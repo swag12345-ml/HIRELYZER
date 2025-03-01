@@ -13,3 +13,5 @@ numpy
 pillow
 sentence-transformers  # Required for HuggingFaceEmbeddings
 pytesseract
+langdetect  # Detects language of input text
+googletrans # Translates text between languages

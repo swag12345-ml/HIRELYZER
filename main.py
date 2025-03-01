@@ -15,6 +15,7 @@ from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 import numpy as np
+from streamlit_webrtc import webrtc_streamer, WebRtcMode, ClientSettings
 
 # Set Streamlit Page Config
 st.set_page_config(page_title="Chat with Swag AI", page_icon="📝", layout="centered")
@@ -27,20 +28,20 @@ working_dir = os.path.dirname(os.path.abspath(__file__))
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 torch.backends.cudnn.benchmark = True  # Optimize GPU performance
 
-# Load API keys from config.json
+# Load API Keys from config.json
 def load_api_keys():
     """Loads API keys from config.json"""
     try:
         with open(os.path.join(working_dir, "config.json"), "r") as f:
-            keys = json.load(f)
-            return keys.get("GROQ_API_KEY"), keys.get("WHISPER_API_KEY")
+            config = json.load(f)
+            return config.get("GROQ_API_KEY"), config.get("WHISPER_API_KEY")
     except FileNotFoundError:
         st.error("🚨 config.json not found. Please add your API keys.")
         st.stop()
 
 groq_api_key, whisper_api_key = load_api_keys()
 if not groq_api_key or not whisper_api_key:
-    st.error("🚨 Missing API keys in config.json. Please check your file.")
+    st.error("🚨 Missing API keys in config.json.")
     st.stop()
 
 # Initialize EasyOCR with GPU support
@@ -93,18 +94,6 @@ def create_chain(vectorstore):
         verbose=False
     )
 
-# Whisper API Speech-to-Text
-def transcribe_audio(audio_bytes):
-    """Converts speech to text using OpenAI Whisper API"""
-    try:
-        headers = {"Authorization": f"Bearer {whisper_api_key}"}
-        files = {"file": ("audio.wav", audio_bytes, "audio/wav")}
-        response = requests.post("https://api.openai.com/v1/audio/transcriptions", headers=headers, files=files)
-        return response.json().get("text", "Could not transcribe audio.")
-    except Exception as e:
-        st.error(f"⚠️ Error in speech-to-text: {e}")
-        return None
-
 # Streamlit UI
 st.title("🦙 Chat with Swag AI - LLAMA 3.3 (GPU Accelerated)")
 
@@ -140,40 +129,61 @@ if "conversation_chain" in st.session_state:
         with st.chat_message("user" if message.type == "human" else "assistant"):
             st.markdown(message.content)
 
-user_input = st.chat_input("Ask Llama...")
-
-async def get_response(user_input):
-    """Runs the chatbot response inside an async event loop."""
-    response = await asyncio.to_thread(
-        st.session_state.conversation_chain.invoke,
-        {"question": user_input, "chat_history": st.session_state.memory.chat_memory.messages}
-    )
-    return response.get("answer", "I'm sorry, I couldn't process that.")
-
-if user_input:
-    with st.chat_message("user"):
-        st.markdown(user_input)
-
+# Real-time Speech Recognition with Whisper
+def transcribe_audio(audio_bytes):
+    """Sends real-time audio to Whisper API for transcription."""
+    url = "https://api.openai.com/v1/audio/transcriptions"
+    headers = {"Authorization": f"Bearer {whisper_api_key}"}
+    files = {"file": ("audio.wav", audio_bytes, "audio/wav")}
+    data = {"model": "whisper-1", "language": "en"}
+    
     try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        assistant_response = loop.run_until_complete(get_response(user_input))
+        response = requests.post(url, headers=headers, files=files, data=data)
+        if response.status_code == 200:
+            return response.json().get("text", "")
+        else:
+            st.error(f"⚠️ Whisper API Error: {response.text}")
+            return ""
     except Exception as e:
-        assistant_response = f"⚠️ Error: {str(e)}"
+        st.error(f"⚠️ Error in transcription: {e}")
+        return ""
 
-    with st.chat_message("assistant"):
-        st.markdown(assistant_response)
+webrtc_ctx = webrtc_streamer(
+    key="speech-to-text",
+    mode=WebRtcMode.SENDRECV,
+    client_settings=ClientSettings(
+        rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+        media_stream_constraints={"video": False, "audio": True},
+    ),
+)
 
-    st.session_state.memory.save_context({"input": user_input}, {"output": assistant_response})
+if webrtc_ctx.audio_receiver:
+    audio_frames = webrtc_ctx.audio_receiver.get_frames(timeout=1)
+    if audio_frames:
+        audio_data = audio_frames[0].to_ndarray().tobytes()
+        user_input = transcribe_audio(audio_data)
+        if user_input:
+            st.text(f"🎤 You said: {user_input}")
 
-# Speech-to-text using Whisper API
-st.header("🎤 Voice Input")
-audio_file = st.file_uploader("Upload an audio file", type=["wav", "mp3", "m4a"])
+            with st.chat_message("user"):
+                st.markdown(user_input)
 
-if audio_file:
-    st.audio(audio_file)
-    with st.spinner("Transcribing..."):
-        transcript = transcribe_audio(audio_file.getvalue())
-    if transcript:
-        st.success("✅ Transcription Successful!")
-        st.text_area("Transcribed Text", transcript)
+            async def get_response(user_input):
+                """Runs the chatbot response inside an async event loop."""
+                response = await asyncio.to_thread(
+                    st.session_state.conversation_chain.invoke,
+                    {"question": user_input, "chat_history": st.session_state.memory.chat_memory.messages}
+                )
+                return response.get("answer", "I'm sorry, I couldn't process that.")
+
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                assistant_response = loop.run_until_complete(get_response(user_input))
+            except Exception as e:
+                assistant_response = f"⚠️ Error: {str(e)}"
+
+            with st.chat_message("assistant"):
+                st.markdown(assistant_response)
+
+            st.session_state.memory.save_context({"input": user_input}, {"output": assistant_response})

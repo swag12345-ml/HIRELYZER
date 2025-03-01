@@ -15,3 +15,4 @@ sentence-transformers  # Required for HuggingFaceEmbeddings
 pytesseract
 speechrecognition  # For capturing speech
 gtts  # For text-to-speech
+pyaudio

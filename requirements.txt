@@ -16,4 +16,5 @@ pytesseract
 SpeechRecognition
 gtts
 pyaudio
+streamlit-audio-recorder
 

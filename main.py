@@ -14,8 +14,6 @@ from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 import numpy as np
-from langdetect import detect
-from deep_translator import GoogleTranslator
 
 # Set Streamlit Page Config
 st.set_page_config(page_title="Chat with Swag AI", page_icon="📝", layout="centered")
@@ -30,6 +28,7 @@ torch.backends.cudnn.benchmark = True  # Optimize GPU performance
 
 # Load GROQ API Key
 def load_groq_api_key():
+    """Loads the GROQ API key from config.json"""
     try:
         with open(os.path.join(working_dir, "config.json"), "r") as f:
             return json.load(f).get("GROQ_API_KEY")
@@ -42,10 +41,11 @@ if not groq_api_key:
     st.error("🚨 GROQ_API_KEY is missing. Check your config.json file.")
     st.stop()
 
-# Initialize EasyOCR with multiple languages
-reader = easyocr.Reader(["en", "es", "fr", "de", "hi", "zh"], gpu=torch.cuda.is_available())
+# Initialize EasyOCR with GPU support
+reader = easyocr.Reader(["en"], gpu=torch.cuda.is_available())
 
 def extract_text_from_pdf(file_path):
+    """Extracts text from PDFs using PyMuPDF, falls back to OCR if needed."""
     try:
         doc = fitz.open(file_path)
         text_list = [page.get_text("text") for page in doc if page.get_text("text").strip()]
@@ -56,26 +56,33 @@ def extract_text_from_pdf(file_path):
         return []
 
 def extract_text_from_images(pdf_path):
+    """Extracts text from image-based PDFs using GPU-accelerated EasyOCR."""
     try:
         images = convert_from_path(pdf_path, dpi=150, first_page=1, last_page=5)
-        return ["\n".join(reader.readtext(np.array(img), detail=0, paragraph=True)) for img in images]
+        return ["\n".join(reader.readtext(np.array(img), detail=0)) for img in images]
     except Exception as e:
         st.error(f"⚠️ Error extracting text from images: {e}")
         return []
 
 def setup_vectorstore(documents):
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+    """Creates a FAISS vector store using Hugging Face embeddings."""
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    
     if DEVICE == "cuda":
         embeddings.model = embeddings.model.to(torch.device("cuda"))
+    
     text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=100)
     doc_chunks = text_splitter.split_text("\n".join(documents))
     return FAISS.from_texts(doc_chunks, embeddings)
 
 def create_chain(vectorstore):
+    """Creates the chat chain with optimized retriever settings."""
     if "memory" not in st.session_state:
         st.session_state.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+
     llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0, groq_api_key=groq_api_key)
     retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
+    
     return ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=retriever,
@@ -85,25 +92,31 @@ def create_chain(vectorstore):
     )
 
 # Streamlit UI
-st.title("🦙 Chat with Swag AI - LLAMA 3.3 (Multilingual)")
+st.title("🦙 Chat with Swag AI - LLAMA 3.3 (GPU Accelerated)")
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
+# Allow multiple PDF uploads
 uploaded_files = st.file_uploader("Upload your PDF files", type=["pdf"], accept_multiple_files=True)
 
 if uploaded_files:
     all_extracted_text = []
+    
     for uploaded_file in uploaded_files:
         file_path = os.path.join(working_dir, uploaded_file.name)
+        
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
+
         try:
             extracted_text = extract_text_from_pdf(file_path)
-            all_extracted_text.extend(extracted_text)
+            all_extracted_text.extend(extracted_text)  # Collect text from all PDFs
             st.success(f"✅ Extracted text from {uploaded_file.name}")
         except Exception as e:
             st.error(f"⚠️ Error processing {uploaded_file.name}: {e}")
+
+    # Process all extracted text together
     if all_extracted_text:
         st.session_state.vectorstore = setup_vectorstore(all_extracted_text)
         st.session_state.conversation_chain = create_chain(st.session_state.vectorstore)
@@ -115,36 +128,26 @@ if "conversation_chain" in st.session_state:
 
 user_input = st.chat_input("Ask Llama...")
 
-def detect_language(text):
-    try:
-        return detect(text)
-    except:
-        return "unknown"
-
-def translate_text(text, target_lang="en"):
-    return GoogleTranslator(source="auto", target=target_lang).translate(text)
-
-async def get_response(user_input, user_lang):
-    translated_input = translate_text(user_input, target_lang="en") if user_lang != "en" else user_input
+async def get_response(user_input):
+    """Runs the chatbot response inside an async event loop."""
     response = await asyncio.to_thread(
         st.session_state.conversation_chain.invoke,
-        {"question": translated_input, "chat_history": st.session_state.memory.chat_memory.messages}
+        {"question": user_input, "chat_history": st.session_state.memory.chat_memory.messages}
     )
-    answer = response.get("answer", "I'm sorry, I couldn't process that.")
-    return translate_text(answer, target_lang=user_lang) if user_lang != "en" else answer
+    return response.get("answer", "I'm sorry, I couldn't process that.")
 
 if user_input:
-    user_lang = detect_language(user_input)
-    st.info(f"Detected language: {user_lang.upper()}")
     with st.chat_message("user"):
         st.markdown(user_input)
+
     try:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        assistant_response = loop.run_until_complete(get_response(user_input, user_lang))
+        assistant_response = loop.run_until_complete(get_response(user_input))
     except Exception as e:
         assistant_response = f"⚠️ Error: {str(e)}"
+
     with st.chat_message("assistant"):
         st.markdown(assistant_response)
+    
     st.session_state.memory.save_context({"input": user_input}, {"output": assistant_response})
-

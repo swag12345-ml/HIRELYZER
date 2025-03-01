@@ -1,5 +1,4 @@
 streamlit
-streamlit-webrtc  # For real-time audio streaming
 torch
 python-dotenv
 pymupdf  # PyMuPDF
@@ -14,4 +13,3 @@ numpy
 pillow
 sentence-transformers  # Required for HuggingFaceEmbeddings
 pytesseract
-requests  # For Whisper API requests

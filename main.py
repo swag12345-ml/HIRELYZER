@@ -20,7 +20,7 @@ st.set_page_config(page_title="Chat with Swag AI", page_icon="📝", layout="cen
 
 # Load environment variables
 load_dotenv()
-working_dir = os.path.dirname(os.path.abspath(_file_))
+working_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Ensure GPU availability
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"

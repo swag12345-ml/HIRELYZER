@@ -20,7 +20,7 @@ from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 import numpy as np
 from dotenv import load_dotenv
-import pyaudio
+from st_audio_recorder import audio_recorder  # Audio recorder for Streamlit
 
 # Load environment variables
 load_dotenv()
@@ -85,25 +85,6 @@ def create_chain(vectorstore):
         verbose=False
     )
 
-def recognize_speech():
-    """Captures user speech and converts it to text."""
-    recognizer = sr.Recognizer()
-    try:
-        with sr.Microphone() as source:
-            recognizer.adjust_for_ambient_noise(source)  # Adjust for background noise
-            st.info("🎤 Listening...")
-            audio = recognizer.listen(source, timeout=10)  # Added timeout for better control
-        return recognizer.recognize_google(audio)
-    except sr.WaitTimeoutError:
-        st.warning("⚠️ No speech detected. Please try again.")
-        return ""
-    except OSError as e:
-        st.error("⚠️ Microphone not available. Please check your device settings or run locally.")
-        return ""
-    except (sr.UnknownValueError, sr.RequestError):
-        st.error("⚠️ Error capturing audio. Check your microphone settings.")
-        return ""
-
 def text_to_speech(text):
     """Converts chatbot response to speech."""
     tts = gTTS(text)
@@ -151,9 +132,26 @@ if "conversation_chain" in st.session_state:
 
 user_input = st.chat_input("Ask Llama...")
 
-if st.button("🎤 Speak"):
-    user_input = recognize_speech()
-    st.text(f"You said: {user_input}")
+st.subheader("🎤 Record Your Voice")
+audio_bytes = audio_recorder()  # Record audio
+
+if audio_bytes:
+    st.audio(audio_bytes, format="audio/wav")
+    recognizer = sr.Recognizer()
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio:
+        temp_audio.write(audio_bytes)
+        temp_audio_path = temp_audio.name
+
+    # Recognize speech from the recorded audio
+    with sr.AudioFile(temp_audio_path) as source:
+        audio = recognizer.record(source)
+        try:
+            user_input = recognizer.recognize_google(audio)
+            st.text(f"You said: {user_input}")
+        except sr.UnknownValueError:
+            st.warning("⚠️ Could not understand the audio.")
+        except sr.RequestError:
+            st.error("⚠️ Error connecting to the speech recognition service.")
 
 if user_input:
     with st.chat_message("user"):

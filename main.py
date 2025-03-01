@@ -92,7 +92,7 @@ def recognize_speech():
         with sr.Microphone() as source:
             recognizer.adjust_for_ambient_noise(source)  # Adjust for background noise
             st.info("🎤 Listening...")
-            audio = recognizer.listen(source, timeout=5)  # Added timeout for better control
+            audio = recognizer.listen(source, timeout=10)  # Added timeout for better control
         return recognizer.recognize_google(audio)
     except sr.WaitTimeoutError:
         st.warning("⚠️ No speech detected. Please try again.")

@@ -88,9 +88,8 @@ def create_chain(vectorstore):
 def recognize_speech():
     """Captures user speech and converts it to text."""
     recognizer = sr.Recognizer()
-    mic = sr.Microphone()
     try:
-        with mic as source:
+        with sr.Microphone() as source:
             recognizer.adjust_for_ambient_noise(source)  # Adjust for background noise
             st.info("🎤 Listening...")
             audio = recognizer.listen(source, timeout=10)  # Added timeout for better control
@@ -98,7 +97,10 @@ def recognize_speech():
     except sr.WaitTimeoutError:
         st.warning("⚠️ No speech detected. Please try again.")
         return ""
-    except (sr.UnknownValueError, sr.RequestError, OSError):
+    except OSError as e:
+        st.error("⚠️ Microphone not available. Please check your device settings or run locally.")
+        return ""
+    except (sr.UnknownValueError, sr.RequestError):
         st.error("⚠️ Error capturing audio. Check your microphone settings.")
         return ""
 

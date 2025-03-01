@@ -1,2 +1,4 @@
 tesseract-ocr
 poppler-utils
+libportaudio2          # Runtime library for PortAudio
+libportaudio-dev

@@ -16,6 +16,10 @@ from langchain.chains import ConversationalRetrievalChain
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor  # For concurrent processing
 
+# Additional libraries for voice assistant
+import speech_recognition as sr  # This uses PyAudio internally
+import pyttsx3
+
 # Set Streamlit Page Config
 st.set_page_config(page_title="Chat with Swag AI", page_icon="📝", layout="centered")
 
@@ -59,14 +63,11 @@ def extract_text_from_pdf(file_path):
 def extract_text_from_images(pdf_path):
     """Extracts text from image-based PDFs using GPU-accelerated EasyOCR concurrently."""
     try:
-        # Convert all pages without specifying page range
         images = convert_from_path(pdf_path, dpi=150)
         
         def ocr_image(img):
-            # Convert image to numpy array and perform OCR
             return "\n".join(reader.readtext(np.array(img), detail=0))
         
-        # Process images concurrently
         with ThreadPoolExecutor() as executor:
             ocr_results = list(executor.map(ocr_image, images))
         
@@ -102,6 +103,34 @@ def create_chain(vectorstore):
         verbose=False
     )
 
+# Voice assistant functions
+def record_voice():
+    """Records audio from the microphone and returns recognized text."""
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        st.info("🎙️ Listening... Please speak now.")
+        try:
+            audio_data = recognizer.listen(source, timeout=5)
+            text = recognizer.recognize_google(audio_data)
+            st.success(f"Voice input: {text}")
+            return text
+        except sr.WaitTimeoutError:
+            st.error("⏰ Listening timed out. Please try again.")
+        except sr.UnknownValueError:
+            st.error("⚠️ Could not understand the audio.")
+        except sr.RequestError as e:
+            st.error(f"⚠️ Could not request results; {e}")
+    return ""
+
+def speak_text(text):
+    """Converts text to speech using pyttsx3."""
+    try:
+        engine = pyttsx3.init()
+        engine.say(text)
+        engine.runAndWait()
+    except Exception as e:
+        st.error(f"⚠️ Text-to-speech error: {e}")
+
 # Streamlit UI
 st.title("🦙 Chat with Swag AI - LLAMA 3.3 (GPU Accelerated)")
 
@@ -116,49 +145,59 @@ if uploaded_files:
     
     for uploaded_file in uploaded_files:
         file_path = os.path.join(working_dir, uploaded_file.name)
-        
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
         try:
             extracted_text = extract_text_from_pdf(file_path)
-            all_extracted_text.extend(extracted_text)  # Collect text from all PDFs
+            all_extracted_text.extend(extracted_text)
             st.success(f"✅ Extracted text from {uploaded_file.name}")
         except Exception as e:
             st.error(f"⚠️ Error processing {uploaded_file.name}: {e}")
 
-    # Process all extracted text together
     if all_extracted_text:
         st.session_state.vectorstore = setup_vectorstore(all_extracted_text)
         st.session_state.conversation_chain = create_chain(st.session_state.vectorstore)
 
+# Display previous chat messages
 if "conversation_chain" in st.session_state:
     for message in st.session_state.memory.load_memory_variables({}).get("chat_history", []):
         with st.chat_message("user" if message.type == "human" else "assistant"):
             st.markdown(message.content)
 
-user_input = st.chat_input("Ask Llama...")
+# Input section: either text chat or voice chat
+st.subheader("Chat Input")
+text_input = st.chat_input("Ask Llama (text)...")
 
-async def get_response(user_input):
+if st.button("Record Voice Input"):
+    voice_input = record_voice()
+    if voice_input:
+        text_input = voice_input  # Override text input if voice input was captured
+
+async def get_response(user_query):
     """Runs the chatbot response inside an async event loop."""
     response = await asyncio.to_thread(
         st.session_state.conversation_chain.invoke,
-        {"question": user_input, "chat_history": st.session_state.memory.chat_memory.messages}
+        {"question": user_query, "chat_history": st.session_state.memory.chat_memory.messages}
     )
     return response.get("answer", "I'm sorry, I couldn't process that.")
 
-if user_input:
+if text_input:
     with st.chat_message("user"):
-        st.markdown(user_input)
+        st.markdown(text_input)
 
     try:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        assistant_response = loop.run_until_complete(get_response(user_input))
+        assistant_response = loop.run_until_complete(get_response(text_input))
     except Exception as e:
         assistant_response = f"⚠️ Error: {str(e)}"
 
     with st.chat_message("assistant"):
         st.markdown(assistant_response)
     
-    st.session_state.memory.save_context({"input": user_input}, {"output": assistant_response})
+    # Save conversation context
+    st.session_state.memory.save_context({"input": text_input}, {"output": assistant_response})
+    
+    # Speak out the assistant's response
+    speak_text(assistant_response)

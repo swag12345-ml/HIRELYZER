@@ -90,10 +90,15 @@ def recognize_speech():
     recognizer = sr.Recognizer()
     try:
         with sr.Microphone() as source:
+            recognizer.adjust_for_ambient_noise(source)  # Adjust for background noise
             st.info("🎤 Listening...")
-            audio = recognizer.listen(source)
+            audio = recognizer.listen(source, timeout=5)  # Added timeout for better control
         return recognizer.recognize_google(audio)
+    except sr.WaitTimeoutError:
+        st.warning("⚠️ No speech detected. Please try again.")
+        return ""
     except (sr.UnknownValueError, sr.RequestError, OSError):
+        st.error("⚠️ Error capturing audio. Check your microphone settings.")
         return ""
 
 def text_to_speech(text):
@@ -102,10 +107,15 @@ def text_to_speech(text):
     with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio:
         tts.save(temp_audio.name)
         st.session_state.audio_file = temp_audio.name
+    st.audio(st.session_state.audio_file, format="audio/mp3")  # Play audio directly
+
 
 def stop_audio():
     """Stops the currently playing audio."""
-    st.session_state.audio_file = None
+    if st.session_state.audio_file:
+        os.remove(st.session_state.audio_file)
+        st.session_state.audio_file = None
+
 
 # Streamlit UI
 st.title("🦙 Chat with Swag AI - LLAMA 3.3 (GPU Accelerated)")

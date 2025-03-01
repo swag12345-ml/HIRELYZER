@@ -14,6 +14,7 @@ from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 import numpy as np
+from concurrent.futures import ThreadPoolExecutor  # For concurrent processing
 
 # Set Streamlit Page Config
 st.set_page_config(page_title="Chat with Swag AI", page_icon="📝", layout="centered")
@@ -56,10 +57,20 @@ def extract_text_from_pdf(file_path):
         return []
 
 def extract_text_from_images(pdf_path):
-    """Extracts text from image-based PDFs using GPU-accelerated EasyOCR."""
+    """Extracts text from image-based PDFs using GPU-accelerated EasyOCR concurrently."""
     try:
-        images = convert_from_path(pdf_path, dpi=150, first_page=1, last_page=5)
-        return ["\n".join(reader.readtext(np.array(img), detail=0)) for img in images]
+        # Convert all pages without specifying page range
+        images = convert_from_path(pdf_path, dpi=150)
+        
+        def ocr_image(img):
+            # Convert image to numpy array and perform OCR
+            return "\n".join(reader.readtext(np.array(img), detail=0))
+        
+        # Process images concurrently
+        with ThreadPoolExecutor() as executor:
+            ocr_results = list(executor.map(ocr_image, images))
+        
+        return ocr_results
     except Exception as e:
         st.error(f"⚠️ Error extracting text from images: {e}")
         return []

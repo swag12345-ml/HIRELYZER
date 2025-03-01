@@ -13,8 +13,3 @@ numpy
 pillow
 sentence-transformers  # Required for HuggingFaceEmbeddings
 pytesseract
-SpeechRecognition
-gtts
-pyaudio
-streamlit-audio
-

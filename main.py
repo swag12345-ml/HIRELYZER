@@ -136,7 +136,7 @@ def transcribe_audio(audio_bytes):
     headers = {"Authorization": f"Bearer {whisper_api_key}"}
     files = {"file": ("audio.wav", audio_bytes, "audio/wav")}
     data = {"model": "whisper-1", "language": "en"}
-    
+
     try:
         response = requests.post(url, headers=headers, files=files, data=data)
         if response.status_code == 200:
@@ -148,6 +148,7 @@ def transcribe_audio(audio_bytes):
         st.error(f"⚠️ Error in transcription: {e}")
         return ""
 
+# WebRTC for real-time audio streaming
 webrtc_ctx = webrtc_streamer(
     key="speech-to-text",
     mode=WebRtcMode.SENDRECV,
@@ -187,3 +188,19 @@ if webrtc_ctx.audio_receiver:
                 st.markdown(assistant_response)
 
             st.session_state.memory.save_context({"input": user_input}, {"output": assistant_response})
+
+# Manual Text Input
+user_input = st.chat_input("Type your message here...")
+
+if user_input:
+    with st.chat_message("user"):
+        st.markdown(user_input)
+
+    assistant_response = st.session_state.conversation_chain.invoke(
+        {"question": user_input, "chat_history": st.session_state.memory.chat_memory.messages}
+    )["answer"]
+
+    with st.chat_message("assistant"):
+        st.markdown(assistant_response)
+
+    st.session_state.memory.save_context({"input": user_input}, {"output": assistant_response})

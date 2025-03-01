@@ -1,4 +1,4 @@
-treamlit
+streamlit
 torch
 python-dotenv
 pymupdf  # PyMuPDF

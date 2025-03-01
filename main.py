@@ -3,6 +3,7 @@ import os
 import json
 import torch
 import asyncio
+import requests
 from dotenv import load_dotenv
 import fitz  # PyMuPDF for text extraction
 import easyocr  # GPU-accelerated OCR
@@ -26,19 +27,20 @@ working_dir = os.path.dirname(os.path.abspath(__file__))
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 torch.backends.cudnn.benchmark = True  # Optimize GPU performance
 
-# Load GROQ API Key
-def load_groq_api_key():
-    """Loads the GROQ API key from config.json"""
+# Load API keys from config.json
+def load_api_keys():
+    """Loads API keys from config.json"""
     try:
         with open(os.path.join(working_dir, "config.json"), "r") as f:
-            return json.load(f).get("GROQ_API_KEY")
+            keys = json.load(f)
+            return keys.get("GROQ_API_KEY"), keys.get("WHISPER_API_KEY")
     except FileNotFoundError:
-        st.error("🚨 config.json not found. Please add your GROQ API key.")
+        st.error("🚨 config.json not found. Please add your API keys.")
         st.stop()
 
-groq_api_key = load_groq_api_key()
-if not groq_api_key:
-    st.error("🚨 GROQ_API_KEY is missing. Check your config.json file.")
+groq_api_key, whisper_api_key = load_api_keys()
+if not groq_api_key or not whisper_api_key:
+    st.error("🚨 Missing API keys in config.json. Please check your file.")
     st.stop()
 
 # Initialize EasyOCR with GPU support
@@ -67,10 +69,10 @@ def extract_text_from_images(pdf_path):
 def setup_vectorstore(documents):
     """Creates a FAISS vector store using Hugging Face embeddings."""
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    
+
     if DEVICE == "cuda":
         embeddings.model = embeddings.model.to(torch.device("cuda"))
-    
+
     text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=100)
     doc_chunks = text_splitter.split_text("\n".join(documents))
     return FAISS.from_texts(doc_chunks, embeddings)
@@ -82,7 +84,7 @@ def create_chain(vectorstore):
 
     llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0, groq_api_key=groq_api_key)
     retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
-    
+
     return ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=retriever,
@@ -90,6 +92,18 @@ def create_chain(vectorstore):
         memory=st.session_state.memory,
         verbose=False
     )
+
+# Whisper API Speech-to-Text
+def transcribe_audio(audio_bytes):
+    """Converts speech to text using OpenAI Whisper API"""
+    try:
+        headers = {"Authorization": f"Bearer {whisper_api_key}"}
+        files = {"file": ("audio.wav", audio_bytes, "audio/wav")}
+        response = requests.post("https://api.openai.com/v1/audio/transcriptions", headers=headers, files=files)
+        return response.json().get("text", "Could not transcribe audio.")
+    except Exception as e:
+        st.error(f"⚠️ Error in speech-to-text: {e}")
+        return None
 
 # Streamlit UI
 st.title("🦙 Chat with Swag AI - LLAMA 3.3 (GPU Accelerated)")
@@ -102,10 +116,10 @@ uploaded_files = st.file_uploader("Upload your PDF files", type=["pdf"], accept_
 
 if uploaded_files:
     all_extracted_text = []
-    
+
     for uploaded_file in uploaded_files:
         file_path = os.path.join(working_dir, uploaded_file.name)
-        
+
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
@@ -149,5 +163,17 @@ if user_input:
 
     with st.chat_message("assistant"):
         st.markdown(assistant_response)
-    
+
     st.session_state.memory.save_context({"input": user_input}, {"output": assistant_response})
+
+# Speech-to-text using Whisper API
+st.header("🎤 Voice Input")
+audio_file = st.file_uploader("Upload an audio file", type=["wav", "mp3", "m4a"])
+
+if audio_file:
+    st.audio(audio_file)
+    with st.spinner("Transcribing..."):
+        transcript = transcribe_audio(audio_file.getvalue())
+    if transcript:
+        st.success("✅ Transcription Successful!")
+        st.text_area("Transcribed Text", transcript)

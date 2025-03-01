@@ -1,2 +1,3 @@
 tesseract-ocr
 poppler-utils
+portaudio  # Required for pyaudio

@@ -20,6 +20,7 @@ from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 import numpy as np
 from dotenv import load_dotenv
+import pyaudio
 
 # Load environment variables
 load_dotenv()
@@ -61,7 +62,6 @@ def extract_text_from_images(pdf_path):
 def setup_vectorstore(documents):
     """Creates a FAISS vector store using Hugging Face embeddings."""
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    
     if DEVICE == "cuda":
         embeddings.model = embeddings.model.to(torch.device("cuda"))
     
@@ -88,22 +88,20 @@ def create_chain(vectorstore):
 def recognize_speech():
     """Captures user speech and converts it to text."""
     recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        st.info("🎤 Listening...")
-        audio = recognizer.listen(source)
     try:
+        with sr.Microphone() as source:
+            st.info("🎤 Listening...")
+            audio = recognizer.listen(source)
         return recognizer.recognize_google(audio)
-    except sr.UnknownValueError:
+    except (sr.UnknownValueError, sr.RequestError, OSError):
         return ""
-    except sr.RequestError:
-        return "Speech recognition service unavailable."
 
 def text_to_speech(text):
     """Converts chatbot response to speech."""
     tts = gTTS(text)
     with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio:
         tts.save(temp_audio.name)
-        st.session_state.audio_file = temp_audio.name  # Store audio file path
+        st.session_state.audio_file = temp_audio.name
 
 def stop_audio():
     """Stops the currently playing audio."""
@@ -134,10 +132,12 @@ if uploaded_files:
             st.session_state.vectorstore = setup_vectorstore(all_extracted_text)
         if "conversation_chain" not in st.session_state:
             st.session_state.conversation_chain = create_chain(st.session_state.vectorstore)
+
 if "conversation_chain" in st.session_state:
     for message in st.session_state.memory.load_memory_variables({}).get("chat_history", []):
         with st.chat_message("user" if message.type == "human" else "assistant"):
             st.markdown(message.content)
+
 user_input = st.chat_input("Ask Llama...")
 
 if st.button("🎤 Speak"):

@@ -136,4 +136,4 @@ if user_input:
     with st.chat_message("assistant"):
         st.markdown(assistant_response)
     
-    st.session_state.memory.save_context({"input": user_input}, {"output": assistant_response}
+    st.session_state.memory.save_context({"input": user_input}, {"output": assistant_response})

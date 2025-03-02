@@ -52,7 +52,7 @@ def extract_text_from_pdf(file_path):
 
 def extract_text_from_images(pdf_path):
     """Extracts text from image-based PDFs using GPU-accelerated EasyOCR."""
-    images = convert_from_path(pdf_path, dpi=150, first_page=1, last_page=5)
+    images = convert_from_path(pdf_path, dpi=150)
     return ["\n".join(reader.readtext(np.array(img), detail=0)) for img in images]
 
 def setup_vectorstore(documents):

@@ -1,4 +1,4 @@
- import streamlit as st  # Streamlit must be imported first
+import streamlit as st  # Streamlit must be imported first
 import os
 import json
 import torch

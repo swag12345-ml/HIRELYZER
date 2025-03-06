@@ -13,4 +13,3 @@ numpy
 pillow
 sentence-transformers  # Required for HuggingFaceEmbeddings
 pytesseract
-faiss-gpu

@@ -16,7 +16,7 @@ from langchain.chains import ConversationalRetrievalChain
 import numpy as np
 
 # Set Streamlit Page Config
-st.set_page_config(page_title="Chat with Swag AI", page_icon="📝", layout="centered")
+st.set_page_config(page_title="Chat with LEXIBOT", page_icon="📝", layout="centered")
 
 # Load environment variables
 load_dotenv()
@@ -92,7 +92,7 @@ def create_chain(vectorstore):
     )
 
 # Streamlit UI
-st.title("🦙 Chat with Swag AI - LLAMA 3.3 (GPU Accelerated)")
+st.title("🦙 Chat with LEXIBOT - LLAMA 3.3 (GPU Accelerated)")
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []

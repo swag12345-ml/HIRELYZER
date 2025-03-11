@@ -1,4 +1,4 @@
-import streamlit as st
+mport streamlit as st  # Streamlit must be imported first
 import os
 import json
 import torch
@@ -6,7 +6,7 @@ import asyncio
 from dotenv import load_dotenv
 import fitz  # PyMuPDF for text extraction
 import easyocr  # GPU-accelerated OCR
-from pdf2image import convert_from_path
+from pdf2image import convert_from_path  # Convert PDFs to images
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -14,7 +14,6 @@ from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 import numpy as np
-from fpdf import FPDF  # PDF generation
 
 # Set Streamlit Page Config
 st.set_page_config(page_title="Chat with LEXIBOT", page_icon="📝", layout="centered")
@@ -98,8 +97,8 @@ st.title("🦙 Chat with LEXIBOT - LLAMA 3.3 (GPU Accelerated)")
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# Upload PDF Files
-uploaded_files = st.file_uploader("📂 Upload your PDF files", type=["pdf"], accept_multiple_files=True)
+# Allow multiple PDF uploads
+uploaded_files = st.file_uploader("Upload your PDF files", type=["pdf"], accept_multiple_files=True)
 
 if uploaded_files:
     all_extracted_text = []
@@ -152,41 +151,3 @@ if user_input:
         st.markdown(assistant_response)
     
     st.session_state.memory.save_context({"input": user_input}, {"output": assistant_response})
-
-# Export Chat as JSON
-def export_chat_json():
-    chat_data = st.session_state.memory.load_memory_variables({})
-    file_path = os.path.join(working_dir, "chat_history.json")
-    with open(file_path, "w") as f:
-        json.dump(chat_data, f, indent=4)
-    return file_path
-
-# Export Chat as PDF
-def export_chat_pdf():
-    pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, "Chat History", ln=True, align="C")
-    
-    for message in st.session_state.memory.load_memory_variables({}).get("chat_history", []):
-        pdf.multi_cell(0, 10, f"{message.type.upper()}: {message.content}\n")
-    
-    file_path = os.path.join(working_dir, "chat_history.pdf")
-    pdf.output(file_path)
-    return file_path
-
-st.subheader("💾 Export Chat")
-col1, col2 = st.columns(2)
-
-with col1:
-    if st.button("📥 Export as JSON"):
-        file_path = export_chat_json()
-        st.success("✅ Chat exported successfully!")
-        st.download_button("⬇️ Download JSON", file_path, file_name="chat_history.json")
-
-with col2:
-    if st.button("📥 Export as PDF"):
-        file_path = export_chat_pdf()
-        st.success("✅ Chat exported successfully!")
-        st.download_button("⬇️ Download PDF", file_path, file_name="chat_history.pdf")

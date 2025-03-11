@@ -14,6 +14,7 @@ from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 import numpy as np
+from fpdf import FPDF  # For PDF generation
 
 # Set Streamlit Page Config
 st.set_page_config(page_title="Chat with LEXIBOT", page_icon="📝", layout="centered")
@@ -43,26 +44,6 @@ if not groq_api_key:
 
 # Initialize EasyOCR with GPU support
 reader = easyocr.Reader(["en"], gpu=torch.cuda.is_available())
-
-def extract_text_from_pdf(file_path):
-    """Extracts text from PDFs using PyMuPDF, falls back to OCR if needed."""
-    try:
-        doc = fitz.open(file_path)
-        text_list = [page.get_text("text") for page in doc if page.get_text("text").strip()]
-        doc.close()
-        return text_list if text_list else extract_text_from_images(file_path)
-    except Exception as e:
-        st.error(f"⚠️ Error extracting text from PDF: {e}")
-        return []
-
-def extract_text_from_images(pdf_path):
-    """Extracts text from image-based PDFs using GPU-accelerated EasyOCR."""
-    try:
-        images = convert_from_path(pdf_path, dpi=150, first_page=1, last_page=5)
-        return ["\n".join(reader.readtext(np.array(img), detail=0)) for img in images]
-    except Exception as e:
-        st.error(f"⚠️ Error extracting text from images: {e}")
-        return []
 
 def setup_vectorstore(documents):
     """Creates a FAISS vector store using Hugging Face embeddings."""
@@ -97,35 +78,6 @@ st.title("🦙 Chat with LEXIBOT - LLAMA 3.3 (GPU Accelerated)")
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# Allow multiple PDF uploads
-uploaded_files = st.file_uploader("Upload your PDF files", type=["pdf"], accept_multiple_files=True)
-
-if uploaded_files:
-    all_extracted_text = []
-    
-    for uploaded_file in uploaded_files:
-        file_path = os.path.join(working_dir, uploaded_file.name)
-        
-        with open(file_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-
-        try:
-            extracted_text = extract_text_from_pdf(file_path)
-            all_extracted_text.extend(extracted_text)  # Collect text from all PDFs
-            st.success(f"✅ Extracted text from {uploaded_file.name}")
-        except Exception as e:
-            st.error(f"⚠️ Error processing {uploaded_file.name}: {e}")
-
-    # Process all extracted text together
-    if all_extracted_text:
-        st.session_state.vectorstore = setup_vectorstore(all_extracted_text)
-        st.session_state.conversation_chain = create_chain(st.session_state.vectorstore)
-
-if "conversation_chain" in st.session_state:
-    for message in st.session_state.memory.load_memory_variables({}).get("chat_history", []):
-        with st.chat_message("user" if message.type == "human" else "assistant"):
-            st.markdown(message.content)
-
 user_input = st.chat_input("Ask Llama...")
 
 async def get_response(user_input):
@@ -150,29 +102,68 @@ if user_input:
     with st.chat_message("assistant"):
         st.markdown(assistant_response)
     
-    # Save chat history
-    st.session_state.chat_history.append(f"User: {user_input}\nBot: {assistant_response}\n")
+    # Save chat history in session state
+    st.session_state.chat_history.append({"user": user_input, "bot": assistant_response})
 
     st.session_state.memory.save_context({"input": user_input}, {"output": assistant_response})
 
 # Chat Export Feature
 def export_chat():
-    """Exports chat history as a downloadable text file."""
-    chat_history_text = "\n".join(st.session_state.chat_history)
-    file_path = os.path.join(working_dir, "chat_history.txt")
+    """Exports chat history in multiple formats."""
     
-    with open(file_path, "w", encoding="utf-8") as f:
-        f.write(chat_history_text)
+    # TXT Export
+    chat_text = "\n".join([f"User: {chat['user']}\nBot: {chat['bot']}\n" for chat in st.session_state.chat_history])
+    txt_path = os.path.join(working_dir, "chat_history.txt")
+    with open(txt_path, "w", encoding="utf-8") as f:
+        f.write(chat_text)
     
-    return file_path
+    # JSON Export
+    json_path = os.path.join(working_dir, "chat_history.json")
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(st.session_state.chat_history, f, indent=4)
 
-# Add a "Download Chat History" button
+    # PDF Export
+    pdf_path = os.path.join(working_dir, "chat_history.pdf")
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    pdf.cell(200, 10, "Chat History", ln=True, align="C")
+    pdf.ln(10)  # Line break
+
+    for chat in st.session_state.chat_history:
+        pdf.multi_cell(0, 10, f"User: {chat['user']}\nBot: {chat['bot']}\n", border=0)
+        pdf.ln(5)
+
+    pdf.output(pdf_path)
+
+    return txt_path, json_path, pdf_path
+
+# Show download buttons if chat history exists
 if st.session_state.chat_history:
-    chat_file = export_chat()
-    with open(chat_file, "rb") as f:
+    txt_file, json_file, pdf_file = export_chat()
+
+    with open(txt_file, "rb") as f:
         st.download_button(
-            label="📥 Download Chat History",
+            label="📥 Download Chat as TXT",
             data=f,
             file_name="chat_history.txt",
             mime="text/plain"
+        )
+
+    with open(json_file, "rb") as f:
+        st.download_button(
+            label="📥 Download Chat as JSON",
+            data=f,
+            file_name="chat_history.json",
+            mime="application/json"
+        )
+
+    with open(pdf_file, "rb") as f:
+        st.download_button(
+            label="📥 Download Chat as PDF",
+            data=f,
+            file_name="chat_history.pdf",
+            mime="application/pdf"
         )

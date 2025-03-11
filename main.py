@@ -150,4 +150,29 @@ if user_input:
     with st.chat_message("assistant"):
         st.markdown(assistant_response)
     
+    # Save chat history
+    st.session_state.chat_history.append(f"User: {user_input}\nBot: {assistant_response}\n")
+
     st.session_state.memory.save_context({"input": user_input}, {"output": assistant_response})
+
+# Chat Export Feature
+def export_chat():
+    """Exports chat history as a downloadable text file."""
+    chat_history_text = "\n".join(st.session_state.chat_history)
+    file_path = os.path.join(working_dir, "chat_history.txt")
+    
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write(chat_history_text)
+    
+    return file_path
+
+# Add a "Download Chat History" button
+if st.session_state.chat_history:
+    chat_file = export_chat()
+    with open(chat_file, "rb") as f:
+        st.download_button(
+            label="📥 Download Chat History",
+            data=f,
+            file_name="chat_history.txt",
+            mime="text/plain"
+        )

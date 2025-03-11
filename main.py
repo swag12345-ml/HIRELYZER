@@ -1,9 +1,11 @@
 import streamlit as st  # Streamlit must be imported first
+
+# Set page config as the very first Streamlit command
+st.set_page_config(page_title="Chat with LEXIBOT", page_icon="📝", layout="centered")
+
 import os
 import json
 import torch
-import asyncio
-from dotenv import load_dotenv
 import fitz  # PyMuPDF for text extraction
 import easyocr  # GPU-accelerated OCR
 from pdf2image import convert_from_path  # Convert PDFs to images
@@ -14,9 +16,8 @@ from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 import numpy as np
-
-# Set Streamlit Page Config
-st.set_page_config(page_title="Chat with LEXIBOT", page_icon="📝", layout="centered")
+import io
+from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
@@ -26,7 +27,6 @@ working_dir = os.path.dirname(os.path.abspath(__file__))
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 torch.backends.cudnn.benchmark = True  # Optimize GPU performance
 
-# Load GROQ API Key
 def load_groq_api_key():
     """Loads the GROQ API key from config.json"""
     try:
@@ -42,27 +42,19 @@ if not groq_api_key:
     st.stop()
 
 # Initialize EasyOCR with GPU support
-reader = easyocr.Reader(["en"], gpu=torch.cuda.is_available())
+reader = easyocr.Reader(["en"], gpu=True)
 
 def extract_text_from_pdf(file_path):
-    """Extracts text from PDFs using PyMuPDF, falls back to OCR if needed."""
-    try:
-        doc = fitz.open(file_path)
-        text_list = [page.get_text("text") for page in doc if page.get_text("text").strip()]
-        doc.close()
-        return text_list if text_list else extract_text_from_images(file_path)
-    except Exception as e:
-        st.error(f"⚠️ Error extracting text from PDF: {e}")
-        return []
+    """Extracts text from PDFs using PyMuPDF, falls back to GPU-based OCR if needed."""
+    doc = fitz.open(file_path)
+    text_list = [page.get_text("text") for page in doc if page.get_text("text").strip()]
+    doc.close()
+    return text_list if text_list else extract_text_from_images(file_path)
 
 def extract_text_from_images(pdf_path):
     """Extracts text from image-based PDFs using GPU-accelerated EasyOCR."""
-    try:
-        images = convert_from_path(pdf_path, dpi=150, first_page=1, last_page=5)
-        return ["\n".join(reader.readtext(np.array(img), detail=0)) for img in images]
-    except Exception as e:
-        st.error(f"⚠️ Error extracting text from images: {e}")
-        return []
+    images = convert_from_path(pdf_path, dpi=150, first_page=1, last_page=5)
+    return ["\n".join(reader.readtext(np.array(img), detail=0)) for img in images]
 
 def setup_vectorstore(documents):
     """Creates a FAISS vector store using Hugging Face embeddings."""
@@ -97,29 +89,25 @@ st.title("🦙 Chat with LEXIBOT - LLAMA 3.3 (GPU Accelerated)")
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# Allow multiple PDF uploads
 uploaded_files = st.file_uploader("Upload your PDF files", type=["pdf"], accept_multiple_files=True)
 
 if uploaded_files:
     all_extracted_text = []
-    
     for uploaded_file in uploaded_files:
         file_path = os.path.join(working_dir, uploaded_file.name)
-        
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
-
         try:
             extracted_text = extract_text_from_pdf(file_path)
-            all_extracted_text.extend(extracted_text)  # Collect text from all PDFs
+            all_extracted_text.extend(extracted_text)
             st.success(f"✅ Extracted text from {uploaded_file.name}")
         except Exception as e:
             st.error(f"⚠️ Error processing {uploaded_file.name}: {e}")
-
-    # Process all extracted text together
     if all_extracted_text:
-        st.session_state.vectorstore = setup_vectorstore(all_extracted_text)
-        st.session_state.conversation_chain = create_chain(st.session_state.vectorstore)
+        if "vectorstore" not in st.session_state:
+            st.session_state.vectorstore = setup_vectorstore(all_extracted_text)
+        if "conversation_chain" not in st.session_state:
+            st.session_state.conversation_chain = create_chain(st.session_state.vectorstore)
 
 if "conversation_chain" in st.session_state:
     for message in st.session_state.memory.load_memory_variables({}).get("chat_history", []):
@@ -128,26 +116,29 @@ if "conversation_chain" in st.session_state:
 
 user_input = st.chat_input("Ask Llama...")
 
-async def get_response(user_input):
-    """Runs the chatbot response inside an async event loop."""
-    response = await asyncio.to_thread(
-        st.session_state.conversation_chain.invoke,
-        {"question": user_input, "chat_history": st.session_state.memory.chat_memory.messages}
-    )
-    return response.get("answer", "I'm sorry, I couldn't process that.")
-
 if user_input:
     with st.chat_message("user"):
         st.markdown(user_input)
-
-    try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        assistant_response = loop.run_until_complete(get_response(user_input))
-    except Exception as e:
-        assistant_response = f"⚠️ Error: {str(e)}"
-
+    response = st.session_state.conversation_chain.invoke({
+        "question": user_input,
+        "chat_history": st.session_state.memory.chat_memory.messages
+    })
+    assistant_response = response.get("answer", "I'm sorry, I couldn't process that.")
     with st.chat_message("assistant"):
         st.markdown(assistant_response)
-    
     st.session_state.memory.save_context({"input": user_input}, {"output": assistant_response})
+
+# Export Chat Feature
+st.subheader("💾 Export Chat")
+
+export_format = st.radio("Choose export format:", ["Text (.txt)", "JSON (.json)"], horizontal=True)
+
+def export_chat():
+    return "\n".join(f"{'User' if msg.type == 'human' else 'LEXIBOT'}: {msg.content}" for msg in st.session_state.memory.chat_memory.messages)
+
+if st.button("Download Chat History"):
+    chat_content = export_chat()
+    chat_file = io.BytesIO(chat_content.encode("utf-8"))
+    mime_type = "text/plain" if export_format == "Text (.txt)" else "application/json"
+    file_name = "chat_history.txt" if export_format == "Text (.txt)" else "chat_history.json"
+    st.download_button(label="📥 Download", data=chat_file, file_name=file_name, mime=mime_type)

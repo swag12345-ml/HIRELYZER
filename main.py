@@ -1,24 +1,7 @@
-import streamlit as st  
-import os
-import json
-import torch
-import fitz  
-import easyocr  
-from pdf2image import convert_from_path  
-from langchain_text_splitters import CharacterTextSplitter
-from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_groq import ChatGroq
-from langchain.memory import ConversationBufferMemory
-from langchain.chains import ConversationalRetrievalChain
-import numpy as np
-import io
-from dotenv import load_dotenv
+import streamlit as st  # Streamlit must be imported first
 
-# Set page config
+# Set page config as the very first Streamlit command
 st.set_page_config(page_title="Chat with LEXIBOT", page_icon="📝", layout="centered")
-
-# Cyberpunk Header & CSS
 st.markdown(
     """
     <style>
@@ -32,8 +15,14 @@ st.markdown(
         100% { background: #007BFF; }
     }
 
+    @keyframes floatEffect {
+        0% { transform: translateX(0px); }
+        50% { transform: translateX(5px); }
+        100% { transform: translateX(0px); }
+    }
+
     .header {
-        animation: colorChange 5s infinite alternate;
+        animation: colorChange 5s infinite alternate, floatEffect 3s infinite ease-in-out;
         padding: 10px 15px;
         text-align: center;
         font-size: 20px;
@@ -53,28 +42,6 @@ st.markdown(
         text-shadow: 0px 0px 6px rgba(255, 255, 255, 0.8), 
                      0px 0px 12px rgba(0, 198, 255, 0.6);
     }
-
-    .cyber-button {
-        background: linear-gradient(90deg, #ff00ff, #00ffff);
-        border: none;
-        color: white;
-        padding: 12px 24px;
-        font-size: 16px;
-        font-family: 'Orbitron', sans-serif;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: 0.3s;
-        box-shadow: 0px 0px 10px rgba(0, 198, 255, 0.8), 
-                    0px 0px 20px rgba(255, 0, 255, 0.6);
-    }
-
-    .cyber-button:hover {
-        background: linear-gradient(90deg, #00ffff, #ff00ff);
-        box-shadow: 0px 0px 15px rgba(255, 0, 255, 1), 
-                    0px 0px 25px rgba(0, 198, 255, 1);
-    }
     </style>
 
     <div class="header">
@@ -84,15 +51,32 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+import os
+import json
+import torch
+import fitz  # PyMuPDF for text extraction
+import easyocr  # GPU-accelerated OCR
+from pdf2image import convert_from_path  # Convert PDFs to images
+from langchain_text_splitters import CharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_groq import ChatGroq
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationalRetrievalChain
+import numpy as np
+import io
+from dotenv import load_dotenv
+
 # Load environment variables
 load_dotenv()
 working_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Ensure GPU availability
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+torch.backends.cudnn.benchmark = True  # Optimize GPU performance
 
-# Load API Key
 def load_groq_api_key():
+    """Loads the GROQ API key from config.json"""
     try:
         with open(os.path.join(working_dir, "config.json"), "r") as f:
             return json.load(f).get("GROQ_API_KEY")
@@ -105,32 +89,34 @@ if not groq_api_key:
     st.error("🚨 GROQ_API_KEY is missing. Check your config.json file.")
     st.stop()
 
-# Initialize OCR with GPU
+# Initialize EasyOCR with GPU support
 reader = easyocr.Reader(["en"], gpu=True)
 
-# PDF Text Extraction
 def extract_text_from_pdf(file_path):
+    """Extracts text from PDFs using PyMuPDF, falls back to GPU-based OCR if needed."""
     doc = fitz.open(file_path)
     text_list = [page.get_text("text") for page in doc if page.get_text("text").strip()]
     doc.close()
     return text_list if text_list else extract_text_from_images(file_path)
 
 def extract_text_from_images(pdf_path):
+    """Extracts text from image-based PDFs using GPU-accelerated EasyOCR."""
     images = convert_from_path(pdf_path, dpi=150, first_page=1, last_page=5)
     return ["\n".join(reader.readtext(np.array(img), detail=0)) for img in images]
 
-# Vector Store Setup
 def setup_vectorstore(documents):
+    """Creates a FAISS vector store using Hugging Face embeddings."""
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+
     if DEVICE == "cuda":
         embeddings.model = embeddings.model.to(torch.device("cuda"))
-    
+
     text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=100)
     doc_chunks = text_splitter.split_text("\n".join(documents))
     return FAISS.from_texts(doc_chunks, embeddings)
 
-# Chat Chain Creation
 def create_chain(vectorstore):
+    """Creates the chat chain with optimized retriever settings."""
     if "memory" not in st.session_state:
         st.session_state.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
@@ -148,8 +134,10 @@ def create_chain(vectorstore):
 # Streamlit UI
 st.title("🦙 Chat with LEXIBOT - LLAMA 3.3 (GPU Accelerated)")
 
-# File Upload Section
-uploaded_files = st.file_uploader("🚀 Upload Cyber Documents", type=["pdf"], accept_multiple_files=True)
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+uploaded_files = st.file_uploader("Upload your PDF files", type=["pdf"], accept_multiple_files=True)
 
 if uploaded_files:
     all_extracted_text = []
@@ -157,29 +145,48 @@ if uploaded_files:
         file_path = os.path.join(working_dir, uploaded_file.name)
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
-        extracted_text = extract_text_from_pdf(file_path)
-        all_extracted_text.extend(extracted_text)
-    
-    st.session_state.vectorstore = setup_vectorstore(all_extracted_text)
-    st.session_state.conversation_chain = create_chain(st.session_state.vectorstore)
+        try:
+            extracted_text = extract_text_from_pdf(file_path)
+            all_extracted_text.extend(extracted_text)
+            st.success(f"✅ Extracted text from {uploaded_file.name}")
+        except Exception as e:
+            st.error(f"⚠️ Error processing {uploaded_file.name}: {e}")
+    if all_extracted_text:
+        if "vectorstore" not in st.session_state:
+            st.session_state.vectorstore = setup_vectorstore(all_extracted_text)
+        if "conversation_chain" not in st.session_state:
+            st.session_state.conversation_chain = create_chain(st.session_state.vectorstore)
 
-# Chat Input
-user_input = st.chat_input("💬 Ask LEXIBOT...")
+if "conversation_chain" in st.session_state:
+    for message in st.session_state.memory.load_memory_variables({}).get("chat_history", []):
+        with st.chat_message("user" if message.type == "human" else "assistant"):
+            st.markdown(message.content)
+
+user_input = st.chat_input("Ask Llama...")
 
 if user_input:
-    response = st.session_state.conversation_chain.invoke({"question": user_input})
-    st.chat_message("assistant").markdown(response.get("answer", "Error processing."))
+    with st.chat_message("user"):
+        st.markdown(user_input)
+    response = st.session_state.conversation_chain.invoke({
+        "question": user_input,
+        "chat_history": st.session_state.memory.chat_memory.messages
+    })
+    assistant_response = response.get("answer", "I'm sorry, I couldn't process that.")
+    with st.chat_message("assistant"):
+        st.markdown(assistant_response)
+    st.session_state.memory.save_context({"input": user_input}, {"output": assistant_response})
 
-# Cyberpunk Export Chat Feature
-st.subheader("⚡ Export Chat History")
+# Export Chat Feature
+st.subheader("💾 Export Chat")
 
-export_format = st.radio("Choose format:", ["Text (.txt)", "JSON (.json)"], horizontal=True)
+export_format = st.radio("Choose export format:", ["Text (.txt)", "JSON (.json)"], horizontal=True)
 
 def export_chat():
-    return "\n".join(f"{msg['type'].capitalize()}: {msg['content']}" for msg in st.session_state.memory.chat_memory.messages)
+    return "\n".join(f"{'User' if msg.type == 'human' else 'LEXIBOT'}: {msg.content}" for msg in st.session_state.memory.chat_memory.messages)
 
-if st.button("⚡ Export Chat", key="export_chat", help="Download chat history"):
+if st.button("Download Chat History"):
     chat_content = export_chat()
+    chat_file = io.BytesIO(chat_content.encode("utf-8"))
     mime_type = "text/plain" if export_format == "Text (.txt)" else "application/json"
     file_name = "chat_history.txt" if export_format == "Text (.txt)" else "chat_history.json"
-    st.download_button("⚡ DOWNLOAD", chat_content, file_name, mime_type, key="download_chat")
+    st.download_button(label="📥 Download", data=chat_file, file_name=file_name, mime=mime_type)

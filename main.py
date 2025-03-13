@@ -2,6 +2,54 @@ import streamlit as st  # Streamlit must be imported first
 
 # Set page config as the very first Streamlit command
 st.set_page_config(page_title="Chat with LEXIBOT", page_icon="📝", layout="centered")
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+    @keyframes colorChange {
+        0% { background: #007BFF; }
+        25% { background: #00C6FF; }
+        50% { background: #6610f2; }
+        75% { background: #ff0080; }
+        100% { background: #007BFF; }
+    }
+
+    @keyframes floatEffect {
+        0% { transform: translateX(0px); }
+        50% { transform: translateX(5px); }
+        100% { transform: translateX(0px); }
+    }
+
+    .header {
+        animation: colorChange 5s infinite alternate, floatEffect 3s infinite ease-in-out;
+        padding: 10px 15px;
+        text-align: center;
+        font-size: 20px;
+        font-weight: bold;
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.3);
+        margin-bottom: 15px;
+        letter-spacing: 2px;
+        font-family: 'Orbitron', sans-serif;
+        text-transform: uppercase;
+        width: fit-content;
+        margin: auto;
+    }
+
+    .glow-text {
+        text-shadow: 0px 0px 6px rgba(255, 255, 255, 0.8), 
+                     0px 0px 12px rgba(0, 198, 255, 0.6);
+    }
+    </style>
+
+    <div class="header">
+        🤖 <span class="glow-text">LEXIBOT</span> | AI Chatbot 🚀
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 import os
 import json

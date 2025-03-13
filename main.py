@@ -7,96 +7,107 @@ st.markdown(
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 
-    /* Cyberpunk Background */
     body {
-        background: linear-gradient(135deg, #0f172a, #1e293b, #0f172a);
-        color: #d1d5db;
+        background-color: #0b0c10;
+        color: #c5c6c7;
         font-family: 'Orbitron', sans-serif;
     }
 
-    /* Glowing Header */
-    @keyframes colorPulse {
-        0% { background: #007BFF; }
-        50% { background: #ff0080; }
-        100% { background: #007BFF; }
+    /* Glitch Animation */
+    @keyframes glitch {
+        0% { text-shadow: 2px 2px #ff0000, -2px -2px #00ffcc; }
+        25% { text-shadow: -2px -2px #ff0000, 2px 2px #00ffcc; }
+        50% { text-shadow: 3px -3px #ff00ff, -3px 3px #ff9900; }
+        75% { text-shadow: -3px -3px #ff9900, 3px 3px #33ff00; }
+        100% { text-shadow: 2px 2px #ff00ff, -2px -2px #0099ff; }
     }
 
-    @keyframes floatEffect {
-        0% { transform: translateX(0px); }
-        50% { transform: translateX(5px); }
-        100% { transform: translateX(0px); }
+    /* RGB Color Animation */
+    @keyframes smoothGlow {
+        0% { color: #ff0000; text-shadow: 0 0 10px #ff0000; }
+        25% { color: #ff9900; text-shadow: 0 0 15px #ff9900; }
+        50% { color: #00ff00; text-shadow: 0 0 20px #00ff00; }
+        75% { color: #0099ff; text-shadow: 0 0 15px #0099ff; }
+        100% { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
     }
 
+    /* Header */
     .header {
-        animation: colorPulse 4s infinite alternate, floatEffect 3s infinite ease-in-out;
-        padding: 8px 15px;
+        font-size: 25px;
+        font-weight: bold;
         text-align: center;
-        font-size: 22px;
-        font-weight: bold;
-        color: white;
-        border-radius: 10px;
-        box-shadow: 0px 0px 15px rgba(0, 198, 255, 0.7);
-        margin-bottom: 15px;
-        letter-spacing: 2px;
-        font-family: 'Orbitron', sans-serif;
         text-transform: uppercase;
-        width: fit-content;
-        margin: auto;
+        letter-spacing: 3px;
+        animation: glitch 0.8s infinite, smoothGlow 3s infinite alternate;
+        text-shadow: 0px 0px 20px cyan;
     }
 
-    .glow-text {
-        text-shadow: 0px 0px 8px rgba(255, 255, 255, 0.9), 
-                     0px 0px 15px rgba(0, 198, 255, 0.8);
-    }
-
-    /* Neon Cyberpunk Buttons */
-    .stButton>button {
-        background: linear-gradient(135deg, #ff0080, #007BFF);
+    /* Buttons - Neon Glow Effect */
+    .stButton > button {
+        background: linear-gradient(45deg, #ff0080, #007BFF);
         color: white;
-        border: none;
-        padding: 10px 20px;
-        font-size: 16px;
+        font-size: 18px;
         font-weight: bold;
         border-radius: 8px;
-        text-transform: uppercase;
-        font-family: 'Orbitron', sans-serif;
-        box-shadow: 0px 0px 15px rgba(0, 198, 255, 0.7);
-        transition: all 0.3s ease-in-out;
-    }
-
-    .stButton>button:hover {
-        background: linear-gradient(135deg, #007BFF, #ff0080);
-        box-shadow: 0px 0px 20px rgba(255, 0, 128, 0.8);
-        transform: scale(1.05);
-    }
-
-    /* Cyberpunk Input Field */
-    .stTextInput>div>div>input {
-        background-color: #1e293b;
-        color: #d1d5db;
-        border: 2px solid #ff0080;
-        font-size: 16px;
-        font-family: 'Orbitron', sans-serif;
         padding: 10px;
+        text-transform: uppercase;
+        box-shadow: 0px 0px 15px rgba(0, 198, 255, 0.8);
+        transition: 0.3s ease-in-out;
+    }
+    .stButton > button:hover {
+        background: linear-gradient(45deg, #ff0077, #00ccff);
+        transform: scale(1.08);
+        box-shadow: 0px 0px 30px rgba(255, 0, 128, 1);
     }
 
-    /* Cyberpunk Chat Messages */
-    .stChatMessage {
-        background: #1e293b;
-        border: 2px solid #007BFF;
-        border-radius: 8px;
-        padding: 12px;
-        font-size: 16px;
-        font-family: 'Orbitron', sans-serif;
-        box-shadow: 0px 0px 10px rgba(0, 198, 255, 0.5);
+    /* Chat Answer Box */
+    @keyframes typing {
+        from { width: 0; }
+        to { width: 100%; }
     }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes neonText {
+        0% { color: #ff44ff; text-shadow: 0px 0px 15px #ff44ff; }
+        50% { color: #00ffff; text-shadow: 0px 0px 20px #00ffff; }
+        100% { color: #ff00ff; text-shadow: 0px 0px 15px #ff00ff; }
+    }
+    
+    .stChatMessage {
+        font-size: 18px;
+        background: #1e293b;
+        padding: 12px;
+        border-radius: 8px;
+        border: 2px solid #00ffff;
+        color: #00ffff;
+        text-shadow: 0px 0px 8px #00ffff;
+        animation: glow 1.5s infinite alternate;
+    }
+
+    /* Upload Animation - Glowing File Upload */
+    @keyframes pulse {
+        0% { box-shadow: 0 0 5px cyan; }
+        50% { box-shadow: 0 0 20px cyan; }
+        100% { box-shadow: 0 0 5px cyan; }
+    }
+    .stFileUploader > div > div {
+        border: 2px solid cyan;
+        animation: pulse 2s infinite;
+        padding: 10px;
+        border-radius: 8px;
+        background-color: rgba(0, 255, 255, 0.1);
+        text-align: center;
+    }
+
     </style>
 
     <div class="header">
-        🤖 <span class="glow-text">LEXIBOT</span> | POWERED BY SEMICOLON 🚀
+        🤖 LEXIBOT - POWERED BY SEMICOLON
     </div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 import os

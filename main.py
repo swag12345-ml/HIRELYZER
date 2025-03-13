@@ -93,7 +93,7 @@ st.markdown(
     </style>
 
     <div class="header">
-        🤖 <span class="glow-text">LEXIBOT</span> | Cyber AI 🚀
+        🤖 <span class="glow-text">LEXIBOT</span> | POWERED BY SEMICOLON 🚀
     </div>
     """,
     unsafe_allow_html=True

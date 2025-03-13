@@ -7,11 +7,17 @@ st.markdown(
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 
-    @keyframes colorChange {
+    /* Cyberpunk Background */
+    body {
+        background: linear-gradient(135deg, #0f172a, #1e293b, #0f172a);
+        color: #d1d5db;
+        font-family: 'Orbitron', sans-serif;
+    }
+
+    /* Glowing Header */
+    @keyframes colorPulse {
         0% { background: #007BFF; }
-        25% { background: #00C6FF; }
-        50% { background: #6610f2; }
-        75% { background: #ff0080; }
+        50% { background: #ff0080; }
         100% { background: #007BFF; }
     }
 
@@ -22,14 +28,14 @@ st.markdown(
     }
 
     .header {
-        animation: colorChange 5s infinite alternate, floatEffect 3s infinite ease-in-out;
-        padding: 10px 15px;
+        animation: colorPulse 4s infinite alternate, floatEffect 3s infinite ease-in-out;
+        padding: 8px 15px;
         text-align: center;
-        font-size: 20px;
+        font-size: 22px;
         font-weight: bold;
         color: white;
-        border-radius: 8px;
-        box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        box-shadow: 0px 0px 15px rgba(0, 198, 255, 0.7);
         margin-bottom: 15px;
         letter-spacing: 2px;
         font-family: 'Orbitron', sans-serif;
@@ -39,13 +45,55 @@ st.markdown(
     }
 
     .glow-text {
-        text-shadow: 0px 0px 6px rgba(255, 255, 255, 0.8), 
-                     0px 0px 12px rgba(0, 198, 255, 0.6);
+        text-shadow: 0px 0px 8px rgba(255, 255, 255, 0.9), 
+                     0px 0px 15px rgba(0, 198, 255, 0.8);
+    }
+
+    /* Neon Cyberpunk Buttons */
+    .stButton>button {
+        background: linear-gradient(135deg, #ff0080, #007BFF);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 8px;
+        text-transform: uppercase;
+        font-family: 'Orbitron', sans-serif;
+        box-shadow: 0px 0px 15px rgba(0, 198, 255, 0.7);
+        transition: all 0.3s ease-in-out;
+    }
+
+    .stButton>button:hover {
+        background: linear-gradient(135deg, #007BFF, #ff0080);
+        box-shadow: 0px 0px 20px rgba(255, 0, 128, 0.8);
+        transform: scale(1.05);
+    }
+
+    /* Cyberpunk Input Field */
+    .stTextInput>div>div>input {
+        background-color: #1e293b;
+        color: #d1d5db;
+        border: 2px solid #ff0080;
+        font-size: 16px;
+        font-family: 'Orbitron', sans-serif;
+        padding: 10px;
+    }
+
+    /* Cyberpunk Chat Messages */
+    .stChatMessage {
+        background: #1e293b;
+        border: 2px solid #007BFF;
+        border-radius: 8px;
+        padding: 12px;
+        font-size: 16px;
+        font-family: 'Orbitron', sans-serif;
+        box-shadow: 0px 0px 10px rgba(0, 198, 255, 0.5);
     }
     </style>
 
     <div class="header">
-        🤖 <span class="glow-text">LEXIBOT</span> | AI Chatbot 🚀
+        🤖 <span class="glow-text">LEXIBOT</span> | Cyber AI 🚀
     </div>
     """,
     unsafe_allow_html=True

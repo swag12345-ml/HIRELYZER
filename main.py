@@ -162,6 +162,7 @@ def extract_text_from_pdf(file_path):
     doc.close()
     return text_list if text_list else extract_text_from_images(file_path)
 
+reader = easyocr.Reader(["en"], gpu=False)
 
 
 def process_image(img):

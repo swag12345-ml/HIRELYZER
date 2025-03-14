@@ -163,7 +163,6 @@ def extract_text_from_pdf(file_path):
     return text_list if text_list else extract_text_from_images(file_path)
 
 
-reader = easyocr.Reader(['en'], gpu=True)
 
 def process_image(img):
     """Extract text from a single image using EasyOCR."""

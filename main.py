@@ -167,14 +167,18 @@ def process_image(img):
     """Extract text from a single image using EasyOCR."""
     return "\n".join(reader.readtext(np.array(img), detail=0))
 
+reader = easyocr.Reader(['en'], gpu=True)
+
+def process_image(img):
+    """Extract text from a single image using EasyOCR."""
+    return "\n".join(reader.readtext(np.array(img), detail=0))
+
 def extract_text_from_images(pdf_path):
     """Extracts text from all images in a PDF using CPU-optimized EasyOCR with multithreading."""
     images = convert_from_path(pdf_path, dpi=150)  # Convert all pages to images
     with ThreadPoolExecutor() as executor:
         text_results = list(executor.map(process_image, images))
     return text_results
-
-
 def setup_vectorstore(documents):
     """Creates a FAISS vector store using Hugging Face embeddings."""
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")

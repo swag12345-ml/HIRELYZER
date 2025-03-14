@@ -104,7 +104,7 @@ st.markdown(
     </style>
 
     <div class="header">
-        🤖 LEXIBOT - POWERED BY SEMICOLON
+        🤖 LEXIBOT - POWERED BY SWAGATO
     </div>
     """,
     unsafe_allow_html=True,

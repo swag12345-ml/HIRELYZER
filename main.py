@@ -159,9 +159,16 @@ def extract_text_from_pdf(file_path):
     return text_list if text_list else extract_text_from_images(file_path)
 
 def extract_text_from_images(pdf_path):
-    """Extracts text from image-based PDFs using GPU-accelerated EasyOCR."""
-    images = convert_from_path(pdf_path, dpi=150, first_page=1, last_page=5)
-    return ["\n".join(reader.readtext(np.array(img), detail=0)) for img in images]
+    """Extracts text from all pages of an image-based PDF using GPU-accelerated EasyOCR."""
+    images = convert_from_path(pdf_path, dpi=150)  # Extract all pages
+    reader = easyocr.Reader(['en'], gpu=True)  # Enable GPU acceleration
+
+    # Process images in parallel for faster extraction
+    with ThreadPoolExecutor() as executor:
+        texts = list(executor.map(lambda img: "\n".join(reader.readtext(np.array(img), detail=0)), images))
+
+    return texts
+
 
 def setup_vectorstore(documents):
     """Creates a FAISS vector store using Hugging Face embeddings."""

@@ -125,8 +125,7 @@ from langchain.chains import ConversationalRetrievalChain
 import numpy as np
 import io
 from dotenv import load_dotenv
-from pdf2image import convert_from_path
-from concurrent.futures import ThreadPoolExecutor
+
 
 
 
@@ -162,19 +161,12 @@ def extract_text_from_pdf(file_path):
     doc.close()
     return text_list if text_list else extract_text_from_images(file_path)
 
-reader = easyocr.Reader(["en"], gpu=False)
-
-
-def process_image(img):
-    """Extract text from a single image using EasyOCR."""
-    return "\n".join(reader.readtext(np.array(img), detail=0))
 
 def extract_text_from_images(pdf_path):
-    """Extracts text from all images in a PDF using CPU-optimized EasyOCR with multithreading."""
-    images = convert_from_path(pdf_path, dpi=150)  # Convert all pages to images
-    with ThreadPoolExecutor() as executor:
-        text_results = list(executor.map(process_image, images))
-    return text_results
+    """Extracts text from image-based PDFs using GPU-accelerated EasyOCR."""
+    images = convert_from_path(pdf_path, dpi=150, first_page=1, last_page=5)
+    return ["\n".join(reader.readtext(np.array(img), detail=0)) for img in images]
+
 def setup_vectorstore(documents):
     """Creates a FAISS vector store using Hugging Face embeddings."""
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")

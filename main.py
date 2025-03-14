@@ -32,15 +32,16 @@ st.markdown(
     }
 
     /* Header */
-    .header {
-        font-size: 25px;
-        font-weight: bold;
-        text-align: center;
-        text-transform: uppercase;
-        letter-spacing: 3px;
-        animation: glitch 0.8s infinite, smoothGlow 3s infinite alternate;
-        text-shadow: 0px 0px 20px cyan;
-    }
+ .header {
+    font-size: 25px;
+    font-weight: bold;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    animation: glitch 0.8s infinite alternate, smoothGlow 3s infinite alternate;
+    text-shadow: 0px 0px 20px cyan;
+    position: relative;
+}
 
     /* Buttons - Neon Glow Effect */
     .stButton > button {

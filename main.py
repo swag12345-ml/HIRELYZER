@@ -125,8 +125,6 @@ from langchain.chains import ConversationalRetrievalChain
 import numpy as np
 import io
 from dotenv import load_dotenv
-from pdf2image import convert_from_path
-from concurrent.futures import ThreadPoolExecutor
 
 
 # Load environment variables
@@ -152,7 +150,7 @@ if not groq_api_key:
     st.stop()
 
 # Initialize EasyOCR with GPU support
-reader = easyocr.Reader(["en"], gpu=False)
+reader = easyocr.Reader(["en"], gpu=True)
 
 def extract_text_from_pdf(file_path):
     """Extracts text from PDFs using PyMuPDF, falls back to GPU-based OCR if needed."""
@@ -161,11 +159,6 @@ def extract_text_from_pdf(file_path):
     doc.close()
     return text_list if text_list else extract_text_from_images(file_path)
 
-reader = easyocr.Reader(['en'], gpu=False)
-
-def process_image(img):
-    """Extract text from a single image using EasyOCR."""
-    return "\n".join(reader.readtext(np.array(img), detail=0))
 
 reader = easyocr.Reader(['en'], gpu=True)
 

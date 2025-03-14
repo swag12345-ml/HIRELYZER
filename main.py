@@ -152,7 +152,7 @@ if not groq_api_key:
     st.stop()
 
 # Initialize EasyOCR with GPU support
-reader = easyocr.Reader(["en"], gpu=True)
+reader = easyocr.Reader(["en"], gpu=False)
 
 def extract_text_from_pdf(file_path):
     """Extracts text from PDFs using PyMuPDF, falls back to GPU-based OCR if needed."""
@@ -160,6 +160,8 @@ def extract_text_from_pdf(file_path):
     text_list = [page.get_text("text") for page in doc if page.get_text("text").strip()]
     doc.close()
     return text_list if text_list else extract_text_from_images(file_path)
+
+reader = easyocr.Reader(["en"], gpu=False)
 
 
 def extract_text_from_images(pdf_path):

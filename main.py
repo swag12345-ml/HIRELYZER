@@ -125,6 +125,9 @@ from langchain.chains import ConversationalRetrievalChain
 import numpy as np
 import io
 from dotenv import load_dotenv
+from pdf2image import convert_from_path
+from concurrent.futures import ThreadPoolExecutor
+
 
 
 # Load environment variables

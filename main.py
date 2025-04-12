@@ -201,21 +201,6 @@ def detect_bias(text):
     fem = sum(text.count(word) for word in gender_words["feminine"])
     bias_score = min((masc + fem) / 10, 1.0)
     return round(bias_score, 2), masc, fem
-# Rewrite biased text into neutral language
-def bias_free_rewrite(text):
-    replacements = {
-        "active": "engaged", "aggressive": "proactive", "ambitious": "motivated", "analytical": "logical",
-        "assertive": "confident", "autonomous": "self-directed", "boast": "highlight", "challenging": "dynamic",
-        "competitive": "goal-oriented", "confident": "capable", "courageous": "resilient", "decisive": "clear-minded",
-        "dominant": "leading", "independent": "self-reliant", "individualistic": "self-sufficient",
-        "affectionate": "friendly", "compassionate": "empathetic", "cooperative": "collaborative",
-        "dependent": "reliable", "emotional": "passionate", "gentle": "considerate", "loyal": "committed",
-        "nurturing": "supportive", "sensitive": "thoughtful", "sympathetic": "understanding"
-        # Add more if needed
-    }
-    words = text.split()
-    rewritten_words = [replacements.get(word.lower(), word) for word in words]
-    return " ".join(rewritten_words)
 
 # Setup Vector DB
 def setup_vectorstore(documents):
@@ -283,31 +268,12 @@ if uploaded_files:
 if resume_data:
     st.markdown("### 📊 Resume Bias Dashboard")
     df = pd.DataFrame(resume_data)
-    for i, data in df.iterrows():
-     with st.expander(f"📄 {data['Resume Name']} | Bias Score: {data['Bias Score (0 = Fair, 1 = Biased)']}"):
-        st.write("**Masculine Words:**", data["Masculine Words"])
-        st.write("**Feminine Words:**", data["Feminine Words"])
-        st.write("### 📝 Text Preview")
-        st.write(data["Text Preview"])
-
-        if st.button(f"Rewrite Bias-Free: {data['Resume Name']}", key=f"rewrite_{i}"):
-            rewritten_text = bias_free_rewrite(data["Text Preview"])
-            st.write("### ✅ Bias-Free Version")
-            st.write(rewritten_text)
-
-            # Optional download button
-            st.download_button(
-                label="📥 Download Rewritten Text",
-                data=rewritten_text,
-                file_name=f"{data['Resume Name'].split('.')[0]}_bias_free.txt",
-                mime="text/plain"
-            )
-
+    st.dataframe(df, use_container_width=True)
 
     st.subheader("📉 Bias Score Comparison")
     st.bar_chart(df.set_index("Resume Name")[["Bias Score (0 = Fair, 1 = Biased)"]])
 
-    st.subheader("⚖️ Masculine vs Feminine Words")
+    st.subheader("⚖ Masculine vs Feminine Words")
     fig, ax = plt.subplots(figsize=(10, 5))
     index = np.arange(len(df))
     bar_width = 0.35
@@ -342,9 +308,9 @@ if user_input:
         )
         answer = response.get("answer", "❌ No answer found.")
     except Exception as e:
-        answer = f"⚠️ Error: {str(e)}"
+        answer = f"⚠ Error: {str(e)}"
 
     with st.chat_message("assistant"):
         st.markdown(answer)
 
-    st.session_state.memory.save_context({"input": user_input}, {"output": answer})
+st.session_state.memory.save_context({"input": user_input}, {"output": answer})

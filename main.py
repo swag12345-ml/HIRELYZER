@@ -1,8 +1,17 @@
-import streamlit as st
-import os, json, torch, asyncio, re
-from dotenv import load_dotenv
+import os
+import json
+import torch
+import random
 import fitz
 import easyocr
+import asyncio
+import streamlit as st
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import string
+
+from dotenv import load_dotenv
 from pdf2image import convert_from_path
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_community.vectorstores import FAISS
@@ -10,32 +19,163 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
-import numpy as np
 
-# Setup
-st.set_page_config(page_title="Bias Detector for Hiring Tools", page_icon="⚖️", layout="centered")
+# Set page config
+st.set_page_config(page_title="Chat with LEXIBOT", page_icon="📝", layout="centered")
+
+# CSS Customization
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+    body {
+        background-color: #0b0c10;
+        color: #c5c6c7;
+        font-family: 'Orbitron', sans-serif;
+    }
+
+    /* Glitch Animation */
+    @keyframes glitch {
+        0% { text-shadow: 2px 2px #ff0000, -2px -2px #00ffcc; }
+        25% { text-shadow: -2px -2px #ff0000, 2px 2px #00ffcc; }
+        50% { text-shadow: 3px -3px #ff00ff, -3px 3px #ff9900; }
+        75% { text-shadow: -3px -3px #ff9900, 3px 3px #33ff00; }
+        100% { text-shadow: 2px 2px #ff00ff, -2px -2px #0099ff; }
+    }
+
+    /* RGB Color Animation */
+    @keyframes smoothGlow {
+        0% { color: #ff0000; text-shadow: 0 0 10px #ff0000; }
+        25% { color: #ff9900; text-shadow: 0 0 15px #ff9900; }
+        50% { color: #00ff00; text-shadow: 0 0 20px #00ff00; }
+        75% { color: #0099ff; text-shadow: 0 0 15px #0099ff; }
+        100% { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
+    }
+
+    /* Header */
+    .header {
+        font-size: 25px;
+        font-weight: bold;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        animation: glitch 0.8s infinite, smoothGlow 3s infinite alternate;
+        text-shadow: 0px 0px 20px cyan;
+    }
+
+    /* Buttons - Neon Glow Effect */
+    .stButton > button {
+        background: linear-gradient(45deg, #ff0080, #007BFF);
+        color: white;
+        font-size: 18px;
+        font-weight: bold;
+        border-radius: 8px;
+        padding: 10px;
+        text-transform: uppercase;
+        box-shadow: 0px 0px 15px rgba(0, 198, 255, 0.8);
+        transition: 0.3s ease-in-out;
+    }
+    .stButton > button:hover {
+        background: linear-gradient(45deg, #ff0077, #00ccff);
+        transform: scale(1.08);
+        box-shadow: 0px 0px 30px rgba(255, 0, 128, 1);
+    }
+
+    /* Chat Answer Box */
+    @keyframes typing {
+        from { width: 0; }
+        to { width: 100%; }
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes neonText {
+        0% { color: #ff44ff; text-shadow: 0px 0px 15px #ff44ff; }
+        50% { color: #00ffff; text-shadow: 0px 0px 20px #00ffff; }
+        100% { color: #ff00ff; text-shadow: 0px 0px 15px #ff00ff; }
+    }
+    
+  .stChatMessage {
+        font-size: 18px;
+        background: #1e293b;
+        padding: 12px;
+        border-radius: 8px;
+        border: 2px solid #00ffff;
+        color: #ccffff;
+        text-shadow: 0px 0px 8px #00ffff;
+        animation: glow 1.5s infinite alternate;
+    }
+
+    /* Upload Animation - Glowing File Upload */
+    @keyframes pulse {
+        0% { box-shadow: 0 0 5px cyan; }
+        50% { box-shadow: 0 0 20px cyan; }
+        100% { box-shadow: 0 0 5px cyan; }
+    }
+    .stFileUploader > div > div {
+        border: 2px solid cyan;
+        animation: pulse 2s infinite;
+        padding: 10px;
+        border-radius: 8px;
+        background-color: rgba(0, 255, 255, 0.1);
+        text-align: center;
+    }
+
+    </style>
+
+    <div class="header">
+        🤖 LEXIBOT - POWERED BY SEMICOLON
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+# Load environment variables
 load_dotenv()
 working_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Detect device
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 torch.backends.cudnn.benchmark = True
 
-# Load API key
+# Load API Key
 def load_groq_api_key():
     try:
         with open(os.path.join(working_dir, "config.json"), "r") as f:
             return json.load(f).get("GROQ_API_KEY")
     except FileNotFoundError:
-        st.error("Missing config.json for GROQ API Key.")
+        st.error("❌ config.json not found.")
         st.stop()
 
 groq_api_key = load_groq_api_key()
 if not groq_api_key:
+    st.error("❌ GROQ_API_KEY is missing.")
     st.stop()
 
-# EasyOCR
+# OCR Reader
 reader = easyocr.Reader(["en"], gpu=torch.cuda.is_available())
 
-# Text extraction
+# Gender-coded language
+gender_words = {
+    "masculine": [
+        "active", "aggressive", "ambitious", "analytical", "assertive", "autonomous", "boast", "challenging",
+        "competitive", "confident", "courageous", "decisive", "determined", "dominant", "driven", "forceful",
+        "independent", "individualistic", "intellectual", "lead", "leader", "objective", "outspoken",
+        "persistent", "principled", "self-reliant", "self-sufficient", "strong", "superior"
+    ],
+    "feminine": [
+        "affectionate", "collaborative", "committed", "compassionate", "considerate", "cooperative",
+        "dependent", "emotional", "empathetic", "enthusiastic", "friendly", "gentle", "honest", "inclusive",
+        "interpersonal", "kind", "loyal", "nurturing", "pleasant", "polite", "sensitive", "supportive",
+        "sympathetic", "tactful", "tender", "trustworthy", "understanding", "warm", "yield"
+    ]
+}
+
+
+# Extract text from PDF
 def extract_text_from_pdf(file_path):
     try:
         doc = fitz.open(file_path)
@@ -43,7 +183,7 @@ def extract_text_from_pdf(file_path):
         doc.close()
         return text_list if text_list else extract_text_from_images(file_path)
     except Exception as e:
-        st.error(f"Error extracting text: {e}")
+        st.error(f"⚠ Error extracting text: {e}")
         return []
 
 def extract_text_from_images(pdf_path):
@@ -51,37 +191,33 @@ def extract_text_from_images(pdf_path):
         images = convert_from_path(pdf_path, dpi=150, first_page=1, last_page=5)
         return ["\n".join(reader.readtext(np.array(img), detail=0)) for img in images]
     except Exception as e:
-        st.error(f"Error from OCR: {e}")
+        st.error(f"⚠ Error extracting from image: {e}")
         return []
 
-# Bias detection
-def analyze_bias(text):
-    flags = []
-    context_snippets = []
+# Detect bias in resume
+def detect_bias(text):
+    text = text.lower()
+    masc = sum(text.count(word) for word in gender_words["masculine"])
+    fem = sum(text.count(word) for word in gender_words["feminine"])
+    bias_score = min((masc + fem) / 10, 1.0)
+    return round(bias_score, 2), masc, fem
+# Rewrite biased text into neutral language
+def bias_free_rewrite(text):
+    replacements = {
+        "active": "engaged", "aggressive": "proactive", "ambitious": "motivated", "analytical": "logical",
+        "assertive": "confident", "autonomous": "self-directed", "boast": "highlight", "challenging": "dynamic",
+        "competitive": "goal-oriented", "confident": "capable", "courageous": "resilient", "decisive": "clear-minded",
+        "dominant": "leading", "independent": "self-reliant", "individualistic": "self-sufficient",
+        "affectionate": "friendly", "compassionate": "empathetic", "cooperative": "collaborative",
+        "dependent": "reliable", "emotional": "passionate", "gentle": "considerate", "loyal": "committed",
+        "nurturing": "supportive", "sensitive": "thoughtful", "sympathetic": "understanding"
+        # Add more if needed
+    }
+    words = text.split()
+    rewritten_words = [replacements.get(word.lower(), word) for word in words]
+    return " ".join(rewritten_words)
 
-    gendered_terms = ["he", "she", "his", "her", "manpower", "chairman"]
-    for term in gendered_terms:
-        matches = re.findall(rf"\b({term})\b", text, re.IGNORECASE)
-        if matches:
-            flags.append(f"Gendered term detected: **{term}**")
-            index = text.lower().find(term)
-            context_snippets.append(text[max(0, index-100):index+100])
-
-    if "ivy league" in text.lower():
-        flags.append("Potential elitism bias: Emphasis on 'Ivy League'")
-        index = text.lower().find("ivy league")
-        context_snippets.append(text[max(0, index-100):index+100])
-
-    if re.search(r"\b(only|must have)\s+(\d+)\s+years\b", text.lower()):
-        flags.append("Strict experience requirement – may limit diversity")
-        match = re.search(r"\b(only|must have)\s+(\d+)\s+years\b", text.lower())
-        if match:
-            index = match.start()
-            context_snippets.append(text[max(0, index-100):index+100])
-
-    return flags, context_snippets
-
-# Vector store setup
+# Setup Vector DB
 def setup_vectorstore(documents):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     if DEVICE == "cuda":
@@ -90,7 +226,7 @@ def setup_vectorstore(documents):
     doc_chunks = text_splitter.split_text("\n".join(documents))
     return FAISS.from_texts(doc_chunks, embeddings)
 
-# Chat chain setup
+# Create Conversational Chain
 def create_chain(vectorstore):
     if "memory" not in st.session_state:
         st.session_state.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
@@ -106,77 +242,109 @@ def create_chain(vectorstore):
         verbose=False
     )
 
-# UI
-st.title("⚖️ Bias Detector for AI Hiring Tools")
-uploaded_files = st.file_uploader("Upload one or more PDFs describing hiring logic or filtering systems", type=["pdf"], accept_multiple_files=True)
+# App Title
+st.title("🦙 Chat with LEXIBOT - LLAMA 3.3 (Bias Detection + QA + GPU)")
 
-bias_report = []
-all_text_for_vectorstore = []
+# Chat history
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
+uploaded_files = st.file_uploader("Upload PDF Resumes", type=["pdf"], accept_multiple_files=True)
+
+resume_data = []
 if uploaded_files:
+    all_text = []
+
     for uploaded_file in uploaded_files:
         file_path = os.path.join(working_dir, uploaded_file.name)
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
-        extracted_text = extract_text_from_pdf(file_path)
-        full_text = "\n".join(extracted_text)
-        all_text_for_vectorstore.extend(extracted_text)
+        text = extract_text_from_pdf(file_path)
+        all_text.extend(text)
 
-        flags, contexts = analyze_bias(full_text)
+        full_text = " ".join(text)
+        bias_score, masc, fem = detect_bias(full_text)
 
-        bias_report.append({
-            "filename": uploaded_file.name,
-            "has_bias": bool(flags),
-            "description": ", ".join(set(flags)) if flags else "No major bias found.",
-            "references": contexts
+        resume_data.append({
+            "Resume Name": uploaded_file.name,
+            "Bias Score (0 = Fair, 1 = Biased)": bias_score,
+            "Masculine Words": masc,
+            "Feminine Words": fem,
+            "Text Preview": full_text[:300] + "..."
         })
 
-    # Bias report summary
-    st.subheader("Bias Report Summary")
-    for entry in bias_report:
-        st.markdown(f"### {entry['filename']}")
-        if entry["has_bias"]:
-            st.warning(entry["description"])
-            for i, ref in enumerate(entry["references"]):
-                with st.expander(f"View Bias Context #{i+1}"):
-                    st.code(ref, language="text")
-        else:
-            st.success(entry["description"])
+        st.success(f"✅ {uploaded_file.name} processed | Bias Score: {bias_score}")
 
-    # Load chatbot
-    st.session_state.vectorstore = setup_vectorstore(all_text_for_vectorstore)
-    st.session_state.conversation_chain = create_chain(st.session_state.vectorstore)
+    if all_text:
+        st.session_state.vectorstore = setup_vectorstore(all_text)
+        st.session_state.chain = create_chain(st.session_state.vectorstore)
 
-# Chat section
-if "conversation_chain" in st.session_state:
-    st.subheader("Chat with the Uploaded Hiring Docs")
+if resume_data:
+    st.markdown("### 📊 Resume Bias Dashboard")
+    df = pd.DataFrame(resume_data)
+    for i, data in df.iterrows():
+     with st.expander(f"📄 {data['Resume Name']} | Bias Score: {data['Bias Score (0 = Fair, 1 = Biased)']}"):
+        st.write("**Masculine Words:**", data["Masculine Words"])
+        st.write("**Feminine Words:**", data["Feminine Words"])
+        st.write("### 📝 Text Preview")
+        st.write(data["Text Preview"])
 
-    for message in st.session_state.memory.load_memory_variables({}).get("chat_history", []):
-        with st.chat_message("user" if message.type == "human" else "assistant"):
-            st.markdown(message.content)
+        if st.button(f"Rewrite Bias-Free: {data['Resume Name']}", key=f"rewrite_{i}"):
+            rewritten_text = bias_free_rewrite(data["Text Preview"])
+            st.write("### ✅ Bias-Free Version")
+            st.write(rewritten_text)
 
-    user_input = st.chat_input("Ask about fairness, keywords, or biases...")
+            # Optional download button
+            st.download_button(
+                label="📥 Download Rewritten Text",
+                data=rewritten_text,
+                file_name=f"{data['Resume Name'].split('.')[0]}_bias_free.txt",
+                mime="text/plain"
+            )
 
-    async def get_response(user_input):
-        response = await asyncio.to_thread(
-            st.session_state.conversation_chain.invoke,
+
+    st.subheader("📉 Bias Score Comparison")
+    st.bar_chart(df.set_index("Resume Name")[["Bias Score (0 = Fair, 1 = Biased)"]])
+
+    st.subheader("⚖️ Masculine vs Feminine Words")
+    fig, ax = plt.subplots(figsize=(10, 5))
+    index = np.arange(len(df))
+    bar_width = 0.35
+
+    ax.bar(index, df["Masculine Words"], bar_width, label="Masculine", color="steelblue")
+    ax.bar(index + bar_width, df["Feminine Words"], bar_width, label="Feminine", color="salmon")
+
+    ax.set_xlabel("Resumes")
+    ax.set_ylabel("Count")
+    ax.set_title("Gender-Coded Language Use")
+    ax.set_xticks(index + bar_width / 2)
+    ax.set_xticklabels(df["Resume Name"], rotation=45, ha='right')
+    ax.legend()
+
+    st.pyplot(fig)
+
+# Display chat history
+if "chain" in st.session_state:
+    for msg in st.session_state.memory.load_memory_variables({}).get("chat_history", []):
+        with st.chat_message("user" if msg.type == "human" else "assistant"):
+            st.markdown(msg.content)
+
+user_input = st.chat_input("Ask LEXIBOT anything...")
+
+if user_input:
+    with st.chat_message("user"):
+        st.markdown(user_input)
+
+    try:
+        response = st.session_state.chain.invoke(
             {"question": user_input, "chat_history": st.session_state.memory.chat_memory.messages}
         )
-        return response.get("answer", "Could not process the question.")
+        answer = response.get("answer", "❌ No answer found.")
+    except Exception as e:
+        answer = f"⚠️ Error: {str(e)}"
 
-    if user_input:
-        with st.chat_message("user"):
-            st.markdown(user_input)
+    with st.chat_message("assistant"):
+        st.markdown(answer)
 
-        try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            assistant_response = loop.run_until_complete(get_response(user_input))
-        except Exception as e:
-            assistant_response = f"⚠️ Error: {str(e)}"
-
-        with st.chat_message("assistant"):
-            st.markdown(assistant_response)
-
-        st.session_state.memory.save_context({"input": user_input}, {"output": assistant_response})
+    st.session_state.memory.save_context({"input": user_input}, {"output": answer})

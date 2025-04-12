@@ -273,7 +273,7 @@ if resume_data:
     st.subheader("📉 Bias Score Comparison")
     st.bar_chart(df.set_index("Resume Name")[["Bias Score (0 = Fair, 1 = Biased)"]])
 
-    st.subheader("⚖ Masculine vs Feminine Words")
+    st.subheader("⚖️ Masculine vs Feminine Words")
     fig, ax = plt.subplots(figsize=(10, 5))
     index = np.arange(len(df))
     bar_width = 0.35
@@ -308,9 +308,9 @@ if user_input:
         )
         answer = response.get("answer", "❌ No answer found.")
     except Exception as e:
-        answer = f"⚠ Error: {str(e)}"
+        answer = f"⚠️ Error: {str(e)}"
 
     with st.chat_message("assistant"):
         st.markdown(answer)
 
-st.session_state.memory.save_context({"input": user_input}, {"output": answer})
+    st.session_state.memory.save_context({"input": user_input}, {"output": answer})

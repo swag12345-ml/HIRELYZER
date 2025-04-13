@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import string
+import re
 
 from dotenv import load_dotenv
 from pdf2image import convert_from_path
@@ -162,12 +163,12 @@ reader = easyocr.Reader(["en"], gpu=torch.cuda.is_available())
 gender_words = {
     "masculine": [
         "active", "aggressive", "ambitious", "analytical", "assertive", "autonomous", "boast", "challenging",
-        "competitive", "confident", "courageous", "decisive", "determined", "dominant", "driven", "forceful",
+        "competitive", "confident", "courageous", "decisive", "determined", "dominant","tech guru","driven", "forceful",
         "independent", "individualistic", "intellectual", "lead", "leader", "objective", "outspoken",
-        "persistent", "principled", "self-reliant", "self-sufficient", "strong", "superior"
+        "persistent", "principled", "self-reliant", "self-sufficient", "strong", "superior","Technical guru","strategic manpower","strongman"
     ],
     "feminine": [
-        "affectionate", "collaborative", "committed", "compassionate", "considerate", "cooperative",
+        "affectionate", "collaborative","collaborate","committed", "compassionate", "considerate", "cooperative","collaborated",
         "dependent", "emotional", "empathetic", "enthusiastic", "friendly", "gentle", "honest", "inclusive",
         "interpersonal", "kind", "loyal", "nurturing", "pleasant", "polite", "sensitive", "supportive",
         "sympathetic", "tactful", "tender", "trustworthy", "understanding", "warm", "yield"
@@ -197,10 +198,118 @@ def extract_text_from_images(pdf_path):
 # Detect bias in resume
 def detect_bias(text):
     text = text.lower()
-    masc = sum(text.count(word) for word in gender_words["masculine"])
-    fem = sum(text.count(word) for word in gender_words["feminine"])
+    masc, fem = 0, 0
+
+    for word in gender_words["masculine"]:
+        masc += len(re.findall(rf'\b{re.escape(word)}\b', text, re.IGNORECASE))
+
+    for word in gender_words["feminine"]:
+        fem += len(re.findall(rf'\b{re.escape(word)}\b', text, re.IGNORECASE))
+
     bias_score = min((masc + fem) / 10, 1.0)
     return round(bias_score, 2), masc, fem
+
+replacement_words = {
+    "masculine": {
+        "active": "engaged",
+        "aggressive": "proactive",
+        "ambitious": "motivated",
+        "analytical": "detail-oriented",
+        "assertive": "confident",
+        "autonomous": "self-directed",
+        "boast": "highlight",
+        "challenging": "demanding",
+        "competitive": "goal-oriented",
+        "confident": "self-assured",
+        "courageous": "bold",
+        "decisive": "action-oriented",
+        "determined": "focused",
+        "dominant": "influential",
+        "driven": "committed",
+        "forceful": "persuasive",
+        "independent": "self-sufficient",
+        "individualistic": "self-motivated",
+        "intellectual": "knowledgeable",
+        "lead": "guide",
+        "leader": "team lead",
+        "objective": "unbiased",
+        "outspoken": "expressive",
+        "persistent": "resilient",
+        "principled": "ethical",
+        "self-reliant": "resourceful",
+        "self-sufficient": "capable",
+        "strong": "capable",
+        "superior": "exceptional",
+        "technical guru": "technical expert",
+        "strategic manpower": "strategic planning expert",
+        "strongman": "resilient individual"
+    },
+    "feminine": {
+        "affectionate": "approachable",
+        "collaborative": "team-oriented",
+        "collaborate": "team-oriented",
+        "collaborated": "team-oriented",
+        "committed": "dedicated",
+        "compassionate": "caring",
+        "considerate": "thoughtful",
+        "cooperative": "supportive",
+        "dependent": "team-oriented",
+        "emotional": "passionate",
+        "empathetic": "understanding",
+        "enthusiastic": "positive",
+        "friendly": "welcoming",
+        "gentle": "respectful",
+        "honest": "trustworthy",
+        "inclusive": "open-minded",
+        "interpersonal": "people-focused",
+        "kind": "respectful",
+        "loyal": "dedicated",
+        "nurturing": "supportive",
+        "pleasant": "positive",
+        "polite": "professional",
+        "sensitive": "attentive",
+        "supportive": "encouraging",
+        "sympathetic": "understanding",
+        "tactful": "diplomatic",
+        "tender": "considerate",
+        "trustworthy": "reliable",
+        "understanding": "empathetic",
+        "warm": "welcoming",
+        "yield": "adaptable"
+    }
+}
+
+
+
+def rewrite_and_highlight(text):
+    highlighted_text = text
+    rewritten_text = text
+    masculine_count, feminine_count = 0, 0
+
+    masculine_words_sorted = sorted(gender_words["masculine"], key=len, reverse=True)
+    feminine_words_sorted = sorted(gender_words["feminine"], key=len, reverse=True)
+
+    for word in masculine_words_sorted:
+        pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
+        matches = len(pattern.findall(highlighted_text))
+        if matches:
+            masculine_count += matches
+            highlighted_text = pattern.sub(f"**:blue[{word}]**", highlighted_text)
+            replacement = replacement_words["masculine"].get(word.lower(), "professional")
+            rewritten_text = pattern.sub(replacement, rewritten_text)
+
+    for word in feminine_words_sorted:
+        pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
+        matches = len(pattern.findall(highlighted_text))
+        if matches:
+            feminine_count += matches
+            highlighted_text = pattern.sub(f"**:red[{word}]**", highlighted_text)
+            replacement = replacement_words["feminine"].get(word.lower(), "effective")
+            rewritten_text = pattern.sub(replacement, rewritten_text)
+
+    return highlighted_text, rewritten_text, masculine_count, feminine_count
+
+    return highlighted_text, rewritten_text, masculine_count, feminine_count
 
 # Setup Vector DB
 def setup_vectorstore(documents):
@@ -250,16 +359,33 @@ if uploaded_files:
 
         full_text = " ".join(text)
         bias_score, masc, fem = detect_bias(full_text)
+        highlighted_text, rewritten_text, masc_count, fem_count = rewrite_and_highlight(full_text)
 
         resume_data.append({
             "Resume Name": uploaded_file.name,
             "Bias Score (0 = Fair, 1 = Biased)": bias_score,
             "Masculine Words": masc,
             "Feminine Words": fem,
-            "Text Preview": full_text[:300] + "..."
+            "Text Preview": full_text[:300] + "...",
+            "Highlighted Text": highlighted_text,
+            "Rewritten Text": rewritten_text
         })
 
-        st.success(f"✅ {uploaded_file.name} processed | Bias Score: {bias_score}")
+    st.success("✅ All resumes processed!")
+
+    
+    if resume_data:
+     st.markdown("### 📊 Resume Bias Dashboard")
+    df = pd.DataFrame(resume_data)
+    st.dataframe(df, use_container_width=True)
+
+    for resume in resume_data:
+        with st.expander(f"📝 View & Rewrite {resume['Resume Name']}"):
+            st.markdown("**Bias-Highlighted Text:**")
+            st.markdown(resume["Highlighted Text"], unsafe_allow_html=True)
+
+            st.markdown("**Bias-Free Rewritten Text:**")
+            st.markdown(resume["Rewritten Text"])
 
     if all_text:
         st.session_state.vectorstore = setup_vectorstore(all_text)

@@ -165,7 +165,7 @@ gender_words = {
         "active", "aggressive", "ambitious", "analytical", "assertive", "autonomous", "boast", "challenging",
         "competitive", "confident", "courageous", "decisive", "determined", "dominant","tech guru","driven", "forceful",
         "independent", "individualistic", "intellectual", "lead", "leader", "objective", "outspoken",
-        "persistent", "principled", "self-reliant", "self-sufficient", "strong", "superior","Technical guru","strategic manpower","strongman"
+        "persistent", "principled", "self-reliant", "self-sufficient", "strong", "superior","Technical guru","manpower","strongman"
     ],
     "feminine": [
         "affectionate", "collaborative","collaborate","committed", "compassionate", "considerate", "cooperative","collaborated",
@@ -196,6 +196,7 @@ def extract_text_from_images(pdf_path):
         return []
 
 # Detect bias in resume
+
 def detect_bias(text):
     text = text.lower()
     masc, fem = 0, 0
@@ -206,8 +207,18 @@ def detect_bias(text):
     for word in gender_words["feminine"]:
         fem += len(re.findall(rf'\b{re.escape(word)}\b', text, re.IGNORECASE))
 
-    bias_score = min((masc + fem) / 10, 1.0)
+    total = masc + fem
+
+    # If no gender-coded words found
+    if total == 0:
+        return 0.0, masc, fem  
+
+    # Bias severity based on total gender-coded words
+    bias_score = min(total / 20, 1.0)  # You can adjust 20 to control sensitivity
+
     return round(bias_score, 2), masc, fem
+
+
 
 replacement_words = {
     "masculine": {
@@ -241,7 +252,7 @@ replacement_words = {
         "strong": "capable",
         "superior": "exceptional",
         "technical guru": "technical expert",
-        "strategic manpower": "strategic planning expert",
+        "manpower": "workforce",
         "strongman": "resilient individual"
     },
     "feminine": {
@@ -280,7 +291,6 @@ replacement_words = {
 }
 
 
-
 def rewrite_and_highlight(text):
     highlighted_text = text
     rewritten_text = text
@@ -291,23 +301,28 @@ def rewrite_and_highlight(text):
 
     for word in masculine_words_sorted:
         pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
-        matches = len(pattern.findall(highlighted_text))
+        matches = pattern.findall(highlighted_text)
         if matches:
-            masculine_count += matches
-            highlighted_text = pattern.sub(f"**:blue[{word}]**", highlighted_text)
+            masculine_count += len(matches)
+            # Highlight original word in blue
+            highlighted_text = pattern.sub(lambda m: f":blue[{m.group(0)}]", highlighted_text)
+            # Replace in rewritten text with green-highlighted replacement
             replacement = replacement_words["masculine"].get(word.lower(), "professional")
-            rewritten_text = pattern.sub(replacement, rewritten_text)
+            rewritten_text = pattern.sub(lambda m: f":green[{replacement}]", rewritten_text)
 
     for word in feminine_words_sorted:
         pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
-        matches = len(pattern.findall(highlighted_text))
+        matches = pattern.findall(highlighted_text)
         if matches:
-            feminine_count += matches
-            highlighted_text = pattern.sub(f"**:red[{word}]**", highlighted_text)
+            feminine_count += len(matches)
+            # Highlight original word in red
+            highlighted_text = pattern.sub(lambda m: f":red[{m.group(0)}]", highlighted_text)
+            # Replace in rewritten text with green-highlighted replacement
             replacement = replacement_words["feminine"].get(word.lower(), "effective")
-            rewritten_text = pattern.sub(replacement, rewritten_text)
+            rewritten_text = pattern.sub(lambda m: f":green[{replacement}]", rewritten_text)
 
     return highlighted_text, rewritten_text, masculine_count, feminine_count
+
 
     return highlighted_text, rewritten_text, masculine_count, feminine_count
 
@@ -372,20 +387,49 @@ if uploaded_files:
         })
 
     st.success("✅ All resumes processed!")
+if resume_data:
+    total_masc = sum(r["Masculine Words"] for r in resume_data)
+    total_fem = sum(r["Feminine Words"] for r in resume_data)
+    avg_bias = round(np.mean([r["Bias Score (0 = Fair, 1 = Biased)"] for r in resume_data]), 2)
 
+    st.markdown("### 📈 Summary Stats")
+    col1, col2, col3 = st.columns(3)
+    col1.metric("🔎 Avg. Bias Score", avg_bias)
+    col2.metric("🔵 Total Masculine Words", total_masc)
+    col3.metric("🔴 Total Feminine Words", total_fem)
     
     if resume_data:
      st.markdown("### 📊 Resume Bias Dashboard")
     df = pd.DataFrame(resume_data)
     st.dataframe(df, use_container_width=True)
 
-    for resume in resume_data:
-        with st.expander(f"📝 View & Rewrite {resume['Resume Name']}"):
-            st.markdown("**Bias-Highlighted Text:**")
-            st.markdown(resume["Highlighted Text"], unsafe_allow_html=True)
+for resume in resume_data:
+    with st.expander(f"📝 View & Rewrite {resume['Resume Name']}"):
+        st.markdown("🔎 **Bias-Highlighted Text:**")
+        st.markdown(resume["Highlighted Text"], unsafe_allow_html=True)
 
-            st.markdown("**Bias-Free Rewritten Text:**")
-            st.markdown(resume["Rewritten Text"])
+        st.markdown("✅ **Bias-Free Rewritten Text:**")
+        st.markdown(resume["Rewritten Text"])
+
+        st.markdown("### 📌 Gender-Coded Word Counts:")
+        col1, col2 = st.columns(2)
+        col1.metric("🔵 Masculine Words", resume["Masculine Words"])
+        col2.metric("🔴 Feminine Words", resume["Feminine Words"])
+
+        st.markdown("### 📚 Word Lists:")
+
+        masculine_words_list = ", ".join(gender_words["masculine"])
+        feminine_words_list = ", ".join(gender_words["feminine"])
+
+        col3, col4 = st.columns(2)
+        with col3:
+            st.markdown("**Masculine Words:**")
+            st.write(masculine_words_list)
+        with col4:
+            st.markdown("**Feminine Words:**")
+            st.write(feminine_words_list)
+
+
 
     if all_text:
         st.session_state.vectorstore = setup_vectorstore(all_text)
@@ -399,7 +443,7 @@ if resume_data:
     st.subheader("📉 Bias Score Comparison")
     st.bar_chart(df.set_index("Resume Name")[["Bias Score (0 = Fair, 1 = Biased)"]])
 
-    st.subheader("⚖️ Masculine vs Feminine Words")
+    st.subheader("⚖ Masculine vs Feminine Words")
     fig, ax = plt.subplots(figsize=(10, 5))
     index = np.arange(len(df))
     bar_width = 0.35
@@ -434,7 +478,7 @@ if user_input:
         )
         answer = response.get("answer", "❌ No answer found.")
     except Exception as e:
-        answer = f"⚠️ Error: {str(e)}"
+        answer = f"⚠ Error: {str(e)}"
 
     with st.chat_message("assistant"):
         st.markdown(answer)

@@ -162,18 +162,26 @@ reader = easyocr.Reader(["en"], gpu=torch.cuda.is_available())
 # Gender-coded language
 gender_words = {
     "masculine": [
-        "active", "aggressive", "ambitious", "analytical", "assertive", "autonomous", "boast", "challenging",
-        "competitive", "confident", "courageous", "decisive", "determined", "dominant","tech guru","driven", "forceful",
-        "independent", "individualistic", "intellectual", "lead", "leader", "objective", "outspoken",
-        "persistent", "principled", "self-reliant", "self-sufficient", "strong", "superior","Technical guru","manpower","strongman"
+        "active", "aggressive", "ambitious", "analytical", "assertive", "autonomous", "boast", "bold",
+        "challenging", "competitive", "confident", "courageous", "decisive", "determined", "dominant", "driven",
+        "dynamic", "forceful", "independent", "individualistic", "intellectual", "lead", "leader", "objective",
+        "outspoken", "persistent", "principled", "proactive", "resilient", "self-reliant", "self-sufficient",
+        "strong", "superior", "tenacious", "technical guru", "visionary", "manpower", "strongman", "command",
+        "assert", "headstrong", "rockstar", "superstar", "go-getter", "trailblazer", "results-driven",
+        "fast-paced", "driven", "determination", "competitive spirit"
     ],
+    
     "feminine": [
-        "affectionate", "collaborative","collaborate","committed", "compassionate", "considerate", "cooperative","collaborated",
-        "dependent", "emotional", "empathetic", "enthusiastic", "friendly", "gentle", "honest", "inclusive",
-        "interpersonal", "kind", "loyal", "nurturing", "pleasant", "polite", "sensitive", "supportive",
-        "sympathetic", "tactful", "tender", "trustworthy", "understanding", "warm", "yield"
+        "affectionate", "agreeable", "attentive", "collaborative", "committed", "compassionate", "considerate",
+        "cooperative", "dependable", "dependent", "emotional", "empathetic", "enthusiastic", "friendly", "gentle",
+        "honest", "inclusive", "interpersonal", "kind", "loyal", "modest", "nurturing", "pleasant", "polite",
+        "sensitive", "supportive", "sympathetic", "tactful", "tender", "trustworthy", "understanding", "warm",
+        "yield", "adaptable", "communal", "helpful", "dedicated", "respectful", "nurture", "sociable",
+        "relationship-oriented", "team player", "dependable", "people-oriented", "empathetic listener",
+        "gentle communicator", "open-minded"
     ]
 }
+
 
 
 # Extract text from PDF
@@ -229,6 +237,7 @@ replacement_words = {
         "assertive": "confident",
         "autonomous": "self-directed",
         "boast": "highlight",
+        "bold": "confident",
         "challenging": "demanding",
         "competitive": "goal-oriented",
         "confident": "self-assured",
@@ -237,6 +246,7 @@ replacement_words = {
         "determined": "focused",
         "dominant": "influential",
         "driven": "committed",
+        "dynamic": "adaptable",
         "forceful": "persuasive",
         "independent": "self-sufficient",
         "individualistic": "self-motivated",
@@ -247,23 +257,42 @@ replacement_words = {
         "outspoken": "expressive",
         "persistent": "resilient",
         "principled": "ethical",
+        "proactive": "initiative-taking",
+        "resilient": "adaptable",
         "self-reliant": "resourceful",
         "self-sufficient": "capable",
         "strong": "capable",
         "superior": "exceptional",
+        "tenacious": "determined",
         "technical guru": "technical expert",
+        "visionary": "forward-thinking",
         "manpower": "workforce",
-        "strongman": "resilient individual"
+        "strongman": "resilient individual",
+        "command": "direct",
+        "assert": "state confidently",
+        "headstrong": "determined",
+        "rockstar": "top performer",
+        "superstar": "outstanding contributor",
+        "go-getter": "initiative-taker",
+        "trailblazer": "innovator",
+        "results-driven": "outcome-focused",
+        "fast-paced": "dynamic",
+        "determination": "commitment",
+        "competitive spirit": "goal-oriented mindset"
     },
+    
     "feminine": {
         "affectionate": "approachable",
+        "agreeable": "cooperative",
+        "attentive": "observant",
         "collaborative": "team-oriented",
         "collaborate": "team-oriented",
-        "collaborated": "team-oriented",
+        "collaborated": "worked together",
         "committed": "dedicated",
         "compassionate": "caring",
         "considerate": "thoughtful",
         "cooperative": "supportive",
+        "dependable": "reliable",
         "dependent": "team-oriented",
         "emotional": "passionate",
         "empathetic": "understanding",
@@ -275,6 +304,7 @@ replacement_words = {
         "interpersonal": "people-focused",
         "kind": "respectful",
         "loyal": "dedicated",
+        "modest": "humble",
         "nurturing": "supportive",
         "pleasant": "positive",
         "polite": "professional",
@@ -286,9 +316,23 @@ replacement_words = {
         "trustworthy": "reliable",
         "understanding": "empathetic",
         "warm": "welcoming",
-        "yield": "adaptable"
+        "yield": "adaptable",
+        "adaptable": "flexible",
+        "communal": "team-centered",
+        "helpful": "supportive",
+        "dedicated": "committed",
+        "respectful": "considerate",
+        "nurture": "develop",
+        "sociable": "friendly",
+        "relationship-oriented": "team-focused",
+        "team player": "collaborative member",
+        "people-oriented": "person-focused",
+        "empathetic listener": "active listener",
+        "gentle communicator": "considerate communicator",
+        "open-minded": "inclusive"
     }
 }
+
 
 
 def rewrite_and_highlight(text):

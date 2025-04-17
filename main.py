@@ -166,7 +166,7 @@ gender_words = {
         "challenging", "competitive", "confident", "courageous", "decisive", "determined", "dominant", "driven",
         "dynamic", "forceful", "independent", "individualistic", "intellectual", "lead", "leader", "objective",
         "outspoken", "persistent", "principled", "proactive", "resilient", "self-reliant", "self-sufficient",
-        "strong", "superior", "tenacious", "technical guru", "visionary", "manpower", "strongman", "command",
+        "strong", "superior", "tenacious", "guru","tech guru","technical guru", "visionary", "manpower", "strongman", "command",
         "assert", "headstrong", "rockstar", "superstar", "go-getter", "trailblazer", "results-driven",
         "fast-paced", "driven", "determination", "competitive spirit"
     ],
@@ -264,7 +264,7 @@ replacement_words = {
         "strong": "capable",
         "superior": "exceptional",
         "tenacious": "determined",
-        "technical guru": "technical expert",
+        "guru": "technical expert",
         "visionary": "forward-thinking",
         "manpower": "workforce",
         "strongman": "resilient individual",

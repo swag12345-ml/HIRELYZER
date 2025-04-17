@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import string
 import re
-
+from collections import Counter
 from dotenv import load_dotenv
 from pdf2image import convert_from_path
 from langchain_text_splitters import CharacterTextSplitter
@@ -295,6 +295,8 @@ def rewrite_and_highlight(text):
     highlighted_text = text
     rewritten_text = text
     masculine_count, feminine_count = 0, 0
+    detected_masculine_words = Counter()
+    detected_feminine_words = Counter()
 
     masculine_words_sorted = sorted(gender_words["masculine"], key=len, reverse=True)
     feminine_words_sorted = sorted(gender_words["feminine"], key=len, reverse=True)
@@ -304,9 +306,9 @@ def rewrite_and_highlight(text):
         matches = pattern.findall(highlighted_text)
         if matches:
             masculine_count += len(matches)
-            # Highlight original word in blue
+            for m in matches:
+                detected_masculine_words[m.lower()] += 1
             highlighted_text = pattern.sub(lambda m: f":blue[{m.group(0)}]", highlighted_text)
-            # Replace in rewritten text with green-highlighted replacement
             replacement = replacement_words["masculine"].get(word.lower(), "professional")
             rewritten_text = pattern.sub(lambda m: f":green[{replacement}]", rewritten_text)
 
@@ -315,16 +317,14 @@ def rewrite_and_highlight(text):
         matches = pattern.findall(highlighted_text)
         if matches:
             feminine_count += len(matches)
-            # Highlight original word in red
+            for m in matches:
+                detected_feminine_words[m.lower()] += 1
             highlighted_text = pattern.sub(lambda m: f":red[{m.group(0)}]", highlighted_text)
-            # Replace in rewritten text with green-highlighted replacement
             replacement = replacement_words["feminine"].get(word.lower(), "effective")
             rewritten_text = pattern.sub(lambda m: f":green[{replacement}]", rewritten_text)
 
-    return highlighted_text, rewritten_text, masculine_count, feminine_count
+    return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
 
-
-    return highlighted_text, rewritten_text, masculine_count, feminine_count
 
 # Setup Vector DB
 def setup_vectorstore(documents):
@@ -361,6 +361,7 @@ if "chat_history" not in st.session_state:
 uploaded_files = st.file_uploader("Upload PDF Resumes", type=["pdf"], accept_multiple_files=True)
 
 resume_data = []
+
 if uploaded_files:
     all_text = []
 
@@ -374,19 +375,28 @@ if uploaded_files:
 
         full_text = " ".join(text)
         bias_score, masc, fem = detect_bias(full_text)
-        highlighted_text, rewritten_text, masc_count, fem_count = rewrite_and_highlight(full_text)
+        highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(full_text)
 
         resume_data.append({
             "Resume Name": uploaded_file.name,
             "Bias Score (0 = Fair, 1 = Biased)": bias_score,
-            "Masculine Words": masc,
-            "Feminine Words": fem,
+            "Masculine Words": masc_count,
+            "Feminine Words": fem_count,
+            "Detected Masculine Words": detected_masc,
+            "Detected Feminine Words": detected_fem,
             "Text Preview": full_text[:300] + "...",
             "Highlighted Text": highlighted_text,
             "Rewritten Text": rewritten_text
         })
 
     st.success("✅ All resumes processed!")
+
+    # Setup vectorstore if needed
+    if all_text:
+        st.session_state.vectorstore = setup_vectorstore(all_text)
+        st.session_state.chain = create_chain(st.session_state.vectorstore)
+
+# 📊 Dashboard and Metrics
 if resume_data:
     total_masc = sum(r["Masculine Words"] for r in resume_data)
     total_fem = sum(r["Feminine Words"] for r in resume_data)
@@ -397,52 +407,17 @@ if resume_data:
     col1.metric("🔎 Avg. Bias Score", avg_bias)
     col2.metric("🔵 Total Masculine Words", total_masc)
     col3.metric("🔴 Total Feminine Words", total_fem)
-    
-    if resume_data:
-     st.markdown("### 📊 Resume Bias Dashboard")
-    df = pd.DataFrame(resume_data)
-    st.dataframe(df, use_container_width=True)
 
-for resume in resume_data:
-    with st.expander(f"📝 View & Rewrite {resume['Resume Name']}"):
-        st.markdown("🔎 **Bias-Highlighted Text:**")
-        st.markdown(resume["Highlighted Text"], unsafe_allow_html=True)
-
-        st.markdown("✅ **Bias-Free Rewritten Text:**")
-        st.markdown(resume["Rewritten Text"])
-
-        st.markdown("### 📌 Gender-Coded Word Counts:")
-        col1, col2 = st.columns(2)
-        col1.metric("🔵 Masculine Words", resume["Masculine Words"])
-        col2.metric("🔴 Feminine Words", resume["Feminine Words"])
-
-        st.markdown("### 📚 Word Lists:")
-
-        masculine_words_list = ", ".join(gender_words["masculine"])
-        feminine_words_list = ", ".join(gender_words["feminine"])
-
-        col3, col4 = st.columns(2)
-        with col3:
-            st.markdown("**Masculine Words:**")
-            st.write(masculine_words_list)
-        with col4:
-            st.markdown("**Feminine Words:**")
-            st.write(feminine_words_list)
-
-
-
-    if all_text:
-        st.session_state.vectorstore = setup_vectorstore(all_text)
-        st.session_state.chain = create_chain(st.session_state.vectorstore)
-
-if resume_data:
+    # 📋 Data Table
     st.markdown("### 📊 Resume Bias Dashboard")
     df = pd.DataFrame(resume_data)
     st.dataframe(df, use_container_width=True)
 
+    # 📉 Bias Score Bar Chart
     st.subheader("📉 Bias Score Comparison")
     st.bar_chart(df.set_index("Resume Name")[["Bias Score (0 = Fair, 1 = Biased)"]])
 
+    # ⚖ Masculine vs Feminine Words Chart
     st.subheader("⚖ Masculine vs Feminine Words")
     fig, ax = plt.subplots(figsize=(10, 5))
     index = np.arange(len(df))
@@ -460,7 +435,39 @@ if resume_data:
 
     st.pyplot(fig)
 
-# Display chat history
+    # 📑 Individual Resume Expanders
+    for resume in resume_data:
+        with st.expander(f"📝 View & Rewrite {resume['Resume Name']}"):
+            st.markdown("🔎 **Bias-Highlighted Text:**")
+            st.markdown(resume["Highlighted Text"], unsafe_allow_html=True)
+
+            st.markdown("✅ **Bias-Free Rewritten Text:**")
+            st.markdown(resume["Rewritten Text"])
+
+            st.markdown("### 📌 Gender-Coded Word Counts:")
+            col1, col2 = st.columns(2)
+            col1.metric("🔵 Masculine Words", resume["Masculine Words"])
+            col2.metric("🔴 Feminine Words", resume["Feminine Words"])
+
+            st.markdown("### 📚 Detected Words:")
+            col3, col4 = st.columns(2)
+            with col3:
+                st.markdown("**Masculine Words Found:**")
+                if resume["Detected Masculine Words"]:
+                    detected_masc_words = ", ".join(f"{word} ({count})" for word, count in resume["Detected Masculine Words"].items())
+                    st.write(detected_masc_words)
+                else:
+                    st.write("None")
+
+            with col4:
+                st.markdown("**Feminine Words Found:**")
+                if resume["Detected Feminine Words"]:
+                    detected_fem_words = ", ".join(f"{word} ({count})" for word, count in resume["Detected Feminine Words"].items())
+                    st.write(detected_fem_words)
+                else:
+                    st.write("None")
+
+# 💬 Chat Section
 if "chain" in st.session_state:
     for msg in st.session_state.memory.load_memory_variables({}).get("chat_history", []):
         with st.chat_message("user" if msg.type == "human" else "assistant"):

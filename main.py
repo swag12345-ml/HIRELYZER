@@ -166,7 +166,7 @@ gender_words = {
         "challenging", "competitive", "confident", "courageous", "decisive", "determined", "dominant", "driven",
         "dynamic", "forceful", "independent", "individualistic", "intellectual", "lead", "leader", "objective",
         "outspoken", "persistent", "principled", "proactive", "resilient", "self-reliant", "self-sufficient",
-        "strong", "superior", "tenacious", "guru","tech guru","technical guru", "visionary", "manpower", "strongman", "command",
+        "strong", "superior", "tenacious","guru","tech guru","technical guru", "visionary", "manpower", "strongman", "command",
         "assert", "headstrong", "rockstar", "superstar", "go-getter", "trailblazer", "results-driven",
         "fast-paced", "driven", "determination", "competitive spirit"
     ],
@@ -227,6 +227,27 @@ def detect_bias(text):
     return round(bias_score, 2), masc, fem
 
 
+gender_words = {
+    "masculine": [
+        "active", "aggressive", "ambitious", "analytical", "assertive", "autonomous", "boast", "bold",
+        "challenging", "competitive", "confident", "courageous", "decisive", "determined", "dominant", "driven",
+        "dynamic", "forceful", "independent", "individualistic", "intellectual", "lead", "leader", "objective",
+        "outspoken", "persistent", "principled", "proactive", "resilient", "self-reliant", "self-sufficient",
+        "strong", "superior", "tenacious","guru","tech guru","technical guru", "visionary", "manpower", "strongman", "command",
+        "assert", "headstrong", "rockstar", "superstar", "go-getter", "trailblazer", "results-driven",
+        "fast-paced", "driven", "determination", "competitive spirit"
+    ],
+    
+    "feminine": [
+        "affectionate", "agreeable", "attentive", "collaborative", "committed", "compassionate", "considerate",
+        "cooperative", "dependable", "dependent", "emotional", "empathetic", "enthusiastic", "gentle",
+        "honest", "inclusive", "interpersonal", "kind", "loyal", "modest", "nurturing", "pleasant", "polite",
+        "sensitive", "supportive", "sympathetic", "tactful", "tender", "trustworthy", "understanding", "warm",
+        "yield", "adaptable", "communal", "helpful", "dedicated", "respectful", "nurture", "sociable",
+        "relationship-oriented", "team player", "dependable", "people-oriented", "empathetic listener",
+        "gentle communicator", "open-minded"
+    ]
+}
 
 replacement_words = {
     "masculine": {
@@ -445,12 +466,14 @@ if resume_data:
     total_masc = sum(r["Masculine Words"] for r in resume_data)
     total_fem = sum(r["Feminine Words"] for r in resume_data)
     avg_bias = round(np.mean([r["Bias Score (0 = Fair, 1 = Biased)"] for r in resume_data]), 2)
+    total_resumes = len(resume_data)
 
     st.markdown("### 📈 Summary Stats")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("🔎 Avg. Bias Score", avg_bias)
-    col2.metric("🔵 Total Masculine Words", total_masc)
-    col3.metric("🔴 Total Feminine Words", total_fem)
+    col1, col2, col3, col4 = st.columns(4)  # ✅ Now 4 columns instead of 3
+    col1.metric("📄 Resumes Uploaded", total_resumes)
+    col2.metric("🔎 Avg. Bias Score", avg_bias)
+    col3.metric("🔵 Total Masculine Words", total_masc)
+    col4.metric("🔴 Total Feminine Words", total_fem)
 
     # 📋 Data Table
     st.markdown("### 📊 Resume Bias Dashboard")

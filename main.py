@@ -11,6 +11,11 @@ import numpy as np
 import pandas as pd
 import string
 import re
+from nltk.stem import WordNetLemmatizer
+import nltk
+nltk.download('wordnet')
+lemmatizer = WordNetLemmatizer()
+
 from collections import Counter
 from dotenv import load_dotenv
 from pdf2image import convert_from_path
@@ -209,23 +214,23 @@ def detect_bias(text):
     text = text.lower()
     masc, fem = 0, 0
 
-    for word in gender_words["masculine"]:
-        masc += len(re.findall(rf'\b{re.escape(word)}\b', text, re.IGNORECASE))
+    masculine_words_sorted = sorted(gender_words["masculine"], key=len, reverse=True)
+    feminine_words_sorted = sorted(gender_words["feminine"], key=len, reverse=True)
 
-    for word in gender_words["feminine"]:
-        fem += len(re.findall(rf'\b{re.escape(word)}\b', text, re.IGNORECASE))
+    for phrase in masculine_words_sorted:
+        masc += len(re.findall(rf'\b{re.escape(phrase)}\b', text))
+
+    for phrase in feminine_words_sorted:
+        fem += len(re.findall(rf'\b{re.escape(phrase)}\b', text))
 
     total = masc + fem
 
-    # If no gender-coded words found
     if total == 0:
         return 0.0, masc, fem  
 
-    # Bias severity based on total gender-coded words
-    bias_score = min(total / 20, 1.0)  # You can adjust 20 to control sensitivity
+    bias_score = min(total / 20, 1.0)
 
     return round(bias_score, 2), masc, fem
-
 
 gender_words = {
     "masculine": [
@@ -248,8 +253,7 @@ gender_words = {
         "gentle communicator", "open-minded"
     ]
 }
-
-replacement_words = {
+replacement_mapping = {
     "masculine": {
         "active": "engaged",
         "aggressive": "proactive",
@@ -269,6 +273,7 @@ replacement_words = {
         "driven": "committed",
         "dynamic": "adaptable",
         "forceful": "persuasive",
+        "guru":"technical expert",
         "independent": "self-sufficient",
         "individualistic": "self-motivated",
         "intellectual": "knowledgeable",
@@ -285,7 +290,7 @@ replacement_words = {
         "strong": "capable",
         "superior": "exceptional",
         "tenacious": "determined",
-        "guru": "technical expert",
+        "technical guru": "technical expert",
         "visionary": "forward-thinking",
         "manpower": "workforce",
         "strongman": "resilient individual",
@@ -318,7 +323,6 @@ replacement_words = {
         "emotional": "passionate",
         "empathetic": "understanding",
         "enthusiastic": "positive",
-        "friendly": "welcoming",
         "gentle": "respectful",
         "honest": "trustworthy",
         "inclusive": "open-minded",
@@ -354,41 +358,80 @@ replacement_words = {
     }
 }
 
+def rewrite_text_with_llm(text):
+    prompt = f"""
+You are an expert career advisor and professional resume language editor.
+
+Your task is to:
+
+1. **Rewrite the following resume text** to:
+   - Remove or replace any gender-coded, biased, or non-inclusive language.
+   - Use **professional, inclusive, neutral, clear, and grammatically correct language**.
+   - **Retain all technical terms, job-specific keywords, certifications, and proper names.**
+   - Do not add new content or remove important information.
+   - Preserve the original meaning and intent of each sentence.
+
+2. **Organize the rewritten text into clearly labeled standard resume sections, such as:**
+   - **Professional Summary**
+   - **Work Experience**
+   - **Skills**
+   - **Certifications**
+   - **Education**
+   - **Projects**
+   (Only include sections that exist in the provided text.)
+
+3. **Strictly apply the following word replacement mapping:**
+
+{replacement_mapping}
+
+- If a word or phrase in the text matches a key from this mapping, replace it exactly with the corresponding replacement.
+- Leave all other words unchanged.
+
+---
+
+**Resume Text to Rewrite:**
+\"\"\"{text}\"\"\"
+
+---
+
+**Final Rewritten, Organized, Bias-Free, Inclusive Resume:**
+"""
 
 
-def rewrite_and_highlight(text):
+    
+    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0, groq_api_key=groq_api_key)
+    response = llm.invoke(prompt)
+    rewritten_text = response.content  
+    return rewritten_text
+    
+
+
+
+def rewrite_and_highlight(text, replacement_mapping):
     highlighted_text = text
-    rewritten_text = text
     masculine_count, feminine_count = 0, 0
     detected_masculine_words = Counter()
     detected_feminine_words = Counter()
 
-    masculine_words_sorted = sorted(gender_words["masculine"], key=len, reverse=True)
-    feminine_words_sorted = sorted(gender_words["feminine"], key=len, reverse=True)
+    words = re.findall(r'\b\w+\b', text)
 
-    for word in masculine_words_sorted:
-        pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
-        matches = pattern.findall(highlighted_text)
-        if matches:
-            masculine_count += len(matches)
-            for m in matches:
-                detected_masculine_words[m.lower()] += 1
-            highlighted_text = pattern.sub(lambda m: f":blue[{m.group(0)}]", highlighted_text)
-            replacement = replacement_words["masculine"].get(word.lower(), "professional")
-            rewritten_text = pattern.sub(lambda m: f":green[{replacement}]", rewritten_text)
+    for w in words:
+        lemma = lemmatizer.lemmatize(w.lower())
+        if lemma in gender_words["masculine"]:
+            masculine_count += 1
+            detected_masculine_words[lemma] += 1
+            highlighted_text = re.sub(rf'\b{re.escape(w)}\b', f":blue[{w}]", highlighted_text)
+ 
+        elif lemma in gender_words["feminine"]:
+            feminine_count += 1
+            detected_feminine_words[lemma] += 1
+            highlighted_text = re.sub(rf'\b{re.escape(w)}\b', f":red[{w}]", highlighted_text)
 
-    for word in feminine_words_sorted:
-        pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
-        matches = pattern.findall(highlighted_text)
-        if matches:
-            feminine_count += len(matches)
-            for m in matches:
-                detected_feminine_words[m.lower()] += 1
-            highlighted_text = pattern.sub(lambda m: f":red[{m.group(0)}]", highlighted_text)
-            replacement = replacement_words["feminine"].get(word.lower(), "effective")
-            rewritten_text = pattern.sub(lambda m: f":green[{replacement}]", rewritten_text)
+    # Now rewrite the text using the LLM
+    rewritten_text = rewrite_text_with_llm(text)
 
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
+
 
 
 # Setup Vector DB
@@ -440,7 +483,7 @@ if uploaded_files:
 
         full_text = " ".join(text)
         bias_score, masc, fem = detect_bias(full_text)
-        highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(full_text)
+        highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(full_text,replacement_mapping)
 
         resume_data.append({
             "Resume Name": uploaded_file.name,
@@ -467,7 +510,7 @@ if resume_data:
     total_fem = sum(r["Feminine Words"] for r in resume_data)
     avg_bias = round(np.mean([r["Bias Score (0 = Fair, 1 = Biased)"] for r in resume_data]), 2)
     total_resumes = len(resume_data)
-
+   
     st.markdown("### 📈 Summary Stats")
     col1, col2, col3, col4 = st.columns(4)  # ✅ Now 4 columns instead of 3
     col1.metric("📄 Resumes Uploaded", total_resumes)

@@ -371,14 +371,19 @@ Your task is to:
    - Do not add new content or remove important information.
    - Preserve the original meaning and intent of each sentence.
 
-2. **Organize the rewritten text into clearly labeled standard resume sections, such as:**
-   - **Professional Summary**
-   - **Work Experience**
-   - **Skills**
-   - **Certifications**
-   - **Education**
-   - **Projects**
-   (Only include sections that exist in the provided text.)
+### 2️⃣ Structure and Organization:
+- Organize the rewritten text into clearly labeled standard resume sections, such as:
+  - **Name**
+  - **Contact Information**
+  - **Email**
+  - **Professional Summary**
+  - **Work Experience**
+  - **Skills**
+  - **Certifications**
+  - **Education**
+  - **Projects**
+- Include **only the sections that exist in the provided text** — do not add new ones.
+- If any of **Name**, **Contact Information**, or **Email** is present in the text, organize it clearly at the top under respective headings.
 
 3. **Strictly apply the following word replacement mapping:**
 
@@ -386,6 +391,10 @@ Your task is to:
 
 - If a word or phrase in the text matches a key from this mapping, replace it exactly with the corresponding replacement.
 - Leave all other words unchanged.
+
+4. **Suggest 5 suitable job titles** based on the candidate's rewritten resume text.
+   - Ensure the job titles are **realistic, well-matched to the candidate’s experience, skills, and qualifications**.
+   - Provide a brief reason for each suggestion, explaining why it fits based on the resume content.
 
 ---
 
@@ -395,7 +404,19 @@ Your task is to:
 ---
 
 **Final Rewritten, Organized, Bias-Free, Inclusive Resume:**
+
+[Your rewritten and organized resume content here]
+
+---
+
+**Suggested Job Titles (with reasons):**
+1. **Job Title 1** — Reason based on skills/experience
+2. **Job Title 2** — Reason based on skills/experience
+3. **Job Title 3** — Reason based on skills/experience
+4. **Job Title 4** — Reason based on skills/experience
+5. **Job Title 5** — Reason based on skills/experience
 """
+
 
 
     

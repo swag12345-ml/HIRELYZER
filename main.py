@@ -132,7 +132,7 @@ st.markdown(
     </style>
 
     <div class="header">
-        🤖 LEXIBOT - POWERED BY SEMICOLON
+        🤖 LEXIBOT - POWERED BY BROCODE
     </div>
     """,
     unsafe_allow_html=True,

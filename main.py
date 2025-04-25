@@ -453,6 +453,35 @@ def rewrite_and_highlight(text, replacement_mapping):
 
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
 
+def ats_percentage_score(resume_text, job_description):
+    prompt = f"""
+You are a skilled ATS (Applicant Tracking System) with expertise in technical hiring.
+
+Task:
+Evaluate the given resume against the job description and provide the following:
+
+1. **Candidate Name**: Extract the full name of the candidate if available (from the top of the resume).
+2. **Percentage Match**: Provide only the number (no percentage symbol).
+3. **Missing Keywords**: List keywords from the job description that are missing in the resume.
+4. **Final Thoughts**: Give a short summary of the candidate's fit for the job.
+
+### Job Description:
+\"\"\"{job_description}\"\"\"
+
+### Resume:
+\"\"\"{resume_text}\"\"\"
+
+Return the output in the format:
+Candidate Name: <name or "Not Found">
+Percentage Match: <only number>
+Missing Keywords: <comma-separated list>
+Final Thoughts: <brief summary>
+"""
+    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0, groq_api_key=groq_api_key)
+    response = llm.invoke(prompt)
+    return response.content.strip()
+
+
 
 
 # Setup Vector DB
@@ -487,6 +516,13 @@ st.title("🦙 Chat with LEXIBOT - LLAMA 3.3 (Bias Detection + QA + GPU)")
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
+    st.sidebar.markdown("### 📝 Paste Job Description")
+job_description = st.sidebar.text_area("Enter the Job Description here", height=200)
+
+if job_description.strip() == "":
+    st.sidebar.warning("Please enter a job description to evaluate the resumes.")
+
+
 uploaded_files = st.file_uploader("Upload PDF Resumes", type=["pdf"], accept_multiple_files=True)
 
 resume_data = []
@@ -505,9 +541,20 @@ if uploaded_files:
         full_text = " ".join(text)
         bias_score, masc, fem = detect_bias(full_text)
         highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(full_text,replacement_mapping)
+        ats_result = ats_percentage_score(full_text, job_description)
+
+        # Parse the ATS result to extract details
+        name_match = re.search(r"Candidate Name:\s*(.*)", ats_result)
+        percent_match = re.search(r"Percentage Match:\s*(\d+)", ats_result)
+        missing_keywords = re.search(r"Missing Keywords:\s*(.*)", ats_result)
+        final_thoughts = re.search(r"Final Thoughts:\s*(.*)", ats_result)
 
         resume_data.append({
             "Resume Name": uploaded_file.name,
+            "Candidate Name": name_match.group(1) if name_match else "Not Found",
+            "ATS Match %": int(percent_match.group(1)) if percent_match else 0,
+            "Missing Keywords": missing_keywords.group(1) if missing_keywords else "N/A",
+            "Fit Summary": final_thoughts.group(1) if final_thoughts else "N/A",
             "Bias Score (0 = Fair, 1 = Biased)": bias_score,
             "Masculine Words": masc_count,
             "Feminine Words": fem_count,
@@ -517,6 +564,7 @@ if uploaded_files:
             "Highlighted Text": highlighted_text,
             "Rewritten Text": rewritten_text
         })
+       
 
     st.success("✅ All resumes processed!")
 
@@ -542,7 +590,8 @@ if resume_data:
     # 📋 Data Table
     st.markdown("### 📊 Resume Bias Dashboard")
     df = pd.DataFrame(resume_data)
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(df[["Resume Name", "Candidate Name", "ATS Match %", "Bias Score (0 = Fair, 1 = Biased)", "Masculine Words", "Feminine Words"]], use_container_width=True)
+
 
     # 📉 Bias Score Bar Chart
     st.subheader("📉 Bias Score Comparison")
@@ -569,6 +618,12 @@ if resume_data:
     # 📑 Individual Resume Expanders
     for resume in resume_data:
         with st.expander(f"📝 View & Rewrite {resume['Resume Name']}"):
+            st.markdown("### 🧠 ATS Evaluation")
+            st.markdown(f"**Candidate Name:** {resume['Candidate Name']}")
+            st.markdown(f"**ATS Match %:** {resume['ATS Match %']}%")
+            st.markdown(f"**Missing Keywords:** {resume['Missing Keywords']}")
+            st.markdown(f"**Fit Summary:** {resume['Fit Summary']}")
+            
             st.markdown("🔎 **Bias-Highlighted Text:**")
             st.markdown(resume["Highlighted Text"], unsafe_allow_html=True)
 

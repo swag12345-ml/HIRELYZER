@@ -586,11 +586,13 @@ if resume_data:
     col2.metric("🔎 Avg. Bias Score", avg_bias)
     col3.metric("🔵 Total Masculine Words", total_masc)
     col4.metric("🔴 Total Feminine Words", total_fem)
+    
 
     # 📋 Data Table
     st.markdown("### 📊 Resume Bias Dashboard")
     df = pd.DataFrame(resume_data)
     st.dataframe(df[["Resume Name", "Candidate Name", "ATS Match %", "Bias Score (0 = Fair, 1 = Biased)", "Masculine Words", "Feminine Words"]], use_container_width=True)
+
 
 
     # 📉 Bias Score Bar Chart

@@ -358,7 +358,8 @@ replacement_mapping = {
     }
 }
 
-def rewrite_text_with_llm(text):
+def rewrite_text_with_llm(text, replacement_mapping):
+
     prompt = f"""
 You are an expert career advisor and professional resume language editor.
 
@@ -449,7 +450,8 @@ def rewrite_and_highlight(text, replacement_mapping):
             highlighted_text = re.sub(rf'\b{re.escape(w)}\b', f":red[{w}]", highlighted_text)
 
     # Now rewrite the text using the LLM
-    rewritten_text = rewrite_text_with_llm(text)
+    rewritten_text = rewrite_text_with_llm(text, replacement_mapping)
+
 
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
 
@@ -618,42 +620,51 @@ if resume_data:
     st.pyplot(fig)
 
     # 📑 Individual Resume Expanders
-    for resume in resume_data:
-        with st.expander(f"📝 View & Rewrite {resume['Resume Name']}"):
-            st.markdown("### 🧠 ATS Evaluation")
-            st.markdown(f"**Candidate Name:** {resume['Candidate Name']}")
-            st.markdown(f"**ATS Match %:** {resume['ATS Match %']}%")
-            st.markdown(f"**Missing Keywords:** {resume['Missing Keywords']}")
-            st.markdown(f"**Fit Summary:** {resume['Fit Summary']}")
-            
-            st.markdown("🔎 **Bias-Highlighted Text:**")
-            st.markdown(resume["Highlighted Text"], unsafe_allow_html=True)
+    # 📑 Individual Resume Expanders
+for resume in resume_data:
+    with st.expander(f"📝 View & Rewrite {resume['Resume Name']}"):
+        st.markdown("### 🧠 ATS Evaluation")
+        st.markdown(f"**Candidate Name:** {resume['Candidate Name']}")
+        st.markdown(f"**ATS Match %:** {resume['ATS Match %']}%")
+        st.markdown(f"**Missing Keywords:** {resume['Missing Keywords']}")
+        st.markdown(f"**Fit Summary:** {resume['Fit Summary']}")
 
-            st.markdown("✅ **Bias-Free Rewritten Text:**")
-            st.markdown(resume["Rewritten Text"])
+        st.markdown("🔎 **Bias-Highlighted Text:**")
+        st.markdown(resume["Highlighted Text"], unsafe_allow_html=True)
 
-            st.markdown("### 📌 Gender-Coded Word Counts:")
-            col1, col2 = st.columns(2)
-            col1.metric("🔵 Masculine Words", resume["Masculine Words"])
-            col2.metric("🔴 Feminine Words", resume["Feminine Words"])
+        st.markdown("✅ **Bias-Free Rewritten Text:**")
+        st.markdown(resume["Rewritten Text"])
 
-            st.markdown("### 📚 Detected Words:")
-            col3, col4 = st.columns(2)
-            with col3:
-                st.markdown("**Masculine Words Found:**")
-                if resume["Detected Masculine Words"]:
-                    detected_masc_words = ", ".join(f"{word} ({count})" for word, count in resume["Detected Masculine Words"].items())
-                    st.write(detected_masc_words)
-                else:
-                    st.write("None")
+        # 📥 Add Download Button for Rewritten Text
+        st.download_button(
+            label="📥 Download Bias-Free Resume Text",
+            data=resume["Rewritten Text"],
+            file_name=f"{resume['Resume Name'].split('.')[0]}_bias_free.txt",
+            mime="text/plain"
+        )
 
-            with col4:
-                st.markdown("**Feminine Words Found:**")
-                if resume["Detected Feminine Words"]:
-                    detected_fem_words = ", ".join(f"{word} ({count})" for word, count in resume["Detected Feminine Words"].items())
-                    st.write(detected_fem_words)
-                else:
-                    st.write("None")
+        st.markdown("### 📌 Gender-Coded Word Counts:")
+        col1, col2 = st.columns(2)
+        col1.metric("🔵 Masculine Words", resume["Masculine Words"])
+        col2.metric("🔴 Feminine Words", resume["Feminine Words"])
+
+        st.markdown("### 📚 Detected Words:")
+        col3, col4 = st.columns(2)
+        with col3:
+            st.markdown("**Masculine Words Found:**")
+            if resume["Detected Masculine Words"]:
+                detected_masc_words = ", ".join(f"{word} ({count})" for word, count in resume["Detected Masculine Words"].items())
+                st.write(detected_masc_words)
+            else:
+                st.write("None")
+
+        with col4:
+            st.markdown("**Feminine Words Found:**")
+            if resume["Detected Feminine Words"]:
+                detected_fem_words = ", ".join(f"{word} ({count})" for word, count in resume["Detected Feminine Words"].items())
+                st.write(detected_fem_words)
+            else:
+                st.write("None")
 
 # 💬 Chat Section
 if "chain" in st.session_state:

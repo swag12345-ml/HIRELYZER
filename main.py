@@ -25,117 +25,161 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
+import streamlit as st
+import streamlit.components.v1 as components
+import time
 
-# Set page config
-st.set_page_config(page_title="Chat with LEXIBOT", page_icon="📝", layout="centered")
+# 🚀 Rocket Welcome Animation
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
 
-# CSS Customization
+    html, body, [class*="css"] {
+        font-family: 'Orbitron', sans-serif;
+        background-color: #0b0c10;
+        color: #c5c6c7;
+    }
+
+    .banner-container {
+        position: relative;
+        width: 100%;
+        height: 80px;
+        overflow: hidden;
+        background: linear-gradient(to right, #000428, #004e92);
+        border-bottom: 2px solid cyan;
+        margin-bottom: 20px;
+    }
+
+    .rocket-fly {
+        position: absolute;
+        top: 15px;
+        left: -30%;
+        display: flex;
+        align-items: center;
+        font-size: 24px;
+        font-weight: bold;
+        color: #00ffff;
+        white-space: nowrap;
+        animation: flyAcross 10s linear infinite;
+        text-shadow: 0 0 10px #00ffff;
+    }
+
+    .rocket-fly .rocket {
+        font-size: 40px;
+        margin-right: 10px;
+        animation: wiggle 0.5s infinite alternate;
+    }
+
+    @keyframes flyAcross {
+        0%   { left: -40%; }
+        100% { left: 110%; }
+    }
+
+    @keyframes wiggle {
+        0%   { transform: translateY(0px); }
+        100% { transform: translateY(-8px); }
+    }
+    </style>
+
+    <div class="banner-container">
+        <div class="rocket-fly">
+            <div class="rocket">🚀</div>
+            <div>Welcome to LEXIBOT</div>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+
+# 🌐 Global Page CSS
 st.markdown(
     """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 
-    body {
+    html, body, [class*="css"] {
+        font-family: 'Orbitron', sans-serif;
         background-color: #0b0c10;
         color: #c5c6c7;
-        font-family: 'Orbitron', sans-serif;
     }
 
-    /* Glitch Animation */
-    @keyframes glitch {
-        0% { text-shadow: 2px 2px #ff0000, -2px -2px #00ffcc; }
-        25% { text-shadow: -2px -2px #ff0000, 2px 2px #00ffcc; }
-        50% { text-shadow: 3px -3px #ff00ff, -3px 3px #ff9900; }
-        75% { text-shadow: -3px -3px #ff9900, 3px 3px #33ff00; }
-        100% { text-shadow: 2px 2px #ff00ff, -2px -2px #0099ff; }
-    }
-
-    /* RGB Color Animation */
-    @keyframes smoothGlow {
-        0% { color: #ff0000; text-shadow: 0 0 10px #ff0000; }
-        25% { color: #ff9900; text-shadow: 0 0 15px #ff9900; }
-        50% { color: #00ff00; text-shadow: 0 0 20px #00ff00; }
-        75% { color: #0099ff; text-shadow: 0 0 15px #0099ff; }
-        100% { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
-    }
-
-    /* Header */
+    /* Neon Glow Header */
     .header {
-        font-size: 25px;
+        font-size: 28px;
         font-weight: bold;
         text-align: center;
         text-transform: uppercase;
-        letter-spacing: 3px;
-        animation: glitch 0.8s infinite, smoothGlow 3s infinite alternate;
-        text-shadow: 0px 0px 20px cyan;
+        letter-spacing: 2px;
+        animation: neonPulse 2.5s infinite alternate, glitch 1s infinite;
+        text-shadow: 0px 0px 10px #00ffff;
+        padding: 10px 0;
     }
 
-    /* Buttons - Neon Glow Effect */
+    @keyframes neonPulse {
+        0% { color: #00ffff; text-shadow: 0 0 10px #00ffff; }
+        50% { color: #ff00ff; text-shadow: 0 0 20px #ff00ff; }
+        100% { color: #00ffff; text-shadow: 0 0 10px #00ffff; }
+    }
+
+    @keyframes glitch {
+        0% { text-shadow: 2px 2px #ff00ff, -2px -2px #00ffff; }
+        50% { text-shadow: -2px -2px #00ffff, 2px 2px #ff00ff; }
+        100% { text-shadow: 2px 2px #ff00ff, -2px -2px #00ffff; }
+    }
+
+    /* Styled Upload Box */
+    .stFileUploader > div > div {
+        border: 2px solid #00ffff;
+        border-radius: 10px;
+        animation: pulse 2s infinite;
+        background-color: rgba(0, 255, 255, 0.1);
+        padding: 12px;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 5px cyan; }
+        50% { box-shadow: 0 0 25px cyan; }
+        100% { box-shadow: 0 0 5px cyan; }
+    }
+
+    /* Button Glow */
     .stButton > button {
-        background: linear-gradient(45deg, #ff0080, #007BFF);
+        background: linear-gradient(45deg, #ff0080, #00bfff);
         color: white;
-        font-size: 18px;
+        font-size: 16px;
         font-weight: bold;
+        border: none;
         border-radius: 8px;
-        padding: 10px;
+        padding: 10px 20px;
         text-transform: uppercase;
-        box-shadow: 0px 0px 15px rgba(0, 198, 255, 0.8);
-        transition: 0.3s ease-in-out;
-    }
-    .stButton > button:hover {
-        background: linear-gradient(45deg, #ff0077, #00ccff);
-        transform: scale(1.08);
-        box-shadow: 0px 0px 30px rgba(255, 0, 128, 1);
+        box-shadow: 0px 0px 12px #00ffff;
+        transition: all 0.3s ease-in-out;
     }
 
-    /* Chat Answer Box */
-    @keyframes typing {
-        from { width: 0; }
-        to { width: 100%; }
+    .stButton > button:hover {
+        transform: scale(1.05);
+        box-shadow: 0px 0px 24px #ff00ff;
+        background: linear-gradient(45deg, #ff00aa, #00ffff);
     }
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-    @keyframes neonText {
-        0% { color: #ff44ff; text-shadow: 0px 0px 15px #ff44ff; }
-        50% { color: #00ffff; text-shadow: 0px 0px 20px #00ffff; }
-        100% { color: #ff00ff; text-shadow: 0px 0px 15px #ff00ff; }
-    }
-    
-  .stChatMessage {
+
+    /* Chat message */
+    .stChatMessage {
         font-size: 18px;
         background: #1e293b;
-        padding: 12px;
-        border-radius: 8px;
+        padding: 14px;
+        border-radius: 10px;
         border: 2px solid #00ffff;
         color: #ccffff;
-        text-shadow: 0px 0px 8px #00ffff;
+        text-shadow: 0px 0px 6px #00ffff;
         animation: glow 1.5s infinite alternate;
     }
 
-    /* Upload Animation - Glowing File Upload */
-    @keyframes pulse {
-        0% { box-shadow: 0 0 5px cyan; }
-        50% { box-shadow: 0 0 20px cyan; }
-        100% { box-shadow: 0 0 5px cyan; }
-    }
-    .stFileUploader > div > div {
-        border: 2px solid cyan;
-        animation: pulse 2s infinite;
-        padding: 10px;
-        border-radius: 8px;
-        background-color: rgba(0, 255, 255, 0.1);
-        text-align: center;
-    }
-
     </style>
-
-    <div class="header">
-        🤖 LEXIBOT - POWERED BY SEMICOLON
-    </div>
+    <div class="header">🤖 LEXIBOT - POWERED BY SEMICOLON</div>
     """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
 )
 
 
@@ -581,90 +625,101 @@ if resume_data:
     total_fem = sum(r["Feminine Words"] for r in resume_data)
     avg_bias = round(np.mean([r["Bias Score (0 = Fair, 1 = Biased)"] for r in resume_data]), 2)
     total_resumes = len(resume_data)
-   
-    st.markdown("### 📈 Summary Stats")
-    col1, col2, col3, col4 = st.columns(4)  # ✅ Now 4 columns instead of 3
-    col1.metric("📄 Resumes Uploaded", total_resumes)
-    col2.metric("🔎 Avg. Bias Score", avg_bias)
-    col3.metric("🔵 Total Masculine Words", total_masc)
-    col4.metric("🔴 Total Feminine Words", total_fem)
-    
 
-    # 📋 Data Table
-    st.markdown("### 📊 Resume Bias Dashboard")
+    st.markdown("### 📊 Summary Statistics")
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("📄 Resumes Uploaded", total_resumes)
+    with col2:
+        st.metric("🔎 Avg. Bias Score", avg_bias)
+    with col3:
+        st.metric("🔵 Total Masculine Words", total_masc)
+    with col4:
+        st.metric("🔴 Total Feminine Words", total_fem)
+
+    # 📋 Resume Table
+    st.markdown("### 🗂️ Resumes Overview")
     df = pd.DataFrame(resume_data)
-    st.dataframe(df[["Resume Name", "Candidate Name", "ATS Match %", "Bias Score (0 = Fair, 1 = Biased)", "Masculine Words", "Feminine Words"]], use_container_width=True)
+    st.dataframe(
+        df[["Resume Name", "Candidate Name", "ATS Match %", "Bias Score (0 = Fair, 1 = Biased)", "Masculine Words", "Feminine Words"]],
+        use_container_width=True
+    )
 
+    # 📈 Charts Section
+    st.markdown("### 📊 Visual Analysis")
+    tab1, tab2 = st.tabs(["📉 Bias Score Chart", "⚖ Gender-Coded Words"])
 
+    with tab1:
+        st.subheader("Bias Score Comparison Across Resumes")
+        st.bar_chart(df.set_index("Resume Name")[["Bias Score (0 = Fair, 1 = Biased)"]])
 
-    # 📉 Bias Score Bar Chart
-    st.subheader("📉 Bias Score Comparison")
-    st.bar_chart(df.set_index("Resume Name")[["Bias Score (0 = Fair, 1 = Biased)"]])
+    with tab2:
+        st.subheader("Masculine vs Feminine Word Usage")
+        fig, ax = plt.subplots(figsize=(10, 5))
+        index = np.arange(len(df))
+        bar_width = 0.35
 
-    # ⚖ Masculine vs Feminine Words Chart
-    st.subheader("⚖ Masculine vs Feminine Words")
-    fig, ax = plt.subplots(figsize=(10, 5))
-    index = np.arange(len(df))
-    bar_width = 0.35
+        ax.bar(index, df["Masculine Words"], bar_width, label="Masculine", color="#3498db")
+        ax.bar(index + bar_width, df["Feminine Words"], bar_width, label="Feminine", color="#e74c3c")
 
-    ax.bar(index, df["Masculine Words"], bar_width, label="Masculine", color="steelblue")
-    ax.bar(index + bar_width, df["Feminine Words"], bar_width, label="Feminine", color="salmon")
+        ax.set_xlabel("Resumes", fontsize=12)
+        ax.set_ylabel("Word Count", fontsize=12)
+        ax.set_title("Gender-Coded Word Usage per Resume", fontsize=14)
+        ax.set_xticks(index + bar_width / 2)
+        ax.set_xticklabels(df["Resume Name"], rotation=45, ha='right')
+        ax.legend()
+        st.pyplot(fig)
 
-    ax.set_xlabel("Resumes")
-    ax.set_ylabel("Count")
-    ax.set_title("Gender-Coded Language Use")
-    ax.set_xticks(index + bar_width / 2)
-    ax.set_xticklabels(df["Resume Name"], rotation=45, ha='right')
-    ax.legend()
+    # 📑 Individual Resume Reports
+    st.markdown("### 📝 Detailed Resume Reports")
+    for resume in resume_data:
+        with st.expander(f"📄 {resume['Resume Name']} | {resume['Candidate Name']}", expanded=False):
+            st.markdown(f"#### 🧠 ATS Evaluation for {resume['Candidate Name']}")
+            st.write(f"**ATS Match %:** {resume['ATS Match %']}%")
+            st.write(f"**Missing Keywords:** {resume['Missing Keywords']}")
+            st.write(f"**Fit Summary:** {resume['Fit Summary']}")
 
-    st.pyplot(fig)
+            st.divider()
 
-    # 📑 Individual Resume Expanders
-    # 📑 Individual Resume Expanders
-for resume in resume_data:
-    with st.expander(f"📝 View & Rewrite {resume['Resume Name']}"):
-        st.markdown("### 🧠 ATS Evaluation")
-        st.markdown(f"**Candidate Name:** {resume['Candidate Name']}")
-        st.markdown(f"**ATS Match %:** {resume['ATS Match %']}%")
-        st.markdown(f"**Missing Keywords:** {resume['Missing Keywords']}")
-        st.markdown(f"**Fit Summary:** {resume['Fit Summary']}")
+            # Tabs inside expander
+            detail_tab1, detail_tab2 = st.tabs(["🔎 Bias Analysis", "✅ Rewritten Resume"])
 
-        st.markdown("🔎 **Bias-Highlighted Text:**")
-        st.markdown(resume["Highlighted Text"], unsafe_allow_html=True)
+            with detail_tab1:
+                st.markdown("#### Bias-Highlighted Original Text")
+                st.markdown(resume["Highlighted Text"], unsafe_allow_html=True)
 
-        st.markdown("✅ **Bias-Free Rewritten Text:**")
-        st.markdown(resume["Rewritten Text"])
+                st.markdown("### 📌 Gender-Coded Word Counts:")
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.metric("🔵 Masculine Words", resume["Masculine Words"])
+                    if resume["Detected Masculine Words"]:
+                        st.markdown("### 📚 Detected Words:")
+                        st.write("**Masculine Words Detected:**")
+                        st.success(", ".join(f"{word} ({count})" for word, count in resume["Detected Masculine Words"].items()))
+                    else:
+                        st.info("No masculine words detected.")
 
-        # 📥 Add Download Button for Rewritten Text
-        st.download_button(
-            label="📥 Download Bias-Free Resume Text",
-            data=resume["Rewritten Text"],
-            file_name=f"{resume['Resume Name'].split('.')[0]}_bias_free.txt",
-            mime="text/plain"
-        )
+                with col2:
+                    st.metric("🔴 Feminine Words", resume["Feminine Words"])
+                    if resume["Detected Feminine Words"]:
+                        st.markdown("### 📚 Detected Words:")
+                        st.write("**Feminine Words Detected:**")
+                        st.success(", ".join(f"{word} ({count})" for word, count in resume["Detected Feminine Words"].items()))
+                    else:
+                        st.info("No feminine words detected.")
 
-        st.markdown("### 📌 Gender-Coded Word Counts:")
-        col1, col2 = st.columns(2)
-        col1.metric("🔵 Masculine Words", resume["Masculine Words"])
-        col2.metric("🔴 Feminine Words", resume["Feminine Words"])
+            with detail_tab2:
+                st.markdown("#### ✨ Bias-Free Rewritten Resume")
+                st.write(resume["Rewritten Text"])
 
-        st.markdown("### 📚 Detected Words:")
-        col3, col4 = st.columns(2)
-        with col3:
-            st.markdown("**Masculine Words Found:**")
-            if resume["Detected Masculine Words"]:
-                detected_masc_words = ", ".join(f"{word} ({count})" for word, count in resume["Detected Masculine Words"].items())
-                st.write(detected_masc_words)
-            else:
-                st.write("None")
-
-        with col4:
-            st.markdown("**Feminine Words Found:**")
-            if resume["Detected Feminine Words"]:
-                detected_fem_words = ", ".join(f"{word} ({count})" for word, count in resume["Detected Feminine Words"].items())
-                st.write(detected_fem_words)
-            else:
-                st.write("None")
+                st.download_button(
+                    label="📥 Download Bias-Free Resume",
+                    data=resume["Rewritten Text"],
+                    file_name=f"{resume['Resume Name'].split('.')[0]}_bias_free.txt",
+                    mime="text/plain",
+                    use_container_width=True,
+                )
+        
 
 # 💬 Chat Section
 if "chain" in st.session_state:

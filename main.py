@@ -720,65 +720,69 @@ with tab1:
 # === TAB 2: Resume Builder ===
 # === TAB 2: Resume Builder ===
 with tab2:
-    st.markdown("## 🧾 Advanced Resume Builder", unsafe_allow_html=True)
-    st.markdown("---")
+ st.markdown("## 🧾 <span style='color:#336699;'>Advanced Resume Builder</span>", unsafe_allow_html=True)
+st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
-    fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary", "skills", "experience", "education", "projects"]
-    for f in fields:
-        if f not in st.session_state:
-            st.session_state[f] = ""
+# Fields to initialize in session state
+fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary", "skills", "experience", "education", "projects"]
+for f in fields:
+    if f not in st.session_state:
+        st.session_state[f] = ""
 
-    with st.form("resume_form"):
-        st.markdown("### 👤 Personal Information")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.text_input("Full Name", value=st.session_state["name"], key="name", placeholder="John Doe")
-            st.text_input("Phone Number", value=st.session_state["phone"], key="phone", placeholder="+1234567890")
-            st.text_input("Location", value=st.session_state["location"], key="location", placeholder="City, Country")
-        with col2:
-            st.text_input("Email", value=st.session_state["email"], key="email", placeholder="you@example.com")
-            st.text_input("LinkedIn URL", value=st.session_state["linkedin"], key="linkedin", placeholder="https://linkedin.com/in/yourprofile")
-            st.text_input("Portfolio Website", value=st.session_state["portfolio"], key="portfolio", placeholder="https://yourportfolio.com")
+# Stylish form
+with st.form("resume_form"):
+    st.markdown("### 👤 <u>Personal Information</u>", unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
+    with col1:
+        st.text_input("👤 Full Name", value=st.session_state["name"], key="name", placeholder="John Doe")
+        st.text_input("📞 Phone Number", value=st.session_state["phone"], key="phone", placeholder="+1234567890")
+        st.text_input("📍 Location", value=st.session_state["location"], key="location", placeholder="City, Country")
+    with col2:
+        st.text_input("📧 Email", value=st.session_state["email"], key="email", placeholder="you@example.com")
+        st.text_input("🔗 LinkedIn", value=st.session_state["linkedin"], key="linkedin", placeholder="https://linkedin.com/in/...")
+        st.text_input("🌐 Portfolio", value=st.session_state["portfolio"], key="portfolio", placeholder="https://yourportfolio.com")
 
-        st.markdown("### 📝 Professional Summary")
-        st.text_area("Write a brief summary of your professional background.", value=st.session_state["summary"], key="summary", height=120)
+    st.markdown("### 📝 <u>Professional Summary</u>", unsafe_allow_html=True)
+    st.text_area("Summarize your background and expertise.", value=st.session_state["summary"], key="summary", height=120)
 
-        st.markdown("### 💼 Skills & Experience")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.text_area("Skills (comma-separated)", value=st.session_state["skills"], key="skills", height=120)
-        with col2:
-            st.text_area("Work Experience", value=st.session_state["experience"], key="experience", height=120)
+    st.markdown("### 💼 <u>Skills & Experience</u>", unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
+    with col1:
+        st.text_area("🔧 Skills (comma-separated)", value=st.session_state["skills"], key="skills", height=120)
+    with col2:
+        st.text_area("🏢 Work Experience", value=st.session_state["experience"], key="experience", height=120)
 
-        st.markdown("### 🎓 Education & Projects")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.text_area("Education", value=st.session_state["education"], key="education", height=120)
-        with col2:
-            st.text_area("Projects (optional)", value=st.session_state["projects"], key="projects", height=120)
+    st.markdown("### 🎓 <u>Education & Projects</u>", unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
+    with col1:
+        st.text_area("🎓 Education", value=st.session_state["education"], key="education", height=120)
+    with col2:
+        st.text_area("🛠 Projects", value=st.session_state["projects"], key="projects", height=120)
 
-        submitted = st.form_submit_button("📑 Generate Resume")
+    submitted = st.form_submit_button("📑 Generate Resume")
 
-    if submitted:
-        doc = Document()
-        doc.add_heading(st.session_state["name"], 0)
+# Generate Word Document
+if submitted:
+    doc = Document()
+    doc.add_heading(st.session_state["name"], 0)
 
-        doc.add_paragraph(f"Phone: {st.session_state['phone']}")
-        doc.add_paragraph(f"Location: {st.session_state['location']}")
+    # Contact Info
+    doc.add_paragraph(f"📞 Phone: {st.session_state['phone']}")
+    doc.add_paragraph(f"📍 Location: {st.session_state['location']}")
 
-# Add clickable email
     if st.session_state["email"]:
-     add_hyperlink(doc.add_paragraph(), f"mailto:{st.session_state['email']}", st.session_state["email"])
+        p = doc.add_paragraph()
+        add_hyperlink(p, f"mailto:{st.session_state['email']}", st.session_state["email"])
 
-# Add clickable LinkedIn
-if st.session_state["linkedin"]:
-    add_hyperlink(doc.add_paragraph(), st.session_state["linkedin"], "LinkedIn Profile")
+    if st.session_state["linkedin"]:
+        p = doc.add_paragraph()
+        add_hyperlink(p, st.session_state["linkedin"], "LinkedIn Profile")
 
-# Add clickable Portfolio
-if st.session_state["portfolio"]:
-    add_hyperlink(doc.add_paragraph(), st.session_state["portfolio"], "Portfolio Website")
+    if st.session_state["portfolio"]:
+        p = doc.add_paragraph()
+        add_hyperlink(p, st.session_state["portfolio"], "Portfolio Website")
 
-
+    # Sections
     doc.add_heading("Professional Summary", level=1)
     doc.add_paragraph(st.session_state["summary"])
 
@@ -792,9 +796,10 @@ if st.session_state["portfolio"]:
     doc.add_paragraph(st.session_state["education"])
 
     if st.session_state["projects"].strip():
-            doc.add_heading("Projects", level=1)
-            doc.add_paragraph(st.session_state["projects"])
+        doc.add_heading("Projects", level=1)
+        doc.add_paragraph(st.session_state["projects"])
 
+    # Download
     doc_io = io.BytesIO()
     doc.save(doc_io)
     doc_io.seek(0)
@@ -802,13 +807,14 @@ if st.session_state["portfolio"]:
     st.success("✅ Resume Generated Successfully!")
 
     st.download_button(
-            label="📥 Download Resume (Word)",
-            data=doc_io,
-            file_name=f"{st.session_state['name'].replace(' ', '_')}_resume.docx",
-            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            use_container_width=True
-        )
+        label="📥 Download Resume (Word)",
+        data=doc_io,
+        file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.docx",
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        use_container_width=True
+    )
 
+    
 
 
                 

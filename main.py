@@ -721,7 +721,7 @@ with tab1:
 # === TAB 2: Resume Builder ===
 with tab2:
   st.markdown("## 🧾 <span style='color:#336699;'>Advanced Resume Builder</span>", unsafe_allow_html=True)
-    st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
+st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
     # Session state setup
     fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary", "skills", "education", "projects"]

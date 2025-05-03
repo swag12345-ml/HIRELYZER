@@ -198,34 +198,41 @@ gender_words = {
 }
 
 def add_hyperlink(paragraph, url, text, color="0000FF", underline=True):
-    """Add a clickable hyperlink to a paragraph."""
+    """Add a clickable hyperlink to a paragraph in a Word document."""
     part = paragraph.part
-    r_id = part.relate_to(url, 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink', is_external=True)
+    r_id = part.relate_to(
+        url,
+        "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink",
+        is_external=True,
+    )
 
-    hyperlink = OxmlElement('w:hyperlink')
-    hyperlink.set(qn('r:id'), r_id)
+    hyperlink = OxmlElement("w:hyperlink")
+    hyperlink.set(qn("r:id"), r_id)
 
-    new_run = OxmlElement('w:r')
-    rPr = OxmlElement('w:rPr')
+    new_run = OxmlElement("w:r")
+    rPr = OxmlElement("w:rPr")
 
+    # Underline
     if underline:
-        u = OxmlElement('w:u')
-        u.set(qn('w:val'), 'single')
+        u = OxmlElement("w:u")
+        u.set(qn("w:val"), "single")
         rPr.append(u)
 
+    # Color
     if color:
-        c = OxmlElement('w:color')
-        c.set(qn('w:val'), color)
+        c = OxmlElement("w:color")
+        c.set(qn("w:val"), color)
         rPr.append(c)
 
     new_run.append(rPr)
-    new_run_text = OxmlElement('w:t')
-    new_run_text.text = text
-    new_run.append(new_run_text)
+    text_elem = OxmlElement("w:t")
+    text_elem.text = text
+    new_run.append(text_elem)
     hyperlink.append(new_run)
 
     paragraph._p.append(hyperlink)
     return paragraph
+
 
 # Extract text from PDF
 def extract_text_from_pdf(file_path):

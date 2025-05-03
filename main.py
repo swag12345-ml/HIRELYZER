@@ -788,21 +788,20 @@ if submitted:
 
         doc.add_paragraph(f"📞 {st.session_state['phone']} | 📍 {st.session_state['location']}")
 
-# Add clickable email
+# 📧 Email with "logo"
 if st.session_state["email"]:
-    p = doc.add_paragraph()
+    p = doc.add_paragraph("📧 ")
     add_hyperlink(p, f"mailto:{st.session_state['email']}", st.session_state["email"])
 
-# Add clickable LinkedIn
+# 🔗 LinkedIn with logo
 if st.session_state["linkedin"]:
-    p = doc.add_paragraph()
+    p = doc.add_paragraph("🔗 ")
     add_hyperlink(p, st.session_state["linkedin"], "LinkedIn Profile")
 
-# Add clickable Portfolio
+# 🌐 Portfolio with logo
 if st.session_state["portfolio"]:
-    p = doc.add_paragraph()
+    p = doc.add_paragraph("🌐 ")
     add_hyperlink(p, st.session_state["portfolio"], "Portfolio Website")
-
 
     doc.add_heading("Professional Summary", level=1)
     doc.add_paragraph(st.session_state["summary"])
@@ -833,6 +832,7 @@ if st.session_state["portfolio"]:
     doc_io.seek(0)
 
     st.success("✅ Resume Generated Successfully!")
+    
     st.download_button(
             label="📥 Download Resume (Word)",
             data=doc_io,

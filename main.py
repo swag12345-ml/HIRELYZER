@@ -720,100 +720,103 @@ with tab1:
 # === TAB 2: Resume Builder ===
 # === TAB 2: Resume Builder ===
 with tab2:
- st.markdown("## 🧾 <span style='color:#336699;'>Advanced Resume Builder</span>", unsafe_allow_html=True)
-st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
+  st.markdown("## 🧾 <span style='color:#336699;'>Advanced Resume Builder</span>", unsafe_allow_html=True)
+    st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
-# Fields to initialize in session state
-fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary", "skills", "experience", "education", "projects"]
-for f in fields:
-    if f not in st.session_state:
-        st.session_state[f] = ""
+    # Session state setup
+    fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary", "skills", "education", "projects"]
+    for f in fields:
+        if f not in st.session_state:
+            st.session_state[f] = ""
 
-# Stylish form
-with st.form("resume_form"):
-    st.markdown("### 👤 <u>Personal Information</u>", unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-    with col1:
-        st.text_input("👤 Full Name", value=st.session_state["name"], key="name", placeholder="John Doe")
-        st.text_input("📞 Phone Number", value=st.session_state["phone"], key="phone", placeholder="+1234567890")
-        st.text_input("📍 Location", value=st.session_state["location"], key="location", placeholder="City, Country")
-    with col2:
-        st.text_input("📧 Email", value=st.session_state["email"], key="email", placeholder="you@example.com")
-        st.text_input("🔗 LinkedIn", value=st.session_state["linkedin"], key="linkedin", placeholder="https://linkedin.com/in/...")
-        st.text_input("🌐 Portfolio", value=st.session_state["portfolio"], key="portfolio", placeholder="https://yourportfolio.com")
+    # Initialize dynamic work experience blocks
+    if "experience_entries" not in st.session_state:
+        st.session_state.experience_entries = [{"title": "", "company": "", "duration": "", "description": ""}]
 
-    st.markdown("### 📝 <u>Professional Summary</u>", unsafe_allow_html=True)
-    st.text_area("Summarize your background and expertise.", value=st.session_state["summary"], key="summary", height=120)
+    # === FORM ===
+    with st.form("resume_form"):
+        st.markdown("### 👤 <u>Personal Information</u>", unsafe_allow_html=True)
+        col1, col2 = st.columns(2)
+        with col1:
+            st.text_input("👤 Full Name", value=st.session_state["name"], key="name", placeholder="John Doe")
+            st.text_input("📞 Phone Number", value=st.session_state["phone"], key="phone", placeholder="+1234567890")
+            st.text_input("📍 Location", value=st.session_state["location"], key="location", placeholder="City, Country")
+        with col2:
+            st.text_input("📧 Email", value=st.session_state["email"], key="email", placeholder="you@example.com")
+            st.text_input("🔗 LinkedIn", value=st.session_state["linkedin"], key="linkedin", placeholder="https://linkedin.com/in/...")
+            st.text_input("🌐 Portfolio", value=st.session_state["portfolio"], key="portfolio", placeholder="https://yourportfolio.com")
 
-    st.markdown("### 💼 <u>Skills & Experience</u>", unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-    with col1:
-        st.text_area("🔧 Skills (comma-separated)", value=st.session_state["skills"], key="skills", height=120)
-    with col2:
-        st.text_area("🏢 Work Experience", value=st.session_state["experience"], key="experience", height=120)
+        st.markdown("### 📝 <u>Professional Summary</u>", unsafe_allow_html=True)
+        st.text_area("Summarize your background and expertise.", value=st.session_state["summary"], key="summary", height=120)
 
-    st.markdown("### 🎓 <u>Education & Projects</u>", unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-    with col1:
-        st.text_area("🎓 Education", value=st.session_state["education"], key="education", height=120)
-    with col2:
-        st.text_area("🛠 Projects", value=st.session_state["projects"], key="projects", height=120)
+        st.markdown("### 💼 <u>Skills</u>", unsafe_allow_html=True)
+        st.text_area("🔧 Skills (comma-separated)", value=st.session_state["skills"], key="skills", height=100)
 
-    submitted = st.form_submit_button("📑 Generate Resume")
+        st.markdown("### 🧱 <u>Work Experience</u>", unsafe_allow_html=True)
+        for idx, exp in enumerate(st.session_state.experience_entries):
+            with st.expander(f"Experience #{idx+1}", expanded=True):
+                exp["title"] = st.text_input(f"Job Title #{idx+1}", value=exp["title"], key=f"title_{idx}")
+                exp["company"] = st.text_input(f"Company #{idx+1}", value=exp["company"], key=f"company_{idx}")
+                exp["duration"] = st.text_input(f"Duration #{idx+1}", value=exp["duration"], key=f"duration_{idx}")
+                exp["description"] = st.text_area(f"Description #{idx+1}", value=exp["description"], key=f"description_{idx}")
 
-# Generate Word Document
-if submitted:
-    doc = Document()
-    doc.add_heading(st.session_state["name"], 0)
+        if st.form_submit_button("➕ Add Experience"):
+            st.session_state.experience_entries.append({"title": "", "company": "", "duration": "", "description": ""})
 
-    # Contact Info
-    doc.add_paragraph(f"📞 Phone: {st.session_state['phone']}")
-    doc.add_paragraph(f"📍 Location: {st.session_state['location']}")
+        st.markdown("### 🎓 <u>Education & Projects</u>", unsafe_allow_html=True)
+        col1, col2 = st.columns(2)
+        with col1:
+            st.text_area("🎓 Education", value=st.session_state["education"], key="education", height=120)
+        with col2:
+            st.text_area("🛠 Projects", value=st.session_state["projects"], key="projects", height=120)
 
-    if st.session_state["email"]:
-        p = doc.add_paragraph()
-        add_hyperlink(p, f"mailto:{st.session_state['email']}", st.session_state["email"])
+        submitted = st.form_submit_button("📑 Generate Resume")
 
-    if st.session_state["linkedin"]:
-        p = doc.add_paragraph()
-        add_hyperlink(p, st.session_state["linkedin"], "LinkedIn Profile")
+    # === Generate Word Resume ===
+    if submitted:
+        doc = Document()
+        doc.add_heading(st.session_state["name"], 0)
 
-    if st.session_state["portfolio"]:
-        p = doc.add_paragraph()
-        add_hyperlink(p, st.session_state["portfolio"], "Portfolio Website")
+        doc.add_paragraph(f"📧 {st.session_state['email']} | 📞 {st.session_state['phone']}")
+        doc.add_paragraph(f"📍 {st.session_state['location']} | 🔗 LinkedIn: {st.session_state['linkedin']}")
+        doc.add_paragraph(f"🌐 Portfolio: {st.session_state['portfolio']}")
 
-    # Sections
-    doc.add_heading("Professional Summary", level=1)
-    doc.add_paragraph(st.session_state["summary"])
+        doc.add_heading("Professional Summary", level=1)
+        doc.add_paragraph(st.session_state["summary"])
 
-    doc.add_heading("Skills", level=1)
-    doc.add_paragraph(st.session_state["skills"])
+        doc.add_heading("Skills", level=1)
+        skills = [s.strip() for s in st.session_state["skills"].split(",") if s.strip()]
+        for skill in skills:
+            doc.add_paragraph(f"• {skill}", style="List Bullet")
 
-    doc.add_heading("Work Experience", level=1)
-    doc.add_paragraph(st.session_state["experience"])
+        doc.add_heading("Work Experience", level=1)
+        for exp in st.session_state.experience_entries:
+            if exp["title"] or exp["company"]:
+                para = doc.add_paragraph()
+                para.add_run(exp["title"]).bold = True
+                para.add_run(f" | {exp['company']} | {exp['duration']}")
+                doc.add_paragraph(exp["description"])
 
-    doc.add_heading("Education", level=1)
-    doc.add_paragraph(st.session_state["education"])
+        doc.add_heading("Education", level=1)
+        doc.add_paragraph(st.session_state["education"])
 
-    if st.session_state["projects"].strip():
-        doc.add_heading("Projects", level=1)
-        doc.add_paragraph(st.session_state["projects"])
+        if st.session_state["projects"].strip():
+            doc.add_heading("Projects", level=1)
+            doc.add_paragraph(st.session_state["projects"])
 
-    # Download
-    doc_io = io.BytesIO()
-    doc.save(doc_io)
-    doc_io.seek(0)
+        # Download
+        doc_io = io.BytesIO()
+        doc.save(doc_io)
+        doc_io.seek(0)
 
-    st.success("✅ Resume Generated Successfully!")
-
-    st.download_button(
-        label="📥 Download Resume (Word)",
-        data=doc_io,
-        file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.docx",
-        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        use_container_width=True
-    )
-
+        st.success("✅ Resume Generated Successfully!")
+        st.download_button(
+            label="📥 Download Resume (Word)",
+            data=doc_io,
+            file_name=f"{st.session_state['name'].replace(' ', '_')}_resume.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            use_container_width=True
+        )
     
 
 

@@ -234,6 +234,7 @@ def add_hyperlink(paragraph, url, text, color="0000FF", underline=True):
     return paragraph
 
 
+
 # Extract text from PDF
 def extract_text_from_pdf(file_path):
     try:
@@ -785,40 +786,54 @@ if submitted:
         doc = Document()
         doc.add_heading(st.session_state["name"], 0)
 
-        doc.add_paragraph(f"📧 {st.session_state['email']} | 📞 {st.session_state['phone']}")
-        doc.add_paragraph(f"📍 {st.session_state['location']} | 🔗 LinkedIn: {st.session_state['linkedin']}")
-        doc.add_paragraph(f"🌐 Portfolio: {st.session_state['portfolio']}")
+        doc.add_paragraph(f"📞 {st.session_state['phone']} | 📍 {st.session_state['location']}")
 
-        doc.add_heading("Professional Summary", level=1)
-        doc.add_paragraph(st.session_state["summary"])
+# Add clickable email
+if st.session_state["email"]:
+    p = doc.add_paragraph()
+    add_hyperlink(p, f"mailto:{st.session_state['email']}", st.session_state["email"])
 
-        doc.add_heading("Skills", level=1)
-        skills = [s.strip() for s in st.session_state["skills"].split(",") if s.strip()]
-        for skill in skills:
+# Add clickable LinkedIn
+if st.session_state["linkedin"]:
+    p = doc.add_paragraph()
+    add_hyperlink(p, st.session_state["linkedin"], "LinkedIn Profile")
+
+# Add clickable Portfolio
+if st.session_state["portfolio"]:
+    p = doc.add_paragraph()
+    add_hyperlink(p, st.session_state["portfolio"], "Portfolio Website")
+
+
+    doc.add_heading("Professional Summary", level=1)
+    doc.add_paragraph(st.session_state["summary"])
+
+    doc.add_heading("Skills", level=1)
+    skills = [s.strip() for s in st.session_state["skills"].split(",") if s.strip()]
+    for skill in skills:
             doc.add_paragraph(f"• {skill}", style="List Bullet")
 
-        doc.add_heading("Work Experience", level=1)
-        for exp in st.session_state.experience_entries:
+    doc.add_heading("Work Experience", level=1)
+    for exp in st.session_state.experience_entries:
             if exp["title"] or exp["company"]:
                 para = doc.add_paragraph()
                 para.add_run(exp["title"]).bold = True
                 para.add_run(f" | {exp['company']} | {exp['duration']}")
                 doc.add_paragraph(exp["description"])
 
-        doc.add_heading("Education", level=1)
-        doc.add_paragraph(st.session_state["education"])
+    doc.add_heading("Education", level=1)
+    doc.add_paragraph(st.session_state["education"])
 
-        if st.session_state["projects"].strip():
+    if st.session_state["projects"].strip():
             doc.add_heading("Projects", level=1)
             doc.add_paragraph(st.session_state["projects"])
 
         # Download
-        doc_io = io.BytesIO()
-        doc.save(doc_io)
-        doc_io.seek(0)
+    doc_io = io.BytesIO()
+    doc.save(doc_io)
+    doc_io.seek(0)
 
-        st.success("✅ Resume Generated Successfully!")
-        st.download_button(
+    st.success("✅ Resume Generated Successfully!")
+    st.download_button(
             label="📥 Download Resume (Word)",
             data=doc_io,
             file_name=f"{st.session_state['name'].replace(' ', '_')}_resume.docx",

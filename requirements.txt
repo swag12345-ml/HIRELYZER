@@ -16,3 +16,4 @@ pytesseract
 fpdf
 matplotlib
 nltk
+python-docx

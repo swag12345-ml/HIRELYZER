@@ -16,6 +16,16 @@ import nltk
 nltk.download('wordnet')
 lemmatizer = WordNetLemmatizer()
 
+from docx import Document
+import io
+from docx import Document
+from docx.shared import Inches
+import io
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.shared import Pt
+
+from PIL import Image
 from collections import Counter
 from dotenv import load_dotenv
 from pdf2image import convert_from_path
@@ -25,161 +35,117 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
-import streamlit as st
-import streamlit.components.v1 as components
-import time
 
-# 🚀 Rocket Welcome Animation
-st.markdown(
-    """
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+# Set page config
+st.set_page_config(page_title="Chat with LEXIBOT", page_icon="📝", layout="centered")
 
-    html, body, [class*="css"] {
-        font-family: 'Orbitron', sans-serif;
-        background-color: #0b0c10;
-        color: #c5c6c7;
-    }
-
-    .banner-container {
-        position: relative;
-        width: 100%;
-        height: 80px;
-        overflow: hidden;
-        background: linear-gradient(to right, #000428, #004e92);
-        border-bottom: 2px solid cyan;
-        margin-bottom: 20px;
-    }
-
-    .rocket-fly {
-        position: absolute;
-        top: 15px;
-        left: -30%;
-        display: flex;
-        align-items: center;
-        font-size: 24px;
-        font-weight: bold;
-        color: #00ffff;
-        white-space: nowrap;
-        animation: flyAcross 10s linear infinite;
-        text-shadow: 0 0 10px #00ffff;
-    }
-
-    .rocket-fly .rocket {
-        font-size: 40px;
-        margin-right: 10px;
-        animation: wiggle 0.5s infinite alternate;
-    }
-
-    @keyframes flyAcross {
-        0%   { left: -40%; }
-        100% { left: 110%; }
-    }
-
-    @keyframes wiggle {
-        0%   { transform: translateY(0px); }
-        100% { transform: translateY(-8px); }
-    }
-    </style>
-
-    <div class="banner-container">
-        <div class="rocket-fly">
-            <div class="rocket">🚀</div>
-            <div>Welcome to LEXIBOT</div>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-
-# 🌐 Global Page CSS
+# CSS Customization
 st.markdown(
     """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 
-    html, body, [class*="css"] {
-        font-family: 'Orbitron', sans-serif;
+    body {
         background-color: #0b0c10;
         color: #c5c6c7;
+        font-family: 'Orbitron', sans-serif;
     }
 
-    /* Neon Glow Header */
+    /* Glitch Animation */
+    @keyframes glitch {
+        0% { text-shadow: 2px 2px #ff0000, -2px -2px #00ffcc; }
+        25% { text-shadow: -2px -2px #ff0000, 2px 2px #00ffcc; }
+        50% { text-shadow: 3px -3px #ff00ff, -3px 3px #ff9900; }
+        75% { text-shadow: -3px -3px #ff9900, 3px 3px #33ff00; }
+        100% { text-shadow: 2px 2px #ff00ff, -2px -2px #0099ff; }
+    }
+
+    /* RGB Color Animation */
+    @keyframes smoothGlow {
+        0% { color: #ff0000; text-shadow: 0 0 10px #ff0000; }
+        25% { color: #ff9900; text-shadow: 0 0 15px #ff9900; }
+        50% { color: #00ff00; text-shadow: 0 0 20px #00ff00; }
+        75% { color: #0099ff; text-shadow: 0 0 15px #0099ff; }
+        100% { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
+    }
+
+    /* Header */
     .header {
-        font-size: 28px;
+        font-size: 25px;
         font-weight: bold;
         text-align: center;
         text-transform: uppercase;
-        letter-spacing: 2px;
-        animation: neonPulse 2.5s infinite alternate, glitch 1s infinite;
-        text-shadow: 0px 0px 10px #00ffff;
-        padding: 10px 0;
+        letter-spacing: 3px;
+        animation: glitch 0.8s infinite, smoothGlow 3s infinite alternate;
+        text-shadow: 0px 0px 20px cyan;
     }
 
-    @keyframes neonPulse {
-        0% { color: #00ffff; text-shadow: 0 0 10px #00ffff; }
-        50% { color: #ff00ff; text-shadow: 0 0 20px #ff00ff; }
-        100% { color: #00ffff; text-shadow: 0 0 10px #00ffff; }
-    }
-
-    @keyframes glitch {
-        0% { text-shadow: 2px 2px #ff00ff, -2px -2px #00ffff; }
-        50% { text-shadow: -2px -2px #00ffff, 2px 2px #ff00ff; }
-        100% { text-shadow: 2px 2px #ff00ff, -2px -2px #00ffff; }
-    }
-
-    /* Styled Upload Box */
-    .stFileUploader > div > div {
-        border: 2px solid #00ffff;
-        border-radius: 10px;
-        animation: pulse 2s infinite;
-        background-color: rgba(0, 255, 255, 0.1);
-        padding: 12px;
-    }
-
-    @keyframes pulse {
-        0% { box-shadow: 0 0 5px cyan; }
-        50% { box-shadow: 0 0 25px cyan; }
-        100% { box-shadow: 0 0 5px cyan; }
-    }
-
-    /* Button Glow */
+    /* Buttons - Neon Glow Effect */
     .stButton > button {
-        background: linear-gradient(45deg, #ff0080, #00bfff);
+        background: linear-gradient(45deg, #ff0080, #007BFF);
         color: white;
-        font-size: 16px;
+        font-size: 18px;
         font-weight: bold;
-        border: none;
         border-radius: 8px;
-        padding: 10px 20px;
+        padding: 10px;
         text-transform: uppercase;
-        box-shadow: 0px 0px 12px #00ffff;
-        transition: all 0.3s ease-in-out;
+        box-shadow: 0px 0px 15px rgba(0, 198, 255, 0.8);
+        transition: 0.3s ease-in-out;
     }
-
     .stButton > button:hover {
-        transform: scale(1.05);
-        box-shadow: 0px 0px 24px #ff00ff;
-        background: linear-gradient(45deg, #ff00aa, #00ffff);
+        background: linear-gradient(45deg, #ff0077, #00ccff);
+        transform: scale(1.08);
+        box-shadow: 0px 0px 30px rgba(255, 0, 128, 1);
     }
 
-    /* Chat message */
-    .stChatMessage {
+    /* Chat Answer Box */
+    @keyframes typing {
+        from { width: 0; }
+        to { width: 100%; }
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes neonText {
+        0% { color: #ff44ff; text-shadow: 0px 0px 15px #ff44ff; }
+        50% { color: #00ffff; text-shadow: 0px 0px 20px #00ffff; }
+        100% { color: #ff00ff; text-shadow: 0px 0px 15px #ff00ff; }
+    }
+    
+  .stChatMessage {
         font-size: 18px;
         background: #1e293b;
-        padding: 14px;
-        border-radius: 10px;
+        padding: 12px;
+        border-radius: 8px;
         border: 2px solid #00ffff;
         color: #ccffff;
-        text-shadow: 0px 0px 6px #00ffff;
+        text-shadow: 0px 0px 8px #00ffff;
         animation: glow 1.5s infinite alternate;
     }
 
+    /* Upload Animation - Glowing File Upload */
+    @keyframes pulse {
+        0% { box-shadow: 0 0 5px cyan; }
+        50% { box-shadow: 0 0 20px cyan; }
+        100% { box-shadow: 0 0 5px cyan; }
+    }
+    .stFileUploader > div > div {
+        border: 2px solid cyan;
+        animation: pulse 2s infinite;
+        padding: 10px;
+        border-radius: 8px;
+        background-color: rgba(0, 255, 255, 0.1);
+        text-align: center;
+    }
+
     </style>
-    <div class="header">🤖 LEXIBOT - POWERED BY SEMICOLON</div>
+
+    <div class="header">
+        🤖 LEXIBOT - POWERED BY SEMICOLON
+    </div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 
@@ -231,7 +197,35 @@ gender_words = {
     ]
 }
 
+def add_hyperlink(paragraph, url, text, color="0000FF", underline=True):
+    """Add a clickable hyperlink to a paragraph."""
+    part = paragraph.part
+    r_id = part.relate_to(url, 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink', is_external=True)
 
+    hyperlink = OxmlElement('w:hyperlink')
+    hyperlink.set(qn('r:id'), r_id)
+
+    new_run = OxmlElement('w:r')
+    rPr = OxmlElement('w:rPr')
+
+    if underline:
+        u = OxmlElement('w:u')
+        u.set(qn('w:val'), 'single')
+        rPr.append(u)
+
+    if color:
+        c = OxmlElement('w:color')
+        c.set(qn('w:val'), color)
+        rPr.append(c)
+
+    new_run.append(rPr)
+    new_run_text = OxmlElement('w:t')
+    new_run_text.text = text
+    new_run.append(new_run_text)
+    hyperlink.append(new_run)
+
+    paragraph._p.append(hyperlink)
+    return paragraph
 
 # Extract text from PDF
 def extract_text_from_pdf(file_path):
@@ -620,30 +614,33 @@ if uploaded_files:
         st.session_state.chain = create_chain(st.session_state.vectorstore)
 
 # 📊 Dashboard and Metrics
-if resume_data:
-    total_masc = sum(r["Masculine Words"] for r in resume_data)
-    total_fem = sum(r["Feminine Words"] for r in resume_data)
-    avg_bias = round(np.mean([r["Bias Score (0 = Fair, 1 = Biased)"] for r in resume_data]), 2)
-    total_resumes = len(resume_data)
+tab1, tab2 = st.tabs(["📊 Dashboard", "🧾 Resume Builder"])
 
-    st.markdown("### 📊 Summary Statistics")
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("📄 Resumes Uploaded", total_resumes)
-    with col2:
-        st.metric("🔎 Avg. Bias Score", avg_bias)
-    with col3:
-        st.metric("🔵 Total Masculine Words", total_masc)
-    with col4:
-        st.metric("🔴 Total Feminine Words", total_fem)
+# === TAB 1: Dashboard ===
+with tab1:
+    if resume_data:
+        total_masc = sum(r["Masculine Words"] for r in resume_data)
+        total_fem = sum(r["Feminine Words"] for r in resume_data)
+        avg_bias = round(np.mean([r["Bias Score (0 = Fair, 1 = Biased)"] for r in resume_data]), 2)
+        total_resumes = len(resume_data)
 
-    # 📋 Resume Table
-    st.markdown("### 🗂️ Resumes Overview")
-    df = pd.DataFrame(resume_data)
-    st.dataframe(
-        df[["Resume Name", "Candidate Name", "ATS Match %", "Bias Score (0 = Fair, 1 = Biased)", "Masculine Words", "Feminine Words"]],
-        use_container_width=True
-    )
+        st.markdown("### 📊 Summary Statistics")
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("📄 Resumes Uploaded", total_resumes)
+        with col2:
+            st.metric("🔎 Avg. Bias Score", avg_bias)
+        with col3:
+            st.metric("🔵 Total Masculine Words", total_masc)
+        with col4:
+            st.metric("🔴 Total Feminine Words", total_fem)
+
+        st.markdown("### 🗂️ Resumes Overview")
+        df = pd.DataFrame(resume_data)
+        st.dataframe(
+            df[["Resume Name", "Candidate Name", "ATS Match %", "Bias Score (0 = Fair, 1 = Biased)", "Masculine Words", "Feminine Words"]],
+            use_container_width=True
+        )
 
     # 📈 Charts Section
     st.markdown("### 📊 Visual Analysis")
@@ -719,6 +716,102 @@ if resume_data:
                     mime="text/plain",
                     use_container_width=True,
                 )
+
+# === TAB 2: Resume Builder ===
+# === TAB 2: Resume Builder ===
+with tab2:
+    st.markdown("## 🧾 Advanced Resume Builder", unsafe_allow_html=True)
+    st.markdown("---")
+
+    fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary", "skills", "experience", "education", "projects"]
+    for f in fields:
+        if f not in st.session_state:
+            st.session_state[f] = ""
+
+    with st.form("resume_form"):
+        st.markdown("### 👤 Personal Information")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.text_input("Full Name", value=st.session_state["name"], key="name", placeholder="John Doe")
+            st.text_input("Phone Number", value=st.session_state["phone"], key="phone", placeholder="+1234567890")
+            st.text_input("Location", value=st.session_state["location"], key="location", placeholder="City, Country")
+        with col2:
+            st.text_input("Email", value=st.session_state["email"], key="email", placeholder="you@example.com")
+            st.text_input("LinkedIn URL", value=st.session_state["linkedin"], key="linkedin", placeholder="https://linkedin.com/in/yourprofile")
+            st.text_input("Portfolio Website", value=st.session_state["portfolio"], key="portfolio", placeholder="https://yourportfolio.com")
+
+        st.markdown("### 📝 Professional Summary")
+        st.text_area("Write a brief summary of your professional background.", value=st.session_state["summary"], key="summary", height=120)
+
+        st.markdown("### 💼 Skills & Experience")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.text_area("Skills (comma-separated)", value=st.session_state["skills"], key="skills", height=120)
+        with col2:
+            st.text_area("Work Experience", value=st.session_state["experience"], key="experience", height=120)
+
+        st.markdown("### 🎓 Education & Projects")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.text_area("Education", value=st.session_state["education"], key="education", height=120)
+        with col2:
+            st.text_area("Projects (optional)", value=st.session_state["projects"], key="projects", height=120)
+
+        submitted = st.form_submit_button("📑 Generate Resume")
+
+    if submitted:
+        doc = Document()
+        doc.add_heading(st.session_state["name"], 0)
+
+        doc.add_paragraph(f"Phone: {st.session_state['phone']}")
+        doc.add_paragraph(f"Location: {st.session_state['location']}")
+
+# Add clickable email
+    if st.session_state["email"]:
+     add_hyperlink(doc.add_paragraph(), f"mailto:{st.session_state['email']}", st.session_state["email"])
+
+# Add clickable LinkedIn
+if st.session_state["linkedin"]:
+    add_hyperlink(doc.add_paragraph(), st.session_state["linkedin"], "LinkedIn Profile")
+
+# Add clickable Portfolio
+if st.session_state["portfolio"]:
+    add_hyperlink(doc.add_paragraph(), st.session_state["portfolio"], "Portfolio Website")
+
+
+    doc.add_heading("Professional Summary", level=1)
+    doc.add_paragraph(st.session_state["summary"])
+
+    doc.add_heading("Skills", level=1)
+    doc.add_paragraph(st.session_state["skills"])
+
+    doc.add_heading("Work Experience", level=1)
+    doc.add_paragraph(st.session_state["experience"])
+
+    doc.add_heading("Education", level=1)
+    doc.add_paragraph(st.session_state["education"])
+
+    if st.session_state["projects"].strip():
+            doc.add_heading("Projects", level=1)
+            doc.add_paragraph(st.session_state["projects"])
+
+    doc_io = io.BytesIO()
+    doc.save(doc_io)
+    doc_io.seek(0)
+
+    st.success("✅ Resume Generated Successfully!")
+
+    st.download_button(
+            label="📥 Download Resume (Word)",
+            data=doc_io,
+            file_name=f"{st.session_state['name'].replace(' ', '_')}_resume.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            use_container_width=True
+        )
+
+
+
+                
         
 
 # 💬 Chat Section

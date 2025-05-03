@@ -720,21 +720,22 @@ with tab1:
 # === TAB 2: Resume Builder ===
 # === TAB 2: Resume Builder ===
 with tab2:
+ with tab2:
   st.markdown("## 🧾 <span style='color:#336699;'>Advanced Resume Builder</span>", unsafe_allow_html=True)
 st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
     # Session state setup
-    fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary", "skills", "education", "projects"]
-    for f in fields:
+fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary", "skills", "education", "projects"]
+for f in fields:
         if f not in st.session_state:
             st.session_state[f] = ""
 
     # Initialize dynamic work experience blocks
-    if "experience_entries" not in st.session_state:
+if "experience_entries" not in st.session_state:
         st.session_state.experience_entries = [{"title": "", "company": "", "duration": "", "description": ""}]
 
     # === FORM ===
-    with st.form("resume_form"):
+with st.form("resume_form"):
         st.markdown("### 👤 <u>Personal Information</u>", unsafe_allow_html=True)
         col1, col2 = st.columns(2)
         with col1:
@@ -773,7 +774,7 @@ st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
         submitted = st.form_submit_button("📑 Generate Resume")
 
     # === Generate Word Resume ===
-    if submitted:
+if submitted:
         doc = Document()
         doc.add_heading(st.session_state["name"], 0)
 

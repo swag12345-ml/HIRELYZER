@@ -763,26 +763,34 @@ if resume_data:
         
 
 # 💬 Chat Section
-if "chain" in st.session_state:
-    for msg in st.session_state.memory.load_memory_variables({}).get("chat_history", []):
+if "memory" in st.session_state:
+    history = st.session_state.memory.load_memory_variables({}).get("chat_history", [])
+    for msg in history:
         with st.chat_message("user" if msg.type == "human" else "assistant"):
             st.markdown(msg.content)
 
+# 2. Wait for user input
 user_input = st.chat_input("Ask LEXIBOT anything...")
 
+# 3. Only call chain when user submits new input
 if user_input:
+    # Show user message
     with st.chat_message("user"):
         st.markdown(user_input)
 
     try:
-        response = st.session_state.chain.invoke(
-            {"question": user_input, "chat_history": st.session_state.memory.chat_memory.messages}
-        )
+        # 🧠 Only call chain ONCE
+        response = st.session_state.chain.invoke({
+            "question": user_input,
+            "chat_history": st.session_state.memory.chat_memory.messages
+        })
         answer = response.get("answer", "❌ No answer found.")
     except Exception as e:
-        answer = f"⚠ Error: {str(e)}"
+        answer = f"⚠️ Error: {str(e)}"
 
+    # Show assistant reply
     with st.chat_message("assistant"):
         st.markdown(answer)
 
+    # Save interaction to memory
     st.session_state.memory.save_context({"input": user_input}, {"output": answer})

@@ -28,7 +28,6 @@ from docx.shared import RGBColor
 from docx.oxml.ns import qn
 
 doc = Document()
-from io import BytesIO
 from PIL import Image
 from collections import Counter
 from dotenv import load_dotenv
@@ -39,201 +38,118 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
-import streamlit as st
-import streamlit.components.v1 as components
-import time
 
-# 🚀 Rocket Welcome Animation
+# Set page config
+st.set_page_config(page_title="Chat with LEXIBOT", page_icon="📝", layout="centered")
+
+# CSS Customization
 st.markdown(
     """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 
-    html, body, [class*="css"] {
-        font-family: 'Orbitron', sans-serif;
+    body {
         background-color: #0b0c10;
         color: #c5c6c7;
-        scroll-behavior: smooth;
+        font-family: 'Orbitron', sans-serif;
     }
 
-    /* ---------- SCROLLBAR ---------- */
-    ::-webkit-scrollbar {
-        width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-        background: #1f2833;
-    }
-    ::-webkit-scrollbar-thumb {
-        background: #00ffff;
-        border-radius: 4px;
+    /* Glitch Animation */
+    @keyframes glitch {
+        0% { text-shadow: 2px 2px #ff0000, -2px -2px #00ffcc; }
+        25% { text-shadow: -2px -2px #ff0000, 2px 2px #00ffcc; }
+        50% { text-shadow: 3px -3px #ff00ff, -3px 3px #ff9900; }
+        75% { text-shadow: -3px -3px #ff9900, 3px 3px #33ff00; }
+        100% { text-shadow: 2px 2px #ff00ff, -2px -2px #0099ff; }
     }
 
-    /* ---------- BANNER ---------- */
-    .banner-container {
-        width: 100%;
-        height: 80px;
-        background: linear-gradient(90deg, #000428, #004e92);
-        border-bottom: 2px solid cyan;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        position: relative;
-        margin-bottom: 20px;
+    /* RGB Color Animation */
+    @keyframes smoothGlow {
+        0% { color: #ff0000; text-shadow: 0 0 10px #ff0000; }
+        25% { color: #ff9900; text-shadow: 0 0 15px #ff9900; }
+        50% { color: #00ff00; text-shadow: 0 0 20px #00ff00; }
+        75% { color: #0099ff; text-shadow: 0 0 15px #0099ff; }
+        100% { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
     }
 
-    .pulse-bar {
-        position: absolute;
-        display: flex;
-        align-items: center;
-        font-size: 22px;
-        font-weight: bold;
-        color: #00ffff;
-        white-space: nowrap;
-        animation: glideIn 12s linear infinite;
-        text-shadow: 0 0 10px #00ffff;
-    }
-
-    .pulse-bar .bar {
-        width: 10px;
-        height: 30px;
-        margin-right: 10px;
-        background: #00ffff;
-        box-shadow: 0 0 8px cyan;
-        animation: pulse 1s ease-in-out infinite;
-    }
-
-    @keyframes glideIn {
-        0% { left: -50%; opacity: 0; }
-        10% { opacity: 1; }
-        90% { opacity: 1; }
-        100% { left: 110%; opacity: 0; }
-    }
-
-    @keyframes pulse {
-        0%, 100% {
-            height: 20px;
-            background-color: #00ffff;
-        }
-        50% {
-            height: 40px;
-            background-color: #ff00ff;
-        }
-    }
-
-    /* ---------- HEADER ---------- */
+    /* Header */
     .header {
-        font-size: 28px;
+        font-size: 25px;
         font-weight: bold;
         text-align: center;
         text-transform: uppercase;
-        letter-spacing: 2px;
-        padding: 12px 0;
-        animation: glowPulse 3s ease-in-out infinite;
-        text-shadow: 0px 0px 10px #00ffff;
+        letter-spacing: 3px;
+        animation: glitch 0.8s infinite, smoothGlow 3s infinite alternate;
+        text-shadow: 0px 0px 20px cyan;
     }
 
-    @keyframes glowPulse {
-        0%, 100% {
-            color: #00ffff;
-            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
-        }
-        50% {
-            color: #ff00ff;
-            text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff;
-        }
-    }
-
-    /* ---------- FILE UPLOADER ---------- */
-    .stFileUploader > div > div {
-        border: 2px solid #00ffff;
-        border-radius: 10px;
-        background-color: rgba(0, 255, 255, 0.05);
-        padding: 12px;
-        box-shadow: 0 0 15px rgba(0,255,255,0.4);
-        transition: box-shadow 0.3s ease-in-out;
-    }
-    .stFileUploader > div > div:hover {
-        box-shadow: 0 0 25px rgba(0,255,255,0.8);
-    }
-
-    /* ---------- BUTTONS ---------- */
+    /* Buttons - Neon Glow Effect */
     .stButton > button {
-        background: linear-gradient(45deg, #ff0080, #00bfff);
+        background: linear-gradient(45deg, #ff0080, #007BFF);
         color: white;
-        font-size: 16px;
+        font-size: 18px;
         font-weight: bold;
-        border: none;
         border-radius: 8px;
-        padding: 10px 20px;
+        padding: 10px;
         text-transform: uppercase;
-        box-shadow: 0px 0px 12px #00ffff;
-        transition: all 0.3s ease-in-out;
+        box-shadow: 0px 0px 15px rgba(0, 198, 255, 0.8);
+        transition: 0.3s ease-in-out;
     }
     .stButton > button:hover {
-        transform: scale(1.05);
-        box-shadow: 0px 0px 24px #ff00ff;
-        background: linear-gradient(45deg, #ff00aa, #00ffff);
+        background: linear-gradient(45deg, #ff0077, #00ccff);
+        transform: scale(1.08);
+        box-shadow: 0px 0px 30px rgba(255, 0, 128, 1);
     }
 
-    /* ---------- CHAT MESSAGES ---------- */
-    .stChatMessage {
+    /* Chat Answer Box */
+    @keyframes typing {
+        from { width: 0; }
+        to { width: 100%; }
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes neonText {
+        0% { color: #ff44ff; text-shadow: 0px 0px 15px #ff44ff; }
+        50% { color: #00ffff; text-shadow: 0px 0px 20px #00ffff; }
+        100% { color: #ff00ff; text-shadow: 0px 0px 15px #ff00ff; }
+    }
+    
+  .stChatMessage {
         font-size: 18px;
         background: #1e293b;
-        padding: 14px;
-        border-radius: 10px;
+        padding: 12px;
+        border-radius: 8px;
         border: 2px solid #00ffff;
         color: #ccffff;
-        text-shadow: 0px 0px 6px #00ffff;
-        animation: glow 1.5s ease-in-out infinite alternate;
+        text-shadow: 0px 0px 8px #00ffff;
+        animation: glow 1.5s infinite alternate;
     }
 
-    /* ---------- INPUTS ---------- */
-    .stTextInput > div > input,
-    .stTextArea > div > textarea {
-        background-color: #1f2833;
-        color: #00ffff;
-        border: 1px solid #00ffff;
-        border-radius: 6px;
+    /* Upload Animation - Glowing File Upload */
+    @keyframes pulse {
+        0% { box-shadow: 0 0 5px cyan; }
+        50% { box-shadow: 0 0 20px cyan; }
+        100% { box-shadow: 0 0 5px cyan; }
+    }
+    .stFileUploader > div > div {
+        border: 2px solid cyan;
+        animation: pulse 2s infinite;
         padding: 10px;
-        box-shadow: 0 0 10px rgba(0,255,255,0.3);
-    }
-
-    /* ---------- METRICS ---------- */
-    .stMetric {
-        background-color: #0f172a;
-        border: 1px solid #00ffff;
-        border-radius: 10px;
-        padding: 15px;
-        box-shadow: 0 0 10px rgba(0,255,255,0.5);
+        border-radius: 8px;
+        background-color: rgba(0, 255, 255, 0.1);
         text-align: center;
     }
 
-    /* ---------- MOBILE ---------- */
-    @media (max-width: 768px) {
-        .pulse-bar {
-            font-size: 16px;
-        }
-        .header {
-            font-size: 20px;
-        }
-    }
     </style>
 
-    <!-- Banner -->
-    <div class="banner-container">
-        <div class="pulse-bar">
-            <div class="bar"></div>
-            <div>LEXIBOT - Elevate Your Resume Analysis</div>
-        </div>
+    <div class="header">
+        🤖 LEXIBOT - POWERED BY SEMICOLON
     </div>
-
-    <!-- Header -->
-    <div class="header">💼 LEXIBOT - AI ETHICAL RESUME ANALYZER</div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
-
 
 
 # Load environment variables
@@ -284,17 +200,43 @@ gender_words = {
     ]
 }
 
-def create_word_resume(text):
-    doc = Document()
-    doc.add_paragraph(text)
-    buffer = BytesIO()
-    doc.save(buffer)
-    buffer.seek(0)
-    return buffer
+def add_hyperlink(paragraph, url, text, color="0000FF", underline=True):
+    """Add a clickable hyperlink to a paragraph in a Word document."""
+    part = paragraph.part
+    r_id = part.relate_to(
+        url,
+        "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink",
+        is_external=True,
+    )
 
-# Create Word content from rewritten text
+    hyperlink = OxmlElement("w:hyperlink")
+    hyperlink.set(qn("r:id"), r_id)
 
+    new_run = OxmlElement("w:r")
+    rPr = OxmlElement("w:rPr")
 
+    # Underline
+    if underline:
+        u = OxmlElement("w:u")
+        u.set(qn("w:val"), "single")
+        rPr.append(u)
+
+    # Color
+    if color:
+        c = OxmlElement("w:color")
+        c.set(qn("w:val"), color)
+        rPr.append(c)
+
+    new_run.append(rPr)
+    text_elem = OxmlElement("w:t")
+    text_elem.text = text
+    new_run.append(text_elem)
+    hyperlink.append(new_run)
+
+    paragraph._p.append(hyperlink)
+    return paragraph
+
+    
 
 # Extract text from PDF
 def extract_text_from_pdf(file_path):
@@ -682,133 +624,305 @@ if uploaded_files:
         st.session_state.vectorstore = setup_vectorstore(all_text)
         st.session_state.chain = create_chain(st.session_state.vectorstore)
 
+
+# === TAB 1: Dashboard ===
 # 📊 Dashboard and Metrics
-if resume_data:
-    total_masc = sum(r["Masculine Words"] for r in resume_data)
-    total_fem = sum(r["Feminine Words"] for r in resume_data)
-    avg_bias = round(np.mean([r["Bias Score (0 = Fair, 1 = Biased)"] for r in resume_data]), 2)
-    total_resumes = len(resume_data)
+tab1, tab2 = st.tabs(["📊 Dashboard", "🧾 Resume Builder"])
 
-    st.markdown("### 📊 Summary Statistics")
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("📄 Resumes Uploaded", total_resumes)
-    with col2:
-        st.metric("🔎 Avg. Bias Score", avg_bias)
-    with col3:
-        st.metric("🔵 Total Masculine Words", total_masc)
-    with col4:
-        st.metric("🔴 Total Feminine Words", total_fem)
+# === TAB 1: Dashboard ===
+with tab1:
+    if resume_data:
+        total_masc = sum(r["Masculine Words"] for r in resume_data)
+        total_fem = sum(r["Feminine Words"] for r in resume_data)
+        avg_bias = round(np.mean([r["Bias Score (0 = Fair, 1 = Biased)"] for r in resume_data]), 2)
+        total_resumes = len(resume_data)
 
-    # 📋 Resume Table
-    st.markdown("### 🗂️ Resumes Overview")
-    df = pd.DataFrame(resume_data)
-    st.dataframe(
-        df[["Resume Name", "Candidate Name", "ATS Match %", "Bias Score (0 = Fair, 1 = Biased)", "Masculine Words", "Feminine Words"]],
+        st.markdown("### 📊 Summary Statistics")
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("📄 Resumes Uploaded", total_resumes)
+        with col2:
+            st.metric("🔎 Avg. Bias Score", avg_bias)
+        with col3:
+            st.metric("🔵 Total Masculine Words", total_masc)
+        with col4:
+            st.metric("🔴 Total Feminine Words", total_fem)
+
+        st.markdown("### 🗂️ Resumes Overview")
+        df = pd.DataFrame(resume_data)
+        st.dataframe(
+            df[["Resume Name", "Candidate Name", "ATS Match %", "Bias Score (0 = Fair, 1 = Biased)", "Masculine Words", "Feminine Words"]],
+            use_container_width=True
+        )
+
+        # 📈 Charts Section
+        st.markdown("### 📊 Visual Analysis")
+        chart_tab1, chart_tab2 = st.tabs(["📉 Bias Score Chart", "⚖ Gender-Coded Words"])
+
+        with chart_tab1:
+            st.subheader("Bias Score Comparison Across Resumes")
+            st.bar_chart(df.set_index("Resume Name")[["Bias Score (0 = Fair, 1 = Biased)"]])
+
+        with chart_tab2:
+            st.subheader("Masculine vs Feminine Word Usage")
+            fig, ax = plt.subplots(figsize=(10, 5))
+            index = np.arange(len(df))
+            bar_width = 0.35
+
+            ax.bar(index, df["Masculine Words"], bar_width, label="Masculine", color="#3498db")
+            ax.bar(index + bar_width, df["Feminine Words"], bar_width, label="Feminine", color="#e74c3c")
+
+            ax.set_xlabel("Resumes", fontsize=12)
+            ax.set_ylabel("Word Count", fontsize=12)
+            ax.set_title("Gender-Coded Word Usage per Resume", fontsize=14)
+            ax.set_xticks(index + bar_width / 2)
+            ax.set_xticklabels(df["Resume Name"], rotation=45, ha='right')
+            ax.legend()
+            st.pyplot(fig)
+
+        # 📑 Individual Resume Reports
+        st.markdown("### 📝 Detailed Resume Reports")
+        for resume in resume_data:
+            with st.expander(f"📄 {resume['Resume Name']} | {resume['Candidate Name']}", expanded=False):
+                st.markdown(f"#### 🧠 ATS Evaluation for {resume['Candidate Name']}")
+                st.write(f"**ATS Match %:** {resume['ATS Match %']}%")
+                st.write(f"**Missing Keywords:** {resume['Missing Keywords']}")
+                st.write(f"**Fit Summary:** {resume['Fit Summary']}")
+
+                st.divider()
+
+                detail_tab1, detail_tab2 = st.tabs(["🔎 Bias Analysis", "✅ Rewritten Resume"])
+
+                with detail_tab1:
+                    st.markdown("#### Bias-Highlighted Original Text")
+                    st.markdown(resume["Highlighted Text"], unsafe_allow_html=True)
+
+                    st.markdown("### 📌 Gender-Coded Word Counts:")
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.metric("🔵 Masculine Words", resume["Masculine Words"])
+                        if resume["Detected Masculine Words"]:
+                            st.markdown("### 📚 Detected Words:")
+                            st.write("**Masculine Words Detected:**")
+                            st.success(", ".join(f"{word} ({count})" for word, count in resume["Detected Masculine Words"].items()))
+                        else:
+                            st.info("No masculine words detected.")
+
+                    with col2:
+                        st.metric("🔴 Feminine Words", resume["Feminine Words"])
+                        if resume["Detected Feminine Words"]:
+                            st.markdown("### 📚 Detected Words:")
+                            st.write("**Feminine Words Detected:**")
+                            st.success(", ".join(f"{word} ({count})" for word, count in resume["Detected Feminine Words"].items()))
+                        else:
+                            st.info("No feminine words detected.")
+
+                with detail_tab2:
+                    st.markdown("#### ✨ Bias-Free Rewritten Resume")
+                    st.write(resume["Rewritten Text"])
+
+                    st.download_button(
+                        label="📥 Download Bias-Free Resume",
+                        data=resume["Rewritten Text"],
+                        file_name=f"{resume['Resume Name'].split('.')[0]}_bias_free.txt",
+                        mime="text/plain",
+                        use_container_width=True,
+                    )
+    else:
+        st.warning("Please upload resumes to view dashboard analytics.")
+
+
+# === TAB 2: Resume Builder ===
+with tab2:
+    st.markdown("## 🧾 <span style='color:#336699;'>Advanced Resume Builder</span>", unsafe_allow_html=True)
+    st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
+
+    # Initialize session state
+    fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary", "skills"]
+    for f in fields:
+        st.session_state.setdefault(f, "")
+    st.session_state.setdefault("experience_entries", [{"title": "", "company": "", "duration": "", "description": ""}])
+    st.session_state.setdefault("education_entries", [{"degree": "", "institution": "", "year": "", "details": ""}])
+    st.session_state.setdefault("project_entries", [{"title": "", "tech": "", "description": ""}])
+    st.session_state.setdefault("project_links", [])
+    st.session_state.setdefault("certificate_links", [{"name": "", "link": ""}])
+
+    # Sidebar controls
+    with st.sidebar:
+        st.markdown("### ➕ Add More Sections")
+        if st.button("➕ Add Experience"):
+            st.session_state.experience_entries.append({"title": "", "company": "", "duration": "", "description": ""})
+        if st.button("➕ Add Education"):
+            st.session_state.education_entries.append({"degree": "", "institution": "", "year": "", "details": ""})
+        if st.button("➕ Add Project"):
+            st.session_state.project_entries.append({"title": "", "tech": "", "description": ""})
+        if st.button("➕ Add Certificate"):
+            st.session_state.certificate_links.append({"name": "", "link": ""})
+
+    with st.form("resume_form"):
+        st.markdown("### 👤 <u>Personal Information</u>", unsafe_allow_html=True)
+        with st.container():
+            col1, col2 = st.columns(2)
+            with col1:
+                st.text_input("👤 Full Name ", key="name")
+                st.text_input("📞 Phone Number", key="phone")
+                st.text_input("📍 Location", key="location")
+            with col2:
+                st.text_input("📧 Email", key="email")
+                st.text_input("🔗 LinkedIn", key="linkedin")
+                st.text_input("🌐 Portfolio", key="portfolio")
+
+        st.markdown("### 📝 <u>Professional Summary</u>", unsafe_allow_html=True)
+        st.text_area("Summary", key="summary")
+
+        st.markdown("### 💼 <u>Skills</u>", unsafe_allow_html=True)
+        st.text_area("Skills (comma-separated)", key="skills")
+
+        st.markdown("### 🧱 <u>Work Experience</u>", unsafe_allow_html=True)
+        for idx, exp in enumerate(st.session_state.experience_entries):
+            with st.expander(f"Experience #{idx+1}", expanded=True):
+                exp["title"] = st.text_input(f"Job Title", value=exp["title"], key=f"title_{idx}")
+                exp["company"] = st.text_input(f"Company", value=exp["company"], key=f"company_{idx}")
+                exp["duration"] = st.text_input(f"Duration", value=exp["duration"], key=f"duration_{idx}")
+                exp["description"] = st.text_area(f"Description", value=exp["description"], key=f"description_{idx}")
+
+        st.markdown("### 🎓 <u>Education</u>", unsafe_allow_html=True)
+        for idx, edu in enumerate(st.session_state.education_entries):
+            with st.expander(f"Education #{idx+1}", expanded=True):
+                edu["degree"] = st.text_input(f"Degree", value=edu["degree"], key=f"degree_{idx}")
+                edu["institution"] = st.text_input(f"Institution", value=edu["institution"], key=f"institution_{idx}")
+                edu["year"] = st.text_input(f"Year", value=edu["year"], key=f"edu_year_{idx}")
+                edu["details"] = st.text_area(f"Details", value=edu["details"], key=f"edu_details_{idx}")
+
+        st.markdown("### 🛠 <u>Projects</u>", unsafe_allow_html=True)
+        for idx, proj in enumerate(st.session_state.project_entries):
+            with st.expander(f"Project #{idx+1}", expanded=True):
+                proj["title"] = st.text_input(f"Project Title", value=proj["title"], key=f"proj_title_{idx}")
+                proj["tech"] = st.text_input(f"Tech Stack", value=proj["tech"], key=f"proj_tech_{idx}")
+                proj["description"] = st.text_area(f"Description", value=proj["description"], key=f"proj_desc_{idx}")
+
+        st.markdown("### 🔗 Project Links")
+        project_links_input = st.text_area("Enter one project link per line:")
+        if project_links_input:
+            st.session_state.project_links = [link.strip() for link in project_links_input.splitlines() if link.strip()]
+
+        st.markdown("### 🧾 <u>Certificates</u>", unsafe_allow_html=True)
+        for idx, cert in enumerate(st.session_state.certificate_links):
+            with st.expander(f"Certificate #{idx+1}", expanded=True):
+                cert["name"] = st.text_input(f"Certificate Name", value=cert["name"], key=f"cert_name_{idx}")
+                cert["link"] = st.text_input(f"Certificate Link", value=cert["link"], key=f"cert_link_{idx}")
+
+        submitted = st.form_submit_button("📑 Generate Resume")
+
+    if submitted:
+        st.success("✅ Resume Generated Successfully! Scroll down to download.")
+
+    if submitted:
+     doc = Document()
+    doc.add_heading(st.session_state["name"], 0)
+    doc.add_paragraph(f"📞 {st.session_state['phone']} | 📍 {st.session_state['location']}")
+
+    if st.session_state["email"]:
+        p = doc.add_paragraph("📧 ")
+        add_hyperlink(p, f"mailto:{st.session_state['email']}", st.session_state["email"])
+
+    if st.session_state["linkedin"]:
+        p = doc.add_paragraph("🔗 ")
+        add_hyperlink(p, st.session_state["linkedin"], "LinkedIn Profile")
+
+    if st.session_state["portfolio"]:
+        p = doc.add_paragraph("🌐 ")
+        add_hyperlink(p, st.session_state["portfolio"], "Portfolio Website")
+
+    doc.add_heading("Professional Summary", level=1)
+    doc.add_paragraph(st.session_state["summary"])
+
+    doc.add_heading("Skills", level=1)
+    for skill in [s.strip() for s in st.session_state["skills"].split(",") if s.strip()]:
+        doc.add_paragraph(f"• {skill}", style="List Bullet")
+
+    doc.add_heading("Work Experience", level=1)
+    for exp in st.session_state.experience_entries:
+        if exp["title"] or exp["company"]:
+            para = doc.add_paragraph()
+            para.add_run(exp["title"]).bold = True
+            para.add_run(f" | {exp['company']} | {exp['duration']}")
+            doc.add_paragraph(exp["description"])
+
+    doc.add_heading("Education", level=1)
+    for edu in st.session_state.education_entries:
+        if edu["degree"] or edu["institution"]:
+            para = doc.add_paragraph()
+            para.add_run(edu["degree"]).bold = True
+            para.add_run(f" | {edu['institution']} | {edu['year']}")
+            doc.add_paragraph(edu["details"])
+
+    doc.add_heading("Projects", level=1)
+    for proj in st.session_state.project_entries:
+        if proj["title"]:
+            para = doc.add_paragraph()
+            para.add_run(proj["title"]).bold = True
+            para.add_run(f" | Tech: {proj['tech']}")
+            doc.add_paragraph(proj["description"])
+    if st.session_state.project_links:
+        doc.add_heading("Project Links", level=1)
+        for i, link in enumerate(st.session_state.project_links):
+            p = doc.add_paragraph(f"Project Link #{i+1}: ")
+            add_hyperlink(p, link, link)
+
+    if st.session_state.certificate_links:
+        doc.add_heading("Certificates", level=1)
+        for i, cert in enumerate(st.session_state.certificate_links):
+            if cert["name"] and cert["link"]:
+                p = doc.add_paragraph(f"📄 {cert['name']}: ")
+                add_hyperlink(p, cert["link"], cert["link"])
+
+    doc_io = io.BytesIO()
+    doc.save(doc_io)
+    doc_io.seek(0)
+
+    st.success("✅ Resume Generated Successfully!")
+    st.download_button(
+        label="📥 Download Resume (Word)",
+        data=doc_io,
+        file_name=f"{st.session_state['name'].replace(' ', '_')}_resume.docx",
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         use_container_width=True
-    )
-
-    # 📈 Charts Section
-    st.markdown("### 📊 Visual Analysis")
-    tab1, tab2 = st.tabs(["📉 Bias Score Chart", "⚖ Gender-Coded Words"])
-
-    with tab1:
-        st.subheader("Bias Score Comparison Across Resumes")
-        st.bar_chart(df.set_index("Resume Name")[["Bias Score (0 = Fair, 1 = Biased)"]])
-
-    with tab2:
-        st.subheader("Masculine vs Feminine Word Usage")
-        fig, ax = plt.subplots(figsize=(10, 5))
-        index = np.arange(len(df))
-        bar_width = 0.35
-
-        ax.bar(index, df["Masculine Words"], bar_width, label="Masculine", color="#3498db")
-        ax.bar(index + bar_width, df["Feminine Words"], bar_width, label="Feminine", color="#e74c3c")
-
-        ax.set_xlabel("Resumes", fontsize=12)
-        ax.set_ylabel("Word Count", fontsize=12)
-        ax.set_title("Gender-Coded Word Usage per Resume", fontsize=14)
-        ax.set_xticks(index + bar_width / 2)
-        ax.set_xticklabels(df["Resume Name"], rotation=45, ha='right')
-        ax.legend()
-        st.pyplot(fig)
-
-    # 📑 Individual Resume Reports
-    st.markdown("### 📝 Detailed Resume Reports")
-    for resume in resume_data:
-        with st.expander(f"📄 {resume['Resume Name']} | {resume['Candidate Name']}", expanded=False):
-            st.markdown(f"#### 🧠 ATS Evaluation for {resume['Candidate Name']}")
-            st.write(f"**ATS Match %:** {resume['ATS Match %']}%")
-            st.write(f"**Missing Keywords:** {resume['Missing Keywords']}")
-            st.write(f"**Fit Summary:** {resume['Fit Summary']}")
-
-            st.divider()
-
-            # Tabs inside expander
-            detail_tab1, detail_tab2 = st.tabs(["🔎 Bias Analysis", "✅ Rewritten Resume"])
-
-            with detail_tab1:
-                st.markdown("#### Bias-Highlighted Original Text")
-                st.markdown(resume["Highlighted Text"], unsafe_allow_html=True)
-
-                st.markdown("### 📌 Gender-Coded Word Counts:")
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.metric("🔵 Masculine Words", resume["Masculine Words"])
-                    if resume["Detected Masculine Words"]:
-                        st.markdown("### 📚 Detected Words:")
-                        st.write("**Masculine Words Detected:**")
-                        st.success(", ".join(f"{word} ({count})" for word, count in resume["Detected Masculine Words"].items()))
-                    else:
-                        st.info("No masculine words detected.")
-
-                with col2:
-                    st.metric("🔴 Feminine Words", resume["Feminine Words"])
-                    if resume["Detected Feminine Words"]:
-                        st.markdown("### 📚 Detected Words:")
-                        st.write("**Feminine Words Detected:**")
-                        st.success(", ".join(f"{word} ({count})" for word, count in resume["Detected Feminine Words"].items()))
-                    else:
-                        st.info("No feminine words detected.")
-
-            with detail_tab2:
-                st.markdown("#### ✨ Bias-Free Rewritten Resume")
-                st.write(resume["Rewritten Text"])
-
-                word_data = create_word_resume(resume["Rewritten Text"])
+    )    
+        # Generate document logic continues below here (same as your original)
 
 
-            st.download_button(
-    label="📥 Download Bias-Free Resume",
-    data=word_data,
-    file_name=f"{resume['Resume Name'].split('.')[0]}_bias_free.docx",
-    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    use_container_width=True,
-)
-            
         
-
 # 💬 Chat Section
-if "chain" in st.session_state:
-    for msg in st.session_state.memory.load_memory_variables({}).get("chat_history", []):
+# 1. Display existing chat history
+if "memory" in st.session_state:
+    history = st.session_state.memory.load_memory_variables({}).get("chat_history", [])
+    for msg in history:
         with st.chat_message("user" if msg.type == "human" else "assistant"):
             st.markdown(msg.content)
 
+# 2. Wait for user input
 user_input = st.chat_input("Ask LEXIBOT anything...")
 
+# 3. Only call chain when user submits new input
 if user_input:
+    # Show user message
     with st.chat_message("user"):
         st.markdown(user_input)
 
     try:
-        response = st.session_state.chain.invoke(
-            {"question": user_input, "chat_history": st.session_state.memory.chat_memory.messages}
-        )
+        # 🧠 Only call chain ONCE
+        response = st.session_state.chain.invoke({
+            "question": user_input,
+            "chat_history": st.session_state.memory.chat_memory.messages
+        })
         answer = response.get("answer", "❌ No answer found.")
     except Exception as e:
-        answer = f"⚠ Error: {str(e)}"
+        answer = f"⚠️ Error: {str(e)}"
 
+    # Show assistant reply
     with st.chat_message("assistant"):
         st.markdown(answer)
 
+    # Save interaction to memory
     st.session_state.memory.save_context({"input": user_input}, {"output": answer})

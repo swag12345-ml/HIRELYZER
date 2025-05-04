@@ -40,89 +40,111 @@ st.markdown(
         font-family: 'Orbitron', sans-serif;
         background-color: #0b0c10;
         color: #c5c6c7;
+        scroll-behavior: smooth;
     }
 
-    /* ---------- BANNER SECTION ---------- */
+    /* ---------- SCROLLBAR ---------- */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #1f2833;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #00ffff;
+        border-radius: 4px;
+    }
+
+    /* ---------- BANNER ---------- */
     .banner-container {
-        position: relative;
         width: 100%;
         height: 80px;
-        overflow: hidden;
-        background: linear-gradient(to right, #000428, #004e92);
+        background: linear-gradient(90deg, #000428, #004e92);
         border-bottom: 2px solid cyan;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        position: relative;
         margin-bottom: 20px;
     }
 
-    .rocket-fly {
+    .pulse-bar {
         position: absolute;
-        top: 15px;
-        left: -30%;
         display: flex;
         align-items: center;
-        font-size: 24px;
+        font-size: 22px;
         font-weight: bold;
         color: #00ffff;
         white-space: nowrap;
-        animation: flyAcross 10s linear infinite;
+        animation: glideIn 12s linear infinite;
         text-shadow: 0 0 10px #00ffff;
     }
 
-    .rocket-fly .rocket {
-        font-size: 40px;
+    .pulse-bar .bar {
+        width: 10px;
+        height: 30px;
         margin-right: 10px;
-        animation: wiggle 0.5s infinite alternate;
+        background: #00ffff;
+        box-shadow: 0 0 8px cyan;
+        animation: pulse 1s ease-in-out infinite;
     }
 
-    @keyframes flyAcross {
-        0%   { left: -40%; }
-        100% { left: 110%; }
+    @keyframes glideIn {
+        0% { left: -50%; opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% { left: 110%; opacity: 0; }
     }
 
-    @keyframes wiggle {
-        0%   { transform: translateY(0px); }
-        100% { transform: translateY(-8px); }
+    @keyframes pulse {
+        0%, 100% {
+            height: 20px;
+            background-color: #00ffff;
+        }
+        50% {
+            height: 40px;
+            background-color: #ff00ff;
+        }
     }
 
-    /* ---------- HEADER GLOW ---------- */
+    /* ---------- HEADER ---------- */
     .header {
         font-size: 28px;
         font-weight: bold;
         text-align: center;
         text-transform: uppercase;
         letter-spacing: 2px;
-        animation: neonPulse 2.5s infinite alternate, glitch 1s infinite;
+        padding: 12px 0;
+        animation: glowPulse 3s ease-in-out infinite;
         text-shadow: 0px 0px 10px #00ffff;
-        padding: 10px 0;
     }
 
-    @keyframes neonPulse {
-        0% { color: #00ffff; text-shadow: 0 0 10px #00ffff; }
-        50% { color: #ff00ff; text-shadow: 0 0 20px #ff00ff; }
-        100% { color: #00ffff; text-shadow: 0 0 10px #00ffff; }
-    }
-
-    @keyframes glitch {
-        0% { text-shadow: 2px 2px #ff00ff, -2px -2px #00ffff; }
-        50% { text-shadow: -2px -2px #00ffff, 2px 2px #ff00ff; }
-        100% { text-shadow: 2px 2px #ff00ff, -2px -2px #00ffff; }
+    @keyframes glowPulse {
+        0%, 100% {
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+        }
+        50% {
+            color: #ff00ff;
+            text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff;
+        }
     }
 
     /* ---------- FILE UPLOADER ---------- */
     .stFileUploader > div > div {
         border: 2px solid #00ffff;
         border-radius: 10px;
-        animation: pulse 2s infinite;
-        background-color: rgba(0, 255, 255, 0.1);
+        background-color: rgba(0, 255, 255, 0.05);
         padding: 12px;
+        box-shadow: 0 0 15px rgba(0,255,255,0.4);
+        transition: box-shadow 0.3s ease-in-out;
+    }
+    .stFileUploader > div > div:hover {
+        box-shadow: 0 0 25px rgba(0,255,255,0.8);
     }
 
-    @keyframes pulse {
-        0% { box-shadow: 0 0 5px cyan; }
-        50% { box-shadow: 0 0 25px cyan; }
-        100% { box-shadow: 0 0 5px cyan; }
-    }
-
-    /* ---------- BUTTON STYLE ---------- */
+    /* ---------- BUTTONS ---------- */
     .stButton > button {
         background: linear-gradient(45deg, #ff0080, #00bfff);
         color: white;
@@ -135,14 +157,13 @@ st.markdown(
         box-shadow: 0px 0px 12px #00ffff;
         transition: all 0.3s ease-in-out;
     }
-
     .stButton > button:hover {
         transform: scale(1.05);
         box-shadow: 0px 0px 24px #ff00ff;
         background: linear-gradient(45deg, #ff00aa, #00ffff);
     }
 
-    /* ---------- CHAT MESSAGE ---------- */
+    /* ---------- CHAT MESSAGES ---------- */
     .stChatMessage {
         font-size: 18px;
         background: #1e293b;
@@ -151,24 +172,55 @@ st.markdown(
         border: 2px solid #00ffff;
         color: #ccffff;
         text-shadow: 0px 0px 6px #00ffff;
-        animation: glow 1.5s infinite alternate;
+        animation: glow 1.5s ease-in-out infinite alternate;
     }
 
+    /* ---------- INPUTS ---------- */
+    .stTextInput > div > input,
+    .stTextArea > div > textarea {
+        background-color: #1f2833;
+        color: #00ffff;
+        border: 1px solid #00ffff;
+        border-radius: 6px;
+        padding: 10px;
+        box-shadow: 0 0 10px rgba(0,255,255,0.3);
+    }
+
+    /* ---------- METRICS ---------- */
+    .stMetric {
+        background-color: #0f172a;
+        border: 1px solid #00ffff;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 0 10px rgba(0,255,255,0.5);
+        text-align: center;
+    }
+
+    /* ---------- MOBILE ---------- */
+    @media (max-width: 768px) {
+        .pulse-bar {
+            font-size: 16px;
+        }
+        .header {
+            font-size: 20px;
+        }
+    }
     </style>
 
-    <!-- Banner Animation -->
+    <!-- Banner -->
     <div class="banner-container">
-        <div class="rocket-fly">
-            <div class="rocket">🚀</div>
-            <div>Welcome to LEXIBOT</div>
+        <div class="pulse-bar">
+            <div class="bar"></div>
+            <div>LEXIBOT - Elevate Your Resume Analysis</div>
         </div>
     </div>
 
-    <!-- Neon Header -->
-    <div class="header">🤖 LEXIBOT - POWERED BY SEMICOLON</div>
+    <!-- Header -->
+    <div class="header">💼 LEXIBOT - AI ETHICAL RESUME ANALYZER</div>
     """,
     unsafe_allow_html=True
 )
+
 
 
 

@@ -16,6 +16,20 @@ import nltk
 nltk.download('wordnet')
 lemmatizer = WordNetLemmatizer()
 
+from docx import Document
+import io
+from docx.shared import Inches
+import io
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.shared import Pt
+from docx import Document
+from docx.shared import RGBColor
+from docx.oxml.ns import qn
+
+doc = Document()
+from io import BytesIO
+from PIL import Image
 from collections import Counter
 from dotenv import load_dotenv
 from pdf2image import convert_from_path
@@ -269,6 +283,16 @@ gender_words = {
         "gentle communicator", "open-minded"
     ]
 }
+
+def create_word_resume(text):
+    doc = Document()
+    doc.add_paragraph(text)
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer
+
+# Create Word content from rewritten text
 
 
 
@@ -751,13 +775,17 @@ if resume_data:
                 st.markdown("#### ✨ Bias-Free Rewritten Resume")
                 st.write(resume["Rewritten Text"])
 
-                st.download_button(
-                    label="📥 Download Bias-Free Resume",
-                    data=resume["Rewritten Text"],
-                    file_name=f"{resume['Resume Name'].split('.')[0]}_bias_free.txt",
-                    mime="text/plain",
-                    use_container_width=True,
-                )
+                word_data = create_word_resume(resume["Rewritten Text"])
+
+
+            st.download_button(
+    label="📥 Download Bias-Free Resume",
+    data=word_data,
+    file_name=f"{resume['Resume Name'].split('.')[0]}_bias_free.docx",
+    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    use_container_width=True,
+)
+            
         
 
 # 💬 Chat Section

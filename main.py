@@ -10,10 +10,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import string
-import json
-from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
-from langchain_groq import ChatGroq  
 import re
 from nltk.stem import WordNetLemmatizer
 import nltk
@@ -352,55 +348,27 @@ def extract_text_from_images(pdf_path):
 
 # Detect bias in resume
 
+def detect_bias(text):
+    text = text.lower()
+    masc, fem = 0, 0
 
-llm = ChatGroq(
-    model="llama3-70b-8192",  # or "llama3-8b-8192"
-    groq_api_key=groq_api_key,
-    temperature=0
-)
+    masculine_words_sorted = sorted(gender_words["masculine"], key=len, reverse=True)
+    feminine_words_sorted = sorted(gender_words["feminine"], key=len, reverse=True)
 
-prompt = PromptTemplate.from_template("""
-You are an unbiased HR expert. Analyze the following resume text and check for gender-coded language, stereotypical tone, or role framing bias.
+    for phrase in masculine_words_sorted:
+        masc += len(re.findall(rf'\b{re.escape(phrase)}\b', text))
 
-Resume Text:
-{resume_text}
+    for phrase in feminine_words_sorted:
+        fem += len(re.findall(rf'\b{re.escape(phrase)}\b', text))
 
-Return the following in JSON format:
-{{
-  "bias_score": A number from 0 to 100 where 0 means no bias and 100 means highly biased,
-  "bias_reasoning": "Short explanation of why the bias score was assigned.",
-  "biased_phrases": ["example1", "example2"],
-  "rewrite_suggestions": ["suggestion1", "suggestion2"]
-}}
-""")
+    total = masc + fem
 
-bias_chain = LLMChain(llm=llm, prompt=prompt)
+    if total == 0:
+        return 0.0, masc, fem  
 
-# Define the callable function
-def detect_bias(resume_text):
-    try:
-        # Run the LLMChain
-        response = bias_chain.run({"resume_text": resume_text})
-        print("LLM Raw Output:", response)
+    bias_score = min(total / 20, 1.0)
 
-        # Parse the output JSON
-        result = json.loads(response)
-
-        score = result.get("bias_score", 0)
-        phrases = result.get("biased_phrases", [])
-        rewrites = result.get("rewrite_suggestions", [])
-        reasoning = result.get("bias_reasoning", "")
-
-        # Normalize score to 0.0 - 1.0 for compatibility (if needed)
-        normalized_score = round(min(float(score) / 100, 1.0), 2)
-
-        return normalized_score, phrases, rewrites, reasoning
-
-    except Exception as e:
-        print("Error parsing or processing LLM output:", e)
-        return 0.0, [], [], "Could not determine bias due to a parsing error."
-
-
+    return round(bias_score, 2), masc, fem
 
 gender_words = {
     "masculine": [
@@ -712,8 +680,7 @@ if uploaded_files:
         all_text.extend(text)
 
         full_text = " ".join(text)
-        bias_score, biased_phrases, rewrite_suggestions, bias_reasoning = detect_bias(full_text)
-
+        bias_score, masc, fem = detect_bias(full_text)
         highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(full_text,replacement_mapping)
         ats_result = ats_percentage_score(full_text, job_description)
 

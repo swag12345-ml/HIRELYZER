@@ -11,6 +11,9 @@ import numpy as np
 import pandas as pd
 import string
 import re
+import requests
+import urllib.parse
+
 from nltk.stem import WordNetLemmatizer
 import nltk
 nltk.download('wordnet')
@@ -235,7 +238,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
 # Load environment variables
 load_dotenv()
 working_dir = os.path.dirname(os.path.abspath(__file__))
@@ -261,6 +263,192 @@ if not groq_api_key:
 # OCR Reader
 reader = easyocr.Reader(["en"], gpu=torch.cuda.is_available())
 
+FEATURED_COMPANIES = {
+    "tech": [
+        {
+            "name": "Google",
+            "icon": "fab fa-google",
+            "color": "#4285F4",
+            "careers_url": "https://careers.google.com",
+            "description": "Leading technology company known for search, cloud, and innovation",
+            "categories": ["Software", "AI/ML", "Cloud", "Data Science"]
+        },
+        {
+            "name": "Microsoft",
+            "icon": "fab fa-microsoft",
+            "color": "#00A4EF",
+            "careers_url": "https://careers.microsoft.com",
+            "description": "Global leader in software, cloud, and enterprise solutions",
+            "categories": ["Software", "Cloud", "Gaming", "Enterprise"]
+        },
+        {
+            "name": "Amazon",
+            "icon": "fab fa-amazon",
+            "color": "#FF9900",
+            "careers_url": "https://www.amazon.jobs",
+            "description": "E-commerce and cloud computing giant",
+            "categories": ["Software", "Operations", "Cloud", "Retail"]
+        },
+        {
+            "name": "Apple",
+            "icon": "fab fa-apple",
+            "color": "#555555",
+            "careers_url": "https://www.apple.com/careers",
+            "description": "Innovation leader in consumer technology",
+            "categories": ["Software", "Hardware", "Design", "AI/ML"]
+        },
+        {
+            "name": "Facebook",
+            "icon": "fab fa-facebook",
+            "color": "#1877F2",
+            "careers_url": "https://www.metacareers.com/",
+            "description": "Social media and technology company",
+            "categories": ["Software", "Marketing", "Networking", "AI/ML"]
+        },
+        {
+            "name": "Netflix",
+            "icon": "fas fa-play-circle",
+            "color": "#E50914",
+            "careers_url": "https://explore.jobs.netflix.net/careers",
+            "description": "Streaming media company",
+            "categories": ["Software", "Marketing", "Design", "Service"],
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Netflix_2015_logo.svg/1920px-Netflix_2015_logo.svg.png",
+            "website": "https://jobs.netflix.com/",
+            "industry": "Entertainment & Technology"
+        }
+    ],
+    "indian_tech": [
+        {
+            "name": "TCS",
+            "icon": "fas fa-building",
+            "color": "#0070C0",
+            "careers_url": "https://www.tcs.com/careers",
+            "description": "India's largest IT services company",
+            "categories": ["IT Services", "Consulting", "Digital"]
+        },
+        {
+            "name": "Infosys",
+            "icon": "fas fa-building",
+            "color": "#007CC3",
+            "careers_url": "https://www.infosys.com/careers",
+            "description": "Global leader in digital services and consulting",
+            "categories": ["IT Services", "Consulting", "Digital"]
+        },
+        {
+            "name": "Wipro",
+            "icon": "fas fa-building",
+            "color": "#341F65",
+            "careers_url": "https://careers.wipro.com",
+            "description": "Leading global information technology company",
+            "categories": ["IT Services", "Consulting", "Digital"]
+        },
+        {
+            "name": "HCL",
+            "icon": "fas fa-building",
+            "color": "#0075C9",
+            "careers_url": "https://www.hcltech.com/careers",
+            "description": "Global technology company",
+            "categories": ["IT Services", "Engineering", "Digital"]
+        }
+    ],
+    "global_corps": [
+        {
+            "name": "IBM",
+            "icon": "fas fa-server",
+            "color": "#1F70C1",
+            "careers_url": "https://www.ibm.com/careers",
+            "description": "Global leader in technology and consulting",
+            "categories": ["Software", "Consulting", "AI/ML", "Cloud"],
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/IBM_logo.svg/1920px-IBM_logo.svg.png",
+            "website": "https://www.ibm.com/careers/",
+            "industry": "Technology & Consulting"
+        },
+        {
+            "name": "Accenture",
+            "icon": "fas fa-building",
+            "color": "#A100FF",
+            "careers_url": "https://www.accenture.com/careers",
+            "description": "Global professional services company",
+            "categories": ["Consulting", "Technology", "Digital"]
+        },
+        {
+            "name": "Cognizant",
+            "icon": "fas fa-building",
+            "color": "#1299D8",
+            "careers_url": "https://careers.cognizant.com",
+            "description": "Leading professional services company",
+            "categories": ["IT Services", "Consulting", "Digital"]
+        }
+    ]
+}
+
+JOB_MARKET_INSIGHTS = {
+    "trending_skills": [
+        {"name": "Artificial Intelligence", "growth": "+45%", "icon": "fas fa-brain"},
+        {"name": "Cloud Computing", "growth": "+38%", "icon": "fas fa-cloud"},
+        {"name": "Data Science", "growth": "+35%", "icon": "fas fa-chart-line"},
+        {"name": "Cybersecurity", "growth": "+32%", "icon": "fas fa-shield-alt"},
+        {"name": "DevOps", "growth": "+30%", "icon": "fas fa-code-branch"},
+        {"name": "Machine Learning", "growth": "+28%", "icon": "fas fa-robot"},
+        {"name": "Blockchain", "growth": "+25%", "icon": "fas fa-lock"},
+        {"name": "Big Data", "growth": "+23%", "icon": "fas fa-database"},
+        {"name": "Internet of Things", "growth": "+21%", "icon": "fas fa-wifi"}
+    ],
+    "top_locations": [
+        {"name": "Bangalore", "jobs": "50,000+", "icon": "fas fa-city"},
+        {"name": "Mumbai", "jobs": "35,000+", "icon": "fas fa-city"},
+        {"name": "Delhi NCR", "jobs": "30,000+", "icon": "fas fa-city"},
+        {"name": "Hyderabad", "jobs": "25,000+", "icon": "fas fa-city"},
+        {"name": "Pune", "jobs": "20,000+", "icon": "fas fa-city"},
+        {"name": "Chennai", "jobs": "15,000+", "icon": "fas fa-city"},
+        {"name": "Noida", "jobs": "10,000+", "icon": "fas fa-city"},
+        {"name": "Vadodara", "jobs": "7,000+", "icon": "fas fa-city"},
+        {"name": "Ahmedabad", "jobs": "6,000+", "icon": "fas fa-city"},
+        {"name": "Remote", "jobs": "3,000+", "icon": "fas fa-globe-americas"},
+    ],
+    "salary_insights": [
+        {"role": "Machine Learning Engineer", "range": "10-35 LPA", "experience": "0-5 years"},
+        {"role": "Big Data Engineer", "range": "8-30 LPA", "experience": "0-5 years"},
+        {"role": "Software Engineer", "range": "5-25 LPA", "experience": "0-5 years"},
+        {"role": "Data Scientist", "range": "8-30 LPA", "experience": "0-5 years"},
+        {"role": "DevOps Engineer", "range": "6-28 LPA", "experience": "0-5 years"},
+        {"role": "UI/UX Designer", "range": "5-25 LPA", "experience": "0-5 years"},
+        {"role": "Full Stack Developer", "range": "8-30 LPA", "experience": "0-5 years"},
+        {"role": "C++/C#/Python/Java Developer", "range": "6-26 LPA", "experience": "0-5 years"},
+        {"role": "Django Developer", "range": "7-27 LPA", "experience": "0-5 years"},
+        {"role": "Cloud Engineer", "range": "6-26 LPA", "experience": "0-5 years"},
+        {"role": "Google Cloud/AWS/Azure Engineer", "range": "6-26 LPA", "experience": "0-5 years"},
+        {"role": "Salesforce Engineer", "range": "6-26 LPA", "experience": "0-5 years"},
+    ]
+}
+
+def get_featured_companies(category=None):
+    """Get featured companies, optionally filtered by category"""
+    if category and category in FEATURED_COMPANIES:
+        return FEATURED_COMPANIES[category]
+    return [company for companies in FEATURED_COMPANIES.values() for company in companies]
+
+def get_market_insights():
+    """Get job market insights"""
+    return JOB_MARKET_INSIGHTS
+
+def get_company_info(company_name):
+    """Get company information by name"""
+    for companies in FEATURED_COMPANIES.values():
+        for company in companies:
+            if company["name"] == company_name:
+                return company
+    return None
+
+def get_companies_by_industry(industry):
+    """Get list of companies by industry"""
+    companies = []
+    for companies_list in FEATURED_COMPANIES.values():
+        for company in companies_list:
+            if "industry" in company and company["industry"] == industry:
+                companies.append(company)
+    return companies
+
 # Gender-coded language
 gender_words = {
     "masculine": [
@@ -283,6 +471,58 @@ gender_words = {
         "gentle communicator", "open-minded"
     ]
 }
+# Sample job search function
+import uuid
+import urllib.parse
+
+def search_jobs(job_role, location, experience_level=None, job_type=None):
+    # Encode inputs
+    role_encoded = urllib.parse.quote_plus(job_role.strip())
+    loc_encoded = urllib.parse.quote_plus(location.strip())
+
+    # Mappings for experience
+    experience_range_map = {
+        "Internship": "0~0", "Entry Level": "1~3", "Associate": "3~5",
+        "Mid-Senior Level": "5~8", "Director": "8~15", "Executive": "15~20"
+    }
+
+    linkedin_exp_map = {
+        "Internship": "1", "Entry Level": "2", "Associate": "3",
+        "Mid-Senior Level": "4", "Director": "5", "Executive": "6"
+    }
+
+    job_type_map = {
+        "Full-time": "F", "Part-time": "P", "Contract": "C",
+        "Temporary": "T", "Volunteer": "V", "Internship": "I"
+    }
+
+    # LinkedIn URL with experience level and job type filters
+    linkedin_url = f"https://www.linkedin.com/jobs/search/?keywords={role_encoded}&location={loc_encoded}"
+    if experience_level in linkedin_exp_map:
+        linkedin_url += f"&f_E={linkedin_exp_map[experience_level]}"
+    if job_type:
+        linkedin_url += f"&f_JT={job_type[0].upper()}"  # e.g., F for Full-time
+
+    # Naukri URL (best effort; limited support)
+    naukri_url = f"https://www.naukri.com/{job_role.strip().lower().replace(' ', '-')}-jobs-in-{location.strip().lower().replace(' ', '-')}"
+    
+    # FoundIt (Monster) URL with experience filter and unique ID
+    experience_range = experience_range_map.get(experience_level, "")
+    search_id = uuid.uuid4()
+    foundit_url = (
+        f"https://www.foundit.in/srp/results?query={role_encoded}"
+        f"&locations={loc_encoded}"
+    )
+    if experience_range:
+        foundit_url += f"&experienceRanges={experience_range}"
+    foundit_url += f"&searchId={search_id}"
+
+    return [
+        {"title": f"LinkedIn: {job_role} jobs in {location}", "link": linkedin_url},
+        {"title": f"Naukri: {job_role} jobs in {location}", "link": naukri_url},
+        {"title": f"FoundIt (Monster): {job_role} jobs in {location}", "link": foundit_url}
+    ]
+
 
 def add_hyperlink(paragraph, url, text, color="0000FF", underline=True):
     """
@@ -496,7 +736,11 @@ replacement_mapping = {
     }
 }
 
-def rewrite_text_with_llm(text, replacement_mapping):
+def rewrite_text_with_llm(text, replacement_mapping, user_location):
+    # Format the replacement mapping as a readable bullet list for the prompt
+    formatted_mapping = "\n".join(
+        [f"- \"{key}\" → \"{value}\"" for key, value in replacement_mapping.items()]
+    )
 
     prompt = f"""
 You are an expert career advisor and professional resume language editor.
@@ -505,70 +749,86 @@ Your task is to:
 
 1. **Rewrite the following resume text** to:
    - Remove or replace any gender-coded, biased, or non-inclusive language.
-   - Use **professional, inclusive, neutral, clear, and grammatically correct language**.
+   - Use *professional, inclusive, neutral, clear, and grammatically correct language*.
    - **Retain all technical terms, job-specific keywords, certifications, and proper names.**
-   - Do not add new content or remove important information.
+   - Do **not** add new content or remove important information.
    - Preserve the original meaning and intent of each sentence.
-
-### 2️⃣ Structure and Organization:
-- Organize the rewritten text into clearly labeled standard resume sections, such as:
-  - **Name**
-  - **Contact Information**
-  - **Email**
-  - **portfolio**
-  - **Professional Summary**
-  - **Work Experience**
-  - **Skills**
-  - **Certifications**
-  - **Education**
-  - **Projects**
-- Include **only the sections that exist in the provided text** — do not add new ones.
-- If any of **Name**, **Contact Information**, or **Email** is present in the text, organize it clearly at the top under respective headings.
-
-3. **Strictly apply the following word replacement mapping:**
-
-{replacement_mapping}
-
-- If a word or phrase in the text matches a key from this mapping, replace it exactly with the corresponding replacement.
-- Leave all other words unchanged.
-
-4. **Suggest 5 suitable job titles** based on the candidate's rewritten resume text.
-   - Ensure the job titles are **realistic, well-matched to the candidate’s experience, skills, and qualifications**.
-   - Provide a brief reason for each suggestion, explaining why it fits based on the resume content.
 
 ---
 
-**Resume Text to Rewrite:**
+2. **Structure and Organize** the rewritten resume into clearly labeled standard resume sections. Only include sections that are present in the original text:
+   - Name
+   - Contact Information
+   - Email
+   - Portfolio
+   - Professional Summary
+   - Work Experience
+   - Skills
+   - Certifications
+   - Education
+   - Projects
+
+   - If *Name*, *Contact Information*, or *Email* is present, place them clearly at the top under respective headings.
+
+---
+
+3. **Strictly apply the following word replacement mapping:**
+
+{formatted_mapping}
+
+   - If a word or phrase matches a key exactly from this list, replace it with the corresponding value.
+   - Leave all other content unchanged.
+
+---
+
+4. **Suggest 5 suitable job titles** based on the resume content and the candidate’s location: **{user_location}**
+   - Ensure titles are realistic for this location and aligned with the candidate's experience and skills.
+   - Provide a brief explanation for each suggestion.
+
+---
+
+5. **Provide LinkedIn job search URLs** for each suggested title based on the location: **{user_location}**
+
+---
+
+**Original Resume Text:**
 \"\"\"{text}\"\"\"
 
 ---
 
-**Final Rewritten, Organized, Bias-Free, Inclusive Resume:**
+**✅ Bias-Free Rewritten Resume (Well-Structured):**
 
-[Your rewritten and organized resume content here]
+
 
 ---
 
-**Suggested Job Titles (with reasons):**
-1. **Job Title 1** — Reason based on skills/experience
-2. **Job Title 2** — Reason based on skills/experience
-3. **Job Title 3** — Reason based on skills/experience
-4. **Job Title 4** — Reason based on skills/experience
-5. **Job Title 5** — Reason based on skills/experience
+**🎯 Suggested Job Titles with Explanations and LinkedIn URLs:**
+
+1. **Job Title 1** — Reason  
+🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%201&location={user_location})
+
+2. **Job Title 2** — Reason  
+🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%202&location={user_location})
+
+3. **Job Title 3** — Reason  
+🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%203&location={user_location})
+
+4. **Job Title 4** — Reason  
+🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%204&location={user_location})
+
+5. **Job Title 5** — Reason  
+🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%205&location={user_location})
 """
-
-
-
-    
     llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0, groq_api_key=groq_api_key)
     response = llm.invoke(prompt)
-    rewritten_text = response.content  
-    return rewritten_text
+    return response.content
+
+    
     
 
 
 
-def rewrite_and_highlight(text, replacement_mapping):
+def rewrite_and_highlight(text, replacement_mapping, user_location):
     highlighted_text = text
     masculine_count, feminine_count = 0, 0
     detected_masculine_words = Counter()
@@ -589,7 +849,8 @@ def rewrite_and_highlight(text, replacement_mapping):
             highlighted_text = re.sub(rf'\b{re.escape(w)}\b', f":red[{w}]", highlighted_text)
 
     # Now rewrite the text using the LLM
-    rewritten_text = rewrite_text_with_llm(text, replacement_mapping)
+    rewritten_text = rewrite_text_with_llm(text, replacement_mapping, user_location)
+
 
 
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
@@ -663,6 +924,8 @@ job_description = st.sidebar.text_area("Enter the Job Description here", height=
 if job_description.strip() == "":
     st.sidebar.warning("Please enter a job description to evaluate the resumes.")
 
+user_location = st.sidebar.text_input("📍 Preferred Job Location (City, Country)")
+
 
 uploaded_files = st.file_uploader("Upload PDF Resumes", type=["pdf"], accept_multiple_files=True)
 
@@ -681,7 +944,8 @@ if uploaded_files:
 
         full_text = " ".join(text)
         bias_score, masc, fem = detect_bias(full_text)
-        highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(full_text,replacement_mapping)
+        highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(full_text, replacement_mapping, user_location)
+
         ats_result = ats_percentage_score(full_text, job_description)
 
         # Parse the ATS result to extract details
@@ -717,7 +981,7 @@ if uploaded_files:
 
 # === TAB 1: Dashboard ===
 # 📊 Dashboard and Metrics
-tab1, tab2 = st.tabs(["📊 Dashboard", "🧾 Resume Builder"])
+tab1, tab2, tab3 = st.tabs(["📊 Dashboard", "🧾 Resume Builder", "💼 Job Search"])
 
 # === TAB 1: Dashboard ===
 with tab1:
@@ -1302,6 +1566,207 @@ with tab2:
  st.markdown("""
 ✅ After downloading your HTML resume, you can [click here to convert it to PDF](https://www.sejda.com/html-to-pdf) using Sejda's free online tool.
 """)
+
+with tab3:
+    st.header("🔍 Job Search Across LinkedIn, Naukri, and FoundIt")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        job_role = st.text_input("💼 Desired Job Role", placeholder="e.g., Data Scientist")
+        experience_level = st.selectbox(
+            "📈 Experience Level",
+            ["", "Internship", "Entry Level", "Associate", "Mid-Senior Level", "Director", "Executive"]
+        )
+
+    with col2:
+        location = st.text_input("📍 Preferred Location", placeholder="e.g., Bangalore, India")
+        job_type = st.selectbox(
+            "📋 Job Type",
+            ["", "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship"]
+        )
+
+    if st.button("🔎 Search Jobs"):
+     if job_role.strip() and location.strip():
+        results = search_jobs(job_role, location, experience_level, job_type)
+
+        st.markdown("## 🎯 Job Search Results")
+
+        for job in results:
+            platform = job["title"].split(":")[0].strip().lower()
+
+            if platform == "linkedin":
+                icon = "🔵 <b style='color:#0e76a8;'>in LinkedIn</b>"
+                btn_color = "#00c4cc"
+            elif platform == "naukri":
+                icon = "🏢 <b style='color:#ff5722;'>Naukri</b>"
+                btn_color = "#00c4cc"
+            elif "foundit" in platform:
+                icon = "🌐 <b style='color:#7c4dff;'>Foundit (Monster)</b>"
+                btn_color = "#00c4cc"
+            else:
+                icon = f"📄 <b>{platform.title()}</b>"
+                btn_color = "#00c4cc"
+
+            st.markdown(f"""
+<div style="
+    background-color:#1e1e1e;
+    padding:20px;
+    border-radius:15px;
+    margin-bottom:20px;
+    border-left: 5px solid {btn_color};
+    box-shadow: 0 0 15px {btn_color};
+    transition: transform 0.2s ease-in-out;
+">
+    <div style="font-size:20px; margin-bottom:8px;">{icon}</div>
+    <div style="color:#ffffff; font-size:17px; margin-bottom:15px;">
+        {job['title'].split(':')[1].strip()}
+    </div>
+    <a href="{job['link']}" target="_blank" style="text-decoration:none;">
+        <button style="
+            background-color:{btn_color};
+            color:white;
+            padding:10px 15px;
+            border:none;
+            border-radius:8px;
+            font-size:15px;
+            cursor:pointer;
+            box-shadow: 0 0 10px {btn_color};
+            transition: all 0.3s ease-in-out;
+        "
+        onmouseover="this.style.transform='scale(1.05)'"
+        onmouseout="this.style.transform='scale(1)'">
+            🚀 View Jobs on {platform.title()} &rarr;
+        </button>
+    </a>
+</div>
+""", unsafe_allow_html=True)
+
+            
+
+    else:
+        st.warning("⚠️ Please enter both the Job Role and Location to perform the search.")
+
+
+    # Inject Glowing CSS for Cards
+    st.markdown("""
+    <style>
+    @keyframes glow {
+        0% {
+            box-shadow: 0 0 5px rgba(255,255,255,0.2);
+        }
+        50% {
+            box-shadow: 0 0 20px rgba(0,255,255,0.6);
+        }
+        100% {
+            box-shadow: 0 0 5px rgba(255,255,255,0.2);
+        }
+    }
+
+    .company-card {
+        background-color: #1e1e1e;
+        color: #ffffff;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        cursor: pointer;
+        text-decoration: none;
+        display: block;
+        animation: glow 3s infinite alternate;
+    }
+
+    .company-card:hover {
+        transform: scale(1.03);
+        box-shadow: 0 0 25px rgba(0, 255, 255, 0.7), 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+
+    .pill {
+        display: inline-block;
+        background-color: #333;
+        padding: 6px 12px;
+        border-radius: 999px;
+        margin: 4px 6px 0 0;
+        font-size: 13px;
+    }
+
+    .title-header {
+        color: white;
+        font-size: 26px;
+        margin-top: 40px;
+        font-weight: bold;
+    }
+
+    .company-logo {
+        font-size: 26px;
+        margin-right: 8px;
+    }
+
+    .company-header {
+        font-size: 22px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # ---------- Featured Companies ----------
+    st.markdown("### <div class='title-header'>🏢 Featured Companies</div>", unsafe_allow_html=True)
+
+    selected_category = st.selectbox("📂 Browse Featured Companies By Category", ["All", "tech", "indian_tech", "global_corps"])
+    companies_to_show = get_featured_companies() if selected_category == "All" else get_featured_companies(selected_category)
+
+    for company in companies_to_show:
+        category_tags = ''.join([f"<span class='pill'>{cat}</span>" for cat in company['categories']])
+        st.markdown(f"""
+        <a href="{company['careers_url']}" class="company-card" target="_blank">
+            <div class="company-header">
+                <span class="company-logo">{company.get('emoji', '🏢')}</span>
+                {company['name']}
+            </div>
+            <p>{company['description']}</p>
+            {category_tags}
+        </a>
+        """, unsafe_allow_html=True)
+
+    # ---------- Market Insights ----------
+    st.markdown("### <div class='title-header'>📈 Job Market Trends</div>", unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("#### 🚀 Trending Skills")
+        for skill in JOB_MARKET_INSIGHTS["trending_skills"]:
+            st.markdown(f"""
+            <div class="company-card">
+                <h4>🔧 {skill['name']}</h4>
+                <p>📈 Growth Rate: {skill['growth']}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("#### 🌍 Top Job Locations")
+        for loc in JOB_MARKET_INSIGHTS["top_locations"]:
+            st.markdown(f"""
+            <div class="company-card">
+                <h4>📍 {loc['name']}</h4>
+                <p>💼 Openings: {loc['jobs']}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # ---------- Salary Insights ----------
+    st.markdown("### <div class='title-header'>💰 Salary Insights</div>", unsafe_allow_html=True)
+    for role in JOB_MARKET_INSIGHTS["salary_insights"]:
+        st.markdown(f"""
+        <div class="company-card">
+            <h4>💼 {role['role']}</h4>
+            <p>📅 Experience: {role['experience']}</p>
+            <p>💵 Salary Range: {role['range']}</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+
 
 
 

@@ -1,1 +1,7 @@
- {"GROQ_API_KEY": "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"}
+{
+  "GROQ_API_KEYS": [
+    "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",
+    "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",
+    "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"
+  ]
+}

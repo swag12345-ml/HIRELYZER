@@ -1,42 +1,29 @@
-import os
-import json
+# ------------------- Core Imports -------------------
+import os, json, random, string, re, asyncio, io
+import urllib.parse
+from collections import Counter
+
+# ------------------- External Libraries -------------------
 import torch
-import random
-import fitz
-import easyocr
-import asyncio
-import streamlit as st
+import io
+from io import BytesIO
 import matplotlib.pyplot as plt
+import fitz
+import requests
 import numpy as np
 import pandas as pd
-import string
-import re
-import requests
-import urllib.parse
-
+import streamlit as st
+from PIL import Image
+from pdf2image import convert_from_path
+from dotenv import load_dotenv
 from nltk.stem import WordNetLemmatizer
-import nltk
-nltk.download('wordnet')
-lemmatizer = WordNetLemmatizer()
-
 from docx import Document
-import io
-from docx.shared import Inches
-from io import BytesIO
-import io
+from docx.shared import Pt, RGBColor, Inches
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.shared import Pt
-from docx import Document
-from docx.shared import RGBColor
-from docx.oxml.ns import qn
-
-doc = Document()
 from docx.opc.constants import RELATIONSHIP_TYPE as RT
-from PIL import Image
-from collections import Counter
-from dotenv import load_dotenv
-from pdf2image import convert_from_path
+
+# ------------------- Langchain & Embeddings -------------------
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -242,26 +229,43 @@ st.markdown(
 load_dotenv()
 working_dir = os.path.dirname(os.path.abspath(__file__))
 
-# Detect device
+# Detect Device
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 torch.backends.cudnn.benchmark = True
 
-# Load API Key
-def load_groq_api_key():
+# ------------------- Load API Keys -------------------
+@st.cache_data(show_spinner=False)
+def load_groq_api_keys():
     try:
         with open(os.path.join(working_dir, "config.json"), "r") as f:
-            return json.load(f).get("GROQ_API_KEY")
+            data = json.load(f)
+            keys = data.get("GROQ_API_KEYS", [])
+            return keys if isinstance(keys, list) and keys else None
     except FileNotFoundError:
         st.error("❌ config.json not found.")
         st.stop()
 
-groq_api_key = load_groq_api_key()
-if not groq_api_key:
-    st.error("❌ GROQ_API_KEY is missing.")
+groq_api_keys = load_groq_api_keys()
+if not groq_api_keys:
+    st.error("❌ GROQ_API_KEYS list is missing or empty in config.json.")
     st.stop()
 
-# OCR Reader
-reader = easyocr.Reader(["en"], gpu=torch.cuda.is_available())
+groq_api_key = random.choice(groq_api_keys)
+
+# ------------------- Lazy Initialization for Slow Components -------------------
+@st.cache_resource(show_spinner=False)
+def get_easyocr_reader():
+    import easyocr
+    return easyocr.Reader(["en"], gpu=torch.cuda.is_available())
+
+@st.cache_data(show_spinner=False)
+def ensure_nltk():
+    import nltk
+    nltk.download('wordnet', quiet=True)
+    return WordNetLemmatizer()
+
+lemmatizer = ensure_nltk()
+reader = get_easyocr_reader()
 
 FEATURED_COMPANIES = {
     "tech": [
@@ -480,7 +484,7 @@ def search_jobs(job_role, location, experience_level=None, job_type=None):
     role_encoded = urllib.parse.quote_plus(job_role.strip())
     loc_encoded = urllib.parse.quote_plus(location.strip())
 
-    # Mappings for experience
+    # Mappings
     experience_range_map = {
         "Internship": "0~0", "Entry Level": "1~3", "Associate": "3~5",
         "Mid-Senior Level": "5~8", "Director": "8~15", "Executive": "15~20"
@@ -496,23 +500,20 @@ def search_jobs(job_role, location, experience_level=None, job_type=None):
         "Temporary": "T", "Volunteer": "V", "Internship": "I"
     }
 
-    # LinkedIn URL with experience level and job type filters
+    # LinkedIn
     linkedin_url = f"https://www.linkedin.com/jobs/search/?keywords={role_encoded}&location={loc_encoded}"
     if experience_level in linkedin_exp_map:
         linkedin_url += f"&f_E={linkedin_exp_map[experience_level]}"
-    if job_type:
-        linkedin_url += f"&f_JT={job_type[0].upper()}"  # e.g., F for Full-time
+    if job_type in job_type_map:
+        linkedin_url += f"&f_JT={job_type_map[job_type]}"
 
-    # Naukri URL (best effort; limited support)
-    naukri_url = f"https://www.naukri.com/{job_role.strip().lower().replace(' ', '-')}-jobs-in-{location.strip().lower().replace(' ', '-')}"
-    
-    # FoundIt (Monster) URL with experience filter and unique ID
+    # Naukri
+    naukri_url = f"https://www.naukri.com/{role_encoded}-jobs-in-{loc_encoded}"
+
+    # FoundIt
     experience_range = experience_range_map.get(experience_level, "")
     search_id = uuid.uuid4()
-    foundit_url = (
-        f"https://www.foundit.in/srp/results?query={role_encoded}"
-        f"&locations={loc_encoded}"
-    )
+    foundit_url = f"https://www.foundit.in/srp/results?query={role_encoded}&locations={loc_encoded}"
     if experience_range:
         foundit_url += f"&experienceRanges={experience_range}"
     foundit_url += f"&searchId={search_id}"
@@ -522,6 +523,7 @@ def search_jobs(job_role, location, experience_level=None, job_type=None):
         {"title": f"Naukri: {job_role} jobs in {location}", "link": naukri_url},
         {"title": f"FoundIt (Monster): {job_role} jobs in {location}", "link": foundit_url}
     ]
+
 
 
 def add_hyperlink(paragraph, url, text, color="0000FF", underline=True):
@@ -1586,29 +1588,32 @@ with tab3:
             ["", "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship"]
         )
 
-    if st.button("🔎 Search Jobs"):
-     if job_role.strip() and location.strip():
-        results = search_jobs(job_role, location, experience_level, job_type)
+    # Store button click in a variable
+    search_clicked = st.button("🔎 Search Jobs")
 
-        st.markdown("## 🎯 Job Search Results")
+    if search_clicked:
+        if job_role.strip() and location.strip():
+            results = search_jobs(job_role, location, experience_level, job_type)
 
-        for job in results:
-            platform = job["title"].split(":")[0].strip().lower()
+            st.markdown("## 🎯 Job Search Results")
 
-            if platform == "linkedin":
-                icon = "🔵 <b style='color:#0e76a8;'>in LinkedIn</b>"
-                btn_color = "#00c4cc"
-            elif platform == "naukri":
-                icon = "🏢 <b style='color:#ff5722;'>Naukri</b>"
-                btn_color = "#00c4cc"
-            elif "foundit" in platform:
-                icon = "🌐 <b style='color:#7c4dff;'>Foundit (Monster)</b>"
-                btn_color = "#00c4cc"
-            else:
-                icon = f"📄 <b>{platform.title()}</b>"
-                btn_color = "#00c4cc"
+            for job in results:
+                platform = job["title"].split(":")[0].strip().lower()
 
-            st.markdown(f"""
+                if platform == "linkedin":
+                    icon = "🔵 <b style='color:#0e76a8;'>in LinkedIn</b>"
+                    btn_color = "#0e76a8"
+                elif platform == "naukri":
+                    icon = "🏢 <b style='color:#ff5722;'>Naukri</b>"
+                    btn_color = "#ff5722"
+                elif "foundit" in platform:
+                    icon = "🌐 <b style='color:#7c4dff;'>Foundit (Monster)</b>"
+                    btn_color = "#7c4dff"
+                else:
+                    icon = f"📄 <b>{platform.title()}</b>"
+                    btn_color = "#00c4cc"
+
+                st.markdown(f"""
 <div style="
     background-color:#1e1e1e;
     padding:20px;
@@ -1616,7 +1621,6 @@ with tab3:
     margin-bottom:20px;
     border-left: 5px solid {btn_color};
     box-shadow: 0 0 15px {btn_color};
-    transition: transform 0.2s ease-in-out;
 ">
     <div style="font-size:20px; margin-bottom:8px;">{icon}</div>
     <div style="color:#ffffff; font-size:17px; margin-bottom:15px;">
@@ -1632,20 +1636,15 @@ with tab3:
             font-size:15px;
             cursor:pointer;
             box-shadow: 0 0 10px {btn_color};
-            transition: all 0.3s ease-in-out;
-        "
-        onmouseover="this.style.transform='scale(1.05)'"
-        onmouseout="this.style.transform='scale(1)'">
+        ">
             🚀 View Jobs on {platform.title()} &rarr;
         </button>
     </a>
 </div>
 """, unsafe_allow_html=True)
+        else:
+            st.warning("⚠️ Please enter both the Job Role and Location to perform the search.")
 
-            
-
-    else:
-        st.warning("⚠️ Please enter both the Job Role and Location to perform the search.")
 
 
     # Inject Glowing CSS for Cards

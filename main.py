@@ -479,15 +479,20 @@ gender_words = {
 import uuid
 import urllib.parse
 
-def search_jobs(job_role, location, experience_level=None, job_type=None):
+def search_jobs(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
     # Encode inputs
     role_encoded = urllib.parse.quote_plus(job_role.strip())
     loc_encoded = urllib.parse.quote_plus(location.strip())
 
     # Mappings
     experience_range_map = {
-        "Internship": "0~0", "Entry Level": "1~3", "Associate": "3~5",
-        "Mid-Senior Level": "5~8", "Director": "8~15", "Executive": "15~20"
+        "Internship": "0~0", "Entry Level": "1~1", "Associate": "2~3",
+        "Mid-Senior Level": "4~7", "Director": "8~15", "Executive": "16~20"
+    }
+
+    experience_exact_map = {
+        "Internship": "0", "Entry Level": "1", "Associate": "2",
+        "Mid-Senior Level": "4", "Director": "8", "Executive": "16"
     }
 
     linkedin_exp_map = {
@@ -511,11 +516,19 @@ def search_jobs(job_role, location, experience_level=None, job_type=None):
     naukri_url = f"https://www.naukri.com/{role_encoded}-jobs-in-{loc_encoded}"
 
     # FoundIt
-    experience_range = experience_range_map.get(experience_level, "")
+    if foundit_experience is not None:
+        experience_range = f"{foundit_experience}~{foundit_experience}"
+        experience_exact = str(foundit_experience)
+    else:
+        experience_range = experience_range_map.get(experience_level, "")
+        experience_exact = experience_exact_map.get(experience_level, "")
+
     search_id = uuid.uuid4()
     foundit_url = f"https://www.foundit.in/srp/results?query={role_encoded}&locations={loc_encoded}"
     if experience_range:
-        foundit_url += f"&experienceRanges={experience_range}"
+        foundit_url += f"&experienceRanges={urllib.parse.quote_plus(experience_range)}"
+    if experience_exact:
+        foundit_url += f"&experience={experience_exact}"
     foundit_url += f"&searchId={search_id}"
 
     return [
@@ -523,6 +536,7 @@ def search_jobs(job_role, location, experience_level=None, job_type=None):
         {"title": f"Naukri: {job_role} jobs in {location}", "link": naukri_url},
         {"title": f"FoundIt (Monster): {job_role} jobs in {location}", "link": foundit_url}
     ]
+
 
 
 
@@ -769,6 +783,7 @@ Your task is to:
    - Certifications
    - Education
    - Projects
+   - Interests
 
    - If *Name*, *Contact Information*, or *Email* is present, place them clearly at the top under respective headings.
 
@@ -1588,12 +1603,13 @@ with tab3:
             ["", "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship"]
         )
 
-    # Store button click in a variable
+    foundit_experience = st.text_input("🔢 Experience (Years) for FoundIt", placeholder="e.g., 1")
+
     search_clicked = st.button("🔎 Search Jobs")
 
     if search_clicked:
         if job_role.strip() and location.strip():
-            results = search_jobs(job_role, location, experience_level, job_type)
+            results = search_jobs(job_role, location, experience_level, job_type, foundit_experience)
 
             st.markdown("## 🎯 Job Search Results")
 
@@ -1644,7 +1660,6 @@ with tab3:
 """, unsafe_allow_html=True)
         else:
             st.warning("⚠️ Please enter both the Job Role and Location to perform the search.")
-
 
 
     # Inject Glowing CSS for Cards

@@ -267,6 +267,13 @@ def ensure_nltk():
 lemmatizer = ensure_nltk()
 reader = get_easyocr_reader()
 
+
+from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
+
+
+
+
+
 FEATURED_COMPANIES = {
     "tech": [
         {
@@ -836,10 +843,13 @@ Your task is to:
 5. **Job Title 5** — Reason  
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%205&location={user_location})
 """
+    
+
+    # Call the LLM
     llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0, groq_api_key=groq_api_key)
     response = llm.invoke(prompt)
-    return response.content
 
+    return response.content
     
     
 
@@ -998,7 +1008,7 @@ if uploaded_files:
 
 # === TAB 1: Dashboard ===
 # 📊 Dashboard and Metrics
-tab1, tab2, tab3 = st.tabs(["📊 Dashboard", "🧾 Resume Builder", "💼 Job Search"])
+tab1, tab2, tab3, tab4 = st.tabs(["📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", "COURSE RECOMMENDATION"])
 
 # === TAB 1: Dashboard ===
 with tab1:
@@ -1026,7 +1036,6 @@ with tab1:
             use_container_width=True
         )
 
-        # 📈 Charts Section
         st.markdown("### 📊 Visual Analysis")
         chart_tab1, chart_tab2 = st.tabs(["📉 Bias Score Chart", "⚖ Gender-Coded Words"])
 
@@ -1051,7 +1060,6 @@ with tab1:
             ax.legend()
             st.pyplot(fig)
 
-        # 📑 Individual Resume Reports
         st.markdown("### 📝 Detailed Resume Reports")
         for resume in resume_data:
             with st.expander(f"📄 {resume['Resume Name']} | {resume['Candidate Name']}", expanded=False):
@@ -1074,7 +1082,6 @@ with tab1:
                         st.metric("🔵 Masculine Words", resume["Masculine Words"])
                         if resume["Detected Masculine Words"]:
                             st.markdown("### 📚 Detected Words:")
-                            st.write("**Masculine Words Detected:**")
                             st.success(", ".join(f"{word} ({count})" for word, count in resume["Detected Masculine Words"].items()))
                         else:
                             st.info("No masculine words detected.")
@@ -1083,7 +1090,6 @@ with tab1:
                         st.metric("🔴 Feminine Words", resume["Feminine Words"])
                         if resume["Detected Feminine Words"]:
                             st.markdown("### 📚 Detected Words:")
-                            st.write("**Feminine Words Detected:**")
                             st.success(", ".join(f"{word} ({count})" for word, count in resume["Detected Feminine Words"].items()))
                         else:
                             st.info("No feminine words detected.")
@@ -1092,17 +1098,22 @@ with tab1:
                     st.markdown("#### ✨ Bias-Free Rewritten Resume")
                     st.write(resume["Rewritten Text"])
 
+                    # ✅ Embedded Course Recommendations inside detail_tab2
+                    # 🔽 Download button AFTER recommendations
                     docx_file = generate_docx(resume["Rewritten Text"])
-
                     st.download_button(
-                    label="📥 Download Bias-Free Resume (.docx)",
-                    data=docx_file,
-                    file_name=f"{resume['Resume Name'].split('.')[0]}_bias_free.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    use_container_width=True,
-)
+                        label="📥 Download Bias-Free Resume (.docx)",
+                        data=docx_file,
+                        file_name=f"{resume['Resume Name'].split('.')[0]}_bias_free.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        use_container_width=True,
+                    )
     else:
         st.warning("Please upload resumes to view dashboard analytics.")
+
+
+
+   
 with tab2:
     st.markdown("## 🧾 <span style='color:#336699;'>Advanced Resume Builder</span>", unsafe_allow_html=True)
     st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
@@ -1780,12 +1791,182 @@ with tab3:
         </div>
         """, unsafe_allow_html=True)
 
+with tab4:
+    # CSS styles for header, buttons, and cards
+    st.markdown("""
+        <style>
+        .header-box {
+            background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+            border: 2px solid #00c3ff;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 0 15px #00c3ff88;
+        }
+
+        .header-box h2 {
+            font-size: 30px;
+            color: #fff;
+            margin: 0;
+            font-weight: bold;
+        }
+
+        .glow-header {
+            font-size: 22px;
+            text-align: center;
+            color: #00c3ff;
+            text-shadow: 0 0 10px #00c3ff;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .stRadio > div {
+            flex-direction: row !important;
+            justify-content: center;
+        }
+
+        .stRadio label {
+            background: #1a1a1a;
+            border: 1px solid #00c3ff;
+            color: #00c3ff;
+            padding: 10px 16px;
+            margin: 4px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .stRadio label:hover {
+            background-color: #00c3ff33;
+        }
+
+        .stRadio input:checked + div > label {
+            background-color: #00c3ff;
+            color: black;
+            font-weight: bold;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            border: 2px solid #00c3ff;
+            border-radius: 15px;
+            padding: 15px 20px;
+            margin: 10px 0;
+            box-shadow: 0 0 15px #00c3ff88;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 25px #00c3ffcc;
+        }
+
+        .card a {
+            color: #00c3ff;
+            font-weight: bold;
+            font-size: 16px;
+            text-decoration: none;
+        }
+
+        .card a:hover {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Header
+    st.markdown("""
+        <div class="header-box">
+            <h2>📚 Recommended Learning Hub</h2>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Subheader
+    st.markdown('<div class="glow-header">🎓 Explore Career Resources</div>', unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#ccc;'>Curated courses and videos for your career growth, resume tips, and interview success.</p>", unsafe_allow_html=True)
+
+    # Enhanced label above radio buttons
+    st.markdown("""
+        <div style="text-align:center; margin-top: 20px; margin-bottom: 10px;">
+            <span style="color: #00c3ff; font-weight: bold; font-size: 20px; text-shadow: 0 0 10px #00c3ff;">
+                🧭 Choose Your Learning Path
+            </span>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Stylish radio buttons
+    page = st.radio(
+        " ",
+        ["Courses by Role", "Resume Videos", "Interview Videos"],
+        horizontal=True,
+        key="page_selection"
+    )
+
+    if page == "Courses by Role":
+        st.subheader("Courses by Career Role")
+        category = st.selectbox(
+            "Select Career Category",
+            options=list(COURSES_BY_CATEGORY.keys()),
+            key="category_selection"
+        )
+        if category:
+            roles = list(COURSES_BY_CATEGORY[category].keys())
+            role = st.selectbox(
+                "Select Role / Job Title",
+                options=roles,
+                key="role_selection"
+            )
+            if role:
+                st.subheader(f"Courses for {role} in {category}:")
+                courses = get_courses_for_role(category, role)
+                if courses:
+                    for title, url in courses:
+                        st.markdown(f"""
+                            <div class="card">
+                                <a href="{url}" target="_blank">🔗 {title}</a>
+                            </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.info("No courses found for this role.")
+
+    elif page == "Resume Videos":
+        st.subheader("📄 Resume Writing Videos")
+        categories = list(RESUME_VIDEOS.keys())
+        selected_cat = st.selectbox(
+            "Select Resume Video Category",
+            options=categories,
+            key="resume_vid_cat"
+        )
+        if selected_cat:
+            st.subheader(f"{selected_cat}")
+            videos = RESUME_VIDEOS[selected_cat]
+            cols = st.columns(2)
+            for idx, (title, url) in enumerate(videos):
+                with cols[idx % 2]:
+                    st.markdown(f"**{title}**")
+                    st.video(url)
+
+    elif page == "Interview Videos":
+        st.subheader("🗣️ Interview Preparation Videos")
+        categories = list(INTERVIEW_VIDEOS.keys())
+        selected_cat = st.selectbox(
+            "Select Interview Video Category",
+            options=categories,
+            key="interview_vid_cat"
+        )
+        if selected_cat:
+            st.subheader(f"{selected_cat}")
+            videos = INTERVIEW_VIDEOS[selected_cat]
+            cols = st.columns(2)
+            for idx, (title, url) in enumerate(videos):
+                with cols[idx % 2]:
+                    st.markdown(f"**{title}**")
+                    st.video(url)
 
 
-
-
-        
-# 💬 Chat Section
 # 1. Display existing chat history
 if "memory" in st.session_state:
     history = st.session_state.memory.load_memory_variables({}).get("chat_history", [])

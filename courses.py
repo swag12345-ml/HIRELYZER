@@ -38,7 +38,7 @@ COURSES_BY_CATEGORY = {
     },
     "Data Science and Analytics": {
         "Data Scientist": [
-            ["Data Science Full Course [Free]", "https://youtu.be/_V8eKsto3Ug"],
+            ["Data Science Full Course [Free]", "https://youtube.com/playlist?list=PLfFghEzKVmjsNtIRwErklMAN8nJmebB0I&si=-t9UVAfs-Z2L13GA"],
             ["IBM Data Science Professional Certificate", "https://www.coursera.org/professional-certificates/ibm-data-science"],
             ["Data Science Career Path", "https://www.codecademy.com/learn/paths/data-science"],
             ["Applied Data Science with Python", "https://www.coursera.org/specializations/data-science-python"],

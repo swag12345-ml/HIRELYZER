@@ -1,4 +1,5 @@
 # ------------------- Core Imports -------------------
+# ------------------- Core Imports -------------------
 import os, json, random, string, re, asyncio, io
 import urllib.parse
 from collections import Counter
@@ -30,6 +31,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
+from pydantic import BaseModel
 
 # Set page config
 st.set_page_config(page_title="Chat with LEXIBOT", page_icon="📝", layout="centered")
@@ -278,7 +280,7 @@ FEATURED_COMPANIES = {
     "tech": [
         {
             "name": "Google",
-            "icon": "fab fa-google",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg",
             "color": "#4285F4",
             "careers_url": "https://careers.google.com",
             "description": "Leading technology company known for search, cloud, and innovation",
@@ -286,7 +288,7 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "Microsoft",
-            "icon": "fab fa-microsoft",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
             "color": "#00A4EF",
             "careers_url": "https://careers.microsoft.com",
             "description": "Global leader in software, cloud, and enterprise solutions",
@@ -294,7 +296,7 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "Amazon",
-            "icon": "fab fa-amazon",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
             "color": "#FF9900",
             "careers_url": "https://www.amazon.jobs",
             "description": "E-commerce and cloud computing giant",
@@ -302,7 +304,7 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "Apple",
-            "icon": "fab fa-apple",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
             "color": "#555555",
             "careers_url": "https://www.apple.com/careers",
             "description": "Innovation leader in consumer technology",
@@ -310,7 +312,7 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "Facebook",
-            "icon": "fab fa-facebook",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/0/05/Facebook_Logo_%282019%29.png",
             "color": "#1877F2",
             "careers_url": "https://www.metacareers.com/",
             "description": "Social media and technology company",
@@ -318,12 +320,11 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "Netflix",
-            "icon": "fas fa-play-circle",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg",
             "color": "#E50914",
             "careers_url": "https://explore.jobs.netflix.net/careers",
             "description": "Streaming media company",
             "categories": ["Software", "Marketing", "Design", "Service"],
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Netflix_2015_logo.svg/1920px-Netflix_2015_logo.svg.png",
             "website": "https://jobs.netflix.com/",
             "industry": "Entertainment & Technology"
         }
@@ -331,7 +332,7 @@ FEATURED_COMPANIES = {
     "indian_tech": [
         {
             "name": "TCS",
-            "icon": "fas fa-building",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/f6/TCS_New_Logo.svg",
             "color": "#0070C0",
             "careers_url": "https://www.tcs.com/careers",
             "description": "India's largest IT services company",
@@ -339,7 +340,7 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "Infosys",
-            "icon": "fas fa-building",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/5/55/Infosys_logo.svg",
             "color": "#007CC3",
             "careers_url": "https://www.infosys.com/careers",
             "description": "Global leader in digital services and consulting",
@@ -347,7 +348,7 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "Wipro",
-            "icon": "fas fa-building",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/8/80/Wipro_Primary_Logo_Color_RGB.svg",
             "color": "#341F65",
             "careers_url": "https://careers.wipro.com",
             "description": "Leading global information technology company",
@@ -355,7 +356,7 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "HCL",
-            "icon": "fas fa-building",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/5/5e/HCL_Technologies_logo.svg",
             "color": "#0075C9",
             "careers_url": "https://www.hcltech.com/careers",
             "description": "Global technology company",
@@ -365,18 +366,17 @@ FEATURED_COMPANIES = {
     "global_corps": [
         {
             "name": "IBM",
-            "icon": "fas fa-server",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg",
             "color": "#1F70C1",
             "careers_url": "https://www.ibm.com/careers",
             "description": "Global leader in technology and consulting",
             "categories": ["Software", "Consulting", "AI/ML", "Cloud"],
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/IBM_logo.svg/1920px-IBM_logo.svg.png",
             "website": "https://www.ibm.com/careers/",
             "industry": "Technology & Consulting"
         },
         {
             "name": "Accenture",
-            "icon": "fas fa-building",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/8/80/Accenture_Logo.svg",
             "color": "#A100FF",
             "careers_url": "https://www.accenture.com/careers",
             "description": "Global professional services company",
@@ -384,7 +384,7 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "Cognizant",
-            "icon": "fas fa-building",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/6/6e/Cognizant_logo_2022.svg",
             "color": "#1299D8",
             "careers_url": "https://careers.cognizant.com",
             "description": "Leading professional services company",
@@ -392,6 +392,7 @@ FEATURED_COMPANIES = {
         }
     ]
 }
+
 
 JOB_MARKET_INSIGHTS = {
     "trending_skills": [
@@ -434,10 +435,18 @@ JOB_MARKET_INSIGHTS = {
 }
 
 def get_featured_companies(category=None):
-    """Get featured companies, optionally filtered by category"""
+    """Get featured companies with original logos, optionally filtered by category"""
+    def has_valid_logo(company):
+        return "logo_url" in company and company["logo_url"].startswith("https://upload.wikimedia.org/")
+
     if category and category in FEATURED_COMPANIES:
-        return FEATURED_COMPANIES[category]
-    return [company for companies in FEATURED_COMPANIES.values() for company in companies]
+        return [company for company in FEATURED_COMPANIES[category] if has_valid_logo(company)]
+    
+    return [
+        company for companies in FEATURED_COMPANIES.values()
+        for company in companies if has_valid_logo(company)
+    ]
+
 
 def get_market_insights():
     """Get job market insights"""
@@ -520,7 +529,11 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         linkedin_url += f"&f_JT={job_type_map[job_type]}"
 
     # Naukri
-    naukri_url = f"https://www.naukri.com/{role_encoded}-jobs-in-{loc_encoded}"
+    # Naukri - add keyword (k), location (l), and experience if available
+    naukri_url = f"https://www.naukri.com/{role_encoded}-jobs-in-{loc_encoded}?k={role_encoded}&l={loc_encoded}"
+    if experience_level and experience_exact_map.get(experience_level):
+     naukri_url += f"&experience={experience_exact_map[experience_level]}"
+
 
     # FoundIt
     if foundit_experience is not None:
@@ -882,17 +895,29 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
 
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
 
+def get_formatted_score(overall_score):
+    if overall_score >= 85:
+        return "Excellent"
+    elif overall_score >= 70:
+        return "Good"
+    elif overall_score >= 50:
+        return "Average"
+    else:
+        return "Poor"
+
 def ats_percentage_score(resume_text, job_description):
     prompt = f"""
 You are a skilled ATS (Applicant Tracking System) with expertise in technical hiring.
 
-Task:
-Evaluate the given resume against the job description and provide the following:
+Your task is to evaluate the candidate’s resume against the job description and provide the following structured results:
 
-1. **Candidate Name**: Extract the full name of the candidate if available (from the top of the resume).
-2. **Percentage Match**: Provide only the number (no percentage symbol).
-3. **Missing Keywords**: List keywords from the job description that are missing in the resume.
-4. **Final Thoughts**: Give a short summary of the candidate's fit for the job.
+1. **Candidate Name**: Extract the full name from the resume (typically from the top).
+2. **Section-wise Score Percentage** (each as an integer):
+    - Education Score
+    - Experience Score
+    - Skills Match Percentage
+3. **Missing Keywords**: List important keywords from the job description not found in the resume.
+4. **Final Thoughts**: A short summary of the candidate's overall fitness for the role.
 
 ### Job Description:
 \"\"\"{job_description}\"\"\"
@@ -902,15 +927,46 @@ Evaluate the given resume against the job description and provide the following:
 
 Return the output in the format:
 Candidate Name: <name or "Not Found">
-Percentage Match: <only number>
+Education Score: <integer>
+Experience Score: <integer>
+Skills Match Percentage: <integer>
 Missing Keywords: <comma-separated list>
 Final Thoughts: <brief summary>
 """
+
     llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0, groq_api_key=groq_api_key)
     response = llm.invoke(prompt)
-    return response.content.strip()
+    raw_output = response.content.strip()
+
+    # Parse response
+    lines = raw_output.splitlines()
+    parsed = {k.strip(): v.strip() for line in lines if ':' in line for k, v in [line.split(':', 1)]}
+
+    # Extract and compute
+    education = int(parsed.get("Education Score", 0))
+    experience = int(parsed.get("Experience Score", 0))
+    skills = int(parsed.get("Skills Match Percentage", 0))
+
+    overall = round((education + experience + skills) / 3)
+    formatted = get_formatted_score(overall)
+
+    final_output = f"""Candidate Name: {parsed.get("Candidate Name", "Not Found")}
+Overall Percentage Match: {overall}
+Formatted Score: {formatted}
+Education Score: {education}
+Experience Score: {experience}
+Skills Match Percentage: {skills}
+Missing Keywords: {parsed.get("Missing Keywords", "")}
+Final Thoughts: {parsed.get("Final Thoughts", "")}
+"""
+
+    return final_output
 
 
+
+
+
+# 🔧 Ask user for job role (once, outside the loop ideally)
 
 
 # Setup Vector DB
@@ -970,21 +1026,49 @@ if uploaded_files:
         all_text.extend(text)
 
         full_text = " ".join(text)
+        
+        # Detect bias and highlight
         bias_score, masc, fem = detect_bias(full_text)
-        highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(full_text, replacement_mapping, user_location)
+        highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(
+            full_text, replacement_mapping, user_location
+        )
 
+        # Call ATS logic
         ats_result = ats_percentage_score(full_text, job_description)
 
-        # Parse the ATS result to extract details
+        # Extract and parse values
         name_match = re.search(r"Candidate Name:\s*(.*)", ats_result)
-        percent_match = re.search(r"Percentage Match:\s*(\d+)", ats_result)
+        edu_score = re.search(r"Education Score:\s*(\d+)", ats_result)
+        exp_score = re.search(r"Experience Score:\s*(\d+)", ats_result)
+        skills_match = re.search(r"Skills Match Percentage:\s*(\d+)", ats_result)
         missing_keywords = re.search(r"Missing Keywords:\s*(.*)", ats_result)
         final_thoughts = re.search(r"Final Thoughts:\s*(.*)", ats_result)
+
+        # Handle extracted values
+        education = int(edu_score.group(1)) if edu_score else 0
+        experience = int(exp_score.group(1)) if exp_score else 0
+        skills = int(skills_match.group(1)) if skills_match else 0
+
+        # Compute overall and formatted score
+        overall_score = round((education + experience + skills) / 3)
+
+        if overall_score >= 85:
+            formatted = "Excellent"
+        elif overall_score >= 70:
+            formatted = "Good"
+        elif overall_score >= 50:
+            formatted = "Average"
+        else:
+            formatted = "Poor"
 
         resume_data.append({
             "Resume Name": uploaded_file.name,
             "Candidate Name": name_match.group(1) if name_match else "Not Found",
-            "ATS Match %": int(percent_match.group(1)) if percent_match else 0,
+            "ATS Match %": overall_score,
+            "Formatted Score": formatted,
+            "Education Score": education,
+            "Experience Score": experience,
+            "Skills Match %": skills,
             "Missing Keywords": missing_keywords.group(1) if missing_keywords else "N/A",
             "Fit Summary": final_thoughts.group(1) if final_thoughts else "N/A",
             "Bias Score (0 = Fair, 1 = Biased)": bias_score,
@@ -996,7 +1080,6 @@ if uploaded_files:
             "Highlighted Text": highlighted_text,
             "Rewritten Text": rewritten_text
         })
-       
 
     st.success("✅ All resumes processed!")
 
@@ -1008,15 +1091,22 @@ if uploaded_files:
 
 # === TAB 1: Dashboard ===
 # 📊 Dashboard and Metrics
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", "COURSE RECOMMENDATION"])
+import streamlit as st
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+tab1, tab2, tab3, tab4 = st.tabs(["📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", "📚 Course Recommendation"])
 
 # === TAB 1: Dashboard ===
 with tab1:
     if resume_data:
-        total_masc = sum(r["Masculine Words"] for r in resume_data)
-        total_fem = sum(r["Feminine Words"] for r in resume_data)
-        avg_bias = round(np.mean([r["Bias Score (0 = Fair, 1 = Biased)"] for r in resume_data]), 2)
+        # ==== Summary Calculations ====
         total_resumes = len(resume_data)
+        total_masc = sum(r.get("Masculine Words", 0) for r in resume_data)
+        total_fem = sum(r.get("Feminine Words", 0) for r in resume_data)
+        avg_bias = round(np.mean([r.get("Bias Score (0 = Fair, 1 = Biased)", 0) for r in resume_data]), 2)
+        avg_ats = round(np.mean([r.get("ATS Match %", 0) for r in resume_data]), 2)
 
         st.markdown("### 📊 Summary Statistics")
         col1, col2, col3, col4 = st.columns(4)
@@ -1031,10 +1121,12 @@ with tab1:
 
         st.markdown("### 🗂️ Resumes Overview")
         df = pd.DataFrame(resume_data)
-        st.dataframe(
-            df[["Resume Name", "Candidate Name", "ATS Match %", "Bias Score (0 = Fair, 1 = Biased)", "Masculine Words", "Feminine Words"]],
-            use_container_width=True
-        )
+        display_df = df[[
+            "Resume Name", "Candidate Name", "ATS Match %", 
+            "Bias Score (0 = Fair, 1 = Biased)", 
+            "Masculine Words", "Feminine Words"
+        ]]
+        st.dataframe(display_df, use_container_width=True)
 
         st.markdown("### 📊 Visual Analysis")
         chart_tab1, chart_tab2 = st.tabs(["📉 Bias Score Chart", "⚖ Gender-Coded Words"])
@@ -1048,13 +1140,11 @@ with tab1:
             fig, ax = plt.subplots(figsize=(10, 5))
             index = np.arange(len(df))
             bar_width = 0.35
-
             ax.bar(index, df["Masculine Words"], bar_width, label="Masculine", color="#3498db")
             ax.bar(index + bar_width, df["Feminine Words"], bar_width, label="Feminine", color="#e74c3c")
-
-            ax.set_xlabel("Resumes", fontsize=12)
-            ax.set_ylabel("Word Count", fontsize=12)
-            ax.set_title("Gender-Coded Word Usage per Resume", fontsize=14)
+            ax.set_xlabel("Resumes")
+            ax.set_ylabel("Word Count")
+            ax.set_title("Gender-Coded Word Usage per Resume")
             ax.set_xticks(index + bar_width / 2)
             ax.set_xticklabels(df["Resume Name"], rotation=45, ha='right')
             ax.legend()
@@ -1063,44 +1153,68 @@ with tab1:
         st.markdown("### 📝 Detailed Resume Reports")
         for resume in resume_data:
             with st.expander(f"📄 {resume['Resume Name']} | {resume['Candidate Name']}", expanded=False):
-                st.markdown(f"#### 🧠 ATS Evaluation for {resume['Candidate Name']}")
-                st.write(f"**ATS Match %:** {resume['ATS Match %']}%")
-                st.write(f"**Missing Keywords:** {resume['Missing Keywords']}")
-                st.write(f"**Fit Summary:** {resume['Fit Summary']}")
+
+                # === ATS Matching Scores ===
+                st.markdown("### 📊 ATS Section Scores")
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("📈 ATS Match", f"{resume.get('ATS Match %', 0)}%")
+                with col2:
+                    st.metric("🏆 Formatting Score", resume.get("Formatted Score", "N/A"))
+                with col3:
+                    st.metric("🎓 Education Score", f"{resume.get('Education Score', 'N/A')}%")
+                with col4:
+                    st.metric("💼 Experience Score", f"{resume.get('Experience Score', 'N/A')}%")
+                st.metric("🧠 Skills Match", f"{resume.get('Skills Match %', 'N/A')}%")
+
+                # === Missing Keywords ===
+                st.markdown("**🔴 Missing Keywords:**")
+                missing_keywords = resume.get("Missing Keywords", "")
+                missing_list = [kw.strip() for kw in missing_keywords.split(",") if kw.strip()]
+                if missing_list:
+                    for kw in missing_list:
+                        st.error(f"- {kw}")
+                else:
+                    st.info("No missing keywords detected.")
+
+                # === Fit Summary ===
+                st.markdown("### 📝 Fit Summary")
+                st.write(resume.get("Fit Summary", "N/A"))
 
                 st.divider()
 
+                # === Tabs for Bias Details and Rewriting ===
                 detail_tab1, detail_tab2 = st.tabs(["🔎 Bias Analysis", "✅ Rewritten Resume"])
 
                 with detail_tab1:
-                    st.markdown("#### Bias-Highlighted Original Text")
-                    st.markdown(resume["Highlighted Text"], unsafe_allow_html=True)
+                    st.markdown("#### 📌 Bias-Highlighted Original Text")
+                    st.markdown(resume.get("Highlighted Text", ""), unsafe_allow_html=True)
 
                     st.markdown("### 📌 Gender-Coded Word Counts:")
                     col1, col2 = st.columns(2)
                     with col1:
-                        st.metric("🔵 Masculine Words", resume["Masculine Words"])
-                        if resume["Detected Masculine Words"]:
+                        st.metric("🔵 Masculine Words", resume.get("Masculine Words", 0))
+                        masc_words = resume.get("Detected Masculine Words", {})
+                        if masc_words:
                             st.markdown("### 📚 Detected Words:")
-                            st.success(", ".join(f"{word} ({count})" for word, count in resume["Detected Masculine Words"].items()))
+                            st.success(", ".join(f"{w} ({c})" for w, c in masc_words.items()))
                         else:
                             st.info("No masculine words detected.")
-
                     with col2:
-                        st.metric("🔴 Feminine Words", resume["Feminine Words"])
-                        if resume["Detected Feminine Words"]:
+                        st.metric("🔴 Feminine Words", resume.get("Feminine Words", 0))
+                        fem_words = resume.get("Detected Feminine Words", {})
+                        if fem_words:
                             st.markdown("### 📚 Detected Words:")
-                            st.success(", ".join(f"{word} ({count})" for word, count in resume["Detected Feminine Words"].items()))
+                            st.success(", ".join(f"{w} ({c})" for w, c in fem_words.items()))
                         else:
                             st.info("No feminine words detected.")
 
                 with detail_tab2:
                     st.markdown("#### ✨ Bias-Free Rewritten Resume")
-                    st.write(resume["Rewritten Text"])
+                    st.write(resume.get("Rewritten Text", "No rewritten text available."))
 
-                    # ✅ Embedded Course Recommendations inside detail_tab2
-                    # 🔽 Download button AFTER recommendations
-                    docx_file = generate_docx(resume["Rewritten Text"])
+                    # Generate and allow docx download
+                    docx_file = generate_docx(resume.get("Rewritten Text", ""))
                     st.download_button(
                         label="📥 Download Bias-Free Resume (.docx)",
                         data=docx_file,
@@ -1110,6 +1224,8 @@ with tab1:
                     )
     else:
         st.warning("Please upload resumes to view dashboard analytics.")
+
+
 
 
 

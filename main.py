@@ -30,7 +30,6 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
-from pydantic import BaseModel
 
 # Set page config
 st.set_page_config(page_title="Chat with LEXIBOT", page_icon="📝", layout="centered")
@@ -279,7 +278,7 @@ FEATURED_COMPANIES = {
     "tech": [
         {
             "name": "Google",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg",
+            "icon": "fab fa-google",
             "color": "#4285F4",
             "careers_url": "https://careers.google.com",
             "description": "Leading technology company known for search, cloud, and innovation",
@@ -287,7 +286,7 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "Microsoft",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
+            "icon": "fab fa-microsoft",
             "color": "#00A4EF",
             "careers_url": "https://careers.microsoft.com",
             "description": "Global leader in software, cloud, and enterprise solutions",
@@ -295,7 +294,7 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "Amazon",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
+            "icon": "fab fa-amazon",
             "color": "#FF9900",
             "careers_url": "https://www.amazon.jobs",
             "description": "E-commerce and cloud computing giant",
@@ -303,7 +302,7 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "Apple",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
+            "icon": "fab fa-apple",
             "color": "#555555",
             "careers_url": "https://www.apple.com/careers",
             "description": "Innovation leader in consumer technology",
@@ -311,7 +310,7 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "Facebook",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/0/05/Facebook_Logo_%282019%29.png",
+            "icon": "fab fa-facebook",
             "color": "#1877F2",
             "careers_url": "https://www.metacareers.com/",
             "description": "Social media and technology company",
@@ -319,11 +318,12 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "Netflix",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg",
+            "icon": "fas fa-play-circle",
             "color": "#E50914",
             "careers_url": "https://explore.jobs.netflix.net/careers",
             "description": "Streaming media company",
             "categories": ["Software", "Marketing", "Design", "Service"],
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Netflix_2015_logo.svg/1920px-Netflix_2015_logo.svg.png",
             "website": "https://jobs.netflix.com/",
             "industry": "Entertainment & Technology"
         }
@@ -331,7 +331,7 @@ FEATURED_COMPANIES = {
     "indian_tech": [
         {
             "name": "TCS",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/f6/TCS_New_Logo.svg",
+            "icon": "fas fa-building",
             "color": "#0070C0",
             "careers_url": "https://www.tcs.com/careers",
             "description": "India's largest IT services company",
@@ -339,7 +339,7 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "Infosys",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/5/55/Infosys_logo.svg",
+            "icon": "fas fa-building",
             "color": "#007CC3",
             "careers_url": "https://www.infosys.com/careers",
             "description": "Global leader in digital services and consulting",
@@ -347,7 +347,7 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "Wipro",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/8/80/Wipro_Primary_Logo_Color_RGB.svg",
+            "icon": "fas fa-building",
             "color": "#341F65",
             "careers_url": "https://careers.wipro.com",
             "description": "Leading global information technology company",
@@ -355,7 +355,7 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "HCL",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/5/5e/HCL_Technologies_logo.svg",
+            "icon": "fas fa-building",
             "color": "#0075C9",
             "careers_url": "https://www.hcltech.com/careers",
             "description": "Global technology company",
@@ -365,17 +365,18 @@ FEATURED_COMPANIES = {
     "global_corps": [
         {
             "name": "IBM",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg",
+            "icon": "fas fa-server",
             "color": "#1F70C1",
             "careers_url": "https://www.ibm.com/careers",
             "description": "Global leader in technology and consulting",
             "categories": ["Software", "Consulting", "AI/ML", "Cloud"],
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/IBM_logo.svg/1920px-IBM_logo.svg.png",
             "website": "https://www.ibm.com/careers/",
             "industry": "Technology & Consulting"
         },
         {
             "name": "Accenture",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/8/80/Accenture_Logo.svg",
+            "icon": "fas fa-building",
             "color": "#A100FF",
             "careers_url": "https://www.accenture.com/careers",
             "description": "Global professional services company",
@@ -383,7 +384,7 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "Cognizant",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/6/6e/Cognizant_logo_2022.svg",
+            "icon": "fas fa-building",
             "color": "#1299D8",
             "careers_url": "https://careers.cognizant.com",
             "description": "Leading professional services company",
@@ -391,7 +392,6 @@ FEATURED_COMPANIES = {
         }
     ]
 }
-
 
 JOB_MARKET_INSIGHTS = {
     "trending_skills": [
@@ -434,18 +434,10 @@ JOB_MARKET_INSIGHTS = {
 }
 
 def get_featured_companies(category=None):
-    """Get featured companies with original logos, optionally filtered by category"""
-    def has_valid_logo(company):
-        return "logo_url" in company and company["logo_url"].startswith("https://upload.wikimedia.org/")
-
+    """Get featured companies, optionally filtered by category"""
     if category and category in FEATURED_COMPANIES:
-        return [company for company in FEATURED_COMPANIES[category] if has_valid_logo(company)]
-    
-    return [
-        company for companies in FEATURED_COMPANIES.values()
-        for company in companies if has_valid_logo(company)
-    ]
-
+        return FEATURED_COMPANIES[category]
+    return [company for companies in FEATURED_COMPANIES.values() for company in companies]
 
 def get_market_insights():
     """Get job market insights"""
@@ -528,11 +520,7 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         linkedin_url += f"&f_JT={job_type_map[job_type]}"
 
     # Naukri
-    # Naukri - add keyword (k), location (l), and experience if available
-    naukri_url = f"https://www.naukri.com/{role_encoded}-jobs-in-{loc_encoded}?k={role_encoded}&l={loc_encoded}"
-    if experience_level and experience_exact_map.get(experience_level):
-     naukri_url += f"&experience={experience_exact_map[experience_level]}"
-
+    naukri_url = f"https://www.naukri.com/{role_encoded}-jobs-in-{loc_encoded}"
 
     # FoundIt
     if foundit_experience is not None:
@@ -923,7 +911,6 @@ Final Thoughts: <brief summary>
     return response.content.strip()
 
 
-# 🔧 Ask user for job role (once, outside the loop ideally)
 
 
 # Setup Vector DB
@@ -1010,7 +997,7 @@ if uploaded_files:
             "Rewritten Text": rewritten_text
         })
        
-     
+
     st.success("✅ All resumes processed!")
 
     # Setup vectorstore if needed
@@ -1021,7 +1008,7 @@ if uploaded_files:
 
 # === TAB 1: Dashboard ===
 # 📊 Dashboard and Metrics
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", "📚 Course Recommendation"])
+tab1, tab2, tab3, tab4 = st.tabs(["📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", "COURSE RECOMMENDATION"])
 
 # === TAB 1: Dashboard ===
 with tab1:
@@ -1076,22 +1063,10 @@ with tab1:
         st.markdown("### 📝 Detailed Resume Reports")
         for resume in resume_data:
             with st.expander(f"📄 {resume['Resume Name']} | {resume['Candidate Name']}", expanded=False):
-                # ATS Match % and Missing Keywords in columns, styled interactively
-                col1, col2 = st.columns([1, 2])
-                with col1:
-                    st.metric(label="📄 ATS Match %", value=f"{resume['ATS Match %']}%")
-                with col2:
-                    st.markdown("**🔴 Missing Keywords:**")
-                    missing_list = resume["Missing Keywords"].split(",") if resume["Missing Keywords"] else []
-                    if missing_list and any(kw.strip() for kw in missing_list):
-                        for kw in missing_list:
-                            st.error(f"- {kw.strip()}")
-                    else:
-                        st.info("No missing keywords detected.")
-
-                # Fit Summary below ATS info
-                st.markdown("### 📝 Fit Summary")
-                st.write(resume['Fit Summary'])
+                st.markdown(f"#### 🧠 ATS Evaluation for {resume['Candidate Name']}")
+                st.write(f"**ATS Match %:** {resume['ATS Match %']}%")
+                st.write(f"**Missing Keywords:** {resume['Missing Keywords']}")
+                st.write(f"**Fit Summary:** {resume['Fit Summary']}")
 
                 st.divider()
 
@@ -1123,6 +1098,8 @@ with tab1:
                     st.markdown("#### ✨ Bias-Free Rewritten Resume")
                     st.write(resume["Rewritten Text"])
 
+                    # ✅ Embedded Course Recommendations inside detail_tab2
+                    # 🔽 Download button AFTER recommendations
                     docx_file = generate_docx(resume["Rewritten Text"])
                     st.download_button(
                         label="📥 Download Bias-Free Resume (.docx)",

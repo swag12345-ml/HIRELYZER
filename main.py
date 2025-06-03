@@ -898,31 +898,36 @@ def ats_percentage_score(resume_text, job_description):
     prompt = f"""
 You are an advanced AI-powered ATS (Applicant Tracking System) with expertise in technical recruitment and semantic job-resume analysis.
 
-Evaluate the candidate’s resume against the job description using the following logic:
+Evaluate the candidate’s resume against the job description using the logic below. Be strict and transparent in detecting any missing requirements.
 
 ---
 
-### SCORING LOGIC:
+### STEP 1: Extract Critical Requirements from Job Description
 
-1. **Weighted Score Calculation**:
-   - Skills Match: 50% weight  
-     - Includes exact skills, synonyms, tool proficiency, and context-related skills
-   - Experience Match: 30% weight  
-     - Includes job roles, years of experience, relevance to the description
-   - Education Match: 20% weight  
-     - Includes degrees, certifications, institution relevance
+Identify and list the following:
+- Mandatory Skills
+- Required Experience (roles, duration)
+- Required Education/Certifications
 
-2. **Bonuses (Optional +5% max)**:
-   - Bonus points for certifications, leadership roles, awards, or exceeding key job requirements.
+---
 
-3. **Penalties (Up to -10%)**:
-   - Penalties if key required skills, experience, or education are clearly missing.
+### STEP 2: Match Resume
 
-4. **Score Classification**:
-   - 85–100: Excellent
-   - 70–84: Good
-   - 50–69: Average
-   - Below 50: Poor
+Check whether these required elements are **present in the resume**. If any are missing, clearly list them.
+
+---
+
+### STEP 3: Score Calculation
+
+**Weighted Score:**
+- Skills Match → 50%
+- Experience Match → 30%
+- Education Match → 20%
+
+**Bonus (max +5%)**: For leadership, awards, certifications, exceeding expectations  
+**Penalty (up to -10%)**: For each clearly missing key requirement
+
+Use strict comparison — if a critical skill or qualification is not found explicitly or via synonyms, apply a penalty.
 
 ---
 
@@ -937,10 +942,10 @@ Experience Score: <0–100>
 Skills Match Percentage: <0–100>
 
 Bonus Points: <if any, explain briefly or state "None">
-Penalties: <if any, explain briefly or state "None">
-Missing Critical Keywords: <comma-separated list>
+Penalties: <describe what’s missing and apply deduction>
+Missing Critical Keywords: <list actual missing required terms or phrases>
 
-Final Thoughts: <short summary of the candidate’s fitness>
+Final Thoughts: <short analysis of candidate fit>
 
 ---
 
@@ -950,6 +955,7 @@ Final Thoughts: <short summary of the candidate’s fitness>
 ### RESUME:
 \"\"\"{resume_text}\"\"\"
 """
+
     llm = ChatGroq(
         model="llama-3.3-70b-versatile",
         temperature=0,

@@ -1,5 +1,4 @@
 # ------------------- Core Imports -------------------
-# ------------------- Core Imports -------------------
 import os, json, random, string, re, asyncio, io
 import urllib.parse
 from collections import Counter
@@ -895,29 +894,25 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
 
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
 
-def get_formatted_score(overall_score):
-    if overall_score >= 85:
-        return "Excellent"
-    elif overall_score >= 70:
-        return "Good"
-    elif overall_score >= 50:
-        return "Average"
-    else:
-        return "Poor"
-
 def ats_percentage_score(resume_text, job_description):
     prompt = f"""
 You are a skilled ATS (Applicant Tracking System) with expertise in technical hiring.
 
 Your task is to evaluate the candidate’s resume against the job description and provide the following structured results:
 
-1. **Candidate Name**: Extract the full name from the resume (typically from the top).
-2. **Section-wise Score Percentage** (each as an integer):
-    - Education Score
-    - Experience Score
-    - Skills Match Percentage
-3. **Missing Keywords**: List important keywords from the job description not found in the resume.
-4. **Final Thoughts**: A short summary of the candidate's overall fitness for the role.
+1. *Candidate Name*: Extract the full name from the resume (typically from the top).
+2. *Overall Percentage Match*: Provide only the number (no percentage symbol).
+3. *Formatted Score*: Based on match percentage, classify as:
+    - 85-100: Excellent
+    - 70-84: Good
+    - 50-69: Average
+    - Below 50: Poor
+4. *Section-wise Score Percentage*:
+    - Education Score: % match for education section
+    - Experience Score: % match for experience section
+    - Skills Match Percentage: % match of resume skills vs required job skills
+5. *Missing Keywords*: List important keywords from the job description not found in the resume.
+6. *Final Thoughts*: A brief summary of the candidate's overall fitness for the role.
 
 ### Job Description:
 \"\"\"{job_description}\"\"\"
@@ -927,44 +922,17 @@ Your task is to evaluate the candidate’s resume against the job description an
 
 Return the output in the format:
 Candidate Name: <name or "Not Found">
-Education Score: <integer>
-Experience Score: <integer>
-Skills Match Percentage: <integer>
+Overall Percentage Match: <only number>
+Formatted Score: <Excellent/Good/Average/Poor>
+Education Score: <number>
+Experience Score: <number>
+Skills Match Percentage: <number>
 Missing Keywords: <comma-separated list>
 Final Thoughts: <brief summary>
 """
-
     llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0, groq_api_key=groq_api_key)
     response = llm.invoke(prompt)
-    raw_output = response.content.strip()
-
-    # Parse response
-    lines = raw_output.splitlines()
-    parsed = {k.strip(): v.strip() for line in lines if ':' in line for k, v in [line.split(':', 1)]}
-
-    # Extract and compute
-    education = int(parsed.get("Education Score", 0))
-    experience = int(parsed.get("Experience Score", 0))
-    skills = int(parsed.get("Skills Match Percentage", 0))
-
-    overall = round((education + experience + skills) / 3)
-    formatted = get_formatted_score(overall)
-
-    final_output = f"""Candidate Name: {parsed.get("Candidate Name", "Not Found")}
-Overall Percentage Match: {overall}
-Formatted Score: {formatted}
-Education Score: {education}
-Experience Score: {experience}
-Skills Match Percentage: {skills}
-Missing Keywords: {parsed.get("Missing Keywords", "")}
-Final Thoughts: {parsed.get("Final Thoughts", "")}
-"""
-
-    return final_output
-
-
-
-
+    return response.content.strip()
 
 # 🔧 Ask user for job role (once, outside the loop ideally)
 
@@ -1026,61 +994,45 @@ if uploaded_files:
         all_text.extend(text)
 
         full_text = " ".join(text)
-        
-        # Detect bias and highlight
         bias_score, masc, fem = detect_bias(full_text)
-        highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(
-            full_text, replacement_mapping, user_location
-        )
+        highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(full_text, replacement_mapping, user_location)
 
-        # Call ATS logic
         ats_result = ats_percentage_score(full_text, job_description)
 
-        # Extract and parse values
+        # Parse the ATS result to extract details
+        # Parse the ATS result to extract details
         name_match = re.search(r"Candidate Name:\s*(.*)", ats_result)
+        percent_match = re.search(r"Overall Percentage Match:\s*(\d+)", ats_result)
+        formatted_score = re.search(r"Formatted Score:\s*(.*)", ats_result)
         edu_score = re.search(r"Education Score:\s*(\d+)", ats_result)
         exp_score = re.search(r"Experience Score:\s*(\d+)", ats_result)
         skills_match = re.search(r"Skills Match Percentage:\s*(\d+)", ats_result)
         missing_keywords = re.search(r"Missing Keywords:\s*(.*)", ats_result)
         final_thoughts = re.search(r"Final Thoughts:\s*(.*)", ats_result)
 
-        # Handle extracted values
-        education = int(edu_score.group(1)) if edu_score else 0
-        experience = int(exp_score.group(1)) if exp_score else 0
-        skills = int(skills_match.group(1)) if skills_match else 0
-
-        # Compute overall and formatted score
-        overall_score = round((education + experience + skills) / 3)
-
-        if overall_score >= 85:
-            formatted = "Excellent"
-        elif overall_score >= 70:
-            formatted = "Good"
-        elif overall_score >= 50:
-            formatted = "Average"
-        else:
-            formatted = "Poor"
 
         resume_data.append({
-            "Resume Name": uploaded_file.name,
-            "Candidate Name": name_match.group(1) if name_match else "Not Found",
-            "ATS Match %": overall_score,
-            "Formatted Score": formatted,
-            "Education Score": education,
-            "Experience Score": experience,
-            "Skills Match %": skills,
-            "Missing Keywords": missing_keywords.group(1) if missing_keywords else "N/A",
-            "Fit Summary": final_thoughts.group(1) if final_thoughts else "N/A",
-            "Bias Score (0 = Fair, 1 = Biased)": bias_score,
-            "Masculine Words": masc_count,
-            "Feminine Words": fem_count,
-            "Detected Masculine Words": detected_masc,
-            "Detected Feminine Words": detected_fem,
-            "Text Preview": full_text[:300] + "...",
-            "Highlighted Text": highlighted_text,
-            "Rewritten Text": rewritten_text
-        })
+    "Resume Name": uploaded_file.name,
+    "Candidate Name": name_match.group(1) if name_match else "Not Found",
+    "ATS Match %": int(percent_match.group(1)) if percent_match else 0,
+    "Formatted Score": formatted_score.group(1) if formatted_score else "N/A",
+    "Education Score": int(edu_score.group(1)) if edu_score else 0,
+    "Experience Score": int(exp_score.group(1)) if exp_score else 0,
+    "Skills Match %": int(skills_match.group(1)) if skills_match else 0,
+    "Missing Keywords": missing_keywords.group(1) if missing_keywords else "N/A",
+    "Fit Summary": final_thoughts.group(1) if final_thoughts else "N/A",
+    "Bias Score (0 = Fair, 1 = Biased)": bias_score,
+    "Masculine Words": masc_count,
+    "Feminine Words": fem_count,
+    "Detected Masculine Words": detected_masc,
+    "Detected Feminine Words": detected_fem,
+    "Text Preview": full_text[:300] + "...",
+    "Highlighted Text": highlighted_text,
+    "Rewritten Text": rewritten_text
+})
 
+       
+     
     st.success("✅ All resumes processed!")
 
     # Setup vectorstore if needed
@@ -1091,22 +1043,15 @@ if uploaded_files:
 
 # === TAB 1: Dashboard ===
 # 📊 Dashboard and Metrics
-import streamlit as st
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-
 tab1, tab2, tab3, tab4 = st.tabs(["📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", "📚 Course Recommendation"])
 
 # === TAB 1: Dashboard ===
 with tab1:
     if resume_data:
-        # ==== Summary Calculations ====
+        total_masc = sum(r["Masculine Words"] for r in resume_data)
+        total_fem = sum(r["Feminine Words"] for r in resume_data)
+        avg_bias = round(np.mean([r["Bias Score (0 = Fair, 1 = Biased)"] for r in resume_data]), 2)
         total_resumes = len(resume_data)
-        total_masc = sum(r.get("Masculine Words", 0) for r in resume_data)
-        total_fem = sum(r.get("Feminine Words", 0) for r in resume_data)
-        avg_bias = round(np.mean([r.get("Bias Score (0 = Fair, 1 = Biased)", 0) for r in resume_data]), 2)
-        avg_ats = round(np.mean([r.get("ATS Match %", 0) for r in resume_data]), 2)
 
         st.markdown("### 📊 Summary Statistics")
         col1, col2, col3, col4 = st.columns(4)
@@ -1121,12 +1066,13 @@ with tab1:
 
         st.markdown("### 🗂️ Resumes Overview")
         df = pd.DataFrame(resume_data)
-        display_df = df[[
-            "Resume Name", "Candidate Name", "ATS Match %", 
-            "Bias Score (0 = Fair, 1 = Biased)", 
-            "Masculine Words", "Feminine Words"
-        ]]
-        st.dataframe(display_df, use_container_width=True)
+        st.dataframe(
+            df[[
+                "Resume Name", "Candidate Name", "ATS Match %",
+                "Bias Score (0 = Fair, 1 = Biased)", "Masculine Words", "Feminine Words"
+            ]],
+            use_container_width=True
+        )
 
         st.markdown("### 📊 Visual Analysis")
         chart_tab1, chart_tab2 = st.tabs(["📉 Bias Score Chart", "⚖ Gender-Coded Words"])
@@ -1140,11 +1086,13 @@ with tab1:
             fig, ax = plt.subplots(figsize=(10, 5))
             index = np.arange(len(df))
             bar_width = 0.35
+
             ax.bar(index, df["Masculine Words"], bar_width, label="Masculine", color="#3498db")
             ax.bar(index + bar_width, df["Feminine Words"], bar_width, label="Feminine", color="#e74c3c")
-            ax.set_xlabel("Resumes")
-            ax.set_ylabel("Word Count")
-            ax.set_title("Gender-Coded Word Usage per Resume")
+
+            ax.set_xlabel("Resumes", fontsize=12)
+            ax.set_ylabel("Word Count", fontsize=12)
+            ax.set_title("Gender-Coded Word Usage per Resume", fontsize=14)
             ax.set_xticks(index + bar_width / 2)
             ax.set_xticklabels(df["Resume Name"], rotation=45, ha='right')
             ax.legend()
@@ -1152,69 +1100,61 @@ with tab1:
 
         st.markdown("### 📝 Detailed Resume Reports")
         for resume in resume_data:
-            with st.expander(f"📄 {resume['Resume Name']} | {resume['Candidate Name']}", expanded=False):
-
-                # === ATS Matching Scores ===
+            with st.expander(f"📄 {resume['Resume Name']} | {resume['Candidate Name']}"):
                 st.markdown("### 📊 ATS Section Scores")
-                col1, col2, col3, col4 = st.columns(4)
-                with col1:
-                    st.metric("📈 ATS Match", f"{resume.get('ATS Match %', 0)}%")
-                with col2:
-                    st.metric("🏆 Formatting Score", resume.get("Formatted Score", "N/A"))
-                with col3:
+                score_col1, score_col2, score_col3, score_col4 = st.columns(4)
+                with score_col1:
+                    st.metric("📈 Overall Match", f"{resume['ATS Match %']}%")
+                with score_col2:
+                    st.metric("🏆 Formatted Score", resume.get("Formatted Score", "N/A"))
+                with score_col3:
                     st.metric("🎓 Education Score", f"{resume.get('Education Score', 'N/A')}%")
-                with col4:
+                with score_col4:
                     st.metric("💼 Experience Score", f"{resume.get('Experience Score', 'N/A')}%")
+
                 st.metric("🧠 Skills Match", f"{resume.get('Skills Match %', 'N/A')}%")
 
-                # === Missing Keywords ===
                 st.markdown("**🔴 Missing Keywords:**")
-                missing_keywords = resume.get("Missing Keywords", "")
-                missing_list = [kw.strip() for kw in missing_keywords.split(",") if kw.strip()]
-                if missing_list:
+                missing_list = resume["Missing Keywords"].split(",") if resume["Missing Keywords"] else []
+                if missing_list and any(kw.strip() for kw in missing_list):
                     for kw in missing_list:
-                        st.error(f"- {kw}")
+                        st.error(f"- {kw.strip()}")
                 else:
                     st.info("No missing keywords detected.")
 
-                # === Fit Summary ===
                 st.markdown("### 📝 Fit Summary")
-                st.write(resume.get("Fit Summary", "N/A"))
+                st.write(resume['Fit Summary'])
 
                 st.divider()
 
-                # === Tabs for Bias Details and Rewriting ===
                 detail_tab1, detail_tab2 = st.tabs(["🔎 Bias Analysis", "✅ Rewritten Resume"])
 
                 with detail_tab1:
-                    st.markdown("#### 📌 Bias-Highlighted Original Text")
-                    st.markdown(resume.get("Highlighted Text", ""), unsafe_allow_html=True)
+                    st.markdown("#### Bias-Highlighted Original Text")
+                    st.markdown(resume["Highlighted Text"], unsafe_allow_html=True)
 
                     st.markdown("### 📌 Gender-Coded Word Counts:")
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.metric("🔵 Masculine Words", resume.get("Masculine Words", 0))
-                        masc_words = resume.get("Detected Masculine Words", {})
-                        if masc_words:
+                    bias_col1, bias_col2 = st.columns(2)
+                    with bias_col1:
+                        st.metric("🔵 Masculine Words", resume["Masculine Words"])
+                        if resume["Detected Masculine Words"]:
                             st.markdown("### 📚 Detected Words:")
-                            st.success(", ".join(f"{w} ({c})" for w, c in masc_words.items()))
+                            st.success(", ".join(f"{word} ({count})" for word, count in resume["Detected Masculine Words"].items()))
                         else:
                             st.info("No masculine words detected.")
-                    with col2:
-                        st.metric("🔴 Feminine Words", resume.get("Feminine Words", 0))
-                        fem_words = resume.get("Detected Feminine Words", {})
-                        if fem_words:
+                    with bias_col2:
+                        st.metric("🔴 Feminine Words", resume["Feminine Words"])
+                        if resume["Detected Feminine Words"]:
                             st.markdown("### 📚 Detected Words:")
-                            st.success(", ".join(f"{w} ({c})" for w, c in fem_words.items()))
+                            st.success(", ".join(f"{word} ({count})" for word, count in resume["Detected Feminine Words"].items()))
                         else:
                             st.info("No feminine words detected.")
 
                 with detail_tab2:
                     st.markdown("#### ✨ Bias-Free Rewritten Resume")
-                    st.write(resume.get("Rewritten Text", "No rewritten text available."))
+                    st.write(resume["Rewritten Text"])
 
-                    # Generate and allow docx download
-                    docx_file = generate_docx(resume.get("Rewritten Text", ""))
+                    docx_file = generate_docx(resume["Rewritten Text"])
                     st.download_button(
                         label="📥 Download Bias-Free Resume (.docx)",
                         data=docx_file,
@@ -1223,7 +1163,7 @@ with tab1:
                         use_container_width=True,
                     )
     else:
-        st.warning("Please upload resumes to view dashboard analytics.")
+        st.warning("⚠️ Please upload resumes to view dashboard analytics.")
 
 
 

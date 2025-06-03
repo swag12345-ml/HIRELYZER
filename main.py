@@ -1064,7 +1064,7 @@ if uploaded_files:
         resume_data.append({
             "Resume Name": uploaded_file.name,
             "Candidate Name": name_match.group(1) if name_match else "Not Found",
-            "ATS Match %": overall_score,
+            "ATS Match %": int(percent_match.group(1)) if percent_match else 0,
             "Formatted Score": formatted,
             "Education Score": education,
             "Experience Score": experience,

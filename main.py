@@ -898,36 +898,31 @@ def ats_percentage_score(resume_text, job_description):
     prompt = f"""
 You are an advanced AI-powered ATS (Applicant Tracking System) with expertise in technical recruitment and semantic job-resume analysis.
 
-Evaluate the candidate’s resume against the job description using the logic below. Be strict and transparent in detecting any missing requirements.
+Evaluate the candidate’s resume against the job description using the following logic:
 
 ---
 
-### STEP 1: Extract Critical Requirements from Job Description
+### SCORING LOGIC:
 
-Identify and list the following:
-- Mandatory Skills
-- Required Experience (roles, duration)
-- Required Education/Certifications
+1. **Weighted Score Calculation**:
+   - Skills Match: 50% weight  
+     - Includes exact skills, synonyms, tool proficiency, and context-related skills
+   - Experience Match: 30% weight  
+     - Includes job roles, years of experience, relevance to the description
+   - Education Match: 20% weight  
+     - Includes degrees, certifications, institution relevance
 
----
+2. **Bonuses (Optional +5% max)**:
+   - Bonus points for certifications, leadership roles, awards, or exceeding key job requirements.
 
-### STEP 2: Match Resume
+3. **Penalties (Up to -10%)**:
+   - Penalties if key required skills, experience, or education are clearly missing.
 
-Check whether these required elements are **present in the resume**. If any are missing, clearly list them.
-
----
-
-### STEP 3: Score Calculation
-
-**Weighted Score:**
-- Skills Match → 50%
-- Experience Match → 30%
-- Education Match → 20%
-
-**Bonus (max +5%)**: For leadership, awards, certifications, exceeding expectations  
-**Penalty (up to -10%)**: For each clearly missing key requirement
-
-Use strict comparison — if a critical skill or qualification is not found explicitly or via synonyms, apply a penalty.
+4. **Score Classification**:
+   - 85–100: Excellent
+   - 70–84: Good
+   - 50–69: Average
+   - Below 50: Poor
 
 ---
 
@@ -942,10 +937,10 @@ Experience Score: <0–100>
 Skills Match Percentage: <0–100>
 
 Bonus Points: <if any, explain briefly or state "None">
-Penalties: <describe what’s missing and apply deduction>
-Missing Critical Keywords: <list actual missing required terms or phrases>
+Penalties: <if any, explain briefly or state "None">
+Missing Critical Keywords: <comma-separated list>
 
-Final Thoughts: <short analysis of candidate fit>
+Final Thoughts: <short summary of the candidate’s fitness>
 
 ---
 
@@ -955,7 +950,6 @@ Final Thoughts: <short analysis of candidate fit>
 ### RESUME:
 \"\"\"{resume_text}\"\"\"
 """
-
     llm = ChatGroq(
         model="llama-3.3-70b-versatile",
         temperature=0,
@@ -1021,36 +1015,38 @@ if uploaded_files:
             f.write(uploaded_file.getbuffer())
 
         text = extract_text_from_pdf(file_path)
-        full_text = " ".join(text)
-        all_text.append(full_text)
+        all_text.extend(text)
 
-        # Bias Detection
+        full_text = " ".join(text)
         bias_score, masc, fem = detect_bias(full_text)
         highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(full_text, replacement_mapping, user_location)
 
-        # ATS Scoring
         ats_result = ats_percentage_score(full_text, job_description)
 
-        # Safe extraction from ATS output
-        def extract(pattern, default="N/A", cast=str):
-            match = re.search(pattern, ats_result)
-            try:
-                return cast(match.group(1).strip()) if match else default
-            except:
-                return default
+        # Extract details from ATS output
+        name_match = re.search(r"Candidate Name:\s*(.*)", ats_result)
+        percent_match = re.search(r"Overall Percentage Match:\s*(\d+)", ats_result)
+        formatted_score = re.search(r"Formatted Score:\s*(.*)", ats_result)
+        edu_score = re.search(r"Education Score:\s*(\d+)", ats_result)
+        exp_score = re.search(r"Experience Score:\s*(\d+)", ats_result)
+        skills_match = re.search(r"Skills Match Percentage:\s*(\d+)", ats_result)
+        bonus_points = re.search(r"Bonus Points:\s*(.*)", ats_result)
+        penalties = re.search(r"Penalties:\s*(.*)", ats_result)
+        missing_keywords = re.search(r"Missing Critical Keywords:\s*(.*)", ats_result)
+        final_thoughts = re.search(r"Final Thoughts:\s*(.*)", ats_result)
 
         resume_data.append({
             "Resume Name": uploaded_file.name,
-            "Candidate Name": extract(r"Candidate Name:\s*(.*)", "Not Found"),
-            "ATS Match %": extract(r"Overall Percentage Match:\s*(\d+)", 0, int),
-            "Formatted Score": extract(r"Formatted Score:\s*(.*)"),
-            "Education Score": extract(r"Education Score:\s*(\d+)", 0, int),
-            "Experience Score": extract(r"Experience Score:\s*(\d+)", 0, int),
-            "Skills Match %": extract(r"Skills Match Percentage:\s*(\d+)", 0, int),
-            "Bonus Points": extract(r"Bonus Points:\s*(.*)", "None"),
-            "Penalties": extract(r"Penalties:\s*(.*)", "None"),
-            "Missing Keywords": extract(r"Missing Critical Keywords:\s*(.*)", "N/A"),
-            "Fit Summary": extract(r"Final Thoughts:\s*(.*)", "N/A"),
+            "Candidate Name": name_match.group(1).strip() if name_match else "Not Found",
+            "ATS Match %": int(percent_match.group(1)) if percent_match else 0,
+            "Formatted Score": formatted_score.group(1).strip() if formatted_score else "N/A",
+            "Education Score": int(edu_score.group(1)) if edu_score else 0,
+            "Experience Score": int(exp_score.group(1)) if exp_score else 0,
+            "Skills Match %": int(skills_match.group(1)) if skills_match else 0,
+            "Bonus Points": bonus_points.group(1).strip() if bonus_points else "None",
+            "Penalties": penalties.group(1).strip() if penalties else "None",
+            "Missing Keywords": missing_keywords.group(1).strip() if missing_keywords else "N/A",
+            "Fit Summary": final_thoughts.group(1).strip() if final_thoughts else "N/A",
             "Bias Score (0 = Fair, 1 = Biased)": bias_score,
             "Masculine Words": masc_count,
             "Feminine Words": fem_count,
@@ -1199,7 +1195,6 @@ with tab1:
                     )
     else:
         st.warning("Please upload resumes to view dashboard analytics.")
-
 
 
 

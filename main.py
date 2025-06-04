@@ -905,7 +905,7 @@ def ats_percentage_score(
     keyword_weight=10
 ):
     """
-    Analyzes resume against job description using structured, score-based prompt and returns ATS metrics.
+    Analyzes resume against job description using a structured, score-based prompt and returns detailed ATS metrics.
     Allows custom weights for each scoring section.
     """
     logic_score_note = (
@@ -959,31 +959,46 @@ You are an AI-powered ATS evaluator. You must calculate scores using the strict 
 Return your output in this exact structure:
 
 Candidate Name: <full name or "Not Found">
-Education Score: <0–{edu_weight}>
-Experience Score: <0–{exp_weight}>
-Skills Match Percentage: <0–{skills_weight}>
-Language Quality Score: <0–{lang_weight}>
-Keyword Match Score: <0–{keyword_weight}>
-Overall Percentage Match: <sum of above>
-Formatted Score: <Excellent / Good / Average / Poor>
+
+Education Score: <0–{edu_weight}>  
+Education Match Details: <List exact matches or mismatches in degree title and field, e.g., "Degree title matches B.Tech; field matches Computer Science.">
+
+Experience Score: <0–{exp_weight}>  
+Experience Highlights: <Summarize years of experience compared to JD requirement, matched roles, and domain matches, e.g., "Candidate has 5 years experience (JD requires 4), role title matches 'Software Engineer', domain matched IT industry.">
+
+Skills Match Percentage: <0–{skills_weight}>  
+Skills Found in Resume: <comma-separated list>  
+Skills Required by JD: <comma-separated list>  
+Skills Missing: <comma-separated list>
+
+Language Quality Score: <0–{lang_weight}>  
+Language Quality Comments: <Brief notes on grammar, style, tone, e.g., "Professional tone with minor grammatical errors.">
+
+Keyword Match Score: <0–{keyword_weight}>  
 Missing Keywords: <comma-separated list>
-Final Thoughts: <brief, 2–3 line comment about fit>{logic_score_note}
+
+Overall Percentage Match: <sum of above>
+
+Formatted Score: <Excellent / Good / Average / Poor>
+
+Final Thoughts:  
+Provide a detailed summary (4–6 sentences) about the candidate’s overall fit. Highlight strengths and weaknesses clearly, note any significant skill gaps, experience mismatches, and language issues. Suggest key improvements to better align with the JD.
+
+{logic_score_note}
 
 ---
 
-### Job Description:
+### Job Description:  
 \"\"\"{job_description}\"\"\"
 
 ---
 
-### Resume:
+### Resume:  
 \"\"\"{resume_text}\"\"\"
 """
     llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0, groq_api_key=groq_api_key)
     response = llm.invoke(prompt)
     return response.content.strip()
-
-
 # Setup Vector DB
 def setup_vectorstore(documents):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")

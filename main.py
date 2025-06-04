@@ -895,44 +895,61 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
 def ats_percentage_score(resume_text, job_description):
     prompt = f"""
-You are a sophisticated, AI-powered Applicant Tracking System (ATS) specializing in technical roles. Your task is to deeply analyze and compare the candidate's resume with the job description, applying contextual understanding and relevance-based scoring.
+You are an AI-powered ATS evaluator. You **must calculate scores using the strict rules below**. Do not guess. Follow logic exactly.
 
-Perform a structured evaluation and return your results with the following insights:
+---
 
-1. *Candidate Name*: Identify and extract the candidate’s full name, typically found at the top of the resume. Use best judgment if multiple name-like entities appear. If uncertain, return "Not Found".
+📊 **Scoring Formula** (Total = 100 Points)
 
-2. *Overall Percentage Match*: Calculate a comprehensive match score (as a number only, no % symbol) reflecting how well the resume aligns with the job description across all major dimensions — education, experience, and skills. Factor in keyword relevance, role fit, and language alignment.
+1. **Education Score (20 pts)**
+   - +10 if degree title (e.g., B.Tech, MSc) matches JD
+   - +10 if field (e.g., CS, IT, Engineering) matches JD
+   - Else, partial matches allowed (5 pts each)
 
-3. *Formatted Score*: Translate the numeric match into a qualitative rating based on:
-    - 85–100: Excellent — The resume strongly aligns with the job and indicates high readiness.
-    - 70–84: Good — The resume shows solid potential with some areas for improvement.
-    - 50–69: Average — Partial match; some qualifications or skills are lacking or unclear.
-    - Below 50: Poor — The resume does not meet the core expectations of the role.
+2. **Experience Score (35 pts)**
+   - +20 if years of experience ≥ required
+   - +10 if past roles match (title overlap)
+   - +5 if industry/domain matches
 
-4. *Section-wise Score Percentage*:
-    - **Education Score**: Percentage match based on academic qualifications, certifications, and alignment with required degrees or disciplines.
-    - **Experience Score**: Match between job-relevant work experience and the requirements described in the job post, including seniority level and industry relevance.
-    - **Skills Match Percentage**: Match percentage based on the overlap of hard and soft skills listed in the resume compared to those explicitly or implicitly required in the job description.
+3. **Skills Match (30 pts)**
+   - Extract skills from JD and resume
+   - Score = (# common skills / # JD skills) × 30
+   - Show both lists for transparency
 
-5. *Missing Keywords*: Identify key job-specific terms (technologies, tools, methods, responsibilities, or certifications) from the job description that are absent in the resume. Use a comma-separated list for clarity.
+4. **Language Quality (5 pts)**
+   - 5 = Very clear, professional
+   - 3 = Minor issues
+   - 1 = Vague or poor grammar
 
-6. *Final Thoughts*: Provide a concise summary evaluating the candidate’s overall fitness for the role. Address any strong qualifications, red flags, or missing elements that influenced the score.
+5. **Keyword Match (10 pts)**
+   - Extract exact keywords (tools/tech/certs) from JD
+   - Missing = (missing keywords / total JD keywords) × 10 deducted
+   - Show missing keywords list
+
+---
+
+Return these fields **exactly**:
+
+Candidate Name: <extracted or "Not Found">
+Education Score: <0–20>
+Experience Score: <0–35>
+Skills Match Percentage: <0–30>
+Language Quality Score: <0–5>
+Keyword Match Score: <0–10>
+Overall Percentage Match: <SUM of above>
+Formatted Score: <Excellent/Good/Average/Poor>
+Missing Keywords: <comma-separated list>
+Final Thoughts: <short summary>
+
+---
 
 ### Job Description:
 \"\"\"{job_description}\"\"\"
 
+---
+
 ### Resume:
 \"\"\"{resume_text}\"\"\"
-
-Return your output using this **exact structure**:
-Candidate Name: <name or "Not Found">
-Overall Percentage Match: <only number>
-Formatted Score: <Excellent/Good/Average/Poor>
-Education Score: <number>
-Experience Score: <number>
-Skills Match Percentage: <number>
-Missing Keywords: <comma-separated list>
-Final Thoughts: <brief summary>
 """
     llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0, groq_api_key=groq_api_key)
     response = llm.invoke(prompt)
@@ -1000,43 +1017,39 @@ if uploaded_files:
 
         ats_result = ats_percentage_score(full_text, job_description)
 
-        # Parse the ATS result to extract details
-        # Parse the ATS result to extract details
-        name_match = re.search(r"Candidate Name:\s*(.*)", ats_result)
-        percent_match = re.search(r"Overall Percentage Match:\s*(\d+)", ats_result)
-        formatted_score = re.search(r"Formatted Score:\s*(.*)", ats_result)
-        edu_score = re.search(r"Education Score:\s*(\d+)", ats_result)
-        exp_score = re.search(r"Experience Score:\s*(\d+)", ats_result)
-        skills_match = re.search(r"Skills Match Percentage:\s*(\d+)", ats_result)
-        missing_keywords = re.search(r"Missing Keywords:\s*(.*)", ats_result)
-        final_thoughts = re.search(r"Final Thoughts:\s*(.*)", ats_result)
+        # Strict regex-based parsing of ALL score fields
+        def extract_score(pattern, text, default=0):
+            match = re.search(pattern, ats_result)
+            return int(match.group(1)) if match else default
 
+        def extract_text(pattern, text, default="N/A"):
+            match = re.search(pattern, ats_result)
+            return match.group(1).strip() if match else default
 
         resume_data.append({
-    "Resume Name": uploaded_file.name,
-    "Candidate Name": name_match.group(1) if name_match else "Not Found",
-    "ATS Match %": int(percent_match.group(1)) if percent_match else 0,
-    "Formatted Score": formatted_score.group(1) if formatted_score else "N/A",
-    "Education Score": int(edu_score.group(1)) if edu_score else 0,
-    "Experience Score": int(exp_score.group(1)) if exp_score else 0,
-    "Skills Match %": int(skills_match.group(1)) if skills_match else 0,
-    "Missing Keywords": missing_keywords.group(1) if missing_keywords else "N/A",
-    "Fit Summary": final_thoughts.group(1) if final_thoughts else "N/A",
-    "Bias Score (0 = Fair, 1 = Biased)": bias_score,
-    "Masculine Words": masc_count,
-    "Feminine Words": fem_count,
-    "Detected Masculine Words": detected_masc,
-    "Detected Feminine Words": detected_fem,
-    "Text Preview": full_text[:300] + "...",
-    "Highlighted Text": highlighted_text,
-    "Rewritten Text": rewritten_text
-})
+            "Resume Name": uploaded_file.name,
+            "Candidate Name": extract_text(r"Candidate Name:\s*(.*)", ats_result),
+            "ATS Match %": extract_score(r"Overall Percentage Match:\s*(\d+)", ats_result),
+            "Formatted Score": extract_text(r"Formatted Score:\s*(.*)", ats_result),
+            "Education Score": extract_score(r"Education Score:\s*(\d+)", ats_result),
+            "Experience Score": extract_score(r"Experience Score:\s*(\d+)", ats_result),
+            "Skills Match %": extract_score(r"Skills Match Percentage:\s*(\d+)", ats_result),
+            "Language Quality Score": extract_score(r"Language Quality Score:\s*(\d+)", ats_result),
+            "Keyword Match Score": extract_score(r"Keyword Match Score:\s*(\d+)", ats_result),
+            "Missing Keywords": extract_text(r"Missing Keywords:\s*(.*)", ats_result),
+            "Fit Summary": extract_text(r"Final Thoughts:\s*(.*)", ats_result),
+            "Bias Score (0 = Fair, 1 = Biased)": bias_score,
+            "Masculine Words": masc_count,
+            "Feminine Words": fem_count,
+            "Detected Masculine Words": detected_masc,
+            "Detected Feminine Words": detected_fem,
+            "Text Preview": full_text[:300] + "...",
+            "Highlighted Text": highlighted_text,
+            "Rewritten Text": rewritten_text
+        })
 
-       
-     
     st.success("✅ All resumes processed!")
 
-    # Setup vectorstore if needed
     if all_text:
         st.session_state.vectorstore = setup_vectorstore(all_text)
         st.session_state.chain = create_chain(st.session_state.vectorstore)
@@ -1069,7 +1082,8 @@ with tab1:
         df = pd.DataFrame(resume_data)
         st.dataframe(
             df[[
-                "Resume Name", "Candidate Name", "ATS Match %",
+                "Resume Name", "Candidate Name", "ATS Match %", "Education Score",
+                "Experience Score", "Skills Match %", "Language Quality Score", "Keyword Match Score",
                 "Bias Score (0 = Fair, 1 = Biased)", "Masculine Words", "Feminine Words"
             ]],
             use_container_width=True
@@ -1102,20 +1116,26 @@ with tab1:
         st.markdown("### 📝 Detailed Resume Reports")
         for resume in resume_data:
             with st.expander(f"📄 {resume['Resume Name']} | {resume['Candidate Name']}"):
-                st.markdown("### 📊 ATS Section Scores")
-                score_col1, score_col2, score_col3, score_col4 = st.columns(4)
+                st.markdown("### 📊 ATS Evaluation for: **" + resume['Candidate Name'] + "**")
+                score_col1, score_col2, score_col3 = st.columns(3)
                 with score_col1:
                     st.metric("📈 Overall Match", f"{resume['ATS Match %']}%")
                 with score_col2:
                     st.metric("🏆 Formatted Score", resume.get("Formatted Score", "N/A"))
                 with score_col3:
-                    st.metric("🎓 Education Score", f"{resume.get('Education Score', 'N/A')}%")
-                with score_col4:
-                    st.metric("💼 Experience Score", f"{resume.get('Experience Score', 'N/A')}%")
+                    st.metric("🧠 Language Quality", f"{resume.get('Language Quality Score', 'N/A')} / 5")
 
-                st.metric("🧠 Skills Match", f"{resume.get('Skills Match %', 'N/A')}%")
+                col_a, col_b, col_c, col_d = st.columns(4)
+                with col_a:
+                    st.metric("🎓 Education Score", f"{resume.get('Education Score', 'N/A')} / 20")
+                with col_b:
+                    st.metric("💼 Experience Score", f"{resume.get('Experience Score', 'N/A')} / 35")
+                with col_c:
+                    st.metric("🛠 Skills Match", f"{resume.get('Skills Match %', 'N/A')} / 30")
+                with col_d:
+                    st.metric("🔍 Keyword Score", f"{resume.get('Keyword Match Score', 'N/A')} / 10")
 
-                st.markdown("**🔴 Missing Keywords:**")
+                st.markdown("**❗ Missing Keywords:**")
                 missing_list = resume["Missing Keywords"].split(",") if resume["Missing Keywords"] else []
                 if missing_list and any(kw.strip() for kw in missing_list):
                     for kw in missing_list:
@@ -1165,7 +1185,6 @@ with tab1:
                     )
     else:
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
-
 
 
 

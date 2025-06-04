@@ -30,6 +30,8 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
+from llm_manager import call_llm
+
 from pydantic import BaseModel
 
 # Set page config
@@ -227,33 +229,24 @@ st.markdown(
 )
 
 # Load environment variables
+# ------------------- Core Setup -------------------
+
+
+# Load environment variables
 load_dotenv()
-working_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Detect Device
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 torch.backends.cudnn.benchmark = True
+working_dir = os.path.dirname(os.path.abspath(__file__))
 
-# ------------------- Load API Keys -------------------
-@st.cache_data(show_spinner=False)
-def load_groq_api_keys():
-    try:
-        with open(os.path.join(working_dir, "config.json"), "r") as f:
-            data = json.load(f)
-            keys = data.get("GROQ_API_KEYS", [])
-            return keys if isinstance(keys, list) and keys else None
-    except FileNotFoundError:
-        st.error("❌ config.json not found.")
-        st.stop()
+# ------------------- API Key & Caching Manager -------------------
+from llm_manager import get_next_groq_key  # <- NEW
 
-groq_api_keys = load_groq_api_keys()
-if not groq_api_keys:
-    st.error("❌ GROQ_API_KEYS list is missing or empty in config.json.")
-    st.stop()
+# Select current API key from rotation
+groq_api_key = get_next_groq_key(st.session_state)
 
-groq_api_key = random.choice(groq_api_keys)
-
-# ------------------- Lazy Initialization for Slow Components -------------------
+# ------------------- Lazy Initialization -------------------
 @st.cache_resource(show_spinner=False)
 def get_easyocr_reader():
     import easyocr
@@ -267,7 +260,6 @@ def ensure_nltk():
 
 lemmatizer = ensure_nltk()
 reader = get_easyocr_reader()
-
 
 from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
 
@@ -772,11 +764,18 @@ replacement_mapping = {
 }
 
 def rewrite_text_with_llm(text, replacement_mapping, user_location):
+    """
+    Uses LLM to rewrite a resume with bias-free language and suggest relevant job roles.
+    Applies strict word replacement mapping and structures the result.
+    """
+    from llm_manager import call_llm
+
     # Format the replacement mapping as a readable bullet list for the prompt
     formatted_mapping = "\n".join(
         [f"- \"{key}\" → \"{value}\"" for key, value in replacement_mapping.items()]
     )
 
+    # Construct the prompt
     prompt = f"""
 You are an expert career advisor and professional resume language editor.
 
@@ -834,8 +833,6 @@ Your task is to:
 
 **✅ Bias-Free Rewritten Resume (Well-Structured):**
 
-
-
 ---
 
 **🎯 Suggested Job Titles with Explanations and LinkedIn URLs:**
@@ -855,15 +852,11 @@ Your task is to:
 5. **Job Title 5** — Reason  
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%205&location={user_location})
 """
-    
 
-    # Call the LLM
-    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0, groq_api_key=groq_api_key)
-    response = llm.invoke(prompt)
+    # Call the LLM with caching + key rotation
+    response = call_llm(prompt, session=st.session_state)
+    return response
 
-    return response.content
-    
-    
 
 
 
@@ -893,7 +886,6 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
 
 
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
-
 def ats_percentage_score(
     resume_text,
     job_description,
@@ -908,6 +900,8 @@ def ats_percentage_score(
     Analyzes resume against job description using a structured, score-based prompt and returns detailed ATS metrics.
     Allows custom weights for each scoring section.
     """
+    from llm_manager import call_llm
+
     logic_score_note = (
         f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
         if logic_profile_score else ""
@@ -996,9 +990,12 @@ Provide a detailed summary (4–6 sentences) about the candidate’s overall fit
 ### Resume:  
 \"\"\"{resume_text}\"\"\"
 """
-    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0, groq_api_key=groq_api_key)
-    response = llm.invoke(prompt)
-    return response.content.strip()
+
+    response = call_llm(prompt, session=st.session_state)
+    return response.strip()
+
+
+
 # Setup Vector DB
 def setup_vectorstore(documents):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")

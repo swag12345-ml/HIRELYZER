@@ -894,12 +894,24 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
 
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
 
-def ats_percentage_score(resume_text, job_description, logic_profile_score=None):
+def ats_percentage_score(
+    resume_text,
+    job_description,
+    logic_profile_score=None,
+    edu_weight=20,
+    exp_weight=35,
+    skills_weight=30,
+    lang_weight=5,
+    keyword_weight=10
+):
     """
     Analyzes resume against job description using structured, score-based prompt and returns ATS metrics.
-    If logic_profile_score is provided (from a separate logic-based analyzer), include it in the final thoughts.
+    Allows custom weights for each scoring section.
     """
-    logic_score_note = f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills." if logic_profile_score else ""
+    logic_score_note = (
+        f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
+        if logic_profile_score else ""
+    )
 
     prompt = f"""
 You are an AI-powered ATS evaluator. You must calculate scores using the strict rules below and perform exact arithmetic for scoring. Do NOT guess or inflate values.
@@ -908,29 +920,29 @@ You are an AI-powered ATS evaluator. You must calculate scores using the strict 
 
 📊 **Scoring Formula (Total = 100 Points)**
 
-1. **Education Score (20 pts)**
-   - +10 if degree title (e.g., B.Tech, MSc) matches JD
-   - +10 if field (e.g., CS, IT, Engineering) matches JD
-   - Partial matches get 5 each
+1. **Education Score ({edu_weight} pts)**
+   - +50% if degree title (e.g., B.Tech, MSc) matches JD
+   - +50% if field (e.g., CS, IT, Engineering) matches JD
+   - Partial matches get 25% each
 
-2. **Experience Score (35 pts)**
-   - +20 if years of experience ≥ required
-   - +10 if role titles match
-   - +5 if domain/industry matches
+2. **Experience Score ({exp_weight} pts)**
+   - +60% if years of experience ≥ required
+   - +30% if role titles match
+   - +10% if domain/industry matches
 
-3. **Skills Match (30 pts)**
+3. **Skills Match ({skills_weight} pts)**
    - Extract skill sets from both resume and JD
-   - Score = (# of matching skills / total JD skills) × 30
+   - Score = (# of matching skills / total JD skills) × {skills_weight}
    - Show both skill lists
 
-4. **Language Quality (5 pts)**
-   - 5 = Very clear, formal, professional tone
-   - 3 = Minor grammatical/style issues
-   - 1 = Informal or unclear writing
+4. **Language Quality ({lang_weight} pts)**
+   - {lang_weight} = Very clear, formal, professional tone
+   - Half for minor grammatical/style issues
+   - Low score for informal or unclear writing
 
-5. **Keyword Match (10 pts)**
+5. **Keyword Match ({keyword_weight} pts)**
    - Extract tools, tech, frameworks from JD
-   - For each missing keyword, deduct proportionally from 10
+   - For each missing keyword, deduct proportionally from {keyword_weight}
    - Show missing keyword list
 
 ---
@@ -947,11 +959,11 @@ You are an AI-powered ATS evaluator. You must calculate scores using the strict 
 Return your output in this exact structure:
 
 Candidate Name: <full name or "Not Found">
-Education Score: <0–20>
-Experience Score: <0–35>
-Skills Match Percentage: <0–30>
-Language Quality Score: <0–5>
-Keyword Match Score: <0–10>
+Education Score: <0–{edu_weight}>
+Experience Score: <0–{exp_weight}>
+Skills Match Percentage: <0–{skills_weight}>
+Language Quality Score: <0–{lang_weight}>
+Keyword Match Score: <0–{keyword_weight}>
 Overall Percentage Match: <sum of above>
 Formatted Score: <Excellent / Good / Average / Poor>
 Missing Keywords: <comma-separated list>
@@ -1012,6 +1024,21 @@ if job_description.strip() == "":
 
 user_location = st.sidebar.text_input("📍 Preferred Job Location (City, Country)")
 
+st.sidebar.markdown("### 🎛️ Customize ATS Scoring Weights")
+
+edu_weight = st.sidebar.slider("🎓 Education Weight", 0, 50, 20)
+exp_weight = st.sidebar.slider("💼 Experience Weight", 0, 50, 35)
+skills_weight = st.sidebar.slider("🛠 Skills Match Weight", 0, 50, 30)
+lang_weight = st.sidebar.slider("🗣 Language Quality Weight", 0, 10, 5)
+keyword_weight = st.sidebar.slider("🔑 Keyword Match Weight", 0, 20, 10)
+
+total_weight = edu_weight + exp_weight + skills_weight + lang_weight + keyword_weight
+
+if total_weight != 100:
+    st.sidebar.error(f"⚠️ Total = {total_weight}. Please make it exactly 100.")
+else:
+    st.sidebar.success("✅ Total weight = 100")
+
 
 uploaded_files = st.file_uploader("Upload PDF Resumes", type=["pdf"], accept_multiple_files=True)
 
@@ -1032,15 +1059,25 @@ if uploaded_files:
         bias_score, masc, fem = detect_bias(full_text)
         highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(full_text, replacement_mapping, user_location)
 
-        ats_result = ats_percentage_score(full_text, job_description)
+        # ✅ Use dynamic weights from sliders
+        ats_result = ats_percentage_score(
+            resume_text=full_text,
+            job_description=job_description,
+            logic_profile_score=None,  # or pass real logic score if available
+            edu_weight=edu_weight,
+            exp_weight=exp_weight,
+            skills_weight=skills_weight,
+            lang_weight=lang_weight,
+            keyword_weight=keyword_weight
+        )
 
-        # Strict regex-based parsing of ALL score fields
+        # 🧠 Reusable extraction functions
         def extract_score(pattern, text, default=0):
-            match = re.search(pattern, ats_result)
+            match = re.search(pattern, text)
             return int(match.group(1)) if match else default
 
         def extract_text(pattern, text, default="N/A"):
-            match = re.search(pattern, ats_result)
+            match = re.search(pattern, text)
             return match.group(1).strip() if match else default
 
         resume_data.append({
@@ -1073,6 +1110,7 @@ if uploaded_files:
 
 
 
+
 # === TAB 1: Dashboard ===
 # 📊 Dashboard and Metrics
 tab1, tab2, tab3, tab4 = st.tabs(["📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", "📚 Course Recommendation"])
@@ -1099,7 +1137,7 @@ with tab1:
         st.markdown("### 🗂️ Resumes Overview")
         df = pd.DataFrame(resume_data)
         st.dataframe(
-            df[[
+            df[[ 
                 "Resume Name", "Candidate Name", "ATS Match %", "Education Score",
                 "Experience Score", "Skills Match %", "Language Quality Score", "Keyword Match Score",
                 "Bias Score (0 = Fair, 1 = Biased)", "Masculine Words", "Feminine Words"
@@ -1141,17 +1179,17 @@ with tab1:
                 with score_col2:
                     st.metric("🏆 Formatted Score", resume.get("Formatted Score", "N/A"))
                 with score_col3:
-                    st.metric("🧠 Language Quality", f"{resume.get('Language Quality Score', 'N/A')} / 5")
+                    st.metric("🧠 Language Quality", f"{resume.get('Language Quality Score', 'N/A')} / {lang_weight}")
 
                 col_a, col_b, col_c, col_d = st.columns(4)
                 with col_a:
-                    st.metric("🎓 Education Score", f"{resume.get('Education Score', 'N/A')} / 20")
+                    st.metric("🎓 Education Score", f"{resume.get('Education Score', 'N/A')} / {edu_weight}")
                 with col_b:
-                    st.metric("💼 Experience Score", f"{resume.get('Experience Score', 'N/A')} / 35")
+                    st.metric("💼 Experience Score", f"{resume.get('Experience Score', 'N/A')} / {exp_weight}")
                 with col_c:
-                    st.metric("🛠 Skills Match", f"{resume.get('Skills Match %', 'N/A')} / 30")
+                    st.metric("🛠 Skills Match", f"{resume.get('Skills Match %', 'N/A')} / {skills_weight}")
                 with col_d:
-                    st.metric("🔍 Keyword Score", f"{resume.get('Keyword Match Score', 'N/A')} / 10")
+                    st.metric("🔍 Keyword Score", f"{resume.get('Keyword Match Score', 'N/A')} / {keyword_weight}")
 
                 st.markdown("**❗ Missing Keywords:**")
                 missing_list = resume["Missing Keywords"].split(",") if resume["Missing Keywords"] else []
@@ -1203,7 +1241,6 @@ with tab1:
                     )
     else:
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
-
 
 
    

@@ -1422,7 +1422,7 @@ with tab2:
               st.markdown(f"""
             <div style='margin-bottom:15px; padding:10px; border-radius:8px;'>
                 <div style='display:flex; justify-content:space-between;'>
-                    <b>🏢 {exp['company']}</b><span style='color:gray;'>⏳ {exp['duration']}</span>
+                    <b>🏢 {exp['company']}</b><span style='color:gray;'>📆  {exp['duration']}</span>
                 </div>
                 <div style='font-size:14px;'>💼 <i>{exp['title']}</i></div>
                 <div style='font-size:14px;'>📝 {exp['description']}</div>
@@ -1477,91 +1477,222 @@ with tab2:
 
 # SKILLS
 skills_html = "".join(
-    f"<div class='skill-list'>• {s.strip()}</div>"
+    f"""
+    <div style='display:inline-block; background-color:#e6f0fa; color:#333; 
+                padding:8px 16px; margin:6px 6px 6px 0; 
+                border-radius:20px; font-size:15px; font-weight:500;'>
+        {s.strip()}
+    </div>
+    """
     for s in st.session_state['skills'].split(',')
     if s.strip()
 )
 
+
 languages_html = "".join(
-    f"<div class='skill-list'>• {l.strip()}</div>"
-    for l in st.session_state['languages'].split(',')
-    if l.strip()
+    f"""
+    <div style='display:inline-block; background-color:#e6f0fa; color:#333; 
+                padding:8px 16px; margin:6px 6px 6px 0; 
+                border-radius:20px; font-size:15px; font-weight:500;'>
+        {lang.strip()}
+    </div>
+    """
+    for lang in st.session_state['languages'].split(',')
+    if lang.strip()
 )
+
 
 # INTERESTS
 interests_html = "".join(
-    f"<div class='skill-list'>• {i.strip()}</div>"
-    for i in st.session_state['interests'].split(',')
-    if i.strip()
-)
-
-Softskills_html = "".join(
-    f"<div class='skill-list'>• {i.strip()}</div>"
-    for i in st.session_state['Softskills'].split(',')
-    if i.strip()
-)
-
-# EXPERIENCE
-experience_html = "".join(
     f"""
-    <div class='entry' style='margin-bottom: 15px; padding: 10px;'>
-        <div class='entry-header' style='display: flex; justify-content: space-between; font-weight: bold; font-size: 16px;'>
-            🏢 {exp['company']} <span style='color: gray;'>⏳ {exp['duration']}</span>
-        </div>
-        <div class='entry-title' style='font-size: 14px; margin-top: 4px;'>💼 <i>{exp['title']}</i></div>
-        <div style='font-size: 14px; margin-top: 4px;'>📝 {exp['description']}</div>
+    <div style='display:inline-block; background-color:#e6f0fa; color:#333; 
+                padding:8px 16px; margin:6px 6px 6px 0; 
+                border-radius:20px; font-size:15px; font-weight:500;'>
+        {interest.strip()}
     </div>
     """
-    for exp in st.session_state.experience_entries
-    if exp["company"] or exp["title"]
+    for interest in st.session_state['interests'].split(',')
+    if interest.strip()
 )
+
+
+Softskills_html = "".join(
+    f"""
+    <div style='display:inline-block; background-color:#eef3f8; color:#1a1a1a; 
+                padding:8px 18px; margin:6px 6px 6px 0; 
+                border-radius:25px; font-size:14.5px; font-family:"Segoe UI", sans-serif; 
+                font-weight:500; box-shadow: 1px 1px 3px rgba(0,0,0,0.05);'>
+        {skill.strip().capitalize()}
+    </div>
+    """
+    for skill in st.session_state['Softskills'].split(',')
+    if skill.strip()
+)
+
+
+
+# EXPERIENCE
+experience_html = ""
+for exp in st.session_state.experience_entries:
+    if exp["company"] or exp["title"]:
+        # Handle paragraphs and single line breaks
+        description_lines = [line.strip() for line in exp["description"].strip().split("\n\n")]
+        description_html = "".join(
+            f"<div style='margin-bottom: 8px;'>{line.replace(chr(10), '<br>')}</div>"
+            for line in description_lines if line
+        )
+
+        experience_html += f"""
+        <div style='
+            margin-bottom: 20px;
+            padding: 16px 20px;
+            border-radius: 12px;
+            background-color: #dbeaff;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            color: #0a1a33;
+            line-height: 1.35;
+        '>
+            <!-- Header Shadow Card -->
+            <div style='
+                background-color: #e6f0ff;
+                border-radius: 8px;
+                padding: 10px 14px;
+                margin-bottom: 12px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            '>
+                <div style='
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    font-weight: 600;
+                    font-size: 16.5px;
+                    margin-bottom: 6px;
+                    color: #08244c;
+                '>
+                    <span>🏢 {exp['company']}</span>
+                    <span style='color: #1a2d4f; font-size: 14px;'>📆 {exp['duration']}</span>
+                </div>
+
+                <div style='
+                    font-size: 16px;
+                    font-weight: 700;
+                    color: #0b2545;
+                '>
+                    💼 {exp['title']}
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div style='
+                font-size: 15px;
+                font-weight: 500;
+                color: #102a43;
+                line-height: 1.35;
+            '>
+                📝 {description_html}
+            </div>
+        </div>
+        """
+
 
 # Convert experience to list if multiple lines
 
-
-
+# Escape HTML and convert line breaks
 summary_html = st.session_state['summary'].replace('\n', '<br>')
 
+
 # EDUCATION
+education_html = ""
+for edu in st.session_state.education_entries:
+    if edu.get("institution") or edu.get("details"):
+        degree_text = ""
+        if edu.get("degree"):
+            degree_val = edu["degree"]
+            if isinstance(degree_val, list):
+                degree_val = ", ".join(degree_val)
+            degree_text = f"<div style='font-size: 14px; color: #273c75; margin-bottom: 6px;'>🎓 <b>{degree_val}</b></div>"
 
-
-education_html = "".join(
-    f"""
-    <div class='entry' style='margin-bottom: 15px; padding: 0;'>
-        <div class='entry-header' style='display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: bold; color: #000; margin-bottom: 5px;'>
-            <span>🏫 {edu['institution']}</span>
-            <span style='color:#333; font-weight: normal;'>🗓️ {edu.get('year', '')}</span>
+        education_html += f"""
+        <div style='
+            margin-bottom: 20px;
+            padding: 16px 20px;
+            border-radius: 12px;
+            background-color: #e3ebf8;  /* Light Gray Blue */
+            box-shadow: 0 3px 8px rgba(39, 60, 117, 0.15);
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            color: #273c75;  /* Dark Blue */
+            line-height: 1.4;
+        '>
+            <div style='
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 16px;
+                font-weight: 700;
+                margin-bottom: 8px;
+            '>
+                <span>🏫 {edu.get('institution', '')}</span>
+                <span style='font-weight: 500;'>🗓️  {edu.get('year', '')}</span>
+            </div>
+            {degree_text}
+            <div style='font-size: 14px; font-style: italic;'>
+                📝 {edu.get('details', '')}
+            </div>
         </div>
-        {f"<div style='font-size:14px; color:#333; margin-bottom: 4px;'>🎓 <b>{', '.join(edu['degree']) if isinstance(edu.get('degree'), list) else edu.get('degree', '')}</b></div>" if edu.get('degree') else ''}
-        <div style='font-size:14px; color:#333;'>📝 <i>{edu['details']}</i></div>
-    </div>
-    """
-    for edu in st.session_state.education_entries
-    if edu.get("institution") or edu.get("details")
-)
+        """
+
+
 
 
 # PROJECTS
 # PROJECTS
-projects_html = "".join(
-    f"""
-    <div class='entry' style='margin-bottom: 15px; padding: 10px; border-radius: 8px;'>
-        <div class='entry-header' style='font-size: 16px; font-weight: bold; color: #333; margin-bottom: 5px;'>
-            💻 {proj['title']} <span style='color:#333; font-weight: normal;'> ⏳ {proj.get('duration','')}</span>
-        </div>
-        {f"<div style='font-size:14px; color:#333; margin-bottom: 4px;'><b>🛠️ Technologies:</b> {', '.join(proj['tech']) if isinstance(proj.get('tech'), list) else proj.get('tech', '')}</div>" if proj.get('tech') else ''}
-        <div style='font-size:14px; color:#333;'>
-            <b>📝 Description:</b>
-            <ul style='margin-top: 5px; padding-left: 20px;'>
-                {"".join(f"<li>{line.strip()}</li>" for line in proj['description'].splitlines() if line.strip())}
-            </ul>
-        </div>
-    </div>
-    """
-    for proj in st.session_state.project_entries
-    if proj.get("title") or proj.get("description")
-)
+projects_html = ""
+for proj in st.session_state.project_entries:
+    if proj.get("title") or proj.get("description"):
+        tech_val = proj.get("tech")
+        if isinstance(tech_val, list):
+            tech_val = ", ".join(tech_val)
+        tech_text = f"<div style='font-size: 14px; color: #1b2330; margin-bottom: 8px; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);'><b>🛠️ Technologies:</b> {tech_val if tech_val else ''}</div>" if tech_val else ""
 
+        description_items = ""
+        if proj.get("description"):
+            description_lines = [line.strip() for line in proj["description"].splitlines() if line.strip()]
+            description_items = "".join(f"<li>{line}</li>" for line in description_lines)
+
+        projects_html += f"""
+        <div style='
+            margin-bottom: 22px;
+            padding: 18px 24px;
+            border-radius: 14px;
+            background-color: #d7e1ec;  /* Deep Blue Slate */
+            box-shadow: 0 4px 10px rgba(27, 35, 48, 0.15);
+            font-family: "Roboto", "Helvetica Neue", Arial, sans-serif;
+            color: #1b2330;  /* Deep Slate Blue */
+            line-height: 1.5;
+        '>
+            <div style='
+                font-size: 17px;
+                font-weight: 700;
+                margin-bottom: 10px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                color: #141a22;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.15);
+            '>
+                <span>💻 {proj.get('title', '')}</span>
+                <span style='font-weight: 600; font-size: 14.5px; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);'>⏳ {proj.get('duration', '')}</span>
+            </div>
+            {tech_text}
+            <div style='font-size: 15px; color: #1b2330; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);'>
+                <b>📝 Description:</b>
+                <ul style='margin-top: 6px; padding-left: 22px; color: #1b2330;'>
+                    {description_items}
+                </ul>
+            </div>
+        </div>
+        """
 
 
 
@@ -1579,19 +1710,67 @@ if st.session_state.project_links:
 # CERTIFICATES
 certificate_links_html = ""
 if st.session_state.certificate_links:
-    certificate_links_html = "<h4 class='section-title'>Certificates</h4><hr>" + "".join(
-        f"""
-        <div class='entry'>
-            <div class='entry-header'>
-                <b><a href="{cert['link']}" target="_blank">📄 {cert['name']}</a></b>
-                <span style='color:gray;'> {cert.get('duration', '')}</span>
+    certificate_links_html = "<h4 class='section-title'>Certificates</h4><hr>"
+    for cert in st.session_state.certificate_links:
+        if cert["name"] and cert["link"]:
+            description = cert.get('description', '').replace('\n', '<br>')
+            name = cert['name']
+            link = cert['link']
+            duration = cert.get('duration', '')
+
+            card_html = f"""
+            <div style='
+                background-color: #e3f2fd;  /* Light Blue */
+                padding: 20px 24px;
+                border-radius: 14px;
+                margin-bottom: 20px;
+                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+                font-family: "Roboto", "Segoe UI", sans-serif;
+                color: #0a1f44;
+                position: relative;
+                line-height: 1.6;
+            '>
+                <!-- Duration Top Right -->
+                <div style='
+                    position: absolute;
+                    top: 20px;
+                    right: 24px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #1b3a63;
+                    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.12);
+                '>⏳ {duration}</div>
+
+                <!-- Certificate Title -->
+                <div style='
+                    font-size: 17px;
+                    font-weight: 700;
+                    color: #08274c;
+                    margin-bottom: 8px;
+                    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
+                '>
+                    📄 <a href="{link}" target="_blank" style='
+                        color: #08274c;
+                        text-decoration: none;
+                    '>{name}</a>
+                </div>
+
+                <!-- Description -->
+                <div style='
+                    font-size: 15px;
+                    color: #1b2b50;
+                    white-space: pre-wrap;
+                    text-shadow: 0 0 2px rgba(0, 0, 0, 0.07);
+                    margin-top: 4px;
+                '>
+                    📝 {description}
+                </div>
             </div>
-            <div class='entry-title' style='font-size:14px;'>{cert.get('description', '')}</div>
-        </div>
-        """
-        for cert in st.session_state.certificate_links
-        if cert["name"] and cert["link"]
-    )
+            """
+            certificate_links_html += card_html
+
+
+
 
         # --- Word Export Logic (Unchanged from your code) ---
 html_content = f"""

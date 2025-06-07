@@ -97,9 +97,21 @@ def delete_candidate_by_id(candidate_id: int):
     conn.commit()
 
 # 📄 Get all candidates (if needed separately)
-def get_all_candidates() -> list:
-    cursor.execute("SELECT * FROM candidates ORDER BY timestamp DESC")
-    return cursor.fetchall()
+def get_all_candidates(bias_threshold: float = None, min_ats: int = None):
+    query = "SELECT * FROM candidates WHERE 1=1"
+    params = []
+
+    if bias_threshold is not None:
+        query += " AND bias_score >= ?"
+        params.append(bias_threshold)
+
+    if min_ats is not None:
+        query += " AND ats_score >= ?"
+        params.append(min_ats)
+
+    query += " ORDER BY timestamp DESC"
+    df = pd.read_sql_query(query, conn, params=params)
+    return df
 
 # 📤 Export database to CSV
 def export_to_csv(filepath: str = "candidates_export.csv"):

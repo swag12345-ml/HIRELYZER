@@ -1037,7 +1037,10 @@ st.title("🦙 Chat with LEXIBOT - LLAMA 3.3 (Bias Detection + QA + GPU)")
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-    st.sidebar.markdown("### 📝 Paste Job Description")
+    st.sidebar.markdown("### 🏷️ Job Information")
+job_title = st.sidebar.text_input("💼 Job Title")  # <-- New input for job title
+
+st.sidebar.markdown("### 📝 Paste Job Description")
 job_description = st.sidebar.text_area("Enter the Job Description here", height=200)
 
 if job_description.strip() == "":
@@ -1046,6 +1049,7 @@ if job_description.strip() == "":
 user_location = st.sidebar.text_input("📍 Preferred Job Location (City, Country)")
 
 st.sidebar.markdown("### 🎛️ Customize ATS Scoring Weights")
+
 
 edu_weight = st.sidebar.slider("🎓 Education Weight", 0, 50, 20)
 exp_weight = st.sidebar.slider("💼 Experience Weight", 0, 50, 35)
@@ -1068,58 +1072,135 @@ import os
 import re
 import streamlit as st
 from datetime import datetime
-
 resume_data = []
 
 # 🧠 Dynamic domain detection from title + description
 def detect_domain_from_title_and_description(job_title, job_description):
-    title = job_title.lower()
-    jd = job_description.lower()
-    combined = title + " " + jd
+    title = job_title.lower().strip()
+    jd = job_description.lower().strip()
+    combined = f"{title} {jd}"
 
-    # Strict title priority matching
-    if "data scientist" in title or "data science" in title:
-        return "Data Science"
-    if "ml engineer" in title or "ai engineer" in title:
-        return "AI/ML"
-    if "frontend" in title:
+    if "full stack" in combined or "fullstack" in combined:
+        return "Software Engineering"
+    if "frontend" in combined or "react" in combined or "angular" in combined or "vue" in combined:
         return "Frontend"
-    if "backend" in title:
+    if "backend" in combined or "node" in combined or "django" in combined or "api" in combined:
         return "Backend"
-    if "full stack" in title or "fullstack" in title:
+    if "software engineer" in combined or "web developer" in combined or "developer" in combined:
         return "Software Engineering"
-    if "software engineer" in title:
-        return "Software Engineering"
-    if "developer" in title and not any(x in title for x in ["data", "ml", "ai"]):
-        return "Software Engineering"
-    if "cybersecurity" in title or "security analyst" in title:
+    if "machine learning" in combined or "ml engineer" in combined or "deep learning" in combined or "ai engineer" in combined:
+        return "AI/ML"
+    if "data scientist" in combined or "data science" in combined:
+        return "Data Science"
+    if "cybersecurity" in combined or "security analyst" in combined or "penetration testing" in combined or "owasp" in combined:
         return "Cybersecurity"
-    if "cloud" in title:
+    if "cloud" in combined or "aws" in combined or "azure" in combined or "gcp" in combined:
         return "Cloud"
-    if "android" in title or "ios" in title or "mobile" in title:
-        return "Mobile Development"
-    if "ui" in title or "ux" in title or "designer" in title:
-        return "UI/UX"
-
-    # Fallback to JD
-    if "data science" in jd or "data scientist" in jd:
-        return "Data Science"
-    if "machine learning" in jd or "deep learning" in jd:
-        return "AI/ML"
-    if "react" in jd or "angular" in jd:
-        return "Frontend"
-    if "node" in jd or "django" in jd or "api" in jd:
-        return "Backend"
-    if "docker" in jd or "kubernetes" in jd or "ci/cd" in jd:
+    if "docker" in combined or "kubernetes" in combined or "ci/cd" in combined:
         return "DevOps"
-    if "aws" in jd or "gcp" in jd or "azure" in jd:
-        return "Cloud"
-    if "penetration testing" in jd or "owasp" in jd:
-        return "Cybersecurity"
-    if "figma" in jd or "user interface" in jd:
+    if "android" in combined or "ios" in combined or "mobile" in combined:
+        return "Mobile Development"
+    if "ui" in combined or "ux" in combined or "figma" in combined or "designer" in combined or "user interface" in combined:
         return "UI/UX"
 
     return "General"
+
+# Timestamp
+def current_timestamp():
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+# ✏️ Job evaluation logic
+if uploaded_files and job_description:
+    all_text = []
+
+    for uploaded_file in uploaded_files:
+        file_path = os.path.join(working_dir, uploaded_file.name)
+        with open(file_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+
+        text = extract_text_from_pdf(file_path)
+        all_text.extend(text)
+        full_text = " ".join(text)
+
+        bias_score, masc, fem = detect_bias(full_text)
+        highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(
+            full_text, replacement_mapping, user_location
+        )
+
+        ats_result = ats_percentage_score(
+            resume_text=full_text,
+            job_description=job_description,
+            logic_profile_score=None,
+            edu_weight=edu_weight,
+            exp_weight=exp_weight,
+            skills_weight=skills_weight,
+            lang_weight=lang_weight,
+            keyword_weight=keyword_weight
+        )
+
+        def extract_score(pattern, text, default=0):
+            match = re.search(pattern, text)
+            return int(match.group(1)) if match else default
+
+        def extract_text(pattern, text, default="N/A"):
+            match = re.search(pattern, text)
+            return match.group(1).strip() if match else default
+
+        candidate_name = extract_text(r"Candidate Name:\s*(.*)", ats_result)
+        ats_score = extract_score(r"Overall Percentage Match:\s*(\d+)", ats_result)
+        edu_score = extract_score(r"Education Score:\s*(\d+)", ats_result)
+        exp_score = extract_score(r"Experience Score:\s*(\d+)", ats_result)
+        skills_score = extract_score(r"Skills Match Percentage:\s*(\d+)", ats_result)
+        lang_score = extract_score(r"Language Quality Score:\s*(\d+)", ats_result)
+        keyword_score = extract_score(r"Keyword Match Score:\s*(\d+)", ats_result)
+
+        # ✅ Correct use of job_title and job_description
+        domain = detect_domain_from_title_and_description(job_title, job_description)
+
+        resume_data.append({
+            "Resume Name": uploaded_file.name,
+            "Candidate Name": candidate_name,
+            "ATS Match %": ats_score,
+            "Formatted Score": extract_text(r"Formatted Score:\s*(.*)", ats_result),
+            "Education Score": edu_score,
+            "Experience Score": exp_score,
+            "Skills Match %": skills_score,
+            "Language Quality Score": lang_score,
+            "Keyword Match Score": keyword_score,
+            "Missing Keywords": extract_text(r"Missing Keywords:\s*(.*)", ats_result),
+            "Fit Summary": extract_text(r"Final Thoughts:\s*(.*)", ats_result),
+            "Bias Score (0 = Fair, 1 = Biased)": bias_score,
+            "Masculine Words": masc_count,
+            "Feminine Words": fem_count,
+            "Detected Masculine Words": detected_masc,
+            "Detected Feminine Words": detected_fem,
+            "Text Preview": full_text[:300] + "...",
+            "Highlighted Text": highlighted_text,
+            "Rewritten Text": rewritten_text
+        })
+
+        # ✅ Unpacked DB insert
+        from db_manager import insert_candidate
+        insert_candidate((
+    uploaded_file.name,
+    candidate_name,
+    ats_score,
+    edu_score,
+    exp_score,
+    skills_score,
+    lang_score,
+    keyword_score,
+    bias_score,
+    domain
+))
+
+
+    st.success("✅ All resumes processed!")
+
+    if all_text:
+        st.session_state.vectorstore = setup_vectorstore(all_text)
+        st.session_state.chain = create_chain(st.session_state.vectorstore)
+
 
 # 📅 Timestamp generator
 def current_timestamp():

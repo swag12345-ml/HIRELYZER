@@ -13,6 +13,13 @@ import requests
 import numpy as np
 import pandas as pd
 import streamlit as st
+import base64
+import streamlit as st
+
+# File uploader widget for image upload
+from db_manager import insert_candidate, get_top_domains_by_score
+
+    
 from PIL import Image
 from pdf2image import convert_from_path
 from dotenv import load_dotenv
@@ -35,7 +42,7 @@ from llm_manager import call_llm
 from pydantic import BaseModel
 
 # Set page config
-st.set_page_config(page_title="Chat with LEXIBOT", page_icon="📝", layout="centered")
+
 
 # CSS Customization
 st.markdown(
@@ -886,6 +893,8 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
 
 
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
+
+
 def ats_percentage_score(
     resume_text,
     job_description,
@@ -897,8 +906,8 @@ def ats_percentage_score(
     keyword_weight=10
 ):
     """
-    Analyzes resume against job description using a structured, score-based prompt and returns detailed ATS metrics.
-    Allows custom weights for each scoring section.
+    Analyzes resume against job description using a structured, score-based prompt.
+    Enforces strict score calculation to prevent inflation. Final scores are validated externally.
     """
     from llm_manager import call_llm
 
@@ -908,7 +917,9 @@ def ats_percentage_score(
     )
 
     prompt = f"""
-You are an AI-powered ATS evaluator. You must calculate scores using the strict rules below and perform exact arithmetic for scoring. Do NOT guess or inflate values.
+You are an AI-powered ATS evaluator. You must evaluate the candidate's resume strictly based on the scoring rules below. 
+You are not allowed to guess, assume, or round scores casually. Your component scores will be validated programmatically,
+so they must follow **exact arithmetic based on the provided weights**.
 
 ---
 
@@ -950,15 +961,15 @@ You are an AI-powered ATS evaluator. You must calculate scores using the strict 
 
 ---
 
-Return your output in this exact structure:
+🧾 **OUTPUT FORMAT (Strictly follow this):**
 
 Candidate Name: <full name or "Not Found">
 
 Education Score: <0–{edu_weight}>  
-Education Match Details: <List exact matches or mismatches in degree title and field, e.g., "Degree title matches B.Tech; field matches Computer Science.">
+Education Match Details: <e.g., "Degree title matches B.Tech; field matches Computer Science.">
 
 Experience Score: <0–{exp_weight}>  
-Experience Highlights: <Summarize years of experience compared to JD requirement, matched roles, and domain matches, e.g., "Candidate has 5 years experience (JD requires 4), role title matches 'Software Engineer', domain matched IT industry.">
+Experience Highlights: <e.g., "5 years experience (JD requires 4), title matches 'Software Engineer', domain matched IT.">
 
 Skills Match Percentage: <0–{skills_weight}>  
 Skills Found in Resume: <comma-separated list>  
@@ -966,34 +977,32 @@ Skills Required by JD: <comma-separated list>
 Skills Missing: <comma-separated list>
 
 Language Quality Score: <0–{lang_weight}>  
-Language Quality Comments: <Brief notes on grammar, style, tone, e.g., "Professional tone with minor grammatical errors.">
+Language Quality Comments: <e.g., "Professional tone with minor grammatical errors.">
 
 Keyword Match Score: <0–{keyword_weight}>  
 Missing Keywords: <comma-separated list>
 
-Overall Percentage Match: <sum of above>
-
+Overall Percentage Match: <sum of above components>  
 Formatted Score: <Excellent / Good / Average / Poor>
 
 Final Thoughts:  
-Provide a detailed summary (4–6 sentences) about the candidate’s overall fit. Highlight strengths and weaknesses clearly, note any significant skill gaps, experience mismatches, and language issues. Suggest key improvements to better align with the JD.
+Provide a detailed summary (4–6 sentences) about the candidate’s overall fit. Highlight strengths
 
 {logic_score_note}
 
 ---
 
-### Job Description:  
+### Job Description:
 \"\"\"{job_description}\"\"\"
 
 ---
 
-### Resume:  
+### Resume:
 \"\"\"{resume_text}\"\"\"
 """
 
     response = call_llm(prompt, session=st.session_state)
     return response.strip()
-
 
 
 # Setup Vector DB
@@ -1054,9 +1063,71 @@ else:
 
 uploaded_files = st.file_uploader("Upload PDF Resumes", type=["pdf"], accept_multiple_files=True)
 
+
+import os
+import re
+import streamlit as st
+from datetime import datetime
+
 resume_data = []
 
-if uploaded_files:
+# 🧠 Dynamic domain detection from title + description
+def detect_domain_from_title_and_description(job_title, job_description):
+    title = job_title.lower()
+    jd = job_description.lower()
+    combined = title + " " + jd
+
+    # Strict title priority matching
+    if "data scientist" in title or "data science" in title:
+        return "Data Science"
+    if "ml engineer" in title or "ai engineer" in title:
+        return "AI/ML"
+    if "frontend" in title:
+        return "Frontend"
+    if "backend" in title:
+        return "Backend"
+    if "full stack" in title or "fullstack" in title:
+        return "Software Engineering"
+    if "software engineer" in title:
+        return "Software Engineering"
+    if "developer" in title and not any(x in title for x in ["data", "ml", "ai"]):
+        return "Software Engineering"
+    if "cybersecurity" in title or "security analyst" in title:
+        return "Cybersecurity"
+    if "cloud" in title:
+        return "Cloud"
+    if "android" in title or "ios" in title or "mobile" in title:
+        return "Mobile Development"
+    if "ui" in title or "ux" in title or "designer" in title:
+        return "UI/UX"
+
+    # Fallback to JD
+    if "data science" in jd or "data scientist" in jd:
+        return "Data Science"
+    if "machine learning" in jd or "deep learning" in jd:
+        return "AI/ML"
+    if "react" in jd or "angular" in jd:
+        return "Frontend"
+    if "node" in jd or "django" in jd or "api" in jd:
+        return "Backend"
+    if "docker" in jd or "kubernetes" in jd or "ci/cd" in jd:
+        return "DevOps"
+    if "aws" in jd or "gcp" in jd or "azure" in jd:
+        return "Cloud"
+    if "penetration testing" in jd or "owasp" in jd:
+        return "Cybersecurity"
+    if "figma" in jd or "user interface" in jd:
+        return "UI/UX"
+
+    return "General"
+
+# 📅 Timestamp generator
+def current_timestamp():
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+# ✏️ Let user enter job title
+
+if uploaded_files and job_description:
     all_text = []
 
     for uploaded_file in uploaded_files:
@@ -1066,16 +1137,17 @@ if uploaded_files:
 
         text = extract_text_from_pdf(file_path)
         all_text.extend(text)
-
         full_text = " ".join(text)
-        bias_score, masc, fem = detect_bias(full_text)
-        highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(full_text, replacement_mapping, user_location)
 
-        # ✅ Use dynamic weights from sliders
+        bias_score, masc, fem = detect_bias(full_text)
+        highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(
+            full_text, replacement_mapping, user_location
+        )
+
         ats_result = ats_percentage_score(
             resume_text=full_text,
             job_description=job_description,
-            logic_profile_score=None,  # or pass real logic score if available
+            logic_profile_score=None,
             edu_weight=edu_weight,
             exp_weight=exp_weight,
             skills_weight=skills_weight,
@@ -1083,7 +1155,6 @@ if uploaded_files:
             keyword_weight=keyword_weight
         )
 
-        # 🧠 Reusable extraction functions
         def extract_score(pattern, text, default=0):
             match = re.search(pattern, text)
             return int(match.group(1)) if match else default
@@ -1092,16 +1163,27 @@ if uploaded_files:
             match = re.search(pattern, text)
             return match.group(1).strip() if match else default
 
+        candidate_name = extract_text(r"Candidate Name:\s*(.*)", ats_result)
+        ats_score = extract_score(r"Overall Percentage Match:\s*(\d+)", ats_result)
+        edu_score = extract_score(r"Education Score:\s*(\d+)", ats_result)
+        exp_score = extract_score(r"Experience Score:\s*(\d+)", ats_result)
+        skills_score = extract_score(r"Skills Match Percentage:\s*(\d+)", ats_result)
+        lang_score = extract_score(r"Language Quality Score:\s*(\d+)", ats_result)
+        keyword_score = extract_score(r"Keyword Match Score:\s*(\d+)", ats_result)
+
+        domain = detect_domain_from_title_and_description("", job_description)
+
+
         resume_data.append({
             "Resume Name": uploaded_file.name,
-            "Candidate Name": extract_text(r"Candidate Name:\s*(.*)", ats_result),
-            "ATS Match %": extract_score(r"Overall Percentage Match:\s*(\d+)", ats_result),
+            "Candidate Name": candidate_name,
+            "ATS Match %": ats_score,
             "Formatted Score": extract_text(r"Formatted Score:\s*(.*)", ats_result),
-            "Education Score": extract_score(r"Education Score:\s*(\d+)", ats_result),
-            "Experience Score": extract_score(r"Experience Score:\s*(\d+)", ats_result),
-            "Skills Match %": extract_score(r"Skills Match Percentage:\s*(\d+)", ats_result),
-            "Language Quality Score": extract_score(r"Language Quality Score:\s*(\d+)", ats_result),
-            "Keyword Match Score": extract_score(r"Keyword Match Score:\s*(\d+)", ats_result),
+            "Education Score": edu_score,
+            "Experience Score": exp_score,
+            "Skills Match %": skills_score,
+            "Language Quality Score": lang_score,
+            "Keyword Match Score": keyword_score,
             "Missing Keywords": extract_text(r"Missing Keywords:\s*(.*)", ats_result),
             "Fit Summary": extract_text(r"Final Thoughts:\s*(.*)", ats_result),
             "Bias Score (0 = Fair, 1 = Biased)": bias_score,
@@ -1114,6 +1196,22 @@ if uploaded_files:
             "Rewritten Text": rewritten_text
         })
 
+        # Insert into DB with proper timestamp
+        from db_manager import insert_candidate
+        insert_candidate((
+            uploaded_file.name,
+            candidate_name,
+            ats_score,
+            edu_score,
+            exp_score,
+            skills_score,
+            lang_score,
+            keyword_score,
+            bias_score,
+            domain,
+            
+        ))
+
     st.success("✅ All resumes processed!")
 
     if all_text:
@@ -1122,10 +1220,13 @@ if uploaded_files:
 
 
 
-
 # === TAB 1: Dashboard ===
 # 📊 Dashboard and Metrics
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", "📚 Course Recommendation"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", 
+    "📚 Course Recommendation", "📁 Admin DB View"
+])
+
 
 # === TAB 1: Dashboard ===
 with tab1:
@@ -1251,14 +1352,133 @@ with tab1:
                         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                         use_container_width=True,
                     )
+
+                def generate_resume_report_html(resume):
+                    rewritten_text = resume['Rewritten Text'].replace("\n", "<br>")
+                    masculine_words = ", ".join(f"{k}({v})" for k, v in resume['Detected Masculine Words'].items())
+                    feminine_words = ", ".join(f"{k}({v})" for k, v in resume['Detected Feminine Words'].items())
+                    missing_keywords = "".join(
+                        f"<span class='keyword'>{kw.strip()}</span>"
+                        for kw in resume['Missing Keywords'].split(",") if kw.strip()
+                    ) or "<i>None</i>"
+
+                    return f"""
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>{resume['Candidate Name']} - Resume Analysis Report</title>
+                        <style>
+                            body {{
+                                font-family: 'Segoe UI', sans-serif;
+                                margin: 40px;
+                                background-color: #f5f7fa;
+                                color: #333;
+                            }}
+                            h1, h2 {{
+                                color: #2f4f6f;
+                            }}
+                            .section {{
+                                margin-bottom: 30px;
+                            }}
+                            .highlight {{
+                                background-color: #eef;
+                                padding: 10px;
+                                border-radius: 6px;
+                                margin-top: 10px;
+                                font-size: 14px;
+                            }}
+                            .metric-box {{
+                                display: inline-block;
+                                background: #dbeaff;
+                                padding: 10px 20px;
+                                margin: 10px;
+                                border-radius: 10px;
+                                font-weight: bold;
+                            }}
+                            .keyword {{
+                                display: inline-block;
+                                background: #fbdcdc;
+                                color: #a33;
+                                margin: 4px;
+                                padding: 6px 12px;
+                                border-radius: 12px;
+                                font-size: 13px;
+                            }}
+                            .resume-box {{
+                                background-color: #f9f9ff;
+                                padding: 15px;
+                                border-radius: 8px;
+                                border: 1px solid #ccc;
+                                white-space: pre-wrap;
+                            }}
+                        </style>
+                    </head>
+                    <body>
+
+                        <h1>📄 Resume Analysis Report</h1>
+
+                        <div class="section">
+                            <h2>Candidate: {resume['Candidate Name']}</h2>
+                            <p><strong>Resume File:</strong> {resume['Resume Name']}</p>
+                        </div>
+
+                        <div class="section">
+                            <h2>📊 ATS Evaluation</h2>
+                            <div class="metric-box">ATS Match: {resume['ATS Match %']}%</div>
+                            <div class="metric-box">Education: {resume['Education Score']}</div>
+                            <div class="metric-box">Experience: {resume['Experience Score']}</div>
+                            <div class="metric-box">Skills Match: {resume['Skills Match %']}</div>
+                            <div class="metric-box">Language Score: {resume['Language Quality Score']}</div>
+                            <div class="metric-box">Keyword Score: {resume['Keyword Match Score']}</div>
+                        </div>
+
+                        <div class="section">
+                            <h2>⚖️ Gender Bias Analysis</h2>
+                            <div class="metric-box" style="background:#f0f8ff;">Masculine Words: {resume['Masculine Words']}</div>
+                            <div class="metric-box" style="background:#fff0f5;">Feminine Words: {resume['Feminine Words']}</div>
+                            <p><strong>Bias Score (0=Fair, 1=Biased):</strong> {resume['Bias Score (0 = Fair, 1 = Biased)']}</p>
+                            <div class="highlight"><strong>Masculine Words:</strong><br>{masculine_words}</div>
+                            <div class="highlight"><strong>Feminine Words:</strong><br>{feminine_words}</div>
+                        </div>
+
+                        <div class="section">
+                            <h2>📌 Missing Keywords</h2>
+                            {missing_keywords}
+                        </div>
+
+                        <div class="section">
+                            <h2>🧠 Final Fit Summary</h2>
+                            <div class="resume-box">{resume['Fit Summary']}</div>
+                        </div>
+
+                        <div class="section">
+                            <h2>✅ Rewritten Bias-Free Resume</h2>
+                            <div class="resume-box">{rewritten_text}</div>
+                        </div>
+
+                    </body>
+                    </html>
+                    """
+
+                html_report = generate_resume_report_html(resume)
+                st.download_button(
+                    label="📥 Download Full Analysis Report (.html)",
+                    data=html_report,
+                    file_name=f"{resume['Resume Name'].split('.')[0]}_report.html",
+                    mime="text/html",
+                    use_container_width=True,
+                )
     else:
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
+
 
 
    
 with tab2:
     st.markdown("## 🧾 <span style='color:#336699;'>Advanced Resume Builder</span>", unsafe_allow_html=True)
     st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
+    uploaded_image = st.file_uploader("Upload a Profile Image", type=["png", "jpg", "jpeg"])
 
     # Initialize session state
     fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary", "skills", "languages", "interests","Softskills"]
@@ -1487,6 +1707,36 @@ skills_html = "".join(
     for s in st.session_state['skills'].split(',')
     if s.strip()
 )
+import streamlit as st
+import base64
+
+# Initialize profile image HTML with empty string
+profile_img_html = ""
+
+if uploaded_image:
+    encoded_image = base64.b64encode(uploaded_image.read()).decode()
+
+    # Circular profile image with glowing effect
+    profile_img_html = f"""
+    <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+        <img src="data:image/png;base64,{encoded_image}" alt="Profile Photo"
+             style="
+                width: 120px;
+                height: 120px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 3px solid #4da6ff;
+                box-shadow:
+                    0 0 8px #4da6ff,
+                    0 0 16px #4da6ff,
+                    0 0 24px #4da6ff;
+            " />
+    </div>
+    """
+    st.markdown(profile_img_html, unsafe_allow_html=True)
+else:
+    st.info("Please upload a profile photo.")
+
 
 
 languages_html = "".join(
@@ -1707,7 +1957,6 @@ if st.session_state.project_links:
 
 
 
-# CERTIFICATES
 certificate_links_html = ""
 if st.session_state.certificate_links:
     certificate_links_html = "<h4 class='section-title'>Certificates</h4><hr>"
@@ -1720,37 +1969,43 @@ if st.session_state.certificate_links:
 
             card_html = f"""
             <div style='
-                background-color: #e3f2fd;  /* Light Blue */
+                background-color: #f9fbe7;  /* Green-Yellow pastel */
                 padding: 20px 24px;
-                border-radius: 14px;
-                margin-bottom: 20px;
-                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
-                font-family: "Roboto", "Segoe UI", sans-serif;
-                color: #0a1f44;
+                border-radius: 16px;
+                margin-bottom: 22px;
+                box-shadow: 0 4px 14px rgba(34, 60, 80, 0.15);
+                font-family: "Poppins", "Segoe UI", sans-serif;
+                color: #1a1a1a;
                 position: relative;
                 line-height: 1.6;
             '>
                 <!-- Duration Top Right -->
                 <div style='
                     position: absolute;
-                    top: 20px;
+                    top: 18px;
                     right: 24px;
-                    font-size: 14px;
+                    font-size: 13.5px;
                     font-weight: 600;
-                    color: #1b3a63;
-                    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.12);
+                    color: #37474f;
+                    text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.15);
+
+                    /* Added background and shadow */
+                    background-color: #fffde7;  /* pastel yellow */
+                    padding: 4px 12px;
+                    border-radius: 14px;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
                 '>⏳ {duration}</div>
 
                 <!-- Certificate Title -->
                 <div style='
                     font-size: 17px;
                     font-weight: 700;
-                    color: #08274c;
+                    color: #263238;
                     margin-bottom: 8px;
-                    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
+                    text-shadow: 0.5px 0.5px 1.5px rgba(0, 0, 0, 0.1);
                 '>
                     📄 <a href="{link}" target="_blank" style='
-                        color: #08274c;
+                        color: #263238;
                         text-decoration: none;
                     '>{name}</a>
                 </div>
@@ -1758,10 +2013,9 @@ if st.session_state.certificate_links:
                 <!-- Description -->
                 <div style='
                     font-size: 15px;
-                    color: #1b2b50;
-                    white-space: pre-wrap;
-                    text-shadow: 0 0 2px rgba(0, 0, 0, 0.07);
-                    margin-top: 4px;
+                    color: #37474f;
+                    margin-top: 6px;
+                    text-shadow: 0 0 1px rgba(0, 0, 0, 0.08);
                 '>
                     📝 {description}
                 </div>
@@ -1843,9 +2097,17 @@ html_content = f"""
 </head>
 <body>
 
-    <h2>{st.session_state['name']}</h2>
-    <h4>{st.session_state['job_title']}</h4>
-    <hr>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <div>
+        <h2 style="margin: 0; color: #336699;">{st.session_state['name']}</h2>
+        <h4 style="margin: 5px 0 0 0; color: #336699;">{st.session_state['job_title']}</h4>
+    </div>
+    <div>
+        {profile_img_html}
+    </div>
+</div>
+<hr>
+
 
     <div class="container">
         <div class="left">
@@ -2057,6 +2319,7 @@ with tab3:
     }
     </style>
     """, unsafe_allow_html=True)
+
 
     # ---------- Featured Companies ----------
     st.markdown("### <div class='title-header'>🏢 Featured Companies</div>", unsafe_allow_html=True)
@@ -2286,7 +2549,78 @@ with tab4:
                 with cols[idx % 2]:
                     st.markdown(f"**{title}**")
                     st.video(url)
+with tab5:
+    import sqlite3
+    import pandas as pd
+    from db_manager import get_top_domains_by_score, delete_candidate_by_id
 
+    st.markdown("## 🛡️ <span style='color:#336699;'>Admin Database Panel</span>", unsafe_allow_html=True)
+    st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
+
+    # 🔐 Admin Login
+    if not st.session_state.get("admin_logged_in", False):
+        st.warning("🔒 Admin access required.")
+        password = st.text_input("Enter Admin Password", type="password")
+        if st.button("Login"):
+            if password == "lexiadmin123":  # ⚠️ Replace with secure method in prod
+                st.session_state.admin_logged_in = True
+                st.success("✅ Logged in successfully.")
+                st.rerun()
+            else:
+                st.error("❌ Incorrect password.")
+        st.stop()
+
+    # ✅ Admin Logged In
+    st.success("✅ You are logged in as admin.")
+
+    # 🔄 Manual Refresh Button
+    if st.button("🔄 Refresh Data"):
+        st.rerun()
+
+    # 📄 Load Data from DB
+    conn = sqlite3.connect("resume_data.db")
+    df = pd.read_sql_query("SELECT * FROM candidates ORDER BY timestamp DESC", conn)
+
+    # 🔍 Search by Candidate Name
+    search = st.text_input("🔍 Search Candidate by Name")
+    if search:
+        df = df[df["candidate_name"].str.contains(search, case=False, na=False)]
+
+    # 📋 Display DataFrame
+    if df.empty:
+        st.info("ℹ️ No candidate data found.")
+    else:
+        st.markdown("### 📋 Candidate Submissions")
+        st.dataframe(df, use_container_width=True)
+
+        # 📥 Download CSV Export
+        st.download_button(
+            label="📥 Download CSV",
+            data=df.to_csv(index=False),
+            file_name="candidates_export.csv",
+            mime="text/csv",
+            use_container_width=True
+        )
+
+        # 🗑️ Delete Candidate
+        st.markdown("### 🗑️ Delete Candidate Entry")
+        delete_id = st.number_input("Enter Candidate ID to Delete", min_value=1, step=1)
+        if st.button("🗑 Delete Candidate"):
+            if delete_id in df["id"].values:
+                delete_candidate_by_id(delete_id)
+                st.success(f"✅ Candidate with ID {delete_id} deleted.")
+                st.rerun()
+            else:
+                st.warning("⚠️ ID not found in current table.")
+
+    # 📊 Top 5 Domains by ATS Score
+    st.markdown("### 📊 Top 5 Domains by ATS Score")
+    top_domains = get_top_domains_by_score()
+    if top_domains:
+        for domain, avg_score, count in top_domains:
+            st.info(f"📁 **{domain}** — Average ATS: {avg_score:.2f} ({count} resumes)")
+    else:
+        st.info("ℹ️ No domain analytics available.")
 
 # 1. Display existing chat history
 if "memory" in st.session_state:

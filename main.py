@@ -1082,25 +1082,25 @@ def detect_domain_from_title_and_description(job_title, job_description):
 
     if "full stack" in combined or "fullstack" in combined:
         return "Software Engineering"
-    if "frontend" in combined or "react" in combined or "angular" in combined or "vue" in combined:
+    if "frontend" in combined or any(kw in combined for kw in ["react", "angular", "vue"]):
         return "Frontend"
-    if "backend" in combined or "node" in combined or "django" in combined or "api" in combined:
+    if "backend" in combined or any(kw in combined for kw in ["node", "django", "api"]):
         return "Backend"
-    if "software engineer" in combined or "web developer" in combined or "developer" in combined:
+    if any(kw in combined for kw in ["software engineer", "web developer", "developer"]):
         return "Software Engineering"
-    if "machine learning" in combined or "ml engineer" in combined or "deep learning" in combined or "ai engineer" in combined:
+    if any(kw in combined for kw in ["machine learning", "ml engineer", "deep learning", "ai engineer"]):
         return "AI/ML"
     if "data scientist" in combined or "data science" in combined:
         return "Data Science"
-    if "cybersecurity" in combined or "security analyst" in combined or "penetration testing" in combined or "owasp" in combined:
+    if any(kw in combined for kw in ["cybersecurity", "security analyst", "penetration testing", "owasp"]):
         return "Cybersecurity"
-    if "cloud" in combined or "aws" in combined or "azure" in combined or "gcp" in combined:
+    if any(kw in combined for kw in ["cloud", "aws", "azure", "gcp"]):
         return "Cloud"
-    if "docker" in combined or "kubernetes" in combined or "ci/cd" in combined:
+    if any(kw in combined for kw in ["docker", "kubernetes", "ci/cd"]):
         return "DevOps"
-    if "android" in combined or "ios" in combined or "mobile" in combined:
+    if any(kw in combined for kw in ["android", "ios", "mobile"]):
         return "Mobile Development"
-    if "ui" in combined or "ux" in combined or "figma" in combined or "designer" in combined or "user interface" in combined:
+    if any(kw in combined for kw in ["ui", "ux", "figma", "designer", "user interface"]):
         return "UI/UX"
     return "General"
 
@@ -1109,23 +1109,23 @@ if uploaded_files and job_description:
     all_text = []
 
     for uploaded_file in uploaded_files:
-        # Save the uploaded file
+        # Save file locally
         file_path = os.path.join(working_dir, uploaded_file.name)
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
-        # Extract text from PDF
+        # Extract resume text
         text = extract_text_from_pdf(file_path)
         all_text.extend(text)
         full_text = " ".join(text)
 
-        # Bias detection
+        # Run bias detection
         bias_score, masc, fem = detect_bias(full_text)
         highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(
             full_text, replacement_mapping, user_location
         )
 
-        # ATS scoring
+        # Run ATS scoring
         ats_result = ats_percentage_score(
             resume_text=full_text,
             job_description=job_description,
@@ -1137,7 +1137,7 @@ if uploaded_files and job_description:
             keyword_weight=keyword_weight
         )
 
-        # Helper extractors
+        # Helper functions
         def extract_score(pattern, text, default=0):
             match = re.search(pattern, text)
             return int(match.group(1)) if match else default
@@ -1146,7 +1146,7 @@ if uploaded_files and job_description:
             match = re.search(pattern, text)
             return match.group(1).strip() if match else default
 
-        # Extract info
+        # Extract scores and info
         candidate_name = extract_text(r"Candidate Name:\s*(.*)", ats_result)
         ats_score = extract_score(r"Overall Percentage Match:\s*(\d+)", ats_result)
         edu_score = extract_score(r"Education Score:\s*(\d+)", ats_result)
@@ -1158,14 +1158,19 @@ if uploaded_files and job_description:
         missing_keywords = extract_text(r"Missing Keywords:\s*(.*)", ats_result)
         fit_summary = extract_text(r"Final Thoughts:\s*(.*)", ats_result)
 
-        # Domain classification
+        # Domain prediction
         domain = detect_domain_from_title_and_description(job_title, job_description)
 
-        # Store in dashboard data
+        # 🔍 High Bias & Low ATS Flagging
+        bias_flag = "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair"
+        ats_flag = "⚠️ Low ATS" if ats_score < 50 else "✅ Good ATS"
+
+        # Append to dashboard memory
         resume_data.append({
             "Resume Name": uploaded_file.name,
             "Candidate Name": candidate_name,
             "ATS Match %": ats_score,
+            "ATS Status": ats_flag,  # 🆕
             "Formatted Score": formatted_score,
             "Education Score": edu_score,
             "Experience Score": exp_score,
@@ -1175,6 +1180,7 @@ if uploaded_files and job_description:
             "Missing Keywords": missing_keywords,
             "Fit Summary": fit_summary,
             "Bias Score (0 = Fair, 1 = Biased)": bias_score,
+            "Bias Status": bias_flag,  # 🆕
             "Masculine Words": masc_count,
             "Feminine Words": fem_count,
             "Detected Masculine Words": detected_masc,
@@ -1184,7 +1190,7 @@ if uploaded_files and job_description:
             "Rewritten Text": rewritten_text
         })
 
-        # ✅ Insert into DB (timestamp is handled by SQLite)
+        # ✅ Insert into DB (timestamp handled by DB itself)
         from db_manager import insert_candidate
         insert_candidate((
             uploaded_file.name,
@@ -1199,12 +1205,14 @@ if uploaded_files and job_description:
             domain
         ))
 
-    # Finalize processing
+    # ✅ Notify completion
     st.success("✅ All resumes processed!")
 
+    # Setup RAG for QA chatbot
     if all_text:
         st.session_state.vectorstore = setup_vectorstore(all_text)
         st.session_state.chain = create_chain(st.session_state.vectorstore)
+
 
 # === TAB 1: Dashboard ===
 # 📊 Dashboard and Metrics
@@ -2540,7 +2548,18 @@ with tab4:
 with tab5:
     import sqlite3
     import pandas as pd
-    from db_manager import get_top_domains_by_score, delete_candidate_by_id
+    from db_manager import (
+    get_top_domains_by_score,
+    get_resume_count_by_day,
+    get_average_ats_by_domain,
+    get_domain_distribution,
+    filter_candidates_by_date,
+    delete_candidate_by_id,
+    get_all_candidates,
+    export_to_csv
+)
+
+    import matplotlib.pyplot as plt
 
     st.markdown("## 🛡️ <span style='color:#336699;'>Admin Database Panel</span>", unsafe_allow_html=True)
     st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
@@ -2565,23 +2584,33 @@ with tab5:
     if st.button("🔄 Refresh Data"):
         st.rerun()
 
-    # 📄 Load Data from DB
+    # 📄 Load Data
     conn = sqlite3.connect("resume_data.db")
     df = pd.read_sql_query("SELECT * FROM candidates ORDER BY timestamp DESC", conn)
 
-    # 🔍 Search by Candidate Name
+    # 🔍 Search
     search = st.text_input("🔍 Search Candidate by Name")
     if search:
         df = df[df["candidate_name"].str.contains(search, case=False, na=False)]
 
-    # 📋 Display DataFrame
+    # 📆 Filter by Date Range
+    st.markdown("### 📆 Filter by Upload Date")
+    col1, col2 = st.columns(2)
+    with col1:
+        start_date = st.date_input("Start Date")
+    with col2:
+        end_date = st.date_input("End Date")
+    if st.button("Apply Date Filter"):
+        df = filter_candidates_by_date(str(start_date), str(end_date))
+
+    # 📋 Show Table
     if df.empty:
         st.info("ℹ️ No candidate data found.")
     else:
         st.markdown("### 📋 Candidate Submissions")
         st.dataframe(df, use_container_width=True)
 
-        # 📥 Download CSV Export
+        # 📥 Download
         st.download_button(
             label="📥 Download CSV",
             data=df.to_csv(index=False),
@@ -2590,7 +2619,7 @@ with tab5:
             use_container_width=True
         )
 
-        # 🗑️ Delete Candidate
+        # 🗑️ Delete
         st.markdown("### 🗑️ Delete Candidate Entry")
         delete_id = st.number_input("Enter Candidate ID to Delete", min_value=1, step=1)
         if st.button("🗑 Delete Candidate"):
@@ -2601,7 +2630,7 @@ with tab5:
             else:
                 st.warning("⚠️ ID not found in current table.")
 
-    # 📊 Top 5 Domains by ATS Score
+    # 📊 Top 5 Domains
     st.markdown("### 📊 Top 5 Domains by ATS Score")
     top_domains = get_top_domains_by_score()
     if top_domains:
@@ -2609,6 +2638,52 @@ with tab5:
             st.info(f"📁 **{domain}** — Average ATS: {avg_score:.2f} ({count} resumes)")
     else:
         st.info("ℹ️ No domain analytics available.")
+
+    # 🧁 Domain Distribution (Pie)
+    st.markdown("### 🥧 Resume Distribution by Domain")
+    df_pie = get_domain_distribution()
+    if not df_pie.empty:
+        fig1, ax1 = plt.subplots()
+        ax1.pie(df_pie["count"], labels=df_pie["domain"], autopct="%1.1f%%", startangle=90)
+        ax1.axis("equal")
+        st.pyplot(fig1)
+    else:
+        st.info("No domain data available.")
+
+    # 📊 Average ATS Score by Domain (Bar)
+    st.markdown("### 📊 Average ATS Score by Domain")
+    df_bar = get_average_ats_by_domain()
+    if not df_bar.empty:
+        fig2, ax2 = plt.subplots()
+        ax2.bar(df_bar["domain"], df_bar["avg_ats"], color="#3399ff")
+        ax2.set_ylabel("Average ATS Score")
+        ax2.set_title("Avg ATS Score per Domain")
+        ax2.set_xticklabels(df_bar["domain"], rotation=45, ha="right")
+        st.pyplot(fig2)
+    else:
+        st.info("No ATS data available.")
+
+    # 📈 Uploads Over Time (Timeline)
+    st.markdown("### 📈 Resume Upload Timeline")
+    df_timeline = get_resume_count_by_day()
+    if not df_timeline.empty:
+        fig3, ax3 = plt.subplots()
+        ax3.plot(df_timeline["date"], df_timeline["count"], marker="o", color="green")
+        ax3.set_title("Daily Resume Uploads")
+        ax3.set_ylabel("Uploads")
+        ax3.set_xlabel("Date")
+        plt.xticks(rotation=45)
+        st.pyplot(fig3)
+    else:
+        st.info("No timeline data available.")
+
+    # 🚩 Flagged Candidates
+    st.markdown("### 🚩 Flagged Candidates (High Bias / Low ATS)")
+    flagged = get_all_candidates(bias_threshold=0.6, min_ats=50)
+    if not flagged.empty:
+        st.dataframe(flagged, use_container_width=True)
+    else:
+        st.success("✅ No flagged candidates based on current thresholds.")
 
 # 1. Display existing chat history
 if "memory" in st.session_state:

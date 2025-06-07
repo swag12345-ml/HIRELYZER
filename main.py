@@ -1102,31 +1102,30 @@ def detect_domain_from_title_and_description(job_title, job_description):
         return "Mobile Development"
     if "ui" in combined or "ux" in combined or "figma" in combined or "designer" in combined or "user interface" in combined:
         return "UI/UX"
-
     return "General"
 
-# Timestamp
-def current_timestamp():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-# ✏️ Job evaluation logic
+# ✏️ Resume Evaluation Logic
 if uploaded_files and job_description:
     all_text = []
 
     for uploaded_file in uploaded_files:
+        # Save the uploaded file
         file_path = os.path.join(working_dir, uploaded_file.name)
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
+        # Extract text from PDF
         text = extract_text_from_pdf(file_path)
         all_text.extend(text)
         full_text = " ".join(text)
 
+        # Bias detection
         bias_score, masc, fem = detect_bias(full_text)
         highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(
             full_text, replacement_mapping, user_location
         )
 
+        # ATS scoring
         ats_result = ats_percentage_score(
             resume_text=full_text,
             job_description=job_description,
@@ -1138,6 +1137,7 @@ if uploaded_files and job_description:
             keyword_weight=keyword_weight
         )
 
+        # Helper extractors
         def extract_score(pattern, text, default=0):
             match = re.search(pattern, text)
             return int(match.group(1)) if match else default
@@ -1146,6 +1146,7 @@ if uploaded_files and job_description:
             match = re.search(pattern, text)
             return match.group(1).strip() if match else default
 
+        # Extract info
         candidate_name = extract_text(r"Candidate Name:\s*(.*)", ats_result)
         ats_score = extract_score(r"Overall Percentage Match:\s*(\d+)", ats_result)
         edu_score = extract_score(r"Education Score:\s*(\d+)", ats_result)
@@ -1153,22 +1154,26 @@ if uploaded_files and job_description:
         skills_score = extract_score(r"Skills Match Percentage:\s*(\d+)", ats_result)
         lang_score = extract_score(r"Language Quality Score:\s*(\d+)", ats_result)
         keyword_score = extract_score(r"Keyword Match Score:\s*(\d+)", ats_result)
+        formatted_score = extract_text(r"Formatted Score:\s*(.*)", ats_result)
+        missing_keywords = extract_text(r"Missing Keywords:\s*(.*)", ats_result)
+        fit_summary = extract_text(r"Final Thoughts:\s*(.*)", ats_result)
 
-        # ✅ Correct use of job_title and job_description
+        # Domain classification
         domain = detect_domain_from_title_and_description(job_title, job_description)
 
+        # Store in dashboard data
         resume_data.append({
             "Resume Name": uploaded_file.name,
             "Candidate Name": candidate_name,
             "ATS Match %": ats_score,
-            "Formatted Score": extract_text(r"Formatted Score:\s*(.*)", ats_result),
+            "Formatted Score": formatted_score,
             "Education Score": edu_score,
             "Experience Score": exp_score,
             "Skills Match %": skills_score,
             "Language Quality Score": lang_score,
             "Keyword Match Score": keyword_score,
-            "Missing Keywords": extract_text(r"Missing Keywords:\s*(.*)", ats_result),
-            "Fit Summary": extract_text(r"Final Thoughts:\s*(.*)", ats_result),
+            "Missing Keywords": missing_keywords,
+            "Fit Summary": fit_summary,
             "Bias Score (0 = Fair, 1 = Biased)": bias_score,
             "Masculine Words": masc_count,
             "Feminine Words": fem_count,
@@ -1179,105 +1184,7 @@ if uploaded_files and job_description:
             "Rewritten Text": rewritten_text
         })
 
-        # ✅ Unpacked DB insert
-        from db_manager import insert_candidate
-        insert_candidate((
-    uploaded_file.name,
-    candidate_name,
-    ats_score,
-    edu_score,
-    exp_score,
-    skills_score,
-    lang_score,
-    keyword_score,
-    bias_score,
-    domain
-))
-
-
-    st.success("✅ All resumes processed!")
-
-    if all_text:
-        st.session_state.vectorstore = setup_vectorstore(all_text)
-        st.session_state.chain = create_chain(st.session_state.vectorstore)
-
-
-# 📅 Timestamp generator
-def current_timestamp():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-# ✏️ Let user enter job title
-
-if uploaded_files and job_description:
-    all_text = []
-
-    for uploaded_file in uploaded_files:
-        file_path = os.path.join(working_dir, uploaded_file.name)
-        with open(file_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
-
-        text = extract_text_from_pdf(file_path)
-        all_text.extend(text)
-        full_text = " ".join(text)
-
-        bias_score, masc, fem = detect_bias(full_text)
-        highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(
-            full_text, replacement_mapping, user_location
-        )
-
-        ats_result = ats_percentage_score(
-            resume_text=full_text,
-            job_description=job_description,
-            logic_profile_score=None,
-            edu_weight=edu_weight,
-            exp_weight=exp_weight,
-            skills_weight=skills_weight,
-            lang_weight=lang_weight,
-            keyword_weight=keyword_weight
-        )
-
-        def extract_score(pattern, text, default=0):
-            match = re.search(pattern, text)
-            return int(match.group(1)) if match else default
-
-        def extract_text(pattern, text, default="N/A"):
-            match = re.search(pattern, text)
-            return match.group(1).strip() if match else default
-
-        candidate_name = extract_text(r"Candidate Name:\s*(.*)", ats_result)
-        ats_score = extract_score(r"Overall Percentage Match:\s*(\d+)", ats_result)
-        edu_score = extract_score(r"Education Score:\s*(\d+)", ats_result)
-        exp_score = extract_score(r"Experience Score:\s*(\d+)", ats_result)
-        skills_score = extract_score(r"Skills Match Percentage:\s*(\d+)", ats_result)
-        lang_score = extract_score(r"Language Quality Score:\s*(\d+)", ats_result)
-        keyword_score = extract_score(r"Keyword Match Score:\s*(\d+)", ats_result)
-
-        domain = detect_domain_from_title_and_description("", job_description)
-
-
-        resume_data.append({
-            "Resume Name": uploaded_file.name,
-            "Candidate Name": candidate_name,
-            "ATS Match %": ats_score,
-            "Formatted Score": extract_text(r"Formatted Score:\s*(.*)", ats_result),
-            "Education Score": edu_score,
-            "Experience Score": exp_score,
-            "Skills Match %": skills_score,
-            "Language Quality Score": lang_score,
-            "Keyword Match Score": keyword_score,
-            "Missing Keywords": extract_text(r"Missing Keywords:\s*(.*)", ats_result),
-            "Fit Summary": extract_text(r"Final Thoughts:\s*(.*)", ats_result),
-            "Bias Score (0 = Fair, 1 = Biased)": bias_score,
-            "Masculine Words": masc_count,
-            "Feminine Words": fem_count,
-            "Detected Masculine Words": detected_masc,
-            "Detected Feminine Words": detected_fem,
-            "Text Preview": full_text[:300] + "...",
-            "Highlighted Text": highlighted_text,
-            "Rewritten Text": rewritten_text
-        })
-
-        # Insert into DB with proper timestamp
+        # ✅ Insert into DB (timestamp is handled by SQLite)
         from db_manager import insert_candidate
         insert_candidate((
             uploaded_file.name,
@@ -1289,17 +1196,15 @@ if uploaded_files and job_description:
             lang_score,
             keyword_score,
             bias_score,
-            domain,
-            
+            domain
         ))
 
+    # Finalize processing
     st.success("✅ All resumes processed!")
 
     if all_text:
         st.session_state.vectorstore = setup_vectorstore(all_text)
         st.session_state.chain = create_chain(st.session_state.vectorstore)
-
-
 
 # === TAB 1: Dashboard ===
 # 📊 Dashboard and Metrics
@@ -1427,12 +1332,14 @@ with tab1:
 
                     docx_file = generate_docx(resume["Rewritten Text"])
                     st.download_button(
-                        label="📥 Download Bias-Free Resume (.docx)",
-                        data=docx_file,
-                        file_name=f"{resume['Resume Name'].split('.')[0]}_bias_free.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        use_container_width=True,
-                    )
+    label="📥 Download Bias-Free Resume (.docx)",
+    data=docx_file,
+    file_name=f"{resume['Resume Name'].split('.')[0]}_bias_free.docx",
+    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    use_container_width=True,
+    key=f"download_docx_{resume['Resume Name']}"  # ✅ Ensure uniqueness
+)
+
 
                 def generate_resume_report_html(resume):
                     rewritten_text = resume['Rewritten Text'].replace("\n", "<br>")

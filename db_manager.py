@@ -89,3 +89,4 @@ def export_to_csv(filepath: str = "candidates_export.csv"):
     """
     df = pd.read_sql_query("SELECT * FROM candidates ORDER BY timestamp DESC", conn)
     df.to_csv(filepath, index=False)
+

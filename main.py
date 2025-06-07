@@ -2655,7 +2655,7 @@ with tab5:
     df_bar = get_average_ats_by_domain()
     if not df_bar.empty:
         fig2, ax2 = plt.subplots()
-        ax2.bar(df_bar["domain"], df_bar["avg_ats"], color="#3399ff")
+        ax2.bar(df_bar["domain"], df_bar["avg_ats_score"], color="#3399ff")
         ax2.set_ylabel("Average ATS Score")
         ax2.set_title("Avg ATS Score per Domain")
         ax2.set_xticklabels(df_bar["domain"], rotation=45, ha="right")

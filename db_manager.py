@@ -26,18 +26,10 @@ CREATE TABLE IF NOT EXISTS candidates (
 """)
 conn.commit()
 
-# ✅ Insert a new candidate entry (timestamp added manually with local time)
+# ✅ Insert a new candidate entry with local timestamp
 def insert_candidate(data: tuple):
-    """
-    Insert a candidate's evaluation into the database with local timestamp.
-    :param data: Tuple of 10 elements (resume_name, candidate_name, ats_score,
-                 edu_score, exp_score, skills_score, lang_score,
-                 keyword_score, bias_score, domain)
-    """
-    # Use local timezone (e.g., Asia/Kolkata)
     local_tz = pytz.timezone("Asia/Kolkata")
     local_time = datetime.now(local_tz).strftime("%Y-%m-%d %H:%M:%S")
-
     cursor.execute("""
         INSERT INTO candidates (
             resume_name, candidate_name, ats_score, edu_score, exp_score,
@@ -57,15 +49,57 @@ def get_top_domains_by_score(limit: int = 5) -> list:
     """, (limit,))
     return cursor.fetchall()
 
-# 📄 All candidates (latest first)
-def get_all_candidates() -> list:
-    cursor.execute("SELECT * FROM candidates ORDER BY timestamp DESC")
-    return cursor.fetchall()
+# 📊 Resume count by date (for trend analysis)
+def get_resume_count_by_day():
+    query = """
+    SELECT DATE(timestamp) AS day, COUNT(*) AS count
+    FROM candidates
+    GROUP BY DATE(timestamp)
+    ORDER BY DATE(timestamp) DESC
+    """
+    df = pd.read_sql_query(query, conn)
+    return df
+
+# 📊 Average ATS score by domain
+def get_average_ats_by_domain():
+    query = """
+    SELECT domain, ROUND(AVG(ats_score), 2) AS avg_ats_score
+    FROM candidates
+    GROUP BY domain
+    ORDER BY avg_ats_score DESC
+    """
+    df = pd.read_sql_query(query, conn)
+    return df
+
+# 🥧 Resume distribution by domain
+def get_domain_distribution():
+    query = """
+    SELECT domain, COUNT(*) as count
+    FROM candidates
+    GROUP BY domain
+    """
+    df = pd.read_sql_query(query, conn)
+    return df
+
+# 📅 Filter candidates by date
+def filter_candidates_by_date(start: str, end: str):
+    query = """
+    SELECT * FROM candidates
+    WHERE DATE(timestamp) BETWEEN DATE(?) AND DATE(?)
+    ORDER BY timestamp DESC
+    """
+    df = pd.read_sql_query(query, conn, params=(start, end))
+    return df
 
 # 🗑️ Delete candidate by ID
 def delete_candidate_by_id(candidate_id: int):
     cursor.execute("DELETE FROM candidates WHERE id = ?", (candidate_id,))
     conn.commit()
+
+# 📄 Get all candidates (if needed separately)
+def get_all_candidates() -> list:
+    cursor.execute("SELECT * FROM candidates ORDER BY timestamp DESC")
+    return cursor.fetchall()
 
 # 📤 Export database to CSV
 def export_to_csv(filepath: str = "candidates_export.csv"):

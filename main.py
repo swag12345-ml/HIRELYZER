@@ -2668,7 +2668,8 @@ with tab5:
     df_timeline = get_resume_count_by_day()
     if not df_timeline.empty:
         fig3, ax3 = plt.subplots()
-        ax3.plot(df_timeline["date"], df_timeline["count"], marker="o", color="green")
+        ax3.plot(df_timeline["day"], df_timeline["count"], marker="o", color="green")
+
         ax3.set_title("Daily Resume Uploads")
         ax3.set_ylabel("Uploads")
         ax3.set_xlabel("Date")

@@ -1080,14 +1080,14 @@ def detect_domain_from_title_and_description(job_title, job_description):
     jd = job_description.lower().strip()
     combined = f"{title} {jd}"
 
+    if any(kw in combined for kw in ["ui", "ux", "figma", "designer", "user interface"]):
+        return "UI/UX"
     if "full stack" in combined or "fullstack" in combined:
         return "Software Engineering"
     if "frontend" in combined or any(kw in combined for kw in ["react", "angular", "vue"]):
         return "Frontend"
     if "backend" in combined or any(kw in combined for kw in ["node", "django", "api"]):
         return "Backend"
-    if any(kw in combined for kw in ["software engineer", "web developer", "developer"]):
-        return "Software Engineering"
     if any(kw in combined for kw in ["machine learning", "ml engineer", "deep learning", "ai engineer"]):
         return "AI/ML"
     if "data scientist" in combined or "data science" in combined:
@@ -1100,8 +1100,9 @@ def detect_domain_from_title_and_description(job_title, job_description):
         return "DevOps"
     if any(kw in combined for kw in ["android", "ios", "mobile"]):
         return "Mobile Development"
-    if any(kw in combined for kw in ["ui", "ux", "figma", "designer", "user interface"]):
-        return "UI/UX"
+    if any(kw in combined for kw in ["software engineer", "web developer", "developer"]):
+        return "Software Engineering"
+
     return "General"
 
 # ✏️ Resume Evaluation Logic

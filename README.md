@@ -1,1 +1,1 @@
-#  Resume analyzer with gender biasedness detection  using llangchain llama supporting multiple documents uploads and asking relevant questions from them without any limitations.This model is based upon llama 3.3.70 b versatile model and groq api key is also their for faster retrieval of documents The requirements.txt file is already uploaded there .See we have the main code for streamlit cloud but the voice assistant will only work for local terminal s streamlit is cloud based and cannot access hardware devices. you  can give your network url from the terminal
+

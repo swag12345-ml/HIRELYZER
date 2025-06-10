@@ -2724,7 +2724,6 @@ with tab5:
           get_candidate_by_id,
      )
 
-     # ------------------- Helper: Pie Chart Renderer -------------------
      def draw_clear_pie_chart(df):
           fig, ax = plt.subplots()
           wedges, texts, autotexts = ax.pie(
@@ -2743,7 +2742,6 @@ with tab5:
                t.set_weight("bold")
           st.pyplot(fig)
 
-     # ------------------- Admin Login Handling -------------------
      if "admin_logged_in" not in st.session_state:
           st.session_state.admin_logged_in = False
 
@@ -2759,23 +2757,26 @@ with tab5:
                     st.error("❌ Incorrect password.")
           st.stop()
 
-     # ------------------- Admin Dashboard -------------------
      st.markdown("## 🛡️ <span style='color:#336699;'>Admin Database Panel</span>", unsafe_allow_html=True)
+     col1, col2 = st.columns([1, 1])
+     with col1:
+          if st.button("🔄 Refresh Dashboard"):
+               st.experimental_rerun()
+     with col2:
+          if st.button("🚪 Logout now"):
+               st.session_state.admin_logged_in = False
+               st.success("👋 Logged out successfully.")
+               st.rerun()
+
      st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
-     if st.button("🔄 Refresh Dashboard"):
-          st.experimental_rerun()
-
-     # ------------------- Load Data -------------------
      conn = sqlite3.connect("resume_data.db")
      df = pd.read_sql_query("SELECT * FROM candidates ORDER BY timestamp DESC", conn)
 
-     # ------------------- Search -------------------
      search = st.text_input("🔍 Search Candidate by Name")
      if search:
           df = df[df["candidate_name"].str.contains(search, case=False, na=False)]
 
-     # ------------------- Date Filters -------------------
      st.markdown("### 📅 Filter by Date")
      col1, col2 = st.columns(2)
      with col1:
@@ -2785,7 +2786,6 @@ with tab5:
      if st.button("Apply Date Filter"):
           df = filter_candidates_by_date(str(start_date), str(end_date))
 
-     # ------------------- Data Table -------------------
      if df.empty:
           st.info("ℹ️ No candidate data available.")
      else:
@@ -2810,7 +2810,6 @@ with tab5:
                else:
                     st.error("ID not found.")
 
-     # ------------------- Top Domains by ATS -------------------
      st.markdown("### 📊 Top Domains by ATS Score")
      top_domains = get_top_domains_by_score()
      if top_domains:
@@ -2819,7 +2818,6 @@ with tab5:
      else:
           st.info("No domain data available.")
 
-     # ------------------- Domain Distribution (Bar with % Labels) -------------------
      st.markdown("### 📊 Domain Distribution by Count")
      df_domain_dist = get_domain_distribution()
      if not df_domain_dist.empty:
@@ -2832,18 +2830,17 @@ with tab5:
           for i, bar in enumerate(bars):
                height = bar.get_height()
                percent = df_domain_dist["percent"].iloc[i]
-               ax_dist.text(bar.get_x() + bar.get_width() / 2, height + 1, f"{percent:.1f}%",
+               ax_dist.text(bar.get_x() + bar.get_width() / 2, height, f"{percent:.1f}%",
                             ha='center', va='bottom', fontsize=8)
 
           ax_dist.set_ylabel("Resume Count")
           ax_dist.set_title("Resumes per Domain")
           ax_dist.set_xticks(np.arange(len(df_domain_dist["domain"])))
-          ax_dist.set_xticklabels(df_domain_dist["domain"], rotation=45, ha="right")
+          ax_dist.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right")
           st.pyplot(fig_dist)
      else:
           st.info("No domain data found.")
 
-     # ------------------- Average ATS Score by Domain -------------------
      st.markdown("### 📊 Average ATS Score by Domain")
      df_bar = get_average_ats_by_domain()
      if not df_bar.empty:
@@ -2865,7 +2862,6 @@ with tab5:
      else:
           st.info("No ATS domain data.")
 
-     # ------------------- Resume Upload Trend -------------------
      st.markdown("### 📈 Resume Uploads Over Time")
      df_timeline = get_resume_count_by_day()
      if not df_timeline.empty:
@@ -2879,7 +2875,6 @@ with tab5:
      else:
           st.info("No upload trend data.")
 
-     # ------------------- Bias Score Pie -------------------
      st.markdown("### 🧠 Fair vs Biased Resumes")
      df_bias = get_bias_distribution()
      if not df_bias.empty:
@@ -2891,14 +2886,12 @@ with tab5:
      else:
           st.info("No bias data to display.")
 
-     # ------------------- Flagged Candidates -------------------
      st.markdown("### 🚩 Flagged Candidates (Bias > 0.6, ATS < 50)")
      flagged_df = get_all_candidates(bias_threshold=0.6, min_ats=50)
      if not flagged_df.empty:
           st.dataframe(flagged_df, use_container_width=True)
      else:
           st.success("✅ No flagged candidates.")
-
 
 if "memory" in st.session_state:
     history = st.session_state.memory.load_memory_variables({}).get("chat_history", [])

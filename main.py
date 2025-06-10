@@ -1,4 +1,183 @@
 # ------------------- Core Imports -------------------
+import streamlit as st
+from user_login import create_user_table, add_user, verify_user
+
+# ------------------- Initialize -------------------
+
+create_user_table()
+
+# ✅ Fix content overflow on wide screens
+
+# ------------------- Initialize Session State -------------------
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+# ------------------- CSS Styling -------------------
+st.markdown("""
+<style>
+body, .main {
+    background-color: #0d1117;
+    color: white;
+}
+
+/* Login card styling */
+.login-card {
+    background: #161b22;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 0 25px rgba(0,0,0,0.3);
+    transition: all 0.4s ease;
+}
+.login-card:hover {
+    transform: translateY(-6px) scale(1.01);
+    box-shadow: 0 0 45px rgba(0,255,255,0.25);
+}
+
+/* Input and button styling */
+.stTextInput > div > input {
+    background-color: #0d1117;
+    color: white;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 0.6em;
+    transition: all 0.3s ease;
+}
+.stTextInput > div > input:hover {
+    border: 1px solid #00BFFF;
+    box-shadow: 0 0 8px rgba(0,191,255,0.2);
+}
+.stTextInput > label {
+    color: #c9d1d9;
+}
+.stButton > button {
+    background-color: #238636;
+    color: white;
+    border-radius: 10px;
+    padding: 0.6em 1.5em;
+    border: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+.stButton > button:hover {
+    background-color: #2ea043;
+    box-shadow: 0 0 10px rgba(46,160,67,0.4);
+    transform: scale(1.02);
+}
+
+/* Feature cards styling */
+.feature-card {
+    background: radial-gradient(circle at top left, #1f2937, #111827);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0,255,255,0.1);
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    color: #fff;
+    cursor: pointer;
+    margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 0 30px rgba(0,255,255,0.4);
+}
+.feature-card h3 {
+    color: #00BFFF;
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+}
+.feature-card p {
+    color: #c9d1d9;
+    font-size: 0.95rem;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ------------------- Sidebar (Visible only if NOT logged in) -------------------
+if not st.session_state.authenticated:
+    with st.sidebar:
+        st.markdown("<h1 style='color:#00BFFF;'>Smart Resume AI</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#c9d1d9; font-size: 1.1rem;'>Transform your career with AI-powered resume analysis, job matching, and smart insights.</p>", unsafe_allow_html=True)
+
+        st.markdown("""
+        <div class="feature-card">
+            <img src="https://img.icons8.com/fluency/48/resume.png" width="40"/>
+            <h3>Resume Analyzer</h3>
+            <p>Get feedback, scores, and tips powered by AI along with the biased words detection and rewriting the resume in an inclusive way.</p>
+        </div>
+
+        <div class="feature-card">
+            <img src="https://img.icons8.com/fluency/48/resume-website.png" width="40"/>
+            <h3>Resume Builder</h3>
+            <p>Build modern, eye-catching resumes easily.</p>
+        </div>
+
+        <div class="feature-card">
+            <img src="https://img.icons8.com/fluency/48/job.png" width="40"/>
+            <h3>Job Search</h3>
+            <p>Find relevant jobs and tailor your resume.</p>
+        </div>
+
+        <div class="feature-card">
+            <img src="https://img.icons8.com/fluency/48/classroom.png" width="40"/>
+            <h3>Course Suggestions</h3>
+            <p>Get upskilling recommendations based on your goals.</p>
+        </div>
+
+        <div class="feature-card">
+            <img src="https://img.icons8.com/fluency/48/combo-chart.png" width="40"/>
+            <h3>Interactive Dashboard</h3>
+            <p>Visualize trends, scores, and analytics interactively.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+# ------------------- Main Content After Login -------------------
+if st.session_state.authenticated:
+    st.markdown("<h2 style='color:#00BFFF;'>Welcome to LEXIBOT </h2>", unsafe_allow_html=True)
+    if st.button("🚪 Logout"):
+        st.session_state.authenticated = False
+        st.rerun()
+
+# ------------------- Main Page (Login/Register Centered) -------------------
+if not st.session_state.authenticated:
+    left, center, right = st.columns([1, 2, 1])
+    with center:
+        st.markdown("""
+            <div class='login-card' style='margin-top: 40px; padding: 30px;'>
+                <h2 style='text-align:center; margin-bottom: 20px;'>🔐 Login to <span style='color:#00BFFF;'>LEXIBOT</span></h2>
+        """, unsafe_allow_html=True)
+
+        login_tab, register_tab = st.tabs(["🔑 Login", "🆕 Register"])
+
+        with login_tab:
+            user = st.text_input("Username", key="login_user")
+            pwd = st.text_input("Password", type="password", key="login_pass")
+            if st.button("Login", key="login_btn"):
+                if verify_user(user, pwd):
+                    st.session_state.authenticated = True
+                    st.success("✅ Login successful!")
+                    st.rerun()
+                else:
+                    st.error("❌ Invalid credentials.")
+
+        with register_tab:
+            new_user = st.text_input("Choose a Username", key="reg_user")
+            new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
+            if st.button("Register", key="register_btn"):
+                try:
+                    add_user(new_user, new_pass)
+                    st.success("✅ Registered! You can now login.")
+                except:
+                    st.warning("⚠️ Username might already exist.")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.stop()
+
+
+
+
 import os, json, random, string, re, asyncio, io
 import urllib.parse
 from collections import Counter
@@ -1072,38 +1251,12 @@ import os
 import re
 import streamlit as st
 from datetime import datetime
+import os
+import re
+import streamlit as st
+from datetime import datetime
+from db_manager import insert_candidate, detect_domain_from_title_and_description  # ✅ import db helpers
 resume_data = []
-
-# 🧠 Dynamic domain detection from title + description
-def detect_domain_from_title_and_description(job_title, job_description):
-    title = job_title.lower().strip()
-    jd = job_description.lower().strip()
-    combined = f"{title} {jd}"
-
-    if any(kw in combined for kw in ["ui", "ux", "figma", "designer", "user interface"]):
-        return "UI/UX"
-    if "full stack" in combined or "fullstack" in combined:
-        return "Software Engineering"
-    if "frontend" in combined or any(kw in combined for kw in ["react", "angular", "vue"]):
-        return "Frontend"
-    if "backend" in combined or any(kw in combined for kw in ["node", "django", "api"]):
-        return "Backend"
-    if any(kw in combined for kw in ["machine learning", "ml engineer", "deep learning", "ai engineer"]):
-        return "AI/ML"
-    if "data scientist" in combined or "data science" in combined:
-        return "Data Science"
-    if any(kw in combined for kw in ["cybersecurity", "security analyst", "penetration testing", "owasp"]):
-        return "Cybersecurity"
-    if any(kw in combined for kw in ["cloud", "aws", "azure", "gcp"]):
-        return "Cloud"
-    if any(kw in combined for kw in ["docker", "kubernetes", "ci/cd"]):
-        return "DevOps"
-    if any(kw in combined for kw in ["android", "ios", "mobile"]):
-        return "Mobile Development"
-    if any(kw in combined for kw in ["software engineer", "web developer", "developer"]):
-        return "Software Engineering"
-
-    return "General"
 
 # ✏️ Resume Evaluation Logic
 if uploaded_files and job_description:
@@ -1138,7 +1291,7 @@ if uploaded_files and job_description:
             keyword_weight=keyword_weight
         )
 
-        # Helper functions
+        # Helper extractors
         def extract_score(pattern, text, default=0):
             match = re.search(pattern, text)
             return int(match.group(1)) if match else default
@@ -1159,19 +1312,19 @@ if uploaded_files and job_description:
         missing_keywords = extract_text(r"Missing Keywords:\s*(.*)", ats_result)
         fit_summary = extract_text(r"Final Thoughts:\s*(.*)", ats_result)
 
-        # Domain prediction
+        # Predict domain
         domain = detect_domain_from_title_and_description(job_title, job_description)
 
-        # 🔍 High Bias & Low ATS Flagging
+        # Flags
         bias_flag = "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair"
         ats_flag = "⚠️ Low ATS" if ats_score < 50 else "✅ Good ATS"
 
-        # Append to dashboard memory
+        # Save to in-memory report
         resume_data.append({
             "Resume Name": uploaded_file.name,
             "Candidate Name": candidate_name,
             "ATS Match %": ats_score,
-            "ATS Status": ats_flag,  # 🆕
+            "ATS Status": ats_flag,
             "Formatted Score": formatted_score,
             "Education Score": edu_score,
             "Experience Score": exp_score,
@@ -1181,18 +1334,18 @@ if uploaded_files and job_description:
             "Missing Keywords": missing_keywords,
             "Fit Summary": fit_summary,
             "Bias Score (0 = Fair, 1 = Biased)": bias_score,
-            "Bias Status": bias_flag,  # 🆕
+            "Bias Status": bias_flag,
             "Masculine Words": masc_count,
             "Feminine Words": fem_count,
             "Detected Masculine Words": detected_masc,
             "Detected Feminine Words": detected_fem,
             "Text Preview": full_text[:300] + "...",
             "Highlighted Text": highlighted_text,
-            "Rewritten Text": rewritten_text
+            "Rewritten Text": rewritten_text,
+            "Domain": domain
         })
 
-        # ✅ Insert into DB (timestamp handled by DB itself)
-        from db_manager import insert_candidate
+        # ✅ Save to DB
         insert_candidate((
             uploaded_file.name,
             candidate_name,
@@ -1206,13 +1359,13 @@ if uploaded_files and job_description:
             domain
         ))
 
-    # ✅ Notify completion
     st.success("✅ All resumes processed!")
 
-    # Setup RAG for QA chatbot
+    # Optional: Enable chat over the resumes
     if all_text:
         st.session_state.vectorstore = setup_vectorstore(all_text)
         st.session_state.chain = create_chain(st.session_state.vectorstore)
+
 
 
 # === TAB 1: Dashboard ===
@@ -1473,9 +1626,43 @@ with tab1:
 
    
 with tab2:
+    st.session_state.active_tab = "Resume Builder"
+    
+
     st.markdown("## 🧾 <span style='color:#336699;'>Advanced Resume Builder</span>", unsafe_allow_html=True)
     st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
+
     uploaded_image = st.file_uploader("Upload a Profile Image", type=["png", "jpg", "jpeg"])
+
+    # ✅ Profile image preview logic here
+    profile_img_html = ""
+
+    if uploaded_image:
+        import base64
+        encoded_image = base64.b64encode(uploaded_image.read()).decode()
+
+        profile_img_html = f"""
+        <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+            <img src="data:image/png;base64,{encoded_image}" alt="Profile Photo"
+                 style="
+                    width: 120px;
+                    height: 120px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    border: 3px solid #4da6ff;
+                    box-shadow:
+                        0 0 8px #4da6ff,
+                        0 0 16px #4da6ff,
+                        0 0 24px #4da6ff;
+                " />
+        </div>
+        """
+        st.markdown(profile_img_html, unsafe_allow_html=True)
+    else:
+        st.info("Please upload a profile photo.")
+
+    # 🔽 Your form fields continue below this...
+
 
     # Initialize session state
     fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary", "skills", "languages", "interests","Softskills"]
@@ -1704,35 +1891,7 @@ skills_html = "".join(
     for s in st.session_state['skills'].split(',')
     if s.strip()
 )
-import streamlit as st
-import base64
 
-# Initialize profile image HTML with empty string
-profile_img_html = ""
-
-if uploaded_image:
-    encoded_image = base64.b64encode(uploaded_image.read()).decode()
-
-    # Circular profile image with glowing effect
-    profile_img_html = f"""
-    <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
-        <img src="data:image/png;base64,{encoded_image}" alt="Profile Photo"
-             style="
-                width: 120px;
-                height: 120px;
-                border-radius: 50%;
-                object-fit: cover;
-                border: 3px solid #4da6ff;
-                box-shadow:
-                    0 0 8px #4da6ff,
-                    0 0 16px #4da6ff,
-                    0 0 24px #4da6ff;
-            " />
-    </div>
-    """
-    st.markdown(profile_img_html, unsafe_allow_html=True)
-else:
-    st.info("Please upload a profile photo.")
 
 
 
@@ -2547,147 +2706,200 @@ with tab4:
                     st.markdown(f"**{title}**")
                     st.video(url)
 with tab5:
-    import sqlite3
-    import pandas as pd
-    from db_manager import (
-    get_top_domains_by_score,
-    get_resume_count_by_day,
-    get_average_ats_by_domain,
-    get_domain_distribution,
-    filter_candidates_by_date,
-    delete_candidate_by_id,
-    get_all_candidates,
-    export_to_csv
-)
+     import sqlite3
+     import pandas as pd
+     import matplotlib.pyplot as plt
+     import numpy as np
+     import streamlit as st
 
-    import matplotlib.pyplot as plt
+     from db_manager import (
+          get_top_domains_by_score,
+          get_resume_count_by_day,
+          get_average_ats_by_domain,
+          get_domain_distribution,
+          get_bias_distribution,
+          filter_candidates_by_date,
+          delete_candidate_by_id,
+          get_all_candidates,
+          get_candidate_by_id,
+     )
 
-    st.markdown("## 🛡️ <span style='color:#336699;'>Admin Database Panel</span>", unsafe_allow_html=True)
-    st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
+     # ------------------- Helper: Pie Chart Renderer -------------------
+     def draw_clear_pie_chart(df):
+          fig, ax = plt.subplots()
+          wedges, texts, autotexts = ax.pie(
+               df["count"],
+               labels=df["domain"],
+               autopct="%1.1f%%",
+               startangle=90,
+               textprops=dict(color="black", fontsize=8),
+               pctdistance=0.8,
+               labeldistance=1.1
+          )
+          ax.axis("equal")
+          for t in autotexts:
+               t.set_fontsize(7)
+               t.set_color("white")
+               t.set_weight("bold")
+          st.pyplot(fig)
 
-    # 🔐 Admin Login
-    if not st.session_state.get("admin_logged_in", False):
-        st.warning("🔒 Admin access required.")
-        password = st.text_input("Enter Admin Password", type="password")
-        if st.button("Login"):
-            if password == "lexiadmin123":  # ⚠️ Replace with secure method in prod
-                st.session_state.admin_logged_in = True
-                st.success("✅ Logged in successfully.")
-                st.rerun()
-            else:
-                st.error("❌ Incorrect password.")
-        st.stop()
+     # ------------------- Admin Login Handling -------------------
+     if "admin_logged_in" not in st.session_state:
+          st.session_state.admin_logged_in = False
 
-    # ✅ Admin Logged In
-    st.success("✅ You are logged in as admin.")
+     if not st.session_state.admin_logged_in:
+          st.markdown("## 🔐 Admin Login Required")
+          password = st.text_input("Enter Admin Password", type="password")
+          if st.button("Login"):
+               if password == "lexiadmin123":
+                    st.session_state.admin_logged_in = True
+                    st.success("✅ Login successful!")
+                    st.rerun()
+               else:
+                    st.error("❌ Incorrect password.")
+          st.stop()
 
-    # 🔄 Manual Refresh Button
-    if st.button("🔄 Refresh Data"):
-        st.rerun()
+     # ------------------- Admin Dashboard -------------------
+     st.markdown("## 🛡️ <span style='color:#336699;'>Admin Database Panel</span>", unsafe_allow_html=True)
+     st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
-    # 📄 Load Data
-    conn = sqlite3.connect("resume_data.db")
-    df = pd.read_sql_query("SELECT * FROM candidates ORDER BY timestamp DESC", conn)
+     if st.button("🔄 Refresh Dashboard"):
+          st.experimental_rerun()
 
-    # 🔍 Search
-    search = st.text_input("🔍 Search Candidate by Name")
-    if search:
-        df = df[df["candidate_name"].str.contains(search, case=False, na=False)]
+     # ------------------- Load Data -------------------
+     conn = sqlite3.connect("resume_data.db")
+     df = pd.read_sql_query("SELECT * FROM candidates ORDER BY timestamp DESC", conn)
 
-    # 📆 Filter by Date Range
-    st.markdown("### 📆 Filter by Upload Date")
-    col1, col2 = st.columns(2)
-    with col1:
-        start_date = st.date_input("Start Date")
-    with col2:
-        end_date = st.date_input("End Date")
-    if st.button("Apply Date Filter"):
-        df = filter_candidates_by_date(str(start_date), str(end_date))
+     # ------------------- Search -------------------
+     search = st.text_input("🔍 Search Candidate by Name")
+     if search:
+          df = df[df["candidate_name"].str.contains(search, case=False, na=False)]
 
-    # 📋 Show Table
-    if df.empty:
-        st.info("ℹ️ No candidate data found.")
-    else:
-        st.markdown("### 📋 Candidate Submissions")
-        st.dataframe(df, use_container_width=True)
+     # ------------------- Date Filters -------------------
+     st.markdown("### 📅 Filter by Date")
+     col1, col2 = st.columns(2)
+     with col1:
+          start_date = st.date_input("Start Date")
+     with col2:
+          end_date = st.date_input("End Date")
+     if st.button("Apply Date Filter"):
+          df = filter_candidates_by_date(str(start_date), str(end_date))
 
-        # 📥 Download
-        st.download_button(
-            label="📥 Download CSV",
-            data=df.to_csv(index=False),
-            file_name="candidates_export.csv",
-            mime="text/csv",
-            use_container_width=True
-        )
+     # ------------------- Data Table -------------------
+     if df.empty:
+          st.info("ℹ️ No candidate data available.")
+     else:
+          st.markdown("### 📋 All Candidates")
+          st.dataframe(df, use_container_width=True)
 
-        # 🗑️ Delete
-        st.markdown("### 🗑️ Delete Candidate Entry")
-        delete_id = st.number_input("Enter Candidate ID to Delete", min_value=1, step=1)
-        if st.button("🗑 Delete Candidate"):
-            if delete_id in df["id"].values:
-                delete_candidate_by_id(delete_id)
-                st.success(f"✅ Candidate with ID {delete_id} deleted.")
-                st.rerun()
-            else:
-                st.warning("⚠️ ID not found in current table.")
+          st.download_button(
+               label="📥 Download Full CSV",
+               data=df.to_csv(index=False),
+               file_name="all_candidates.csv",
+               mime="text/csv"
+          )
 
-    # 📊 Top 5 Domains
-    st.markdown("### 📊 Top 5 Domains by ATS Score")
-    top_domains = get_top_domains_by_score()
-    if top_domains:
-        for domain, avg_score, count in top_domains:
-            st.info(f"📁 **{domain}** — Average ATS: {avg_score:.2f} ({count} resumes)")
-    else:
-        st.info("ℹ️ No domain analytics available.")
+          st.markdown("### 🗑️ Delete Candidate by ID")
+          delete_id = st.number_input("Enter Candidate ID", min_value=1, step=1)
+          if st.button("❌ Delete Candidate"):
+               if delete_id in df["id"].values:
+                    st.warning(get_candidate_by_id(delete_id).to_markdown(index=False), icon="📄")
+                    delete_candidate_by_id(delete_id)
+                    st.success(f"✅ Candidate with ID {delete_id} deleted.")
+                    st.rerun()
+               else:
+                    st.error("ID not found.")
 
-    # 🧁 Domain Distribution (Pie)
-    st.markdown("### 🥧 Resume Distribution by Domain")
-    df_pie = get_domain_distribution()
-    if not df_pie.empty:
-        fig1, ax1 = plt.subplots()
-        ax1.pie(df_pie["count"], labels=df_pie["domain"], autopct="%1.1f%%", startangle=90)
-        ax1.axis("equal")
-        st.pyplot(fig1)
-    else:
-        st.info("No domain data available.")
+     # ------------------- Top Domains by ATS -------------------
+     st.markdown("### 📊 Top Domains by ATS Score")
+     top_domains = get_top_domains_by_score()
+     if top_domains:
+          for domain, avg, count in top_domains:
+               st.info(f"📁 {domain} — Avg ATS: {avg:.2f} | Total: {count}")
+     else:
+          st.info("No domain data available.")
 
-    # 📊 Average ATS Score by Domain (Bar)
-    st.markdown("### 📊 Average ATS Score by Domain")
-    df_bar = get_average_ats_by_domain()
-    if not df_bar.empty:
-        fig2, ax2 = plt.subplots()
-        ax2.bar(df_bar["domain"], df_bar["avg_ats_score"], color="#3399ff")
-        ax2.set_ylabel("Average ATS Score")
-        ax2.set_title("Avg ATS Score per Domain")
-        ax2.set_xticklabels(df_bar["domain"], rotation=45, ha="right")
-        st.pyplot(fig2)
-    else:
-        st.info("No ATS data available.")
+     # ------------------- Domain Distribution (Bar with % Labels) -------------------
+     st.markdown("### 📊 Domain Distribution by Count")
+     df_domain_dist = get_domain_distribution()
+     if not df_domain_dist.empty:
+          total_count = df_domain_dist["count"].sum()
+          df_domain_dist["percent"] = (df_domain_dist["count"] / total_count) * 100
 
-    # 📈 Uploads Over Time (Timeline)
-    st.markdown("### 📈 Resume Upload Timeline")
-    df_timeline = get_resume_count_by_day()
-    if not df_timeline.empty:
-        fig3, ax3 = plt.subplots()
-        ax3.plot(df_timeline["day"], df_timeline["count"], marker="o", color="green")
+          fig_dist, ax_dist = plt.subplots(figsize=(6, 4))
+          bars = ax_dist.bar(df_domain_dist["domain"], df_domain_dist["count"], color="#ff9933")
 
-        ax3.set_title("Daily Resume Uploads")
-        ax3.set_ylabel("Uploads")
-        ax3.set_xlabel("Date")
-        plt.xticks(rotation=45)
-        st.pyplot(fig3)
-    else:
-        st.info("No timeline data available.")
+          for i, bar in enumerate(bars):
+               height = bar.get_height()
+               percent = df_domain_dist["percent"].iloc[i]
+               ax_dist.text(bar.get_x() + bar.get_width() / 2, height + 1, f"{percent:.1f}%",
+                            ha='center', va='bottom', fontsize=8)
 
-    # 🚩 Flagged Candidates
-    st.markdown("### 🚩 Flagged Candidates (High Bias / Low ATS)")
-    flagged = get_all_candidates(bias_threshold=0.6, min_ats=50)
-    if not flagged.empty:
-        st.dataframe(flagged, use_container_width=True)
-    else:
-        st.success("✅ No flagged candidates based on current thresholds.")
+          ax_dist.set_ylabel("Resume Count")
+          ax_dist.set_title("Resumes per Domain")
+          ax_dist.set_xticks(np.arange(len(df_domain_dist["domain"])))
+          ax_dist.set_xticklabels(df_domain_dist["domain"], rotation=45, ha="right")
+          st.pyplot(fig_dist)
+     else:
+          st.info("No domain data found.")
 
-# 1. Display existing chat history
+     # ------------------- Average ATS Score by Domain -------------------
+     st.markdown("### 📊 Average ATS Score by Domain")
+     df_bar = get_average_ats_by_domain()
+     if not df_bar.empty:
+          fig2, ax2 = plt.subplots(figsize=(6, 4))
+          bars = ax2.bar(df_bar["domain"], df_bar["avg_ats_score"], color="#3399ff")
+
+          for i, bar in enumerate(bars):
+               height = bar.get_height()
+               ax2.text(bar.get_x() + bar.get_width() / 2, height + 0.5, f"{height:.1f}",
+                        ha='center', va='bottom', fontsize=8)
+
+          ax2.set_ylabel("Avg ATS Score")
+          ax2.set_title("ATS by Domain")
+          max_score = df_bar["avg_ats_score"].max()
+          ax2.set_yticks(np.arange(0, max_score + 5, 5))
+          ax2.set_xticks(np.arange(len(df_bar["domain"])))
+          ax2.set_xticklabels(df_bar["domain"], rotation=45, ha="right")
+          st.pyplot(fig2)
+     else:
+          st.info("No ATS domain data.")
+
+     # ------------------- Resume Upload Trend -------------------
+     st.markdown("### 📈 Resume Uploads Over Time")
+     df_timeline = get_resume_count_by_day()
+     if not df_timeline.empty:
+          fig3, ax3 = plt.subplots(figsize=(6, 3.5))
+          ax3.plot(df_timeline["day"], df_timeline["count"], marker="o", color="green")
+          ax3.set_ylabel("Uploads")
+          ax3.set_title("Resume Upload Timeline")
+          ax3.set_xlabel("Date")
+          plt.xticks(rotation=45)
+          st.pyplot(fig3)
+     else:
+          st.info("No upload trend data.")
+
+     # ------------------- Bias Score Pie -------------------
+     st.markdown("### 🧠 Fair vs Biased Resumes")
+     df_bias = get_bias_distribution()
+     if not df_bias.empty:
+          fig4, ax4 = plt.subplots()
+          ax4.pie(df_bias["count"], labels=df_bias["bias_category"], autopct="%1.1f%%", startangle=90,
+                  colors=["#00cc66", "#ff6666"])
+          ax4.axis("equal")
+          st.pyplot(fig4)
+     else:
+          st.info("No bias data to display.")
+
+     # ------------------- Flagged Candidates -------------------
+     st.markdown("### 🚩 Flagged Candidates (Bias > 0.6, ATS < 50)")
+     flagged_df = get_all_candidates(bias_threshold=0.6, min_ats=50)
+     if not flagged_df.empty:
+          st.dataframe(flagged_df, use_container_width=True)
+     else:
+          st.success("✅ No flagged candidates.")
+
+
 if "memory" in st.session_state:
     history = st.session_state.memory.load_memory_variables({}).get("chat_history", [])
     for msg in history:

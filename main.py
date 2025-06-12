@@ -9,6 +9,12 @@ import streamlit as st
 
 # Display current system time for debugging
 st.write("🕒 Current System Time:", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+st.write("IST Today:", get_ist_time().strftime('%Y-%m-%d'))
+
+import datetime
+import streamlit as st
+
+
 from user_login import (
     create_user_table,
     add_user,

@@ -65,8 +65,14 @@ def verify_user(username, password):
     return False
 
 # ------------------ Log User Action ------------------
+import pytz  # Make sure you have pytz installed
+
 def log_user_action(username, action):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # Set timezone to Asia/Kolkata (IST)
+    india_timezone = pytz.timezone('Asia/Kolkata')
+    local_time = datetime.now(india_timezone)
+    timestamp = local_time.strftime("%Y-%m-%d %H:%M:%S")
+
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute('INSERT INTO user_logs (username, action, timestamp) VALUES (?, ?, ?)', 

@@ -1,5 +1,9 @@
 import streamlit as st
 import streamlit.components.v1 as components
+from streamlit_autorefresh import st_autorefresh
+
+# Auto-refresh the app every 60 seconds
+st_autorefresh(interval=60000, key="auto_refresh")
 from user_login import (
     create_user_table,
     add_user,

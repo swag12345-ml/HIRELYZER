@@ -1,18 +1,24 @@
-# user_login.py
-
 import sqlite3
 import bcrypt
-from datetime import datetime
+import streamlit as st
 from datetime import datetime, timedelta
+import pytz
 
 DB_NAME = "resume_data.db"
+
+# ------------------ Utility: Get IST Time ------------------
+def get_ist_time():
+    ist = pytz.timezone("Asia/Kolkata")
+    return datetime.now(ist)
+
+# Debug current system time (IST)
+st.write("🕒 Current IST Time:", get_ist_time().strftime("%Y-%m-%d %H:%M:%S"))
 
 # ------------------ Create Tables ------------------
 def create_user_table():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
 
-    # Users table
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -21,7 +27,6 @@ def create_user_table():
         )
     ''')
 
-    # User logs table
     c.execute('''
         CREATE TABLE IF NOT EXISTS user_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -43,13 +48,11 @@ def add_user(username, password):
         c.execute('INSERT INTO users (username, password) VALUES (?, ?)', 
                   (username, hashed_password.decode('utf-8')))
         conn.commit()
-        conn.close()
-        return True  # Successfully registered
+        return True
     except sqlite3.IntegrityError:
+        return False
+    finally:
         conn.close()
-        return False  # Username already exists
-
-
 
 # ------------------ Verify User ------------------
 def verify_user(username, password):
@@ -66,7 +69,7 @@ def verify_user(username, password):
 
 # ------------------ Log User Action ------------------
 def log_user_action(username, action):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute('INSERT INTO user_logs (username, action, timestamp) VALUES (?, ?, ?)', 
@@ -74,30 +77,30 @@ def log_user_action(username, action):
     conn.commit()
     conn.close()
 
-# ------------------ Get Active User Count ------------------
+# ------------------ Get Total Registered Users ------------------
 def get_total_registered_users():
-    conn = sqlite3.connect("resume_data.db")
+    conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute("SELECT COUNT(*) FROM users")
     count = c.fetchone()[0]
     conn.close()
     return count
 
-from datetime import datetime, timedelta
-
+# ------------------ Get Today's Logins (based on IST) ------------------
 def get_logins_today():
-    """Return the number of login events since midnight today."""
+    today = get_ist_time().strftime('%Y-%m-%d')
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute("""
         SELECT COUNT(*) FROM user_logs
         WHERE action = 'login'
-          AND date(timestamp) = date('now', 'localtime')
-    """)
+          AND DATE(timestamp) = ?
+    """, (today,))
     count = c.fetchone()[0]
     conn.close()
     return count
 
+# ------------------ Get All User Logs ------------------
 def get_all_user_logs():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()

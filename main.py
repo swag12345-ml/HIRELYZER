@@ -1,16 +1,22 @@
-# ------------------- Core Imports -------------------
 import streamlit as st
-from user_login import create_user_table, add_user, verify_user
+import streamlit.components.v1 as components
+from user_login import (
+    create_user_table,
+    add_user,
+    verify_user,
+    get_recent_active_users,
+    get_total_registered_users,
+    log_user_action
+)
 
 # ------------------- Initialize -------------------
-
 create_user_table()
-
-# ✅ Fix content overflow on wide screens
 
 # ------------------- Initialize Session State -------------------
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
+if "username" not in st.session_state:
+    st.session_state.username = None
 
 # ------------------- CSS Styling -------------------
 st.markdown("""
@@ -94,59 +100,137 @@ body, .main {
 </style>
 """, unsafe_allow_html=True)
 
-# ------------------- Sidebar (Visible only if NOT logged in) -------------------
+# ------------------- SHOW ONLY BEFORE LOGIN -------------------
 if not st.session_state.authenticated:
+
+    # -------- Sidebar and Features --------
     with st.sidebar:
         st.markdown("<h1 style='color:#00BFFF;'>Smart Resume AI</h1>", unsafe_allow_html=True)
         st.markdown("<p style='color:#c9d1d9; font-size: 1.1rem;'>Transform your career with AI-powered resume analysis, job matching, and smart insights.</p>", unsafe_allow_html=True)
 
-        st.markdown("""
-        <div class="feature-card">
+        st.markdown("""<div class="feature-card">
             <img src="https://img.icons8.com/fluency/48/resume.png" width="40"/>
             <h3>Resume Analyzer</h3>
             <p>Get feedback, scores, and tips powered by AI along with the biased words detection and rewriting the resume in an inclusive way.</p>
         </div>
-
         <div class="feature-card">
             <img src="https://img.icons8.com/fluency/48/resume-website.png" width="40"/>
             <h3>Resume Builder</h3>
             <p>Build modern, eye-catching resumes easily.</p>
         </div>
-
         <div class="feature-card">
             <img src="https://img.icons8.com/fluency/48/job.png" width="40"/>
             <h3>Job Search</h3>
             <p>Find relevant jobs and tailor your resume.</p>
         </div>
-
         <div class="feature-card">
             <img src="https://img.icons8.com/fluency/48/classroom.png" width="40"/>
             <h3>Course Suggestions</h3>
             <p>Get upskilling recommendations based on your goals.</p>
         </div>
-
         <div class="feature-card">
             <img src="https://img.icons8.com/fluency/48/combo-chart.png" width="40"/>
             <h3>Interactive Dashboard</h3>
             <p>Visualize trends, scores, and analytics interactively.</p>
-        </div>
-        """, unsafe_allow_html=True)
+        </div>""", unsafe_allow_html=True)
+        # Sidebar features...
+        # (your feature cards unchanged)
 
-# ------------------- Main Content After Login -------------------
-if st.session_state.authenticated:
-    st.markdown("<h2 style='color:#00BFFF;'>Welcome to LEXIBOT </h2>", unsafe_allow_html=True)
-    if st.button("🚪 Logout"):
-        st.session_state.authenticated = False
-        st.rerun()
+    # -------- Animated Counter Section --------
+    total_users = get_total_registered_users()
+    active_sessions = get_recent_active_users()
+    resumes_uploaded = 431  # Keep hardcoded
+    states_accessed = 29    # Keep hardcoded
 
-# ------------------- Main Page (Login/Register Centered) -------------------
+
+    components.html(f"""
+<style>
+.counter-wrapper {{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 40px;
+}}
+.counter {{
+    width: 230px;
+    height: 140px;
+    background: linear-gradient(145deg, #0d1117, #0d1117);
+    color: #00BFFF;
+    border-radius: 15px;
+    box-shadow: 0 0 10px rgba(0, 191, 255, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+    border: 2px solid transparent;
+    border-image: linear-gradient(to right, #00BFFF, #00FFFF) 1;
+}}
+.counter:hover {{
+    transform: translateY(-6px);
+    box-shadow: 0 0 25px rgba(0,255,255,0.5);
+}}
+.counter h1 {{
+    font-size: 2.8em;
+    margin: 0;
+}}
+.counter p {{
+    margin: 5px 0 0 0;
+    font-size: 1.1em;
+    color: #c9d1d9;
+}}
+</style>
+
+<div class="counter-wrapper">
+    <div class="counter">
+        <h1 id="totalUsers">0</h1>
+        <p>Total Users</p>
+    </div>
+    <div class="counter">
+        <h1 id="states">0</h1>
+        <p>States Accessed</p>
+    </div>
+    <div class="counter">
+        <h1 id="resumes">0</h1>
+        <p>Resumes Uploaded</p>
+    </div>
+    <div class="counter">
+        <h1 id="activeSessions">0</h1>
+        <p>Active Sessions</p>
+    </div>
+</div>
+
+<script>
+function animateValue(id, start, end, duration) {{
+    const obj = document.getElementById(id);
+    const range = end - start;
+    const increment = end > start ? 1 : -1;
+    const stepTime = Math.abs(Math.floor(duration / range));
+    let current = start;
+    const timer = setInterval(() => {{
+        current += increment;
+        obj.innerHTML = current;
+        if (current == end) {{
+            clearInterval(timer);
+        }}
+    }}, stepTime);
+}}
+
+// Start animated counters
+animateValue("totalUsers", 0, {total_users}, 1500);
+animateValue("states", 0, {states_accessed}, 1200);
+animateValue("resumes", 0, {resumes_uploaded}, 1300);
+animateValue("activeSessions", 0, {active_sessions}, 1500);
+</script>
+""", height=400)
+
+
+# ------------------- LOGIN / REGISTER -------------------
 if not st.session_state.authenticated:
     left, center, right = st.columns([1, 2, 1])
     with center:
-        st.markdown("""
-            <div class='login-card' style='margin-top: 40px; padding: 30px;'>
-                <h2 style='text-align:center; margin-bottom: 20px;'>🔐 Login to <span style='color:#00BFFF;'>LEXIBOT</span></h2>
-        """, unsafe_allow_html=True)
+        st.markdown("<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>LEXIBOT</span></h2>", unsafe_allow_html=True)
 
         login_tab, register_tab = st.tabs(["🔑 Login", "🆕 Register"])
 
@@ -154,8 +238,10 @@ if not st.session_state.authenticated:
             user = st.text_input("Username", key="login_user")
             pwd = st.text_input("Password", type="password", key="login_pass")
             if st.button("Login", key="login_btn"):
-                if verify_user(user, pwd):
+                if verify_user(user.strip(), pwd.strip()):
                     st.session_state.authenticated = True
+                    st.session_state.username = user.strip()
+                    log_user_action(user.strip(), "login")
                     st.success("✅ Login successful!")
                     st.rerun()
                 else:
@@ -165,17 +251,47 @@ if not st.session_state.authenticated:
             new_user = st.text_input("Choose a Username", key="reg_user")
             new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
             if st.button("Register", key="register_btn"):
-                try:
-                    add_user(new_user, new_pass)
-                    st.success("✅ Registered! You can now login.")
-                except:
-                    st.warning("⚠️ Username might already exist.")
-
+                if new_user.strip() and new_pass.strip():
+                    if add_user(new_user.strip(), new_pass.strip()):
+                        st.success("✅ Registered! You can now login.")
+                        log_user_action(new_user.strip(), "register")
+                    else:
+                        st.error("🚫 Username already exists. Try a different one.")
+                else:
+                    st.warning("⚠️ Please fill in both fields.")
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()
 
+# ------------------- AFTER LOGIN -------------------
+if st.session_state.authenticated:
+    st.markdown(f"<h2 style='color:#00BFFF;'>Welcome to LEXIBOT, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>", unsafe_allow_html=True)
 
+    if st.button("🚪 Logout"):
+       log_user_action(st.session_state.username, "logout")  # ✅ Log the logout
+       st.session_state.authenticated = False
+       st.session_state.username = None
+       st.rerun()
+
+
+from user_login import get_all_user_logs
+
+if st.session_state.username == "admin":
+    st.markdown("<hr>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#00BFFF;'>📋 Admin Activity Log</h3>", unsafe_allow_html=True)
+
+    logs = get_all_user_logs()
+    if logs:
+        st.dataframe(
+            {
+                "Username": [log[0] for log in logs],
+                "Action": [log[1] for log in logs],
+                "Timestamp": [log[2] for log in logs]
+            },
+            use_container_width=True
+        )
+    else:
+        st.info("No logs found yet.")
 
 
 import os, json, random, string, re, asyncio, io

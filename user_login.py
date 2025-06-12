@@ -85,28 +85,18 @@ def get_total_registered_users():
 
 from datetime import datetime, timedelta
 
-def get_recent_active_users(window_minutes=10):
+def get_logins_today():
+    """Return the number of login events since midnight today."""
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
-
-    # Get unique users with their most recent action
     c.execute("""
-        SELECT username, action, MAX(timestamp) 
-        FROM user_logs 
-        GROUP BY username
+        SELECT COUNT(*) FROM user_logs
+        WHERE action = 'login'
+          AND date(timestamp) = date('now', 'localtime')
     """)
-    rows = c.fetchall()
-    
-    active_users = 0
-    now = datetime.now()
-    for username, action, ts in rows:
-        last_time = datetime.strptime(ts, '%Y-%m-%d %H:%M:%S')
-        if action == 'login' and (now - last_time).total_seconds() <= window_minutes * 60:
-            active_users += 1
-
+    count = c.fetchone()[0]
     conn.close()
-    return active_users
-
+    return count
 
 def get_all_user_logs():
     conn = sqlite3.connect(DB_NAME)
@@ -115,3 +105,4 @@ def get_all_user_logs():
     logs = c.fetchall()
     conn.close()
     return logs
+

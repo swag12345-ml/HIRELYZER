@@ -19,3 +19,4 @@ nltk
 python-docx
 bcrypt
 pytz
+streamlit-autorefresh

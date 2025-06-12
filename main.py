@@ -4,7 +4,7 @@ from user_login import (
     create_user_table,
     add_user,
     verify_user,
-    get_recent_active_users,
+    get_logins_today,
     get_total_registered_users,
     log_user_action
 )
@@ -138,7 +138,7 @@ if not st.session_state.authenticated:
 
     # -------- Animated Counter Section --------
     total_users = get_total_registered_users()
-    active_sessions = get_recent_active_users()
+    active_logins = get_logins_today()
     resumes_uploaded = 431  # Keep hardcoded
     states_accessed = 29    # Keep hardcoded
 
@@ -221,9 +221,10 @@ function animateValue(id, start, end, duration) {{
 animateValue("totalUsers", 0, {total_users}, 1500);
 animateValue("states", 0, {states_accessed}, 1200);
 animateValue("resumes", 0, {resumes_uploaded}, 1300);
-animateValue("activeSessions", 0, {active_sessions}, 1500);
+animateValue("activeSessions", 0, {get_logins_today()}, 1500);
 </script>
 """, height=400)
+
 
 
 # ------------------- LOGIN / REGISTER -------------------

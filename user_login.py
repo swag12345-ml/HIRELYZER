@@ -1,3 +1,5 @@
+import datetime
+st.write("🕒 Current System Time:", datetime.datetime.now())
 # user_login.py
 
 import sqlite3

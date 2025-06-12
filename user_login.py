@@ -92,17 +92,19 @@ def get_total_registered_users():
 from datetime import datetime, timedelta
 
 def get_logins_today():
-    """Return the number of login events since midnight today."""
+    """Return number of login events since midnight today based on system time."""
+    today = datetime.now().strftime('%Y-%m-%d')  # system's local date
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute("""
         SELECT COUNT(*) FROM user_logs
         WHERE action = 'login'
-          AND date(timestamp) = date('now', 'localtime')
-    """)
+          AND DATE(timestamp) = ?
+    """, (today,))
     count = c.fetchone()[0]
     conn.close()
     return count
+
 
 def get_all_user_logs():
     conn = sqlite3.connect(DB_NAME)

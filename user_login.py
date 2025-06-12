@@ -108,5 +108,3 @@ def get_all_user_logs():
     logs = c.fetchall()
     conn.close()
     return logs
-
-

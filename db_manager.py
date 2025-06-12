@@ -244,4 +244,3 @@ def detect_domain_from_title_and_description(job_title, job_description):
             return top_domain
 
     return "General"
-

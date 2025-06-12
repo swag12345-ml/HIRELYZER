@@ -4,6 +4,11 @@ from streamlit_autorefresh import st_autorefresh
 
 # Auto-refresh the app every 60 seconds
 st_autorefresh(interval=60000, key="auto_refresh")
+import datetime
+import streamlit as st
+
+# Display current system time for debugging
+st.write("🕒 Current System Time:", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 from user_login import (
     create_user_table,
     add_user,

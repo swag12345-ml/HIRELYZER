@@ -8,9 +8,7 @@
 
 ---
 
-### 🔥 Live Preview (Optional)
-[🧪 Try Demo](#) • [🛠 GitHub Repo](#) • [📽 Pitch Video](#)  
-> Replace `#` with actual URLs when available.
+
 
 ---
 
@@ -58,31 +56,5 @@
 
 ---
 
-## 🖼 Screenshots
 
-### 🔒 Login + Live Stats
-![Login Page](docs/login_stats.png)
-
-### 📊 Resume Dashboard
-![Dashboard](docs/dashboard.png)
-
-### ⚖️ Bias Detection + Rewriting
-![Bias Detection](docs/bias_analysis.png)
-
-> Place these images in a `docs/` folder inside your repo.
-
----
-
-## 📦 Setup Instructions
-
-```bash
-# 1. Clone the repo
-git clone https://github.com/your-username/lexibot.git
-cd lexibot
-
-# 2. Install dependencies
-pip install -r requirements.txt
-
-# 3. Run the app
-streamlit run tia.py
 

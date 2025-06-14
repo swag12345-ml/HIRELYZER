@@ -2958,7 +2958,7 @@ with tab5:
     if not df_bias.empty:
         fig4, ax4 = plt.subplots()
         ax4.pie(df_bias["count"], labels=df_bias["bias_category"], autopct="%1.1f%%", startangle=90,
-                colors=["#00cc66", "#ff6666"])
+                colors=["#ff6666", "#00cc66"])
         ax4.axis("equal")
         st.pyplot(fig4)
     else:

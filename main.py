@@ -1,9 +1,6 @@
 import streamlit as st
 import streamlit.components.v1 as components
-from streamlit_autorefresh import st_autorefresh
 
-# Auto-refresh the app every 60 seconds
-st_autorefresh(interval=60000, key="auto_refresh")
 
 import datetime
 import streamlit as st
@@ -22,10 +19,16 @@ from user_login import (
 create_user_table()
 
 # ------------------- Initialize Session State -------------------
+# ------------------- Initialize Session State -------------------
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "username" not in st.session_state:
     st.session_state.username = None
+
+# ✅ Add this to track uploaded resumes
+if "processed_files" not in st.session_state:
+    st.session_state.processed_files = set()
+
 
 # ------------------- CSS Styling -------------------
 st.markdown("""
@@ -1382,13 +1385,25 @@ import re
 import streamlit as st
 from datetime import datetime
 from db_manager import insert_candidate, detect_domain_from_title_and_description  # ✅ import db helpers
-resume_data = []
+# Initialize resume data storage
+# ✅ Use persistent storage for resume results
+if "resume_data" not in st.session_state:
+    st.session_state.resume_data = []
+resume_data = st.session_state.resume_data
+
+# ✅ Ensure processed file tracker exists
+if "processed_files" not in st.session_state:
+    st.session_state.processed_files = set()
 
 # ✏️ Resume Evaluation Logic
 if uploaded_files and job_description:
     all_text = []
 
     for uploaded_file in uploaded_files:
+        # ✅ Skip already-processed resumes
+        if uploaded_file.name in st.session_state.processed_files:
+            continue
+
         # Save file locally
         file_path = os.path.join(working_dir, uploaded_file.name)
         with open(file_path, "wb") as f:
@@ -1445,8 +1460,8 @@ if uploaded_files and job_description:
         bias_flag = "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair"
         ats_flag = "⚠️ Low ATS" if ats_score < 50 else "✅ Good ATS"
 
-        # Save to in-memory report
-        resume_data.append({
+        # ✅ Append to session-state list
+        st.session_state.resume_data.append({
             "Resume Name": uploaded_file.name,
             "Candidate Name": candidate_name,
             "ATS Match %": ats_score,
@@ -1471,7 +1486,7 @@ if uploaded_files and job_description:
             "Domain": domain
         })
 
-        # ✅ Save to DB
+        # ✅ Save to DB only once
         insert_candidate((
             uploaded_file.name,
             candidate_name,
@@ -1485,13 +1500,21 @@ if uploaded_files and job_description:
             domain
         ))
 
+        # ✅ Track as processed
+        st.session_state.processed_files.add(uploaded_file.name)
+
     st.success("✅ All resumes processed!")
 
-    # Optional: Enable chat over the resumes
+    # ✅ Setup QA over resumes once
     if all_text:
         st.session_state.vectorstore = setup_vectorstore(all_text)
         st.session_state.chain = create_chain(st.session_state.vectorstore)
 
+# ✅ Optional: Reset memory during development
+if st.button("🔄 Reset Resume Upload Memory"):
+    st.session_state.processed_files.clear()
+    st.session_state.resume_data.clear()
+    st.success("✅ Cleared uploaded resume history. You can re-upload now.")
 
 
 # === TAB 1: Dashboard ===
@@ -1504,6 +1527,8 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 
 # === TAB 1: Dashboard ===
 with tab1:
+    resume_data = st.session_state.get("resume_data", [])
+
     if resume_data:
         total_masc = sum(r["Masculine Words"] for r in resume_data)
         total_fem = sum(r["Feminine Words"] for r in resume_data)
@@ -1618,133 +1643,60 @@ with tab1:
                     st.markdown("#### ✨ Bias-Free Rewritten Resume")
                     st.write(resume["Rewritten Text"])
 
+                    # ✅ Precompute docx before download
                     docx_file = generate_docx(resume["Rewritten Text"])
                     st.download_button(
-    label="📥 Download Bias-Free Resume (.docx)",
-    data=docx_file,
-    file_name=f"{resume['Resume Name'].split('.')[0]}_bias_free.docx",
-    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    use_container_width=True,
-    key=f"download_docx_{resume['Resume Name']}"  # ✅ Ensure uniqueness
-)
+                        label="📥 Download Bias-Free Resume (.docx)",
+                        data=docx_file,
+                        file_name=f"{resume['Resume Name'].split('.')[0]}_bias_free.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        use_container_width=True,
+                        key=f"download_docx_{resume['Resume Name']}"
+                    )
 
+                    # ✅ Generate HTML report before button
+                    def generate_resume_report_html(resume):
+                        rewritten_text = resume['Rewritten Text'].replace("\n", "<br>")
+                        masculine_words = ", ".join(f"{k}({v})" for k, v in resume['Detected Masculine Words'].items())
+                        feminine_words = ", ".join(f"{k}({v})" for k, v in resume['Detected Feminine Words'].items())
+                        missing_keywords = "".join(
+                            f"<span class='keyword'>{kw.strip()}</span>"
+                            for kw in resume['Missing Keywords'].split(",") if kw.strip()
+                        ) or "<i>None</i>"
 
-                def generate_resume_report_html(resume):
-                    rewritten_text = resume['Rewritten Text'].replace("\n", "<br>")
-                    masculine_words = ", ".join(f"{k}({v})" for k, v in resume['Detected Masculine Words'].items())
-                    feminine_words = ", ".join(f"{k}({v})" for k, v in resume['Detected Feminine Words'].items())
-                    missing_keywords = "".join(
-                        f"<span class='keyword'>{kw.strip()}</span>"
-                        for kw in resume['Missing Keywords'].split(",") if kw.strip()
-                    ) or "<i>None</i>"
-
-                    return f"""
-                    <!DOCTYPE html>
-                    <html lang="en">
-                    <head>
-                        <meta charset="UTF-8">
-                        <title>{resume['Candidate Name']} - Resume Analysis Report</title>
-                        <style>
-                            body {{
-                                font-family: 'Segoe UI', sans-serif;
-                                margin: 40px;
-                                background-color: #f5f7fa;
-                                color: #333;
-                            }}
-                            h1, h2 {{
-                                color: #2f4f6f;
-                            }}
-                            .section {{
-                                margin-bottom: 30px;
-                            }}
-                            .highlight {{
-                                background-color: #eef;
-                                padding: 10px;
-                                border-radius: 6px;
-                                margin-top: 10px;
-                                font-size: 14px;
-                            }}
-                            .metric-box {{
-                                display: inline-block;
-                                background: #dbeaff;
-                                padding: 10px 20px;
-                                margin: 10px;
-                                border-radius: 10px;
-                                font-weight: bold;
-                            }}
-                            .keyword {{
-                                display: inline-block;
-                                background: #fbdcdc;
-                                color: #a33;
-                                margin: 4px;
-                                padding: 6px 12px;
-                                border-radius: 12px;
-                                font-size: 13px;
-                            }}
-                            .resume-box {{
-                                background-color: #f9f9ff;
-                                padding: 15px;
-                                border-radius: 8px;
-                                border: 1px solid #ccc;
-                                white-space: pre-wrap;
-                            }}
-                        </style>
-                    </head>
-                    <body>
-
+                        return f"""<!DOCTYPE html><html><head><meta charset="UTF-8"><title>{resume['Candidate Name']} - Resume Analysis Report</title>
+                        <style>body{{font-family:'Segoe UI',sans-serif;margin:40px;background:#f5f7fa;color:#333}}h1,h2{{color:#2f4f6f}}.section{{margin-bottom:30px}}
+                        .highlight{{background-color:#eef;padding:10px;border-radius:6px;margin-top:10px;font-size:14px}}.metric-box{{display:inline-block;background:#dbeaff;
+                        padding:10px 20px;margin:10px;border-radius:10px;font-weight:bold}}.keyword{{display:inline-block;background:#fbdcdc;color:#a33;margin:4px;
+                        padding:6px 12px;border-radius:12px;font-size:13px}}.resume-box{{background-color:#f9f9ff;padding:15px;border-radius:8px;border:1px solid #ccc;
+                        white-space:pre-wrap}}</style></head><body>
                         <h1>📄 Resume Analysis Report</h1>
+                        <div class="section"><h2>Candidate: {resume['Candidate Name']}</h2><p><strong>Resume File:</strong> {resume['Resume Name']}</p></div>
+                        <div class="section"><h2>📊 ATS Evaluation</h2><div class="metric-box">ATS Match: {resume['ATS Match %']}%</div>
+                        <div class="metric-box">Education: {resume['Education Score']}</div><div class="metric-box">Experience: {resume['Experience Score']}</div>
+                        <div class="metric-box">Skills Match: {resume['Skills Match %']}</div><div class="metric-box">Language Score: {resume['Language Quality Score']}</div>
+                        <div class="metric-box">Keyword Score: {resume['Keyword Match Score']}</div></div>
+                        <div class="section"><h2>⚖️ Gender Bias Analysis</h2>
+                        <div class="metric-box" style="background:#f0f8ff;">Masculine Words: {resume['Masculine Words']}</div>
+                        <div class="metric-box" style="background:#fff0f5;">Feminine Words: {resume['Feminine Words']}</div>
+                        <p><strong>Bias Score (0=Fair, 1=Biased):</strong> {resume['Bias Score (0 = Fair, 1 = Biased)']}</p>
+                        <div class="highlight"><strong>Masculine Words:</strong><br>{masculine_words}</div>
+                        <div class="highlight"><strong>Feminine Words:</strong><br>{feminine_words}</div></div>
+                        <div class="section"><h2>📌 Missing Keywords</h2>{missing_keywords}</div>
+                        <div class="section"><h2>🧠 Final Fit Summary</h2><div class="resume-box">{resume['Fit Summary']}</div></div>
+                        <div class="section"><h2>✅ Rewritten Bias-Free Resume</h2><div class="resume-box">{rewritten_text}</div></div>
+                        </body></html>"""
 
-                        <div class="section">
-                            <h2>Candidate: {resume['Candidate Name']}</h2>
-                            <p><strong>Resume File:</strong> {resume['Resume Name']}</p>
-                        </div>
+                    html_report = generate_resume_report_html(resume)
+                    st.download_button(
+                        label="📥 Download Full Analysis Report (.html)",
+                        data=html_report,
+                        file_name=f"{resume['Resume Name'].split('.')[0]}_report.html",
+                        mime="text/html",
+                        use_container_width=True,
+                        key=f"download_html_{resume['Resume Name']}"
+                    )
 
-                        <div class="section">
-                            <h2>📊 ATS Evaluation</h2>
-                            <div class="metric-box">ATS Match: {resume['ATS Match %']}%</div>
-                            <div class="metric-box">Education: {resume['Education Score']}</div>
-                            <div class="metric-box">Experience: {resume['Experience Score']}</div>
-                            <div class="metric-box">Skills Match: {resume['Skills Match %']}</div>
-                            <div class="metric-box">Language Score: {resume['Language Quality Score']}</div>
-                            <div class="metric-box">Keyword Score: {resume['Keyword Match Score']}</div>
-                        </div>
-
-                        <div class="section">
-                            <h2>⚖️ Gender Bias Analysis</h2>
-                            <div class="metric-box" style="background:#f0f8ff;">Masculine Words: {resume['Masculine Words']}</div>
-                            <div class="metric-box" style="background:#fff0f5;">Feminine Words: {resume['Feminine Words']}</div>
-                            <p><strong>Bias Score (0=Fair, 1=Biased):</strong> {resume['Bias Score (0 = Fair, 1 = Biased)']}</p>
-                            <div class="highlight"><strong>Masculine Words:</strong><br>{masculine_words}</div>
-                            <div class="highlight"><strong>Feminine Words:</strong><br>{feminine_words}</div>
-                        </div>
-
-                        <div class="section">
-                            <h2>📌 Missing Keywords</h2>
-                            {missing_keywords}
-                        </div>
-
-                        <div class="section">
-                            <h2>🧠 Final Fit Summary</h2>
-                            <div class="resume-box">{resume['Fit Summary']}</div>
-                        </div>
-
-                        <div class="section">
-                            <h2>✅ Rewritten Bias-Free Resume</h2>
-                            <div class="resume-box">{rewritten_text}</div>
-                        </div>
-
-                    </body>
-                    </html>
-                    """
-
-                html_report = generate_resume_report_html(resume)
-                st.download_button(
-                    label="📥 Download Full Analysis Report (.html)",
-                    data=html_report,
-                    file_name=f"{resume['Resume Name'].split('.')[0]}_report.html",
-                    mime="text/html",
-                    use_container_width=True,
-                )
     else:
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
 

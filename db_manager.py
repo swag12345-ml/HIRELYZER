@@ -244,3 +244,13 @@ def detect_domain_from_title_and_description(job_title, job_description):
             return top_domain
 
     return "General"
+# 🚩 Get all flagged candidates (bias_score > threshold)
+def get_flagged_candidates(threshold: float = 0.6):
+    query = """
+    SELECT resume_name, candidate_name, ats_score, bias_score, domain, timestamp
+    FROM candidates
+    WHERE bias_score > ?
+    ORDER BY bias_score DESC
+    """
+    return pd.read_sql_query(query, conn, params=(threshold,))
+

@@ -227,10 +227,10 @@ function animateValue(id, start, end, duration) {{
 }}
 
 // Start animated counters
-animateValue("totalUsers", 0, {total_users}, 1500);
+animateValue("totalUsers", 34, {total_users}, 1500);
 animateValue("states", 0, {states_accessed}, 1200);
 animateValue("resumes", 0, {resumes_uploaded}, 1300);
-animateValue("activeSessions", 0, {get_logins_today()}, 1500);
+animateValue("activeSessions", 6, {get_logins_today()}, 1500);
 </script>
 """, height=400)
 

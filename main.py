@@ -2829,8 +2829,7 @@ with tab5:
         if st.button("Login"):
             if password == "lexiadmin123":
                 st.session_state.admin_logged_in = True
-                st.success("✅ Login successful!")
-                st.rerun()
+                st.success("✅ Login successful! You now have access to the Admin Dashboard.")
             else:
                 st.error("❌ Incorrect password.")
         st.stop()

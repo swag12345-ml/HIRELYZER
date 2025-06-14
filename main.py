@@ -2784,192 +2784,199 @@ with tab4:
                     st.markdown(f"**{title}**")
                     st.video(url)
 with tab5:
-     import sqlite3
-     import pandas as pd
-     import matplotlib.pyplot as plt
-     import numpy as np
-     import streamlit as st
+    import sqlite3
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import streamlit as st
 
-     from db_manager import (
-          get_top_domains_by_score,
-          get_resume_count_by_day,
-          get_average_ats_by_domain,
-          get_domain_distribution,
-          get_bias_distribution,
-          filter_candidates_by_date,
-          delete_candidate_by_id,
-          get_all_candidates,
-          get_candidate_by_id,
-     )
+    from db_manager import (
+        get_top_domains_by_score,
+        get_resume_count_by_day,
+        get_average_ats_by_domain,
+        get_domain_distribution,
+        get_bias_distribution,
+        filter_candidates_by_date,
+        delete_candidate_by_id,
+        get_all_candidates,
+        get_candidate_by_id,
+    )
 
-     def draw_clear_pie_chart(df):
-          fig, ax = plt.subplots()
-          wedges, texts, autotexts = ax.pie(
-               df["count"],
-               labels=df["domain"],
-               autopct="%1.1f%%",
-               startangle=90,
-               textprops=dict(color="black", fontsize=8),
-               pctdistance=0.8,
-               labeldistance=1.1
-          )
-          ax.axis("equal")
-          for t in autotexts:
-               t.set_fontsize(7)
-               t.set_color("white")
-               t.set_weight("bold")
-          st.pyplot(fig)
+    def draw_clear_pie_chart(df):
+        fig, ax = plt.subplots()
+        wedges, texts, autotexts = ax.pie(
+            df["count"],
+            labels=df["domain"],
+            autopct="%1.1f%%",
+            startangle=90,
+            textprops=dict(color="black", fontsize=8),
+            pctdistance=0.8,
+            labeldistance=1.1
+        )
+        ax.axis("equal")
+        for t in autotexts:
+            t.set_fontsize(7)
+            t.set_color("white")
+            t.set_weight("bold")
+        st.pyplot(fig)
 
-     if "admin_logged_in" not in st.session_state:
-          st.session_state.admin_logged_in = False
+    if "admin_logged_in" not in st.session_state:
+        st.session_state.admin_logged_in = False
 
-     if not st.session_state.admin_logged_in:
-          st.markdown("## 🔐 Admin Login Required")
-          password = st.text_input("Enter Admin Password", type="password")
-          if st.button("Login"):
-               if password == "lexiadmin123":
-                    st.session_state.admin_logged_in = True
-                    st.success("✅ Login successful!")
-                    st.rerun()
-               else:
-                    st.error("❌ Incorrect password.")
-          st.stop()
+    if not st.session_state.admin_logged_in:
+        st.markdown("## 🔐 Admin Login Required")
+        password = st.text_input("Enter Admin Password", type="password")
+        if st.button("Login"):
+            if password == "lexiadmin123":
+                st.session_state.admin_logged_in = True
+                st.success("✅ Login successful!")
+                st.rerun()
+            else:
+                st.error("❌ Incorrect password.")
+        st.stop()
 
-     st.markdown("## 🛡️ <span style='color:#336699;'>Admin Database Panel</span>", unsafe_allow_html=True)
-     col1, col2 = st.columns([1, 1])
-     with col1:
-          if st.button("🔄 Refresh Dashboard"):
-               st.experimental_rerun()
-     with col2:
-          if st.button("🚪 Logout now"):
-               st.session_state.admin_logged_in = False
-               st.success("👋 Logged out successfully.")
-               st.rerun()
+    st.markdown("## 🛡️ <span style='color:#336699;'>Admin Database Panel</span>", unsafe_allow_html=True)
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        if st.button("🔄 Refresh Dashboard"):
+            st.experimental_rerun()
+    with col2:
+        if st.button("🚪 Logout now"):
+            st.session_state.admin_logged_in = False
+            st.success("👋 Logged out successfully.")
+            st.rerun()
 
-     st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
+    st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
-     conn = sqlite3.connect("resume_data.db")
-     df = pd.read_sql_query("SELECT * FROM candidates ORDER BY timestamp DESC", conn)
+    conn = sqlite3.connect("resume_data.db")
+    df = pd.read_sql_query("SELECT * FROM candidates ORDER BY timestamp DESC", conn)
 
-     search = st.text_input("🔍 Search Candidate by Name")
-     if search:
-          df = df[df["candidate_name"].str.contains(search, case=False, na=False)]
+    search = st.text_input("🔍 Search Candidate by Name")
+    if search:
+        df = df[df["candidate_name"].str.contains(search, case=False, na=False)]
 
-     st.markdown("### 📅 Filter by Date")
-     col1, col2 = st.columns(2)
-     with col1:
-          start_date = st.date_input("Start Date")
-     with col2:
-          end_date = st.date_input("End Date")
-     if st.button("Apply Date Filter"):
-          df = filter_candidates_by_date(str(start_date), str(end_date))
+    st.markdown("### 📅 Filter by Date")
+    col1, col2 = st.columns(2)
+    with col1:
+        start_date = st.date_input("Start Date")
+    with col2:
+        end_date = st.date_input("End Date")
+    if st.button("Apply Date Filter"):
+        df = filter_candidates_by_date(str(start_date), str(end_date))
 
-     if df.empty:
-          st.info("ℹ️ No candidate data available.")
-     else:
-          st.markdown("### 📋 All Candidates")
-          st.dataframe(df, use_container_width=True)
+    if df.empty:
+        st.info("ℹ️ No candidate data available.")
+    else:
+        st.markdown("### 📋 All Candidates")
+        st.dataframe(df, use_container_width=True)
 
-          st.download_button(
-               label="📥 Download Full CSV",
-               data=df.to_csv(index=False),
-               file_name="all_candidates.csv",
-               mime="text/csv"
-          )
+        st.download_button(
+            label="📥 Download Full CSV",
+            data=df.to_csv(index=False),
+            file_name="all_candidates.csv",
+            mime="text/csv"
+        )
 
-          st.markdown("### 🗑️ Delete Candidate by ID")
-          delete_id = st.number_input("Enter Candidate ID", min_value=1, step=1)
-          if st.button("❌ Delete Candidate"):
-               if delete_id in df["id"].values:
-                    st.warning(get_candidate_by_id(delete_id).to_markdown(index=False), icon="📄")
-                    delete_candidate_by_id(delete_id)
-                    st.success(f"✅ Candidate with ID {delete_id} deleted.")
-                    st.rerun()
-               else:
-                    st.error("ID not found.")
+        st.markdown("### 🗑️ Delete Candidate by ID")
+        delete_id = st.number_input("Enter Candidate ID", min_value=1, step=1)
+        if st.button("❌ Delete Candidate"):
+            if delete_id in df["id"].values:
+                st.warning(get_candidate_by_id(delete_id).to_markdown(index=False), icon="📄")
+                delete_candidate_by_id(delete_id)
+                st.success(f"✅ Candidate with ID {delete_id} deleted.")
+                st.rerun()
+            else:
+                st.error("ID not found.")
 
-     st.markdown("### 📊 Top Domains by ATS Score")
-     top_domains = get_top_domains_by_score()
-     if top_domains:
-          for domain, avg, count in top_domains:
-               st.info(f"📁 {domain} — Avg ATS: {avg:.2f} | Total: {count}")
-     else:
-          st.info("No domain data available.")
+    st.markdown("### 📊 Top Domains by ATS Score")
+    top_domains = get_top_domains_by_score()
+    if top_domains:
+        for domain, avg, count in top_domains:
+            st.info(f"📁 {domain} — Avg ATS: {avg:.2f} | Total: {count}")
+    else:
+        st.info("No domain data available.")
 
-     st.markdown("### 📊 Domain Distribution by Count")
-     df_domain_dist = get_domain_distribution()
-     if not df_domain_dist.empty:
-          total_count = df_domain_dist["count"].sum()
-          df_domain_dist["percent"] = (df_domain_dist["count"] / total_count) * 100
+    st.markdown("### 📊 Domain Distribution by Count")
+    df_domain_dist = get_domain_distribution()
+    if not df_domain_dist.empty:
+        total_count = df_domain_dist["count"].sum()
+        df_domain_dist["percent"] = (df_domain_dist["count"] / total_count) * 100
 
-          fig_dist, ax_dist = plt.subplots(figsize=(6, 4))
-          bars = ax_dist.bar(df_domain_dist["domain"], df_domain_dist["count"], color="#ff9933")
+        fig_dist, ax_dist = plt.subplots(figsize=(6, 4))
+        bars = ax_dist.bar(df_domain_dist["domain"], df_domain_dist["count"], color="#ff9933")
 
-          for i, bar in enumerate(bars):
-               height = bar.get_height()
-               percent = df_domain_dist["percent"].iloc[i]
-               ax_dist.text(bar.get_x() + bar.get_width() / 2, height, f"{percent:.1f}%",
-                            ha='center', va='bottom', fontsize=8)
+        for i, bar in enumerate(bars):
+            height = bar.get_height()
+            percent = df_domain_dist["percent"].iloc[i]
+            ax_dist.text(bar.get_x() + bar.get_width() / 2, height, f"{percent:.1f}%",
+                         ha='center', va='bottom', fontsize=8)
 
-          ax_dist.set_ylabel("Resume Count")
-          ax_dist.set_title("Resumes per Domain")
-          ax_dist.set_xticks(np.arange(len(df_domain_dist["domain"])))
-          ax_dist.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right")
-          st.pyplot(fig_dist)
-     else:
-          st.info("No domain data found.")
+        ax_dist.set_ylabel("Resume Count")
+        ax_dist.set_title("Resumes per Domain")
+        ax_dist.set_xticks(np.arange(len(df_domain_dist["domain"])))
+        ax_dist.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right")
+        st.pyplot(fig_dist)
+    else:
+        st.info("No domain data found.")
 
-     st.markdown("### 📊 Average ATS Score by Domain")
-     df_bar = get_average_ats_by_domain()
-     if not df_bar.empty:
-          fig2, ax2 = plt.subplots(figsize=(6, 4))
-          bars = ax2.bar(df_bar["domain"], df_bar["avg_ats_score"], color="#3399ff")
+    st.markdown("### 📊 Average ATS Score by Domain")
+    df_bar = get_average_ats_by_domain()
+    if not df_bar.empty:
+        fig2, ax2 = plt.subplots(figsize=(6, 4))
+        bars = ax2.bar(df_bar["domain"], df_bar["avg_ats_score"], color="#3399ff")
 
-          for i, bar in enumerate(bars):
-               height = bar.get_height()
-               ax2.text(bar.get_x() + bar.get_width() / 2, height + 0.5, f"{height:.1f}",
-                        ha='center', va='bottom', fontsize=8)
+        for i, bar in enumerate(bars):
+            height = bar.get_height()
+            ax2.text(bar.get_x() + bar.get_width() / 2, height + 0.5, f"{height:.1f}",
+                     ha='center', va='bottom', fontsize=8)
 
-          ax2.set_ylabel("Avg ATS Score")
-          ax2.set_title("ATS by Domain")
-          max_score = df_bar["avg_ats_score"].max()
-          ax2.set_yticks(np.arange(0, max_score + 5, 5))
-          ax2.set_xticks(np.arange(len(df_bar["domain"])))
-          ax2.set_xticklabels(df_bar["domain"], rotation=45, ha="right")
-          st.pyplot(fig2)
-     else:
-          st.info("No ATS domain data.")
+        ax2.set_ylabel("Avg ATS Score")
+        ax2.set_title("ATS by Domain")
+        max_score = df_bar["avg_ats_score"].max()
+        ax2.set_yticks(np.arange(0, max_score + 5, 5))
+        ax2.set_xticks(np.arange(len(df_bar["domain"])))
+        ax2.set_xticklabels(df_bar["domain"], rotation=45, ha="right")
+        st.pyplot(fig2)
+    else:
+        st.info("No ATS domain data.")
 
-     st.markdown("### 📈 Resume Uploads Over Time")
-     df_timeline = get_resume_count_by_day()
-     if not df_timeline.empty:
-          fig3, ax3 = plt.subplots(figsize=(6, 3.5))
-          ax3.plot(df_timeline["day"], df_timeline["count"], marker="o", color="green")
-          ax3.set_ylabel("Uploads")
-          ax3.set_title("Resume Upload Timeline")
-          ax3.set_xlabel("Date")
-          plt.xticks(rotation=45)
-          st.pyplot(fig3)
-     else:
-          st.info("No upload trend data.")
+    st.markdown("### 📈 Resume Uploads Over Time")
+    df_timeline = get_resume_count_by_day()
+    if not df_timeline.empty:
+        fig3, ax3 = plt.subplots(figsize=(6, 3.5))
+        ax3.plot(df_timeline["day"], df_timeline["count"], marker="o", color="green")
+        ax3.set_ylabel("Uploads")
+        ax3.set_title("Resume Upload Timeline")
+        ax3.set_xlabel("Date")
+        plt.xticks(rotation=45)
+        st.pyplot(fig3)
+    else:
+        st.info("No upload trend data.")
 
-     st.markdown("### 🧠 Fair vs Biased Resumes")
-     df_bias = get_bias_distribution()
-     if not df_bias.empty:
-          fig4, ax4 = plt.subplots()
-          ax4.pie(df_bias["count"], labels=df_bias["bias_category"], autopct="%1.1f%%", startangle=90,
-                  colors=["#00cc66", "#ff6666"])
-          ax4.axis("equal")
-          st.pyplot(fig4)
-     else:
-          st.info("No bias data to display.")
+    st.markdown("### 🧠 Fair vs Biased Resumes")
+    df_bias = get_bias_distribution()
+    if not df_bias.empty:
+        fig4, ax4 = plt.subplots()
+        ax4.pie(df_bias["count"], labels=df_bias["bias_category"], autopct="%1.1f%%", startangle=90,
+                colors=["#00cc66", "#ff6666"])
+        ax4.axis("equal")
+        st.pyplot(fig4)
+    else:
+        st.info("No bias data to display.")
 
-     st.markdown("### 🚩 Flagged Candidates (Bias > 0.6, ATS < 50)")
-     flagged_df = get_all_candidates(bias_threshold=0.6, min_ats=50)
-     if not flagged_df.empty:
-          st.dataframe(flagged_df, use_container_width=True)
-     else:
-          st.success("✅ No flagged candidates.")
+    st.markdown("### 🚩 Flagged Candidates (Bias Score > 0.6)")
+    flagged_df = get_all_candidates(bias_threshold=0.6)  # ✅ Removed strict ATS filter
+
+    if not flagged_df.empty:
+        st.dataframe(
+            flagged_df[[
+                "id", "resume_name", "candidate_name",
+                "bias_score", "ats_score", "domain", "timestamp"
+            ]].sort_values(by="bias_score", ascending=False),
+            use_container_width=True
+        )
+    else:
+        st.success("✅ No flagged candidates.")
 
 if "memory" in st.session_state:
     history = st.session_state.memory.load_memory_variables({}).get("chat_history", [])

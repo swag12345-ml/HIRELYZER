@@ -1,10 +1,8 @@
 import streamlit as st
 import streamlit.components.v1 as components
-
-
+from base64 import b64encode
+import requests
 import datetime
-import streamlit as st
-
 
 from user_login import (
     create_user_table,
@@ -19,16 +17,12 @@ from user_login import (
 create_user_table()
 
 # ------------------- Initialize Session State -------------------
-# ------------------- Initialize Session State -------------------
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "username" not in st.session_state:
     st.session_state.username = None
-
-# ✅ Add this to track uploaded resumes
 if "processed_files" not in st.session_state:
     st.session_state.processed_files = set()
-
 
 # ------------------- CSS Styling -------------------
 st.markdown("""
@@ -37,8 +31,6 @@ body, .main {
     background-color: #0d1117;
     color: white;
 }
-
-/* Login card styling */
 .login-card {
     background: #161b22;
     padding: 30px;
@@ -50,15 +42,12 @@ body, .main {
     transform: translateY(-6px) scale(1.01);
     box-shadow: 0 0 45px rgba(0,255,255,0.25);
 }
-
-/* Input and button styling */
 .stTextInput > div > input {
     background-color: #0d1117;
     color: white;
     border: 1px solid #30363d;
     border-radius: 10px;
     padding: 0.6em;
-    transition: all 0.3s ease;
 }
 .stTextInput > div > input:hover {
     border: 1px solid #00BFFF;
@@ -74,15 +63,12 @@ body, .main {
     padding: 0.6em 1.5em;
     border: none;
     font-weight: bold;
-    transition: all 0.3s ease;
 }
 .stButton > button:hover {
     background-color: #2ea043;
     box-shadow: 0 0 10px rgba(46,160,67,0.4);
     transform: scale(1.02);
 }
-
-/* Feature cards styling */
 .feature-card {
     background: radial-gradient(circle at top left, #1f2937, #111827);
     padding: 20px;
@@ -91,10 +77,7 @@ body, .main {
     text-align: center;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     color: #fff;
-    cursor: pointer;
     margin-bottom: 20px;
-    width: 100%;
-    box-sizing: border-box;
 }
 .feature-card:hover {
     transform: translateY(-10px);
@@ -102,145 +85,191 @@ body, .main {
 }
 .feature-card h3 {
     color: #00BFFF;
-    margin-bottom: 10px;
-    font-size: 1.2rem;
 }
 .feature-card p {
     color: #c9d1d9;
-    font-size: 0.95rem;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ------------------- SHOW ONLY BEFORE LOGIN -------------------
+# ------------------- BEFORE LOGIN -------------------
 if not st.session_state.authenticated:
 
-    # -------- Sidebar and Features --------
+    # -------- Sidebar --------
     with st.sidebar:
         st.markdown("<h1 style='color:#00BFFF;'>Smart Resume AI</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='color:#c9d1d9; font-size: 1.1rem;'>Transform your career with AI-powered resume analysis, job matching, and smart insights.</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#c9d1d9;'>Transform your career with AI-powered resume analysis, job matching, and smart insights.</p>", unsafe_allow_html=True)
 
-        st.markdown("""<div class="feature-card">
-            <img src="https://img.icons8.com/fluency/48/resume.png" width="40"/>
-            <h3>Resume Analyzer</h3>
-            <p>Get feedback, scores, and tips powered by AI along with the biased words detection and rewriting the resume in an inclusive way.</p>
-        </div>
-        <div class="feature-card">
-            <img src="https://img.icons8.com/fluency/48/resume-website.png" width="40"/>
-            <h3>Resume Builder</h3>
-            <p>Build modern, eye-catching resumes easily.</p>
-        </div>
-        <div class="feature-card">
-            <img src="https://img.icons8.com/fluency/48/job.png" width="40"/>
-            <h3>Job Search</h3>
-            <p>Find relevant jobs and tailor your resume.</p>
-        </div>
-        <div class="feature-card">
-            <img src="https://img.icons8.com/fluency/48/classroom.png" width="40"/>
-            <h3>Course Suggestions</h3>
-            <p>Get upskilling recommendations based on your goals.</p>
-        </div>
-        <div class="feature-card">
-            <img src="https://img.icons8.com/fluency/48/combo-chart.png" width="40"/>
-            <h3>Interactive Dashboard</h3>
-            <p>Visualize trends, scores, and analytics interactively.</p>
-        </div>""", unsafe_allow_html=True)
-        # Sidebar features...
-        # (your feature cards unchanged)
+        features = [
+            ("https://img.icons8.com/fluency/48/resume.png", "Resume Analyzer", "Get feedback, scores, and tips powered by AI along with the biased words detection and rewriting the resume in an inclusive way."),
+            ("https://img.icons8.com/fluency/48/resume-website.png", "Resume Builder", "Build modern, eye-catching resumes easily."),
+            ("https://img.icons8.com/fluency/48/job.png", "Job Search", "Find tailored job matches."),
+            ("https://img.icons8.com/fluency/48/classroom.png", "Course Suggestions", "Get upskilling recommendations based on your goals."),
+            ("https://img.icons8.com/fluency/48/combo-chart.png", "Interactive Dashboard", "Visualize trends, scores, and analytics."),
+        ]
 
-    # -------- Animated Counter Section --------
+        for icon, title, desc in features:
+            st.markdown(f"""
+            <div class="feature-card">
+                <img src="{icon}" width="40"/>
+                <h3>{title}</h3>
+                <p>{desc}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # -------- Animated Cards --------
+    image_url = "https://cdn-icons-png.flaticon.com/512/3135/3135768.png"
+    response = requests.get(image_url)
+    img_base64 = b64encode(response.content).decode()
+
+    st.markdown(f"""
+    <style>
+    .animated-cards {{
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+      position: relative;
+      height: 300px;
+    }}
+    .animated-cards img {{
+      position: absolute;
+      width: 240px;
+      animation: splitCards 2.5s ease-in-out infinite alternate;
+      z-index: 1;
+    }}
+    .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
+    .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
+    .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
+    @keyframes splitCards {{
+      0% {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
+      100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
+    }}
+    .card-left {{ --x-offset: -80px; --rot: -5deg; }}
+    .card-center {{ --x-offset: 0px; --rot: 0deg; }}
+    .card-right {{ --x-offset: 80px; --rot: 5deg; }}
+    </style>
+    <div class="animated-cards">
+        <img class="card-left" src="data:image/png;base64,{img_base64}" />
+        <img class="card-center" src="data:image/png;base64,{img_base64}" />
+        <img class="card-right" src="data:image/png;base64,{img_base64}" />
+    </div>
+    """, unsafe_allow_html=True)
+
+    # -------- Counter Section --------
     total_users = get_total_registered_users()
     active_logins = get_logins_today()
-    resumes_uploaded = 431  # Keep hardcoded
-    states_accessed = 29    # Keep hardcoded
-
+    resumes_uploaded = 431
+    states_accessed = 29
 
     components.html(f"""
-<style>
-.counter-wrapper {{
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 30px;
-    margin-top: 40px;
-}}
-.counter {{
-    width: 230px;
-    height: 140px;
-    background: linear-gradient(145deg, #0d1117, #0d1117);
-    color: #00BFFF;
-    border-radius: 15px;
-    box-shadow: 0 0 10px rgba(0, 191, 255, 0.4);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.3s ease;
-    border: 2px solid transparent;
-    border-image: linear-gradient(to right, #00BFFF, #00FFFF) 1;
-}}
-.counter:hover {{
-    transform: translateY(-6px);
-    box-shadow: 0 0 25px rgba(0,255,255,0.5);
-}}
-.counter h1 {{
-    font-size: 2.8em;
-    margin: 0;
-}}
-.counter p {{
-    margin: 5px 0 0 0;
-    font-size: 1.1em;
-    color: #c9d1d9;
-}}
-</style>
-
-<div class="counter-wrapper">
-    <div class="counter">
-        <h1 id="totalUsers">0</h1>
-        <p>Total Users</p>
+    <style>
+    .counter-wrapper {{
+        display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; margin-top: 40px;
+    }}
+    .counter {{
+        width: 230px; height: 140px;
+        background: linear-gradient(145deg, #0d1117, #0d1117);
+        color: #00BFFF;
+        border-radius: 15px;
+        box-shadow: 0 0 10px rgba(0, 191, 255, 0.4);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        transition: transform 0.3s ease;
+        border: 2px solid transparent;
+        border-image: linear-gradient(to right, #00BFFF, #00FFFF) 1;
+    }}
+    .counter:hover {{
+        transform: translateY(-6px);
+        box-shadow: 0 0 25px rgba(0,255,255,0.5);
+    }}
+    .counter h1 {{ font-size: 2.8em; margin: 0; }}
+    .counter p {{ margin: 5px 0 0; font-size: 1.1em; color: #c9d1d9; }}
+    </style>
+    <div class="counter-wrapper">
+        <div class="counter"><h1 id="totalUsers">0</h1><p>Total Users</p></div>
+        <div class="counter"><h1 id="states">0</h1><p>States Accessed</p></div>
+        <div class="counter"><h1 id="resumes">0</h1><p>Resumes Uploaded</p></div>
+        <div class="counter"><h1 id="activeSessions">0</h1><p>Active Sessions</p></div>
     </div>
-    <div class="counter">
-        <h1 id="states">0</h1>
-        <p>States Accessed</p>
-    </div>
-    <div class="counter">
-        <h1 id="resumes">0</h1>
-        <p>Resumes Uploaded</p>
-    </div>
-    <div class="counter">
-        <h1 id="activeSessions">0</h1>
-        <p>Active Sessions</p>
-    </div>
-</div>
+    <script>
+    function animateValue(id, start, end, duration) {{
+        const obj = document.getElementById(id);
+        const range = end - start;
+        const increment = end > start ? 1 : -1;
+        const stepTime = Math.abs(Math.floor(duration / range));
+        let current = start;
+        const timer = setInterval(() => {{
+            current += increment;
+            obj.innerHTML = current;
+            if (current == end) clearInterval(timer);
+        }}, stepTime);
+    }}
+    animateValue("totalUsers", 0, {total_users}, 1500);
+    animateValue("states", 0, {states_accessed}, 1200);
+    animateValue("resumes", 0, {resumes_uploaded}, 1300);
+    animateValue("activeSessions", 0, {active_logins}, 1500);
+    </script>
+    """, height=400)
 
-<script>
-function animateValue(id, start, end, duration) {{
-    const obj = document.getElementById(id);
-    const range = end - start;
-    const increment = end > start ? 1 : -1;
-    const stepTime = Math.abs(Math.floor(duration / range));
-    let current = start;
-    const timer = setInterval(() => {{
-        current += increment;
-        obj.innerHTML = current;
-        if (current == end) {{
-            clearInterval(timer);
-        }}
-    }}, stepTime);
-}}
-
-// Start animated counters
-animateValue("totalUsers", 0, {total_users}, 1500);
-animateValue("states", 0, {states_accessed}, 1200);
-animateValue("resumes", 0, {resumes_uploaded}, 1300);
-animateValue("activeSessions", 0, {get_logins_today()}, 1500);
-</script>
-""", height=400)
-
-
-
-# ------------------- LOGIN / REGISTER -------------------
 if not st.session_state.authenticated:
+    from base64 import b64encode
+    import requests
+
+    # ✅ Use an online image of a female employee
+    image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
+    response = requests.get(image_url)
+    img_base64 = b64encode(response.content).decode()
+
+    # ✅ Inject animated shuffle CSS + HTML
+    st.markdown(f"""
+    <style>
+    .animated-cards {{
+      margin-top: 40px;
+      display: flex;
+      justify-content: center;
+      position: relative;
+      height: 260px;
+    }}
+    .animated-cards img {{
+      position: absolute;
+      width: 220px;
+      animation: splitCards 2.5s ease-in-out infinite alternate;
+      z-index: 1;
+    }}
+    .animated-cards img:nth-child(1) {{
+      animation-delay: 0s;
+      z-index: 3;
+    }}
+    .animated-cards img:nth-child(2) {{
+      animation-delay: 0.3s;
+      z-index: 2;
+    }}
+    .animated-cards img:nth-child(3) {{
+      animation-delay: 0.6s;
+      z-index: 1;
+    }}
+    @keyframes splitCards {{
+      0% {{
+        transform: scale(1) translateX(0) rotate(0deg);
+        opacity: 1;
+      }}
+      100% {{
+        transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot));
+        opacity: 1;
+      }}
+    }}
+    .card-left {{ --x-offset: -80px; --rot: -4deg; }}
+    .card-center {{ --x-offset: 0px; --rot: 0deg; }}
+    .card-right {{ --x-offset: 80px; --rot: 4deg; }}
+    </style>
+
+    <div class="animated-cards">
+        <img class="card-left" src="data:image/png;base64,{img_base64}" />
+        <img class="card-center" src="data:image/png;base64,{img_base64}" />
+        <img class="card-right" src="data:image/png;base64,{img_base64}" />
+    </div>
+    """, unsafe_allow_html=True)
+
+    # -------- Login/Register Layout --------
     left, center, right = st.columns([1, 2, 1])
     with center:
         st.markdown("<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>LEXIBOT</span></h2>", unsafe_allow_html=True)
@@ -269,7 +298,7 @@ if not st.session_state.authenticated:
                         st.success("✅ Registered! You can now login.")
                         log_user_action(new_user.strip(), "register")
                     else:
-                        st.error("🚫 Username already exists. Try a different one.")
+                        st.error("🚫 Username already exists.")
                 else:
                     st.warning("⚠️ Please fill in both fields.")
         st.markdown("</div>", unsafe_allow_html=True)
@@ -281,10 +310,10 @@ if st.session_state.authenticated:
     st.markdown(f"<h2 style='color:#00BFFF;'>Welcome to LEXIBOT, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>", unsafe_allow_html=True)
 
     if st.button("🚪 Logout"):
-       log_user_action(st.session_state.username, "logout")  # ✅ Log the logout
-       st.session_state.authenticated = False
-       st.session_state.username = None
-       st.rerun()
+        log_user_action(st.session_state.username, "logout")
+        st.session_state.authenticated = False
+        st.session_state.username = None
+        st.rerun()
 
 
 from user_login import get_all_user_logs
@@ -1215,8 +1244,10 @@ def ats_percentage_score(
 ):
     """
     Analyzes resume against job description using a structured, score-based prompt.
-    Enforces strict score calculation to prevent inflation. Final scores are validated externally.
+    Enforces strict score calculation and standardized score bands.
     """
+    import re
+    import streamlit as st
     from llm_manager import call_llm
 
     logic_score_note = (
@@ -1267,6 +1298,12 @@ so they must follow **exact arithmetic based on the provided weights**.
 - Never return 0 unless all components are truly zero.
 - Return exact numeric values.
 
+📊 **Score Bands for Formatted Score**  
+- 85–100: Excellent  
+- 70–84: Good  
+- 50–69: Average  
+- Below 50: Poor
+
 ---
 
 🧾 **OUTPUT FORMAT (Strictly follow this):**
@@ -1294,7 +1331,7 @@ Overall Percentage Match: <sum of above components>
 Formatted Score: <Excellent / Good / Average / Poor>
 
 Final Thoughts:  
-Provide a detailed summary (4–6 sentences) about the candidate’s overall fit. Highlight strengths
+Provide a detailed summary (4–6 sentences) about the candidate’s overall fit. Highlight strengths.
 
 {logic_score_note}
 
@@ -1310,7 +1347,52 @@ Provide a detailed summary (4–6 sentences) about the candidate’s overall fit
 """
 
     response = call_llm(prompt, session=st.session_state)
-    return response.strip()
+
+    # ✅ Post-process the response to extract and correct the ATS score
+    def extract_score(pattern, text, default=0):
+        match = re.search(pattern, text)
+        return int(match.group(1)) if match else default
+
+    ats_result = response.strip()
+
+    # Extract component scores
+    edu_score = extract_score(r"Education Score:\s*(\d+)", ats_result)
+    exp_score = extract_score(r"Experience Score:\s*(\d+)", ats_result)
+    skills_score = extract_score(r"Skills Match Percentage:\s*(\d+)", ats_result)
+    lang_score = extract_score(r"Language Quality Score:\s*(\d+)", ats_result)
+    keyword_score = extract_score(r"Keyword Match Score:\s*(\d+)", ats_result)
+
+    # ✅ Recalculate overall score
+    recalculated_total = edu_score + exp_score + skills_score + lang_score + keyword_score
+    if recalculated_total > 100:
+        recalculated_total = 100
+
+    # ✅ Determine formatted score from bands
+    if recalculated_total >= 85:
+        formatted_score = "Excellent"
+    elif recalculated_total >= 70:
+        formatted_score = "Good"
+    elif recalculated_total >= 50:
+        formatted_score = "Average"
+    else:
+        formatted_score = "Poor"
+
+    # ✅ Replace original overall and formatted score strings
+    ats_result = re.sub(
+        r"Overall Percentage Match:\s*\d+",
+        f"Overall Percentage Match: {recalculated_total}",
+        ats_result
+    )
+    ats_result = re.sub(
+        r"Formatted Score:\s*.*",
+        f"Formatted Score: {formatted_score}",
+        ats_result
+    )
+
+    return ats_result
+
+
+
 
 
 # Setup Vector DB
@@ -1519,9 +1601,9 @@ if st.button("🔄 Reset Resume Upload Memory"):
 
 # === TAB 1: Dashboard ===
 # 📊 Dashboard and Metrics
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", 
-    "📚 Course Recommendation", "📁 Admin DB View"
+    "📚 Course Recommendation", "📁 Admin DB View", "💌 Confess Anonymously"
 ])
 
 
@@ -2830,7 +2912,7 @@ with tab5:
             if password == "lexiadmin123":
                 st.session_state.admin_logged_in = True
                 st.success("✅ Login successful! You now have access to the Admin Dashboard.")
-                st.rerun() 
+                st.rerun()
             else:
                 st.error("❌ Incorrect password.")
         st.stop()
@@ -2898,23 +2980,50 @@ with tab5:
 
     st.markdown("### 📊 Domain Distribution by Count")
     df_domain_dist = get_domain_distribution()
+
     if not df_domain_dist.empty:
         total_count = df_domain_dist["count"].sum()
         df_domain_dist["percent"] = (df_domain_dist["count"] / total_count) * 100
 
-        fig_dist, ax_dist = plt.subplots(figsize=(6, 4))
+        fig_dist, ax_dist = plt.subplots(figsize=(8, 5))
         bars = ax_dist.bar(df_domain_dist["domain"], df_domain_dist["count"], color="#ff9933")
 
+        # Show actual count on Y-axis aligned with bar top
+        for bar in bars:
+            height = bar.get_height()
+            ax_dist.axhline(y=height, color='gray', linestyle=':', linewidth=0.5)
+            ax_dist.text(
+                -0.5,
+                height,
+                f"{int(height)}",
+                va='center',
+                ha='right',
+                fontsize=9,
+                color="gray"
+            )
+
+        # Show percentage on top of bars
         for i, bar in enumerate(bars):
             height = bar.get_height()
             percent = df_domain_dist["percent"].iloc[i]
-            ax_dist.text(bar.get_x() + bar.get_width() / 2, height, f"{percent:.1f}%",
-                         ha='center', va='bottom', fontsize=8)
+            ax_dist.text(
+                bar.get_x() + bar.get_width() / 2,
+                height + 0.5,
+                f"{percent:.1f}%",
+                ha='center',
+                va='bottom',
+                fontsize=10,
+                fontweight='bold',
+                color="black"
+            )
 
-        ax_dist.set_ylabel("Resume Count")
-        ax_dist.set_title("Resumes per Domain")
+        ax_dist.set_ylabel("Resume Count", fontsize=12, fontweight='bold')
+        ax_dist.set_title("Resumes per Domain", fontsize=14, fontweight='bold')
         ax_dist.set_xticks(np.arange(len(df_domain_dist["domain"])))
-        ax_dist.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right")
+        ax_dist.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=10)
+        max_count = df_domain_dist["count"].max()
+        ax_dist.set_yticks(np.arange(0, max_count + 6, 5))
+
         st.pyplot(fig_dist)
     else:
         st.info("No domain data found.")
@@ -2943,15 +3052,27 @@ with tab5:
     st.markdown("### 📈 Resume Uploads Over Time")
     df_timeline = get_resume_count_by_day()
     if not df_timeline.empty:
-        fig3, ax3 = plt.subplots(figsize=(6, 3.5))
-        ax3.plot(df_timeline["day"], df_timeline["count"], marker="o", color="green")
+        df_timeline = df_timeline.sort_values("day")
+        fig3, ax3 = plt.subplots(figsize=(7, 4))
+        ax3.plot(df_timeline["day"], df_timeline["count"], marker="o", color="green", linewidth=2)
+        for i in range(len(df_timeline)):
+            ax3.annotate(
+                str(df_timeline["count"].iloc[i]),
+                (df_timeline["day"].iloc[i], df_timeline["count"].iloc[i]),
+                textcoords="offset points",
+                xytext=(0, 8),
+                ha='center',
+                fontsize=9,
+                color='black'
+            )
         ax3.set_ylabel("Uploads")
-        ax3.set_title("Resume Upload Timeline")
         ax3.set_xlabel("Date")
-        plt.xticks(rotation=45)
+        ax3.set_title("Resume Upload Timeline")
+        plt.xticks(rotation=60, ha='right')
+        fig3.tight_layout()
         st.pyplot(fig3)
     else:
-        st.info("No upload trend data.")
+        st.info("ℹ️ No upload trend data to display.")
 
     st.markdown("### 🧠 Fair vs Biased Resumes")
     df_bias = get_bias_distribution()
@@ -2965,24 +3086,98 @@ with tab5:
         st.info("No bias data to display.")
 
     st.markdown("### 🚩 Flagged Candidates (Bias Score > 0.6)")
-    flagged_df = get_all_candidates(bias_threshold=0.6)  # ✅ Removed strict ATS filter
-
+    flagged_df = get_all_candidates(bias_threshold=0.6)
     if not flagged_df.empty:
         st.dataframe(
-            flagged_df[[
-                "id", "resume_name", "candidate_name",
-                "bias_score", "ats_score", "domain", "timestamp"
-            ]].sort_values(by="bias_score", ascending=False),
-            use_container_width=True
-        )
+    flagged_df[[
+        "id", "resume_name", "candidate_name",
+        "bias_score", "ats_score", "domain", "timestamp"
+    ]].sort_values(by="bias_score", key=lambda x: pd.to_numeric(x, errors="coerce"), ascending=False),
+    use_container_width=True
+)
+
     else:
         st.success("✅ No flagged candidates.")
 
-if "memory" in st.session_state:
-    history = st.session_state.memory.load_memory_variables({}).get("chat_history", [])
-    for msg in history:
-        with st.chat_message("user" if msg.type == "human" else "assistant"):
-            st.markdown(msg.content)
+# ---------------- TAB 6: Anonymous Confession ----------------
+with tab6:
+    import sqlite3
+    from datetime import datetime
+
+    # -- DB setup --
+    def create_confession_table():
+        conn = sqlite3.connect("resume_data.db")
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS confessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT,
+                confession TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
+        conn.close()
+
+    def add_confession(username, confession):
+        conn = sqlite3.connect("resume_data.db")
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO confessions (username, confession) VALUES (?, ?)", (username, confession))
+        conn.commit()
+        conn.close()
+
+    def get_all_confessions():
+        conn = sqlite3.connect("resume_data.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT username, confession, timestamp FROM confessions ORDER BY timestamp DESC")
+        rows = cursor.fetchall()
+        conn.close()
+        return rows
+
+    # -- Initialize DB table --
+    create_confession_table()
+
+    # -- Login Check --
+    if "authenticated" not in st.session_state or not st.session_state.authenticated:
+        st.warning("🔒 Please log in to submit or view confessions.")
+        st.stop()
+
+    # -- Confession Form --
+    st.markdown("### 💬 Write a New Confession")
+    with st.form(key="confess_form", clear_on_submit=True):
+        confession = st.text_area("📝 Your secret, feeling, or message to someone (anonymous)", max_chars=1000, height=150)
+        submit_btn = st.form_submit_button(label="📨 Submit Confession")
+
+    if submit_btn:
+        if confession.strip():
+            add_confession(st.session_state.username, confession.strip())
+            st.success("✅ Confession submitted successfully!")
+        else:
+            st.warning("⚠️ Please write something before submitting.")
+
+    # -- Public Confessions --
+    st.markdown("## 🕊️ Anonymous Confessions")
+    for _, text, timestamp in get_all_confessions():
+        st.markdown(f"""
+        <div style='background:#1f2937;padding:15px;border-radius:10px;margin-bottom:10px;box-shadow:0 0 10px rgba(0,255,255,0.1);'>
+            <strong>Anonymous:</strong><br>
+            <em>{text}</em><br>
+            <small style='color:gray;'>🕒 {timestamp}</small>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # -- Admin Panel --
+    if st.session_state.username == "admin":
+        st.markdown("## 🔐 Admin View (Real Names)")
+        for user, text, timestamp in get_all_confessions():
+            st.markdown(f"""
+            <div style='background:#262626;padding:15px;border-radius:10px;margin-bottom:10px;'>
+                <strong>{user}</strong> confessed:<br>
+                <em>{text}</em><br>
+                <small style='color:gray;'>🕒 {timestamp}</small>
+            </div>
+            """, unsafe_allow_html=True)
+
 
 # 2. Wait for user input
 user_input = st.chat_input("Ask LEXIBOT anything...")

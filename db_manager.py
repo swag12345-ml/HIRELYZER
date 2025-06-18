@@ -141,6 +141,8 @@ def get_daily_ats_stats():
     return pd.read_sql_query(query, conn)
 
 # 🧠 Domain Detection from Job Title + Description
+from collections import defaultdict
+
 def detect_domain_from_title_and_description(job_title, job_description):
     title = job_title.lower().strip()
     jd = job_description.lower().strip()
@@ -230,6 +232,7 @@ def detect_domain_from_title_and_description(job_title, job_description):
         matches = sum(1 for kw in kws if kw in combined)
         domain_scores[domain] += matches * WEIGHTS[domain]
 
+    # Special logic for full stack if both front and back detected
     frontend_match = any(kw in combined for kw in keywords["Frontend Development"])
     backend_match = any(kw in combined for kw in keywords["Backend Development"])
 
@@ -238,12 +241,23 @@ def detect_domain_from_title_and_description(job_title, job_description):
     elif frontend_match and backend_match:
         domain_scores["Full Stack Development"] += WEIGHTS["Full Stack Development"]
 
+    # Pick highest scoring domain and normalize
     if domain_scores:
         top_domain = max(domain_scores, key=domain_scores.get)
         if domain_scores[top_domain] > 0:
-            return top_domain
+            normalization_map = {
+                "AI / Machine Learning": "AI/ML",
+                "Artificial Intelligence": "AI/ML",
+                "Machine Learning": "AI/ML",
+                "DevOps / Infrastructure": "DevOps & Infrastructure",
+                "Cloud Engineering": "Cloud & DevOps",
+                "General Software Engineering": "Software Engineering"
+            }
+            return normalization_map.get(top_domain, top_domain)
 
     return "General"
+
+    
 # 🚩 Get all flagged candidates (bias_score > threshold)
 def get_flagged_candidates(threshold: float = 0.6):
     query = """
@@ -253,4 +267,7 @@ def get_flagged_candidates(threshold: float = 0.6):
     ORDER BY bias_score DESC
     """
     return pd.read_sql_query(query, conn, params=(threshold,))
+
+
+
 

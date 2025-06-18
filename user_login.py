@@ -19,25 +19,32 @@ def create_user_table():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
 
+    # Add email column if it doesn't exist
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL
+            password TEXT NOT NULL,
+            email TEXT
         )
     ''')
 
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS user_logs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL,
-            action TEXT NOT NULL,
-            timestamp TEXT NOT NULL
-        )
-    ''')
+    # Try to add email column if upgrading from older version
+    try:
+        c.execute('ALTER TABLE users ADD COLUMN email TEXT')
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
+    c.execute('''CREATE TABLE IF NOT EXISTS user_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL,
+        action TEXT NOT NULL,
+        timestamp TEXT NOT NULL
+    )''')
 
     conn.commit()
     conn.close()
+
 
 # ------------------ Add User ------------------
 def add_user(username, password):

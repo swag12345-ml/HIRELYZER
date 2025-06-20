@@ -21,3 +21,4 @@ bcrypt
 pytz
 streamlit-autorefresh
 tabulate
+language-tool-python

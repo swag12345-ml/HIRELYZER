@@ -1,9 +1,6 @@
 import streamlit as st
 import streamlit.components.v1 as components
 from base64 import b64encode
-import streamlit as st
-import re
-from llm_manager import call_llm
 import requests
 import datetime
 
@@ -1112,63 +1109,64 @@ replacement_mapping = {
 
 def rewrite_text_with_llm(text, replacement_mapping, user_location):
     """
-    Uses LLM to rewrite a resume with grammatically improved, professionally written, bias-free language,
-    while preserving all the original achievements, skills, and content. Also suggests job roles.
+    Uses LLM to rewrite a resume with bias-free language and suggest relevant job roles.
+    Applies strict word replacement mapping and structures the result.
     """
     from llm_manager import call_llm
 
+    # Format the replacement mapping as a readable bullet list for the prompt
     formatted_mapping = "\n".join(
         [f"- \"{key}\" → \"{value}\"" for key, value in replacement_mapping.items()]
     )
 
+    # Construct the prompt
     prompt = f"""
-You are an expert resume editor and career advisor.
+You are an expert career advisor and professional resume language editor.
 
-Your goal is to **professionally rewrite** the following resume text by improving:
+Your task is to:
 
-✅ Grammar  
-✅ Sentence structure  
-✅ Formal tone and clarity  
-✅ Bias-free and inclusive language
-
----
-
-⚠️ **Important rules you must follow**:
-- Keep **all original achievements, roles, skills, technologies, and job-specific content** exactly as-is.
-- Do **NOT remove**, generalize, or fabricate any details.
-- Only improve **how the content is written** (style, tone, flow, professionalism).
-- Apply strict **word replacements** from the given list below.
-- Output must be **grammatically correct, clear, and professional**.
+1. **Rewrite the following resume text** to:
+   - Remove or replace any gender-coded, biased, or non-inclusive language.
+   - Use *professional, inclusive, neutral, clear, and grammatically correct language*.
+   - **Retain all technical terms, job-specific keywords, certifications, and proper names.**
+   - Do **not** add new content or remove important information.
+   - Preserve the original meaning and intent of each sentence.
 
 ---
 
-2. **Structure the resume** using labeled sections if present:
-- Name
-- Contact Information
-- Email
-- Portfolio
-- Professional Summary
-- Work Experience
-- Skills
-- Certifications
-- Education
-- Projects
-- Interests
+2. **Structure and Organize** the rewritten resume into clearly labeled standard resume sections. Only include sections that are present in the original text:
+   - Name
+   - Contact Information
+   - Email
+   - Portfolio
+   - Professional Summary
+   - Work Experience
+   - Skills
+   - Certifications
+   - Education
+   - Projects
+   - Interests
 
-Only include sections that are present in the original resume.
+   - If *Name*, *Contact Information*, or *Email* is present, place them clearly at the top under respective headings.
 
 ---
 
-3. **Apply this replacement mapping** strictly:
+3. **Strictly apply the following word replacement mapping:**
 
 {formatted_mapping}
 
+   - If a word or phrase matches a key exactly from this list, replace it with the corresponding value.
+   - Leave all other content unchanged.
+
 ---
 
-4. **Suggest 5 suitable job titles** based on the resume and candidate’s location: **{user_location}**  
-Include:
-- A reason for each title  
-- A LinkedIn search link for that role
+4. **Suggest 5 suitable job titles** based on the resume content and the candidate’s location: **{user_location}**
+   - Ensure titles are realistic for this location and aligned with the candidate's experience and skills.
+   - Provide a brief explanation for each suggestion.
+
+---
+
+5. **Provide LinkedIn job search URLs** for each suggested title based on the location: **{user_location}**
 
 ---
 
@@ -1177,8 +1175,7 @@ Include:
 
 ---
 
-**✅ Improved, Bias-Free, Well-Structured Resume Text:**
-
+**✅ Bias-Free Rewritten Resume (Well-Structured):**
 
 ---
 
@@ -1200,9 +1197,9 @@ Include:
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%205&location={user_location})
 """
 
+    # Call the LLM with caching + key rotation
     response = call_llm(prompt, session=st.session_state)
     return response
-
 
 
 
@@ -1235,41 +1232,6 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
 
 
-import re
-import streamlit as st
-from llm_manager import call_llm
-
-# ✅ Cached grammar checker
-@st.cache_resource(show_spinner=False)
-def load_grammar_tool():
-    import language_tool_python
-    return language_tool_python.LanguageTool('en-US')
-
-tool = load_grammar_tool()
-
-# ✅ Fair grammar scoring
-def get_grammar_score(text, max_score=5):
-    matches = tool.check(text)
-    num_issues = len(matches)
-    total_words = len(text.split())
-
-    if total_words == 0:
-        return 1, "Empty or unreadable resume."
-
-    issues_per_100_words = (num_issues / total_words) * 100
-
-    if issues_per_100_words <= 2:
-        return max_score, f"Excellent grammar ({num_issues} issues in {total_words} words)."
-    elif issues_per_100_words <= 4:
-        return round(max_score * 0.9), f"Very good grammar ({num_issues} minor issues)."
-    elif issues_per_100_words <= 6:
-        return round(max_score * 0.75), f"Few noticeable issues ({num_issues})."
-    elif issues_per_100_words <= 8:
-        return round(max_score * 0.5), f"Moderate grammar issues ({num_issues})."
-    else:
-        return round(max_score * 0.3), f"High issue density ({num_issues})."
-
-# ✅ ATS Evaluation Function
 def ats_percentage_score(
     resume_text,
     job_description,
@@ -1280,12 +1242,19 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
+    """
+    Analyzes resume against job description using a structured, score-based prompt.
+    Enforces strict score calculation and standardized score bands.
+    """
+    import re
+    import streamlit as st
+    from llm_manager import call_llm
+
     logic_score_note = (
         f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
         if logic_profile_score else ""
     )
 
-    # Prompt for LLM to return ATS report
     prompt = f"""
 You are an AI-powered ATS evaluator. You must evaluate the candidate's resume strictly based on the scoring rules below. 
 You are not allowed to guess, assume, or round scores casually. Your component scores will be validated programmatically,
@@ -1377,48 +1346,50 @@ Provide a detailed summary (4–6 sentences) about the candidate’s overall fit
 \"\"\"{resume_text}\"\"\"
 """
 
-    # 🧠 Get LLM-based ATS result
     response = call_llm(prompt, session=st.session_state)
-    ats_result = response.strip()
 
-    # 🧪 Regex score extractors
+    # ✅ Post-process the response to extract and correct the ATS score
     def extract_score(pattern, text, default=0):
         match = re.search(pattern, text)
         return int(match.group(1)) if match else default
 
-    # 🎯 Extract LLM scores
+    ats_result = response.strip()
+
+    # Extract component scores
     edu_score = extract_score(r"Education Score:\s*(\d+)", ats_result)
     exp_score = extract_score(r"Experience Score:\s*(\d+)", ats_result)
     skills_score = extract_score(r"Skills Match Percentage:\s*(\d+)", ats_result)
+    lang_score = extract_score(r"Language Quality Score:\s*(\d+)", ats_result)
     keyword_score = extract_score(r"Keyword Match Score:\s*(\d+)", ats_result)
 
-    # ✅ Grammar-based Language Score Override
-    lang_score, lang_comment = get_grammar_score(resume_text, max_score=lang_weight)
+    # ✅ Recalculate overall score
+    recalculated_total = edu_score + exp_score + skills_score + lang_score + keyword_score
+    if recalculated_total > 100:
+        recalculated_total = 100
 
-    # ✅ Recalculate total with true grammar score
-    total_score = edu_score + exp_score + skills_score + lang_score + keyword_score
-    if total_score > 100:
-        total_score = 100
-
-    # 📊 Banding
-    if total_score >= 85:
+    # ✅ Determine formatted score from bands
+    if recalculated_total >= 85:
         formatted_score = "Excellent"
-    elif total_score >= 70:
+    elif recalculated_total >= 70:
         formatted_score = "Good"
-    elif total_score >= 50:
+    elif recalculated_total >= 50:
         formatted_score = "Average"
     else:
         formatted_score = "Poor"
 
-    # 🛠 Patch result with correct language and total scores
-    ats_result = re.sub(r"Language Quality Score:\s*\d+", f"Language Quality Score: {lang_score}", ats_result)
-    ats_result = re.sub(r"Language Quality Comments:.*", f"Language Quality Comments: {lang_comment}", ats_result)
-    ats_result = re.sub(r"Overall Percentage Match:\s*\d+", f"Overall Percentage Match: {total_score}", ats_result)
-    ats_result = re.sub(r"Formatted Score:\s*.*", f"Formatted Score: {formatted_score}", ats_result)
+    # ✅ Replace original overall and formatted score strings
+    ats_result = re.sub(
+        r"Overall Percentage Match:\s*\d+",
+        f"Overall Percentage Match: {recalculated_total}",
+        ats_result
+    )
+    ats_result = re.sub(
+        r"Formatted Score:\s*.*",
+        f"Formatted Score: {formatted_score}",
+        ats_result
+    )
 
     return ats_result
-
-
 
 
 

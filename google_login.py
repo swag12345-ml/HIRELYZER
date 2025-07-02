@@ -30,7 +30,9 @@ def fetch_token_from_url():
                 TOKEN_URL,
                 code=code,
                 redirect_uri=REDIRECT_URI,
-                client_secret=GOOGLE_CLIENT_SECRET
+                client_id=GOOGLE_CLIENT_ID,
+                client_secret=GOOGLE_CLIENT_SECRET,
+                include_client_id=True  # ✅ this is critical
             )
             if token and "access_token" in token:
                 st.session_state.google_token = token

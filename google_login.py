@@ -33,8 +33,9 @@ def fetch_token_from_url():
             )
             if token and "access_token" in token:
                 st.session_state.google_token = token
+                st.write("✅ Token fetched:", token)  # TEMP debug
             else:
-                st.error("🚫 Token received but missing access_token.")
+                st.error("🚫 Token fetched but missing access_token.")
                 st.stop()
         except Exception as e:
             st.error(f"🚫 Failed to fetch token. Error: {e}")

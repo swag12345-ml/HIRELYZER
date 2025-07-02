@@ -303,16 +303,19 @@ if not st.session_state.get("authenticated") and "google_token" in st.session_st
         user_info = login_via_google()
         if user_info:
             email = user_info.get("email", "google_user")
+            name = user_info.get("name", email.split("@")[0])
 
+            # 🔄 Register if not already in DB
             if not user_exists(email):
-                add_google_user(email)
+                add_google_user(email=email, name=name)
                 log_user_action(email, "google_register")
 
+            # ✅ Now log them in
             st.session_state.authenticated = True
-            st.session_state.username = email
+            st.session_state.username = name  # Set name as display
             log_user_action(email, "google_login")
 
-            st.success(f"✅ Logged in as {email}")
+            st.success(f"✅ Logged in as {name}")
             st.rerun()
     except Exception as e:
         st.error(f"❌ Google login failed: {e}")
@@ -323,42 +326,6 @@ if not st.session_state.get("authenticated") and "google_token" not in st.sessio
     st.markdown("### 🔐 Login with Google")
     login_via_google()
     st.stop()
-
-# 👇 Step 3: Traditional login form always visible after Google check
-if not st.session_state.get("authenticated"):
-    st.markdown("<hr><div class='login-card'><h2 style='text-align:center;'>🔐 Or Login Manually to <span style='color:#00BFFF;'>LEXIBOT</span></h2>", unsafe_allow_html=True)
-
-    login_tab, register_tab = st.tabs(["🔑 Login", "🆕 Register"])
-
-    with login_tab:
-        user = st.text_input("Username", key="login_user")
-        pwd = st.text_input("Password", type="password", key="login_pass")
-        if st.button("Login", key="login_btn"):
-            if verify_user(user.strip(), pwd.strip()):
-                st.session_state.authenticated = True
-                st.session_state.username = user.strip()
-                log_user_action(user.strip(), "login")
-                st.success("✅ Login successful!")
-                st.rerun()
-            else:
-                st.error("❌ Invalid credentials.")
-
-    with register_tab:
-        new_user = st.text_input("Choose a Username", key="reg_user")
-        new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
-        if st.button("Register", key="register_btn"):
-            if new_user.strip() and new_pass.strip():
-                if add_user(new_user.strip(), new_pass.strip()):
-                    st.success("✅ Registered! You can now login.")
-                    log_user_action(new_user.strip(), "register")
-                else:
-                    st.error("🚫 Username already exists.")
-            else:
-                st.warning("⚠️ Please fill in both fields.")
-
-    st.markdown("</div>", unsafe_allow_html=True)
-    st.stop()
-
 
 
 

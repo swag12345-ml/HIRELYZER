@@ -32,7 +32,7 @@ def fetch_token_from_url():
                 redirect_uri=REDIRECT_URI,
                 client_id=GOOGLE_CLIENT_ID,
                 client_secret=GOOGLE_CLIENT_SECRET,
-                include_client_id=True  # ✅ this is critical
+                include_client_id=True
             )
             if token and "access_token" in token:
                 st.session_state.google_token = token
@@ -47,18 +47,17 @@ def fetch_token_from_url():
 
 def login_via_google():
     """
-    Show login link if no token.
+    Shows login link if no token.
     If token is present, fetch and return user info from Google.
+    Returns: dict with user info (email, name, picture)
     """
     if "google_token" not in st.session_state:
-        # Not logged in yet — show login link
         oauth = OAuth2Session(
             client_id=GOOGLE_CLIENT_ID,
             client_secret=GOOGLE_CLIENT_SECRET,
             redirect_uri=REDIRECT_URI,
             scope="openid email profile"
         )
-        # ✅ Important: Pass redirect_uri explicitly here too
         auth_url, state = oauth.create_authorization_url(
             AUTH_URL,
             redirect_uri=REDIRECT_URI
@@ -67,17 +66,24 @@ def login_via_google():
         st.markdown(f"[🔐 Login with Google]({auth_url})", unsafe_allow_html=True)
         st.stop()
     else:
-        # Token exists, now get user info
         token = st.session_state.get("google_token")
         if not token or not isinstance(token, dict) or "access_token" not in token:
             st.error("⚠️ Invalid or missing token. Please try logging in again.")
             st.session_state.pop("google_token", None)
             st.stop()
 
-        oauth = OAuth2Session(client_id=GOOGLE_CLIENT_ID, client_secret=GOOGLE_CLIENT_SECRET)
+        oauth = OAuth2Session(
+            client_id=GOOGLE_CLIENT_ID,
+            client_secret=GOOGLE_CLIENT_SECRET
+        )
         try:
             resp = oauth.get(USERINFO_URL, token=token)
-            return resp.json()
+            user_data = resp.json()
+            return {
+                "email": user_data.get("email"),
+                "name": user_data.get("name"),
+                "picture": user_data.get("picture")
+            }
         except Exception as e:
             st.error(f"🚫 Failed to get user info. Error: {e}")
             st.session_state.pop("google_token", None)

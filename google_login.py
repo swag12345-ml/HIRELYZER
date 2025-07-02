@@ -26,8 +26,17 @@ def fetch_token_from_url():
             scope="openid email profile"
         )
         try:
-            token = oauth.fetch_token(TOKEN_URL, code=code, redirect_uri=REDIRECT_URI)
-            st.session_state.google_token = token
+            token = oauth.fetch_token(
+                TOKEN_URL,
+                code=code,
+                redirect_uri=REDIRECT_URI,
+                client_secret=GOOGLE_CLIENT_SECRET
+            )
+            if token and "access_token" in token:
+                st.session_state.google_token = token
+            else:
+                st.error("🚫 Token received but missing access_token.")
+                st.stop()
         except Exception as e:
             st.error(f"🚫 Failed to fetch token. Error: {e}")
             st.session_state.pop("google_token", None)
@@ -47,18 +56,22 @@ def login_via_google():
             redirect_uri=REDIRECT_URI,
             scope="openid email profile"
         )
-        auth_url, state = oauth.create_authorization_url(AUTH_URL, redirect_uri=REDIRECT_URI)
+        # ✅ Important: Pass redirect_uri explicitly here too
+        auth_url, state = oauth.create_authorization_url(
+            AUTH_URL,
+            redirect_uri=REDIRECT_URI
+        )
         st.session_state.oauth_state = state
         st.markdown(f"[🔐 Login with Google]({auth_url})", unsafe_allow_html=True)
         st.stop()
-
     else:
         # Token exists, now get user info
         token = st.session_state.get("google_token")
-        if not token or "access_token" not in token:
-            st.error("⚠️ Invalid or missing Google token. Please login again.")
+        if not token or not isinstance(token, dict) or "access_token" not in token:
+            st.error("⚠️ Invalid or missing token. Please try logging in again.")
             st.session_state.pop("google_token", None)
             st.stop()
+
         oauth = OAuth2Session(client_id=GOOGLE_CLIENT_ID, client_secret=GOOGLE_CLIENT_SECRET)
         try:
             resp = oauth.get(USERINFO_URL, token=token)

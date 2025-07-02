@@ -115,3 +115,22 @@ def get_all_user_logs():
     logs = c.fetchall()
     conn.close()
     return logs
+
+def add_google_user(email):
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    try:
+        c.execute('INSERT OR IGNORE INTO users (username, password, email) VALUES (?, ?, ?)', 
+                  (email, 'google_oauth', email))
+        conn.commit()
+    except sqlite3.IntegrityError:
+        pass
+    finally:
+        conn.close()
+def user_exists(username_or_email):
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM users WHERE username = ? OR email = ?", (username_or_email, username_or_email))
+    exists = c.fetchone() is not None
+    conn.close()
+    return exists

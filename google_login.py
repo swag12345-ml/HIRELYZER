@@ -1,13 +1,11 @@
 import streamlit as st
 from authlib.integrations.requests_client import OAuth2Session
-from dotenv import load_dotenv
 import os
 
-load_dotenv()
-
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
-REDIRECT_URI = os.getenv("REDIRECT_URI")
+# ✅ Load credentials securely
+GOOGLE_CLIENT_ID = st.secrets.get("GOOGLE_CLIENT_ID", os.getenv("GOOGLE_CLIENT_ID"))
+GOOGLE_CLIENT_SECRET = st.secrets.get("GOOGLE_CLIENT_SECRET", os.getenv("GOOGLE_CLIENT_SECRET"))
+REDIRECT_URI = st.secrets.get("REDIRECT_URI", os.getenv("REDIRECT_URI"))
 
 AUTH_URL = "https://accounts.google.com/o/oauth2/auth"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
@@ -15,7 +13,6 @@ USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
 
 
 def fetch_token_from_url():
-    """Fetch token if redirected back from Google with code."""
     query_params = st.experimental_get_query_params()
     if "code" in query_params:
         code = query_params["code"][0]
@@ -46,11 +43,6 @@ def fetch_token_from_url():
 
 
 def login_via_google():
-    """
-    Shows login link if no token.
-    If token is present, fetch and return user info from Google.
-    Returns: dict with user info (email, name, picture)
-    """
     if "google_token" not in st.session_state:
         oauth = OAuth2Session(
             client_id=GOOGLE_CLIENT_ID,

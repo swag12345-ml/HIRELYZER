@@ -20,13 +20,13 @@ def fetch_token_from_url():
     if "code" in query_params:
         code = query_params["code"][0]
         oauth = OAuth2Session(
-            GOOGLE_CLIENT_ID,
-            GOOGLE_CLIENT_SECRET,
+            client_id=GOOGLE_CLIENT_ID,
+            client_secret=GOOGLE_CLIENT_SECRET,
             redirect_uri=REDIRECT_URI,
             scope="openid email profile"
         )
         try:
-            token = oauth.fetch_token(TOKEN_URL, code=code)
+            token = oauth.fetch_token(TOKEN_URL, code=code, redirect_uri=REDIRECT_URI)
             st.session_state.google_token = token
         except Exception as e:
             st.error(f"🚫 Failed to fetch token. Error: {e}")
@@ -42,21 +42,24 @@ def login_via_google():
     if "google_token" not in st.session_state:
         # Not logged in yet — show login link
         oauth = OAuth2Session(
-            GOOGLE_CLIENT_ID,
-            GOOGLE_CLIENT_SECRET,
+            client_id=GOOGLE_CLIENT_ID,
+            client_secret=GOOGLE_CLIENT_SECRET,
             redirect_uri=REDIRECT_URI,
             scope="openid email profile"
         )
-        auth_url, state = oauth.create_authorization_url(AUTH_URL)
+        auth_url, state = oauth.create_authorization_url(AUTH_URL, redirect_uri=REDIRECT_URI)
         st.session_state.oauth_state = state
         st.markdown(f"[🔐 Login with Google]({auth_url})", unsafe_allow_html=True)
         st.stop()
+
     else:
         # Token exists, now get user info
         token = st.session_state.get("google_token")
-        if not token:
-            raise RuntimeError("Missing token. Please login again.")
-        oauth = OAuth2Session(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)
+        if not token or "access_token" not in token:
+            st.error("⚠️ Invalid or missing Google token. Please login again.")
+            st.session_state.pop("google_token", None)
+            st.stop()
+        oauth = OAuth2Session(client_id=GOOGLE_CLIENT_ID, client_secret=GOOGLE_CLIENT_SECRET)
         try:
             resp = oauth.get(USERINFO_URL, token=token)
             return resp.json()
@@ -64,4 +67,3 @@ def login_via_google():
             st.error(f"🚫 Failed to get user info. Error: {e}")
             st.session_state.pop("google_token", None)
             st.stop()
-

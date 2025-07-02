@@ -65,12 +65,14 @@ def login_via_google():
             st.session_state.pop("google_token", None)
             st.stop()
 
+        # ✅ FIX: Attach token directly into the session
         oauth = OAuth2Session(
             client_id=GOOGLE_CLIENT_ID,
-            client_secret=GOOGLE_CLIENT_SECRET
+            token=token  # ✅ Correct method
         )
+
         try:
-            resp = oauth.get(USERINFO_URL, token=token)
+            resp = oauth.get(USERINFO_URL)
             user_data = resp.json()
             return {
                 "email": user_data.get("email"),
@@ -81,3 +83,4 @@ def login_via_google():
             st.error(f"🚫 Failed to get user info. Error: {e}")
             st.session_state.pop("google_token", None)
             st.stop()
+

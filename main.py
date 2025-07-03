@@ -1,3 +1,51 @@
+def generate_cover_letter_from_resume_builder():
+    from datetime import datetime
+    name = st.session_state.get("name", "")
+    job_title = st.session_state.get("job_title", "")
+    summary = st.session_state.get("summary", "")
+    skills = st.session_state.get("skills", "")
+    location = st.session_state.get("location", "")
+    today_date = datetime.today().strftime("%B %d, %Y")
+    company = st.text_input("🏢 Target Company", placeholder="e.g., Google")
+
+    if not all([name, job_title, summary, skills, company]):
+        st.warning("⚠️ Please fill in all resume fields and company name.")
+        return
+
+    prompt = f"""
+You are a professional cover letter writer.
+
+Write a formal and compelling cover letter using the information below. Format it as a real letter with:
+1. Date
+2. Recipient heading
+3. Proper salutation
+4. Three short paragraphs
+5. Professional closing
+
+Ensure you **only include the company name once** in the header or salutation, and avoid repeating it redundantly in the body.
+
+### Heading Info:
+{today_date}
+Hiring Manager, {company}, {location}
+
+### Candidate Info:
+- Name: {name}
+- Job Title: {job_title}
+- Summary: {summary}
+- Skills: {skills}
+- Location: {location}
+
+### Instructions:
+- Do not repeat the company name twice.
+- Focus on skills and impact.
+- Make it personalized and enthusiastic.
+
+Return only the final formatted cover letter.
+"""
+
+    cover_letter = call_llm(prompt, session=st.session_state)
+    st.session_state["cover_letter"] = cover_letter
+
 import streamlit as st
 import streamlit.components.v1 as components
 from base64 import b64encode
@@ -1886,14 +1934,7 @@ with tab1:
                         key=f"download_docx_{resume['Resume Name']}"
                     )
                     html_report = generate_resume_report_html(resume)
-                    pdf_bytes = html_to_pdf_bytes(html_report)
-
-                    st.download_button(
-                        label="📥 Download ATS Report (PDF)",
-                        data=pdf_bytes,
-                        file_name=f"{resume['Candidate Name']}_ATS_Report.pdf",
-                        mime="application/pdf"
-                    )
+                    
 
                     st.download_button(
                         label="📥 Download Full Analysis Report (.html)",
@@ -2676,7 +2717,7 @@ html_content = f"""
 html_bytes = html_content.encode("utf-8")
 html_file = BytesIO(html_bytes)
 # Convert HTML resume to PDF bytes
-pdf_resume_bytes = html_to_pdf_bytes(html_content)
+
 
 
 with tab2:
@@ -2687,13 +2728,7 @@ with tab2:
         file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.html",
         mime="text/html"
     )
-    st.download_button(
-        label="📥 Download Resume (PDF)",
-        data=pdf_resume_bytes,
-        file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.pdf",
-        mime="application/pdf"
-    )
-
+  
     # Cover Letter Expander (INSIDE tab2)
     with st.expander("📩 Generate Cover Letter from This Resume"):
         generate_cover_letter_from_resume_builder()

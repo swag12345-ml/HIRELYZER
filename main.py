@@ -1,25 +1,3 @@
-from xhtml2pdf import pisa
-from io import BytesIO
-
-def html_to_pdf_bytes(html_string):
-    """
-    Converts an HTML string to PDF bytes using xhtml2pdf.
-    Fully compatible with Streamlit Cloud (no external binaries required).
-    """
-    result = BytesIO()
-    pisa_status = pisa.CreatePDF(html_string, dest=result, encoding='UTF-8')
-
-    if pisa_status.err:
-        raise Exception("Error generating PDF")
-
-    result.seek(0)
-    return result
-
-
-
-
-    
-
 
 def generate_cover_letter_from_resume_builder():
     from datetime import datetime
@@ -1983,14 +1961,9 @@ with tab1:
                         key=f"download_docx_{resume['Resume Name']}"
                     )
                     html_report = generate_resume_report_html(resume)
-                    pdf_bytes = html_to_pdf_bytes(html_report)
+                    
 
-                    st.download_button(
-                        label="📥 Download ATS Report (PDF)",
-                        data=pdf_bytes,
-                        file_name=f"{resume['Candidate Name']}_ATS_Report.pdf",
-                        mime="application/pdf"
-                    )
+                    
 
                     st.download_button(
                         label="📥 Download Full Analysis Report (.html)",
@@ -2773,7 +2746,7 @@ html_content = f"""
 html_bytes = html_content.encode("utf-8")
 html_file = BytesIO(html_bytes)
 # Convert HTML resume to PDF bytes
-pdf_resume_bytes = html_to_pdf_bytes(html_content)
+
 
 
 with tab2:
@@ -2784,13 +2757,7 @@ with tab2:
         file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.html",
         mime="text/html"
     )
-    st.download_button(
-        label="📥 Download Resume (PDF)",
-        data=pdf_resume_bytes,
-        file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.pdf",
-        mime="application/pdf"
-    )
-
+    
     # Cover Letter Expander (INSIDE tab2)
     with st.expander("📩 Generate Cover Letter from This Resume"):
         generate_cover_letter_from_resume_builder()

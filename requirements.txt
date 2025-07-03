@@ -1,4 +1,4 @@
-pdfkit
+xhtml2pdf
 streamlit
 torch
 python-dotenv

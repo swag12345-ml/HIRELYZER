@@ -1822,7 +1822,7 @@ with tab1:
 
 
    
-   with tab2:
+with tab2:
     st.session_state.active_tab = "Resume Builder"
 
     st.markdown("## 🧾 <span style='color:#336699;'>Advanced Resume Builder</span>", unsafe_allow_html=True)

@@ -24,4 +24,3 @@ tabulate
 language-tool-python
 pdfkit
 spacy
-

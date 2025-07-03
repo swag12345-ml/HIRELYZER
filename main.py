@@ -1023,7 +1023,7 @@ gender_words = {
 }
 
 def detect_bias(text):
-    doc = nlp(text)
+    
     
     masc, fem = 0, 0
     masculine_found = []

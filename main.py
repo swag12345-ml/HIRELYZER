@@ -1,25 +1,20 @@
-import pdfkit
+from xhtml2pdf import pisa
 from io import BytesIO
 
 def html_to_pdf_bytes(html_string):
-    path_to_wkhtmltopdf = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
-    config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
+    """
+    Converts an HTML string to PDF bytes using xhtml2pdf.
+    Fully compatible with Streamlit Cloud (no external binaries required).
+    """
+    result = BytesIO()
+    pisa_status = pisa.CreatePDF(html_string, dest=result, encoding='UTF-8')
 
-    options = {
-        'page-width': '400mm',     # Increased width for more horizontal space
-        'page-height': '297mm',    # Keep standard A4 height
-        'encoding': "UTF-8",
-        'enable-local-file-access': None,
-        'margin-top': '10mm',
-        'margin-bottom': '10mm',
-        'margin-left': '10mm',
-        'margin-right': '10mm',
-        'zoom': '1',               # Keep at 1 for original scale
-        'disable-smart-shrinking': '',
-    }
+    if pisa_status.err:
+        raise Exception("Error generating PDF")
 
-    pdf_bytes = pdfkit.from_string(html_string, False, options=options, configuration=config)
-    return BytesIO(pdf_bytes)
+    result.seek(0)
+    return result
+
 
 
 

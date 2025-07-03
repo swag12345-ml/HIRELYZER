@@ -1,7 +1,7 @@
 import sqlite3
 import bcrypt
 import streamlit as st
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 
 DB_NAME = "resume_data.db"
@@ -11,6 +11,7 @@ def get_ist_time():
     ist = pytz.timezone("Asia/Kolkata")
     return datetime.now(ist)
 
+# Debug current system time (IST)
 st.write("🕒 Current IST Time:", get_ist_time().strftime("%Y-%m-%d %H:%M:%S"))
 
 # ------------------ Create Tables ------------------
@@ -18,40 +19,34 @@ def create_user_table():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
 
-    # Create users table with optional name/email
+    # Add email column if it doesn't exist
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
-            email TEXT,
-            name TEXT
+            email TEXT
         )
     ''')
 
-    # Add missing columns if needed (for upgrades)
+    # Try to add email column if upgrading from older version
     try:
         c.execute('ALTER TABLE users ADD COLUMN email TEXT')
     except sqlite3.OperationalError:
-        pass
-    try:
-        c.execute('ALTER TABLE users ADD COLUMN name TEXT')
-    except sqlite3.OperationalError:
-        pass
+        pass  # Column already exists
 
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS user_logs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL,
-            action TEXT NOT NULL,
-            timestamp TEXT NOT NULL
-        )
-    ''')
+    c.execute('''CREATE TABLE IF NOT EXISTS user_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL,
+        action TEXT NOT NULL,
+        timestamp TEXT NOT NULL
+    )''')
 
     conn.commit()
     conn.close()
 
-# ------------------ Add Traditional User ------------------
+
+# ------------------ Add User ------------------
 def add_user(username, password):
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
     conn = sqlite3.connect(DB_NAME)
@@ -66,15 +61,17 @@ def add_user(username, password):
     finally:
         conn.close()
 
-# ------------------ Verify Traditional User ------------------
+# ------------------ Verify User ------------------
 def verify_user(username, password):
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute('SELECT password FROM users WHERE username = ?', (username,))
     result = c.fetchone()
     conn.close()
+
     if result:
-        return bcrypt.checkpw(password.encode('utf-8'), result[0].encode('utf-8'))
+        stored_hashed = result[0]
+        return bcrypt.checkpw(password.encode('utf-8'), stored_hashed.encode('utf-8'))
     return False
 
 # ------------------ Log User Action ------------------
@@ -87,7 +84,7 @@ def log_user_action(username, action):
     conn.commit()
     conn.close()
 
-# ------------------ Get Total Users ------------------
+# ------------------ Get Total Registered Users ------------------
 def get_total_registered_users():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -96,7 +93,7 @@ def get_total_registered_users():
     conn.close()
     return count
 
-# ------------------ Get Today's Logins ------------------
+# ------------------ Get Today's Logins (based on IST) ------------------
 def get_logins_today():
     today = get_ist_time().strftime('%Y-%m-%d')
     conn = sqlite3.connect(DB_NAME)
@@ -110,7 +107,7 @@ def get_logins_today():
     conn.close()
     return count
 
-# ------------------ Get Logs ------------------
+# ------------------ Get All User Logs ------------------
 def get_all_user_logs():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -118,27 +115,3 @@ def get_all_user_logs():
     logs = c.fetchall()
     conn.close()
     return logs
-
-# ------------------ Add Google User ------------------
-def add_google_user(email, name="Google User"):
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    try:
-        # Add user with default password and optional name/email
-        c.execute('INSERT OR IGNORE INTO users (username, password, email, name) VALUES (?, ?, ?, ?)', 
-                  (email, 'google_oauth', email, name))
-        conn.commit()
-    except sqlite3.IntegrityError:
-        pass
-    finally:
-        conn.close()
-
-# ------------------ Check if User Exists ------------------
-def user_exists(username_or_email):
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute("SELECT 1 FROM users WHERE username = ? OR email = ?", 
-              (username_or_email, username_or_email))
-    exists = c.fetchone() is not None
-    conn.close()
-    return exists

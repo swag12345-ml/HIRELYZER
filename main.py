@@ -1,12 +1,15 @@
 import spacy
 import spacy.cli
 
-# Load or download en_core_web_sm model at runtime
+model_name = "en_core_web_sm"
+
 try:
-    nlp = spacy.load("en_core_web_sm")
+    nlp = spacy.load(model_name)
 except OSError:
-    spacy.cli.download("en_core_web_sm")
-    nlp = spacy.load("en_core_web_sm")
+    # This downloads the model in user space, safe for Streamlit Cloud
+    spacy.cli.download(model_name)
+    nlp = spacy.load(model_name)
+
 
 import pdfkit
 from io import BytesIO

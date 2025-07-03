@@ -291,44 +291,100 @@ if not st.session_state.authenticated:
     </script>
     """, height=400)
 
-from google_login import login_via_google, fetch_token_from_url
-from user_login import add_google_user, log_user_action, user_exists
+if not st.session_state.authenticated:
+    from base64 import b64encode
+    import requests
 
-# 🔁 Step 1: Handle Google redirect (get token)
-fetch_token_from_url()
+    # ✅ Use an online image of a female employee
+    image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
+    response = requests.get(image_url)
+    img_base64 = b64encode(response.content).decode()
 
-# 🔐 Step 2: Auto-login Google users
-if not st.session_state.get("authenticated") and "google_token" in st.session_state:
-    try:
-        user_info = login_via_google()
-        if user_info:
-            email = user_info.get("email", "google_user")
-            name = user_info.get("name", email.split("@")[0])
+    # ✅ Inject animated shuffle CSS + HTML
+    st.markdown(f"""
+    <style>
+    .animated-cards {{
+      margin-top: 40px;
+      display: flex;
+      justify-content: center;
+      position: relative;
+      height: 260px;
+    }}
+    .animated-cards img {{
+      position: absolute;
+      width: 220px;
+      animation: splitCards 2.5s ease-in-out infinite alternate;
+      z-index: 1;
+    }}
+    .animated-cards img:nth-child(1) {{
+      animation-delay: 0s;
+      z-index: 3;
+    }}
+    .animated-cards img:nth-child(2) {{
+      animation-delay: 0.3s;
+      z-index: 2;
+    }}
+    .animated-cards img:nth-child(3) {{
+      animation-delay: 0.6s;
+      z-index: 1;
+    }}
+    @keyframes splitCards {{
+      0% {{
+        transform: scale(1) translateX(0) rotate(0deg);
+        opacity: 1;
+      }}
+      100% {{
+        transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot));
+        opacity: 1;
+      }}
+    }}
+    .card-left {{ --x-offset: -80px; --rot: -4deg; }}
+    .card-center {{ --x-offset: 0px; --rot: 0deg; }}
+    .card-right {{ --x-offset: 80px; --rot: 4deg; }}
+    </style>
 
-            # 🔄 Register if not already in DB
-            if not user_exists(email):
-                add_google_user(email=email, name=name)
-                log_user_action(email, "google_register")
+    <div class="animated-cards">
+        <img class="card-left" src="data:image/png;base64,{img_base64}" />
+        <img class="card-center" src="data:image/png;base64,{img_base64}" />
+        <img class="card-right" src="data:image/png;base64,{img_base64}" />
+    </div>
+    """, unsafe_allow_html=True)
 
-            # ✅ Now log them in
-            st.session_state.authenticated = True
-            st.session_state.username = name  # Set name as display
-            log_user_action(email, "google_login")
+    # -------- Login/Register Layout --------
+    left, center, right = st.columns([1, 2, 1])
+    with center:
+        st.markdown("<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>LEXIBOT</span></h2>", unsafe_allow_html=True)
 
-            st.success(f"✅ Logged in as {name}")
-            st.rerun()
-    except Exception as e:
-        st.error(f"❌ Google login failed: {e}")
-        st.session_state.pop("google_token", None)
+        login_tab, register_tab = st.tabs(["🔑 Login", "🆕 Register"])
 
-# ✅ Always show Google login link if token not set
-if not st.session_state.get("authenticated") and "google_token" not in st.session_state:
-    st.markdown("### 🔐 Login with Google")
-    login_via_google()
+        with login_tab:
+            user = st.text_input("Username", key="login_user")
+            pwd = st.text_input("Password", type="password", key="login_pass")
+            if st.button("Login", key="login_btn"):
+                if verify_user(user.strip(), pwd.strip()):
+                    st.session_state.authenticated = True
+                    st.session_state.username = user.strip()
+                    log_user_action(user.strip(), "login")
+                    st.success("✅ Login successful!")
+                    st.rerun()
+                else:
+                    st.error("❌ Invalid credentials.")
+
+        with register_tab:
+            new_user = st.text_input("Choose a Username", key="reg_user")
+            new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
+            if st.button("Register", key="register_btn"):
+                if new_user.strip() and new_pass.strip():
+                    if add_user(new_user.strip(), new_pass.strip()):
+                        st.success("✅ Registered! You can now login.")
+                        log_user_action(new_user.strip(), "register")
+                    else:
+                        st.error("🚫 Username already exists.")
+                else:
+                    st.warning("⚠️ Please fill in both fields.")
+        st.markdown("</div>", unsafe_allow_html=True)
+
     st.stop()
-
-
-
 
 # ------------------- AFTER LOGIN -------------------
 if st.session_state.authenticated:

@@ -1,6 +1,3 @@
-
-
-
 import pdfkit
 from io import BytesIO
 
@@ -26,8 +23,7 @@ def html_to_pdf_bytes(html_string):
 
 
 
-    pdf_bytes = pdfkit.from_string(html_string, False, options=options, configuration=config)
-    return BytesIO(pdf_bytes)
+    
 
 
 def generate_cover_letter_from_resume_builder():

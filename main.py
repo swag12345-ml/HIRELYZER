@@ -994,11 +994,10 @@ def extract_text_from_images(pdf_path):
 
 # Detect bias in resume
 
-import spacy
+
 import re
 
 # Load spaCy English model
-nlp = spacy.load("en_core_web_sm")
 
 # Example gender_words dictionary (use your full research-backed lists here)
 gender_words = {

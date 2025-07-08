@@ -1,16 +1,11 @@
-from weasyprint import HTML
-from io import BytesIO
-
-def html_to_pdf_bytes(html_string):
-    pdf_io = BytesIO()
-    HTML(string=html_string).write_pdf(pdf_io)
-    pdf_io.seek(0)  # ✅ Reset pointer for Streamlit download
-    return pdf_io
-
 import spacy
 import os
 import nltk
+import language_tool_python
 
+# ================================
+# 📌 Load spaCy model (auto-download if missing)
+# ================================
 def load_spacy_model():
     try:
         nlp = spacy.load("en_core_web_sm")
@@ -19,6 +14,9 @@ def load_spacy_model():
         nlp = spacy.load("en_core_web_sm")
     return nlp
 
+# ================================
+# 📌 Setup NLTK resources (punkt, stopwords)
+# ================================
 def setup_nltk():
     try:
         nltk.data.find('tokenizers/punkt')
@@ -29,9 +27,25 @@ def setup_nltk():
     except LookupError:
         nltk.download('stopwords')
 
-# ✅ Usage
-nlp = load_spacy_model()
-setup_nltk()
+# ================================
+# 📌 Setup LanguageTool for grammar checking
+# ================================
+def setup_language_tool():
+    tool = language_tool_python.LanguageTool('en-US')
+    return tool
+
+# ================================
+# ✅ Initialize all NLP tools at once
+# ================================
+def initialize_nlp_tools():
+    nlp = load_spacy_model()
+    setup_nltk()
+    tool = setup_language_tool()
+    return nlp, tool
+
+# ✅ Call this once during your app initialization
+nlp, language_tool = initialize_nlp_tools()
+
 
 def generate_cover_letter_from_resume_builder():
     import streamlit as st

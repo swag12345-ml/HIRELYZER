@@ -28,10 +28,10 @@ def setup_nltk():
         nltk.download('stopwords')
 
 # ================================
-# 📌 Setup LanguageTool for grammar checking
+# 📌 Setup LanguageTool using public API for grammar checking (no Java required)
 # ================================
 def setup_language_tool():
-    tool = language_tool_python.LanguageTool('en-US')
+    tool = language_tool_python.LanguageToolPublicAPI('en-US')
     return tool
 
 # ================================

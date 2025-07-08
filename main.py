@@ -1,35 +1,37 @@
-import pdfkit
+from weasyprint import HTML
 from io import BytesIO
 
 def html_to_pdf_bytes(html_string):
-    import pdfkit
-    from io import BytesIO
-
-    path_to_wkhtmltopdf = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
-    config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
-
-    options = {
-        'page-width': '400mm',
-        'page-height': '297mm',
-        'encoding': "UTF-8",
-        'enable-local-file-access': None,
-        'margin-top': '10mm',
-        'margin-bottom': '10mm',
-        'margin-left': '10mm',
-        'margin-right': '10mm',
-        'zoom': '1',
-        'disable-smart-shrinking': '',
-    }
-
-    pdf_bytes = pdfkit.from_string(html_string, False, options=options, configuration=config)
-    pdf_io = BytesIO(pdf_bytes)
-    pdf_io.seek(0)  # ✅ Reset pointer for download button
+    pdf_io = BytesIO()
+    HTML(string=html_string).write_pdf(pdf_io)
+    pdf_io.seek(0)  # ✅ Reset pointer for Streamlit download
     return pdf_io
 
+import spacy
+import os
+import nltk
 
+def load_spacy_model():
+    try:
+        nlp = spacy.load("en_core_web_sm")
+    except OSError:
+        os.system("python -m spacy download en_core_web_sm")
+        nlp = spacy.load("en_core_web_sm")
+    return nlp
 
-    pdf_bytes = pdfkit.from_string(html_string, False, options=options, configuration=config)
-    return BytesIO(pdf_bytes)
+def setup_nltk():
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except LookupError:
+        nltk.download('punkt')
+    try:
+        nltk.data.find('corpora/stopwords')
+    except LookupError:
+        nltk.download('stopwords')
+
+# ✅ Usage
+nlp = load_spacy_model()
+setup_nltk()
 
 def generate_cover_letter_from_resume_builder():
     import streamlit as st

@@ -1,4 +1,3 @@
-
 import pdfkit
 from io import BytesIO
 
@@ -50,7 +49,7 @@ def html_to_pdf_bytes(html_string):
     return BytesIO(pdf_bytes)
 
 def generate_cover_letter_from_resume_builder():
-   
+    import streamlit as st
     from datetime import datetime
     import re
 
@@ -137,10 +136,9 @@ Hiring Manager, {company}, {location}
     st.session_state["cover_letter_html"] = cover_letter_html
 
 
-
+import streamlit as st
 import streamlit.components.v1 as components
 from base64 import b64encode
-
 import re
 from llm_manager import call_llm
 import requests
@@ -358,7 +356,7 @@ if not st.session_state.authenticated:
     </script>
     """, height=400)
 
-import streamlit as st
+
 
 if not st.session_state.get("authenticated", False):
     from base64 import b64encode
@@ -1155,8 +1153,11 @@ def extract_text_from_images(pdf_path):
 
 # Detect bias in resume
 
+import spacy
+import re
 
-
+# Load spaCy English model
+nlp = spacy.load("en_core_web_sm")
 
 # Example gender_words dictionary (use your full research-backed lists here)
 gender_words = {
@@ -1570,8 +1571,7 @@ def setup_vectorstore(documents):
 def create_chain(vectorstore):
     if "memory" not in st.session_state:
         st.session_state.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
-
-
+import re
 import pandas as pd
 import altair as alt
 from llm_manager import call_llm
@@ -1806,8 +1806,6 @@ else:
 
 
 uploaded_files = st.file_uploader("Upload PDF Resumes", type=["pdf"], accept_multiple_files=True)
-
-
 
 
 import os

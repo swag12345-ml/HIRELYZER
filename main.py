@@ -1,17 +1,3 @@
-import spacy
-from spacy.cli import download
-import streamlit as st
-
-@st.cache_resource(show_spinner="⏳ Loading spaCy model...")
-def load_spacy_model():
-    try:
-        return spacy.load("en_core_web_sm")
-    except OSError:
-        download("en_core_web_sm")
-        return spacy.load("en_core_web_sm")
-
-nlp = load_spacy_model()
-
 
 import pdfkit
 from io import BytesIO

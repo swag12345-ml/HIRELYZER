@@ -1153,15 +1153,20 @@ def extract_text_from_images(pdf_path):
         return []
 
 # Detect bias in resume
-
 import spacy
 from spacy.cli import download
+import streamlit as st
 
-try:
-    nlp = spacy.load("en_core_web_sm")
-except OSError:
-    download("en_core_web_sm")
-    nlp = spacy.load("en_core_web_sm")
+@st.cache_resource(show_spinner="⏳ Loading spaCy model...")  # ✅ prevents re-download
+def load_spacy_model():
+    try:
+        return spacy.load("en_core_web_sm")
+    except OSError:
+        download("en_core_web_sm")
+        return spacy.load("en_core_web_sm")
+
+nlp = load_spacy_model()
+
 
 
 # Example gender_words dictionary (use your full research-backed lists here)

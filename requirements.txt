@@ -1,29 +1,31 @@
 streamlit
+streamlit-autorefresh
 torch
-python-dotenv
-pymupdf  # PyMuPDF
-easyocr
+numpy
+pillow
+matplotlib
+pytz
+pdfkit
+fpdf
 pdf2image
+pymupdf
+python-docx
+pytesseract
+language-tool-python
+spacy
+nltk
+easyocr
+bcrypt
+python-dotenv
+tabulate
+
+# LangChain ecosystem
 langchain
 langchain-community
 langchain-huggingface
 langchain-groq
+sentence-transformers
 faiss-cpu
-numpy
-pillow
-sentence-transformers  # Required for HuggingFaceEmbeddings
-pytesseract
-fpdf
-matplotlib
-nltk
-python-docx
-bcrypt
-pytz
-streamlit-autorefresh
-tabulate
-language-tool-python
-spacy
-pdfkit
 
 
 

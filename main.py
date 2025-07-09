@@ -1,51 +1,52 @@
-import spacy
-from spacy.cli import download
-import nltk
-import language_tool_python
+import pdfkit
+from io import BytesIO
 
-# ================================
-# 📌 Load spaCy model (auto-download if missing)
-# ================================
-def load_spacy_model():
-    try:
-        nlp = spacy.load("en_core_web_sm")
-    except OSError:
-        download("en_core_web_sm")
-        nlp = spacy.load("en_core_web_sm")
-    return nlp
+def html_to_pdf_bytes(html_string):
+    path_to_wkhtmltopdf = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+    config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
 
-# ================================
-# 📌 Setup NLTK resources (punkt, stopwords)
-# ================================
-def setup_nltk():
-    try:
-        nltk.data.find('tokenizers/punkt')
-    except LookupError:
-        nltk.download('punkt')
-    try:
-        nltk.data.find('corpora/stopwords')
-    except LookupError:
-        nltk.download('stopwords')
+    # ✅ Inject a base style with larger font size
+    styled_html_string = f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                font-size: 14pt;
+                font-family: 'Segoe UI', sans-serif;
+                line-height: 1.5;
+            }}
+        </style>
+    </head>
+    <body>
+        {html_string}
+    </body>
+    </html>
+    """
 
-# ================================
-# 📌 Setup LanguageTool using public API for grammar checking (no Java required)
-# ================================
-def setup_language_tool():
-    tool = language_tool_python.LanguageToolPublicAPI('en-US')
-    return tool
+    options = {
+        'page-width': '400mm',       # ✅ Custom wide page size
+        'page-height': '297mm',      # ✅ Standard height
+        'encoding': "UTF-8",
+        'enable-local-file-access': None,
+        'margin-top': '10mm',
+        'margin-bottom': '10mm',
+        'margin-left': '10mm',
+        'margin-right': '10mm',
+        'zoom': '1',                 # ✅ No zoom to maintain layout
+        'disable-smart-shrinking': ''
+    }
 
-# ================================
-# ✅ Initialize all NLP tools at once
-# ================================
-def initialize_nlp_tools():
-    nlp = load_spacy_model()
-    setup_nltk()
-    tool = setup_language_tool()
-    return nlp, tool
+    pdf_bytes = pdfkit.from_string(styled_html_string, False, options=options, configuration=config)
+    pdf_io = BytesIO(pdf_bytes)
+    pdf_io.seek(0)
 
-# ✅ Call this once during your app initialization
-nlp, language_tool = initialize_nlp_tools()
+    return pdf_io
 
+
+
+
+    pdf_bytes = pdfkit.from_string(html_string, False, options=options, configuration=config)
+    return BytesIO(pdf_bytes)
 
 def generate_cover_letter_from_resume_builder():
     import streamlit as st
@@ -150,8 +151,10 @@ from user_login import (
     verify_user,
     get_logins_today,
     get_total_registered_users,
-    log_user_action
+    log_user_action,
+    username_exists  # 👈 add this line
 )
+
 
 # ------------------- Initialize -------------------
 create_user_table()
@@ -231,6 +234,10 @@ body, .main {
 }
 </style>
 """, unsafe_allow_html=True)
+# 🔹 VIDEO BACKGROUND & GLOW TEXT
+
+
+
 
 # ------------------- BEFORE LOGIN -------------------
 if not st.session_state.authenticated:
@@ -350,7 +357,9 @@ if not st.session_state.authenticated:
     </script>
     """, height=400)
 
-if not st.session_state.authenticated:
+import streamlit as st
+
+if not st.session_state.get("authenticated", False):
     from base64 import b64encode
     import requests
 
@@ -411,49 +420,115 @@ if not st.session_state.authenticated:
 
     # -------- Login/Register Layout --------
     left, center, right = st.columns([1, 2, 1])
+
     with center:
-        st.markdown("<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>LEXIBOT</span></h2>", unsafe_allow_html=True)
+        st.markdown(
+            "<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>LEXIBOT</span></h2>",
+            unsafe_allow_html=True,
+        )
 
         login_tab, register_tab = st.tabs(["🔑 Login", "🆕 Register"])
 
+        # ---------------- LOGIN TAB ----------------
         with login_tab:
             user = st.text_input("Username", key="login_user")
             pwd = st.text_input("Password", type="password", key="login_pass")
+
             if st.button("Login", key="login_btn"):
-                if verify_user(user.strip(), pwd.strip()):
+                success, saved_key = verify_user(user.strip(), pwd.strip())
+                if success:
                     st.session_state.authenticated = True
                     st.session_state.username = user.strip()
+
+                    # ✅ Load saved Groq key into session
+                    if saved_key:
+                        st.session_state["user_groq_key"] = saved_key
+
                     log_user_action(user.strip(), "login")
                     st.success("✅ Login successful!")
                     st.rerun()
                 else:
                     st.error("❌ Invalid credentials.")
 
+        # ---------------- REGISTER TAB ----------------
         with register_tab:
             new_user = st.text_input("Choose a Username", key="reg_user")
             new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
+            st.caption("🔒 Password must be at least 8 characters and include uppercase, lowercase, number, and special character.")
+
+            # ✅ Live Username Availability Check
+            if new_user.strip():
+                if username_exists(new_user.strip()):
+                    st.error("🚫 Username already exists.")
+                else:
+                    st.info("✅ Username is available.")
+
             if st.button("Register", key="register_btn"):
                 if new_user.strip() and new_pass.strip():
-                    if add_user(new_user.strip(), new_pass.strip()):
-                        st.success("✅ Registered! You can now login.")
+                    success, message = add_user(new_user.strip(), new_pass.strip())
+                    if success:
+                        st.success(message)
                         log_user_action(new_user.strip(), "register")
                     else:
-                        st.error("🚫 Username already exists.")
+                        st.error(message)
                 else:
                     st.warning("⚠️ Please fill in both fields.")
+
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()
 
+
+
+
 # ------------------- AFTER LOGIN -------------------
+from user_login import save_user_api_key, get_user_api_key  # Ensure both are imported
+
 if st.session_state.authenticated:
-    st.markdown(f"<h2 style='color:#00BFFF;'>Welcome to LEXIBOT, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>", unsafe_allow_html=True)
+    st.markdown(
+        f"<h2 style='color:#00BFFF;'>Welcome to LEXIBOT, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>",
+        unsafe_allow_html=True,
+    )
 
     if st.button("🚪 Logout"):
         log_user_action(st.session_state.username, "logout")
         st.session_state.authenticated = False
         st.session_state.username = None
         st.rerun()
+
+    # ✅ Groq API Key Input (in sidebar)
+    st.sidebar.markdown("### 🔑 Groq API Key")
+
+    # Load saved key from DB
+    saved_key = get_user_api_key(st.session_state.username)
+
+    # Generate masked preview
+    masked_preview = f"****{saved_key[-6:]}" if saved_key else ""
+
+    # Optional API key input (user can overwrite)
+    user_api_key_input = st.sidebar.text_input(
+        "Your Groq API Key (Optional)",
+        placeholder=masked_preview,
+        type="password"
+    )
+
+    # Save new key if entered
+    if user_api_key_input:
+        st.session_state["user_groq_key"] = user_api_key_input
+        save_user_api_key(st.session_state.username, user_api_key_input)
+        st.sidebar.success("✅ New key saved and in use.")
+    elif saved_key:
+        st.session_state["user_groq_key"] = saved_key
+        st.sidebar.info(f"ℹ️ Using your previously saved API key ({masked_preview})")
+    else:
+        st.sidebar.warning("⚠ Using shared admin key with possible usage limits")
+
+    # 🔘 Clear Key Button
+    if st.sidebar.button("🗑️ Clear My API Key"):
+        st.session_state["user_groq_key"] = None
+        save_user_api_key(st.session_state.username, None)
+        st.sidebar.success("✅ Cleared saved Groq API key. Now using shared admin key.")
+
 
 
 from user_login import get_all_user_logs
@@ -1544,7 +1619,6 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    # ✅ Calculate grammar tool score before prompt
     grammar_score, grammar_feedback = get_grammar_score(resume_text, max_score=lang_weight)
 
     logic_score_note = (
@@ -1552,18 +1626,20 @@ def ats_percentage_score(
         if logic_profile_score else ""
     )
 
-    # ✅ Modified prompt injecting grammar tool score & feedback
     prompt = f"""
 You are an AI-powered ATS evaluator. Evaluate the candidate's resume with **detailed analysis for each section** in a structured format as follows.
 
 For the **Language Quality Analysis** section:
 
-- Use the following grammar tool evaluation as the official score and feedback.
-- Do NOT generate your own separate score. Instead, use:
-    - **Score:** {grammar_score} / {lang_weight}
-    - **Grammar & Tone:** {grammar_feedback}
+- Use the following grammar tool evaluation as the official score.
+- Provide your detailed analysis for clarity, tone, and professionalism as explanation.
+- Append the grammar tool feedback summary at the end.
+
+Grammar Tool Score: {grammar_score} / {lang_weight}
+Grammar Tool Feedback: {grammar_feedback}
 
 ---
+
 ### 🏷️ Candidate Name
 <Full name or "Not Found">
 
@@ -1592,7 +1668,7 @@ For the **Language Quality Analysis** section:
 
 ### 🗣 Language Quality Analysis
 **Score:** {grammar_score} / {lang_weight}
-**Grammar & Tone:** {grammar_feedback}
+**Grammar & Tone:** <Your detailed analysis here>
 
 ### 🔑 Keyword Analysis
 **Score:** <0–{keyword_weight}> / {keyword_weight}
@@ -1610,7 +1686,8 @@ For the **Language Quality Analysis** section:
 ---
 **Instructions:**
 - Return each section in Markdown format with proper bullet points and bold subsection titles as shown.
-- Do NOT modify the Language Quality score or feedback. Use the provided grammar tool evaluation.
+- Do NOT modify the Language Quality score. Use grammar tool score as shown.
+- Append grammar tool feedback summary at the end of Language Quality section.
 - Ensure clarity and formal language.
 - Keep technical terms as in the resume.
 ---
@@ -1632,22 +1709,18 @@ For the **Language Quality Analysis** section:
         match = re.search(pattern, text, re.DOTALL)
         return match.group(1).strip() if match else default
 
-    # Extract candidate name
     candidate_name = extract_section(r"### 🏷️ Candidate Name(.*?)###", ats_result, default="Not Found")
-
-    # Extract each analysis section
     edu_analysis = extract_section(r"### 🏫 Education Analysis(.*?)###", ats_result)
     exp_analysis = extract_section(r"### 💼 Experience Analysis(.*?)###", ats_result)
     skills_analysis = extract_section(r"### 🛠 Skills Analysis(.*?)###", ats_result)
-    lang_analysis = extract_section(r"### 🗣 Language Quality Analysis(.*?)###", ats_result)
+    lang_analysis_llm = extract_section(r"### 🗣 Language Quality Analysis(.*?)###", ats_result)
     keyword_analysis = extract_section(r"### 🔑 Keyword Analysis(.*?)###", ats_result)
     final_thoughts = extract_section(r"### ✅ Final Thoughts(.*)", ats_result)
 
-    # ✅ Extract missing keywords with multiline safe regex
+    # ✅ Clean missing keywords and skills
     missing_keywords = extract_section(r"\*\*Missing Keywords:\*\*(.*?)(?:###|\Z)", keyword_analysis, default="N/A")
     missing_keywords = missing_keywords.replace("-", "").strip().replace("\n", ", ")
 
-    # ✅ Extract missing skills with multiline safe regex
     missing_skills = extract_section(r"\*\*Missing Skills:\*\*(.*?)(?:###|\Z)", skills_analysis, default="N/A")
     missing_skills = missing_skills.replace("-", "").strip().replace("\n", ", ")
 
@@ -1665,16 +1738,17 @@ For the **Language Quality Analysis** section:
     total_score = min(edu_score + exp_score + skills_score + grammar_score + keyword_score, 100)
 
     # 📊 Score band
-    if total_score >= 85:
-        formatted_score = "Excellent"
-    elif total_score >= 70:
-        formatted_score = "Good"
-    elif total_score >= 50:
-        formatted_score = "Average"
-    else:
-        formatted_score = "Poor"
+    formatted_score = (
+        "Excellent" if total_score >= 85 else
+        "Good" if total_score >= 70 else
+        "Average" if total_score >= 50 else
+        "Poor"
+    )
 
-    # ✅ Return ats_result (full text) and structured component dictionary
+    # ✅ Combine LLM analysis with grammar tool summary
+    updated_lang_analysis = f"{lang_analysis_llm}<br><b>Grammar Tool Summary:</b> {grammar_feedback}"
+
+    # ✅ Return structured results
     return ats_result, {
         "Candidate Name": candidate_name,
         "Education Score": edu_score,
@@ -1687,12 +1761,14 @@ For the **Language Quality Analysis** section:
         "Education Analysis": edu_analysis,
         "Experience Analysis": exp_analysis,
         "Skills Analysis": skills_analysis,
-        "Language Analysis": lang_analysis + f"<br><b>Grammar Tool Feedback:</b> {grammar_feedback}",
+        "Language Analysis": updated_lang_analysis,
         "Keyword Analysis": keyword_analysis,
         "Final Thoughts": final_thoughts,
         "Missing Keywords": missing_keywords,
         "Missing Skills": missing_skills
     }
+
+
 
 
 
@@ -1783,7 +1859,7 @@ if uploaded_files and job_description:
             full_text, replacement_mapping, user_location
         )
 
-        # ✅ ATS evaluation (now uses grammar tool score and feedback internally)
+        # ✅ ATS evaluation (uses grammar tool score + full LLM analysis explanation)
         ats_result, ats_scores = ats_percentage_score(
             resume_text=full_text,
             job_description=job_description,
@@ -1807,7 +1883,7 @@ if uploaded_files and job_description:
         missing_keywords_raw = ats_scores.get("Missing Keywords", "N/A")
         missing_skills_raw = ats_scores.get("Missing Skills", "N/A")
         fit_summary = ats_scores.get("Final Thoughts", "N/A")
-        grammar_feedback = ats_scores.get("Language Analysis", "N/A")
+        language_analysis_full = ats_scores.get("Language Analysis", "N/A")  # ✅ LLM explanation + grammar summary
 
         # ✅ Clean Missing Keywords and Skills to lists
         missing_keywords = [kw.strip() for kw in missing_keywords_raw.split(",") if kw.strip()] if missing_keywords_raw != "N/A" else []
@@ -1851,7 +1927,7 @@ if uploaded_files and job_description:
             "Education Analysis": ats_scores.get("Education Analysis", ""),
             "Experience Analysis": ats_scores.get("Experience Analysis", ""),
             "Skills Analysis": ats_scores.get("Skills Analysis", ""),
-            "Language Analysis": grammar_feedback,  # ✅ Uses updated grammar tool feedback
+            "Language Analysis": language_analysis_full,  # ✅ Stores combined LLM + grammar summary
             "Keyword Analysis": ats_scores.get("Keyword Analysis", ""),
             "Final Thoughts": fit_summary,
             "Missing Keywords": missing_keywords,
@@ -1902,13 +1978,13 @@ if st.button("🔄 Reset Resume Upload Memory"):
 
 
 
-
 # === TAB 1: Dashboard ===
 # 📊 Dashboard and Metrics
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", 
     "📚 Course Recommendation", "📁 Admin DB View"
 ])
+
 def generate_resume_report_html(resume):
     # ✅ Safe retrieval with fallback
     candidate_name = resume.get('Candidate Name', 'Not Found')
@@ -1917,48 +1993,36 @@ def generate_resume_report_html(resume):
 
     # Masculine words formatted
     masculine_words_list = resume.get("Detected Masculine Words", [])
-    if masculine_words_list:
-        masculine_words = "".join(
-            f"<b>{item.get('word','')}</b>: {item.get('sentence','')}<br>"
-            for item in masculine_words_list
-        )
-    else:
-        masculine_words = "<i>None detected.</i>"
+    masculine_words = "".join(
+        f"<b>{item.get('word','')}</b>: {item.get('sentence','')}<br>"
+        for item in masculine_words_list
+    ) if masculine_words_list else "<i>None detected.</i>"
 
     # Feminine words formatted
     feminine_words_list = resume.get("Detected Feminine Words", [])
-    if feminine_words_list:
-        feminine_words = "".join(
-            f"<b>{item.get('word','')}</b>: {item.get('sentence','')}<br>"
-            for item in feminine_words_list
-        )
-    else:
-        feminine_words = "<i>None detected.</i>"
+    feminine_words = "".join(
+        f"<b>{item.get('word','')}</b>: {item.get('sentence','')}<br>"
+        for item in feminine_words_list
+    ) if feminine_words_list else "<i>None detected.</i>"
 
-    # Missing keywords formatted
+    # Missing keywords formatted as multiline bullet points
     missing_keywords_list = resume.get('Missing Keywords', [])
-    if missing_keywords_list:
-        missing_keywords = "".join(
-            f"<span class='keyword'>{kw}</span>"
-            for kw in missing_keywords_list
-        )
-    else:
-        missing_keywords = "<i>None</i>"
+    missing_keywords = "".join(
+        f"• {kw}<br>"
+        for kw in missing_keywords_list
+    ) if missing_keywords_list else "<i>None</i>"
 
-    # Missing skills formatted
+    # Missing skills formatted as multiline bullet points
     missing_skills_list = resume.get('Missing Skills', [])
-    if missing_skills_list:
-        missing_skills = "".join(
-            f"<span class='keyword'>{sk}</span>"
-            for sk in missing_skills_list
-        )
-    else:
-        missing_skills = "<i>None</i>"
+    missing_skills = "".join(
+        f"• {sk}<br>"
+        for sk in missing_skills_list
+    ) if missing_skills_list else "<i>None</i>"
 
     ats_report_html = resume.get("ATS Report", "").replace("\n", "<br>")
 
     # ✅ Pre-fetch analysis fields with enhanced styling for scores
-    def style_analysis(title, analysis):
+    def style_analysis(analysis):
         if "**Score:**" in analysis:
             parts = analysis.split("**Score:**")
             rest = parts[1].split("**", 1)
@@ -1969,15 +2033,11 @@ def generate_resume_report_html(resume):
         else:
             return f"<p>{analysis}</p>"
 
-    edu_analysis = style_analysis("Education Analysis", resume.get("Education Analysis", "N/A").replace("\n", "<br>"))
-    exp_analysis = style_analysis("Experience Analysis", resume.get("Experience Analysis", "N/A").replace("\n", "<br>"))
-    skills_analysis = style_analysis("Skills Analysis", resume.get("Skills Analysis", "N/A").replace("\n", "<br>"))
-
-    # ✅ Language Analysis uses grammar tool score + feedback directly
-    lang_analysis_raw = resume.get("Language Analysis", "N/A").replace("\n", "<br>")
-    lang_analysis = style_analysis("Language Analysis", lang_analysis_raw)
-
-    keyword_analysis = style_analysis("Keyword Analysis", resume.get("Keyword Analysis", "N/A").replace("\n", "<br>"))
+    edu_analysis = style_analysis(resume.get("Education Analysis", "N/A").replace("\n", "<br>"))
+    exp_analysis = style_analysis(resume.get("Experience Analysis", "N/A").replace("\n", "<br>"))
+    skills_analysis = style_analysis(resume.get("Skills Analysis", "N/A").replace("\n", "<br>"))
+    lang_analysis = style_analysis(resume.get("Language Analysis", "N/A").replace("\n", "<br>"))
+    keyword_analysis = style_analysis(resume.get("Keyword Analysis", "N/A").replace("\n", "<br>"))
     final_thoughts = resume.get("Final Thoughts", "N/A").replace("\n", "<br>")
 
     # Metrics
@@ -2044,6 +2104,7 @@ def generate_resume_report_html(resume):
         <div style="margin-top:20px;">
             <div class="card-header">🛠 Skills Analysis</div>
             <div class="card-body">{skills_analysis}</div>
+            
         </div>
 
         <div style="margin-top:20px;">
@@ -2054,9 +2115,8 @@ def generate_resume_report_html(resume):
         <div style="margin-top:20px;">
             <div class="card-header">🔑 Keyword Analysis</div>
             <div class="card-body">{keyword_analysis}</div>
+            
         </div>
-
-        
 
         <div style="margin-top:20px;">
             <div class="card-header">✅ Final Thoughts</div>
@@ -2145,6 +2205,9 @@ with tab1:
         for resume in resume_data:
             candidate_name = resume.get("Candidate Name", "Not Found")
             resume_name = resume.get("Resume Name", "Unknown")
+            missing_keywords = resume.get("Missing Keywords", [])
+            missing_skills = resume.get("Missing Skills", [])
+
             with st.expander(f"📄 {resume_name} | {candidate_name}"):
                 st.markdown(f"### 📊 ATS Evaluation for: **{candidate_name}**")
                 score_col1, score_col2, score_col3 = st.columns(3)
@@ -2227,6 +2290,10 @@ with tab1:
 {analysis_html}
 </div>
 """, unsafe_allow_html=True)
+
+                # ✅ Display Missing Skills and Keywords as badges
+                # ✅ Display Missing Skills as multiline bullet points
+                
 
                 # ✅ Show Missing Keywords and Missing Skills
                      # Missing keywords
@@ -3657,52 +3724,71 @@ with tab5:
         st.info("No domain data available.")
 
     st.markdown("### 📊 Domain Distribution by Count")
-    df_domain_dist = get_domain_distribution()
+
+    # ✅ Cached data loading
+    @st.cache_data
+    def load_domain_distribution():
+        df = get_domain_distribution()
+        if not df.empty:
+            total = df["count"].sum()
+            df["percent"] = (df["count"] / total) * 100
+            df = df.sort_values(by="count", ascending=False).reset_index(drop=True)
+        return df
+
+    # Load data
+    df_domain_dist = load_domain_distribution()
 
     if not df_domain_dist.empty:
-        total_count = df_domain_dist["count"].sum()
-        df_domain_dist["percent"] = (df_domain_dist["count"] / total_count) * 100
+        # 🔘 Radio to toggle between chart views
+        chart_type = st.radio("📊 Select View:", ["📈 Percentage View", "📉 Count View"], horizontal=True)
 
-        fig_dist, ax_dist = plt.subplots(figsize=(8, 5))
-        bars = ax_dist.bar(df_domain_dist["domain"], df_domain_dist["count"], color="#ff9933")
+        if chart_type == "📈 Percentage View":
+            fig_percent, ax_percent = plt.subplots(figsize=(9, 5))
+            bars_percent = ax_percent.bar(df_domain_dist["domain"], df_domain_dist["percent"], color="#33B5E5")
 
-        # Show actual count on Y-axis aligned with bar top
-        for bar in bars:
-            height = bar.get_height()
-            ax_dist.axhline(y=height, color='gray', linestyle=':', linewidth=0.5)
-            ax_dist.text(
-                -0.5,
-                height,
-                f"{int(height)}",
-                va='center',
-                ha='right',
-                fontsize=9,
-                color="gray"
-            )
+            for bar, pct in zip(bars_percent, df_domain_dist["percent"]):
+                height = bar.get_height()
+                ax_percent.text(
+                    bar.get_x() + bar.get_width() / 2,
+                    height + 0.5,
+                    f"{pct:.1f}%",
+                    ha='center',
+                    va='bottom',
+                    fontsize=10
+                )
 
-        # Show percentage on top of bars
-        for i, bar in enumerate(bars):
-            height = bar.get_height()
-            percent = df_domain_dist["percent"].iloc[i]
-            ax_dist.text(
-                bar.get_x() + bar.get_width() / 2,
-                height + 0.5,
-                f"{percent:.1f}%",
-                ha='center',
-                va='bottom',
-                fontsize=10,
-                fontweight='bold',
-                color="black"
-            )
+            ax_percent.set_title("Resume Distribution by Domain (%)", fontsize=14, fontweight='bold')
+            ax_percent.set_ylabel("Percentage (%)", fontsize=12)
+            ax_percent.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=10)
+            ax_percent.set_ylim(0, df_domain_dist["percent"].max() * 1.25)
+            ax_percent.grid(axis='y', linestyle='--', alpha=0.4)
 
-        ax_dist.set_ylabel("Resume Count", fontsize=12, fontweight='bold')
-        ax_dist.set_title("Resumes per Domain", fontsize=14, fontweight='bold')
-        ax_dist.set_xticks(np.arange(len(df_domain_dist["domain"])))
-        ax_dist.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=10)
-        max_count = df_domain_dist["count"].max()
-        ax_dist.set_yticks(np.arange(0, max_count + 6, 5))
+            st.pyplot(fig_percent)
 
-        st.pyplot(fig_dist)
+        elif chart_type == "📉 Count View":
+            fig_count, ax_count = plt.subplots(figsize=(9, 5))
+            bars_count = ax_count.bar(df_domain_dist["domain"], df_domain_dist["count"], color="#ff9933")
+
+            for bar, count in zip(bars_count, df_domain_dist["count"]):
+                height = bar.get_height()
+                ax_count.text(
+                    bar.get_x() + bar.get_width() / 2,
+                    height + 1,
+                    f"{int(count)}",
+                    ha='center',
+                    va='bottom',
+                    fontsize=10,
+                    color="black"
+                )
+
+            ax_count.set_title("Resume Count by Domain", fontsize=14, fontweight='bold')
+            ax_count.set_ylabel("Resume Count", fontsize=12)
+            ax_count.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=10)
+            ax_count.set_ylim(0, df_domain_dist["count"].max() * 1.25)
+            ax_count.grid(axis='y', linestyle='--', alpha=0.4)
+
+            st.pyplot(fig_count)
+
     else:
         st.info("No domain data found.")
 
@@ -3767,15 +3853,15 @@ with tab5:
     flagged_df = get_all_candidates(bias_threshold=0.6)
     if not flagged_df.empty:
         st.dataframe(
-    flagged_df[[
-        "id", "resume_name", "candidate_name",
-        "bias_score", "ats_score", "domain", "timestamp"
-    ]].sort_values(by="bias_score", key=lambda x: pd.to_numeric(x, errors="coerce"), ascending=False),
-    use_container_width=True
-)
-
+            flagged_df[[
+                "id", "resume_name", "candidate_name",
+                "bias_score", "ats_score", "domain", "timestamp"
+            ]].sort_values(by="bias_score", key=lambda x: pd.to_numeric(x, errors="coerce"), ascending=False),
+            use_container_width=True
+        )
     else:
         st.success("✅ No flagged candidates.")
+
 
 
 if "memory" in st.session_state:

@@ -12,6 +12,7 @@ def load_spacy_model():
 
 nlp = load_spacy_model()
 
+
 import pdfkit
 from io import BytesIO
 

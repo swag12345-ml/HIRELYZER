@@ -1,3 +1,46 @@
+from xhtml2pdf import pisa
+from io import BytesIO
+
+def html_to_pdf_bytes(html_string):
+    # ✅ CSS emulating the same wkhtmltopdf options
+    styled_html_string = f"""
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            @page {{
+                size: 400mm 297mm;  /* ✅ page-width: 400mm, page-height: 297mm */
+                margin-top: 10mm;
+                margin-bottom: 10mm;
+                margin-left: 10mm;
+                margin-right: 10mm;
+            }}
+            body {{
+                font-size: 14pt;
+                font-family: 'Segoe UI', sans-serif;
+                line-height: 1.5;
+                zoom: 1;  /* ✅ Not real CSS zoom, but included for logical completeness */
+            }}
+        </style>
+    </head>
+    <body>
+        {html_string}
+    </body>
+    </html>
+    """
+
+    # ✅ Create PDF in memory
+    pdf_io = BytesIO()
+    pisa_status = pisa.CreatePDF(src=styled_html_string, dest=pdf_io, encoding='utf-8')
+
+    if pisa_status.err:
+        raise Exception("❌ Error generating PDF")
+
+    pdf_io.seek(0)
+    return pdf_io
+
+
+
 import streamlit as st
 import streamlit.components.v1 as components
 from base64 import b64encode
@@ -911,47 +954,42 @@ import uuid
 import urllib.parse
 
 def search_jobs(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
-    # Encode for URL
+    # Encode values for query
     role_encoded = urllib.parse.quote_plus(job_role.strip())
-    role_slug = job_role.strip().lower().replace(" ", "-")
     loc_encoded = urllib.parse.quote_plus(location.strip())
-    loc_slug = location.strip().lower().replace(" ", "-")
+
+    # Create role/city slugs for path
+    role_path = job_role.strip().lower().replace(" ", "-")
+    city = location.strip().split(",")[0].strip().lower()
+    city_path = city.replace(" ", "-")
+    city_query = city.replace(" ", "%20") + "%20and%20india"
 
     # Experience mappings
     experience_range_map = {
         "Internship": "0~0", "Entry Level": "1~1", "Associate": "2~3",
         "Mid-Senior Level": "4~7", "Director": "8~15", "Executive": "16~20"
     }
-
     experience_exact_map = {
         "Internship": "0", "Entry Level": "1", "Associate": "2",
         "Mid-Senior Level": "4", "Director": "8", "Executive": "16"
     }
-
     linkedin_exp_map = {
         "Internship": "1", "Entry Level": "2", "Associate": "3",
         "Mid-Senior Level": "4", "Director": "5", "Executive": "6"
     }
-
     job_type_map = {
         "Full-time": "F", "Part-time": "P", "Contract": "C",
         "Temporary": "T", "Volunteer": "V", "Internship": "I"
     }
 
-    # LinkedIn URL
+    # LinkedIn
     linkedin_url = f"https://www.linkedin.com/jobs/search/?keywords={role_encoded}&location={loc_encoded}"
     if experience_level in linkedin_exp_map:
         linkedin_url += f"&f_E={linkedin_exp_map[experience_level]}"
     if job_type in job_type_map:
         linkedin_url += f"&f_JT={job_type_map[job_type]}"
 
-    # Naukri URL
-    naukri_url = f"https://www.naukri.com/{role_slug}-jobs-in-{loc_slug}?k={role_encoded}&l={loc_encoded}"
-    if experience_level and experience_exact_map.get(experience_level):
-        naukri_url += f"&experience={experience_exact_map[experience_level]}"
-    naukri_url += "&nignbevent_src=jobsearchDeskGNB"
-
-    # FoundIt URL
+    # Experience values
     if foundit_experience is not None:
         experience_range = f"{foundit_experience}~{foundit_experience}"
         experience_exact = str(foundit_experience)
@@ -959,13 +997,29 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         experience_range = experience_range_map.get(experience_level, "")
         experience_exact = experience_exact_map.get(experience_level, "")
 
-    search_id = uuid.uuid4()
-    foundit_url = f"https://www.foundit.in/srp/results?query={role_encoded}&locations={loc_encoded}"
-    if experience_range:
-        foundit_url += f"&experienceRanges={urllib.parse.quote_plus(experience_range)}"
+    # ✅ Naukri (cleaned)
+    naukri_url = (
+        f"https://www.naukri.com/{role_path}-jobs-in-{city_path}-and-india"
+        f"?k={role_encoded}"
+        f"&l={city_query}"
+    )
     if experience_exact:
-        foundit_url += f"&experience={experience_exact}"
-    foundit_url += f"&searchId={search_id}"
+        naukri_url += f"&experience={experience_exact}"
+    naukri_url += "&nignbevent_src=jobsearchDeskGNB"
+
+    # ✅ FoundIt
+    search_id = uuid.uuid4()
+    child_search_id = uuid.uuid4()
+    foundit_url = (
+        f"https://www.foundit.in/search/{role_path}-jobs-in-{city_path}"
+        f"?query={role_encoded}"
+        f"&locations={loc_encoded}"
+        f"&experienceRanges={urllib.parse.quote_plus(experience_range)}"
+        f"&experience={experience_exact}"
+        f"&queryDerived=true"
+        f"&searchId={search_id}"
+        f"&child_search_id={child_search_id}"
+    )
 
     return [
         {"title": f"LinkedIn: {job_role} jobs in {location}", "link": linkedin_url},
@@ -1858,42 +1912,45 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 ])
 
 def generate_resume_report_html(resume):
-    # ✅ Safe retrieval with fallback
+    import base64
+
+    def svg_to_base64(svg_string):
+        return base64.b64encode(svg_string.encode('utf-8')).decode('utf-8')
+
+    # SVG Icons (as minimal inline symbols)
+    icons = {
+        "resume": svg_to_base64("""<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"><text x="0" y="15" font-size="16">📄</text></svg>"""),
+        "ats": svg_to_base64("""<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"><text x="0" y="15" font-size="16">📊</text></svg>"""),
+        "edu": svg_to_base64("""<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"><text x="0" y="15" font-size="16">🏫</text></svg>"""),
+        "exp": svg_to_base64("""<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"><text x="0" y="15" font-size="16">💼</text></svg>"""),
+        "skills": svg_to_base64("""<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"><text x="0" y="15" font-size="16">🛠</text></svg>"""),
+        "lang": svg_to_base64("""<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"><text x="0" y="15" font-size="16">🗣</text></svg>"""),
+        "keyword": svg_to_base64("""<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"><text x="0" y="15" font-size="16">🔑</text></svg>"""),
+        "final": svg_to_base64("""<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"><text x="0" y="15" font-size="16">✅</text></svg>"""),
+        "bias": svg_to_base64("""<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"><text x="0" y="15" font-size="16">⚖️</text></svg>"""),
+    }
+
+    def icon_img(name):
+        return f'<img src="data:image/svg+xml;base64,{icons[name]}" width="18" height="18" style="vertical-align:middle;margin-right:5px;" />'
+
     candidate_name = resume.get('Candidate Name', 'Not Found')
     resume_name = resume.get('Resume Name', 'Unknown')
     rewritten_text = resume.get('Rewritten Text', '').replace("\n", "<br>")
 
-    # Masculine words formatted
     masculine_words_list = resume.get("Detected Masculine Words", [])
     masculine_words = "".join(
         f"<b>{item.get('word','')}</b>: {item.get('sentence','')}<br>"
         for item in masculine_words_list
     ) if masculine_words_list else "<i>None detected.</i>"
 
-    # Feminine words formatted
     feminine_words_list = resume.get("Detected Feminine Words", [])
     feminine_words = "".join(
         f"<b>{item.get('word','')}</b>: {item.get('sentence','')}<br>"
         for item in feminine_words_list
     ) if feminine_words_list else "<i>None detected.</i>"
 
-    # Missing keywords formatted as multiline bullet points
-    missing_keywords_list = resume.get('Missing Keywords', [])
-    missing_keywords = "".join(
-        f"• {kw}<br>"
-        for kw in missing_keywords_list
-    ) if missing_keywords_list else "<i>None</i>"
-
-    # Missing skills formatted as multiline bullet points
-    missing_skills_list = resume.get('Missing Skills', [])
-    missing_skills = "".join(
-        f"• {sk}<br>"
-        for sk in missing_skills_list
-    ) if missing_skills_list else "<i>None</i>"
-
     ats_report_html = resume.get("ATS Report", "").replace("\n", "<br>")
 
-    # ✅ Pre-fetch analysis fields with enhanced styling for scores
     def style_analysis(analysis):
         if "**Score:**" in analysis:
             parts = analysis.split("**Score:**")
@@ -1912,7 +1969,6 @@ def generate_resume_report_html(resume):
     keyword_analysis = style_analysis(resume.get("Keyword Analysis", "N/A").replace("\n", "<br>"))
     final_thoughts = resume.get("Final Thoughts", "N/A").replace("\n", "<br>")
 
-    # Metrics
     ats_match = resume.get('ATS Match %', 'N/A')
     edu_score = resume.get('Education Score', 'N/A')
     exp_score = resume.get('Experience Score', 'N/A')
@@ -1923,9 +1979,6 @@ def generate_resume_report_html(resume):
     feminine_count = resume.get('Feminine Words', 0)
     bias_score = resume.get('Bias Score (0 = Fair, 1 = Biased)', 'N/A')
 
-    # ================================
-    # 🔥 HTML report with analysis cards
-    # ================================
     return f"""<!DOCTYPE html><html><head><meta charset="UTF-8">
     <title>{candidate_name} - Resume Analysis Report</title>
     <style>
@@ -1933,15 +1986,13 @@ def generate_resume_report_html(resume):
         h1,h2{{color:#2f4f6f}}.section{{margin-bottom:30px}}
         .highlight{{background-color:#eef;padding:10px;border-radius:6px;margin-top:10px;font-size:14px}}
         .metric-box{{display:inline-block;background:#dbeaff;padding:10px 20px;margin:10px;border-radius:10px;font-weight:bold}}
-        .keyword{{display:inline-block;background:#fbdcdc;color:#a33;margin:4px;padding:6px 12px;border-radius:12px;font-size:13px}}
         .resume-box{{background-color:#f9f9ff;padding:15px;border-radius:8px;border:1px solid #ccc;white-space:pre-wrap}}
         .report-box{{background:#fffbe6;border-left:5px solid #f7d794;padding:10px;margin-top:10px;border-radius:6px}}
         .card-header{{background:#5b3cc4;color:white;padding:10px;border-radius:6px 6px 0 0}}
         .card-body{{background:#2d2d3a;color:white;padding:10px;border-radius:0 0 6px 6px}}
-        mark{{background-color: #ffd54f;}}
     </style>
     </head><body>
-    <h1>📄 Resume Analysis Report</h1>
+    <h1>{icon_img("resume")}Resume Analysis Report</h1>
 
     <div class="section">
         <h2>Candidate: {candidate_name}</h2>
@@ -1949,7 +2000,7 @@ def generate_resume_report_html(resume):
     </div>
 
     <div class="section">
-        <h2>📊 ATS Evaluation</h2>
+        <h2>{icon_img("ats")}ATS Evaluation</h2>
         <div class="metric-box">ATS Match: {ats_match}%</div>
         <div class="metric-box">Education: {edu_score}</div>
         <div class="metric-box">Experience: {exp_score}</div>
@@ -1958,46 +2009,43 @@ def generate_resume_report_html(resume):
         <div class="metric-box">Keyword: {keyword_score}</div>
 
         <div class="report-box">
-            <h3>📋 ATS Evaluation Report</h3>
+            <h3>ATS Evaluation Report</h3>
             {ats_report_html}
         </div>
 
-        <!-- 🔷 Analysis Cards -->
         <div style="margin-top:20px;">
-            <div class="card-header">🏫 Education Analysis</div>
+            <div class="card-header">{icon_img("edu")}Education Analysis</div>
             <div class="card-body">{edu_analysis}</div>
         </div>
 
         <div style="margin-top:20px;">
-            <div class="card-header">💼 Experience Analysis</div>
+            <div class="card-header">{icon_img("exp")}Experience Analysis</div>
             <div class="card-body">{exp_analysis}</div>
         </div>
 
         <div style="margin-top:20px;">
-            <div class="card-header">🛠 Skills Analysis</div>
+            <div class="card-header">{icon_img("skills")}Skills Analysis</div>
             <div class="card-body">{skills_analysis}</div>
-            
         </div>
 
         <div style="margin-top:20px;">
-            <div class="card-header">🗣 Language Quality Analysis</div>
+            <div class="card-header">{icon_img("lang")}Language Quality Analysis</div>
             <div class="card-body">{lang_analysis}</div>
         </div>
 
         <div style="margin-top:20px;">
-            <div class="card-header">🔑 Keyword Analysis</div>
+            <div class="card-header">{icon_img("keyword")}Keyword Analysis</div>
             <div class="card-body">{keyword_analysis}</div>
-            
         </div>
 
         <div style="margin-top:20px;">
-            <div class="card-header">✅ Final Thoughts</div>
+            <div class="card-header">{icon_img("final")}Final Thoughts</div>
             <div class="card-body">{final_thoughts}</div>
         </div>
     </div>
 
     <div class="section">
-        <h2>⚖️ Gender Bias Analysis</h2>
+        <h2>{icon_img("bias")}Gender Bias Analysis</h2>
         <div class="metric-box" style="background:#f0f8ff;">Masculine Words: {masculine_count}</div>
         <div class="metric-box" style="background:#fff0f5;">Feminine Words: {feminine_count}</div>
         <p><strong>Bias Score (0=Fair, 1=Biased):</strong> {bias_score}</p>
@@ -2006,12 +2054,11 @@ def generate_resume_report_html(resume):
     </div>
 
     <div class="section">
-        <h2>✅ Rewritten Bias-Free Resume</h2>
+        <h2>{icon_img("final")}Rewritten Bias-Free Resume</h2>
         <div class="resume-box">{rewritten_text}</div>
     </div>
 
     </body></html>"""
-
 
 
 
@@ -2230,7 +2277,17 @@ with tab1:
                         use_container_width=True,
                         key=f"download_html_{resume['Resume Name']}"
                     )
-    else:
+                    pdf_file = html_to_pdf_bytes(html_report)
+                    st.download_button(
+                    label="📄 Download Full Analysis Report (.pdf)",
+                    data=pdf_file,
+                    file_name=f"{resume['Resume Name'].split('.')[0]}_report.pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                    key=f"download_pdf_{resume['Resume Name']}"
+                    )               
+
+    else:           
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
 
 

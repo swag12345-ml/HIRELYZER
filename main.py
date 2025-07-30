@@ -1163,12 +1163,18 @@ import spacy
 import subprocess
 import importlib.util
 
+# Check if spaCy model is installed
 def ensure_spacy_model(model_name="en_core_web_sm"):
-    if importlib.util.find_spec(model_name) is None:
-        subprocess.run(["python", "-m", "spacy", "download", model_name])
+    try:
+        # Try to load it directly
+        spacy.load(model_name)
+    except OSError:
+        # If not installed, download it
+        subprocess.run(["python", "-m", "spacy", "download", model_name], check=True)
 
 ensure_spacy_model()
 nlp = spacy.load("en_core_web_sm")
+
 
 
 # Example gender_words dictionary (use your full research-backed lists here)

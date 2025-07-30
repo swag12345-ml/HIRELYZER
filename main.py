@@ -1,5 +1,51 @@
 import pdfkit
 from io import BytesIO
+import streamlit as st
+from datetime import datetime
+import streamlit.components.v1 as components
+from base64 import b64encode
+import re
+from llm_manager import call_llm
+import requests
+import datetime
+import os, json, random, string, re, asyncio, io
+import urllib.parse
+from collections import Counter
+
+# ------------------- External Libraries -------------------
+import torch
+import io
+from io import BytesIO
+import matplotlib.pyplot as plt
+import fitz
+import requests
+import numpy as np
+import pandas as pd
+
+import base64
+from db_manager import insert_candidate, get_top_domains_by_score
+
+    
+from PIL import Image
+from pdf2image import convert_from_path
+from dotenv import load_dotenv
+from nltk.stem import WordNetLemmatizer
+from docx import Document
+from docx.shared import Pt, RGBColor, Inches
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
+
+# ------------------- Langchain & Embeddings -------------------
+from langchain_text_splitters import CharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_groq import ChatGroq
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationalRetrievalChain
+from llm_manager import call_llm
+
+from pydantic import BaseModel
 
 def html_to_pdf_bytes(html_string):
     path_to_wkhtmltopdf = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
@@ -9,7 +55,7 @@ def html_to_pdf_bytes(html_string):
     styled_html_string = f"""
     <html>
     <head>
-        <style>
+        <style>-----
             body {{
                 font-size: 14pt;
                 font-family: 'Segoe UI', sans-serif;
@@ -49,9 +95,7 @@ def html_to_pdf_bytes(html_string):
     return BytesIO(pdf_bytes)
 
 def generate_cover_letter_from_resume_builder():
-    import streamlit as st
-    from datetime import datetime
-    import re
+    
 
     name = st.session_state.get("name", "")
     job_title = st.session_state.get("job_title", "")
@@ -136,51 +180,414 @@ Hiring Manager, {company}, {location}
     st.session_state["cover_letter_html"] = cover_letter_html
 
 
+from user_login import (
+    create_user_table,
+    add_user,
+    verify_user,
+    get_logins_today,
+    get_total_registered_users,
+    log_user_action,
+    username_exists  # 👈 add this line
+)
 
 
-import os, json, random, string, re, asyncio, io
-import urllib.parse
-from collections import Counter
+# ------------------- Initialize -------------------
+create_user_table()
 
-# ------------------- External Libraries -------------------
-import torch
-import io
-from io import BytesIO
-import matplotlib.pyplot as plt
-import fitz
-import requests
-import numpy as np
-import pandas as pd
+# ------------------- Initialize Session State -------------------
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+if "username" not in st.session_state:
+    st.session_state.username = None
+if "processed_files" not in st.session_state:
+    st.session_state.processed_files = set()
 
-import base64
+# ------------------- CSS Styling -------------------
+st.markdown("""
+<style>
+body, .main {
+    background-color: #0d1117;
+    color: white;
+}
+.login-card {
+    background: #161b22;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 0 25px rgba(0,0,0,0.3);
+    transition: all 0.4s ease;
+}
+.login-card:hover {
+    transform: translateY(-6px) scale(1.01);
+    box-shadow: 0 0 45px rgba(0,255,255,0.25);
+}
+.stTextInput > div > input {
+    background-color: #0d1117;
+    color: white;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 0.6em;
+}
+.stTextInput > div > input:hover {
+    border: 1px solid #00BFFF;
+    box-shadow: 0 0 8px rgba(0,191,255,0.2);
+}
+.stTextInput > label {
+    color: #c9d1d9;
+}
+.stButton > button {
+    background-color: #238636;
+    color: white;
+    border-radius: 10px;
+    padding: 0.6em 1.5em;
+    border: none;
+    font-weight: bold;
+}
+.stButton > button:hover {
+    background-color: #2ea043;
+    box-shadow: 0 0 10px rgba(46,160,67,0.4);
+    transform: scale(1.02);
+}
+.feature-card {
+    background: radial-gradient(circle at top left, #1f2937, #111827);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0,255,255,0.1);
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    color: #fff;
+    margin-bottom: 20px;
+}
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 0 30px rgba(0,255,255,0.4);
+}
+.feature-card h3 {
+    color: #00BFFF;
+}
+.feature-card p {
+    color: #c9d1d9;
+}
+</style>
+""", unsafe_allow_html=True)
+# 🔹 VIDEO BACKGROUND & GLOW TEXT
 
 
-# File uploader widget for image upload
-from db_manager import insert_candidate, get_top_domains_by_score
 
-import streamlit as st    
-from PIL import Image
-from pdf2image import convert_from_path
-from dotenv import load_dotenv
-from nltk.stem import WordNetLemmatizer
-from docx import Document
-from docx.shared import Pt, RGBColor, Inches
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
-from docx.opc.constants import RELATIONSHIP_TYPE as RT
 
-# ------------------- Langchain & Embeddings -------------------
-from langchain_text_splitters import CharacterTextSplitter
-from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_groq import ChatGroq
-from langchain.memory import ConversationBufferMemory
-from langchain.chains import ConversationalRetrievalChain
-from llm_manager import call_llm
+# ------------------- BEFORE LOGIN -------------------
+if not st.session_state.authenticated:
 
-from pydantic import BaseModel
+    # -------- Sidebar --------
+    with st.sidebar:
+        st.markdown("<h1 style='color:#00BFFF;'>Smart Resume AI</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#c9d1d9;'>Transform your career with AI-powered resume analysis, job matching, and smart insights.</p>", unsafe_allow_html=True)
 
-# Set page config
+        features = [
+            ("https://img.icons8.com/fluency/48/resume.png", "Resume Analyzer", "Get feedback, scores, and tips powered by AI along with the biased words detection and rewriting the resume in an inclusive way."),
+            ("https://img.icons8.com/fluency/48/resume-website.png", "Resume Builder", "Build modern, eye-catching resumes easily."),
+            ("https://img.icons8.com/fluency/48/job.png", "Job Search", "Find tailored job matches."),
+            ("https://img.icons8.com/fluency/48/classroom.png", "Course Suggestions", "Get upskilling recommendations based on your goals."),
+            ("https://img.icons8.com/fluency/48/combo-chart.png", "Interactive Dashboard", "Visualize trends, scores, and analytics."),
+        ]
+
+        for icon, title, desc in features:
+            st.markdown(f"""
+            <div class="feature-card">
+                <img src="{icon}" width="40"/>
+                <h3>{title}</h3>
+                <p>{desc}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # -------- Animated Cards --------
+    image_url = "https://cdn-icons-png.flaticon.com/512/3135/3135768.png"
+    response = requests.get(image_url)
+    img_base64 = b64encode(response.content).decode()
+
+    st.markdown(f"""
+    <style>
+    .animated-cards {{
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+      position: relative;
+      height: 300px;
+    }}
+    .animated-cards img {{
+      position: absolute;
+      width: 240px;
+      animation: splitCards 2.5s ease-in-out infinite alternate;
+      z-index: 1;
+    }}
+    .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
+    .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
+    .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
+    @keyframes splitCards {{
+      0% {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
+      100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
+    }}
+    .card-left {{ --x-offset: -80px; --rot: -5deg; }}
+    .card-center {{ --x-offset: 0px; --rot: 0deg; }}
+    .card-right {{ --x-offset: 80px; --rot: 5deg; }}
+    </style>
+    <div class="animated-cards">
+        <img class="card-left" src="data:image/png;base64,{img_base64}" />
+        <img class="card-center" src="data:image/png;base64,{img_base64}" />
+        <img class="card-right" src="data:image/png;base64,{img_base64}" />
+    </div>
+    """, unsafe_allow_html=True)
+
+    # -------- Counter Section --------
+    total_users = get_total_registered_users()
+    active_logins = get_logins_today()
+    resumes_uploaded = 431
+    states_accessed = 29
+
+    components.html(f"""
+    <style>
+    .counter-wrapper {{
+        display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; margin-top: 40px;
+    }}
+    .counter {{
+        width: 230px; height: 140px;
+        background: linear-gradient(145deg, #0d1117, #0d1117);
+        color: #00BFFF;
+        border-radius: 15px;
+        box-shadow: 0 0 10px rgba(0, 191, 255, 0.4);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        transition: transform 0.3s ease;
+        border: 2px solid transparent;
+        border-image: linear-gradient(to right, #00BFFF, #00FFFF) 1;
+    }}
+    .counter:hover {{
+        transform: translateY(-6px);
+        box-shadow: 0 0 25px rgba(0,255,255,0.5);
+    }}
+    .counter h1 {{ font-size: 2.8em; margin: 0; }}
+    .counter p {{ margin: 5px 0 0; font-size: 1.1em; color: #c9d1d9; }}
+    </style>
+    <div class="counter-wrapper">
+        <div class="counter"><h1 id="totalUsers">0</h1><p>Total Users</p></div>
+        <div class="counter"><h1 id="states">0</h1><p>States Accessed</p></div>
+        <div class="counter"><h1 id="resumes">0</h1><p>Resumes Uploaded</p></div>
+        <div class="counter"><h1 id="activeSessions">0</h1><p>Active Sessions</p></div>
+    </div>
+    <script>
+    function animateValue(id, start, end, duration) {{
+        const obj = document.getElementById(id);
+        const range = end - start;
+        const increment = end > start ? 1 : -1;
+        const stepTime = Math.abs(Math.floor(duration / range));
+        let current = start;
+        const timer = setInterval(() => {{
+            current += increment;
+            obj.innerHTML = current;
+            if (current == end) clearInterval(timer);
+        }}, stepTime);
+    }}
+    animateValue("totalUsers", 0, {total_users}, 1500);
+    animateValue("states", 0, {states_accessed}, 1200);
+    animateValue("resumes", 0, {resumes_uploaded}, 1300);
+    animateValue("activeSessions", 0, {active_logins}, 1500);
+    </script>
+    """, height=400)
+
+
+
+if not st.session_state.get("authenticated", False):
+    
+
+    # ✅ Use an online image of a female employee
+    image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
+    response = requests.get(image_url)
+    img_base64 = b64encode(response.content).decode()
+
+    # ✅ Inject animated shuffle CSS + HTML
+    st.markdown(f"""
+    <style>
+    .animated-cards {{
+      margin-top: 40px;
+      display: flex;
+      justify-content: center;
+      position: relative;
+      height: 260px;
+    }}
+    .animated-cards img {{
+      position: absolute;
+      width: 220px;
+      animation: splitCards 2.5s ease-in-out infinite alternate;
+      z-index: 1;
+    }}
+    .animated-cards img:nth-child(1) {{
+      animation-delay: 0s;
+      z-index: 3;
+    }}
+    .animated-cards img:nth-child(2) {{
+      animation-delay: 0.3s;
+      z-index: 2;
+    }}
+    .animated-cards img:nth-child(3) {{
+      animation-delay: 0.6s;
+      z-index: 1;
+    }}
+    @keyframes splitCards {{
+      0% {{
+        transform: scale(1) translateX(0) rotate(0deg);
+        opacity: 1;
+      }}
+      100% {{
+        transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot));
+        opacity: 1;
+      }}
+    }}
+    .card-left {{ --x-offset: -80px; --rot: -4deg; }}
+    .card-center {{ --x-offset: 0px; --rot: 0deg; }}
+    .card-right {{ --x-offset: 80px; --rot: 4deg; }}
+    </style>
+
+    <div class="animated-cards">
+        <img class="card-left" src="data:image/png;base64,{img_base64}" />
+        <img class="card-center" src="data:image/png;base64,{img_base64}" />
+        <img class="card-right" src="data:image/png;base64,{img_base64}" />
+    </div>
+    """, unsafe_allow_html=True)
+
+    # -------- Login/Register Layout --------
+    left, center, right = st.columns([1, 2, 1])
+
+    with center:
+        st.markdown(
+            "<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>LEXIBOT</span></h2>",
+            unsafe_allow_html=True,
+        )
+
+        login_tab, register_tab = st.tabs(["🔑 Login", "🆕 Register"])
+
+        # ---------------- LOGIN TAB ----------------
+        with login_tab:
+            user = st.text_input("Username", key="login_user")
+            pwd = st.text_input("Password", type="password", key="login_pass")
+
+            if st.button("Login", key="login_btn"):
+                success, saved_key = verify_user(user.strip(), pwd.strip())
+                if success:
+                    st.session_state.authenticated = True
+                    st.session_state.username = user.strip()
+
+                    # ✅ Load saved Groq key into session
+                    if saved_key:
+                        st.session_state["user_groq_key"] = saved_key
+
+                    log_user_action(user.strip(), "login")
+                    st.success("✅ Login successful!")
+                    st.rerun()
+                else:
+                    st.error("❌ Invalid credentials.")
+
+        # ---------------- REGISTER TAB ----------------
+        with register_tab:
+            new_user = st.text_input("Choose a Username", key="reg_user")
+            new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
+            st.caption("🔒 Password must be at least 8 characters and include uppercase, lowercase, number, and special character.")
+
+            # ✅ Live Username Availability Check
+            if new_user.strip():
+                if username_exists(new_user.strip()):
+                    st.error("🚫 Username already exists.")
+                else:
+                    st.info("✅ Username is available.")
+
+            if st.button("Register", key="register_btn"):
+                if new_user.strip() and new_pass.strip():
+                    success, message = add_user(new_user.strip(), new_pass.strip())
+                    if success:
+                        st.success(message)
+                        log_user_action(new_user.strip(), "register")
+                    else:
+                        st.error(message)
+                else:
+                    st.warning("⚠️ Please fill in both fields.")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.stop()
+
+
+
+
+# ------------------- AFTER LOGIN -------------------
+from user_login import save_user_api_key, get_user_api_key  # Ensure both are imported
+
+if st.session_state.get("authenticated"):
+    st.markdown(
+        f"<h2 style='color:#00BFFF;'>Welcome to LEXIBOT, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>",
+        unsafe_allow_html=True,
+    )
+
+    # 🔓 LOGOUT BUTTON
+    if st.button("🚪 Logout"):
+        log_user_action(st.session_state.get("username", "unknown"), "logout")
+
+        # ✅ Clear all session keys safely
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+
+        st.success("✅ Logged out successfully.")
+        st.rerun()  # Force rerun to prevent stale UI
+
+    # 🔑 GROQ API KEY SECTION (SIDEBAR)
+    st.sidebar.markdown("### 🔑 Groq API Key")
+
+    # ✅ Load saved key from DB
+    saved_key = get_user_api_key(st.session_state.username)
+    masked_preview = f"****{saved_key[-6:]}" if saved_key else ""
+
+    user_api_key_input = st.sidebar.text_input(
+        "Your Groq API Key (Optional)",
+        placeholder=masked_preview,
+        type="password"
+    )
+
+    # ✅ Save or reuse key
+    if user_api_key_input:
+        st.session_state["user_groq_key"] = user_api_key_input
+        save_user_api_key(st.session_state.username, user_api_key_input)
+        st.sidebar.success("✅ New key saved and in use.")
+    elif saved_key:
+        st.session_state["user_groq_key"] = saved_key
+        st.sidebar.info(f"ℹ️ Using your previously saved API key ({masked_preview})")
+    else:
+        st.sidebar.warning("⚠ Using shared admin key with possible usage limits")
+
+    # 🧹 Clear saved key
+    if st.sidebar.button("🗑️ Clear My API Key"):
+        st.session_state["user_groq_key"] = None
+        save_user_api_key(st.session_state.username, None)
+        st.sidebar.success("✅ Cleared saved Groq API key. Now using shared admin key.")
+
+
+
+
+
+
+from user_login import get_all_user_logs
+
+if st.session_state.username == "admin":
+    st.markdown("<hr>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#00BFFF;'>📋 Admin Activity Log</h3>", unsafe_allow_html=True)
+
+    logs = get_all_user_logs()
+    if logs:
+        st.dataframe(
+            {
+                "Username": [log[0] for log in logs],
+                "Action": [log[1] for log in logs],
+                "Timestamp": [log[2] for log in logs]
+            },
+            use_container_width=True
+        )
+    else:
+        st.info("No logs found yet.")
 
 
 # CSS Customization
@@ -613,26 +1020,29 @@ import uuid
 import urllib.parse
 
 def search_jobs(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
-    # Encode inputs
+    # Encode values for query
     role_encoded = urllib.parse.quote_plus(job_role.strip())
     loc_encoded = urllib.parse.quote_plus(location.strip())
 
-    # Mappings
+    # Create role/city slugs for path
+    role_path = job_role.strip().lower().replace(" ", "-")
+    city = location.strip().split(",")[0].strip().lower()
+    city_path = city.replace(" ", "-")
+    city_query = city.replace(" ", "%20") + "%20and%20india"
+
+    # Experience mappings
     experience_range_map = {
         "Internship": "0~0", "Entry Level": "1~1", "Associate": "2~3",
         "Mid-Senior Level": "4~7", "Director": "8~15", "Executive": "16~20"
     }
-
     experience_exact_map = {
         "Internship": "0", "Entry Level": "1", "Associate": "2",
         "Mid-Senior Level": "4", "Director": "8", "Executive": "16"
     }
-
     linkedin_exp_map = {
         "Internship": "1", "Entry Level": "2", "Associate": "3",
         "Mid-Senior Level": "4", "Director": "5", "Executive": "6"
     }
-
     job_type_map = {
         "Full-time": "F", "Part-time": "P", "Contract": "C",
         "Temporary": "T", "Volunteer": "V", "Internship": "I"
@@ -645,14 +1055,7 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
     if job_type in job_type_map:
         linkedin_url += f"&f_JT={job_type_map[job_type]}"
 
-    # Naukri
-    # Naukri - add keyword (k), location (l), and experience if available
-    naukri_url = f"https://www.naukri.com/{role_encoded}-jobs-in-{loc_encoded}?k={role_encoded}&l={loc_encoded}"
-    if experience_level and experience_exact_map.get(experience_level):
-     naukri_url += f"&experience={experience_exact_map[experience_level]}"
-
-
-    # FoundIt
+    # Experience values
     if foundit_experience is not None:
         experience_range = f"{foundit_experience}~{foundit_experience}"
         experience_exact = str(foundit_experience)
@@ -660,20 +1063,35 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         experience_range = experience_range_map.get(experience_level, "")
         experience_exact = experience_exact_map.get(experience_level, "")
 
-    search_id = uuid.uuid4()
-    foundit_url = f"https://www.foundit.in/srp/results?query={role_encoded}&locations={loc_encoded}"
-    if experience_range:
-        foundit_url += f"&experienceRanges={urllib.parse.quote_plus(experience_range)}"
+    # ✅ Naukri (cleaned)
+    naukri_url = (
+        f"https://www.naukri.com/{role_path}-jobs-in-{city_path}-and-india"
+        f"?k={role_encoded}"
+        f"&l={city_query}"
+    )
     if experience_exact:
-        foundit_url += f"&experience={experience_exact}"
-    foundit_url += f"&searchId={search_id}"
+        naukri_url += f"&experience={experience_exact}"
+    naukri_url += "&nignbevent_src=jobsearchDeskGNB"
+
+    # ✅ FoundIt
+    search_id = uuid.uuid4()
+    child_search_id = uuid.uuid4()
+    foundit_url = (
+        f"https://www.foundit.in/search/{role_path}-jobs-in-{city_path}"
+        f"?query={role_encoded}"
+        f"&locations={loc_encoded}"
+        f"&experienceRanges={urllib.parse.quote_plus(experience_range)}"
+        f"&experience={experience_exact}"
+        f"&queryDerived=true"
+        f"&searchId={search_id}"
+        f"&child_search_id={child_search_id}"
+    )
 
     return [
         {"title": f"LinkedIn: {job_role} jobs in {location}", "link": linkedin_url},
         {"title": f"Naukri: {job_role} jobs in {location}", "link": naukri_url},
         {"title": f"FoundIt (Monster): {job_role} jobs in {location}", "link": foundit_url}
     ]
-
 
 
 
@@ -1562,6 +1980,7 @@ if st.button("🔄 Reset Resume Upload Memory"):
 
 # === TAB 1: Dashboard ===
 # 📊 Dashboard and Metrics
+# ✅ Exclusive tab selection (only one visible at a time)
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", 
     "📚 Course Recommendation", "📁 Admin DB View"
@@ -2058,12 +2477,37 @@ with tab2:
                 edu["details"] = st.text_area(f"Details", value=edu["details"], key=f"edu_details_{idx}")
 
         st.markdown("### 🛠 <u>Projects</u>", unsafe_allow_html=True)
+
         for idx, proj in enumerate(st.session_state.project_entries):
             with st.expander(f"Project #{idx+1}", expanded=True):
-                proj["title"] = st.text_input(f"Project Title", value=proj["title"], key=f"proj_title_{idx}")
-                proj["tech"] = st.text_input(f"Tech Stack", value=proj["tech"], key=f"proj_tech_{idx}")
-                proj["duration"] = st.text_input(f"Duration", value=proj["duration"], key=f"proj_duration_{idx}")
-                proj["description"] = st.text_area(f"Description", value=proj["description"], key=f"proj_desc_{idx}")
+        # Keys for each project field
+             title_key = f"proj_title_{idx}"
+             tech_key = f"proj_tech_{idx}"
+             duration_key = f"proj_duration_{idx}"
+             desc_key = f"proj_desc_{idx}"
+
+        # Initialize only once if key doesn't exist
+        if title_key not in st.session_state:
+            st.session_state[title_key] = proj["title"]
+        if tech_key not in st.session_state:
+            st.session_state[tech_key] = proj["tech"]
+        if duration_key not in st.session_state:
+            st.session_state[duration_key] = proj["duration"]
+        if desc_key not in st.session_state:
+            st.session_state[desc_key] = proj["description"]
+
+        # Inputs (no value=..., only key)
+        st.text_input("Project Title", key=title_key)
+        st.text_input("Tech Stack", key=tech_key)
+        st.text_input("Duration", key=duration_key)
+        st.text_area("Description", key=desc_key)
+
+        # Sync back to project_entries
+        proj["title"] = st.session_state[title_key]
+        proj["tech"] = st.session_state[tech_key]
+        proj["duration"] = st.session_state[duration_key]
+        proj["description"] = st.session_state[desc_key]
+
 
 
         st.markdown("### 🔗 Project Links")
@@ -2146,7 +2590,7 @@ with tab2:
         with right:
             st.markdown("<h4 style='color:#336699;'>Summary</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
             summary_text = st.session_state['summary'].replace('\n', '<br>')
-            st.markdown(f"<p style='font-size:14px;'>{summary_text}</p>", unsafe_allow_html=True)
+            st.markdown(f"<p style='font-size:17px;'>{summary_text}</p>", unsafe_allow_html=True)
 
 
             st.markdown("<h4 style='color:#336699;'>Experience</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
@@ -2158,7 +2602,7 @@ with tab2:
                     <b>🏢 {exp['company']}</b><span style='color:gray;'>📆  {exp['duration']}</span>
                 </div>
                 <div style='font-size:14px;'>💼 <i>{exp['title']}</i></div>
-                <div style='font-size:14px;'>📝 {exp['description']}</div>
+                <div style='font-size:17px;'>📝 {exp['description']}</div>
             </div>
         """, unsafe_allow_html=True)
 
@@ -2185,7 +2629,7 @@ with tab2:
         <strong style='font-size:16px;'>{proj['title']}</strong><br>
         <span style='font-size:14px;'>🛠️ <strong>Tech Stack:</strong> {proj['tech']}</span><br>
         <span style='font-size:14px;'>⏳ <strong>Duration:</strong> {proj['duration']}</span><br>
-        <span style='font-size:14px;'>📝 <strong>Description:</strong> {proj['description']}</span>
+        <span style='font-size:17px;'>📝 <strong>Description:</strong> {proj['description']}</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -2207,7 +2651,247 @@ with tab2:
             </div>
             <div style='margin-bottom:10px; font-size:14px;'>{cert['description']}</div>
         """, unsafe_allow_html=True)
+with tab2:
+    import re
 
+    st.markdown("## ✨ <span style='color:#336699;'>Enhanced AI Resume Preview</span>", unsafe_allow_html=True)
+    st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
+
+    # ------------------------- ENHANCE PROMPT -------------------------
+    enhance_prompt = f"""
+    You are a professional resume builder AI.
+
+    Enhance the following resume sections based on the user's job title: "{st.session_state['job_title']}". The enhancements must be aligned **strictly and specifically** with the responsibilities, tools, skills, and certifications relevant to that job title.
+
+    Instructions:
+    1. Rewrite the summary to sound professional, achievement-driven, and role-specific using strong action verbs.
+    2. Expand experience and project descriptions into structured bullet points (• or A., B., C.). Highlight domain-specific responsibilities and achievements.
+    3. Maintain paragraph structure and meaningful line breaks.
+    4. Infer and recommend **only domain-accurate** items, even if not explicitly provided:
+       - 6–8 modern **technical Skills** (relevant to the job title; e.g., for Cyber Security: SIEM, Kali Linux, Wireshark, Burp Suite, Splunk, Nmap, Firewalls, OWASP Top 10, etc.)
+       - 6–8 strong **Soft Skills**
+       - 3–6 job-aligned **Interests** (e.g., bug bounty, ethical hacking, network defense)
+       - Only **spoken Languages**
+       - 3–6 globally recognized **Certificates** (e.g., CompTIA Security+, CEH, IBM Cybersecurity Analyst, Google Cybersecurity, Cisco CCNA Security)
+
+    Important:
+    - Do not include irrelevant frontend/backend tools if the job title is from a different domain like Cyber Security, DevOps, Data Science, etc.
+    - The certificate names must match real-world course titles from platforms like Coursera, Udemy, Google, IBM, Cisco, Microsoft, etc.
+
+    📌 Format the output exactly like this:
+
+    Summary:
+    • ...
+
+    Experience:
+    A. Company Name (Duration)
+       • Role
+       • Responsibility 1
+       • Responsibility 2
+
+    Projects:
+    A. <Project Title>
+       • Tech Stack: <Job-relevant tools only>
+       • Duration: <Start – End>
+       • Description:
+         - Clearly describe a specific feature, functionality, or implementation aligned with the job role.
+         - Mention a tool or technology used and explain its context in the project.
+         - Highlight performance improvements, solved challenges, or measurable impacts.
+         - Include a technical or collaborative achievement that enhanced project success.
+         - (Optional) Add an additional impactful point if it meaningfully supports the role.
+
+
+    Skills:
+    Kali Linux, Splunk, SIEM, ...
+
+    SoftSkills:
+    Problem Solving, Critical Thinking...
+
+    Languages:
+    English, Hindi...
+
+    Interests:
+    Capture The Flag (CTF), Ethical Hacking...
+
+    Certificates:
+    Google Cybersecurity – Coursera (6 months)
+    IBM Cybersecurity Analyst – IBM (Professional Certificate)
+    CompTIA Security+ – CompTIA (5 months)
+
+    Use ONLY the user's inputs below as a reference. Rewrite and improve them meaningfully and accurately.
+
+    Summary:
+    {st.session_state['summary']}
+
+    Experience:
+    {[exp for exp in st.session_state.experience_entries]}
+
+    Projects:
+    {[proj for proj in st.session_state.project_entries]}
+
+    Skills:
+    {st.session_state['skills']}
+
+    SoftSkills:
+    {st.session_state['Softskills']}
+
+    Languages:
+    {st.session_state['languages']}
+
+    Interests:
+    {st.session_state['interests']}
+
+    Certificates:
+    {[cert['name'] for cert in st.session_state.certificate_links if cert['name']]}
+    """
+
+    # ------------------------- CALL LLM -------------------------
+    ai_output = call_llm(enhance_prompt, session=st.session_state)
+
+    # ------------------------- PARSE OUTPUT -------------------------
+    def extract_section(label, output, default=""):
+        match = re.search(rf"{label}:\s*(.*?)(?=\n\w+:|\Z)", output, re.DOTALL)
+        return match.group(1).strip() if match else default
+
+    summary_enhanced = extract_section("Summary", ai_output, st.session_state['summary'])
+    experience_raw = extract_section("Experience", ai_output)
+    experience_blocks = re.split(r"\n(?=[A-Z]\. )", experience_raw.strip())
+    projects_raw = extract_section("Projects", ai_output)
+    projects_blocks = re.split(r"\n(?=[A-Z]\. )", projects_raw.strip())
+    skills_list = extract_section("Skills", ai_output, st.session_state['skills'])
+    softskills_list = extract_section("SoftSkills", ai_output, st.session_state['Softskills'])
+    languages_list = extract_section("Languages", ai_output, st.session_state['languages'])
+    interests_list = extract_section("Interests", ai_output, st.session_state['interests'])
+    certificates_list = extract_section("Certificates", ai_output)
+
+    # ------------------------- UI RENDER -------------------------
+    left, right = st.columns([1, 2])
+
+    with left:
+        st.markdown(f"""
+            <h2 style='color:#2f2f2f;margin-bottom:0;'>{st.session_state['name']}</h2>
+            <h4 style='margin-top:5px;color:#444;'>{st.session_state['job_title']}</h4>
+            <p style='font-size:14px;'>
+            📍 {st.session_state['location']}<br>
+            📞 {st.session_state['phone']}<br>
+            📧 <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a><br>
+            🔗 <a href="{st.session_state['linkedin']}" target="_blank">LinkedIn</a><br>
+            🌐 <a href="{st.session_state['portfolio']}" target="_blank">Portfolio</a>
+            </p>
+        """, unsafe_allow_html=True)
+
+        def render_bullet_section(title, items):
+            st.markdown(f"<h4 style='color:#336699;'>{title}</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            for item in [i.strip() for i in items.split(",") if i.strip()]:
+                st.markdown(f"<div style='margin-left:10px;'>• {item}</div>", unsafe_allow_html=True)
+
+        render_bullet_section("Skills", skills_list)
+        render_bullet_section("Languages", languages_list)
+        render_bullet_section("Interests", interests_list)
+        render_bullet_section("Soft Skills", softskills_list)
+
+    with right:
+        formatted_summary = summary_enhanced.replace('\n• ', '<br>• ').replace('\n', '<br>')
+        st.markdown("<h4 style='color:#336699;'>Summary</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size:17px;'>{formatted_summary}</p>", unsafe_allow_html=True)
+
+        # -------- Experience Section --------
+        if experience_blocks:
+            st.markdown("<h4 style='color:#336699;'>Experience</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            experience_titles = [entry.get("title", "").strip().upper() for entry in st.session_state.experience_entries]
+            for idx, exp_block in enumerate(experience_blocks):
+                lines = exp_block.strip().split("\n")
+                if not lines:
+                    continue
+                heading = lines[0]
+                description_lines = lines[1:]
+                match = re.match(r"[A-Z]\.\s*(.+?)\s*\((.*?)\)", heading)
+                if match:
+                    company = match.group(1).strip()
+                    duration = match.group(2).strip()
+                else:
+                    company = heading.replace(f"{chr(65 + idx)}. ", "").strip()
+                    duration = ""
+                role = experience_titles[idx] if idx < len(experience_titles) else ""
+                formatted_exp = "<br>".join(description_lines)
+
+                st.markdown(f"""
+                <div style='margin-bottom:15px; padding:10px; border-radius:8px;'>
+                    <div style='display:flex; justify-content:space-between;'>
+                        <b>🏢 {company.upper()}</b><span style='color:gray;'>📆 {duration}</span>
+                    </div>
+                    <div style='font-size:14px;'>💼 <i>{role}</i></div>
+                    <div style='font-size:17px;'>📝 {formatted_exp}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+        # -------- Education Section --------
+        st.markdown("<h4 style='color:#336699;'>🎓 Education</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+        for edu in st.session_state.education_entries:
+            st.markdown(f"""
+            <div style='margin-bottom:15px; padding:10px 15px; border-radius:8px;'>
+                <div style='display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;'>
+                    <span>🏫 {edu['institution']}</span>
+                    <span style='color: gray;'>📅 {edu['year']}</span>
+                </div>
+                <div style='font-size: 14px;'>🎓 <i>{edu['degree']}</i></div>
+                <div style='font-size: 14px;'>📄 {edu['details']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # -------- Projects Section --------
+        if projects_blocks:
+            st.markdown("<h4 style='color:#336699;'>Projects</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            for idx, proj_block in enumerate(projects_blocks):
+                if idx < len(st.session_state.project_entries):
+                    proj = st.session_state.project_entries[idx]
+                    title = proj.get("title", "")
+                    tech = proj.get("tech", "")
+                    duration = proj.get("duration", "")
+                else:
+                    title, tech, duration = "", "", ""
+                description = proj_block
+                if title and title in description:
+                    description = description.replace(title, "")
+                if tech and f"Tech Stack: {tech}" in description:
+                    description = description.replace(f"Tech Stack: {tech}", "")
+                if duration and f"Duration: {duration}" in description:
+                    description = description.replace(f"Duration: {duration}", "")
+                formatted_proj = description.strip().replace('\n• ', '<br>• ').replace('\n', '<br>').strip()
+                label = chr(65 + idx)
+
+                st.markdown(f"""
+                <div style='margin-bottom:15px; padding: 10px;'>
+                    <strong style='font-size:16px;'>📌 <span style='color:#444;'>{label}. </span>{title}</strong><br>
+                    <span style='font-size:14px;'>🛠️ <strong>Tech Stack:</strong> {tech}</span><br>
+                    <span style='font-size:14px;'>⏳ <strong>Duration:</strong> {duration}</span><br>
+                    <span style='font-size:17px;'>📄 <strong>Description:</strong></span><br>
+                    <div style='margin-top:4px; font-size:15px;'>{formatted_proj}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+
+        # -------- Certificates Section --------
+        if certificates_list:
+            st.markdown("<h4 style='color:#336699;'>📜 Certificates</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            certs = re.split(r"\n|(?<=\))(?=\s*[A-Z])|(?<=[a-z]\))(?= [A-Z])", certificates_list)
+            for cert in [c.strip() for c in certs if c.strip()]:
+                st.markdown(f"<div style='margin-left:10px;'>• {cert}</div>", unsafe_allow_html=True)
+
+        if st.session_state.project_links:
+            st.markdown("<h4 style='color:#336699;'>Project Links</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            for i, link in enumerate(st.session_state.project_links):
+                st.markdown(f"[🔗 Project {i+1}]({link})", unsafe_allow_html=True)
+
+
+
+
+
+
+
+
+                  
+        
 # SKILLS
 skills_html = "".join(
     f"""

@@ -143,12 +143,15 @@ def get_daily_ats_stats():
 # 🧠 Domain Detection from Job Title + Description
 from collections import defaultdict
 
+from collections import defaultdict
+
 def detect_domain_from_title_and_description(job_title, job_description):
     title = job_title.lower().strip()
     jd = job_description.lower().strip()
     combined = f"{title} {jd}"
 
     domain_scores = defaultdict(int)
+    domain_match_counts = defaultdict(int)
 
     WEIGHTS = {
         "Data Science": 3,
@@ -200,9 +203,19 @@ def detect_domain_from_title_and_description(job_title, job_description):
             "business logic", "orm", "database schema"
         ],
         "Full Stack Development": [
-            "full stack", "fullstack", "mern", "mean", "mevn",
-            "frontend and backend", "end-to-end development", "full stack developer",
-            "api integration", "react + node", "monolith", "microservices", "integrated app"
+           "full stack", "fullstack", "mern", "mean", "mevn", "lamp", "jamstack",
+           "frontend and backend", "end-to-end development", "full stack developer",
+            "api integration", "rest api", "graphql", "react + node", "react.js + express",
+            "monolith", "microservices", "serverless architecture", "integrated app",
+            "web application", "cross-functional development", "component-based architecture",
+            "database design", "middleware", "mvc", "mvvm", "authentication", "authorization",
+            "session management", "cloud deployment", "responsive ui", "performance tuning",
+            "state management", "redux", "context api", "axios", "fetch api",
+            "typescript", "es6", "html5", "css3", "javascript", "react", "next.js", "angular",
+            "node.js", "express.js", "spring boot", "java", "python", "django", "flask",
+            "mysql", "postgresql", "mongodb", "sqlite", "nosql", "sql", "orm", "prisma",
+            "docker", "ci/cd", "git", "github", "bitbucket", "testing", "jest", "mocha",
+            "unit testing", "integration testing", "agile", "scrum", "devops"
         ],
         "Cybersecurity": [
             "cybersecurity", "security analyst", "penetration testing", "ethical hacking",
@@ -228,20 +241,30 @@ def detect_domain_from_title_and_description(job_title, job_description):
         ]
     }
 
+    # Step 1: Count matches and assign weighted scores
     for domain, kws in keywords.items():
-        matches = sum(1 for kw in kws if kw in combined)
-        domain_scores[domain] += matches * WEIGHTS[domain]
+        match_count = sum(1 for kw in kws if kw in combined)
+        domain_match_counts[domain] = match_count
+        domain_scores[domain] = match_count * WEIGHTS[domain]
 
-    # Special logic for full stack if both front and back detected
-    frontend_match = any(kw in combined for kw in keywords["Frontend Development"])
-    backend_match = any(kw in combined for kw in keywords["Backend Development"])
+    # Step 2: Handle Full Stack more intelligently
+    frontend_hits = domain_match_counts["Frontend Development"]
+    backend_hits = domain_match_counts["Backend Development"]
+    fullstack_mentioned = "full stack" in combined or "fullstack" in combined
 
-    if "full stack" in combined or "fullstack" in combined:
-        domain_scores["Full Stack Development"] += 2
-    elif frontend_match and backend_match:
-        domain_scores["Full Stack Development"] += WEIGHTS["Full Stack Development"]
+    if fullstack_mentioned:
+        domain_scores["Full Stack Development"] += 5  # Boost if explicitly mentioned
 
-    # Pick highest scoring domain and normalize
+    if frontend_hits >= 5 and backend_hits >= 5:
+        domain_scores["Full Stack Development"] += 8  # Boost for dual presence
+
+    # Avoid false full stack assignment when one side dominates
+    if frontend_hits > backend_hits * 2 and not fullstack_mentioned:
+        domain_scores["Full Stack Development"] = 0
+    elif backend_hits > frontend_hits * 2 and not fullstack_mentioned:
+        domain_scores["Full Stack Development"] = 0
+
+    # Step 3: Return highest scoring normalized domain
     if domain_scores:
         top_domain = max(domain_scores, key=domain_scores.get)
         if domain_scores[top_domain] > 0:

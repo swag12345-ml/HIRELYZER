@@ -1595,34 +1595,7 @@ import altair as alt
 from llm_manager import call_llm
 
 # ✅ Load grammar checker
-@st.cache_resource(show_spinner=False)
-def load_grammar_tool():
-    import language_tool_python
-    return language_tool_python.LanguageTool('en-US')
 
-tool = load_grammar_tool()
-
-# ✅ Grammar score calculation
-def get_grammar_score(text, max_score=5):
-    matches = tool.check(text)
-    num_issues = len(matches)
-    total_words = len(text.split())
-
-    if total_words == 0:
-        return 1, "Empty or unreadable resume."
-
-    issues_per_100_words = (num_issues / total_words) * 100
-
-    if issues_per_100_words <= 2:
-        return max_score, f"Excellent grammar ({num_issues} issues in {total_words} words)."
-    elif issues_per_100_words <= 4:
-        return round(max_score * 0.9), f"Very good grammar ({num_issues} minor issues)."
-    elif issues_per_100_words <= 6:
-        return round(max_score * 0.75), f"Few noticeable issues ({num_issues})."
-    elif issues_per_100_words <= 8:
-        return round(max_score * 0.5), f"Moderate grammar issues ({num_issues})."
-    else:
-        return round(max_score * 0.3), f"High issue density ({num_issues})."
 
 # ✅ ATS Evaluation Function
 def ats_percentage_score(

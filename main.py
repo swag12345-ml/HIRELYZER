@@ -3,6 +3,53 @@ import streamlit.components.v1 as components
 from base64 import b64encode
 import requests
 import datetime
+from io import BytesIO
+import streamlit as st
+from datetime import datetime
+import streamlit.components.v1 as components
+from base64 import b64encode
+import re
+from llm_manager import call_llm
+import requests
+import datetime
+import os, json, random, string, re, asyncio, io
+import urllib.parse
+from collections import Counter
+
+# ------------------- External Libraries -------------------
+import torch
+import io
+from io import BytesIO
+import matplotlib.pyplot as plt
+import fitz
+import requests
+import numpy as np
+import pandas as pd
+
+import base64
+from db_manager import insert_candidate, get_top_domains_by_score
+
+    
+from PIL import Image
+from pdf2image import convert_from_path
+from dotenv import load_dotenv
+from nltk.stem import WordNetLemmatizer
+from docx import Document
+from docx.shared import Pt, RGBColor, Inches
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
+
+# ------------------- Langchain & Embeddings -------------------
+from langchain_text_splitters import CharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_groq import ChatGroq
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationalRetrievalChain
+from llm_manager import call_llm
+
+from pydantic import BaseModel
 
 from user_login import (
     create_user_table,
@@ -10,8 +57,10 @@ from user_login import (
     verify_user,
     get_logins_today,
     get_total_registered_users,
-    log_user_action
+    log_user_action,
+    username_exists  # 👈 add this line
 )
+
 
 # ------------------- Initialize -------------------
 create_user_table()
@@ -91,6 +140,10 @@ body, .main {
 }
 </style>
 """, unsafe_allow_html=True)
+# 🔹 VIDEO BACKGROUND & GLOW TEXT
+
+
+
 
 # ------------------- BEFORE LOGIN -------------------
 if not st.session_state.authenticated:
@@ -210,9 +263,10 @@ if not st.session_state.authenticated:
     </script>
     """, height=400)
 
-if not st.session_state.authenticated:
-    from base64 import b64encode
-    import requests
+
+
+if not st.session_state.get("authenticated", False):
+    
 
     # ✅ Use an online image of a female employee
     image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
@@ -271,49 +325,120 @@ if not st.session_state.authenticated:
 
     # -------- Login/Register Layout --------
     left, center, right = st.columns([1, 2, 1])
+
     with center:
-        st.markdown("<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>LEXIBOT</span></h2>", unsafe_allow_html=True)
+        st.markdown(
+            "<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>LEXIBOT</span></h2>",
+            unsafe_allow_html=True,
+        )
 
         login_tab, register_tab = st.tabs(["🔑 Login", "🆕 Register"])
 
+        # ---------------- LOGIN TAB ----------------
         with login_tab:
             user = st.text_input("Username", key="login_user")
             pwd = st.text_input("Password", type="password", key="login_pass")
+
             if st.button("Login", key="login_btn"):
-                if verify_user(user.strip(), pwd.strip()):
+                success, saved_key = verify_user(user.strip(), pwd.strip())
+                if success:
                     st.session_state.authenticated = True
                     st.session_state.username = user.strip()
+
+                    # ✅ Load saved Groq key into session
+                    if saved_key:
+                        st.session_state["user_groq_key"] = saved_key
+
                     log_user_action(user.strip(), "login")
                     st.success("✅ Login successful!")
                     st.rerun()
                 else:
                     st.error("❌ Invalid credentials.")
 
+        # ---------------- REGISTER TAB ----------------
         with register_tab:
             new_user = st.text_input("Choose a Username", key="reg_user")
             new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
+            st.caption("🔒 Password must be at least 8 characters and include uppercase, lowercase, number, and special character.")
+
+            # ✅ Live Username Availability Check
+            if new_user.strip():
+                if username_exists(new_user.strip()):
+                    st.error("🚫 Username already exists.")
+                else:
+                    st.info("✅ Username is available.")
+
             if st.button("Register", key="register_btn"):
                 if new_user.strip() and new_pass.strip():
-                    if add_user(new_user.strip(), new_pass.strip()):
-                        st.success("✅ Registered! You can now login.")
+                    success, message = add_user(new_user.strip(), new_pass.strip())
+                    if success:
+                        st.success(message)
                         log_user_action(new_user.strip(), "register")
                     else:
-                        st.error("🚫 Username already exists.")
+                        st.error(message)
                 else:
                     st.warning("⚠️ Please fill in both fields.")
+
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()
 
-# ------------------- AFTER LOGIN -------------------
-if st.session_state.authenticated:
-    st.markdown(f"<h2 style='color:#00BFFF;'>Welcome to LEXIBOT, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>", unsafe_allow_html=True)
 
+
+
+# ------------------- AFTER LOGIN -------------------
+from user_login import save_user_api_key, get_user_api_key  # Ensure both are imported
+
+if st.session_state.get("authenticated"):
+    st.markdown(
+        f"<h2 style='color:#00BFFF;'>Welcome to LEXIBOT, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>",
+        unsafe_allow_html=True,
+    )
+
+    # 🔓 LOGOUT BUTTON
     if st.button("🚪 Logout"):
-        log_user_action(st.session_state.username, "logout")
-        st.session_state.authenticated = False
-        st.session_state.username = None
-        st.rerun()
+        log_user_action(st.session_state.get("username", "unknown"), "logout")
+
+        # ✅ Clear all session keys safely
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+
+        st.success("✅ Logged out successfully.")
+        st.rerun()  # Force rerun to prevent stale UI
+
+    # 🔑 GROQ API KEY SECTION (SIDEBAR)
+    st.sidebar.markdown("### 🔑 Groq API Key")
+
+    # ✅ Load saved key from DB
+    saved_key = get_user_api_key(st.session_state.username)
+    masked_preview = f"****{saved_key[-6:]}" if saved_key else ""
+
+    user_api_key_input = st.sidebar.text_input(
+        "Your Groq API Key (Optional)",
+        placeholder=masked_preview,
+        type="password"
+    )
+
+    # ✅ Save or reuse key
+    if user_api_key_input:
+        st.session_state["user_groq_key"] = user_api_key_input
+        save_user_api_key(st.session_state.username, user_api_key_input)
+        st.sidebar.success("✅ New key saved and in use.")
+    elif saved_key:
+        st.session_state["user_groq_key"] = saved_key
+        st.sidebar.info(f"ℹ️ Using your previously saved API key ({masked_preview})")
+    else:
+        st.sidebar.warning("⚠ Using shared admin key with possible usage limits")
+
+    # 🧹 Clear saved key
+    if st.sidebar.button("🗑️ Clear My API Key"):
+        st.session_state["user_groq_key"] = None
+        save_user_api_key(st.session_state.username, None)
+        st.sidebar.success("✅ Cleared saved Groq API key. Now using shared admin key.")
+
+
+
+
 
 
 from user_login import get_all_user_logs
@@ -334,51 +459,6 @@ if st.session_state.username == "admin":
         )
     else:
         st.info("No logs found yet.")
-
-
-import os, json, random, string, re, asyncio, io
-import urllib.parse
-from collections import Counter
-
-# ------------------- External Libraries -------------------
-import torch
-import io
-from io import BytesIO
-import matplotlib.pyplot as plt
-import fitz
-import requests
-import numpy as np
-import pandas as pd
-import streamlit as st
-import base64
-import streamlit as st
-
-# File uploader widget for image upload
-from db_manager import insert_candidate, get_top_domains_by_score
-
-    
-from PIL import Image
-from pdf2image import convert_from_path
-from dotenv import load_dotenv
-from nltk.stem import WordNetLemmatizer
-from docx import Document
-from docx.shared import Pt, RGBColor, Inches
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
-from docx.opc.constants import RELATIONSHIP_TYPE as RT
-
-# ------------------- Langchain & Embeddings -------------------
-from langchain_text_splitters import CharacterTextSplitter
-from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_groq import ChatGroq
-from langchain.memory import ConversationBufferMemory
-from langchain.chains import ConversationalRetrievalChain
-from llm_manager import call_llm
-
-from pydantic import BaseModel
-
-# Set page config
 
 
 # CSS Customization
@@ -1109,98 +1189,88 @@ replacement_mapping = {
 
 def rewrite_text_with_llm(text, replacement_mapping, user_location):
     """
-    Uses LLM to rewrite a resume with bias-free language and suggest relevant job roles.
-    Applies strict word replacement mapping and structures the result.
+    Uses LLM to rewrite a resume with bias-free language, while preserving
+    the original content length. Enhances grammar, structure, and clarity.
+    Ensures structured formatting and includes relevant links and job suggestions.
     """
-    from llm_manager import call_llm
 
-    # Format the replacement mapping as a readable bullet list for the prompt
+    # Create a clear mapping in bullet format
     formatted_mapping = "\n".join(
-        [f"- \"{key}\" → \"{value}\"" for key, value in replacement_mapping.items()]
+        [f'- "{key}" → "{value}"' for key, value in replacement_mapping.items()]
     )
 
-    # Construct the prompt
+    # Prompt for LLM
     prompt = f"""
-You are an expert career advisor and professional resume language editor.
+You are an expert resume editor and career advisor.
 
-Your task is to:
+Your tasks:
 
-1. **Rewrite the following resume text** to:
-   - Remove or replace any gender-coded, biased, or non-inclusive language.
-   - Use *professional, inclusive, neutral, clear, and grammatically correct language*.
-   - **Retain all technical terms, job-specific keywords, certifications, and proper names.**
-   - Do **not** add new content or remove important information.
-   - Preserve the original meaning and intent of each sentence.
+1. ✨ Rewrite the resume text below with these rules:
+   - Replace any biased or gender-coded language using the exact matches from the replacement mapping.
+   - Do NOT reduce the length of any section — preserve the original **number of words per section**.
+   - Improve grammar, tone, sentence clarity, and flow without shortening or removing any content.
+   - Do NOT change or remove names, tools, technologies, certifications, or project details.
 
----
+2. 🧾 Structure the resume using these sections **if present** in the original, keeping the original text size:
+   - 🏷️ **Name**
+   - 📞 **Contact Information**
+   - 📧 **Email**
+   - 🔗 **LinkedIn** → If missing, insert: 🔗 Please paste your LinkedIn URL here.
+   - 🌐 **Portfolio** → If missing, insert: 🌐 Please paste your GitHub or portfolio link here.
+   - ✍️ **Professional Summary**
+   - 💼 **Work Experience**
+   - 🧑‍💼 **Internships**
+   - 🛠️ **Skills**
+   - 🤝 **Soft Skills**
+   - 🎓 **Certifications**
+   - 🏫 **Education**
+   - 📂 **Projects**
+   - 🌟 **Interests**
 
-2. **Structure and Organize** the rewritten resume into clearly labeled standard resume sections. Only include sections that are present in the original text:
-   - Name
-   - Contact Information
-   - Email
-   - Portfolio
-   - Professional Summary
-   - Work Experience
-   - Skills
-   - Certifications
-   - Education
-   - Projects
-   - Interests
+   - Use bullet points (•) inside each section for clarity.
+   - Maintain new lines after each points properly.
+   - Keep all hyperlinks intact and show them in full where applicable (e.g., LinkedIn, GitHub, project links).
+   - Do not invent or assume any information not present in the original.
 
-   - If *Name*, *Contact Information*, or *Email* is present, place them clearly at the top under respective headings.
-
----
-
-3. **Strictly apply the following word replacement mapping:**
-
+3. 📌 Strictly apply this **replacement mapping** (match exact phrases only — avoid altering keywords or terminology):
 {formatted_mapping}
 
-   - If a word or phrase matches a key exactly from this list, replace it with the corresponding value.
-   - Leave all other content unchanged.
+4. 💼 Suggest **5 relevant job titles** suited for this candidate based in **{user_location}**. For each:
+   - Provide a detailed  reason for relevance.
+   - Attach a direct LinkedIn job search URL.
 
 ---
 
-4. **Suggest 5 suitable job titles** based on the resume content and the candidate’s location: **{user_location}**
-   - Ensure titles are realistic for this location and aligned with the candidate's experience and skills.
-   - Provide a brief explanation for each suggestion.
-
----
-
-5. **Provide LinkedIn job search URLs** for each suggested title based on the location: **{user_location}**
-
----
-
-**Original Resume Text:**
+### 📄 Original Resume Text
 \"\"\"{text}\"\"\"
 
 ---
 
-**✅ Bias-Free Rewritten Resume (Well-Structured):**
+### ✅ Bias-Free Rewritten Resume (Fully Structured, Same Length)
 
 ---
 
-**🎯 Suggested Job Titles with Explanations and LinkedIn URLs:**
+### 🎯 Suggested Job Titles with Reasoning and LinkedIn Search Links
 
-1. **Job Title 1** — Reason  
+1. **[Job Title 1]** — Brief reason  
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%201&location={user_location})
 
-2. **Job Title 2** — Reason  
+2. **[Job Title 2]** — Brief reason  
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%202&location={user_location})
 
-3. **Job Title 3** — Reason  
+3. **[Job Title 3]** — Brief reason  
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%203&location={user_location})
 
-4. **Job Title 4** — Reason  
+4. **[Job Title 4]** — Brief reason  
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%204&location={user_location})
 
-5. **Job Title 5** — Reason  
+5. **[Job Title 5]** — Brief reason  
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%205&location={user_location})
 """
 
-    # Call the LLM with caching + key rotation
+    # Call the LLM of your choice
     response = call_llm(prompt, session=st.session_state)
     return response
-
 
 
 
@@ -1340,7 +1410,6 @@ Provide a detailed summary (4–6 sentences) about the candidate’s overall fit
 
     response = call_llm(prompt, session=st.session_state)
     return response.strip()
-
 
 # Setup Vector DB
 def setup_vectorstore(documents):
@@ -1729,9 +1798,6 @@ with tab1:
     else:
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
 
-
-
-   
 with tab2:
     st.session_state.active_tab = "Resume Builder"
 
@@ -2758,13 +2824,10 @@ html_content = f"""
 </body>
 </html>
 """
-
-
-
-
-# Then encode it to bytes and prepare for download
 html_bytes = html_content.encode("utf-8")
 html_file = BytesIO(html_bytes)
+
+# Convert HTML resume to PDF bytes
 
 
 with tab2:
@@ -2777,8 +2840,7 @@ with tab2:
         file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.html",
         mime="text/html",
         key="download_resume_html"
-    )
-
+    )    
 with tab2:
  st.markdown("""
 ✅ After downloading your HTML resume, you can [click here to convert it to PDF](https://www.sejda.com/html-to-pdf) using Sejda's free online tool.
@@ -2980,9 +3042,8 @@ with tab3:
             <p>💵 Salary Range: {role['range']}</p>
         </div>
         """, unsafe_allow_html=True)
-
 with tab4:
-    # CSS styles for header, buttons, and cards
+    # Inject CSS styles
     st.markdown("""
         <style>
         .header-box {
@@ -3014,18 +3075,22 @@ with tab4:
 
         .stRadio > div {
             flex-direction: row !important;
-            justify-content: center;
+            justify-content: center !important;
+            gap: 12px;
         }
 
         .stRadio label {
             background: #1a1a1a;
             border: 1px solid #00c3ff;
             color: #00c3ff;
-            padding: 10px 16px;
+            padding: 10px 20px;
             margin: 4px;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s ease;
+            font-weight: 500;
+            min-width: 180px;
+            text-align: center;
         }
 
         .stRadio label:hover {
@@ -3034,7 +3099,7 @@ with tab4:
 
         .stRadio input:checked + div > label {
             background-color: #00c3ff;
-            color: black;
+            color: #000;
             font-weight: bold;
         }
 
@@ -3078,25 +3143,34 @@ with tab4:
     st.markdown('<div class="glow-header">🎓 Explore Career Resources</div>', unsafe_allow_html=True)
     st.markdown("<p style='text-align:center; color:#ccc;'>Curated courses and videos for your career growth, resume tips, and interview success.</p>", unsafe_allow_html=True)
 
-    # Enhanced label above radio buttons
+    # Learning path label
     st.markdown("""
-        <div style="text-align:center; margin-top: 20px; margin-bottom: 10px;">
+        <div style="text-align:center; margin-top: 25px; margin-bottom: 10px;">
             <span style="color: #00c3ff; font-weight: bold; font-size: 20px; text-shadow: 0 0 10px #00c3ff;">
                 🧭 Choose Your Learning Path
             </span>
         </div>
     """, unsafe_allow_html=True)
 
-    # Stylish radio buttons
+    # Centered Radio buttons
+    st.markdown("""
+        <div style="display: flex; justify-content: center; width: 100%;">
+            <div style="display: flex; justify-content: center; gap: 16px;">
+    """, unsafe_allow_html=True)
+
     page = st.radio(
-        " ",
-        ["Courses by Role", "Resume Videos", "Interview Videos"],
+        label="Select Learning Option",
+        options=["Courses by Role", "Resume Videos", "Interview Videos"],
         horizontal=True,
-        key="page_selection"
+        key="page_selection",
+        label_visibility="collapsed"
     )
 
+    st.markdown("</div></div>", unsafe_allow_html=True)
+
+    # Section 1: Courses by Role
     if page == "Courses by Role":
-        st.subheader("Courses by Career Role")
+        st.subheader("🎯 Courses by Career Role")
         category = st.selectbox(
             "Select Career Category",
             options=list(COURSES_BY_CATEGORY.keys()),
@@ -3110,7 +3184,7 @@ with tab4:
                 key="role_selection"
             )
             if role:
-                st.subheader(f"Courses for {role} in {category}:")
+                st.subheader(f"📘 Courses for **{role}** in **{category}**:")
                 courses = get_courses_for_role(category, role)
                 if courses:
                     for title, url in courses:
@@ -3120,8 +3194,9 @@ with tab4:
                             </div>
                         """, unsafe_allow_html=True)
                 else:
-                    st.info("No courses found for this role.")
+                    st.info("🚫 No courses found for this role.")
 
+    # Section 2: Resume Videos
     elif page == "Resume Videos":
         st.subheader("📄 Resume Writing Videos")
         categories = list(RESUME_VIDEOS.keys())
@@ -3131,7 +3206,7 @@ with tab4:
             key="resume_vid_cat"
         )
         if selected_cat:
-            st.subheader(f"{selected_cat}")
+            st.subheader(f"📂 {selected_cat}")
             videos = RESUME_VIDEOS[selected_cat]
             cols = st.columns(2)
             for idx, (title, url) in enumerate(videos):
@@ -3139,6 +3214,7 @@ with tab4:
                     st.markdown(f"**{title}**")
                     st.video(url)
 
+    # Section 3: Interview Videos
     elif page == "Interview Videos":
         st.subheader("🗣️ Interview Preparation Videos")
         categories = list(INTERVIEW_VIDEOS.keys())
@@ -3148,13 +3224,15 @@ with tab4:
             key="interview_vid_cat"
         )
         if selected_cat:
-            st.subheader(f"{selected_cat}")
+            st.subheader(f"📂 {selected_cat}")
             videos = INTERVIEW_VIDEOS[selected_cat]
             cols = st.columns(2)
             for idx, (title, url) in enumerate(videos):
                 with cols[idx % 2]:
                     st.markdown(f"**{title}**")
                     st.video(url)
+
+
 with tab5:
     import sqlite3
     import pandas as pd
@@ -3201,7 +3279,7 @@ with tab5:
         if st.button("Login"):
             if password == "lexiadmin123":
                 st.session_state.admin_logged_in = True
-                st.success("✅ Login successful!")
+                st.success("✅ Login successful! You now have access to the Admin Dashboard.")
                 st.rerun()
             else:
                 st.error("❌ Incorrect password.")
@@ -3211,7 +3289,7 @@ with tab5:
     col1, col2 = st.columns([1, 1])
     with col1:
         if st.button("🔄 Refresh Dashboard"):
-            st.experimental_rerun()
+            st.rerun()
     with col2:
         if st.button("🚪 Logout now"):
             st.session_state.admin_logged_in = False
@@ -3269,25 +3347,71 @@ with tab5:
         st.info("No domain data available.")
 
     st.markdown("### 📊 Domain Distribution by Count")
-    df_domain_dist = get_domain_distribution()
+
+    # ✅ Cached data loading
+    @st.cache_data
+    def load_domain_distribution():
+        df = get_domain_distribution()
+        if not df.empty:
+            total = df["count"].sum()
+            df["percent"] = (df["count"] / total) * 100
+            df = df.sort_values(by="count", ascending=False).reset_index(drop=True)
+        return df
+
+    # Load data
+    df_domain_dist = load_domain_distribution()
+
     if not df_domain_dist.empty:
-        total_count = df_domain_dist["count"].sum()
-        df_domain_dist["percent"] = (df_domain_dist["count"] / total_count) * 100
+        # 🔘 Radio to toggle between chart views
+        chart_type = st.radio("📊 Select View:", ["📈 Percentage View", "📉 Count View"], horizontal=True)
 
-        fig_dist, ax_dist = plt.subplots(figsize=(6, 4))
-        bars = ax_dist.bar(df_domain_dist["domain"], df_domain_dist["count"], color="#ff9933")
+        if chart_type == "📈 Percentage View":
+            fig_percent, ax_percent = plt.subplots(figsize=(9, 5))
+            bars_percent = ax_percent.bar(df_domain_dist["domain"], df_domain_dist["percent"], color="#33B5E5")
 
-        for i, bar in enumerate(bars):
-            height = bar.get_height()
-            percent = df_domain_dist["percent"].iloc[i]
-            ax_dist.text(bar.get_x() + bar.get_width() / 2, height, f"{percent:.1f}%",
-                         ha='center', va='bottom', fontsize=8)
+            for bar, pct in zip(bars_percent, df_domain_dist["percent"]):
+                height = bar.get_height()
+                ax_percent.text(
+                    bar.get_x() + bar.get_width() / 2,
+                    height + 0.5,
+                    f"{pct:.1f}%",
+                    ha='center',
+                    va='bottom',
+                    fontsize=10
+                )
 
-        ax_dist.set_ylabel("Resume Count")
-        ax_dist.set_title("Resumes per Domain")
-        ax_dist.set_xticks(np.arange(len(df_domain_dist["domain"])))
-        ax_dist.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right")
-        st.pyplot(fig_dist)
+            ax_percent.set_title("Resume Distribution by Domain (%)", fontsize=14, fontweight='bold')
+            ax_percent.set_ylabel("Percentage (%)", fontsize=12)
+            ax_percent.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=10)
+            ax_percent.set_ylim(0, df_domain_dist["percent"].max() * 1.25)
+            ax_percent.grid(axis='y', linestyle='--', alpha=0.4)
+
+            st.pyplot(fig_percent)
+
+        elif chart_type == "📉 Count View":
+            fig_count, ax_count = plt.subplots(figsize=(9, 5))
+            bars_count = ax_count.bar(df_domain_dist["domain"], df_domain_dist["count"], color="#ff9933")
+
+            for bar, count in zip(bars_count, df_domain_dist["count"]):
+                height = bar.get_height()
+                ax_count.text(
+                    bar.get_x() + bar.get_width() / 2,
+                    height + 1,
+                    f"{int(count)}",
+                    ha='center',
+                    va='bottom',
+                    fontsize=10,
+                    color="black"
+                )
+
+            ax_count.set_title("Resume Count by Domain", fontsize=14, fontweight='bold')
+            ax_count.set_ylabel("Resume Count", fontsize=12)
+            ax_count.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=10)
+            ax_count.set_ylim(0, df_domain_dist["count"].max() * 1.25)
+            ax_count.grid(axis='y', linestyle='--', alpha=0.4)
+
+            st.pyplot(fig_count)
+
     else:
         st.info("No domain data found.")
 
@@ -3312,28 +3436,50 @@ with tab5:
     else:
         st.info("No ATS domain data.")
 
-    
+    st.markdown("### 📈 Resume Uploads Over Time")
+    df_timeline = get_resume_count_by_day()
+    if not df_timeline.empty:
+        df_timeline = df_timeline.sort_values("day")
+        fig3, ax3 = plt.subplots(figsize=(7, 4))
+        ax3.plot(df_timeline["day"], df_timeline["count"], marker="o", color="green", linewidth=2)
+        for i in range(len(df_timeline)):
+            ax3.annotate(
+                str(df_timeline["count"].iloc[i]),
+                (df_timeline["day"].iloc[i], df_timeline["count"].iloc[i]),
+                textcoords="offset points",
+                xytext=(0, 8),
+                ha='center',
+                fontsize=9,
+                color='black'
+            )
+        ax3.set_ylabel("Uploads")
+        ax3.set_xlabel("Date")
+        ax3.set_title("Resume Upload Timeline")
+        plt.xticks(rotation=60, ha='right')
+        fig3.tight_layout()
+        st.pyplot(fig3)
+    else:
+        st.info("ℹ️ No upload trend data to display.")
 
     st.markdown("### 🧠 Fair vs Biased Resumes")
     df_bias = get_bias_distribution()
     if not df_bias.empty:
         fig4, ax4 = plt.subplots()
         ax4.pie(df_bias["count"], labels=df_bias["bias_category"], autopct="%1.1f%%", startangle=90,
-                colors=["#00cc66", "#ff6666"])
+                colors=["#ff6666", "#00cc66"])
         ax4.axis("equal")
         st.pyplot(fig4)
     else:
         st.info("No bias data to display.")
 
     st.markdown("### 🚩 Flagged Candidates (Bias Score > 0.6)")
-    flagged_df = get_all_candidates(bias_threshold=0.6)  # ✅ Removed strict ATS filter
-
+    flagged_df = get_all_candidates(bias_threshold=0.6)
     if not flagged_df.empty:
         st.dataframe(
             flagged_df[[
                 "id", "resume_name", "candidate_name",
                 "bias_score", "ats_score", "domain", "timestamp"
-            ]].sort_values(by="bias_score", ascending=False),
+            ]].sort_values(by="bias_score", key=lambda x: pd.to_numeric(x, errors="coerce"), ascending=False),
             use_container_width=True
         )
     else:

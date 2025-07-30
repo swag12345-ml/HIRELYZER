@@ -26,6 +26,9 @@ langchain-huggingface
 langchain-groq
 sentence-transformers
 faiss-cpu
+reportlab
+beautifulsoup4
+
 
 
 

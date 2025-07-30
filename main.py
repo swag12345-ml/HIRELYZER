@@ -2845,7 +2845,6 @@ with tab2:
  st.markdown("""
 ✅ After downloading your HTML resume, you can [click here to convert it to PDF](https://www.sejda.com/html-to-pdf) using Sejda's free online tool.
 """)
-
 with tab3:
     st.header("🔍 Job Search Across LinkedIn, Naukri, and FoundIt")
 
@@ -3231,8 +3230,6 @@ with tab4:
                 with cols[idx % 2]:
                     st.markdown(f"**{title}**")
                     st.video(url)
-
-
 with tab5:
     import sqlite3
     import pandas as pd

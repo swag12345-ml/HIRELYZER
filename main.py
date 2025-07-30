@@ -1,25 +1,16 @@
-from xhtml2pdf import pisa
-from io import BytesIO
-
 def html_to_pdf_bytes(html_string):
-    # ✅ CSS emulating the same wkhtmltopdf options
+    path_to_wkhtmltopdf = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+    config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
+
+    # ✅ Inject a base style with larger font size
     styled_html_string = f"""
     <html>
     <head>
-        <meta charset="UTF-8">
-        <style>
-            @page {{
-                size: 400mm 297mm;  /* ✅ page-width: 400mm, page-height: 297mm */
-                margin-top: 10mm;
-                margin-bottom: 10mm;
-                margin-left: 10mm;
-                margin-right: 10mm;
-            }}
+        <style>-----
             body {{
                 font-size: 14pt;
                 font-family: 'Segoe UI', sans-serif;
                 line-height: 1.5;
-                zoom: 1;  /* ✅ Not real CSS zoom, but included for logical completeness */
             }}
         </style>
     </head>
@@ -29,14 +20,23 @@ def html_to_pdf_bytes(html_string):
     </html>
     """
 
-    # ✅ Create PDF in memory
-    pdf_io = BytesIO()
-    pisa_status = pisa.CreatePDF(src=styled_html_string, dest=pdf_io, encoding='utf-8')
+    options = {
+        'page-width': '400mm',       # ✅ Custom wide page size
+        'page-height': '297mm',      # ✅ Standard height
+        'encoding': "UTF-8",
+        'enable-local-file-access': None,
+        'margin-top': '10mm',
+        'margin-bottom': '10mm',
+        'margin-left': '10mm',
+        'margin-right': '10mm',
+        'zoom': '1',                 # ✅ No zoom to maintain layout
+        'disable-smart-shrinking': ''
+    }
 
-    if pisa_status.err:
-        raise Exception("❌ Error generating PDF")
-
+    pdf_bytes = pdfkit.from_string(styled_html_string, False, options=options, configuration=config)
+    pdf_io = BytesIO(pdf_bytes)
     pdf_io.seek(0)
+
     return pdf_io
 
 

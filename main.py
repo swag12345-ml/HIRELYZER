@@ -1,3 +1,5 @@
+import pdfkit
+
 def html_to_pdf_bytes(html_string):
     path_to_wkhtmltopdf = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
     config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)

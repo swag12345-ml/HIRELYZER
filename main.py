@@ -1,6 +1,9 @@
 import streamlit as st
 import streamlit.components.v1 as components
 from base64 import b64encode
+import streamlit as st
+import re
+from llm_manager import call_llm
 import requests
 import datetime
 
@@ -831,13 +834,11 @@ import uuid
 import urllib.parse
 
 def search_jobs(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
-    # Encode for URL
+    # Encode inputs
     role_encoded = urllib.parse.quote_plus(job_role.strip())
-    role_slug = job_role.strip().lower().replace(" ", "-")
     loc_encoded = urllib.parse.quote_plus(location.strip())
-    loc_slug = location.strip().lower().replace(" ", "-")
 
-    # Experience mappings
+    # Mappings
     experience_range_map = {
         "Internship": "0~0", "Entry Level": "1~1", "Associate": "2~3",
         "Mid-Senior Level": "4~7", "Director": "8~15", "Executive": "16~20"
@@ -858,20 +859,21 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         "Temporary": "T", "Volunteer": "V", "Internship": "I"
     }
 
-    # LinkedIn URL
+    # LinkedIn
     linkedin_url = f"https://www.linkedin.com/jobs/search/?keywords={role_encoded}&location={loc_encoded}"
     if experience_level in linkedin_exp_map:
         linkedin_url += f"&f_E={linkedin_exp_map[experience_level]}"
     if job_type in job_type_map:
         linkedin_url += f"&f_JT={job_type_map[job_type]}"
 
-    # Naukri URL
-    naukri_url = f"https://www.naukri.com/{role_slug}-jobs-in-{loc_slug}?k={role_encoded}&l={loc_encoded}"
+    # Naukri
+    # Naukri - add keyword (k), location (l), and experience if available
+    naukri_url = f"https://www.naukri.com/{role_encoded}-jobs-in-{loc_encoded}?k={role_encoded}&l={loc_encoded}"
     if experience_level and experience_exact_map.get(experience_level):
-        naukri_url += f"&experience={experience_exact_map[experience_level]}"
-    naukri_url += "&nignbevent_src=jobsearchDeskGNB"
+     naukri_url += f"&experience={experience_exact_map[experience_level]}"
 
-    # FoundIt URL
+
+    # FoundIt
     if foundit_experience is not None:
         experience_range = f"{foundit_experience}~{foundit_experience}"
         experience_exact = str(foundit_experience)
@@ -892,6 +894,7 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         {"title": f"Naukri: {job_role} jobs in {location}", "link": naukri_url},
         {"title": f"FoundIt (Monster): {job_role} jobs in {location}", "link": foundit_url}
     ]
+
 
 
 
@@ -1109,64 +1112,63 @@ replacement_mapping = {
 
 def rewrite_text_with_llm(text, replacement_mapping, user_location):
     """
-    Uses LLM to rewrite a resume with bias-free language and suggest relevant job roles.
-    Applies strict word replacement mapping and structures the result.
+    Uses LLM to rewrite a resume with grammatically improved, professionally written, bias-free language,
+    while preserving all the original achievements, skills, and content. Also suggests job roles.
     """
     from llm_manager import call_llm
 
-    # Format the replacement mapping as a readable bullet list for the prompt
     formatted_mapping = "\n".join(
         [f"- \"{key}\" → \"{value}\"" for key, value in replacement_mapping.items()]
     )
 
-    # Construct the prompt
     prompt = f"""
-You are an expert career advisor and professional resume language editor.
+You are an expert resume editor and career advisor.
 
-Your task is to:
+Your goal is to **professionally rewrite** the following resume text by improving:
 
-1. **Rewrite the following resume text** to:
-   - Remove or replace any gender-coded, biased, or non-inclusive language.
-   - Use *professional, inclusive, neutral, clear, and grammatically correct language*.
-   - **Retain all technical terms, job-specific keywords, certifications, and proper names.**
-   - Do **not** add new content or remove important information.
-   - Preserve the original meaning and intent of each sentence.
+✅ Grammar  
+✅ Sentence structure  
+✅ Formal tone and clarity  
+✅ Bias-free and inclusive language
 
 ---
 
-2. **Structure and Organize** the rewritten resume into clearly labeled standard resume sections. Only include sections that are present in the original text:
-   - Name
-   - Contact Information
-   - Email
-   - Portfolio
-   - Professional Summary
-   - Work Experience
-   - Skills
-   - Certifications
-   - Education
-   - Projects
-   - Interests
-
-   - If *Name*, *Contact Information*, or *Email* is present, place them clearly at the top under respective headings.
+⚠️ **Important rules you must follow**:
+- Keep **all original achievements, roles, skills, technologies, and job-specific content** exactly as-is.
+- Do **NOT remove**, generalize, or fabricate any details.
+- Only improve **how the content is written** (style, tone, flow, professionalism).
+- Apply strict **word replacements** from the given list below.
+- Output must be **grammatically correct, clear, and professional**.
 
 ---
 
-3. **Strictly apply the following word replacement mapping:**
+2. **Structure the resume** using labeled sections if present:
+- Name
+- Contact Information
+- Email
+- Portfolio
+- Professional Summary
+- Work Experience
+- Skills
+- Certifications
+- Education
+- Projects
+- Interests
+
+Only include sections that are present in the original resume.
+
+---
+
+3. **Apply this replacement mapping** strictly:
 
 {formatted_mapping}
 
-   - If a word or phrase matches a key exactly from this list, replace it with the corresponding value.
-   - Leave all other content unchanged.
-
 ---
 
-4. **Suggest 5 suitable job titles** based on the resume content and the candidate’s location: **{user_location}**
-   - Ensure titles are realistic for this location and aligned with the candidate's experience and skills.
-   - Provide a brief explanation for each suggestion.
-
----
-
-5. **Provide LinkedIn job search URLs** for each suggested title based on the location: **{user_location}**
+4. **Suggest 5 suitable job titles** based on the resume and candidate’s location: **{user_location}**  
+Include:
+- A reason for each title  
+- A LinkedIn search link for that role
 
 ---
 
@@ -1175,7 +1177,8 @@ Your task is to:
 
 ---
 
-**✅ Bias-Free Rewritten Resume (Well-Structured):**
+**✅ Improved, Bias-Free, Well-Structured Resume Text:**
+
 
 ---
 
@@ -1197,9 +1200,9 @@ Your task is to:
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%205&location={user_location})
 """
 
-    # Call the LLM with caching + key rotation
     response = call_llm(prompt, session=st.session_state)
     return response
+
 
 
 
@@ -1232,6 +1235,41 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
 
 
+import re
+import streamlit as st
+from llm_manager import call_llm
+
+# ✅ Cached grammar checker
+@st.cache_resource(show_spinner=False)
+def load_grammar_tool():
+    import language_tool_python
+    return language_tool_python.LanguageTool('en-US')
+
+tool = load_grammar_tool()
+
+# ✅ Fair grammar scoring
+def get_grammar_score(text, max_score=5):
+    matches = tool.check(text)
+    num_issues = len(matches)
+    total_words = len(text.split())
+
+    if total_words == 0:
+        return 1, "Empty or unreadable resume."
+
+    issues_per_100_words = (num_issues / total_words) * 100
+
+    if issues_per_100_words <= 2:
+        return max_score, f"Excellent grammar ({num_issues} issues in {total_words} words)."
+    elif issues_per_100_words <= 4:
+        return round(max_score * 0.9), f"Very good grammar ({num_issues} minor issues)."
+    elif issues_per_100_words <= 6:
+        return round(max_score * 0.75), f"Few noticeable issues ({num_issues})."
+    elif issues_per_100_words <= 8:
+        return round(max_score * 0.5), f"Moderate grammar issues ({num_issues})."
+    else:
+        return round(max_score * 0.3), f"High issue density ({num_issues})."
+
+# ✅ ATS Evaluation Function
 def ats_percentage_score(
     resume_text,
     job_description,
@@ -1242,17 +1280,12 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    """
-    Analyzes resume against job description using a structured, score-based prompt.
-    Enforces strict score calculation to prevent inflation. Final scores are validated externally.
-    """
-    from llm_manager import call_llm
-
     logic_score_note = (
         f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
         if logic_profile_score else ""
     )
 
+    # Prompt for LLM to return ATS report
     prompt = f"""
 You are an AI-powered ATS evaluator. You must evaluate the candidate's resume strictly based on the scoring rules below. 
 You are not allowed to guess, assume, or round scores casually. Your component scores will be validated programmatically,
@@ -1296,6 +1329,12 @@ so they must follow **exact arithmetic based on the provided weights**.
 - Never return 0 unless all components are truly zero.
 - Return exact numeric values.
 
+📊 **Score Bands for Formatted Score**  
+- 85–100: Excellent  
+- 70–84: Good  
+- 50–69: Average  
+- Below 50: Poor
+
 ---
 
 🧾 **OUTPUT FORMAT (Strictly follow this):**
@@ -1323,7 +1362,7 @@ Overall Percentage Match: <sum of above components>
 Formatted Score: <Excellent / Good / Average / Poor>
 
 Final Thoughts:  
-Provide a detailed summary (4–6 sentences) about the candidate’s overall fit. Highlight strengths
+Provide a detailed summary (4–6 sentences) about the candidate’s overall fit. Highlight strengths.
 
 {logic_score_note}
 
@@ -1338,8 +1377,51 @@ Provide a detailed summary (4–6 sentences) about the candidate’s overall fit
 \"\"\"{resume_text}\"\"\"
 """
 
+    # 🧠 Get LLM-based ATS result
     response = call_llm(prompt, session=st.session_state)
-    return response.strip()
+    ats_result = response.strip()
+
+    # 🧪 Regex score extractors
+    def extract_score(pattern, text, default=0):
+        match = re.search(pattern, text)
+        return int(match.group(1)) if match else default
+
+    # 🎯 Extract LLM scores
+    edu_score = extract_score(r"Education Score:\s*(\d+)", ats_result)
+    exp_score = extract_score(r"Experience Score:\s*(\d+)", ats_result)
+    skills_score = extract_score(r"Skills Match Percentage:\s*(\d+)", ats_result)
+    keyword_score = extract_score(r"Keyword Match Score:\s*(\d+)", ats_result)
+
+    # ✅ Grammar-based Language Score Override
+    lang_score, lang_comment = get_grammar_score(resume_text, max_score=lang_weight)
+
+    # ✅ Recalculate total with true grammar score
+    total_score = edu_score + exp_score + skills_score + lang_score + keyword_score
+    if total_score > 100:
+        total_score = 100
+
+    # 📊 Banding
+    if total_score >= 85:
+        formatted_score = "Excellent"
+    elif total_score >= 70:
+        formatted_score = "Good"
+    elif total_score >= 50:
+        formatted_score = "Average"
+    else:
+        formatted_score = "Poor"
+
+    # 🛠 Patch result with correct language and total scores
+    ats_result = re.sub(r"Language Quality Score:\s*\d+", f"Language Quality Score: {lang_score}", ats_result)
+    ats_result = re.sub(r"Language Quality Comments:.*", f"Language Quality Comments: {lang_comment}", ats_result)
+    ats_result = re.sub(r"Overall Percentage Match:\s*\d+", f"Overall Percentage Match: {total_score}", ats_result)
+    ats_result = re.sub(r"Formatted Score:\s*.*", f"Formatted Score: {formatted_score}", ats_result)
+
+    return ats_result
+
+
+
+
+
 
 
 # Setup Vector DB
@@ -2812,6 +2894,7 @@ with tab4:
                 with cols[idx % 2]:
                     st.markdown(f"**{title}**")
                     st.video(url)
+
 with tab5:
     import sqlite3
     import pandas as pd
@@ -2858,7 +2941,7 @@ with tab5:
         if st.button("Login"):
             if password == "lexiadmin123":
                 st.session_state.admin_logged_in = True
-                st.success("✅ Login successful!")
+                st.success("✅ Login successful! You now have access to the Admin Dashboard.")
                 st.rerun()
             else:
                 st.error("❌ Incorrect password.")
@@ -2927,23 +3010,50 @@ with tab5:
 
     st.markdown("### 📊 Domain Distribution by Count")
     df_domain_dist = get_domain_distribution()
+
     if not df_domain_dist.empty:
         total_count = df_domain_dist["count"].sum()
         df_domain_dist["percent"] = (df_domain_dist["count"] / total_count) * 100
 
-        fig_dist, ax_dist = plt.subplots(figsize=(6, 4))
+        fig_dist, ax_dist = plt.subplots(figsize=(8, 5))
         bars = ax_dist.bar(df_domain_dist["domain"], df_domain_dist["count"], color="#ff9933")
 
+        # Show actual count on Y-axis aligned with bar top
+        for bar in bars:
+            height = bar.get_height()
+            ax_dist.axhline(y=height, color='gray', linestyle=':', linewidth=0.5)
+            ax_dist.text(
+                -0.5,
+                height,
+                f"{int(height)}",
+                va='center',
+                ha='right',
+                fontsize=9,
+                color="gray"
+            )
+
+        # Show percentage on top of bars
         for i, bar in enumerate(bars):
             height = bar.get_height()
             percent = df_domain_dist["percent"].iloc[i]
-            ax_dist.text(bar.get_x() + bar.get_width() / 2, height, f"{percent:.1f}%",
-                         ha='center', va='bottom', fontsize=8)
+            ax_dist.text(
+                bar.get_x() + bar.get_width() / 2,
+                height + 0.5,
+                f"{percent:.1f}%",
+                ha='center',
+                va='bottom',
+                fontsize=10,
+                fontweight='bold',
+                color="black"
+            )
 
-        ax_dist.set_ylabel("Resume Count")
-        ax_dist.set_title("Resumes per Domain")
+        ax_dist.set_ylabel("Resume Count", fontsize=12, fontweight='bold')
+        ax_dist.set_title("Resumes per Domain", fontsize=14, fontweight='bold')
         ax_dist.set_xticks(np.arange(len(df_domain_dist["domain"])))
-        ax_dist.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right")
+        ax_dist.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=10)
+        max_count = df_domain_dist["count"].max()
+        ax_dist.set_yticks(np.arange(0, max_count + 6, 5))
+
         st.pyplot(fig_dist)
     else:
         st.info("No domain data found.")
@@ -2969,32 +3079,56 @@ with tab5:
     else:
         st.info("No ATS domain data.")
 
-    
+    st.markdown("### 📈 Resume Uploads Over Time")
+    df_timeline = get_resume_count_by_day()
+    if not df_timeline.empty:
+        df_timeline = df_timeline.sort_values("day")
+        fig3, ax3 = plt.subplots(figsize=(7, 4))
+        ax3.plot(df_timeline["day"], df_timeline["count"], marker="o", color="green", linewidth=2)
+        for i in range(len(df_timeline)):
+            ax3.annotate(
+                str(df_timeline["count"].iloc[i]),
+                (df_timeline["day"].iloc[i], df_timeline["count"].iloc[i]),
+                textcoords="offset points",
+                xytext=(0, 8),
+                ha='center',
+                fontsize=9,
+                color='black'
+            )
+        ax3.set_ylabel("Uploads")
+        ax3.set_xlabel("Date")
+        ax3.set_title("Resume Upload Timeline")
+        plt.xticks(rotation=60, ha='right')
+        fig3.tight_layout()
+        st.pyplot(fig3)
+    else:
+        st.info("ℹ️ No upload trend data to display.")
 
     st.markdown("### 🧠 Fair vs Biased Resumes")
     df_bias = get_bias_distribution()
     if not df_bias.empty:
         fig4, ax4 = plt.subplots()
         ax4.pie(df_bias["count"], labels=df_bias["bias_category"], autopct="%1.1f%%", startangle=90,
-                colors=["#00cc66", "#ff6666"])
+                colors=["#ff6666", "#00cc66"])
         ax4.axis("equal")
         st.pyplot(fig4)
     else:
         st.info("No bias data to display.")
 
     st.markdown("### 🚩 Flagged Candidates (Bias Score > 0.6)")
-    flagged_df = get_all_candidates(bias_threshold=0.6)  # ✅ Removed strict ATS filter
-
+    flagged_df = get_all_candidates(bias_threshold=0.6)
     if not flagged_df.empty:
         st.dataframe(
-            flagged_df[[
-                "id", "resume_name", "candidate_name",
-                "bias_score", "ats_score", "domain", "timestamp"
-            ]].sort_values(by="bias_score", ascending=False),
-            use_container_width=True
-        )
+    flagged_df[[
+        "id", "resume_name", "candidate_name",
+        "bias_score", "ats_score", "domain", "timestamp"
+    ]].sort_values(by="bias_score", key=lambda x: pd.to_numeric(x, errors="coerce"), ascending=False),
+    use_container_width=True
+)
+
     else:
         st.success("✅ No flagged candidates.")
+
 
 if "memory" in st.session_state:
     history = st.session_state.memory.load_memory_variables({}).get("chat_history", [])

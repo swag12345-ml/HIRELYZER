@@ -1161,16 +1161,20 @@ def extract_text_from_images(pdf_path):
 
 import spacy
 import subprocess
-import importlib
+import importlib.util
 
-model_name = "en_core_web_sm"
+def load_spacy_model(model_name="en_core_web_sm"):
+    try:
+        return spacy.load(model_name)
+    except OSError:
+        try:
+            subprocess.run(["python", "-m", "spacy", "download", model_name], check=True)
+            return spacy.load(model_name)
+        except Exception as e:
+            print(f"⚠️ Failed to download spaCy model: {e}")
+            return None  # or handle fallback
 
-try:
-    nlp = spacy.load(model_name)
-except OSError:
-    subprocess.run(["python", "-m", "spacy", "download", model_name])
-    importlib.invalidate_caches()
-    nlp = spacy.load(model_name)
+nlp = load_spacy_model()
 
 
 # Example gender_words dictionary (use your full research-backed lists here)

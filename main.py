@@ -1160,10 +1160,18 @@ def extract_text_from_images(pdf_path):
 # Detect bias in resume
 
 import spacy
-import re
+import subprocess
+import importlib
 
-# Load spaCy English model
-nlp = spacy.load("en_core_web_sm")
+model_name = "en_core_web_sm"
+
+try:
+    nlp = spacy.load(model_name)
+except OSError:
+    subprocess.run(["python", "-m", "spacy", "download", model_name])
+    importlib.invalidate_caches()
+    nlp = spacy.load(model_name)
+
 
 # Example gender_words dictionary (use your full research-backed lists here)
 gender_words = {

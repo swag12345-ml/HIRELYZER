@@ -1,184 +1,8 @@
-import pdfkit
-from io import BytesIO
 import streamlit as st
-from datetime import datetime
 import streamlit.components.v1 as components
 from base64 import b64encode
-import re
-from llm_manager import call_llm
 import requests
 import datetime
-import os, json, random, string, re, asyncio, io
-import urllib.parse
-from collections import Counter
-
-# ------------------- External Libraries -------------------
-import torch
-import io
-from io import BytesIO
-import matplotlib.pyplot as plt
-import fitz
-import requests
-import numpy as np
-import pandas as pd
-
-import base64
-from db_manager import insert_candidate, get_top_domains_by_score
-
-    
-from PIL import Image
-from pdf2image import convert_from_path
-from dotenv import load_dotenv
-from nltk.stem import WordNetLemmatizer
-from docx import Document
-from docx.shared import Pt, RGBColor, Inches
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
-from docx.opc.constants import RELATIONSHIP_TYPE as RT
-
-# ------------------- Langchain & Embeddings -------------------
-from langchain_text_splitters import CharacterTextSplitter
-from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_groq import ChatGroq
-from langchain.memory import ConversationBufferMemory
-from langchain.chains import ConversationalRetrievalChain
-from llm_manager import call_llm
-
-from pydantic import BaseModel
-
-def html_to_pdf_bytes(html_string):
-    path_to_wkhtmltopdf = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
-    config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
-
-    # ✅ Inject a base style with larger font size
-    styled_html_string = f"""
-    <html>
-    <head>
-        <style>-----
-            body {{
-                font-size: 14pt;
-                font-family: 'Segoe UI', sans-serif;
-                line-height: 1.5;
-            }}
-        </style>
-    </head>
-    <body>
-        {html_string}
-    </body>
-    </html>
-    """
-
-    options = {
-        'page-width': '400mm',       # ✅ Custom wide page size
-        'page-height': '297mm',      # ✅ Standard height
-        'encoding': "UTF-8",
-        'enable-local-file-access': None,
-        'margin-top': '10mm',
-        'margin-bottom': '10mm',
-        'margin-left': '10mm',
-        'margin-right': '10mm',
-        'zoom': '1',                 # ✅ No zoom to maintain layout
-        'disable-smart-shrinking': ''
-    }
-
-    pdf_bytes = pdfkit.from_string(styled_html_string, False, options=options, configuration=config)
-    pdf_io = BytesIO(pdf_bytes)
-    pdf_io.seek(0)
-
-    return pdf_io
-
-
-
-
-    pdf_bytes = pdfkit.from_string(html_string, False, options=options, configuration=config)
-    return BytesIO(pdf_bytes)
-
-def generate_cover_letter_from_resume_builder():
-    
-
-    name = st.session_state.get("name", "")
-    job_title = st.session_state.get("job_title", "")
-    summary = st.session_state.get("summary", "")
-    skills = st.session_state.get("skills", "")
-    location = st.session_state.get("location", "")
-    today_date = datetime.today().strftime("%B %d, %Y")
-
-    # ✅ Input boxes for contact info
-    company = st.text_input("🏢 Target Company", placeholder="e.g., Google")
-    linkedin = st.text_input("🔗 LinkedIn URL", placeholder="e.g., https://linkedin.com/in/username")
-    email = st.text_input("📧 Email", placeholder="e.g., you@example.com")
-    mobile = st.text_input("📞 Mobile Number", placeholder="e.g., +91 9876543210")
-
-    # ✅ Show warning only after inputs
-    if not all([name, job_title, summary, skills, company, linkedin, email, mobile]):
-        st.warning("⚠️ Please fill in all fields including LinkedIn, email, and mobile.")
-        return
-
-    prompt = f"""
-You are a professional cover letter writer.
-
-Write a formal and compelling cover letter using the information below. Format it as a real letter with:
-1. Date
-2. Recipient heading
-3. Proper salutation
-4. Three short paragraphs
-5. Professional closing
-
-Ensure you **only include the company name once** in the header or salutation, and avoid repeating it redundantly in the body.
-
-### Heading Info:
-{today_date}
-Hiring Manager, {company}, {location}
-
-### Candidate Info:
-- Name: {name}
-- Job Title: {job_title}
-- Summary: {summary}
-- Skills: {skills}
-- Location: {location}
-
-### Instructions:
-- Do not repeat the company name twice.
-- Focus on skills and impact.
-- Make it personalized and enthusiastic.
-- Return only the final formatted cover letter without any HTML tags.
-"""
-
-    # ✅ Call LLM for cover letter
-    cover_letter = call_llm(prompt, session=st.session_state)
-
-    # ✅ Remove leading date line or raw HTML blocks if present
-    lines = cover_letter.strip().split("\n")
-    if len(lines) > 0 and (re.match(r'^\w+ \d{1,2}, \d{4}$', lines[0].strip()) or lines[0].strip().startswith('<div')):
-        lines = lines[1:]
-    cover_letter = "\n".join(lines)
-
-    st.session_state["cover_letter"] = cover_letter
-
-    # ✅ Styled HTML template wrapping the LLM output with icons and date
-    cover_letter_html = f"""
-    <div style="font-family: Georgia, serif; line-height: 1.6; color: #333; border: 1px solid #ccc; padding: 20px; max-width: 700px; margin: auto;">
-        <div style="text-align: center;">
-            <h1 style="color: #003366; font-size: 26px; margin-bottom: 0;">{name}</h1>
-            <h2 style="font-style: normal; font-weight: normal; margin-top: 0; color: #555;">{job_title}</h2>
-            <p style="margin: 4px 0; font-size: 14px;">
-                <a href="{linkedin}" style="color: #003366;">{linkedin}</a><br>
-                <img src="https://img.icons8.com/ios-glyphs/16/000000/new-post.png" style="vertical-align: middle;"/> {email} |
-                <img src="https://img.icons8.com/ios-glyphs/16/000000/phone.png" style="vertical-align: middle;"/> {mobile}
-            </p>
-        </div>
-        <p style="text-align: left; font-size: 14px; margin-top: 20px;">{today_date}</p>
-        <hr style="border: 1px solid #ccc;">
-        <div style="white-space: pre-wrap; text-align: left; font-size: 14px; line-height: 1.6;">
-            {cover_letter}
-        </div>
-    </div>
-    """
-
-    # ✅ Save styled HTML to session state for download in Tab 2
-    st.session_state["cover_letter_html"] = cover_letter_html
-
 
 from user_login import (
     create_user_table,
@@ -186,10 +10,8 @@ from user_login import (
     verify_user,
     get_logins_today,
     get_total_registered_users,
-    log_user_action,
-    username_exists  # 👈 add this line
+    log_user_action
 )
-
 
 # ------------------- Initialize -------------------
 create_user_table()
@@ -269,10 +91,6 @@ body, .main {
 }
 </style>
 """, unsafe_allow_html=True)
-# 🔹 VIDEO BACKGROUND & GLOW TEXT
-
-
-
 
 # ------------------- BEFORE LOGIN -------------------
 if not st.session_state.authenticated:
@@ -392,10 +210,9 @@ if not st.session_state.authenticated:
     </script>
     """, height=400)
 
-
-
-if not st.session_state.get("authenticated", False):
-    
+if not st.session_state.authenticated:
+    from base64 import b64encode
+    import requests
 
     # ✅ Use an online image of a female employee
     image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
@@ -454,120 +271,49 @@ if not st.session_state.get("authenticated", False):
 
     # -------- Login/Register Layout --------
     left, center, right = st.columns([1, 2, 1])
-
     with center:
-        st.markdown(
-            "<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>LEXIBOT</span></h2>",
-            unsafe_allow_html=True,
-        )
+        st.markdown("<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>LEXIBOT</span></h2>", unsafe_allow_html=True)
 
         login_tab, register_tab = st.tabs(["🔑 Login", "🆕 Register"])
 
-        # ---------------- LOGIN TAB ----------------
         with login_tab:
             user = st.text_input("Username", key="login_user")
             pwd = st.text_input("Password", type="password", key="login_pass")
-
             if st.button("Login", key="login_btn"):
-                success, saved_key = verify_user(user.strip(), pwd.strip())
-                if success:
+                if verify_user(user.strip(), pwd.strip()):
                     st.session_state.authenticated = True
                     st.session_state.username = user.strip()
-
-                    # ✅ Load saved Groq key into session
-                    if saved_key:
-                        st.session_state["user_groq_key"] = saved_key
-
                     log_user_action(user.strip(), "login")
                     st.success("✅ Login successful!")
                     st.rerun()
                 else:
                     st.error("❌ Invalid credentials.")
 
-        # ---------------- REGISTER TAB ----------------
         with register_tab:
             new_user = st.text_input("Choose a Username", key="reg_user")
             new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
-            st.caption("🔒 Password must be at least 8 characters and include uppercase, lowercase, number, and special character.")
-
-            # ✅ Live Username Availability Check
-            if new_user.strip():
-                if username_exists(new_user.strip()):
-                    st.error("🚫 Username already exists.")
-                else:
-                    st.info("✅ Username is available.")
-
             if st.button("Register", key="register_btn"):
                 if new_user.strip() and new_pass.strip():
-                    success, message = add_user(new_user.strip(), new_pass.strip())
-                    if success:
-                        st.success(message)
+                    if add_user(new_user.strip(), new_pass.strip()):
+                        st.success("✅ Registered! You can now login.")
                         log_user_action(new_user.strip(), "register")
                     else:
-                        st.error(message)
+                        st.error("🚫 Username already exists.")
                 else:
                     st.warning("⚠️ Please fill in both fields.")
-
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()
 
-
-
-
 # ------------------- AFTER LOGIN -------------------
-from user_login import save_user_api_key, get_user_api_key  # Ensure both are imported
+if st.session_state.authenticated:
+    st.markdown(f"<h2 style='color:#00BFFF;'>Welcome to LEXIBOT, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>", unsafe_allow_html=True)
 
-if st.session_state.get("authenticated"):
-    st.markdown(
-        f"<h2 style='color:#00BFFF;'>Welcome to LEXIBOT, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>",
-        unsafe_allow_html=True,
-    )
-
-    # 🔓 LOGOUT BUTTON
     if st.button("🚪 Logout"):
-        log_user_action(st.session_state.get("username", "unknown"), "logout")
-
-        # ✅ Clear all session keys safely
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
-
-        st.success("✅ Logged out successfully.")
-        st.rerun()  # Force rerun to prevent stale UI
-
-    # 🔑 GROQ API KEY SECTION (SIDEBAR)
-    st.sidebar.markdown("### 🔑 Groq API Key")
-
-    # ✅ Load saved key from DB
-    saved_key = get_user_api_key(st.session_state.username)
-    masked_preview = f"****{saved_key[-6:]}" if saved_key else ""
-
-    user_api_key_input = st.sidebar.text_input(
-        "Your Groq API Key (Optional)",
-        placeholder=masked_preview,
-        type="password"
-    )
-
-    # ✅ Save or reuse key
-    if user_api_key_input:
-        st.session_state["user_groq_key"] = user_api_key_input
-        save_user_api_key(st.session_state.username, user_api_key_input)
-        st.sidebar.success("✅ New key saved and in use.")
-    elif saved_key:
-        st.session_state["user_groq_key"] = saved_key
-        st.sidebar.info(f"ℹ️ Using your previously saved API key ({masked_preview})")
-    else:
-        st.sidebar.warning("⚠ Using shared admin key with possible usage limits")
-
-    # 🧹 Clear saved key
-    if st.sidebar.button("🗑️ Clear My API Key"):
-        st.session_state["user_groq_key"] = None
-        save_user_api_key(st.session_state.username, None)
-        st.sidebar.success("✅ Cleared saved Groq API key. Now using shared admin key.")
-
-
-
-
+        log_user_action(st.session_state.username, "logout")
+        st.session_state.authenticated = False
+        st.session_state.username = None
+        st.rerun()
 
 
 from user_login import get_all_user_logs
@@ -588,6 +334,51 @@ if st.session_state.username == "admin":
         )
     else:
         st.info("No logs found yet.")
+
+
+import os, json, random, string, re, asyncio, io
+import urllib.parse
+from collections import Counter
+
+# ------------------- External Libraries -------------------
+import torch
+import io
+from io import BytesIO
+import matplotlib.pyplot as plt
+import fitz
+import requests
+import numpy as np
+import pandas as pd
+import streamlit as st
+import base64
+import streamlit as st
+
+# File uploader widget for image upload
+from db_manager import insert_candidate, get_top_domains_by_score
+
+    
+from PIL import Image
+from pdf2image import convert_from_path
+from dotenv import load_dotenv
+from nltk.stem import WordNetLemmatizer
+from docx import Document
+from docx.shared import Pt, RGBColor, Inches
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
+
+# ------------------- Langchain & Embeddings -------------------
+from langchain_text_splitters import CharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_groq import ChatGroq
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationalRetrievalChain
+from llm_manager import call_llm
+
+from pydantic import BaseModel
+
+# Set page config
 
 
 # CSS Customization
@@ -1014,48 +805,73 @@ def get_companies_by_industry(industry):
     return companies
 
 # Gender-coded language
-
+gender_words = {
+    "masculine": [
+        "active", "aggressive", "ambitious", "analytical", "assertive", "autonomous", "boast", "bold",
+        "challenging", "competitive", "confident", "courageous", "decisive", "determined", "dominant", "driven",
+        "dynamic", "forceful", "independent", "individualistic", "intellectual", "lead", "leader", "objective",
+        "outspoken", "persistent", "principled", "proactive", "resilient", "self-reliant", "self-sufficient",
+        "strong", "superior", "tenacious","guru","tech guru","technical guru", "visionary", "manpower", "strongman", "command",
+        "assert", "headstrong", "rockstar", "superstar", "go-getter", "trailblazer", "results-driven",
+        "fast-paced", "driven", "determination", "competitive spirit"
+    ],
+    
+    "feminine": [
+        "affectionate", "agreeable", "attentive", "collaborative", "committed", "compassionate", "considerate",
+        "cooperative", "dependable", "dependent", "emotional", "empathetic", "enthusiastic", "friendly", "gentle",
+        "honest", "inclusive", "interpersonal", "kind", "loyal", "modest", "nurturing", "pleasant", "polite",
+        "sensitive", "supportive", "sympathetic", "tactful", "tender", "trustworthy", "understanding", "warm",
+        "yield", "adaptable", "communal", "helpful", "dedicated", "respectful", "nurture", "sociable",
+        "relationship-oriented", "team player", "dependable", "people-oriented", "empathetic listener",
+        "gentle communicator", "open-minded"
+    ]
+}
 # Sample job search function
 import uuid
 import urllib.parse
 
 def search_jobs(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
-    # Encode values for query
+    # Encode for URL
     role_encoded = urllib.parse.quote_plus(job_role.strip())
+    role_slug = job_role.strip().lower().replace(" ", "-")
     loc_encoded = urllib.parse.quote_plus(location.strip())
-
-    # Create role/city slugs for path
-    role_path = job_role.strip().lower().replace(" ", "-")
-    city = location.strip().split(",")[0].strip().lower()
-    city_path = city.replace(" ", "-")
-    city_query = city.replace(" ", "%20") + "%20and%20india"
+    loc_slug = location.strip().lower().replace(" ", "-")
 
     # Experience mappings
     experience_range_map = {
         "Internship": "0~0", "Entry Level": "1~1", "Associate": "2~3",
         "Mid-Senior Level": "4~7", "Director": "8~15", "Executive": "16~20"
     }
+
     experience_exact_map = {
         "Internship": "0", "Entry Level": "1", "Associate": "2",
         "Mid-Senior Level": "4", "Director": "8", "Executive": "16"
     }
+
     linkedin_exp_map = {
         "Internship": "1", "Entry Level": "2", "Associate": "3",
         "Mid-Senior Level": "4", "Director": "5", "Executive": "6"
     }
+
     job_type_map = {
         "Full-time": "F", "Part-time": "P", "Contract": "C",
         "Temporary": "T", "Volunteer": "V", "Internship": "I"
     }
 
-    # LinkedIn
+    # LinkedIn URL
     linkedin_url = f"https://www.linkedin.com/jobs/search/?keywords={role_encoded}&location={loc_encoded}"
     if experience_level in linkedin_exp_map:
         linkedin_url += f"&f_E={linkedin_exp_map[experience_level]}"
     if job_type in job_type_map:
         linkedin_url += f"&f_JT={job_type_map[job_type]}"
 
-    # Experience values
+    # Naukri URL
+    naukri_url = f"https://www.naukri.com/{role_slug}-jobs-in-{loc_slug}?k={role_encoded}&l={loc_encoded}"
+    if experience_level and experience_exact_map.get(experience_level):
+        naukri_url += f"&experience={experience_exact_map[experience_level]}"
+    naukri_url += "&nignbevent_src=jobsearchDeskGNB"
+
+    # FoundIt URL
     if foundit_experience is not None:
         experience_range = f"{foundit_experience}~{foundit_experience}"
         experience_exact = str(foundit_experience)
@@ -1063,29 +879,13 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         experience_range = experience_range_map.get(experience_level, "")
         experience_exact = experience_exact_map.get(experience_level, "")
 
-    # ✅ Naukri (cleaned)
-    naukri_url = (
-        f"https://www.naukri.com/{role_path}-jobs-in-{city_path}-and-india"
-        f"?k={role_encoded}"
-        f"&l={city_query}"
-    )
-    if experience_exact:
-        naukri_url += f"&experience={experience_exact}"
-    naukri_url += "&nignbevent_src=jobsearchDeskGNB"
-
-    # ✅ FoundIt
     search_id = uuid.uuid4()
-    child_search_id = uuid.uuid4()
-    foundit_url = (
-        f"https://www.foundit.in/search/{role_path}-jobs-in-{city_path}"
-        f"?query={role_encoded}"
-        f"&locations={loc_encoded}"
-        f"&experienceRanges={urllib.parse.quote_plus(experience_range)}"
-        f"&experience={experience_exact}"
-        f"&queryDerived=true"
-        f"&searchId={search_id}"
-        f"&child_search_id={child_search_id}"
-    )
+    foundit_url = f"https://www.foundit.in/srp/results?query={role_encoded}&locations={loc_encoded}"
+    if experience_range:
+        foundit_url += f"&experienceRanges={urllib.parse.quote_plus(experience_range)}"
+    if experience_exact:
+        foundit_url += f"&experience={experience_exact}"
+    foundit_url += f"&searchId={search_id}"
 
     return [
         {"title": f"LinkedIn: {job_role} jobs in {location}", "link": linkedin_url},
@@ -1159,119 +959,27 @@ def extract_text_from_images(pdf_path):
 
 # Detect bias in resume
 
-import spacy
-import subprocess
-import importlib.util
-
-# Check if spaCy model is installed
-def ensure_spacy_model(model_name="en_core_web_sm"):
-    try:
-        # Try to load it directly
-        spacy.load(model_name)
-    except OSError:
-        # If not installed, download it
-        subprocess.run(["python", "-m", "spacy", "download", model_name], check=True)
-
-ensure_spacy_model()
-nlp = spacy.load("en_core_web_sm")
-
-
-
-# Example gender_words dictionary (use your full research-backed lists here)
-gender_words = {
-    "masculine": [
-        "active", "aggressive", "ambitious", "analytical", "assertive", "autonomous", "boast", "bold",
-        "challenging", "competitive", "confident", "courageous", "decisive", "determined", "dominant", "driven",
-        "dynamic", "forceful", "independent", "individualistic", "intellectual", "lead", "leader", "objective",
-        "outspoken", "persistent", "principled", "proactive", "resilient", "self-reliant", "self-sufficient",
-        "strong", "superior", "tenacious","guru","tech guru","technical guru", "visionary", "manpower", "strongman", "command",
-        "assert", "headstrong", "rockstar", "superstar", "go-getter", "trailblazer", "results-driven",
-        "fast-paced", "driven", "determination", "competitive spirit"
-    ],
-    
-    "feminine": [
-        "affectionate", "agreeable", "attentive", "collaborative", "committed", "compassionate", "considerate",
-        "cooperative", "dependable", "dependent", "emotional", "empathetic", "enthusiastic", "friendly", "gentle",
-        "honest", "inclusive", "interpersonal", "kind", "loyal", "modest", "nurturing", "pleasant", "polite",
-        "sensitive", "supportive", "sympathetic", "tactful", "tender", "trustworthy", "understanding", "warm",
-        "yield", "adaptable", "communal", "helpful", "dedicated", "respectful", "nurture", "sociable",
-        "relationship-oriented", "team player", "dependable", "people-oriented", "empathetic listener",
-        "gentle communicator", "open-minded"
-    ]
-}
-
 def detect_bias(text):
-    doc = nlp(text)
+    text = text.lower()
+    masc, fem = 0, 0
 
-    masc_set, fem_set = set(), set()
-    masculine_found, feminine_found = [], []
+    masculine_words_sorted = sorted(gender_words["masculine"], key=len, reverse=True)
+    feminine_words_sorted = sorted(gender_words["feminine"], key=len, reverse=True)
 
-    masculine_words = sorted(gender_words["masculine"], key=len, reverse=True)
-    feminine_words = sorted(gender_words["feminine"], key=len, reverse=True)
+    for phrase in masculine_words_sorted:
+        masc += len(re.findall(rf'\b{re.escape(phrase)}\b', text))
 
-    for sent in doc.sents:
-        sent_text = sent.text.strip()
-        sent_lower = sent_text.lower()
-        matched_spans = []
+    for phrase in feminine_words_sorted:
+        fem += len(re.findall(rf'\b{re.escape(phrase)}\b', text))
 
-        def is_overlapping(start, end):
-            return any(start < e and end > s for s, e in matched_spans)
-
-        # 🔵 Highlight masculine words in blue font
-        for word in masculine_words:
-            pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
-            for match in pattern.finditer(sent_lower):
-                start, end = match.span()
-                if not is_overlapping(start, end):
-                    matched_spans.append((start, end))
-                    key = (word.lower(), sent_text)
-                    if key not in masc_set:
-                        masc_set.add(key)
-
-                        highlighted_sentence = re.sub(
-                            rf'\b({re.escape(word)})\b',
-                            r'<span style="color:blue;">\1</span>',
-                            sent_text,
-                            flags=re.IGNORECASE
-                        )
-
-                        masculine_found.append({
-                            "word": word,
-                            "sentence": highlighted_sentence
-                        })
-
-        # 🔴 Highlight feminine words in red font
-        for word in feminine_words:
-            pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
-            for match in pattern.finditer(sent_lower):
-                start, end = match.span()
-                if not is_overlapping(start, end):
-                    matched_spans.append((start, end))
-                    key = (word.lower(), sent_text)
-                    if key not in fem_set:
-                        fem_set.add(key)
-
-                        highlighted_sentence = re.sub(
-                            rf'\b({re.escape(word)})\b',
-                            r'<span style="color:red;">\1</span>',
-                            sent_text,
-                            flags=re.IGNORECASE
-                        )
-
-                        feminine_found.append({
-                            "word": word,
-                            "sentence": highlighted_sentence
-                        })
-
-    masc = len(masculine_found)
-    fem = len(feminine_found)
     total = masc + fem
-    bias_score = min(total / 20, 1.0) if total > 0 else 0.0
 
-    return round(bias_score, 2), masc, fem, masculine_found, feminine_found
+    if total == 0:
+        return 0.0, masc, fem  
 
+    bias_score = min(total / 20, 1.0)
 
-
+    return round(bias_score, 2), masc, fem
 
 gender_words = {
     "masculine": [
@@ -1401,179 +1109,237 @@ replacement_mapping = {
 
 def rewrite_text_with_llm(text, replacement_mapping, user_location):
     """
-    Uses LLM to rewrite a resume with bias-free language, while preserving
-    the original content length. Enhances grammar, structure, and clarity.
-    Ensures structured formatting and includes relevant links and job suggestions.
+    Uses LLM to rewrite a resume with bias-free language and suggest relevant job roles.
+    Applies strict word replacement mapping and structures the result.
     """
+    from llm_manager import call_llm
 
-    # Create a clear mapping in bullet format
+    # Format the replacement mapping as a readable bullet list for the prompt
     formatted_mapping = "\n".join(
-        [f'- "{key}" → "{value}"' for key, value in replacement_mapping.items()]
+        [f"- \"{key}\" → \"{value}\"" for key, value in replacement_mapping.items()]
     )
 
-    # Prompt for LLM
+    # Construct the prompt
     prompt = f"""
-You are an expert resume editor and career advisor.
+You are an expert career advisor and professional resume language editor.
 
-Your tasks:
+Your task is to:
 
-1. ✨ Rewrite the resume text below with these rules:
-   - Replace any biased or gender-coded language using the exact matches from the replacement mapping.
-   - Do NOT reduce the length of any section — preserve the original **number of words per section**.
-   - Improve grammar, tone, sentence clarity, and flow without shortening or removing any content.
-   - Do NOT change or remove names, tools, technologies, certifications, or project details.
-
-2. 🧾 Structure the resume using these sections **if present** in the original, keeping the original text size:
-   - 🏷️ **Name**
-   - 📞 **Contact Information**
-   - 📧 **Email**
-   - 🔗 **LinkedIn** → If missing, insert: 🔗 Please paste your LinkedIn URL here.
-   - 🌐 **Portfolio** → If missing, insert: 🌐 Please paste your GitHub or portfolio link here.
-   - ✍️ **Professional Summary**
-   - 💼 **Work Experience**
-   - 🧑‍💼 **Internships**
-   - 🛠️ **Skills**
-   - 🤝 **Soft Skills**
-   - 🎓 **Certifications**
-   - 🏫 **Education**
-   - 📂 **Projects**
-   - 🌟 **Interests**
-
-   - Use bullet points (•) inside each section for clarity.
-   - Maintain new lines after each points properly.
-   - Keep all hyperlinks intact and show them in full where applicable (e.g., LinkedIn, GitHub, project links).
-   - Do not invent or assume any information not present in the original.
-
-3. 📌 Strictly apply this **replacement mapping** (match exact phrases only — avoid altering keywords or terminology):
-{formatted_mapping}
-
-4. 💼 Suggest **5 relevant job titles** suited for this candidate based in **{user_location}**. For each:
-   - Provide a detailed  reason for relevance.
-   - Attach a direct LinkedIn job search URL.
+1. **Rewrite the following resume text** to:
+   - Remove or replace any gender-coded, biased, or non-inclusive language.
+   - Use *professional, inclusive, neutral, clear, and grammatically correct language*.
+   - **Retain all technical terms, job-specific keywords, certifications, and proper names.**
+   - Do **not** add new content or remove important information.
+   - Preserve the original meaning and intent of each sentence.
 
 ---
 
-### 📄 Original Resume Text
+2. **Structure and Organize** the rewritten resume into clearly labeled standard resume sections. Only include sections that are present in the original text:
+   - Name
+   - Contact Information
+   - Email
+   - Portfolio
+   - Professional Summary
+   - Work Experience
+   - Skills
+   - Certifications
+   - Education
+   - Projects
+   - Interests
+
+   - If *Name*, *Contact Information*, or *Email* is present, place them clearly at the top under respective headings.
+
+---
+
+3. **Strictly apply the following word replacement mapping:**
+
+{formatted_mapping}
+
+   - If a word or phrase matches a key exactly from this list, replace it with the corresponding value.
+   - Leave all other content unchanged.
+
+---
+
+4. **Suggest 5 suitable job titles** based on the resume content and the candidate’s location: **{user_location}**
+   - Ensure titles are realistic for this location and aligned with the candidate's experience and skills.
+   - Provide a brief explanation for each suggestion.
+
+---
+
+5. **Provide LinkedIn job search URLs** for each suggested title based on the location: **{user_location}**
+
+---
+
+**Original Resume Text:**
 \"\"\"{text}\"\"\"
 
 ---
 
-### ✅ Bias-Free Rewritten Resume (Fully Structured, Same Length)
+**✅ Bias-Free Rewritten Resume (Well-Structured):**
 
 ---
 
-### 🎯 Suggested Job Titles with Reasoning and LinkedIn Search Links
+**🎯 Suggested Job Titles with Explanations and LinkedIn URLs:**
 
-1. **[Job Title 1]** — Brief reason  
+1. **Job Title 1** — Reason  
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%201&location={user_location})
 
-2. **[Job Title 2]** — Brief reason  
+2. **Job Title 2** — Reason  
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%202&location={user_location})
 
-3. **[Job Title 3]** — Brief reason  
+3. **Job Title 3** — Reason  
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%203&location={user_location})
 
-4. **[Job Title 4]** — Brief reason  
+4. **Job Title 4** — Reason  
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%204&location={user_location})
 
-5. **[Job Title 5]** — Brief reason  
+5. **Job Title 5** — Reason  
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%205&location={user_location})
 """
 
-    # Call the LLM of your choice
+    # Call the LLM with caching + key rotation
     response = call_llm(prompt, session=st.session_state)
     return response
+
+
 
 
 def rewrite_and_highlight(text, replacement_mapping, user_location):
     highlighted_text = text
     masculine_count, feminine_count = 0, 0
-    detected_masculine_words, detected_feminine_words = [], []
-    matched_spans = []
+    detected_masculine_words = Counter()
+    detected_feminine_words = Counter()
 
-    masculine_words = sorted(gender_words["masculine"], key=len, reverse=True)
-    feminine_words = sorted(gender_words["feminine"], key=len, reverse=True)
+    words = re.findall(r'\b\w+\b', text)
 
-    def span_overlaps(start, end):
-        return any(s < end and e > start for s, e in matched_spans)
-
-    # 🔵 Highlight masculine words with blue text color
-    for word in masculine_words:
-        for match in re.finditer(rf'\b{re.escape(word)}\b', highlighted_text, flags=re.IGNORECASE):
-            start, end = match.span()
-            if span_overlaps(start, end):
-                continue
-            word_match = match.group(0)
-
-            # ✅ Replace in main highlighted_text with blue font color
-            highlighted_text = (
-                highlighted_text[:start] +
-                f"<span style='color:blue;'>{word_match}</span>" +
-                highlighted_text[end:]
-            )
-
+    for w in words:
+        lemma = lemmatizer.lemmatize(w.lower())
+        if lemma in gender_words["masculine"]:
             masculine_count += 1
-
-            # ✅ Replace in the sentence context with blue font color
-            sentence_match = re.search(r'([^.]*?\b' + re.escape(word_match) + r'\b[^.]*\.)', text, re.IGNORECASE)
-            if sentence_match:
-                sentence_text = sentence_match.group(1).strip()
-                sentence_colored = re.sub(
-                    rf'\b({re.escape(word_match)})\b',
-                    r"<span style='color:blue;'>\1</span>",
-                    sentence_text,
-                    flags=re.IGNORECASE
-                )
-                detected_masculine_words.append({
-                    "word": word_match,
-                    "sentence": sentence_colored
-                })
-
-            matched_spans.append((start, end))
-            break  # move to next word
-
-    # 🔴 Highlight feminine words with red text color
-    for word in feminine_words:
-        for match in re.finditer(rf'\b{re.escape(word)}\b', highlighted_text, flags=re.IGNORECASE):
-            start, end = match.span()
-            if span_overlaps(start, end):
-                continue
-            word_match = match.group(0)
-
-            # ✅ Replace in main highlighted_text with red font color
-            highlighted_text = (
-                highlighted_text[:start] +
-                f"<span style='color:red;'>{word_match}</span>" +
-                highlighted_text[end:]
-            )
-
+            detected_masculine_words[lemma] += 1
+            highlighted_text = re.sub(rf'\b{re.escape(w)}\b', f":blue[{w}]", highlighted_text)
+ 
+        elif lemma in gender_words["feminine"]:
             feminine_count += 1
+            detected_feminine_words[lemma] += 1
+            highlighted_text = re.sub(rf'\b{re.escape(w)}\b', f":red[{w}]", highlighted_text)
 
-            # ✅ Replace in the sentence context with red font color
-            sentence_match = re.search(r'([^.]*?\b' + re.escape(word_match) + r'\b[^.]*\.)', text, re.IGNORECASE)
-            if sentence_match:
-                sentence_text = sentence_match.group(1).strip()
-                sentence_colored = re.sub(
-                    rf'\b({re.escape(word_match)})\b',
-                    r"<span style='color:red;'>\1</span>",
-                    sentence_text,
-                    flags=re.IGNORECASE
-                )
-                detected_feminine_words.append({
-                    "word": word_match,
-                    "sentence": sentence_colored
-                })
+    # Now rewrite the text using the LLM
+    rewritten_text = rewrite_text_with_llm(text, replacement_mapping, user_location)
 
-            matched_spans.append((start, end))
-            break  # move to next word
 
-    rewritten_text = rewrite_text_with_llm(
-        text,
-        replacement_mapping["masculine"] | replacement_mapping["feminine"],
-        user_location
-    )
 
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
+
+
+def ats_percentage_score(
+    resume_text,
+    job_description,
+    logic_profile_score=None,
+    edu_weight=20,
+    exp_weight=35,
+    skills_weight=30,
+    lang_weight=5,
+    keyword_weight=10
+):
+    """
+    Analyzes resume against job description using a structured, score-based prompt.
+    Enforces strict score calculation to prevent inflation. Final scores are validated externally.
+    """
+    from llm_manager import call_llm
+
+    logic_score_note = (
+        f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
+        if logic_profile_score else ""
+    )
+
+    prompt = f"""
+You are an AI-powered ATS evaluator. You must evaluate the candidate's resume strictly based on the scoring rules below. 
+You are not allowed to guess, assume, or round scores casually. Your component scores will be validated programmatically,
+so they must follow **exact arithmetic based on the provided weights**.
+
+---
+
+📊 **Scoring Formula (Total = 100 Points)**
+
+1. **Education Score ({edu_weight} pts)**
+   - +50% if degree title (e.g., B.Tech, MSc) matches JD
+   - +50% if field (e.g., CS, IT, Engineering) matches JD
+   - Partial matches get 25% each
+
+2. **Experience Score ({exp_weight} pts)**
+   - +60% if years of experience ≥ required
+   - +30% if role titles match
+   - +10% if domain/industry matches
+
+3. **Skills Match ({skills_weight} pts)**
+   - Extract skill sets from both resume and JD
+   - Score = (# of matching skills / total JD skills) × {skills_weight}
+   - Show both skill lists
+
+4. **Language Quality ({lang_weight} pts)**
+   - {lang_weight} = Very clear, formal, professional tone
+   - Half for minor grammatical/style issues
+   - Low score for informal or unclear writing
+
+5. **Keyword Match ({keyword_weight} pts)**
+   - Extract tools, tech, frameworks from JD
+   - For each missing keyword, deduct proportionally from {keyword_weight}
+   - Show missing keyword list
+
+---
+
+📐 **Scoring Instruction**
+- Total Score = Sum of all 5 components.
+- This becomes the **Overall Percentage Match**.
+- Max = 100. If score exceeds, cap it at 100.
+- Never return 0 unless all components are truly zero.
+- Return exact numeric values.
+
+---
+
+🧾 **OUTPUT FORMAT (Strictly follow this):**
+
+Candidate Name: <full name or "Not Found">
+
+Education Score: <0–{edu_weight}>  
+Education Match Details: <e.g., "Degree title matches B.Tech; field matches Computer Science.">
+
+Experience Score: <0–{exp_weight}>  
+Experience Highlights: <e.g., "5 years experience (JD requires 4), title matches 'Software Engineer', domain matched IT.">
+
+Skills Match Percentage: <0–{skills_weight}>  
+Skills Found in Resume: <comma-separated list>  
+Skills Required by JD: <comma-separated list>  
+Skills Missing: <comma-separated list>
+
+Language Quality Score: <0–{lang_weight}>  
+Language Quality Comments: <e.g., "Professional tone with minor grammatical errors.">
+
+Keyword Match Score: <0–{keyword_weight}>  
+Missing Keywords: <comma-separated list>
+
+Overall Percentage Match: <sum of above components>  
+Formatted Score: <Excellent / Good / Average / Poor>
+
+Final Thoughts:  
+Provide a detailed summary (4–6 sentences) about the candidate’s overall fit. Highlight strengths
+
+{logic_score_note}
+
+---
+
+### Job Description:
+\"\"\"{job_description}\"\"\"
+
+---
+
+### Resume:
+\"\"\"{resume_text}\"\"\"
+"""
+
+    response = call_llm(prompt, session=st.session_state)
+    return response.strip()
 
 
 # Setup Vector DB
@@ -1589,204 +1355,17 @@ def setup_vectorstore(documents):
 def create_chain(vectorstore):
     if "memory" not in st.session_state:
         st.session_state.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
-import re
-import pandas as pd
-import altair as alt
-from llm_manager import call_llm
 
-# ✅ Load grammar checker
-@st.cache_resource(show_spinner=False)
-def load_grammar_tool():
-    import language_tool_python
-    return language_tool_python.LanguageTool('en-US')
+    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0, groq_api_key=groq_api_key)
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
 
-tool = load_grammar_tool()
-
-# ✅ Grammar score calculation
-def get_grammar_score(text, max_score=5):
-    matches = tool.check(text)
-    num_issues = len(matches)
-    total_words = len(text.split())
-
-    if total_words == 0:
-        return 1, "Empty or unreadable resume."
-
-    issues_per_100_words = (num_issues / total_words) * 100
-
-    if issues_per_100_words <= 2:
-        return max_score, f"Excellent grammar ({num_issues} issues in {total_words} words)."
-    elif issues_per_100_words <= 4:
-        return round(max_score * 0.9), f"Very good grammar ({num_issues} minor issues)."
-    elif issues_per_100_words <= 6:
-        return round(max_score * 0.75), f"Few noticeable issues ({num_issues})."
-    elif issues_per_100_words <= 8:
-        return round(max_score * 0.5), f"Moderate grammar issues ({num_issues})."
-    else:
-        return round(max_score * 0.3), f"High issue density ({num_issues})."
-
-# ✅ ATS Evaluation Function
-def ats_percentage_score(
-    resume_text,
-    job_description,
-    logic_profile_score=None,
-    edu_weight=20,
-    exp_weight=35,
-    skills_weight=30,
-    lang_weight=5,
-    keyword_weight=10
-):
-    grammar_score, grammar_feedback = get_grammar_score(resume_text, max_score=lang_weight)
-
-    logic_score_note = (
-        f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
-        if logic_profile_score else ""
+    return ConversationalRetrievalChain.from_llm(
+        llm=llm,
+        retriever=retriever,
+        chain_type="stuff",
+        memory=st.session_state.memory,
+        verbose=False
     )
-
-    prompt = f"""
-You are an AI-powered ATS evaluator. Evaluate the candidate's resume with **detailed analysis for each section** in a structured format as follows.
-
-For the **Language Quality Analysis** section:
-
-- Use the following grammar tool evaluation as the official score.
-- Provide your detailed analysis for clarity, tone, and professionalism as explanation.
-- Append the grammar tool feedback summary at the end.
-
-Grammar Tool Score: {grammar_score} / {lang_weight}
-Grammar Tool Feedback: {grammar_feedback}
-
----
-
-### 🏷️ Candidate Name
-<Full name or "Not Found">
-
-### 🏫 Education Analysis
-**Score:** <0–{edu_weight}> / {edu_weight}
-**Degree Match:** <Detailed explanation of degree title and field relevance.>
-
-### 💼 Experience Analysis
-**Score:** <0–{exp_weight}> / {exp_weight}
-**Experience Details:** <Detailed explanation of years, role match, domain relevance, and notable achievements.>
-
-### 🛠 Skills Analysis
-**Score:** <0–{skills_weight}> / {skills_weight}
-**Current Skills:**
-- Technical: <list>
-- Soft Skills: <list>
-- Domain-Specific: <list>
-
-**Skill Proficiency:**  
-<Detailed explanation of proficiency levels, strengths, and areas needing examples.>
-
-**Missing Skills:**
-- Skill 1
-- Skill 2
-- Skill 3
-
-### 🗣 Language Quality Analysis
-**Score:** {grammar_score} / {lang_weight}
-**Grammar & Tone:** <Your detailed analysis here>
-
-### 🔑 Keyword Analysis
-**Score:** <0–{keyword_weight}> / {keyword_weight}
-**Missing Keywords:**
-- Keyword1
-- Keyword2
-- Keyword3
-
-**Keyword Analysis:**  
-<Detailed explanation of which keywords were matched or missing and their importance.>
-
-### ✅ Final Thoughts
-<4-6 sentence detailed summary highlighting strengths, areas of improvement, and overall fit.>
-
----
-**Instructions:**
-- Return each section in Markdown format with proper bullet points and bold subsection titles as shown.
-- Do NOT modify the Language Quality score. Use grammar tool score as shown.
-- Append grammar tool feedback summary at the end of Language Quality section.
-- Ensure clarity and formal language.
-- Keep technical terms as in the resume.
----
-### 📄 Job Description
-\"\"\"{job_description}\"\"\"
-
-### 📄 Resume
-\"\"\"{resume_text}\"\"\"
-
-{logic_score_note}
-"""
-
-    # 🔁 Call your LLM
-    response = call_llm(prompt, session=st.session_state)
-    ats_result = response.strip()
-
-    # 🧪 Regex-based extractors for each detailed section
-    def extract_section(pattern, text, default="N/A"):
-        match = re.search(pattern, text, re.DOTALL)
-        return match.group(1).strip() if match else default
-
-    candidate_name = extract_section(r"### 🏷️ Candidate Name(.*?)###", ats_result, default="Not Found")
-    edu_analysis = extract_section(r"### 🏫 Education Analysis(.*?)###", ats_result)
-    exp_analysis = extract_section(r"### 💼 Experience Analysis(.*?)###", ats_result)
-    skills_analysis = extract_section(r"### 🛠 Skills Analysis(.*?)###", ats_result)
-    lang_analysis_llm = extract_section(r"### 🗣 Language Quality Analysis(.*?)###", ats_result)
-    keyword_analysis = extract_section(r"### 🔑 Keyword Analysis(.*?)###", ats_result)
-    final_thoughts = extract_section(r"### ✅ Final Thoughts(.*)", ats_result)
-
-    # ✅ Clean missing keywords and skills
-    missing_keywords = extract_section(r"\*\*Missing Keywords:\*\*(.*?)(?:###|\Z)", keyword_analysis, default="N/A")
-    missing_keywords = missing_keywords.replace("-", "").strip().replace("\n", ", ")
-
-    missing_skills = extract_section(r"\*\*Missing Skills:\*\*(.*?)(?:###|\Z)", skills_analysis, default="N/A")
-    missing_skills = missing_skills.replace("-", "").strip().replace("\n", ", ")
-
-    # ✅ Extract numeric scores within each analysis block
-    def extract_score(pattern, text, default=0):
-        match = re.search(pattern, text)
-        return int(match.group(1)) if match else default
-
-    edu_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis)
-    exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)
-    skills_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
-    keyword_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis)
-
-    # ✅ Final ATS Match Score uses grammar tool's lang_score
-    total_score = min(edu_score + exp_score + skills_score + grammar_score + keyword_score, 100)
-
-    # 📊 Score band
-    formatted_score = (
-        "Excellent" if total_score >= 85 else
-        "Good" if total_score >= 70 else
-        "Average" if total_score >= 50 else
-        "Poor"
-    )
-
-    # ✅ Combine LLM analysis with grammar tool summary
-    updated_lang_analysis = f"{lang_analysis_llm}<br><b>Grammar Tool Summary:</b> {grammar_feedback}"
-
-    # ✅ Return structured results
-    return ats_result, {
-        "Candidate Name": candidate_name,
-        "Education Score": edu_score,
-        "Experience Score": exp_score,
-        "Skills Score": skills_score,
-        "Language Score": grammar_score,
-        "Keyword Score": keyword_score,
-        "ATS Match %": total_score,
-        "Formatted Score": formatted_score,
-        "Education Analysis": edu_analysis,
-        "Experience Analysis": exp_analysis,
-        "Skills Analysis": skills_analysis,
-        "Language Analysis": updated_lang_analysis,
-        "Keyword Analysis": keyword_analysis,
-        "Final Thoughts": final_thoughts,
-        "Missing Keywords": missing_keywords,
-        "Missing Skills": missing_skills
-    }
-
-
-
-
 
 # App Title
 st.title("🦙 Chat with LEXIBOT - LLAMA 3.3 (Bias Detection + QA + GPU)")
@@ -1830,6 +1409,10 @@ import os
 import re
 import streamlit as st
 from datetime import datetime
+import os
+import re
+import streamlit as st
+from datetime import datetime
 from db_manager import insert_candidate, detect_domain_from_title_and_description  # ✅ import db helpers
 # Initialize resume data storage
 # ✅ Use persistent storage for resume results
@@ -1846,33 +1429,28 @@ if uploaded_files and job_description:
     all_text = []
 
     for uploaded_file in uploaded_files:
+        # ✅ Skip already-processed resumes
         if uploaded_file.name in st.session_state.processed_files:
             continue
 
-        # ✅ Save uploaded file
+        # Save file locally
         file_path = os.path.join(working_dir, uploaded_file.name)
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
-        # ✅ Extract text from PDF
+        # Extract resume text
         text = extract_text_from_pdf(file_path)
-        if not text:
-            st.warning(f"⚠️ Could not extract text from {uploaded_file.name}. Skipping.")
-            continue
-
         all_text.extend(text)
         full_text = " ".join(text)
 
-        # ✅ Bias detection
-        bias_score, masc_count, fem_count, detected_masc, detected_fem = detect_bias(full_text)
-
-        # ✅ Rewrite and highlight with bias-free rewriting
-        highlighted_text, rewritten_text, _, _, _, _ = rewrite_and_highlight(
+        # Run bias detection
+        bias_score, masc, fem = detect_bias(full_text)
+        highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(
             full_text, replacement_mapping, user_location
         )
 
-        # ✅ ATS evaluation (uses grammar tool score + full LLM analysis explanation)
-        ats_result, ats_scores = ats_percentage_score(
+        # Run ATS scoring
+        ats_result = ats_percentage_score(
             resume_text=full_text,
             job_description=job_description,
             logic_profile_score=None,
@@ -1883,67 +1461,48 @@ if uploaded_files and job_description:
             keyword_weight=keyword_weight
         )
 
-        # ✅ Extract structured ATS values safely
-        candidate_name = ats_scores.get("Candidate Name", "Not Found")
-        ats_score = ats_scores.get("ATS Match %", 0)
-        edu_score = ats_scores.get("Education Score", 0)
-        exp_score = ats_scores.get("Experience Score", 0)
-        skills_score = ats_scores.get("Skills Score", 0)
-        lang_score = ats_scores.get("Language Score", 0)
-        keyword_score = ats_scores.get("Keyword Score", 0)
-        formatted_score = ats_scores.get("Formatted Score", "N/A")
-        missing_keywords_raw = ats_scores.get("Missing Keywords", "N/A")
-        missing_skills_raw = ats_scores.get("Missing Skills", "N/A")
-        fit_summary = ats_scores.get("Final Thoughts", "N/A")
-        language_analysis_full = ats_scores.get("Language Analysis", "N/A")  # ✅ LLM explanation + grammar summary
+        # Helper extractors
+        def extract_score(pattern, text, default=0):
+            match = re.search(pattern, text)
+            return int(match.group(1)) if match else default
 
-        # ✅ Clean Missing Keywords and Skills to lists
-        missing_keywords = [kw.strip() for kw in missing_keywords_raw.split(",") if kw.strip()] if missing_keywords_raw != "N/A" else []
-        missing_skills = [sk.strip() for sk in missing_skills_raw.split(",") if sk.strip()] if missing_skills_raw != "N/A" else []
+        def extract_text(pattern, text, default="N/A"):
+            match = re.search(pattern, text)
+            return match.group(1).strip() if match else default
 
-        # ✅ Detect domain from job title and description
+        # Extract scores and info
+        candidate_name = extract_text(r"Candidate Name:\s*(.*)", ats_result)
+        ats_score = extract_score(r"Overall Percentage Match:\s*(\d+)", ats_result)
+        edu_score = extract_score(r"Education Score:\s*(\d+)", ats_result)
+        exp_score = extract_score(r"Experience Score:\s*(\d+)", ats_result)
+        skills_score = extract_score(r"Skills Match Percentage:\s*(\d+)", ats_result)
+        lang_score = extract_score(r"Language Quality Score:\s*(\d+)", ats_result)
+        keyword_score = extract_score(r"Keyword Match Score:\s*(\d+)", ats_result)
+        formatted_score = extract_text(r"Formatted Score:\s*(.*)", ats_result)
+        missing_keywords = extract_text(r"Missing Keywords:\s*(.*)", ats_result)
+        fit_summary = extract_text(r"Final Thoughts:\s*(.*)", ats_result)
+
+        # Predict domain
         domain = detect_domain_from_title_and_description(job_title, job_description)
 
-        # ✅ Bias and ATS flags
+        # Flags
         bias_flag = "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair"
         ats_flag = "⚠️ Low ATS" if ats_score < 50 else "✅ Good ATS"
 
-        # ✅ Build ATS breakdown chart (optional Streamlit display)
-        ats_df = pd.DataFrame({
-            'Component': ['Education', 'Experience', 'Skills', 'Language', 'Keywords'],
-            'Score': [edu_score, exp_score, skills_score, lang_score, keyword_score]
-        })
-        ats_chart = alt.Chart(ats_df).mark_bar().encode(
-            x=alt.X('Component', sort=None),
-            y=alt.Y('Score', scale=alt.Scale(domain=[0, 50])),
-            color='Component',
-            tooltip=['Component', 'Score']
-        ).properties(
-            title="ATS Evaluation Breakdown",
-            width=600,
-            height=300
-        )
-
-        # ✅ Save data to session state for dashboard and display
+        # ✅ Append to session-state list
         st.session_state.resume_data.append({
             "Resume Name": uploaded_file.name,
             "Candidate Name": candidate_name,
-            "ATS Report": ats_result,
             "ATS Match %": ats_score,
+            "ATS Status": ats_flag,
             "Formatted Score": formatted_score,
             "Education Score": edu_score,
             "Experience Score": exp_score,
-            "Skills Score": skills_score,
-            "Language Score": lang_score,
-            "Keyword Score": keyword_score,
-            "Education Analysis": ats_scores.get("Education Analysis", ""),
-            "Experience Analysis": ats_scores.get("Experience Analysis", ""),
-            "Skills Analysis": ats_scores.get("Skills Analysis", ""),
-            "Language Analysis": language_analysis_full,  # ✅ Stores combined LLM + grammar summary
-            "Keyword Analysis": ats_scores.get("Keyword Analysis", ""),
-            "Final Thoughts": fit_summary,
+            "Skills Match %": skills_score,
+            "Language Quality Score": lang_score,
+            "Keyword Match Score": keyword_score,
             "Missing Keywords": missing_keywords,
-            "Missing Skills": missing_skills,
+            "Fit Summary": fit_summary,
             "Bias Score (0 = Fair, 1 = Biased)": bias_score,
             "Bias Status": bias_flag,
             "Masculine Words": masc_count,
@@ -1956,7 +1515,7 @@ if uploaded_files and job_description:
             "Domain": domain
         })
 
-        # ✅ Insert candidate into DB
+        # ✅ Save to DB only once
         insert_candidate((
             uploaded_file.name,
             candidate_name,
@@ -1970,191 +1529,29 @@ if uploaded_files and job_description:
             domain
         ))
 
-        # ✅ Mark file as processed to prevent reprocessing
+        # ✅ Track as processed
         st.session_state.processed_files.add(uploaded_file.name)
 
     st.success("✅ All resumes processed!")
 
-    # ✅ Setup vectorstore + chain for chat-based querying
+    # ✅ Setup QA over resumes once
     if all_text:
         st.session_state.vectorstore = setup_vectorstore(all_text)
         st.session_state.chain = create_chain(st.session_state.vectorstore)
 
-# ✅ Optional developer reset button for testing
+# ✅ Optional: Reset memory during development
 if st.button("🔄 Reset Resume Upload Memory"):
     st.session_state.processed_files.clear()
     st.session_state.resume_data.clear()
     st.success("✅ Cleared uploaded resume history. You can re-upload now.")
 
 
-
-
-
 # === TAB 1: Dashboard ===
 # 📊 Dashboard and Metrics
-# ✅ Exclusive tab selection (only one visible at a time)
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", 
     "📚 Course Recommendation", "📁 Admin DB View"
 ])
-
-def generate_resume_report_html(resume):
-    # ✅ Safe retrieval with fallback
-    candidate_name = resume.get('Candidate Name', 'Not Found')
-    resume_name = resume.get('Resume Name', 'Unknown')
-    rewritten_text = resume.get('Rewritten Text', '').replace("\n", "<br>")
-
-    # Masculine words formatted
-    masculine_words_list = resume.get("Detected Masculine Words", [])
-    masculine_words = "".join(
-        f"<b>{item.get('word','')}</b>: {item.get('sentence','')}<br>"
-        for item in masculine_words_list
-    ) if masculine_words_list else "<i>None detected.</i>"
-
-    # Feminine words formatted
-    feminine_words_list = resume.get("Detected Feminine Words", [])
-    feminine_words = "".join(
-        f"<b>{item.get('word','')}</b>: {item.get('sentence','')}<br>"
-        for item in feminine_words_list
-    ) if feminine_words_list else "<i>None detected.</i>"
-
-    # Missing keywords formatted as multiline bullet points
-    missing_keywords_list = resume.get('Missing Keywords', [])
-    missing_keywords = "".join(
-        f"• {kw}<br>"
-        for kw in missing_keywords_list
-    ) if missing_keywords_list else "<i>None</i>"
-
-    # Missing skills formatted as multiline bullet points
-    missing_skills_list = resume.get('Missing Skills', [])
-    missing_skills = "".join(
-        f"• {sk}<br>"
-        for sk in missing_skills_list
-    ) if missing_skills_list else "<i>None</i>"
-
-    ats_report_html = resume.get("ATS Report", "").replace("\n", "<br>")
-
-    # ✅ Pre-fetch analysis fields with enhanced styling for scores
-    def style_analysis(analysis):
-        if "**Score:**" in analysis:
-            parts = analysis.split("**Score:**")
-            rest = parts[1].split("**", 1)
-            score_text = rest[0].strip()
-            remaining = rest[1].strip() if len(rest) > 1 else ""
-            formatted_score = f"<div style='background:#4c1d95;color:white;padding:8px;border-radius:6px;margin-bottom:5px;'><b>Score:</b> {score_text}</div>"
-            return formatted_score + f"<p>{remaining}</p>"
-        else:
-            return f"<p>{analysis}</p>"
-
-    edu_analysis = style_analysis(resume.get("Education Analysis", "N/A").replace("\n", "<br>"))
-    exp_analysis = style_analysis(resume.get("Experience Analysis", "N/A").replace("\n", "<br>"))
-    skills_analysis = style_analysis(resume.get("Skills Analysis", "N/A").replace("\n", "<br>"))
-    lang_analysis = style_analysis(resume.get("Language Analysis", "N/A").replace("\n", "<br>"))
-    keyword_analysis = style_analysis(resume.get("Keyword Analysis", "N/A").replace("\n", "<br>"))
-    final_thoughts = resume.get("Final Thoughts", "N/A").replace("\n", "<br>")
-
-    # Metrics
-    ats_match = resume.get('ATS Match %', 'N/A')
-    edu_score = resume.get('Education Score', 'N/A')
-    exp_score = resume.get('Experience Score', 'N/A')
-    skills_score = resume.get('Skills Score', 'N/A')
-    lang_score = resume.get('Language Score', 'N/A')
-    keyword_score = resume.get('Keyword Score', 'N/A')
-    masculine_count = resume.get('Masculine Words', 0)
-    feminine_count = resume.get('Feminine Words', 0)
-    bias_score = resume.get('Bias Score (0 = Fair, 1 = Biased)', 'N/A')
-
-    # ================================
-    # 🔥 HTML report with analysis cards
-    # ================================
-    return f"""<!DOCTYPE html><html><head><meta charset="UTF-8">
-    <title>{candidate_name} - Resume Analysis Report</title>
-    <style>
-        body{{font-family:'Segoe UI',sans-serif;margin:40px;background:#f5f7fa;color:#333}}
-        h1,h2{{color:#2f4f6f}}.section{{margin-bottom:30px}}
-        .highlight{{background-color:#eef;padding:10px;border-radius:6px;margin-top:10px;font-size:14px}}
-        .metric-box{{display:inline-block;background:#dbeaff;padding:10px 20px;margin:10px;border-radius:10px;font-weight:bold}}
-        .keyword{{display:inline-block;background:#fbdcdc;color:#a33;margin:4px;padding:6px 12px;border-radius:12px;font-size:13px}}
-        .resume-box{{background-color:#f9f9ff;padding:15px;border-radius:8px;border:1px solid #ccc;white-space:pre-wrap}}
-        .report-box{{background:#fffbe6;border-left:5px solid #f7d794;padding:10px;margin-top:10px;border-radius:6px}}
-        .card-header{{background:#5b3cc4;color:white;padding:10px;border-radius:6px 6px 0 0}}
-        .card-body{{background:#2d2d3a;color:white;padding:10px;border-radius:0 0 6px 6px}}
-        mark{{background-color: #ffd54f;}}
-    </style>
-    </head><body>
-    <h1>📄 Resume Analysis Report</h1>
-
-    <div class="section">
-        <h2>Candidate: {candidate_name}</h2>
-        <p><strong>Resume File:</strong> {resume_name}</p>
-    </div>
-
-    <div class="section">
-        <h2>📊 ATS Evaluation</h2>
-        <div class="metric-box">ATS Match: {ats_match}%</div>
-        <div class="metric-box">Education: {edu_score}</div>
-        <div class="metric-box">Experience: {exp_score}</div>
-        <div class="metric-box">Skills: {skills_score}</div>
-        <div class="metric-box">Language: {lang_score}</div>
-        <div class="metric-box">Keyword: {keyword_score}</div>
-
-        <div class="report-box">
-            <h3>📋 ATS Evaluation Report</h3>
-            {ats_report_html}
-        </div>
-
-        <!-- 🔷 Analysis Cards -->
-        <div style="margin-top:20px;">
-            <div class="card-header">🏫 Education Analysis</div>
-            <div class="card-body">{edu_analysis}</div>
-        </div>
-
-        <div style="margin-top:20px;">
-            <div class="card-header">💼 Experience Analysis</div>
-            <div class="card-body">{exp_analysis}</div>
-        </div>
-
-        <div style="margin-top:20px;">
-            <div class="card-header">🛠 Skills Analysis</div>
-            <div class="card-body">{skills_analysis}</div>
-            
-        </div>
-
-        <div style="margin-top:20px;">
-            <div class="card-header">🗣 Language Quality Analysis</div>
-            <div class="card-body">{lang_analysis}</div>
-        </div>
-
-        <div style="margin-top:20px;">
-            <div class="card-header">🔑 Keyword Analysis</div>
-            <div class="card-body">{keyword_analysis}</div>
-            
-        </div>
-
-        <div style="margin-top:20px;">
-            <div class="card-header">✅ Final Thoughts</div>
-            <div class="card-body">{final_thoughts}</div>
-        </div>
-    </div>
-
-    <div class="section">
-        <h2>⚖️ Gender Bias Analysis</h2>
-        <div class="metric-box" style="background:#f0f8ff;">Masculine Words: {masculine_count}</div>
-        <div class="metric-box" style="background:#fff0f5;">Feminine Words: {feminine_count}</div>
-        <p><strong>Bias Score (0=Fair, 1=Biased):</strong> {bias_score}</p>
-        <div class="highlight"><strong>Masculine Words Detected:</strong><br>{masculine_words}</div>
-        <div class="highlight"><strong>Feminine Words Detected:</strong><br>{feminine_words}</div>
-    </div>
-
-    <div class="section">
-        <h2>✅ Rewritten Bias-Free Resume</h2>
-        <div class="resume-box">{rewritten_text}</div>
-    </div>
-
-    </body></html>"""
-
-
-
 
 
 # === TAB 1: Dashboard ===
@@ -2162,10 +1559,9 @@ with tab1:
     resume_data = st.session_state.get("resume_data", [])
 
     if resume_data:
-        # ✅ Calculate total counts safely
-        total_masc = sum(len(r.get("Detected Masculine Words", [])) for r in resume_data)
-        total_fem = sum(len(r.get("Detected Feminine Words", [])) for r in resume_data)
-        avg_bias = round(np.mean([r.get("Bias Score (0 = Fair, 1 = Biased)", 0) for r in resume_data]), 2)
+        total_masc = sum(r["Masculine Words"] for r in resume_data)
+        total_fem = sum(r["Feminine Words"] for r in resume_data)
+        avg_bias = round(np.mean([r["Bias Score (0 = Fair, 1 = Biased)"] for r in resume_data]), 2)
         total_resumes = len(resume_data)
 
         st.markdown("### 📊 Summary Statistics")
@@ -2181,31 +1577,31 @@ with tab1:
 
         st.markdown("### 🗂️ Resumes Overview")
         df = pd.DataFrame(resume_data)
-
-        # ✅ Add calculated count columns safely
-        df["Masculine Words Count"] = df["Detected Masculine Words"].apply(lambda x: len(x) if isinstance(x, list) else 0)
-        df["Feminine Words Count"] = df["Detected Feminine Words"].apply(lambda x: len(x) if isinstance(x, list) else 0)
-
-        overview_cols = [
-            "Resume Name", "Candidate Name", "ATS Match %", "Education Score",
-            "Experience Score", "Skills Score", "Language Score", "Keyword Score",
-            "Bias Score (0 = Fair, 1 = Biased)", "Masculine Words Count", "Feminine Words Count"
-        ]
-
-        st.dataframe(df[overview_cols], use_container_width=True)
+        st.dataframe(
+            df[[ 
+                "Resume Name", "Candidate Name", "ATS Match %", "Education Score",
+                "Experience Score", "Skills Match %", "Language Quality Score", "Keyword Match Score",
+                "Bias Score (0 = Fair, 1 = Biased)", "Masculine Words", "Feminine Words"
+            ]],
+            use_container_width=True
+        )
 
         st.markdown("### 📊 Visual Analysis")
         chart_tab1, chart_tab2 = st.tabs(["📉 Bias Score Chart", "⚖ Gender-Coded Words"])
+
         with chart_tab1:
             st.subheader("Bias Score Comparison Across Resumes")
             st.bar_chart(df.set_index("Resume Name")[["Bias Score (0 = Fair, 1 = Biased)"]])
+
         with chart_tab2:
             st.subheader("Masculine vs Feminine Word Usage")
             fig, ax = plt.subplots(figsize=(10, 5))
             index = np.arange(len(df))
             bar_width = 0.35
-            ax.bar(index, df["Masculine Words Count"], bar_width, label="Masculine", color="#3498db")
-            ax.bar(index + bar_width, df["Feminine Words Count"], bar_width, label="Feminine", color="#e74c3c")
+
+            ax.bar(index, df["Masculine Words"], bar_width, label="Masculine", color="#3498db")
+            ax.bar(index + bar_width, df["Feminine Words"], bar_width, label="Feminine", color="#e74c3c")
+
             ax.set_xlabel("Resumes", fontsize=12)
             ax.set_ylabel("Word Count", fontsize=12)
             ax.set_title("Gender-Coded Word Usage per Resume", fontsize=14)
@@ -2216,20 +1612,15 @@ with tab1:
 
         st.markdown("### 📝 Detailed Resume Reports")
         for resume in resume_data:
-            candidate_name = resume.get("Candidate Name", "Not Found")
-            resume_name = resume.get("Resume Name", "Unknown")
-            missing_keywords = resume.get("Missing Keywords", [])
-            missing_skills = resume.get("Missing Skills", [])
-
-            with st.expander(f"📄 {resume_name} | {candidate_name}"):
-                st.markdown(f"### 📊 ATS Evaluation for: **{candidate_name}**")
+            with st.expander(f"📄 {resume['Resume Name']} | {resume['Candidate Name']}"):
+                st.markdown("### 📊 ATS Evaluation for: **" + resume['Candidate Name'] + "**")
                 score_col1, score_col2, score_col3 = st.columns(3)
                 with score_col1:
-                    st.metric("📈 Overall Match", f"{resume.get('ATS Match %', 'N/A')}%")
+                    st.metric("📈 Overall Match", f"{resume['ATS Match %']}%")
                 with score_col2:
                     st.metric("🏆 Formatted Score", resume.get("Formatted Score", "N/A"))
                 with score_col3:
-                    st.metric("🧠 Language Quality", f"{resume.get('Language Score', 'N/A')} / {lang_weight}")
+                    st.metric("🧠 Language Quality", f"{resume.get('Language Quality Score', 'N/A')} / {lang_weight}")
 
                 col_a, col_b, col_c, col_d = st.columns(4)
                 with col_a:
@@ -2237,81 +1628,20 @@ with tab1:
                 with col_b:
                     st.metric("💼 Experience Score", f"{resume.get('Experience Score', 'N/A')} / {exp_weight}")
                 with col_c:
-                    st.metric("🛠 Skills Score", f"{resume.get('Skills Score', 'N/A')} / {skills_weight}")
+                    st.metric("🛠 Skills Match", f"{resume.get('Skills Match %', 'N/A')} / {skills_weight}")
                 with col_d:
-                    st.metric("🔍 Keyword Score", f"{resume.get('Keyword Score', 'N/A')} / {keyword_weight}")
+                    st.metric("🔍 Keyword Score", f"{resume.get('Keyword Match Score', 'N/A')} / {keyword_weight}")
 
-                # Fit summary
+                st.markdown("**❗ Missing Keywords:**")
+                missing_list = resume["Missing Keywords"].split(",") if resume["Missing Keywords"] else []
+                if missing_list and any(kw.strip() for kw in missing_list):
+                    for kw in missing_list:
+                        st.error(f"- {kw.strip()}")
+                else:
+                    st.info("No missing keywords detected.")
+
                 st.markdown("### 📝 Fit Summary")
-                st.write(resume.get('Final Thoughts', 'N/A'))
-
-                # ATS Report
-                if resume.get("ATS Report"):
-                    st.markdown("### 📋 ATS Evaluation Report")
-                    st.markdown(resume["ATS Report"], unsafe_allow_html=True)
-
-                # ATS Chart
-                st.markdown("### 📊 ATS Score Breakdown Chart")
-                ats_df = pd.DataFrame({
-                    'Component': ['Education', 'Experience', 'Skills', 'Language', 'Keywords'],
-                    'Score': [
-                        resume.get("Education Score", 0),
-                        resume.get("Experience Score", 0),
-                        resume.get("Skills Score", 0),
-                        resume.get("Language Score", 0),
-                        resume.get("Keyword Score", 0)
-                    ]
-                })
-                ats_chart = alt.Chart(ats_df).mark_bar().encode(
-                    x=alt.X('Component', sort=None),
-                    y=alt.Y('Score', scale=alt.Scale(domain=[0, 50])),
-                    color='Component',
-                    tooltip=['Component', 'Score']
-                ).properties(
-                    title="ATS Evaluation Breakdown",
-                    width=600,
-                    height=300
-                )
-                st.altair_chart(ats_chart, use_container_width=True)
-
-                # 🔷 Detailed ATS Analysis Cards with bold white score highlight
-                st.markdown("### 🔍 Detailed ATS Section Analyses")
-                for section_title, key in [
-                    ("🏫 Education Analysis", "Education Analysis"),
-                    ("💼 Experience Analysis", "Experience Analysis"),
-                    ("🛠 Skills Analysis", "Skills Analysis"),
-                    ("🗣 Language Quality Analysis", "Language Analysis"),
-                    ("🔑 Keyword Analysis", "Keyword Analysis"),
-                    ("✅ Final Thoughts", "Final Thoughts")
-                ]:
-                    analysis_content = resume.get(key, "N/A")
-                    if "**Score:**" in analysis_content:
-                        parts = analysis_content.split("**Score:**")
-                        rest = parts[1].split("**", 1)
-                        score_text = rest[0].strip()
-                        remaining = rest[1].strip() if len(rest) > 1 else ""
-                        formatted_score = f"<div style='background:#4c1d95;color:white;padding:8px;border-radius:6px;margin-bottom:5px;'><b>Score:</b> {score_text}</div>"
-                        analysis_html = formatted_score + f"<p>{remaining}</p>"
-                    else:
-                        analysis_html = f"<p>{analysis_content}</p>"
-
-                    st.markdown(f"""
-<div style="background:#5b3cc4; color:white; padding:10px; border-radius:6px;">
-  <h3>{section_title}</h3>
-</div>
-<div style="background:#2d2d3a; color:white; padding:10px; border-radius:6px;">
-{analysis_html}
-</div>
-""", unsafe_allow_html=True)
-
-                # ✅ Display Missing Skills and Keywords as badges
-                # ✅ Display Missing Skills as multiline bullet points
-                
-
-                # ✅ Show Missing Keywords and Missing Skills
-                     # Missing keywords
-                
-
+                st.write(resume['Fit Summary'])
 
                 st.divider()
 
@@ -2323,32 +1653,26 @@ with tab1:
 
                     st.markdown("### 📌 Gender-Coded Word Counts:")
                     bias_col1, bias_col2 = st.columns(2)
-
                     with bias_col1:
-                        st.metric("🔵 Masculine Words", len(resume["Detected Masculine Words"]))
+                        st.metric("🔵 Masculine Words", resume["Masculine Words"])
                         if resume["Detected Masculine Words"]:
-                            st.markdown("### 📚 Detected Masculine Words with Context:")
-                            for item in resume["Detected Masculine Words"]:
-                                word = item['word']
-                                sentence = item['sentence']
-                                st.write(f"🔵 **{word}**: {sentence}", unsafe_allow_html=True)
+                            st.markdown("### 📚 Detected Words:")
+                            st.success(", ".join(f"{word} ({count})" for word, count in resume["Detected Masculine Words"].items()))
                         else:
                             st.info("No masculine words detected.")
-
                     with bias_col2:
-                        st.metric("🔴 Feminine Words", len(resume["Detected Feminine Words"]))
+                        st.metric("🔴 Feminine Words", resume["Feminine Words"])
                         if resume["Detected Feminine Words"]:
-                            st.markdown("### 📚 Detected Feminine Words with Context:")
-                            for item in resume["Detected Feminine Words"]:
-                                word = item['word']
-                                sentence = item['sentence']
-                                st.write(f"🔴 **{word}**: {sentence}", unsafe_allow_html=True)
+                            st.markdown("### 📚 Detected Words:")
+                            st.success(", ".join(f"{word} ({count})" for word, count in resume["Detected Feminine Words"].items()))
                         else:
                             st.info("No feminine words detected.")
 
                 with detail_tab2:
                     st.markdown("#### ✨ Bias-Free Rewritten Resume")
                     st.write(resume["Rewritten Text"])
+
+                    # ✅ Precompute docx before download
                     docx_file = generate_docx(resume["Rewritten Text"])
                     st.download_button(
                         label="📥 Download Bias-Free Resume (.docx)",
@@ -2358,16 +1682,41 @@ with tab1:
                         use_container_width=True,
                         key=f"download_docx_{resume['Resume Name']}"
                     )
+
+                    # ✅ Generate HTML report before button
+                    def generate_resume_report_html(resume):
+                        rewritten_text = resume['Rewritten Text'].replace("\n", "<br>")
+                        masculine_words = ", ".join(f"{k}({v})" for k, v in resume['Detected Masculine Words'].items())
+                        feminine_words = ", ".join(f"{k}({v})" for k, v in resume['Detected Feminine Words'].items())
+                        missing_keywords = "".join(
+                            f"<span class='keyword'>{kw.strip()}</span>"
+                            for kw in resume['Missing Keywords'].split(",") if kw.strip()
+                        ) or "<i>None</i>"
+
+                        return f"""<!DOCTYPE html><html><head><meta charset="UTF-8"><title>{resume['Candidate Name']} - Resume Analysis Report</title>
+                        <style>body{{font-family:'Segoe UI',sans-serif;margin:40px;background:#f5f7fa;color:#333}}h1,h2{{color:#2f4f6f}}.section{{margin-bottom:30px}}
+                        .highlight{{background-color:#eef;padding:10px;border-radius:6px;margin-top:10px;font-size:14px}}.metric-box{{display:inline-block;background:#dbeaff;
+                        padding:10px 20px;margin:10px;border-radius:10px;font-weight:bold}}.keyword{{display:inline-block;background:#fbdcdc;color:#a33;margin:4px;
+                        padding:6px 12px;border-radius:12px;font-size:13px}}.resume-box{{background-color:#f9f9ff;padding:15px;border-radius:8px;border:1px solid #ccc;
+                        white-space:pre-wrap}}</style></head><body>
+                        <h1>📄 Resume Analysis Report</h1>
+                        <div class="section"><h2>Candidate: {resume['Candidate Name']}</h2><p><strong>Resume File:</strong> {resume['Resume Name']}</p></div>
+                        <div class="section"><h2>📊 ATS Evaluation</h2><div class="metric-box">ATS Match: {resume['ATS Match %']}%</div>
+                        <div class="metric-box">Education: {resume['Education Score']}</div><div class="metric-box">Experience: {resume['Experience Score']}</div>
+                        <div class="metric-box">Skills Match: {resume['Skills Match %']}</div><div class="metric-box">Language Score: {resume['Language Quality Score']}</div>
+                        <div class="metric-box">Keyword Score: {resume['Keyword Match Score']}</div></div>
+                        <div class="section"><h2>⚖️ Gender Bias Analysis</h2>
+                        <div class="metric-box" style="background:#f0f8ff;">Masculine Words: {resume['Masculine Words']}</div>
+                        <div class="metric-box" style="background:#fff0f5;">Feminine Words: {resume['Feminine Words']}</div>
+                        <p><strong>Bias Score (0=Fair, 1=Biased):</strong> {resume['Bias Score (0 = Fair, 1 = Biased)']}</p>
+                        <div class="highlight"><strong>Masculine Words:</strong><br>{masculine_words}</div>
+                        <div class="highlight"><strong>Feminine Words:</strong><br>{feminine_words}</div></div>
+                        <div class="section"><h2>📌 Missing Keywords</h2>{missing_keywords}</div>
+                        <div class="section"><h2>🧠 Final Fit Summary</h2><div class="resume-box">{resume['Fit Summary']}</div></div>
+                        <div class="section"><h2>✅ Rewritten Bias-Free Resume</h2><div class="resume-box">{rewritten_text}</div></div>
+                        </body></html>"""
+
                     html_report = generate_resume_report_html(resume)
-                    pdf_bytes = html_to_pdf_bytes(html_report)
-
-                    st.download_button(
-                        label="📥 Download ATS Report (PDF)",
-                        data=pdf_bytes,
-                        file_name=f"{resume['Candidate Name']}_ATS_Report.pdf",
-                        mime="application/pdf"
-                    )
-
                     st.download_button(
                         label="📥 Download Full Analysis Report (.html)",
                         data=html_report,
@@ -2376,29 +1725,29 @@ with tab1:
                         use_container_width=True,
                         key=f"download_html_{resume['Resume Name']}"
                     )
+
     else:
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
 
 
+
+   
 with tab2:
     st.session_state.active_tab = "Resume Builder"
+    
 
     st.markdown("## 🧾 <span style='color:#336699;'>Advanced Resume Builder</span>", unsafe_allow_html=True)
     st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
-    # 📸 Upload profile photo
     uploaded_image = st.file_uploader("Upload a Profile Image", type=["png", "jpg", "jpeg"])
 
+    # ✅ Profile image preview logic here
     profile_img_html = ""
 
     if uploaded_image:
         import base64
         encoded_image = base64.b64encode(uploaded_image.read()).decode()
 
-        # 🔄 Save to session state for reuse in preview/export
-        st.session_state["encoded_profile_image"] = encoded_image
-
-        # 🖼️ Show image preview
         profile_img_html = f"""
         <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
             <img src="data:image/png;base64,{encoded_image}" alt="Profile Photo"
@@ -2407,7 +1756,6 @@ with tab2:
                     height: 120px;
                     border-radius: 50%;
                     object-fit: cover;
-                    object-position: top center;
                     border: 3px solid #4da6ff;
                     box-shadow:
                         0 0 8px #4da6ff,
@@ -2418,8 +1766,7 @@ with tab2:
         """
         st.markdown(profile_img_html, unsafe_allow_html=True)
     else:
-        st.info("📸 Please upload a clear, front-facing profile photo (square or vertical preferred).")
-
+        st.info("Please upload a profile photo.")
 
     # 🔽 Your form fields continue below this...
 
@@ -2489,37 +1836,12 @@ with tab2:
                 edu["details"] = st.text_area(f"Details", value=edu["details"], key=f"edu_details_{idx}")
 
         st.markdown("### 🛠 <u>Projects</u>", unsafe_allow_html=True)
-
         for idx, proj in enumerate(st.session_state.project_entries):
             with st.expander(f"Project #{idx+1}", expanded=True):
-        # Keys for each project field
-             title_key = f"proj_title_{idx}"
-             tech_key = f"proj_tech_{idx}"
-             duration_key = f"proj_duration_{idx}"
-             desc_key = f"proj_desc_{idx}"
-
-        # Initialize only once if key doesn't exist
-        if title_key not in st.session_state:
-            st.session_state[title_key] = proj["title"]
-        if tech_key not in st.session_state:
-            st.session_state[tech_key] = proj["tech"]
-        if duration_key not in st.session_state:
-            st.session_state[duration_key] = proj["duration"]
-        if desc_key not in st.session_state:
-            st.session_state[desc_key] = proj["description"]
-
-        # Inputs (no value=..., only key)
-        st.text_input("Project Title", key=title_key)
-        st.text_input("Tech Stack", key=tech_key)
-        st.text_input("Duration", key=duration_key)
-        st.text_area("Description", key=desc_key)
-
-        # Sync back to project_entries
-        proj["title"] = st.session_state[title_key]
-        proj["tech"] = st.session_state[tech_key]
-        proj["duration"] = st.session_state[duration_key]
-        proj["description"] = st.session_state[desc_key]
-
+                proj["title"] = st.text_input(f"Project Title", value=proj["title"], key=f"proj_title_{idx}")
+                proj["tech"] = st.text_input(f"Tech Stack", value=proj["tech"], key=f"proj_tech_{idx}")
+                proj["duration"] = st.text_input(f"Duration", value=proj["duration"], key=f"proj_duration_{idx}")
+                proj["description"] = st.text_area(f"Description", value=proj["description"], key=f"proj_desc_{idx}")
 
 
         st.markdown("### 🔗 Project Links")
@@ -2602,7 +1924,7 @@ with tab2:
         with right:
             st.markdown("<h4 style='color:#336699;'>Summary</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
             summary_text = st.session_state['summary'].replace('\n', '<br>')
-            st.markdown(f"<p style='font-size:17px;'>{summary_text}</p>", unsafe_allow_html=True)
+            st.markdown(f"<p style='font-size:14px;'>{summary_text}</p>", unsafe_allow_html=True)
 
 
             st.markdown("<h4 style='color:#336699;'>Experience</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
@@ -2614,7 +1936,7 @@ with tab2:
                     <b>🏢 {exp['company']}</b><span style='color:gray;'>📆  {exp['duration']}</span>
                 </div>
                 <div style='font-size:14px;'>💼 <i>{exp['title']}</i></div>
-                <div style='font-size:17px;'>📝 {exp['description']}</div>
+                <div style='font-size:14px;'>📝 {exp['description']}</div>
             </div>
         """, unsafe_allow_html=True)
 
@@ -2641,7 +1963,7 @@ with tab2:
         <strong style='font-size:16px;'>{proj['title']}</strong><br>
         <span style='font-size:14px;'>🛠️ <strong>Tech Stack:</strong> {proj['tech']}</span><br>
         <span style='font-size:14px;'>⏳ <strong>Duration:</strong> {proj['duration']}</span><br>
-        <span style='font-size:17px;'>📝 <strong>Description:</strong> {proj['description']}</span>
+        <span style='font-size:14px;'>📝 <strong>Description:</strong> {proj['description']}</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -2663,247 +1985,7 @@ with tab2:
             </div>
             <div style='margin-bottom:10px; font-size:14px;'>{cert['description']}</div>
         """, unsafe_allow_html=True)
-with tab2:
-    import re
 
-    st.markdown("## ✨ <span style='color:#336699;'>Enhanced AI Resume Preview</span>", unsafe_allow_html=True)
-    st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
-
-    # ------------------------- ENHANCE PROMPT -------------------------
-    enhance_prompt = f"""
-    You are a professional resume builder AI.
-
-    Enhance the following resume sections based on the user's job title: "{st.session_state['job_title']}". The enhancements must be aligned **strictly and specifically** with the responsibilities, tools, skills, and certifications relevant to that job title.
-
-    Instructions:
-    1. Rewrite the summary to sound professional, achievement-driven, and role-specific using strong action verbs.
-    2. Expand experience and project descriptions into structured bullet points (• or A., B., C.). Highlight domain-specific responsibilities and achievements.
-    3. Maintain paragraph structure and meaningful line breaks.
-    4. Infer and recommend **only domain-accurate** items, even if not explicitly provided:
-       - 6–8 modern **technical Skills** (relevant to the job title; e.g., for Cyber Security: SIEM, Kali Linux, Wireshark, Burp Suite, Splunk, Nmap, Firewalls, OWASP Top 10, etc.)
-       - 6–8 strong **Soft Skills**
-       - 3–6 job-aligned **Interests** (e.g., bug bounty, ethical hacking, network defense)
-       - Only **spoken Languages**
-       - 3–6 globally recognized **Certificates** (e.g., CompTIA Security+, CEH, IBM Cybersecurity Analyst, Google Cybersecurity, Cisco CCNA Security)
-
-    Important:
-    - Do not include irrelevant frontend/backend tools if the job title is from a different domain like Cyber Security, DevOps, Data Science, etc.
-    - The certificate names must match real-world course titles from platforms like Coursera, Udemy, Google, IBM, Cisco, Microsoft, etc.
-
-    📌 Format the output exactly like this:
-
-    Summary:
-    • ...
-
-    Experience:
-    A. Company Name (Duration)
-       • Role
-       • Responsibility 1
-       • Responsibility 2
-
-    Projects:
-    A. <Project Title>
-       • Tech Stack: <Job-relevant tools only>
-       • Duration: <Start – End>
-       • Description:
-         - Clearly describe a specific feature, functionality, or implementation aligned with the job role.
-         - Mention a tool or technology used and explain its context in the project.
-         - Highlight performance improvements, solved challenges, or measurable impacts.
-         - Include a technical or collaborative achievement that enhanced project success.
-         - (Optional) Add an additional impactful point if it meaningfully supports the role.
-
-
-    Skills:
-    Kali Linux, Splunk, SIEM, ...
-
-    SoftSkills:
-    Problem Solving, Critical Thinking...
-
-    Languages:
-    English, Hindi...
-
-    Interests:
-    Capture The Flag (CTF), Ethical Hacking...
-
-    Certificates:
-    Google Cybersecurity – Coursera (6 months)
-    IBM Cybersecurity Analyst – IBM (Professional Certificate)
-    CompTIA Security+ – CompTIA (5 months)
-
-    Use ONLY the user's inputs below as a reference. Rewrite and improve them meaningfully and accurately.
-
-    Summary:
-    {st.session_state['summary']}
-
-    Experience:
-    {[exp for exp in st.session_state.experience_entries]}
-
-    Projects:
-    {[proj for proj in st.session_state.project_entries]}
-
-    Skills:
-    {st.session_state['skills']}
-
-    SoftSkills:
-    {st.session_state['Softskills']}
-
-    Languages:
-    {st.session_state['languages']}
-
-    Interests:
-    {st.session_state['interests']}
-
-    Certificates:
-    {[cert['name'] for cert in st.session_state.certificate_links if cert['name']]}
-    """
-
-    # ------------------------- CALL LLM -------------------------
-    ai_output = call_llm(enhance_prompt, session=st.session_state)
-
-    # ------------------------- PARSE OUTPUT -------------------------
-    def extract_section(label, output, default=""):
-        match = re.search(rf"{label}:\s*(.*?)(?=\n\w+:|\Z)", output, re.DOTALL)
-        return match.group(1).strip() if match else default
-
-    summary_enhanced = extract_section("Summary", ai_output, st.session_state['summary'])
-    experience_raw = extract_section("Experience", ai_output)
-    experience_blocks = re.split(r"\n(?=[A-Z]\. )", experience_raw.strip())
-    projects_raw = extract_section("Projects", ai_output)
-    projects_blocks = re.split(r"\n(?=[A-Z]\. )", projects_raw.strip())
-    skills_list = extract_section("Skills", ai_output, st.session_state['skills'])
-    softskills_list = extract_section("SoftSkills", ai_output, st.session_state['Softskills'])
-    languages_list = extract_section("Languages", ai_output, st.session_state['languages'])
-    interests_list = extract_section("Interests", ai_output, st.session_state['interests'])
-    certificates_list = extract_section("Certificates", ai_output)
-
-    # ------------------------- UI RENDER -------------------------
-    left, right = st.columns([1, 2])
-
-    with left:
-        st.markdown(f"""
-            <h2 style='color:#2f2f2f;margin-bottom:0;'>{st.session_state['name']}</h2>
-            <h4 style='margin-top:5px;color:#444;'>{st.session_state['job_title']}</h4>
-            <p style='font-size:14px;'>
-            📍 {st.session_state['location']}<br>
-            📞 {st.session_state['phone']}<br>
-            📧 <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a><br>
-            🔗 <a href="{st.session_state['linkedin']}" target="_blank">LinkedIn</a><br>
-            🌐 <a href="{st.session_state['portfolio']}" target="_blank">Portfolio</a>
-            </p>
-        """, unsafe_allow_html=True)
-
-        def render_bullet_section(title, items):
-            st.markdown(f"<h4 style='color:#336699;'>{title}</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for item in [i.strip() for i in items.split(",") if i.strip()]:
-                st.markdown(f"<div style='margin-left:10px;'>• {item}</div>", unsafe_allow_html=True)
-
-        render_bullet_section("Skills", skills_list)
-        render_bullet_section("Languages", languages_list)
-        render_bullet_section("Interests", interests_list)
-        render_bullet_section("Soft Skills", softskills_list)
-
-    with right:
-        formatted_summary = summary_enhanced.replace('\n• ', '<br>• ').replace('\n', '<br>')
-        st.markdown("<h4 style='color:#336699;'>Summary</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-        st.markdown(f"<p style='font-size:17px;'>{formatted_summary}</p>", unsafe_allow_html=True)
-
-        # -------- Experience Section --------
-        if experience_blocks:
-            st.markdown("<h4 style='color:#336699;'>Experience</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            experience_titles = [entry.get("title", "").strip().upper() for entry in st.session_state.experience_entries]
-            for idx, exp_block in enumerate(experience_blocks):
-                lines = exp_block.strip().split("\n")
-                if not lines:
-                    continue
-                heading = lines[0]
-                description_lines = lines[1:]
-                match = re.match(r"[A-Z]\.\s*(.+?)\s*\((.*?)\)", heading)
-                if match:
-                    company = match.group(1).strip()
-                    duration = match.group(2).strip()
-                else:
-                    company = heading.replace(f"{chr(65 + idx)}. ", "").strip()
-                    duration = ""
-                role = experience_titles[idx] if idx < len(experience_titles) else ""
-                formatted_exp = "<br>".join(description_lines)
-
-                st.markdown(f"""
-                <div style='margin-bottom:15px; padding:10px; border-radius:8px;'>
-                    <div style='display:flex; justify-content:space-between;'>
-                        <b>🏢 {company.upper()}</b><span style='color:gray;'>📆 {duration}</span>
-                    </div>
-                    <div style='font-size:14px;'>💼 <i>{role}</i></div>
-                    <div style='font-size:17px;'>📝 {formatted_exp}</div>
-                </div>
-                """, unsafe_allow_html=True)
-
-        # -------- Education Section --------
-        st.markdown("<h4 style='color:#336699;'>🎓 Education</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-        for edu in st.session_state.education_entries:
-            st.markdown(f"""
-            <div style='margin-bottom:15px; padding:10px 15px; border-radius:8px;'>
-                <div style='display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;'>
-                    <span>🏫 {edu['institution']}</span>
-                    <span style='color: gray;'>📅 {edu['year']}</span>
-                </div>
-                <div style='font-size: 14px;'>🎓 <i>{edu['degree']}</i></div>
-                <div style='font-size: 14px;'>📄 {edu['details']}</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        # -------- Projects Section --------
-        if projects_blocks:
-            st.markdown("<h4 style='color:#336699;'>Projects</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for idx, proj_block in enumerate(projects_blocks):
-                if idx < len(st.session_state.project_entries):
-                    proj = st.session_state.project_entries[idx]
-                    title = proj.get("title", "")
-                    tech = proj.get("tech", "")
-                    duration = proj.get("duration", "")
-                else:
-                    title, tech, duration = "", "", ""
-                description = proj_block
-                if title and title in description:
-                    description = description.replace(title, "")
-                if tech and f"Tech Stack: {tech}" in description:
-                    description = description.replace(f"Tech Stack: {tech}", "")
-                if duration and f"Duration: {duration}" in description:
-                    description = description.replace(f"Duration: {duration}", "")
-                formatted_proj = description.strip().replace('\n• ', '<br>• ').replace('\n', '<br>').strip()
-                label = chr(65 + idx)
-
-                st.markdown(f"""
-                <div style='margin-bottom:15px; padding: 10px;'>
-                    <strong style='font-size:16px;'>📌 <span style='color:#444;'>{label}. </span>{title}</strong><br>
-                    <span style='font-size:14px;'>🛠️ <strong>Tech Stack:</strong> {tech}</span><br>
-                    <span style='font-size:14px;'>⏳ <strong>Duration:</strong> {duration}</span><br>
-                    <span style='font-size:17px;'>📄 <strong>Description:</strong></span><br>
-                    <div style='margin-top:4px; font-size:15px;'>{formatted_proj}</div>
-                </div>
-                """, unsafe_allow_html=True)
-
-
-        # -------- Certificates Section --------
-        if certificates_list:
-            st.markdown("<h4 style='color:#336699;'>📜 Certificates</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            certs = re.split(r"\n|(?<=\))(?=\s*[A-Z])|(?<=[a-z]\))(?= [A-Z])", certificates_list)
-            for cert in [c.strip() for c in certs if c.strip()]:
-                st.markdown(f"<div style='margin-left:10px;'>• {cert}</div>", unsafe_allow_html=True)
-
-        if st.session_state.project_links:
-            st.markdown("<h4 style='color:#336699;'>Project Links</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for i, link in enumerate(st.session_state.project_links):
-                st.markdown(f"[🔗 Project {i+1}]({link})", unsafe_allow_html=True)
-
-
-
-
-
-
-
-
-                  
-        
 # SKILLS
 skills_html = "".join(
     f"""
@@ -2962,6 +2044,7 @@ Softskills_html = "".join(
 
 
 
+# EXPERIENCE
 experience_html = ""
 for exp in st.session_state.experience_entries:
     if exp["company"] or exp["title"]:
@@ -2973,71 +2056,57 @@ for exp in st.session_state.experience_entries:
         )
 
         experience_html += f"""
-<div style='
-    margin-bottom: 20px;
-    padding: 16px 20px;
-    border-radius: 12px;
-    background-color: #dbeaff;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    color: #0a1a33;
-    line-height: 1.35;
-'>
-    <!-- Header Shadow Card -->
-    <div style='
-        background-color: #e6f0ff;
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin-bottom: 12px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    '>
         <div style='
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 600;
-            font-size: 16.5px;
-            margin-bottom: 6px;
-            color: #08244c;
-            width: 100%;
+            margin-bottom: 20px;
+            padding: 16px 20px;
+            border-radius: 12px;
+            background-color: #dbeaff;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            color: #0a1a33;
+            line-height: 1.35;
         '>
-            <div style='display: inline-flex; align-items: center;'>
-                <img src="https://img.icons8.com/ios-filled/50/000000/company.png" style="width:16px; height:16px; margin-right:5px;"/>
-                <span>{exp['company']}</span>
+            <!-- Header Shadow Card -->
+            <div style='
+                background-color: #e6f0ff;
+                border-radius: 8px;
+                padding: 10px 14px;
+                margin-bottom: 12px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            '>
+                <div style='
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    font-weight: 600;
+                    font-size: 16.5px;
+                    margin-bottom: 6px;
+                    color: #08244c;
+                '>
+                    <span>🏢 {exp['company']}</span>
+                    <span style='color: #1a2d4f; font-size: 14px;'>📆 {exp['duration']}</span>
+                </div>
+
+                <div style='
+                    font-size: 16px;
+                    font-weight: 700;
+                    color: #0b2545;
+                '>
+                    💼 {exp['title']}
+                </div>
             </div>
-            <div style='display: inline-flex; align-items: center; font-size: 14px;'>
-                <img src="https://img.icons8.com/ios-filled/50/000000/calendar.png" style="width:16px; height:16px; margin-right:5px;"/>
-                <span>{exp['duration']}</span>
+
+            <!-- Description -->
+            <div style='
+                font-size: 15px;
+                font-weight: 500;
+                color: #102a43;
+                line-height: 1.35;
+            '>
+                📝 {description_html}
             </div>
         </div>
-
-        <div style='
-            display: inline-flex;
-            align-items: center;
-            font-size: 16px;
-            font-weight: 700;
-            color: #0b2545;
-        '>
-            <img src="https://img.icons8.com/ios-filled/50/000000/briefcase.png" style="width:16px; height:16px; margin-right:5px;"/>
-            <span>{exp['title']}</span>
-        </div>
-    </div>
-
-    <!-- Description -->
-    <div style='
-        display: inline-flex;
-        align-items: flex-start;
-        font-size: 15px;
-        font-weight: 500;
-        color: #102a43;
-        line-height: 1.35;
-    '>
-        <img src="https://img.icons8.com/ios-filled/50/000000/task.png" style="width:16px; height:16px; margin-right:5px; margin-top:2px;"/>
-        <div>{description_html}</div>
-    </div>
-</div>
-"""
-
+        """
 
 
 # Convert experience to list if multiple lines
@@ -3055,12 +2124,7 @@ for edu in st.session_state.education_entries:
             degree_val = edu["degree"]
             if isinstance(degree_val, list):
                 degree_val = ", ".join(degree_val)
-            degree_text = f"""
-            <div style='display: inline-flex; align-items: center; font-size: 14px; color: #273c75; margin-bottom: 6px;'>
-                <img src="https://img.icons8.com/ios-filled/50/000000/graduation-cap.png" style="width:16px; height:16px; margin-right:5px;"/>
-                <b>{degree_val}</b>
-            </div>
-            """
+            degree_text = f"<div style='font-size: 14px; color: #273c75; margin-bottom: 6px;'>🎓 <b>{degree_val}</b></div>"
 
         education_html += f"""
         <div style='
@@ -3080,26 +2144,16 @@ for edu in st.session_state.education_entries:
                 font-size: 16px;
                 font-weight: 700;
                 margin-bottom: 8px;
-                width: 100%;
             '>
-                <div style='display: inline-flex; align-items: center;'>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/school.png" style="width:16px; height:16px; margin-right:5px;"/>
-                    <span>{edu.get('institution', '')}</span>
-                </div>
-                <div style='display: inline-flex; align-items: center; font-weight: 500;'>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/calendar.png" style="width:16px; height:16px; margin-right:5px;"/>
-                    <span>{edu.get('year', '')}</span>
-                </div>
+                <span>🏫 {edu.get('institution', '')}</span>
+                <span style='font-weight: 500;'>🗓️  {edu.get('year', '')}</span>
             </div>
             {degree_text}
-            <div style='display: inline-flex; align-items: flex-start; font-size: 14px; font-style: italic;'>
-                <img src="https://img.icons8.com/ios-filled/50/000000/task.png" style="width:16px; height:16px; margin-right:5px; margin-top:2px;"/>
-                <div>{edu.get('details', '')}</div>
+            <div style='font-size: 14px; font-style: italic;'>
+                📝 {edu.get('details', '')}
             </div>
         </div>
         """
-
-
 
 
 
@@ -3112,12 +2166,7 @@ for proj in st.session_state.project_entries:
         tech_val = proj.get("tech")
         if isinstance(tech_val, list):
             tech_val = ", ".join(tech_val)
-        tech_text = f"""
-        <div style='display: inline-flex; align-items: center; font-size: 14px; color: #1b2330; margin-bottom: 8px; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);'>
-            <img src="https://img.icons8.com/ios-filled/50/000000/maintenance.png" style="width:16px; height:16px; margin-right:5px;"/>
-            <b>Technologies:</b> {tech_val if tech_val else ''}
-        </div>
-        """ if tech_val else ""
+        tech_text = f"<div style='font-size: 14px; color: #1b2330; margin-bottom: 8px; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);'><b>🛠️ Technologies:</b> {tech_val if tech_val else ''}</div>" if tech_val else ""
 
         description_items = ""
         if proj.get("description"):
@@ -3144,30 +2193,19 @@ for proj in st.session_state.project_entries:
                 align-items: center;
                 color: #141a22;
                 text-shadow: 1px 1px 2px rgba(0,0,0,0.15);
-                width: 100%;
             '>
-                <div style='display: inline-flex; align-items: center;'>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/laptop.png" style="width:16px; height:16px; margin-right:5px;"/>
-                    <span>{proj.get('title', '')}</span>
-                </div>
-                <div style='display: inline-flex; align-items: center; font-weight: 600; font-size: 14.5px;'>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/time.png" style="width:16px; height:16px; margin-right:5px;"/>
-                    <span>{proj.get('duration', '')}</span>
-                </div>
+                <span>💻 {proj.get('title', '')}</span>
+                <span style='font-weight: 600; font-size: 14.5px; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);'>⏳ {proj.get('duration', '')}</span>
             </div>
             {tech_text}
-            <div style='display: inline-flex; align-items: flex-start; font-size: 15px; color: #1b2330; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);'>
-                <img src="https://img.icons8.com/ios-filled/50/000000/task.png" style="width:16px; height:16px; margin-right:5px; margin-top:2px;"/>
-                <div>
-                    <b>Description:</b>
-                    <ul style='margin-top: 6px; padding-left: 22px; color: #1b2330;'>
-                        {description_items}
-                    </ul>
-                </div>
+            <div style='font-size: 15px; color: #1b2330; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);'>
+                <b>📝 Description:</b>
+                <ul style='margin-top: 6px; padding-left: 22px; color: #1b2330;'>
+                    {description_items}
+                </ul>
             </div>
         </div>
         """
-
 
 
 
@@ -3176,15 +2214,9 @@ for proj in st.session_state.project_entries:
 project_links_html = ""
 if st.session_state.project_links:
     project_links_html = "<h4 class='section-title'>Project Links</h4><hr>" + "".join(
-        f'''
-        <p>
-            <img src="https://img.icons8.com/ios-filled/50/000000/link.png" style="width:16px; height:16px; vertical-align:middle; margin-right:5px;"/>
-            <a href="{link}">Project {i+1}</a>
-        </p>
-        '''
+        f'<p><a href="{link}">🔗 Project {i+1}</a></p>'
         for i, link in enumerate(st.session_state.project_links)
     )
-
 
 
 
@@ -3220,14 +2252,12 @@ if st.session_state.certificate_links:
                     color: #37474f;
                     text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.15);
 
+                    /* Added background and shadow */
                     background-color: #fffde7;  /* pastel yellow */
                     padding: 4px 12px;
                     border-radius: 14px;
                     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-                '>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/time.png" style="width:14px; height:14px; vertical-align:middle; margin-right:4px;"/>
-                    {duration}
-                </div>
+                '>⏳ {duration}</div>
 
                 <!-- Certificate Title -->
                 <div style='
@@ -3237,8 +2267,7 @@ if st.session_state.certificate_links:
                     margin-bottom: 8px;
                     text-shadow: 0.5px 0.5px 1.5px rgba(0, 0, 0, 0.1);
                 '>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/certificate.png" style="width:16px; height:16px; vertical-align:middle; margin-right:5px;"/>
-                    <a href="{link}" target="_blank" style='
+                    📄 <a href="{link}" target="_blank" style='
                         color: #263238;
                         text-decoration: none;
                     '>{name}</a>
@@ -3251,8 +2280,7 @@ if st.session_state.certificate_links:
                     margin-top: 6px;
                     text-shadow: 0 0 1px rgba(0, 0, 0, 0.08);
                 '>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/task.png" style="width:16px; height:16px; vertical-align:middle; margin-right:5px;"/>
-                    {description}
+                    📝 {description}
                 </div>
             </div>
             """
@@ -3260,9 +2288,11 @@ if st.session_state.certificate_links:
 
 
 
+
+        # --- Word Export Logic (Unchanged from your code) ---
 html_content = f"""
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -3296,74 +2326,61 @@ html_content = f"""
             margin: 20px 0;
         }}
         .container {{
-            display: table;
-            width: 100%;
-        }}
-        .left, .right {{
-            display: table-cell;
-            vertical-align: top;
+            display: flex;
+            gap: 40px;
         }}
         .left {{
-            width: 30%;
+            flex: 1;
             border-right: 2px solid #ccc;
             padding-right: 20px;
         }}
         .right {{
-            width: 70%;
+            flex: 2;
             padding-left: 20px;
-        }}
-        .icon {{
-            width: 16px;
-            height: 16px;
-            margin-right: 6px;
-        }}
-        .contact-row {{
-            display: flex;
-            align-items: center;
-            margin-bottom: 5px;
         }}
         .section-title {{
             color: #336699;
             margin-top: 30px;
             margin-bottom: 5px;
         }}
+        .skill-list {{
+            margin-left: 10px;
+        }}
+        .entry {{
+            margin-bottom: 15px;
+        }}
+        .entry-header {{
+            display: flex;
+            justify-content: space-between;
+        }}
+        .entry-title {{
+            font-style: italic;
+        }}
     </style>
 </head>
 <body>
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <div>
-            <h2>{st.session_state['name']}</h2>
-            <h4>{st.session_state['job_title']}</h4>
-        </div>
-        <div>
-            {profile_img_html}
-        </div>
+    <div>
+        <h2 style="margin: 0; color: #336699;">{st.session_state['name']}</h2>
+        <h4 style="margin: 5px 0 0 0; color: #336699;">{st.session_state['job_title']}</h4>
     </div>
-    <hr>
+    <div>
+        {profile_img_html}
+    </div>
+</div>
+<hr>
+
 
     <div class="container">
         <div class="left">
-            <div class="contact-row">
-                <img src="https://img.icons8.com/ios-filled/50/000000/marker.png" class="icon"/>
-                <span>{st.session_state['location']}</span>
-            </div>
-            <div class="contact-row">
-                <img src="https://img.icons8.com/ios-filled/50/000000/phone.png" class="icon"/>
-                <span>{st.session_state['phone']}</span>
-            </div>
-            <div class="contact-row">
-                <img src="https://img.icons8.com/ios-filled/50/000000/email.png" class="icon"/>
-                <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a>
-            </div>
-            <div class="contact-row">
-                <img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" class="icon"/>
-                <a href="{st.session_state['linkedin']}">LinkedIn</a>
-            </div>
-            <div class="contact-row">
-                <img src="https://img.icons8.com/ios-filled/50/000000/domain.png" class="icon"/>
-                <a href="{st.session_state['portfolio']}">Portfolio</a>
-            </div>
+            <p>
+                📍 {st.session_state['location']}<br>
+                📞 {st.session_state['phone']}<br>
+                📧 <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a><br>
+                🔗 <a href="{st.session_state['linkedin']}">LinkedIn</a><br>
+                🌐 <a href="{st.session_state['portfolio']}">Portfolio</a>
+            </p>
 
             <h4 class="section-title">Skills</h4>
             <hr>
@@ -3407,100 +2424,23 @@ html_content = f"""
 </html>
 """
 
-
-
-
 # Then encode it to bytes and prepare for download
 html_bytes = html_content.encode("utf-8")
 html_file = BytesIO(html_bytes)
 
-# Convert HTML resume to PDF bytes
-pdf_resume_bytes = html_to_pdf_bytes(html_content)
 
 with tab2:
-    # ==========================
-    # 📥 Download Resume buttons
-    # ==========================
-    st.download_button(
-        label="📥 Download Resume (HTML)",
-        data=html_file,
-        file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.html",
-        mime="text/html",
-        key="download_resume_html"
-    )
+ st.download_button (
+    label="📥 Download Resume (HTML)",
+    data=html_file,
+    file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.html",
+    mime="text/html"
+)    
+with tab2:
+ st.markdown("""
+✅ After downloading your HTML resume, you can [click here to convert it to PDF](https://www.sejda.com/html-to-pdf) using Sejda's free online tool.
+""")
 
-    st.download_button(
-        label="📥 Download Resume (PDF)",
-        data=pdf_resume_bytes,
-        file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.pdf",
-        mime="application/pdf",
-        key="download_resume_pdf"
-    )
-
-    # ==========================
-    # 📩 Cover Letter Expander
-    # ==========================
-    with st.expander("📩 Generate Cover Letter from This Resume"):
-        generate_cover_letter_from_resume_builder()
-
-    # ==========================
-    # ✉️ Generated Cover Letter Preview & Downloads
-    # ==========================
-    if "cover_letter" in st.session_state:
-        st.markdown("""
-        <h3 style="color: #003366; margin-top: 30px;">✉️ Generated Cover Letter</h3>
-        """, unsafe_allow_html=True)
-
-        styled_cover_letter = st.session_state.get("cover_letter_html", "")
-        st.markdown(styled_cover_letter, unsafe_allow_html=True)
-
-        # ✅ Generate PDF from styled HTML
-        pdf_file = html_to_pdf_bytes(styled_cover_letter)
-
-        # ✅ Create DOCX function
-        from io import BytesIO
-        from docx import Document
-
-        def create_docx(text, filename="cover_letter.docx"):
-            doc = Document()
-            doc.add_heading("Cover Letter", 0)
-            doc.add_paragraph(text)
-            bio = BytesIO()
-            doc.save(bio)
-            bio.seek(0)
-            return bio
-
-        # ==========================
-        # 📥 Cover Letter Download Buttons
-        # ==========================
-        st.markdown("""
-        <div style="margin-top: 20px; margin-bottom: 10px;">
-            <strong>⬇️ Download Your Cover Letter:</strong>
-        </div>
-        """, unsafe_allow_html=True)
-
-        col1, col2 = st.columns(2)
-        with col1:
-            st.download_button(
-                label="📥 Download Cover Letter (.docx)",
-                data=create_docx(st.session_state["cover_letter"]),
-                file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                key="download_coverletter_docx"
-            )
-        with col2:
-            st.download_button(
-                label="📥 Download Cover Letter (PDF)",
-                data=pdf_file,
-                file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.pdf",
-                mime="application/pdf",
-                key="download_coverletter_pdf"
-            )
-
-
-    st.markdown("""
-    ✅ After downloading your HTML resume, you can [click here to convert it to PDF](https://www.sejda.com/html-to-pdf) using Sejda's free online tool.
-    """)
 with tab3:
     st.header("🔍 Job Search Across LinkedIn, Naukri, and FoundIt")
 
@@ -3697,8 +2637,9 @@ with tab3:
             <p>💵 Salary Range: {role['range']}</p>
         </div>
         """, unsafe_allow_html=True)
+
 with tab4:
-    # Inject CSS styles
+    # CSS styles for header, buttons, and cards
     st.markdown("""
         <style>
         .header-box {
@@ -3730,22 +2671,18 @@ with tab4:
 
         .stRadio > div {
             flex-direction: row !important;
-            justify-content: center !important;
-            gap: 12px;
+            justify-content: center;
         }
 
         .stRadio label {
             background: #1a1a1a;
             border: 1px solid #00c3ff;
             color: #00c3ff;
-            padding: 10px 20px;
+            padding: 10px 16px;
             margin: 4px;
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-weight: 500;
-            min-width: 180px;
-            text-align: center;
         }
 
         .stRadio label:hover {
@@ -3754,7 +2691,7 @@ with tab4:
 
         .stRadio input:checked + div > label {
             background-color: #00c3ff;
-            color: #000;
+            color: black;
             font-weight: bold;
         }
 
@@ -3798,34 +2735,25 @@ with tab4:
     st.markdown('<div class="glow-header">🎓 Explore Career Resources</div>', unsafe_allow_html=True)
     st.markdown("<p style='text-align:center; color:#ccc;'>Curated courses and videos for your career growth, resume tips, and interview success.</p>", unsafe_allow_html=True)
 
-    # Learning path label
+    # Enhanced label above radio buttons
     st.markdown("""
-        <div style="text-align:center; margin-top: 25px; margin-bottom: 10px;">
+        <div style="text-align:center; margin-top: 20px; margin-bottom: 10px;">
             <span style="color: #00c3ff; font-weight: bold; font-size: 20px; text-shadow: 0 0 10px #00c3ff;">
                 🧭 Choose Your Learning Path
             </span>
         </div>
     """, unsafe_allow_html=True)
 
-    # Centered Radio buttons
-    st.markdown("""
-        <div style="display: flex; justify-content: center; width: 100%;">
-            <div style="display: flex; justify-content: center; gap: 16px;">
-    """, unsafe_allow_html=True)
-
+    # Stylish radio buttons
     page = st.radio(
-        label="Select Learning Option",
-        options=["Courses by Role", "Resume Videos", "Interview Videos"],
+        " ",
+        ["Courses by Role", "Resume Videos", "Interview Videos"],
         horizontal=True,
-        key="page_selection",
-        label_visibility="collapsed"
+        key="page_selection"
     )
 
-    st.markdown("</div></div>", unsafe_allow_html=True)
-
-    # Section 1: Courses by Role
     if page == "Courses by Role":
-        st.subheader("🎯 Courses by Career Role")
+        st.subheader("Courses by Career Role")
         category = st.selectbox(
             "Select Career Category",
             options=list(COURSES_BY_CATEGORY.keys()),
@@ -3839,7 +2767,7 @@ with tab4:
                 key="role_selection"
             )
             if role:
-                st.subheader(f"📘 Courses for **{role}** in **{category}**:")
+                st.subheader(f"Courses for {role} in {category}:")
                 courses = get_courses_for_role(category, role)
                 if courses:
                     for title, url in courses:
@@ -3849,9 +2777,8 @@ with tab4:
                             </div>
                         """, unsafe_allow_html=True)
                 else:
-                    st.info("🚫 No courses found for this role.")
+                    st.info("No courses found for this role.")
 
-    # Section 2: Resume Videos
     elif page == "Resume Videos":
         st.subheader("📄 Resume Writing Videos")
         categories = list(RESUME_VIDEOS.keys())
@@ -3861,7 +2788,7 @@ with tab4:
             key="resume_vid_cat"
         )
         if selected_cat:
-            st.subheader(f"📂 {selected_cat}")
+            st.subheader(f"{selected_cat}")
             videos = RESUME_VIDEOS[selected_cat]
             cols = st.columns(2)
             for idx, (title, url) in enumerate(videos):
@@ -3869,7 +2796,6 @@ with tab4:
                     st.markdown(f"**{title}**")
                     st.video(url)
 
-    # Section 3: Interview Videos
     elif page == "Interview Videos":
         st.subheader("🗣️ Interview Preparation Videos")
         categories = list(INTERVIEW_VIDEOS.keys())
@@ -3879,15 +2805,13 @@ with tab4:
             key="interview_vid_cat"
         )
         if selected_cat:
-            st.subheader(f"📂 {selected_cat}")
+            st.subheader(f"{selected_cat}")
             videos = INTERVIEW_VIDEOS[selected_cat]
             cols = st.columns(2)
             for idx, (title, url) in enumerate(videos):
                 with cols[idx % 2]:
                     st.markdown(f"**{title}**")
                     st.video(url)
-
-
 with tab5:
     import sqlite3
     import pandas as pd
@@ -3934,7 +2858,7 @@ with tab5:
         if st.button("Login"):
             if password == "lexiadmin123":
                 st.session_state.admin_logged_in = True
-                st.success("✅ Login successful! You now have access to the Admin Dashboard.")
+                st.success("✅ Login successful!")
                 st.rerun()
             else:
                 st.error("❌ Incorrect password.")
@@ -3944,7 +2868,7 @@ with tab5:
     col1, col2 = st.columns([1, 1])
     with col1:
         if st.button("🔄 Refresh Dashboard"):
-            st.rerun()
+            st.experimental_rerun()
     with col2:
         if st.button("🚪 Logout now"):
             st.session_state.admin_logged_in = False
@@ -4002,71 +2926,25 @@ with tab5:
         st.info("No domain data available.")
 
     st.markdown("### 📊 Domain Distribution by Count")
-
-    # ✅ Cached data loading
-    @st.cache_data
-    def load_domain_distribution():
-        df = get_domain_distribution()
-        if not df.empty:
-            total = df["count"].sum()
-            df["percent"] = (df["count"] / total) * 100
-            df = df.sort_values(by="count", ascending=False).reset_index(drop=True)
-        return df
-
-    # Load data
-    df_domain_dist = load_domain_distribution()
-
+    df_domain_dist = get_domain_distribution()
     if not df_domain_dist.empty:
-        # 🔘 Radio to toggle between chart views
-        chart_type = st.radio("📊 Select View:", ["📈 Percentage View", "📉 Count View"], horizontal=True)
+        total_count = df_domain_dist["count"].sum()
+        df_domain_dist["percent"] = (df_domain_dist["count"] / total_count) * 100
 
-        if chart_type == "📈 Percentage View":
-            fig_percent, ax_percent = plt.subplots(figsize=(9, 5))
-            bars_percent = ax_percent.bar(df_domain_dist["domain"], df_domain_dist["percent"], color="#33B5E5")
+        fig_dist, ax_dist = plt.subplots(figsize=(6, 4))
+        bars = ax_dist.bar(df_domain_dist["domain"], df_domain_dist["count"], color="#ff9933")
 
-            for bar, pct in zip(bars_percent, df_domain_dist["percent"]):
-                height = bar.get_height()
-                ax_percent.text(
-                    bar.get_x() + bar.get_width() / 2,
-                    height + 0.5,
-                    f"{pct:.1f}%",
-                    ha='center',
-                    va='bottom',
-                    fontsize=10
-                )
+        for i, bar in enumerate(bars):
+            height = bar.get_height()
+            percent = df_domain_dist["percent"].iloc[i]
+            ax_dist.text(bar.get_x() + bar.get_width() / 2, height, f"{percent:.1f}%",
+                         ha='center', va='bottom', fontsize=8)
 
-            ax_percent.set_title("Resume Distribution by Domain (%)", fontsize=14, fontweight='bold')
-            ax_percent.set_ylabel("Percentage (%)", fontsize=12)
-            ax_percent.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=10)
-            ax_percent.set_ylim(0, df_domain_dist["percent"].max() * 1.25)
-            ax_percent.grid(axis='y', linestyle='--', alpha=0.4)
-
-            st.pyplot(fig_percent)
-
-        elif chart_type == "📉 Count View":
-            fig_count, ax_count = plt.subplots(figsize=(9, 5))
-            bars_count = ax_count.bar(df_domain_dist["domain"], df_domain_dist["count"], color="#ff9933")
-
-            for bar, count in zip(bars_count, df_domain_dist["count"]):
-                height = bar.get_height()
-                ax_count.text(
-                    bar.get_x() + bar.get_width() / 2,
-                    height + 1,
-                    f"{int(count)}",
-                    ha='center',
-                    va='bottom',
-                    fontsize=10,
-                    color="black"
-                )
-
-            ax_count.set_title("Resume Count by Domain", fontsize=14, fontweight='bold')
-            ax_count.set_ylabel("Resume Count", fontsize=12)
-            ax_count.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=10)
-            ax_count.set_ylim(0, df_domain_dist["count"].max() * 1.25)
-            ax_count.grid(axis='y', linestyle='--', alpha=0.4)
-
-            st.pyplot(fig_count)
-
+        ax_dist.set_ylabel("Resume Count")
+        ax_dist.set_title("Resumes per Domain")
+        ax_dist.set_xticks(np.arange(len(df_domain_dist["domain"])))
+        ax_dist.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right")
+        st.pyplot(fig_dist)
     else:
         st.info("No domain data found.")
 
@@ -4091,56 +2969,32 @@ with tab5:
     else:
         st.info("No ATS domain data.")
 
-    st.markdown("### 📈 Resume Uploads Over Time")
-    df_timeline = get_resume_count_by_day()
-    if not df_timeline.empty:
-        df_timeline = df_timeline.sort_values("day")
-        fig3, ax3 = plt.subplots(figsize=(7, 4))
-        ax3.plot(df_timeline["day"], df_timeline["count"], marker="o", color="green", linewidth=2)
-        for i in range(len(df_timeline)):
-            ax3.annotate(
-                str(df_timeline["count"].iloc[i]),
-                (df_timeline["day"].iloc[i], df_timeline["count"].iloc[i]),
-                textcoords="offset points",
-                xytext=(0, 8),
-                ha='center',
-                fontsize=9,
-                color='black'
-            )
-        ax3.set_ylabel("Uploads")
-        ax3.set_xlabel("Date")
-        ax3.set_title("Resume Upload Timeline")
-        plt.xticks(rotation=60, ha='right')
-        fig3.tight_layout()
-        st.pyplot(fig3)
-    else:
-        st.info("ℹ️ No upload trend data to display.")
+    
 
     st.markdown("### 🧠 Fair vs Biased Resumes")
     df_bias = get_bias_distribution()
     if not df_bias.empty:
         fig4, ax4 = plt.subplots()
         ax4.pie(df_bias["count"], labels=df_bias["bias_category"], autopct="%1.1f%%", startangle=90,
-                colors=["#ff6666", "#00cc66"])
+                colors=["#00cc66", "#ff6666"])
         ax4.axis("equal")
         st.pyplot(fig4)
     else:
         st.info("No bias data to display.")
 
     st.markdown("### 🚩 Flagged Candidates (Bias Score > 0.6)")
-    flagged_df = get_all_candidates(bias_threshold=0.6)
+    flagged_df = get_all_candidates(bias_threshold=0.6)  # ✅ Removed strict ATS filter
+
     if not flagged_df.empty:
         st.dataframe(
             flagged_df[[
                 "id", "resume_name", "candidate_name",
                 "bias_score", "ats_score", "domain", "timestamp"
-            ]].sort_values(by="bias_score", key=lambda x: pd.to_numeric(x, errors="coerce"), ascending=False),
+            ]].sort_values(by="bias_score", ascending=False),
             use_container_width=True
         )
     else:
         st.success("✅ No flagged candidates.")
-
-
 
 if "memory" in st.session_state:
     history = st.session_state.memory.load_memory_variables({}).get("chat_history", [])

@@ -1039,27 +1039,97 @@ def extract_text_from_images(pdf_path):
 
 # Detect bias in resume
 
+import re
+
+# Predefined gender-coded word lists
+gender_words = {
+    "masculine": [
+        "active", "aggressive", "ambitious", "analytical", "assertive", "autonomous", "boast", "bold",
+        "challenging", "competitive", "confident", "courageous", "decisive", "determined", "dominant", "driven",
+        "dynamic", "forceful", "independent", "individualistic", "intellectual", "lead", "leader", "objective",
+        "outspoken", "persistent", "principled", "proactive", "resilient", "self-reliant", "self-sufficient",
+        "strong", "superior", "tenacious","guru","tech guru","technical guru", "visionary", "manpower", "strongman", "command",
+        "assert", "headstrong", "rockstar", "superstar", "go-getter", "trailblazer", "results-driven",
+        "fast-paced", "driven", "determination", "competitive spirit"
+    ],
+    
+    "feminine": [
+        "affectionate", "agreeable", "attentive", "collaborative", "committed", "compassionate", "considerate",
+        "cooperative", "dependable", "dependent", "emotional", "empathetic", "enthusiastic", "friendly", "gentle",
+        "honest", "inclusive", "interpersonal", "kind", "loyal", "modest", "nurturing", "pleasant", "polite",
+        "sensitive", "supportive", "sympathetic", "tactful", "tender", "trustworthy", "understanding", "warm",
+        "yield", "adaptable", "communal", "helpful", "dedicated", "respectful", "nurture", "sociable",
+        "relationship-oriented", "team player", "dependable", "people-oriented", "empathetic listener",
+        "gentle communicator", "open-minded"
+    ]
+}
+
 def detect_bias(text):
-    text = text.lower()
-    masc, fem = 0, 0
+    # Split into sentences using simple delimiters
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
 
-    masculine_words_sorted = sorted(gender_words["masculine"], key=len, reverse=True)
-    feminine_words_sorted = sorted(gender_words["feminine"], key=len, reverse=True)
+    masc_set, fem_set = set(), set()
+    masculine_found, feminine_found = [] , []
 
-    for phrase in masculine_words_sorted:
-        masc += len(re.findall(rf'\b{re.escape(phrase)}\b', text))
+    masculine_words = sorted(gender_words["masculine"], key=len, reverse=True)
+    feminine_words = sorted(gender_words["feminine"], key=len, reverse=True)
 
-    for phrase in feminine_words_sorted:
-        fem += len(re.findall(rf'\b{re.escape(phrase)}\b', text))
+    for sent in sentences:
+        sent_text = sent.strip()
+        sent_lower = sent_text.lower()
+        matched_spans = []
 
+        def is_overlapping(start, end):
+            return any(start < e and end > s for s, e in matched_spans)
+
+        # 🔵 Highlight masculine words in blue
+        for word in masculine_words:
+            pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
+            for match in pattern.finditer(sent_lower):
+                start, end = match.span()
+                if not is_overlapping(start, end):
+                    matched_spans.append((start, end))
+                    key = (word.lower(), sent_text)
+                    if key not in masc_set:
+                        masc_set.add(key)
+                        highlighted = re.sub(
+                            rf'\b({re.escape(word)})\b',
+                            r'<span style="color:blue;">\1</span>',
+                            sent_text,
+                            flags=re.IGNORECASE
+                        )
+                        masculine_found.append({
+                            "word": word,
+                            "sentence": highlighted
+                        })
+
+        # 🔴 Highlight feminine words in red
+        for word in feminine_words:
+            pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
+            for match in pattern.finditer(sent_lower):
+                start, end = match.span()
+                if not is_overlapping(start, end):
+                    matched_spans.append((start, end))
+                    key = (word.lower(), sent_text)
+                    if key not in fem_set:
+                        fem_set.add(key)
+                        highlighted = re.sub(
+                            rf'\b({re.escape(word)})\b',
+                            r'<span style="color:red;">\1</span>',
+                            sent_text,
+                            flags=re.IGNORECASE
+                        )
+                        feminine_found.append({
+                            "word": word,
+                            "sentence": highlighted
+                        })
+
+    masc = len(masculine_found)
+    fem = len(feminine_found)
     total = masc + fem
+    bias_score = min(total / 20, 1.0) if total > 0 else 0.0
 
-    if total == 0:
-        return 0.0, masc, fem  
-
-    bias_score = min(total / 20, 1.0)
-
-    return round(bias_score, 2), masc, fem
+    return round(bias_score, 2), masc, fem, masculine_found, feminine_found
 
 gender_words = {
     "masculine": [
@@ -1273,35 +1343,134 @@ Your tasks:
     return response
 
 
+import re
 
 def rewrite_and_highlight(text, replacement_mapping, user_location):
     highlighted_text = text
     masculine_count, feminine_count = 0, 0
-    detected_masculine_words = Counter()
-    detected_feminine_words = Counter()
+    detected_masculine_words, detected_feminine_words = [], []
+    matched_spans = []
 
-    words = re.findall(r'\b\w+\b', text)
+    masculine_words = sorted(gender_words["masculine"], key=len, reverse=True)
+    feminine_words = sorted(gender_words["feminine"], key=len, reverse=True)
 
-    for w in words:
-        lemma = lemmatizer.lemmatize(w.lower())
-        if lemma in gender_words["masculine"]:
+    def span_overlaps(start, end):
+        return any(s < end and e > start for s, e in matched_spans)
+
+    # Highlight and count masculine words
+    for word in masculine_words:
+        pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
+        for match in pattern.finditer(highlighted_text):
+            start, end = match.span()
+            if span_overlaps(start, end):
+                continue
+
+            word_match = match.group(0)
+            colored = f"<span style='color:blue;'>{word_match}</span>"
+
+            # Replace word in the highlighted text
+            highlighted_text = highlighted_text[:start] + colored + highlighted_text[end:]
+            shift = len(colored) - len(word_match)
+            matched_spans = [(s if s < start else s + shift, e if s < start else e + shift) for s, e in matched_spans]
+            matched_spans.append((start, start + len(colored)))
+
             masculine_count += 1
-            detected_masculine_words[lemma] += 1
-            highlighted_text = re.sub(rf'\b{re.escape(w)}\b', f":blue[{w}]", highlighted_text)
- 
-        elif lemma in gender_words["feminine"]:
+
+            # Get sentence context and highlight
+            sentence_match = re.search(r'([^.]*?\b' + re.escape(word_match) + r'\b[^.]*\.)', text, re.IGNORECASE)
+            if sentence_match:
+                sentence = sentence_match.group(1).strip()
+                colored_sentence = re.sub(
+                    rf'\b({re.escape(word_match)})\b',
+                    r"<span style='color:blue;'>\1</span>",
+                    sentence,
+                    flags=re.IGNORECASE
+                )
+                detected_masculine_words.append({
+                    "word": word_match,
+                    "sentence": colored_sentence
+                })
+            break  # Only one match per word
+
+    # Highlight and count feminine words
+    for word in feminine_words:
+        pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
+        for match in pattern.finditer(highlighted_text):
+            start, end = match.span()
+            if span_overlaps(start, end):
+                continue
+
+            word_match = match.group(0)
+            colored = f"<span style='color:red;'>{word_match}</span>"
+
+            # Replace word in the highlighted text
+            highlighted_text = highlighted_text[:start] + colored + highlighted_text[end:]
+            shift = len(colored) - len(word_match)
+            matched_spans = [(s if s < start else s + shift, e if s < start else e + shift) for s, e in matched_spans]
+            matched_spans.append((start, start + len(colored)))
+
             feminine_count += 1
-            detected_feminine_words[lemma] += 1
-            highlighted_text = re.sub(rf'\b{re.escape(w)}\b', f":red[{w}]", highlighted_text)
 
-    # Now rewrite the text using the LLM
-    rewritten_text = rewrite_text_with_llm(text, replacement_mapping, user_location)
+            # Get sentence context and highlight
+            sentence_match = re.search(r'([^.]*?\b' + re.escape(word_match) + r'\b[^.]*\.)', text, re.IGNORECASE)
+            if sentence_match:
+                sentence = sentence_match.group(1).strip()
+                colored_sentence = re.sub(
+                    rf'\b({re.escape(word_match)})\b',
+                    r"<span style='color:red;'>\1</span>",
+                    sentence,
+                    flags=re.IGNORECASE
+                )
+                detected_feminine_words.append({
+                    "word": word_match,
+                    "sentence": colored_sentence
+                })
+            break  # Only one match per word
 
-
+    # Rewrite text with neutral terms
+    rewritten_text = rewrite_text_with_llm(
+        text,
+        replacement_mapping["masculine"] | replacement_mapping["feminine"],
+        user_location
+    )
 
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
 
+import re
+import pandas as pd
+import altair as alt
+import streamlit as st
+from llm_manager import call_llm
 
+# ✅ Grammar score via LLM (new function)
+def get_grammar_score_with_llm(text, max_score=5):
+    grammar_prompt = f"""
+You are a grammar evaluator AI. Analyze the following resume text and:
+
+1. Give a grammar score out of {max_score} based on grammar quality, sentence structure, clarity, and tone.
+2. Return a 1-sentence summary of the grammar quality.
+3. Keep the score an integer between 1 and {max_score}.
+
+Output format strictly:
+Score: <number>
+Feedback: <one-sentence grammar and tone summary>
+
+---
+{text}
+---
+"""
+
+    response = call_llm(grammar_prompt, session=st.session_state).strip()
+
+    score_match = re.search(r"Score:\s*(\d+)", response)
+    feedback_match = re.search(r"Feedback:\s*(.+)", response)
+
+    score = int(score_match.group(1)) if score_match else 3
+    feedback = feedback_match.group(1).strip() if feedback_match else "No grammar feedback provided."
+
+    return score, feedback
+
+# ✅ ATS Evaluation Function
 def ats_percentage_score(
     resume_text,
     job_description,
@@ -1312,11 +1481,8 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    """
-    Analyzes resume against job description using a structured, score-based prompt.
-    Enforces strict score calculation to prevent inflation. Final scores are validated externally.
-    """
-    from llm_manager import call_llm
+    # ⛔ Removed grammar tool; using LLM for score and feedback
+    grammar_score, grammar_feedback = get_grammar_score_with_llm(resume_text, max_score=lang_weight)
 
     logic_score_note = (
         f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
@@ -1324,92 +1490,141 @@ def ats_percentage_score(
     )
 
     prompt = f"""
-You are an AI-powered ATS evaluator. You must evaluate the candidate's resume strictly based on the scoring rules below. 
-You are not allowed to guess, assume, or round scores casually. Your component scores will be validated programmatically,
-so they must follow **exact arithmetic based on the provided weights**.
+You are an AI-powered ATS evaluator. Evaluate the candidate's resume with **detailed analysis for each section** in a structured format as follows.
+
+For the **Language Quality Analysis** section:
+
+- Use the following grammar score and feedback.
+- Provide additional insights on tone, clarity, and professionalism.
+- Append the provided feedback in bold at the end of the section.
+
+Grammar Score: {grammar_score} / {lang_weight}
+Feedback Summary: {grammar_feedback}
 
 ---
 
-📊 **Scoring Formula (Total = 100 Points)**
+### 🏷️ Candidate Name
+<Full name or "Not Found">
 
-1. **Education Score ({edu_weight} pts)**
-   - +50% if degree title (e.g., B.Tech, MSc) matches JD
-   - +50% if field (e.g., CS, IT, Engineering) matches JD
-   - Partial matches get 25% each
+### 🏫 Education Analysis
+**Score:** <0–{edu_weight}> / {edu_weight}
+**Degree Match:** <Detailed explanation of degree title and field relevance.>
 
-2. **Experience Score ({exp_weight} pts)**
-   - +60% if years of experience ≥ required
-   - +30% if role titles match
-   - +10% if domain/industry matches
+### 💼 Experience Analysis
+**Score:** <0–{exp_weight}> / {exp_weight}
+**Experience Details:** <Detailed explanation of years, role match, domain relevance, and notable achievements.>
 
-3. **Skills Match ({skills_weight} pts)**
-   - Extract skill sets from both resume and JD
-   - Score = (# of matching skills / total JD skills) × {skills_weight}
-   - Show both skill lists
+### 🛠 Skills Analysis
+**Score:** <0–{skills_weight}> / {skills_weight}
+**Current Skills:**
+- Technical: <list>
+- Soft Skills: <list>
+- Domain-Specific: <list>
 
-4. **Language Quality ({lang_weight} pts)**
-   - {lang_weight} = Very clear, formal, professional tone
-   - Half for minor grammatical/style issues
-   - Low score for informal or unclear writing
+**Skill Proficiency:**  
+<Detailed explanation of proficiency levels, strengths, and areas needing examples.>
 
-5. **Keyword Match ({keyword_weight} pts)**
-   - Extract tools, tech, frameworks from JD
-   - For each missing keyword, deduct proportionally from {keyword_weight}
-   - Show missing keyword list
+**Missing Skills:**
+- Skill 1
+- Skill 2
+- Skill 3
 
----
+### 🗣 Language Quality Analysis
+**Score:** {grammar_score} / {lang_weight}
+**Grammar & Tone:** <Your detailed analysis here>  
+**Feedback Summary:** **{grammar_feedback}**
 
-📐 **Scoring Instruction**
-- Total Score = Sum of all 5 components.
-- This becomes the **Overall Percentage Match**.
-- Max = 100. If score exceeds, cap it at 100.
-- Never return 0 unless all components are truly zero.
-- Return exact numeric values.
+### 🔑 Keyword Analysis
+**Score:** <0–{keyword_weight}> / {keyword_weight}
+**Missing Keywords:**
+- Keyword1
+- Keyword2
+- Keyword3
 
----
+**Keyword Analysis:**  
+<Detailed explanation of which keywords were matched or missing and their importance.>
 
-🧾 **OUTPUT FORMAT (Strictly follow this):**
-
-Candidate Name: <full name or "Not Found">
-
-Education Score: <0–{edu_weight}>  
-Education Match Details: <e.g., "Degree title matches B.Tech; field matches Computer Science.">
-
-Experience Score: <0–{exp_weight}>  
-Experience Highlights: <e.g., "5 years experience (JD requires 4), title matches 'Software Engineer', domain matched IT.">
-
-Skills Match Percentage: <0–{skills_weight}>  
-Skills Found in Resume: <comma-separated list>  
-Skills Required by JD: <comma-separated list>  
-Skills Missing: <comma-separated list>
-
-Language Quality Score: <0–{lang_weight}>  
-Language Quality Comments: <e.g., "Professional tone with minor grammatical errors.">
-
-Keyword Match Score: <0–{keyword_weight}>  
-Missing Keywords: <comma-separated list>
-
-Overall Percentage Match: <sum of above components>  
-Formatted Score: <Excellent / Good / Average / Poor>
-
-Final Thoughts:  
-Provide a detailed summary (4–6 sentences) about the candidate’s overall fit. Highlight strengths
-
-{logic_score_note}
+### ✅ Final Thoughts
+<4–6 sentence detailed summary highlighting strengths, areas of improvement, and overall fit.>
 
 ---
+**Instructions:**
+- Return each section in Markdown format with proper bullet points and bold subsection titles as shown.
+- Use the provided grammar score as-is.
+- Ensure clarity, conciseness, and professionalism.
+- Keep technical terms as in the resume.
 
-### Job Description:
+---
+### 📄 Job Description
 \"\"\"{job_description}\"\"\"
 
----
-
-### Resume:
+### 📄 Resume
 \"\"\"{resume_text}\"\"\"
+
+{logic_score_note}
 """
 
-    response = call_llm(prompt, session=st.session_state)
-    return response.strip()
+    # 🔁 Call your LLM
+    ats_result = call_llm(prompt, session=st.session_state).strip()
+
+    # 🧪 Extract structured data from LLM result
+    def extract_section(pattern, text, default="N/A"):
+        match = re.search(pattern, text, re.DOTALL)
+        return match.group(1).strip() if match else default
+
+    candidate_name = extract_section(r"### 🏷️ Candidate Name(.*?)###", ats_result, default="Not Found")
+    edu_analysis = extract_section(r"### 🏫 Education Analysis(.*?)###", ats_result)
+    exp_analysis = extract_section(r"### 💼 Experience Analysis(.*?)###", ats_result)
+    skills_analysis = extract_section(r"### 🛠 Skills Analysis(.*?)###", ats_result)
+    lang_analysis_llm = extract_section(r"### 🗣 Language Quality Analysis(.*?)###", ats_result)
+    keyword_analysis = extract_section(r"### 🔑 Keyword Analysis(.*?)###", ats_result)
+    final_thoughts = extract_section(r"### ✅ Final Thoughts(.*)", ats_result)
+
+    missing_keywords = extract_section(r"\*\*Missing Keywords:\*\*(.*?)(?:###|\Z)", keyword_analysis).replace("-", "").strip().replace("\n", ", ")
+    missing_skills = extract_section(r"\*\*Missing Skills:\*\*(.*?)(?:###|\Z)", skills_analysis).replace("-", "").strip().replace("\n", ", ")
+
+    def extract_score(pattern, text, default=0):
+        match = re.search(pattern, text)
+        return int(match.group(1)) if match else default
+
+    edu_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis)
+    exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)
+    skills_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
+    keyword_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis)
+
+    total_score = min(edu_score + exp_score + skills_score + grammar_score + keyword_score, 100)
+    formatted_score = (
+        "Excellent" if total_score >= 85 else
+        "Good" if total_score >= 70 else
+        "Average" if total_score >= 50 else
+        "Poor"
+    )
+
+    updated_lang_analysis = f"{lang_analysis_llm}<br><b>LLM Feedback Summary:</b> {grammar_feedback}"
+
+    return ats_result, {
+        "Candidate Name": candidate_name,
+        "Education Score": edu_score,
+        "Experience Score": exp_score,
+        "Skills Score": skills_score,
+        "Language Score": grammar_score,
+        "Keyword Score": keyword_score,
+        "ATS Match %": total_score,
+        "Formatted Score": formatted_score,
+        "Education Analysis": edu_analysis,
+        "Experience Analysis": exp_analysis,
+        "Skills Analysis": skills_analysis,
+        "Language Analysis": updated_lang_analysis,
+        "Keyword Analysis": keyword_analysis,
+        "Final Thoughts": final_thoughts,
+        "Missing Keywords": missing_keywords,
+        "Missing Skills": missing_skills
+    }
+
+
+
+
+
 
 # Setup Vector DB
 def setup_vectorstore(documents):
@@ -1477,49 +1692,53 @@ uploaded_files = st.file_uploader("Upload PDF Resumes", type=["pdf"], accept_mul
 import os
 import re
 import streamlit as st
+import pandas as pd
+import altair as alt
 from datetime import datetime
-import os
-import re
-import streamlit as st
-from datetime import datetime
-from db_manager import insert_candidate, detect_domain_from_title_and_description  # ✅ import db helpers
-# Initialize resume data storage
-# ✅ Use persistent storage for resume results
+from db_manager import insert_candidate, detect_domain_from_title_and_description
+from llm_manager import call_llm  # ensure this calls your LLM
+
+# ✅ Initialize state
 if "resume_data" not in st.session_state:
     st.session_state.resume_data = []
-resume_data = st.session_state.resume_data
 
-# ✅ Ensure processed file tracker exists
 if "processed_files" not in st.session_state:
     st.session_state.processed_files = set()
+
+resume_data = st.session_state.resume_data
 
 # ✏️ Resume Evaluation Logic
 if uploaded_files and job_description:
     all_text = []
 
     for uploaded_file in uploaded_files:
-        # ✅ Skip already-processed resumes
         if uploaded_file.name in st.session_state.processed_files:
             continue
 
-        # Save file locally
+        # ✅ Save uploaded file
         file_path = os.path.join(working_dir, uploaded_file.name)
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
-        # Extract resume text
+        # ✅ Extract text from PDF
         text = extract_text_from_pdf(file_path)
+        if not text:
+            st.warning(f"⚠️ Could not extract text from {uploaded_file.name}. Skipping.")
+            continue
+
         all_text.extend(text)
         full_text = " ".join(text)
 
-        # Run bias detection
-        bias_score, masc, fem = detect_bias(full_text)
-        highlighted_text, rewritten_text, masc_count, fem_count, detected_masc, detected_fem = rewrite_and_highlight(
+        # ✅ Bias detection
+        bias_score, masc_count, fem_count, detected_masc, detected_fem = detect_bias(full_text)
+
+        # ✅ Rewrite and highlight gender-biased words
+        highlighted_text, rewritten_text, _, _, _, _ = rewrite_and_highlight(
             full_text, replacement_mapping, user_location
         )
 
-        # Run ATS scoring
-        ats_result = ats_percentage_score(
+        # ✅ ATS Evaluation (LLM-only version)
+        ats_result, ats_scores = ats_percentage_score(
             resume_text=full_text,
             job_description=job_description,
             logic_profile_score=None,
@@ -1530,48 +1749,67 @@ if uploaded_files and job_description:
             keyword_weight=keyword_weight
         )
 
-        # Helper extractors
-        def extract_score(pattern, text, default=0):
-            match = re.search(pattern, text)
-            return int(match.group(1)) if match else default
+        # ✅ Extract structured ATS values
+        candidate_name = ats_scores.get("Candidate Name", "Not Found")
+        ats_score = ats_scores.get("ATS Match %", 0)
+        edu_score = ats_scores.get("Education Score", 0)
+        exp_score = ats_scores.get("Experience Score", 0)
+        skills_score = ats_scores.get("Skills Score", 0)
+        lang_score = ats_scores.get("Language Score", 0)
+        keyword_score = ats_scores.get("Keyword Score", 0)
+        formatted_score = ats_scores.get("Formatted Score", "N/A")
+        fit_summary = ats_scores.get("Final Thoughts", "N/A")
+        language_analysis_full = ats_scores.get("Language Analysis", "N/A")
 
-        def extract_text(pattern, text, default="N/A"):
-            match = re.search(pattern, text)
-            return match.group(1).strip() if match else default
+        # ✅ Clean keywords/skills
+        missing_keywords_raw = ats_scores.get("Missing Keywords", "N/A")
+        missing_skills_raw = ats_scores.get("Missing Skills", "N/A")
+        missing_keywords = [kw.strip() for kw in missing_keywords_raw.split(",") if kw.strip()] if missing_keywords_raw != "N/A" else []
+        missing_skills = [sk.strip() for sk in missing_skills_raw.split(",") if sk.strip()] if missing_skills_raw != "N/A" else []
 
-        # Extract scores and info
-        candidate_name = extract_text(r"Candidate Name:\s*(.*)", ats_result)
-        ats_score = extract_score(r"Overall Percentage Match:\s*(\d+)", ats_result)
-        edu_score = extract_score(r"Education Score:\s*(\d+)", ats_result)
-        exp_score = extract_score(r"Experience Score:\s*(\d+)", ats_result)
-        skills_score = extract_score(r"Skills Match Percentage:\s*(\d+)", ats_result)
-        lang_score = extract_score(r"Language Quality Score:\s*(\d+)", ats_result)
-        keyword_score = extract_score(r"Keyword Match Score:\s*(\d+)", ats_result)
-        formatted_score = extract_text(r"Formatted Score:\s*(.*)", ats_result)
-        missing_keywords = extract_text(r"Missing Keywords:\s*(.*)", ats_result)
-        fit_summary = extract_text(r"Final Thoughts:\s*(.*)", ats_result)
-
-        # Predict domain
+        # ✅ Domain detection
         domain = detect_domain_from_title_and_description(job_title, job_description)
 
-        # Flags
+        # ✅ Bias + ATS flags
         bias_flag = "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair"
         ats_flag = "⚠️ Low ATS" if ats_score < 50 else "✅ Good ATS"
 
-        # ✅ Append to session-state list
+        # ✅ ATS Chart
+        ats_df = pd.DataFrame({
+            'Component': ['Education', 'Experience', 'Skills', 'Language', 'Keywords'],
+            'Score': [edu_score, exp_score, skills_score, lang_score, keyword_score]
+        })
+        ats_chart = alt.Chart(ats_df).mark_bar().encode(
+            x=alt.X('Component', sort=None),
+            y=alt.Y('Score', scale=alt.Scale(domain=[0, 50])),
+            color='Component',
+            tooltip=['Component', 'Score']
+        ).properties(
+            title="ATS Evaluation Breakdown",
+            width=600,
+            height=300
+        )
+
+        # ✅ Store results in session
         st.session_state.resume_data.append({
             "Resume Name": uploaded_file.name,
             "Candidate Name": candidate_name,
+            "ATS Report": ats_result,
             "ATS Match %": ats_score,
-            "ATS Status": ats_flag,
             "Formatted Score": formatted_score,
             "Education Score": edu_score,
             "Experience Score": exp_score,
-            "Skills Match %": skills_score,
-            "Language Quality Score": lang_score,
-            "Keyword Match Score": keyword_score,
+            "Skills Score": skills_score,
+            "Language Score": lang_score,
+            "Keyword Score": keyword_score,
+            "Education Analysis": ats_scores.get("Education Analysis", ""),
+            "Experience Analysis": ats_scores.get("Experience Analysis", ""),
+            "Skills Analysis": ats_scores.get("Skills Analysis", ""),
+            "Language Analysis": language_analysis_full,
+            "Keyword Analysis": ats_scores.get("Keyword Analysis", ""),
+            "Final Thoughts": fit_summary,
             "Missing Keywords": missing_keywords,
-            "Fit Summary": fit_summary,
+            "Missing Skills": missing_skills,
             "Bias Score (0 = Fair, 1 = Biased)": bias_score,
             "Bias Status": bias_flag,
             "Masculine Words": masc_count,
@@ -1584,7 +1822,7 @@ if uploaded_files and job_description:
             "Domain": domain
         })
 
-        # ✅ Save to DB only once
+        # ✅ Save to database
         insert_candidate((
             uploaded_file.name,
             candidate_name,
@@ -1598,29 +1836,184 @@ if uploaded_files and job_description:
             domain
         ))
 
-        # ✅ Track as processed
+        # ✅ Mark file as processed
         st.session_state.processed_files.add(uploaded_file.name)
 
     st.success("✅ All resumes processed!")
 
-    # ✅ Setup QA over resumes once
+    # ✅ Optional vectorstore setup
     if all_text:
         st.session_state.vectorstore = setup_vectorstore(all_text)
         st.session_state.chain = create_chain(st.session_state.vectorstore)
 
-# ✅ Optional: Reset memory during development
+# 🔄 Developer Reset Button
 if st.button("🔄 Reset Resume Upload Memory"):
     st.session_state.processed_files.clear()
     st.session_state.resume_data.clear()
     st.success("✅ Cleared uploaded resume history. You can re-upload now.")
 
-
-# === TAB 1: Dashboard ===
-# 📊 Dashboard and Metrics
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", 
     "📚 Course Recommendation", "📁 Admin DB View"
 ])
+
+def generate_resume_report_html(resume):
+    # ✅ Safe retrieval with fallback
+    candidate_name = resume.get('Candidate Name', 'Not Found')
+    resume_name = resume.get('Resume Name', 'Unknown')
+    rewritten_text = resume.get('Rewritten Text', '').replace("\n", "<br>")
+
+    # Masculine words formatted
+    masculine_words_list = resume.get("Detected Masculine Words", [])
+    masculine_words = "".join(
+        f"<b>{item.get('word','')}</b>: {item.get('sentence','')}<br>"
+        for item in masculine_words_list
+    ) if masculine_words_list else "<i>None detected.</i>"
+
+    # Feminine words formatted
+    feminine_words_list = resume.get("Detected Feminine Words", [])
+    feminine_words = "".join(
+        f"<b>{item.get('word','')}</b>: {item.get('sentence','')}<br>"
+        for item in feminine_words_list
+    ) if feminine_words_list else "<i>None detected.</i>"
+
+    # Missing keywords formatted as multiline bullet points
+    missing_keywords_list = resume.get('Missing Keywords', [])
+    missing_keywords = "".join(
+        f"• {kw}<br>"
+        for kw in missing_keywords_list
+    ) if missing_keywords_list else "<i>None</i>"
+
+    # Missing skills formatted as multiline bullet points
+    missing_skills_list = resume.get('Missing Skills', [])
+    missing_skills = "".join(
+        f"• {sk}<br>"
+        for sk in missing_skills_list
+    ) if missing_skills_list else "<i>None</i>"
+
+    ats_report_html = resume.get("ATS Report", "").replace("\n", "<br>")
+
+    # ✅ Pre-fetch analysis fields with enhanced styling for scores
+    def style_analysis(analysis):
+        if "**Score:**" in analysis:
+            parts = analysis.split("**Score:**")
+            rest = parts[1].split("**", 1)
+            score_text = rest[0].strip()
+            remaining = rest[1].strip() if len(rest) > 1 else ""
+            formatted_score = f"<div style='background:#4c1d95;color:white;padding:8px;border-radius:6px;margin-bottom:5px;'><b>Score:</b> {score_text}</div>"
+            return formatted_score + f"<p>{remaining}</p>"
+        else:
+            return f"<p>{analysis}</p>"
+
+    edu_analysis = style_analysis(resume.get("Education Analysis", "N/A").replace("\n", "<br>"))
+    exp_analysis = style_analysis(resume.get("Experience Analysis", "N/A").replace("\n", "<br>"))
+    skills_analysis = style_analysis(resume.get("Skills Analysis", "N/A").replace("\n", "<br>"))
+    lang_analysis = style_analysis(resume.get("Language Analysis", "N/A").replace("\n", "<br>"))
+    keyword_analysis = style_analysis(resume.get("Keyword Analysis", "N/A").replace("\n", "<br>"))
+    final_thoughts = resume.get("Final Thoughts", "N/A").replace("\n", "<br>")
+
+    # Metrics
+    ats_match = resume.get('ATS Match %', 'N/A')
+    edu_score = resume.get('Education Score', 'N/A')
+    exp_score = resume.get('Experience Score', 'N/A')
+    skills_score = resume.get('Skills Score', 'N/A')
+    lang_score = resume.get('Language Score', 'N/A')
+    keyword_score = resume.get('Keyword Score', 'N/A')
+    masculine_count = resume.get('Masculine Words', 0)
+    feminine_count = resume.get('Feminine Words', 0)
+    bias_score = resume.get('Bias Score (0 = Fair, 1 = Biased)', 'N/A')
+
+    # ================================
+    # 🔥 HTML report with analysis cards
+    # ================================
+    return f"""<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>{candidate_name} - Resume Analysis Report</title>
+    <style>
+        body{{font-family:'Segoe UI',sans-serif;margin:40px;background:#f5f7fa;color:#333}}
+        h1,h2{{color:#2f4f6f}}.section{{margin-bottom:30px}}
+        .highlight{{background-color:#eef;padding:10px;border-radius:6px;margin-top:10px;font-size:14px}}
+        .metric-box{{display:inline-block;background:#dbeaff;padding:10px 20px;margin:10px;border-radius:10px;font-weight:bold}}
+        .keyword{{display:inline-block;background:#fbdcdc;color:#a33;margin:4px;padding:6px 12px;border-radius:12px;font-size:13px}}
+        .resume-box{{background-color:#f9f9ff;padding:15px;border-radius:8px;border:1px solid #ccc;white-space:pre-wrap}}
+        .report-box{{background:#fffbe6;border-left:5px solid #f7d794;padding:10px;margin-top:10px;border-radius:6px}}
+        .card-header{{background:#5b3cc4;color:white;padding:10px;border-radius:6px 6px 0 0}}
+        .card-body{{background:#2d2d3a;color:white;padding:10px;border-radius:0 0 6px 6px}}
+        mark{{background-color: #ffd54f;}}
+    </style>
+    </head><body>
+    <h1>📄 Resume Analysis Report</h1>
+
+    <div class="section">
+        <h2>Candidate: {candidate_name}</h2>
+        <p><strong>Resume File:</strong> {resume_name}</p>
+    </div>
+
+    <div class="section">
+        <h2>📊 ATS Evaluation</h2>
+        <div class="metric-box">ATS Match: {ats_match}%</div>
+        <div class="metric-box">Education: {edu_score}</div>
+        <div class="metric-box">Experience: {exp_score}</div>
+        <div class="metric-box">Skills: {skills_score}</div>
+        <div class="metric-box">Language: {lang_score}</div>
+        <div class="metric-box">Keyword: {keyword_score}</div>
+
+        <div class="report-box">
+            <h3>📋 ATS Evaluation Report</h3>
+            {ats_report_html}
+        </div>
+
+        <!-- 🔷 Analysis Cards -->
+        <div style="margin-top:20px;">
+            <div class="card-header">🏫 Education Analysis</div>
+            <div class="card-body">{edu_analysis}</div>
+        </div>
+
+        <div style="margin-top:20px;">
+            <div class="card-header">💼 Experience Analysis</div>
+            <div class="card-body">{exp_analysis}</div>
+        </div>
+
+        <div style="margin-top:20px;">
+            <div class="card-header">🛠 Skills Analysis</div>
+            <div class="card-body">{skills_analysis}</div>
+            
+        </div>
+
+        <div style="margin-top:20px;">
+            <div class="card-header">🗣 Language Quality Analysis</div>
+            <div class="card-body">{lang_analysis}</div>
+        </div>
+
+        <div style="margin-top:20px;">
+            <div class="card-header">🔑 Keyword Analysis</div>
+            <div class="card-body">{keyword_analysis}</div>
+            
+        </div>
+
+        <div style="margin-top:20px;">
+            <div class="card-header">✅ Final Thoughts</div>
+            <div class="card-body">{final_thoughts}</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>⚖️ Gender Bias Analysis</h2>
+        <div class="metric-box" style="background:#f0f8ff;">Masculine Words: {masculine_count}</div>
+        <div class="metric-box" style="background:#fff0f5;">Feminine Words: {feminine_count}</div>
+        <p><strong>Bias Score (0=Fair, 1=Biased):</strong> {bias_score}</p>
+        <div class="highlight"><strong>Masculine Words Detected:</strong><br>{masculine_words}</div>
+        <div class="highlight"><strong>Feminine Words Detected:</strong><br>{feminine_words}</div>
+    </div>
+
+    <div class="section">
+        <h2>✅ Rewritten Bias-Free Resume</h2>
+        <div class="resume-box">{rewritten_text}</div>
+    </div>
+
+    </body></html>"""
+
+
+
 
 
 # === TAB 1: Dashboard ===
@@ -1628,9 +2021,10 @@ with tab1:
     resume_data = st.session_state.get("resume_data", [])
 
     if resume_data:
-        total_masc = sum(r["Masculine Words"] for r in resume_data)
-        total_fem = sum(r["Feminine Words"] for r in resume_data)
-        avg_bias = round(np.mean([r["Bias Score (0 = Fair, 1 = Biased)"] for r in resume_data]), 2)
+        # ✅ Calculate total counts safely
+        total_masc = sum(len(r.get("Detected Masculine Words", [])) for r in resume_data)
+        total_fem = sum(len(r.get("Detected Feminine Words", [])) for r in resume_data)
+        avg_bias = round(np.mean([r.get("Bias Score (0 = Fair, 1 = Biased)", 0) for r in resume_data]), 2)
         total_resumes = len(resume_data)
 
         st.markdown("### 📊 Summary Statistics")
@@ -1646,31 +2040,31 @@ with tab1:
 
         st.markdown("### 🗂️ Resumes Overview")
         df = pd.DataFrame(resume_data)
-        st.dataframe(
-            df[[ 
-                "Resume Name", "Candidate Name", "ATS Match %", "Education Score",
-                "Experience Score", "Skills Match %", "Language Quality Score", "Keyword Match Score",
-                "Bias Score (0 = Fair, 1 = Biased)", "Masculine Words", "Feminine Words"
-            ]],
-            use_container_width=True
-        )
+
+        # ✅ Add calculated count columns safely
+        df["Masculine Words Count"] = df["Detected Masculine Words"].apply(lambda x: len(x) if isinstance(x, list) else 0)
+        df["Feminine Words Count"] = df["Detected Feminine Words"].apply(lambda x: len(x) if isinstance(x, list) else 0)
+
+        overview_cols = [
+            "Resume Name", "Candidate Name", "ATS Match %", "Education Score",
+            "Experience Score", "Skills Score", "Language Score", "Keyword Score",
+            "Bias Score (0 = Fair, 1 = Biased)", "Masculine Words Count", "Feminine Words Count"
+        ]
+
+        st.dataframe(df[overview_cols], use_container_width=True)
 
         st.markdown("### 📊 Visual Analysis")
         chart_tab1, chart_tab2 = st.tabs(["📉 Bias Score Chart", "⚖ Gender-Coded Words"])
-
         with chart_tab1:
             st.subheader("Bias Score Comparison Across Resumes")
             st.bar_chart(df.set_index("Resume Name")[["Bias Score (0 = Fair, 1 = Biased)"]])
-
         with chart_tab2:
             st.subheader("Masculine vs Feminine Word Usage")
             fig, ax = plt.subplots(figsize=(10, 5))
             index = np.arange(len(df))
             bar_width = 0.35
-
-            ax.bar(index, df["Masculine Words"], bar_width, label="Masculine", color="#3498db")
-            ax.bar(index + bar_width, df["Feminine Words"], bar_width, label="Feminine", color="#e74c3c")
-
+            ax.bar(index, df["Masculine Words Count"], bar_width, label="Masculine", color="#3498db")
+            ax.bar(index + bar_width, df["Feminine Words Count"], bar_width, label="Feminine", color="#e74c3c")
             ax.set_xlabel("Resumes", fontsize=12)
             ax.set_ylabel("Word Count", fontsize=12)
             ax.set_title("Gender-Coded Word Usage per Resume", fontsize=14)
@@ -1681,15 +2075,20 @@ with tab1:
 
         st.markdown("### 📝 Detailed Resume Reports")
         for resume in resume_data:
-            with st.expander(f"📄 {resume['Resume Name']} | {resume['Candidate Name']}"):
-                st.markdown("### 📊 ATS Evaluation for: **" + resume['Candidate Name'] + "**")
+            candidate_name = resume.get("Candidate Name", "Not Found")
+            resume_name = resume.get("Resume Name", "Unknown")
+            missing_keywords = resume.get("Missing Keywords", [])
+            missing_skills = resume.get("Missing Skills", [])
+
+            with st.expander(f"📄 {resume_name} | {candidate_name}"):
+                st.markdown(f"### 📊 ATS Evaluation for: **{candidate_name}**")
                 score_col1, score_col2, score_col3 = st.columns(3)
                 with score_col1:
-                    st.metric("📈 Overall Match", f"{resume['ATS Match %']}%")
+                    st.metric("📈 Overall Match", f"{resume.get('ATS Match %', 'N/A')}%")
                 with score_col2:
                     st.metric("🏆 Formatted Score", resume.get("Formatted Score", "N/A"))
                 with score_col3:
-                    st.metric("🧠 Language Quality", f"{resume.get('Language Quality Score', 'N/A')} / {lang_weight}")
+                    st.metric("🧠 Language Quality", f"{resume.get('Language Score', 'N/A')} / {lang_weight}")
 
                 col_a, col_b, col_c, col_d = st.columns(4)
                 with col_a:
@@ -1697,20 +2096,81 @@ with tab1:
                 with col_b:
                     st.metric("💼 Experience Score", f"{resume.get('Experience Score', 'N/A')} / {exp_weight}")
                 with col_c:
-                    st.metric("🛠 Skills Match", f"{resume.get('Skills Match %', 'N/A')} / {skills_weight}")
+                    st.metric("🛠 Skills Score", f"{resume.get('Skills Score', 'N/A')} / {skills_weight}")
                 with col_d:
-                    st.metric("🔍 Keyword Score", f"{resume.get('Keyword Match Score', 'N/A')} / {keyword_weight}")
+                    st.metric("🔍 Keyword Score", f"{resume.get('Keyword Score', 'N/A')} / {keyword_weight}")
 
-                st.markdown("**❗ Missing Keywords:**")
-                missing_list = resume["Missing Keywords"].split(",") if resume["Missing Keywords"] else []
-                if missing_list and any(kw.strip() for kw in missing_list):
-                    for kw in missing_list:
-                        st.error(f"- {kw.strip()}")
-                else:
-                    st.info("No missing keywords detected.")
-
+                # Fit summary
                 st.markdown("### 📝 Fit Summary")
-                st.write(resume['Fit Summary'])
+                st.write(resume.get('Final Thoughts', 'N/A'))
+
+                # ATS Report
+                if resume.get("ATS Report"):
+                    st.markdown("### 📋 ATS Evaluation Report")
+                    st.markdown(resume["ATS Report"], unsafe_allow_html=True)
+
+                # ATS Chart
+                st.markdown("### 📊 ATS Score Breakdown Chart")
+                ats_df = pd.DataFrame({
+                    'Component': ['Education', 'Experience', 'Skills', 'Language', 'Keywords'],
+                    'Score': [
+                        resume.get("Education Score", 0),
+                        resume.get("Experience Score", 0),
+                        resume.get("Skills Score", 0),
+                        resume.get("Language Score", 0),
+                        resume.get("Keyword Score", 0)
+                    ]
+                })
+                ats_chart = alt.Chart(ats_df).mark_bar().encode(
+                    x=alt.X('Component', sort=None),
+                    y=alt.Y('Score', scale=alt.Scale(domain=[0, 50])),
+                    color='Component',
+                    tooltip=['Component', 'Score']
+                ).properties(
+                    title="ATS Evaluation Breakdown",
+                    width=600,
+                    height=300
+                )
+                st.altair_chart(ats_chart, use_container_width=True)
+
+                # 🔷 Detailed ATS Analysis Cards with bold white score highlight
+                st.markdown("### 🔍 Detailed ATS Section Analyses")
+                for section_title, key in [
+                    ("🏫 Education Analysis", "Education Analysis"),
+                    ("💼 Experience Analysis", "Experience Analysis"),
+                    ("🛠 Skills Analysis", "Skills Analysis"),
+                    ("🗣 Language Quality Analysis", "Language Analysis"),
+                    ("🔑 Keyword Analysis", "Keyword Analysis"),
+                    ("✅ Final Thoughts", "Final Thoughts")
+                ]:
+                    analysis_content = resume.get(key, "N/A")
+                    if "**Score:**" in analysis_content:
+                        parts = analysis_content.split("**Score:**")
+                        rest = parts[1].split("**", 1)
+                        score_text = rest[0].strip()
+                        remaining = rest[1].strip() if len(rest) > 1 else ""
+                        formatted_score = f"<div style='background:#4c1d95;color:white;padding:8px;border-radius:6px;margin-bottom:5px;'><b>Score:</b> {score_text}</div>"
+                        analysis_html = formatted_score + f"<p>{remaining}</p>"
+                    else:
+                        analysis_html = f"<p>{analysis_content}</p>"
+
+                    st.markdown(f"""
+<div style="background:#5b3cc4; color:white; padding:10px; border-radius:6px;">
+  <h3>{section_title}</h3>
+</div>
+<div style="background:#2d2d3a; color:white; padding:10px; border-radius:6px;">
+{analysis_html}
+</div>
+""", unsafe_allow_html=True)
+
+                # ✅ Display Missing Skills and Keywords as badges
+                # ✅ Display Missing Skills as multiline bullet points
+                
+
+                # ✅ Show Missing Keywords and Missing Skills
+                     # Missing keywords
+                
+
 
                 st.divider()
 
@@ -1722,26 +2182,32 @@ with tab1:
 
                     st.markdown("### 📌 Gender-Coded Word Counts:")
                     bias_col1, bias_col2 = st.columns(2)
+
                     with bias_col1:
-                        st.metric("🔵 Masculine Words", resume["Masculine Words"])
+                        st.metric("🔵 Masculine Words", len(resume["Detected Masculine Words"]))
                         if resume["Detected Masculine Words"]:
-                            st.markdown("### 📚 Detected Words:")
-                            st.success(", ".join(f"{word} ({count})" for word, count in resume["Detected Masculine Words"].items()))
+                            st.markdown("### 📚 Detected Masculine Words with Context:")
+                            for item in resume["Detected Masculine Words"]:
+                                word = item['word']
+                                sentence = item['sentence']
+                                st.write(f"🔵 **{word}**: {sentence}", unsafe_allow_html=True)
                         else:
                             st.info("No masculine words detected.")
+
                     with bias_col2:
-                        st.metric("🔴 Feminine Words", resume["Feminine Words"])
+                        st.metric("🔴 Feminine Words", len(resume["Detected Feminine Words"]))
                         if resume["Detected Feminine Words"]:
-                            st.markdown("### 📚 Detected Words:")
-                            st.success(", ".join(f"{word} ({count})" for word, count in resume["Detected Feminine Words"].items()))
+                            st.markdown("### 📚 Detected Feminine Words with Context:")
+                            for item in resume["Detected Feminine Words"]:
+                                word = item['word']
+                                sentence = item['sentence']
+                                st.write(f"🔴 **{word}**: {sentence}", unsafe_allow_html=True)
                         else:
                             st.info("No feminine words detected.")
 
                 with detail_tab2:
                     st.markdown("#### ✨ Bias-Free Rewritten Resume")
                     st.write(resume["Rewritten Text"])
-
-                    # ✅ Precompute docx before download
                     docx_file = generate_docx(resume["Rewritten Text"])
                     st.download_button(
                         label="📥 Download Bias-Free Resume (.docx)",
@@ -1751,41 +2217,11 @@ with tab1:
                         use_container_width=True,
                         key=f"download_docx_{resume['Resume Name']}"
                     )
-
-                    # ✅ Generate HTML report before button
-                    def generate_resume_report_html(resume):
-                        rewritten_text = resume['Rewritten Text'].replace("\n", "<br>")
-                        masculine_words = ", ".join(f"{k}({v})" for k, v in resume['Detected Masculine Words'].items())
-                        feminine_words = ", ".join(f"{k}({v})" for k, v in resume['Detected Feminine Words'].items())
-                        missing_keywords = "".join(
-                            f"<span class='keyword'>{kw.strip()}</span>"
-                            for kw in resume['Missing Keywords'].split(",") if kw.strip()
-                        ) or "<i>None</i>"
-
-                        return f"""<!DOCTYPE html><html><head><meta charset="UTF-8"><title>{resume['Candidate Name']} - Resume Analysis Report</title>
-                        <style>body{{font-family:'Segoe UI',sans-serif;margin:40px;background:#f5f7fa;color:#333}}h1,h2{{color:#2f4f6f}}.section{{margin-bottom:30px}}
-                        .highlight{{background-color:#eef;padding:10px;border-radius:6px;margin-top:10px;font-size:14px}}.metric-box{{display:inline-block;background:#dbeaff;
-                        padding:10px 20px;margin:10px;border-radius:10px;font-weight:bold}}.keyword{{display:inline-block;background:#fbdcdc;color:#a33;margin:4px;
-                        padding:6px 12px;border-radius:12px;font-size:13px}}.resume-box{{background-color:#f9f9ff;padding:15px;border-radius:8px;border:1px solid #ccc;
-                        white-space:pre-wrap}}</style></head><body>
-                        <h1>📄 Resume Analysis Report</h1>
-                        <div class="section"><h2>Candidate: {resume['Candidate Name']}</h2><p><strong>Resume File:</strong> {resume['Resume Name']}</p></div>
-                        <div class="section"><h2>📊 ATS Evaluation</h2><div class="metric-box">ATS Match: {resume['ATS Match %']}%</div>
-                        <div class="metric-box">Education: {resume['Education Score']}</div><div class="metric-box">Experience: {resume['Experience Score']}</div>
-                        <div class="metric-box">Skills Match: {resume['Skills Match %']}</div><div class="metric-box">Language Score: {resume['Language Quality Score']}</div>
-                        <div class="metric-box">Keyword Score: {resume['Keyword Match Score']}</div></div>
-                        <div class="section"><h2>⚖️ Gender Bias Analysis</h2>
-                        <div class="metric-box" style="background:#f0f8ff;">Masculine Words: {resume['Masculine Words']}</div>
-                        <div class="metric-box" style="background:#fff0f5;">Feminine Words: {resume['Feminine Words']}</div>
-                        <p><strong>Bias Score (0=Fair, 1=Biased):</strong> {resume['Bias Score (0 = Fair, 1 = Biased)']}</p>
-                        <div class="highlight"><strong>Masculine Words:</strong><br>{masculine_words}</div>
-                        <div class="highlight"><strong>Feminine Words:</strong><br>{feminine_words}</div></div>
-                        <div class="section"><h2>📌 Missing Keywords</h2>{missing_keywords}</div>
-                        <div class="section"><h2>🧠 Final Fit Summary</h2><div class="resume-box">{resume['Fit Summary']}</div></div>
-                        <div class="section"><h2>✅ Rewritten Bias-Free Resume</h2><div class="resume-box">{rewritten_text}</div></div>
-                        </body></html>"""
-
                     html_report = generate_resume_report_html(resume)
+                    
+
+                    
+
                     st.download_button(
                         label="📥 Download Full Analysis Report (.html)",
                         data=html_report,
@@ -1794,9 +2230,9 @@ with tab1:
                         use_container_width=True,
                         key=f"download_html_{resume['Resume Name']}"
                     )
-
     else:
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
+
 
 with tab2:
     st.session_state.active_tab = "Resume Builder"

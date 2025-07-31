@@ -2382,1103 +2382,129 @@ with tab1:
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
 
 
+from resume_builder import ResumeBuilder
+builder = ResumeBuilder()
+
 with tab2:
-    st.session_state.active_tab = "Resume Builder"
-
-    st.markdown("## 🧾 <span style='color:#336699;'>Advanced Resume Builder</span>", unsafe_allow_html=True)
-    st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
-
-    # 📸 Upload profile photo
-    uploaded_image = st.file_uploader("Upload a Profile Image", type=["png", "jpg", "jpeg"])
-
-    profile_img_html = ""
-
-    if uploaded_image:
-        import base64
-        encoded_image = base64.b64encode(uploaded_image.read()).decode()
-
-        # 🔄 Save to session state for reuse in preview/export
-        st.session_state["encoded_profile_image"] = encoded_image
-
-        # 🖼️ Show image preview
-        profile_img_html = f"""
-        <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
-            <img src="data:image/png;base64,{encoded_image}" alt="Profile Photo"
-                 style="
-                    width: 120px;
-                    height: 120px;
-                    border-radius: 50%;
-                    object-fit: cover;
-                    object-position: top center;
-                    border: 3px solid #4da6ff;
-                    box-shadow:
-                        0 0 8px #4da6ff,
-                        0 0 16px #4da6ff,
-                        0 0 24px #4da6ff;
-                " />
-        </div>
-        """
-        st.markdown(profile_img_html, unsafe_allow_html=True)
-    else:
-        st.info("📸 Please upload a clear, front-facing profile photo (square or vertical preferred).")
-
-
-    # 🔽 Your form fields continue below this...
-
-
-    # Initialize session state
-    fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary", "skills", "languages", "interests","Softskills"]
-    for f in fields:
-        st.session_state.setdefault(f, "")
-    st.session_state.setdefault("experience_entries", [{"title": "", "company": "", "duration": "", "description": ""}])
-    st.session_state.setdefault("education_entries", [{"degree": "", "institution": "", "year": "", "details": ""}])
-    st.session_state.setdefault("project_entries", [{"title": "", "tech": "", "duration": "", "description": ""}])
-    st.session_state.setdefault("project_links", [])
-    st.session_state.setdefault("certificate_links", [{"name": "", "link": "", "duration": "", "description": ""}])
-    
-    # Sidebar controls
-    with st.sidebar:
-        st.markdown("### ➕ Add More Sections")
-        if st.button("➕ Add Experience"):
-            st.session_state.experience_entries.append({"title": "", "company": "", "duration": "", "description": ""})
-        if st.button("➕ Add Education"):
-            st.session_state.education_entries.append({"degree": "", "institution": "", "year": "", "details": ""})
-        if st.button("➕ Add Project"):
-            st.session_state.project_entries.append({"title": "", "tech": "", "duration": "", "description": ""})
-        if st.button("➕ Add Certificate"):
-           st.session_state.certificate_links.append({"name": "", "link": "", "duration": "", "description": ""})
-
+    st.subheader("📄 Resume Builder")
 
     with st.form("resume_form"):
-        st.markdown("### 👤 <u>Personal Information</u>", unsafe_allow_html=True)
-        with st.container():
-            col1, col2 = st.columns(2)
-            with col1:
-                st.text_input("👤 Full Name ", key="name")
-                st.text_input("📞 Phone Number", key="phone")
-                st.text_input("📍 Location", key="location")
-            with col2:
-                st.text_input("📧 Email", key="email")
-                st.text_input("🔗 LinkedIn", key="linkedin")
-                st.text_input("🌐 Portfolio", key="portfolio")
-                st.text_input("💼 Job Title", key="job_title")
+        st.subheader("👤 Personal Information")
+        full_name = st.text_input("Full Name", key="full_name")
+        title = st.text_input("Title/Role", key="title")
+        email = st.text_input("Email", key="email")
+        phone = st.text_input("Phone", key="phone")
+        location = st.text_input("Location", key="location")
+        linkedin = st.text_input("LinkedIn URL", key="linkedin")
+        portfolio = st.text_input("Portfolio URL", key="portfolio")
 
+        st.subheader("📝 Summary")
+        summary = st.text_area("Professional Summary", key="summary")
 
-        st.markdown("### 📝 <u>Professional Summary</u>", unsafe_allow_html=True)
-        st.text_area("Summary", key="summary")
+        st.subheader("💼 Experience")
+        exp_list = []
+        num_exp = st.number_input("How many experiences do you want to add?", min_value=1, max_value=10, value=1, key="num_exp")
+        for i in range(num_exp):
+            with st.expander(f"Experience {i+1}"):
+                exp_company = st.text_input("Company", key=f"exp_company_{i}")
+                exp_position = st.text_input("Position", key=f"exp_position_{i}")
+                exp_start = st.text_input("Start Date", key=f"exp_start_{i}")
+                exp_end = st.text_input("End Date", key=f"exp_end_{i}")
+                exp_description = st.text_area("Description", key=f"exp_desc_{i}")
+                exp_responsibilities = st.text_area("Responsibilities (One per line)", key=f"exp_resp_{i}")
+                exp_list.append({
+                    "company": exp_company,
+                    "position": exp_position,
+                    "start_date": exp_start,
+                    "end_date": exp_end,
+                    "description": exp_description,
+                    "responsibilities": exp_responsibilities.splitlines()
+                })
 
-        st.markdown("### 💼 <u>Skills, Languages, Interests & Soft Skills</u>", unsafe_allow_html=True)
-        st.text_area("Skills (comma-separated)", key="skills")
-        st.text_area("Languages (comma-separated)", key="languages")
-        st.text_area("Interests (comma-separated)", key="interests")
-        st.text_area("Softskills (comma-separated)", key="Softskills")
+        st.subheader("📂 Projects")
+        proj_list = []
+        num_proj = st.number_input("How many projects do you want to add?", min_value=0, max_value=10, value=0, key="num_proj")
+        for i in range(num_proj):
+            with st.expander(f"Project {i+1}"):
+                proj_name = st.text_input("Project Name", key=f"proj_name_{i}")
+                proj_tech = st.text_input("Technologies Used", key=f"proj_tech_{i}")
+                proj_link = st.text_input("Project Link", key=f"proj_link_{i}")
+                proj_desc = st.text_area("Description", key=f"proj_desc_{i}")
+                proj_responsibilities = st.text_area("Responsibilities (One per line)", key=f"proj_resp_{i}")
+                proj_achievements = st.text_area("Key Achievements (One per line)", key=f"proj_achievements_{i}")
+                proj_list.append({
+                    "name": proj_name,
+                    "technologies": proj_tech,
+                    "link": proj_link,
+                    "description": proj_desc,
+                    "responsibilities": proj_responsibilities.splitlines(),
+                    "achievements": proj_achievements.splitlines()
+                })
 
+        st.subheader("🎓 Education")
+        edu_list = []
+        num_edu = st.number_input("How many education entries?", min_value=1, max_value=5, value=1, key="num_edu")
+        for i in range(num_edu):
+            with st.expander(f"Education {i+1}"):
+                school = st.text_input("School", key=f"edu_school_{i}")
+                degree = st.text_input("Degree", key=f"edu_degree_{i}")
+                field = st.text_input("Field of Study", key=f"edu_field_{i}")
+                grad_date = st.text_input("Graduation Date", key=f"edu_grad_date_{i}")
+                gpa = st.text_input("GPA (Optional)", key=f"edu_gpa_{i}")
+                edu_list.append({
+                    "school": school,
+                    "degree": degree,
+                    "field": field,
+                    "graduation_date": grad_date,
+                    "gpa": gpa
+                })
 
-        st.markdown("### 🧱 <u>Work Experience</u>", unsafe_allow_html=True)
-        for idx, exp in enumerate(st.session_state.experience_entries):
-            with st.expander(f"Experience #{idx+1}", expanded=True):
-                exp["title"] = st.text_input(f"Job Title", value=exp["title"], key=f"title_{idx}")
-                exp["company"] = st.text_input(f"Company", value=exp["company"], key=f"company_{idx}")
-                exp["duration"] = st.text_input(f"Duration", value=exp["duration"], key=f"duration_{idx}")
-                exp["description"] = st.text_area(f"Description", value=exp["description"], key=f"description_{idx}")
+        st.subheader("🛠️ Skills")
+        tech_skills = st.text_area("Technical Skills (one per line)", key="tech_skills")
+        soft_skills = st.text_area("Soft Skills (one per line)", key="soft_skills")
+        languages = st.text_area("Languages (one per line)", key="languages")
+        tools = st.text_area("Tools & Technologies (one per line)", key="tools")
 
-        st.markdown("### 🎓 <u>Education</u>", unsafe_allow_html=True)
-        for idx, edu in enumerate(st.session_state.education_entries):
-            with st.expander(f"Education #{idx+1}", expanded=True):
-                edu["degree"] = st.text_input(f"Degree", value=edu["degree"], key=f"degree_{idx}")
-                edu["institution"] = st.text_input(f"Institution", value=edu["institution"], key=f"institution_{idx}")
-                edu["year"] = st.text_input(f"Year", value=edu["year"], key=f"edu_year_{idx}")
-                edu["details"] = st.text_area(f"Details", value=edu["details"], key=f"edu_details_{idx}")
+        template_choice = st.selectbox("Choose Resume Template", ["Modern", "Professional", "Minimal", "Creative"], key="template")
 
-        st.markdown("### 🛠 <u>Projects</u>", unsafe_allow_html=True)
+        submit = st.form_submit_button("🎯 Generate Resume")
 
-        for idx, proj in enumerate(st.session_state.project_entries):
-            with st.expander(f"Project #{idx+1}", expanded=True):
-        # Keys for each project field
-             title_key = f"proj_title_{idx}"
-             tech_key = f"proj_tech_{idx}"
-             duration_key = f"proj_duration_{idx}"
-             desc_key = f"proj_desc_{idx}"
-
-        # Initialize only once if key doesn't exist
-        if title_key not in st.session_state:
-            st.session_state[title_key] = proj["title"]
-        if tech_key not in st.session_state:
-            st.session_state[tech_key] = proj["tech"]
-        if duration_key not in st.session_state:
-            st.session_state[duration_key] = proj["duration"]
-        if desc_key not in st.session_state:
-            st.session_state[desc_key] = proj["description"]
-
-        # Inputs (no value=..., only key)
-        st.text_input("Project Title", key=title_key)
-        st.text_input("Tech Stack", key=tech_key)
-        st.text_input("Duration", key=duration_key)
-        st.text_area("Description", key=desc_key)
-
-        # Sync back to project_entries
-        proj["title"] = st.session_state[title_key]
-        proj["tech"] = st.session_state[tech_key]
-        proj["duration"] = st.session_state[duration_key]
-        proj["description"] = st.session_state[desc_key]
-
-
-
-        st.markdown("### 🔗 Project Links")
-        project_links_input = st.text_area("Enter one project link per line:")
-        if project_links_input:
-            st.session_state.project_links = [link.strip() for link in project_links_input.splitlines() if link.strip()]
-
-        st.markdown("### 🧾 <u>Certificates</u>", unsafe_allow_html=True)
-        for idx, cert in enumerate(st.session_state.certificate_links):
-            with st.expander(f"Certificate #{idx+1}", expanded=True):
-                cert["name"] = st.text_input(f"Certificate Name", value=cert["name"], key=f"cert_name_{idx}")
-                cert["link"] = st.text_input(f"Certificate Link", value=cert["link"], key=f"cert_link_{idx}")
-                cert["duration"] = st.text_input(f"Duration", value=cert["duration"], key=f"cert_duration_{idx}")
-                cert["description"] = st.text_area(f"Description", value=cert["description"], key=f"cert_description_{idx}")
-
-
-        submitted = st.form_submit_button("📑 Generate Resume")
-
-    
-        if submitted:
-         st.success("✅ Resume Generated Successfully! Scroll down to preview or download.")
-
-        st.markdown("""
-    <style>
-        .heading-large {
-            font-size: 36px;
-            font-weight: bold;
-            color: #336699;
+    if submit:
+        resume_data = {
+            "template": template_choice,
+            "personal_info": {
+                "full_name": full_name,
+                "title": title,
+                "email": email,
+                "phone": phone,
+                "location": location,
+                "linkedin": linkedin,
+                "portfolio": portfolio
+            },
+            "summary": summary,
+            "experience": exp_list,
+            "projects": proj_list,
+            "education": edu_list,
+            "skills": {
+                "technical": tech_skills.splitlines(),
+                "soft": soft_skills.splitlines(),
+                "languages": languages.splitlines(),
+                "tools": tools.splitlines()
+            }
         }
-        .subheading-large {
-            font-size: 30px;
-            font-weight: bold;
-            color: #336699;
-        }
-        .tab-section {
-            margin-top: 20px;
-        }
-    </style>
-""", unsafe_allow_html=True)
- 
 
-
-    # --- Visual Resume Preview Section ---
-        st.markdown("## 🧾 <span style='color:#336699;'>Resume Preview</span>", unsafe_allow_html=True)
-        st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
-
-        left, right = st.columns([1, 2])
-
-        with left:
-            st.markdown(f"""
-                <h2 style='color:#2f2f2f;margin-bottom:0;'>{st.session_state['name']}</h2>
-                <h4 style='margin-top:5px;color:#444;'>{st.session_state['job_title']}</h4>
-
-                <p style='font-size:14px;'>
-                📍 {st.session_state['location']}<br>
-                📞 {st.session_state['phone']}<br>
-                📧 <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a><br>
-                🔗 <a href="{st.session_state['linkedin']}" target="_blank">LinkedIn</a><br>
-                🌐 <a href="{st.session_state['portfolio']}" target="_blank">Portfolio</a>
-                </p>
-            """, unsafe_allow_html=True)
-
-            st.markdown("<h4 style='color:#336699;'>Skills</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for skill in [s.strip() for s in st.session_state["skills"].split(",") if s.strip()]:
-                st.markdown(f"<div style='margin-left:10px;'>• {skill}</div>", unsafe_allow_html=True)
-
-            st.markdown("<h4 style='color:#336699;'>Languages</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for lang in [l.strip() for l in st.session_state["languages"].split(",") if l.strip()]:
-               st.markdown(f"<div style='margin-left:10px;'>• {lang}</div>", unsafe_allow_html=True)
-
-            st.markdown("<h4 style='color:#336699;'>Interests</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for interest in [i.strip() for i in st.session_state["interests"].split(",") if i.strip()]:
-               st.markdown(f"<div style='margin-left:10px;'>• {interest}</div>", unsafe_allow_html=True)
-
-            st.markdown("<h4 style='color:#336699;'>Softskills</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for Softskills  in [i.strip() for i in st.session_state["Softskills"].split(",") if i.strip()]:
-               st.markdown(f"<div style='margin-left:10px;'>• {Softskills}</div>", unsafe_allow_html=True)   
-
-
-        with right:
-            st.markdown("<h4 style='color:#336699;'>Summary</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            summary_text = st.session_state['summary'].replace('\n', '<br>')
-            st.markdown(f"<p style='font-size:17px;'>{summary_text}</p>", unsafe_allow_html=True)
-
-
-            st.markdown("<h4 style='color:#336699;'>Experience</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for exp in st.session_state.experience_entries:
-             if exp["company"] or exp["title"]:
-              st.markdown(f"""
-            <div style='margin-bottom:15px; padding:10px; border-radius:8px;'>
-                <div style='display:flex; justify-content:space-between;'>
-                    <b>🏢 {exp['company']}</b><span style='color:gray;'>📆  {exp['duration']}</span>
-                </div>
-                <div style='font-size:14px;'>💼 <i>{exp['title']}</i></div>
-                <div style='font-size:17px;'>📝 {exp['description']}</div>
-            </div>
-        """, unsafe_allow_html=True)
-
-
-            st.markdown("<h4 style='color:#336699;'>🎓 Education</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for edu in st.session_state.education_entries:
-             if edu["institution"] or edu["degree"]:
-              st.markdown(f"""
-            <div style='margin-bottom: 15px; padding: 10px 15px;color: white; border-radius: 8px;'>
-                <div style='display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;'>
-                    <span>🏫 {edu['institution']}</span>
-                    <span style='color: gray;'>📅 {edu['year']}</span>
-                </div>
-                <div style='font-size: 14px; margin-top: 5px;'>🎓 <i>{edu['degree']}</i></div>
-                <div style='font-size: 14px;'>📄 {edu['details']}</div>
-            </div>
-        """, unsafe_allow_html=True)
-
-
-            st.markdown("<h4 style='color:#336699;'>Projects</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for proj in st.session_state.project_entries:
-             st.markdown(f"""
-        <div style='margin-bottom:15px; padding: 10px;'>
-        <strong style='font-size:16px;'>{proj['title']}</strong><br>
-        <span style='font-size:14px;'>🛠️ <strong>Tech Stack:</strong> {proj['tech']}</span><br>
-        <span style='font-size:14px;'>⏳ <strong>Duration:</strong> {proj['duration']}</span><br>
-        <span style='font-size:17px;'>📝 <strong>Description:</strong> {proj['description']}</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-
-
-        if st.session_state.project_links:
-                st.markdown("<h4 style='color:#336699;'>Project Links</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-                for i, link in enumerate(st.session_state.project_links):
-                    st.markdown(f"[🔗 Project {i+1}]({link})", unsafe_allow_html=True)
-
-        if st.session_state.certificate_links:
-                st.markdown("<h4 style='color:#336699;'>Certificates</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-                
-                for cert in st.session_state.certificate_links:
-                    if cert["name"] and cert["link"]:
-                      st.markdown(f"""
-            <div style='display:flex; justify-content:space-between;'>
-                <a href="{cert['link']}" target="_blank"><b>📄 {cert['name']}</b></a><span style='color:gray;'>{cert['duration']}</span>
-            </div>
-            <div style='margin-bottom:10px; font-size:14px;'>{cert['description']}</div>
-        """, unsafe_allow_html=True)
-with tab2:
-    import re
-
-    st.markdown("## ✨ <span style='color:#336699;'>Enhanced AI Resume Preview</span>", unsafe_allow_html=True)
-    st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
-
-    # ------------------------- ENHANCE PROMPT -------------------------
-    enhance_prompt = f"""
-    You are a professional resume builder AI.
-
-    Enhance the following resume sections based on the user's job title: "{st.session_state['job_title']}". The enhancements must be aligned **strictly and specifically** with the responsibilities, tools, skills, and certifications relevant to that job title.
-
-    Instructions:
-    1. Rewrite the summary to sound professional, achievement-driven, and role-specific using strong action verbs.
-    2. Expand experience and project descriptions into structured bullet points (• or A., B., C.). Highlight domain-specific responsibilities and achievements.
-    3. Maintain paragraph structure and meaningful line breaks.
-    4. Infer and recommend **only domain-accurate** items, even if not explicitly provided:
-       - 6–8 modern **technical Skills** (relevant to the job title; e.g., for Cyber Security: SIEM, Kali Linux, Wireshark, Burp Suite, Splunk, Nmap, Firewalls, OWASP Top 10, etc.)
-       - 6–8 strong **Soft Skills**
-       - 3–6 job-aligned **Interests** (e.g., bug bounty, ethical hacking, network defense)
-       - Only **spoken Languages**
-       - 3–6 globally recognized **Certificates** (e.g., CompTIA Security+, CEH, IBM Cybersecurity Analyst, Google Cybersecurity, Cisco CCNA Security)
-
-    Important:
-    - Do not include irrelevant frontend/backend tools if the job title is from a different domain like Cyber Security, DevOps, Data Science, etc.
-    - The certificate names must match real-world course titles from platforms like Coursera, Udemy, Google, IBM, Cisco, Microsoft, etc.
-
-    📌 Format the output exactly like this:
-
-    Summary:
-    • ...
-
-    Experience:
-    A. Company Name (Duration)
-       • Role
-       • Responsibility 1
-       • Responsibility 2
-
-    Projects:
-    A. <Project Title>
-       • Tech Stack: <Job-relevant tools only>
-       • Duration: <Start – End>
-       • Description:
-         - Clearly describe a specific feature, functionality, or implementation aligned with the job role.
-         - Mention a tool or technology used and explain its context in the project.
-         - Highlight performance improvements, solved challenges, or measurable impacts.
-         - Include a technical or collaborative achievement that enhanced project success.
-         - (Optional) Add an additional impactful point if it meaningfully supports the role.
-
-
-    Skills:
-    Kali Linux, Splunk, SIEM, ...
-
-    SoftSkills:
-    Problem Solving, Critical Thinking...
-
-    Languages:
-    English, Hindi...
-
-    Interests:
-    Capture The Flag (CTF), Ethical Hacking...
-
-    Certificates:
-    Google Cybersecurity – Coursera (6 months)
-    IBM Cybersecurity Analyst – IBM (Professional Certificate)
-    CompTIA Security+ – CompTIA (5 months)
-
-    Use ONLY the user's inputs below as a reference. Rewrite and improve them meaningfully and accurately.
-
-    Summary:
-    {st.session_state['summary']}
-
-    Experience:
-    {[exp for exp in st.session_state.experience_entries]}
-
-    Projects:
-    {[proj for proj in st.session_state.project_entries]}
-
-    Skills:
-    {st.session_state['skills']}
-
-    SoftSkills:
-    {st.session_state['Softskills']}
-
-    Languages:
-    {st.session_state['languages']}
-
-    Interests:
-    {st.session_state['interests']}
-
-    Certificates:
-    {[cert['name'] for cert in st.session_state.certificate_links if cert['name']]}
-    """
-
-    # ------------------------- CALL LLM -------------------------
-    ai_output = call_llm(enhance_prompt, session=st.session_state)
-
-    # ------------------------- PARSE OUTPUT -------------------------
-    def extract_section(label, output, default=""):
-        match = re.search(rf"{label}:\s*(.*?)(?=\n\w+:|\Z)", output, re.DOTALL)
-        return match.group(1).strip() if match else default
-
-    summary_enhanced = extract_section("Summary", ai_output, st.session_state['summary'])
-    experience_raw = extract_section("Experience", ai_output)
-    experience_blocks = re.split(r"\n(?=[A-Z]\. )", experience_raw.strip())
-    projects_raw = extract_section("Projects", ai_output)
-    projects_blocks = re.split(r"\n(?=[A-Z]\. )", projects_raw.strip())
-    skills_list = extract_section("Skills", ai_output, st.session_state['skills'])
-    softskills_list = extract_section("SoftSkills", ai_output, st.session_state['Softskills'])
-    languages_list = extract_section("Languages", ai_output, st.session_state['languages'])
-    interests_list = extract_section("Interests", ai_output, st.session_state['interests'])
-    certificates_list = extract_section("Certificates", ai_output)
-
-    # ------------------------- UI RENDER -------------------------
-    left, right = st.columns([1, 2])
-
-    with left:
-        st.markdown(f"""
-            <h2 style='color:#2f2f2f;margin-bottom:0;'>{st.session_state['name']}</h2>
-            <h4 style='margin-top:5px;color:#444;'>{st.session_state['job_title']}</h4>
-            <p style='font-size:14px;'>
-            📍 {st.session_state['location']}<br>
-            📞 {st.session_state['phone']}<br>
-            📧 <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a><br>
-            🔗 <a href="{st.session_state['linkedin']}" target="_blank">LinkedIn</a><br>
-            🌐 <a href="{st.session_state['portfolio']}" target="_blank">Portfolio</a>
-            </p>
-        """, unsafe_allow_html=True)
-
-        def render_bullet_section(title, items):
-            st.markdown(f"<h4 style='color:#336699;'>{title}</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for item in [i.strip() for i in items.split(",") if i.strip()]:
-                st.markdown(f"<div style='margin-left:10px;'>• {item}</div>", unsafe_allow_html=True)
-
-        render_bullet_section("Skills", skills_list)
-        render_bullet_section("Languages", languages_list)
-        render_bullet_section("Interests", interests_list)
-        render_bullet_section("Soft Skills", softskills_list)
-
-    with right:
-        formatted_summary = summary_enhanced.replace('\n• ', '<br>• ').replace('\n', '<br>')
-        st.markdown("<h4 style='color:#336699;'>Summary</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-        st.markdown(f"<p style='font-size:17px;'>{formatted_summary}</p>", unsafe_allow_html=True)
-
-        # -------- Experience Section --------
-        if experience_blocks:
-            st.markdown("<h4 style='color:#336699;'>Experience</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            experience_titles = [entry.get("title", "").strip().upper() for entry in st.session_state.experience_entries]
-            for idx, exp_block in enumerate(experience_blocks):
-                lines = exp_block.strip().split("\n")
-                if not lines:
-                    continue
-                heading = lines[0]
-                description_lines = lines[1:]
-                match = re.match(r"[A-Z]\.\s*(.+?)\s*\((.*?)\)", heading)
-                if match:
-                    company = match.group(1).strip()
-                    duration = match.group(2).strip()
-                else:
-                    company = heading.replace(f"{chr(65 + idx)}. ", "").strip()
-                    duration = ""
-                role = experience_titles[idx] if idx < len(experience_titles) else ""
-                formatted_exp = "<br>".join(description_lines)
-
-                st.markdown(f"""
-                <div style='margin-bottom:15px; padding:10px; border-radius:8px;'>
-                    <div style='display:flex; justify-content:space-between;'>
-                        <b>🏢 {company.upper()}</b><span style='color:gray;'>📆 {duration}</span>
-                    </div>
-                    <div style='font-size:14px;'>💼 <i>{role}</i></div>
-                    <div style='font-size:17px;'>📝 {formatted_exp}</div>
-                </div>
-                """, unsafe_allow_html=True)
-
-        # -------- Education Section --------
-        st.markdown("<h4 style='color:#336699;'>🎓 Education</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-        for edu in st.session_state.education_entries:
-            st.markdown(f"""
-            <div style='margin-bottom:15px; padding:10px 15px; border-radius:8px;'>
-                <div style='display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;'>
-                    <span>🏫 {edu['institution']}</span>
-                    <span style='color: gray;'>📅 {edu['year']}</span>
-                </div>
-                <div style='font-size: 14px;'>🎓 <i>{edu['degree']}</i></div>
-                <div style='font-size: 14px;'>📄 {edu['details']}</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        # -------- Projects Section --------
-        if projects_blocks:
-            st.markdown("<h4 style='color:#336699;'>Projects</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for idx, proj_block in enumerate(projects_blocks):
-                if idx < len(st.session_state.project_entries):
-                    proj = st.session_state.project_entries[idx]
-                    title = proj.get("title", "")
-                    tech = proj.get("tech", "")
-                    duration = proj.get("duration", "")
-                else:
-                    title, tech, duration = "", "", ""
-                description = proj_block
-                if title and title in description:
-                    description = description.replace(title, "")
-                if tech and f"Tech Stack: {tech}" in description:
-                    description = description.replace(f"Tech Stack: {tech}", "")
-                if duration and f"Duration: {duration}" in description:
-                    description = description.replace(f"Duration: {duration}", "")
-                formatted_proj = description.strip().replace('\n• ', '<br>• ').replace('\n', '<br>').strip()
-                label = chr(65 + idx)
-
-                st.markdown(f"""
-                <div style='margin-bottom:15px; padding: 10px;'>
-                    <strong style='font-size:16px;'>📌 <span style='color:#444;'>{label}. </span>{title}</strong><br>
-                    <span style='font-size:14px;'>🛠️ <strong>Tech Stack:</strong> {tech}</span><br>
-                    <span style='font-size:14px;'>⏳ <strong>Duration:</strong> {duration}</span><br>
-                    <span style='font-size:17px;'>📄 <strong>Description:</strong></span><br>
-                    <div style='margin-top:4px; font-size:15px;'>{formatted_proj}</div>
-                </div>
-                """, unsafe_allow_html=True)
-
-
-        # -------- Certificates Section --------
-        if certificates_list:
-            st.markdown("<h4 style='color:#336699;'>📜 Certificates</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            certs = re.split(r"\n|(?<=\))(?=\s*[A-Z])|(?<=[a-z]\))(?= [A-Z])", certificates_list)
-            for cert in [c.strip() for c in certs if c.strip()]:
-                st.markdown(f"<div style='margin-left:10px;'>• {cert}</div>", unsafe_allow_html=True)
-
-        if st.session_state.project_links:
-            st.markdown("<h4 style='color:#336699;'>Project Links</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for i, link in enumerate(st.session_state.project_links):
-                st.markdown(f"[🔗 Project {i+1}]({link})", unsafe_allow_html=True)
-
-
-
-
-
-
-
-
-                  
-        
-# SKILLS
-skills_html = "".join(
-    f"""
-    <div style='display:inline-block; background-color:#e6f0fa; color:#333; 
-                padding:8px 16px; margin:6px 6px 6px 0; 
-                border-radius:20px; font-size:15px; font-weight:500;'>
-        {s.strip()}
-    </div>
-    """
-    for s in st.session_state['skills'].split(',')
-    if s.strip()
-)
-
-
-
-
-languages_html = "".join(
-    f"""
-    <div style='display:inline-block; background-color:#e6f0fa; color:#333; 
-                padding:8px 16px; margin:6px 6px 6px 0; 
-                border-radius:20px; font-size:15px; font-weight:500;'>
-        {lang.strip()}
-    </div>
-    """
-    for lang in st.session_state['languages'].split(',')
-    if lang.strip()
-)
-
-
-# INTERESTS
-interests_html = "".join(
-    f"""
-    <div style='display:inline-block; background-color:#e6f0fa; color:#333; 
-                padding:8px 16px; margin:6px 6px 6px 0; 
-                border-radius:20px; font-size:15px; font-weight:500;'>
-        {interest.strip()}
-    </div>
-    """
-    for interest in st.session_state['interests'].split(',')
-    if interest.strip()
-)
-
-
-Softskills_html = "".join(
-    f"""
-    <div style='display:inline-block; background-color:#eef3f8; color:#1a1a1a; 
-                padding:8px 18px; margin:6px 6px 6px 0; 
-                border-radius:25px; font-size:14.5px; font-family:"Segoe UI", sans-serif; 
-                font-weight:500; box-shadow: 1px 1px 3px rgba(0,0,0,0.05);'>
-        {skill.strip().capitalize()}
-    </div>
-    """
-    for skill in st.session_state['Softskills'].split(',')
-    if skill.strip()
-)
-
-
-
-experience_html = ""
-for exp in st.session_state.experience_entries:
-    if exp["company"] or exp["title"]:
-        # Handle paragraphs and single line breaks
-        description_lines = [line.strip() for line in exp["description"].strip().split("\n\n")]
-        description_html = "".join(
-            f"<div style='margin-bottom: 8px;'>{line.replace(chr(10), '<br>')}</div>"
-            for line in description_lines if line
-        )
-
-        experience_html += f"""
-<div style='
-    margin-bottom: 20px;
-    padding: 16px 20px;
-    border-radius: 12px;
-    background-color: #dbeaff;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    color: #0a1a33;
-    line-height: 1.35;
-'>
-    <!-- Header Shadow Card -->
-    <div style='
-        background-color: #e6f0ff;
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin-bottom: 12px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    '>
-        <div style='
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 600;
-            font-size: 16.5px;
-            margin-bottom: 6px;
-            color: #08244c;
-            width: 100%;
-        '>
-            <div style='display: inline-flex; align-items: center;'>
-                <img src="https://img.icons8.com/ios-filled/50/000000/company.png" style="width:16px; height:16px; margin-right:5px;"/>
-                <span>{exp['company']}</span>
-            </div>
-            <div style='display: inline-flex; align-items: center; font-size: 14px;'>
-                <img src="https://img.icons8.com/ios-filled/50/000000/calendar.png" style="width:16px; height:16px; margin-right:5px;"/>
-                <span>{exp['duration']}</span>
-            </div>
-        </div>
-
-        <div style='
-            display: inline-flex;
-            align-items: center;
-            font-size: 16px;
-            font-weight: 700;
-            color: #0b2545;
-        '>
-            <img src="https://img.icons8.com/ios-filled/50/000000/briefcase.png" style="width:16px; height:16px; margin-right:5px;"/>
-            <span>{exp['title']}</span>
-        </div>
-    </div>
-
-    <!-- Description -->
-    <div style='
-        display: inline-flex;
-        align-items: flex-start;
-        font-size: 15px;
-        font-weight: 500;
-        color: #102a43;
-        line-height: 1.35;
-    '>
-        <img src="https://img.icons8.com/ios-filled/50/000000/task.png" style="width:16px; height:16px; margin-right:5px; margin-top:2px;"/>
-        <div>{description_html}</div>
-    </div>
-</div>
-"""
-
-
-
-# Convert experience to list if multiple lines
-
-# Escape HTML and convert line breaks
-summary_html = st.session_state['summary'].replace('\n', '<br>')
-
-
-# EDUCATION
-education_html = ""
-for edu in st.session_state.education_entries:
-    if edu.get("institution") or edu.get("details"):
-        degree_text = ""
-        if edu.get("degree"):
-            degree_val = edu["degree"]
-            if isinstance(degree_val, list):
-                degree_val = ", ".join(degree_val)
-            degree_text = f"""
-            <div style='display: inline-flex; align-items: center; font-size: 14px; color: #273c75; margin-bottom: 6px;'>
-                <img src="https://img.icons8.com/ios-filled/50/000000/graduation-cap.png" style="width:16px; height:16px; margin-right:5px;"/>
-                <b>{degree_val}</b>
-            </div>
-            """
-
-        education_html += f"""
-        <div style='
-            margin-bottom: 20px;
-            padding: 16px 20px;
-            border-radius: 12px;
-            background-color: #e3ebf8;  /* Light Gray Blue */
-            box-shadow: 0 3px 8px rgba(39, 60, 117, 0.15);
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            color: #273c75;  /* Dark Blue */
-            line-height: 1.4;
-        '>
-            <div style='
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-size: 16px;
-                font-weight: 700;
-                margin-bottom: 8px;
-                width: 100%;
-            '>
-                <div style='display: inline-flex; align-items: center;'>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/school.png" style="width:16px; height:16px; margin-right:5px;"/>
-                    <span>{edu.get('institution', '')}</span>
-                </div>
-                <div style='display: inline-flex; align-items: center; font-weight: 500;'>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/calendar.png" style="width:16px; height:16px; margin-right:5px;"/>
-                    <span>{edu.get('year', '')}</span>
-                </div>
-            </div>
-            {degree_text}
-            <div style='display: inline-flex; align-items: flex-start; font-size: 14px; font-style: italic;'>
-                <img src="https://img.icons8.com/ios-filled/50/000000/task.png" style="width:16px; height:16px; margin-right:5px; margin-top:2px;"/>
-                <div>{edu.get('details', '')}</div>
-            </div>
-        </div>
-        """
-
-
-
-
-
-
-# PROJECTS
-# PROJECTS
-projects_html = ""
-for proj in st.session_state.project_entries:
-    if proj.get("title") or proj.get("description"):
-        tech_val = proj.get("tech")
-        if isinstance(tech_val, list):
-            tech_val = ", ".join(tech_val)
-        tech_text = f"""
-        <div style='display: inline-flex; align-items: center; font-size: 14px; color: #1b2330; margin-bottom: 8px; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);'>
-            <img src="https://img.icons8.com/ios-filled/50/000000/maintenance.png" style="width:16px; height:16px; margin-right:5px;"/>
-            <b>Technologies:</b> {tech_val if tech_val else ''}
-        </div>
-        """ if tech_val else ""
-
-        description_items = ""
-        if proj.get("description"):
-            description_lines = [line.strip() for line in proj["description"].splitlines() if line.strip()]
-            description_items = "".join(f"<li>{line}</li>" for line in description_lines)
-
-        projects_html += f"""
-        <div style='
-            margin-bottom: 22px;
-            padding: 18px 24px;
-            border-radius: 14px;
-            background-color: #d7e1ec;  /* Deep Blue Slate */
-            box-shadow: 0 4px 10px rgba(27, 35, 48, 0.15);
-            font-family: "Roboto", "Helvetica Neue", Arial, sans-serif;
-            color: #1b2330;  /* Deep Slate Blue */
-            line-height: 1.5;
-        '>
-            <div style='
-                font-size: 17px;
-                font-weight: 700;
-                margin-bottom: 10px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                color: #141a22;
-                text-shadow: 1px 1px 2px rgba(0,0,0,0.15);
-                width: 100%;
-            '>
-                <div style='display: inline-flex; align-items: center;'>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/laptop.png" style="width:16px; height:16px; margin-right:5px;"/>
-                    <span>{proj.get('title', '')}</span>
-                </div>
-                <div style='display: inline-flex; align-items: center; font-weight: 600; font-size: 14.5px;'>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/time.png" style="width:16px; height:16px; margin-right:5px;"/>
-                    <span>{proj.get('duration', '')}</span>
-                </div>
-            </div>
-            {tech_text}
-            <div style='display: inline-flex; align-items: flex-start; font-size: 15px; color: #1b2330; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);'>
-                <img src="https://img.icons8.com/ios-filled/50/000000/task.png" style="width:16px; height:16px; margin-right:5px; margin-top:2px;"/>
-                <div>
-                    <b>Description:</b>
-                    <ul style='margin-top: 6px; padding-left: 22px; color: #1b2330;'>
-                        {description_items}
-                    </ul>
-                </div>
-            </div>
-        </div>
-        """
-
-
-
-
-
-# PROJECT LINKS
-project_links_html = ""
-if st.session_state.project_links:
-    project_links_html = "<h4 class='section-title'>Project Links</h4><hr>" + "".join(
-        f'''
-        <p>
-            <img src="https://img.icons8.com/ios-filled/50/000000/link.png" style="width:16px; height:16px; vertical-align:middle; margin-right:5px;"/>
-            <a href="{link}">Project {i+1}</a>
-        </p>
-        '''
-        for i, link in enumerate(st.session_state.project_links)
-    )
-
-
-
-
-certificate_links_html = ""
-if st.session_state.certificate_links:
-    certificate_links_html = "<h4 class='section-title'>Certificates</h4><hr>"
-    for cert in st.session_state.certificate_links:
-        if cert["name"] and cert["link"]:
-            description = cert.get('description', '').replace('\n', '<br>')
-            name = cert['name']
-            link = cert['link']
-            duration = cert.get('duration', '')
-
-            card_html = f"""
-            <div style='
-                background-color: #f9fbe7;  /* Green-Yellow pastel */
-                padding: 20px 24px;
-                border-radius: 16px;
-                margin-bottom: 22px;
-                box-shadow: 0 4px 14px rgba(34, 60, 80, 0.15);
-                font-family: "Poppins", "Segoe UI", sans-serif;
-                color: #1a1a1a;
-                position: relative;
-                line-height: 1.6;
-            '>
-                <!-- Duration Top Right -->
-                <div style='
-                    position: absolute;
-                    top: 18px;
-                    right: 24px;
-                    font-size: 13.5px;
-                    font-weight: 600;
-                    color: #37474f;
-                    text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.15);
-
-                    background-color: #fffde7;  /* pastel yellow */
-                    padding: 4px 12px;
-                    border-radius: 14px;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-                '>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/time.png" style="width:14px; height:14px; vertical-align:middle; margin-right:4px;"/>
-                    {duration}
-                </div>
-
-                <!-- Certificate Title -->
-                <div style='
-                    font-size: 17px;
-                    font-weight: 700;
-                    color: #263238;
-                    margin-bottom: 8px;
-                    text-shadow: 0.5px 0.5px 1.5px rgba(0, 0, 0, 0.1);
-                '>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/certificate.png" style="width:16px; height:16px; vertical-align:middle; margin-right:5px;"/>
-                    <a href="{link}" target="_blank" style='
-                        color: #263238;
-                        text-decoration: none;
-                    '>{name}</a>
-                </div>
-
-                <!-- Description -->
-                <div style='
-                    font-size: 15px;
-                    color: #37474f;
-                    margin-top: 6px;
-                    text-shadow: 0 0 1px rgba(0, 0, 0, 0.08);
-                '>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/task.png" style="width:16px; height:16px; vertical-align:middle; margin-right:5px;"/>
-                    {description}
-                </div>
-            </div>
-            """
-            certificate_links_html += card_html
-
-html_content = f"""
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{st.session_state['name']} - Resume</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            font-size: 12pt;
-            color: #2f2f2f;
-            margin: 20px;
-        }}
-        h2 {{
-            font-size: 24pt;
-            color: #336699;
-            margin-bottom: 5px;
-        }}
-        h4 {{
-            font-size: 16pt;
-            color: #336699;
-            margin-top: 15px;
-            margin-bottom: 5px;
-        }}
-        hr {{
-            border: none;
-            border-top: 1px solid #bbb;
-            margin: 10px 0;
-        }}
-        .icon {{
-            width: 12px;
-            height: 12px;
-            vertical-align: middle;
-        }}
-        a {{
-            color: #007acc;
-            text-decoration: none;
-        }}
-        td {{
-            vertical-align: top;
-            padding: 2px 0;
-        }}
-    </style>
-</head>
-<body>
-
-    <!-- Header -->
-    <table width="100%">
-        <tr>
-            <td>
-                <h2>{st.session_state['name']}</h2>
-                <h4>{st.session_state['job_title']}</h4>
-            </td>
-            <td align="right">
-                {profile_img_html}
-            </td>
-        </tr>
-    </table>
-    <hr>
-
-    <!-- Two Column Layout -->
-    <table width="100%" cellpadding="10" cellspacing="0">
-        <tr valign="top">
-            <!-- Left Column -->
-            <td width="35%" style="border-right: 1px solid #ccc;">
-
-                <table>
-                    <tr>
-                        <td><img src="https://img.icons8.com/ios-filled/50/000000/marker.png" class="icon" /></td>
-                        <td>{st.session_state['location']}</td>
-                    </tr>
-                    <tr>
-                        <td><img src="https://img.icons8.com/ios-filled/50/000000/phone.png" class="icon" /></td>
-                        <td>{st.session_state['phone']}</td>
-                    </tr>
-                    <tr>
-                        <td><img src="https://img.icons8.com/ios-filled/50/000000/email.png" class="icon" /></td>
-                        <td><a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a></td>
-                    </tr>
-                    <tr>
-                        <td><img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" class="icon" /></td>
-                        <td><a href="{st.session_state['linkedin']}">LinkedIn</a></td>
-                    </tr>
-                    <tr>
-                        <td><img src="https://img.icons8.com/ios-filled/50/000000/domain.png" class="icon" /></td>
-                        <td><a href="{st.session_state['portfolio']}">Portfolio</a></td>
-                    </tr>
-                </table>
-
-                <h4>Skills</h4><hr>
-                {skills_html}
-
-                <h4>Languages</h4><hr>
-                {languages_html}
-
-                <h4>Interests</h4><hr>
-                {interests_html}
-
-                <h4>Softskills</h4><hr>
-                {Softskills_html}
-            </td>
-
-            <!-- Right Column -->
-            <td width="65%">
-                <h4>Summary</h4><hr>
-                <p>{summary_html}</p>
-
-                <h4>Experience</h4><hr>
-                {experience_html}
-
-                <h4>Education</h4><hr>
-                {education_html}
-
-                <h4>Projects</h4><hr>
-                {projects_html}
-
-                {project_links_html}
-                {certificate_links_html}
-            </td>
-        </tr>
-    </table>
-
-</body>
-</html>
-"""
-
-
-html_bytes = html_content.encode("utf-8")
-html_file = BytesIO(html_bytes)
-
-# Convert HTML resume to PDF bytes
-pdf_resume_bytes = html_to_pdf_bytes(html_content)
-
-with tab2:
-    # ==========================
-    # 📥 Download Resume buttons
-    # ==========================
-    st.download_button(
-        label="📥 Download Resume (HTML)",
-        data=html_file,
-        file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.html",
-        mime="text/html",
-        key="download_resume_html"
-    )
-
-    st.download_button(
-        label="📥 Download Resume (PDF)",
-        data=pdf_resume_bytes,
-        file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.pdf",
-        mime="application/pdf",
-        key="download_resume_pdf"
-    )
-
-    # ==========================
-    # 📩 Cover Letter Expander
-    # ==========================
-    with st.expander("📩 Generate Cover Letter from This Resume"):
-        generate_cover_letter_from_resume_builder()
-
-    # ==========================
-    # ✉️ Generated Cover Letter Preview & Downloads
-    # ==========================
-    if "cover_letter" in st.session_state:
-        st.markdown("""
-        <h3 style="color: #003366; margin-top: 30px;">✉️ Generated Cover Letter</h3>
-        """, unsafe_allow_html=True)
-
-        styled_cover_letter = st.session_state.get("cover_letter_html", "")
-        st.markdown(styled_cover_letter, unsafe_allow_html=True)
-
-        # ✅ Generate PDF from styled HTML
-        pdf_file = html_to_pdf_bytes(styled_cover_letter)
-
-        # ✅ Create DOCX function
-        from io import BytesIO
-        from docx import Document
-
-        def create_docx(text, filename="cover_letter.docx"):
-            doc = Document()
-            doc.add_heading("Cover Letter", 0)
-            doc.add_paragraph(text)
-            bio = BytesIO()
-            doc.save(bio)
-            bio.seek(0)
-            return bio
-
-        # ==========================
-        # 📥 Cover Letter Download Buttons
-        # ==========================
-        st.markdown("""
-        <div style="margin-top: 20px; margin-bottom: 10px;">
-            <strong>⬇️ Download Your Cover Letter:</strong>
-        </div>
-        """, unsafe_allow_html=True)
-
-        col1, col2 = st.columns(2)
-        with col1:
+        try:
+            doc_buffer = builder.generate_resume(resume_data)
+            st.success("✅ Resume generated successfully!")
             st.download_button(
-                label="📥 Download Cover Letter (.docx)",
-                data=create_docx(st.session_state["cover_letter"]),
-                file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                key="download_coverletter_docx"
+                label="📥 Download Resume DOCX",
+                data=doc_buffer,
+                file_name=f"{full_name.replace(' ', '_')}_Resume.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             )
-        with col2:
-            st.download_button(
-                label="📥 Download Cover Letter (PDF)",
-                data=pdf_file,
-                file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.pdf",
-                mime="application/pdf",
-                key="download_coverletter_pdf"
-            )
+        except Exception as e:
+            st.error(f"❌ Error generating resume: {e}")
 
-
-    st.markdown("""
-    ✅ After downloading your HTML resume, you can [click here to convert it to PDF](https://www.sejda.com/html-to-pdf) using Sejda's free online tool.
-    """)
-
-# Convert HTML resume to PDF bytes
 
 
 

@@ -1,18 +1,46 @@
-import pdfkit
+from xhtml2pdf import pisa
+from io import BytesIO
 
 def html_to_pdf_bytes(html_string):
-    path_to_wkhtmltopdf = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
-    config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
-
-    # ✅ Inject a base style with larger font size
-    styled_html_string = f"""
+    styled_html = f"""
     <html>
     <head>
-        <style>-----
+        <meta charset="UTF-8">
+        <style>
+            @page {{
+                size: 400mm 297mm;  /* Matches page-width & page-height */
+                margin-top: 10mm;
+                margin-bottom: 10mm;
+                margin-left: 10mm;
+                margin-right: 10mm;
+            }}
             body {{
                 font-size: 14pt;
-                font-family: 'Segoe UI', sans-serif;
+                font-family: "Segoe UI", "Helvetica", sans-serif;
                 line-height: 1.5;
+            }}
+            h1, h2, h3 {{
+                color: #2f4f6f;
+            }}
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 15px;
+            }}
+            td {{
+                padding: 4px;
+                vertical-align: top;
+            }}
+            .section-title {{
+                background-color: #e0e0e0;
+                font-weight: bold;
+                padding: 4px;
+                margin-top: 10px;
+            }}
+            .box {{
+                border: 1px solid #999;
+                padding: 8px;
+                margin-top: 6px;
             }}
         </style>
     </head>
@@ -22,24 +50,97 @@ def html_to_pdf_bytes(html_string):
     </html>
     """
 
-    options = {
-        'page-width': '400mm',       # ✅ Custom wide page size
-        'page-height': '297mm',      # ✅ Standard height
-        'encoding': "UTF-8",
-        'enable-local-file-access': None,
-        'margin-top': '10mm',
-        'margin-bottom': '10mm',
-        'margin-left': '10mm',
-        'margin-right': '10mm',
-        'zoom': '1',                 # ✅ No zoom to maintain layout
-        'disable-smart-shrinking': ''
-    }
-
-    pdf_bytes = pdfkit.from_string(styled_html_string, False, options=options, configuration=config)
-    pdf_io = BytesIO(pdf_bytes)
+    pdf_io = BytesIO()
+    pisa.CreatePDF(styled_html, dest=pdf_io)
     pdf_io.seek(0)
-
     return pdf_io
+
+
+
+def generate_cover_letter_from_resume_builder():
+    
+
+    name = st.session_state.get("name", "")
+    job_title = st.session_state.get("job_title", "")
+    summary = st.session_state.get("summary", "")
+    skills = st.session_state.get("skills", "")
+    location = st.session_state.get("location", "")
+    today_date = datetime.today().strftime("%B %d, %Y")
+
+    # ✅ Input boxes for contact info
+    company = st.text_input("🏢 Target Company", placeholder="e.g., Google")
+    linkedin = st.text_input("🔗 LinkedIn URL", placeholder="e.g., https://linkedin.com/in/username")
+    email = st.text_input("📧 Email", placeholder="e.g., you@example.com")
+    mobile = st.text_input("📞 Mobile Number", placeholder="e.g., +91 9876543210")
+
+    # ✅ Show warning only after inputs
+    if not all([name, job_title, summary, skills, company, linkedin, email, mobile]):
+        st.warning("⚠️ Please fill in all fields including LinkedIn, email, and mobile.")
+        return
+
+    prompt = f"""
+You are a professional cover letter writer.
+
+Write a formal and compelling cover letter using the information below. Format it as a real letter with:
+1. Date
+2. Recipient heading
+3. Proper salutation
+4. Three short paragraphs
+5. Professional closing
+
+Ensure you **only include the company name once** in the header or salutation, and avoid repeating it redundantly in the body.
+
+### Heading Info:
+{today_date}
+Hiring Manager, {company}, {location}
+
+### Candidate Info:
+- Name: {name}
+- Job Title: {job_title}
+- Summary: {summary}
+- Skills: {skills}
+- Location: {location}
+
+### Instructions:
+- Do not repeat the company name twice.
+- Focus on skills and impact.
+- Make it personalized and enthusiastic.
+- Return only the final formatted cover letter without any HTML tags.
+"""
+
+    # ✅ Call LLM for cover letter
+    cover_letter = call_llm(prompt, session=st.session_state)
+
+    # ✅ Remove leading date line or raw HTML blocks if present
+    lines = cover_letter.strip().split("\n")
+    if len(lines) > 0 and (re.match(r'^\w+ \d{1,2}, \d{4}$', lines[0].strip()) or lines[0].strip().startswith('<div')):
+        lines = lines[1:]
+    cover_letter = "\n".join(lines)
+
+    st.session_state["cover_letter"] = cover_letter
+
+    # ✅ Styled HTML template wrapping the LLM output with icons and date
+    cover_letter_html = f"""
+    <div style="font-family: Georgia, serif; line-height: 1.6; color: #333; border: 1px solid #ccc; padding: 20px; max-width: 700px; margin: auto;">
+        <div style="text-align: center;">
+            <h1 style="color: #003366; font-size: 26px; margin-bottom: 0;">{name}</h1>
+            <h2 style="font-style: normal; font-weight: normal; margin-top: 0; color: #555;">{job_title}</h2>
+            <p style="margin: 4px 0; font-size: 14px;">
+                <a href="{linkedin}" style="color: #003366;">{linkedin}</a><br>
+                <img src="https://img.icons8.com/ios-glyphs/16/000000/new-post.png" style="vertical-align: middle;"/> {email} |
+                <img src="https://img.icons8.com/ios-glyphs/16/000000/phone.png" style="vertical-align: middle;"/> {mobile}
+            </p>
+        </div>
+        <p style="text-align: left; font-size: 14px; margin-top: 20px;">{today_date}</p>
+        <hr style="border: 1px solid #ccc;">
+        <div style="white-space: pre-wrap; text-align: left; font-size: 14px; line-height: 1.6;">
+            {cover_letter}
+        </div>
+    </div>
+    """
+
+    # ✅ Save styled HTML to session state for download in Tab 2
+    st.session_state["cover_letter_html"] = cover_letter_html
 
 
 
@@ -1914,44 +2015,23 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 ])
 
 def generate_resume_report_html(resume):
-    import base64
-
-    def svg_to_base64(svg_string):
-        return base64.b64encode(svg_string.encode('utf-8')).decode('utf-8')
-
-    # SVG Icons (as minimal inline symbols)
-    icons = {
-        "resume": svg_to_base64("""<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"><text x="0" y="15" font-size="16">📄</text></svg>"""),
-        "ats": svg_to_base64("""<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"><text x="0" y="15" font-size="16">📊</text></svg>"""),
-        "edu": svg_to_base64("""<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"><text x="0" y="15" font-size="16">🏫</text></svg>"""),
-        "exp": svg_to_base64("""<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"><text x="0" y="15" font-size="16">💼</text></svg>"""),
-        "skills": svg_to_base64("""<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"><text x="0" y="15" font-size="16">🛠</text></svg>"""),
-        "lang": svg_to_base64("""<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"><text x="0" y="15" font-size="16">🗣</text></svg>"""),
-        "keyword": svg_to_base64("""<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"><text x="0" y="15" font-size="16">🔑</text></svg>"""),
-        "final": svg_to_base64("""<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"><text x="0" y="15" font-size="16">✅</text></svg>"""),
-        "bias": svg_to_base64("""<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"><text x="0" y="15" font-size="16">⚖️</text></svg>"""),
-    }
-
-    def icon_img(name):
-        return f'<img src="data:image/svg+xml;base64,{icons[name]}" width="18" height="18" style="vertical-align:middle;margin-right:5px;" />'
-
     candidate_name = resume.get('Candidate Name', 'Not Found')
     resume_name = resume.get('Resume Name', 'Unknown')
-    rewritten_text = resume.get('Rewritten Text', '').replace("\n", "<br>")
+    rewritten_text = resume.get('Rewritten Text', '').replace("\n", "<br/>")
 
     masculine_words_list = resume.get("Detected Masculine Words", [])
     masculine_words = "".join(
-        f"<b>{item.get('word','')}</b>: {item.get('sentence','')}<br>"
+        f"<b>{item.get('word','')}</b>: {item.get('sentence','')}<br/>"
         for item in masculine_words_list
     ) if masculine_words_list else "<i>None detected.</i>"
 
     feminine_words_list = resume.get("Detected Feminine Words", [])
     feminine_words = "".join(
-        f"<b>{item.get('word','')}</b>: {item.get('sentence','')}<br>"
+        f"<b>{item.get('word','')}</b>: {item.get('sentence','')}<br/>"
         for item in feminine_words_list
     ) if feminine_words_list else "<i>None detected.</i>"
 
-    ats_report_html = resume.get("ATS Report", "").replace("\n", "<br>")
+    ats_report_html = resume.get("ATS Report", "").replace("\n", "<br/>")
 
     def style_analysis(analysis):
         if "**Score:**" in analysis:
@@ -1959,17 +2039,16 @@ def generate_resume_report_html(resume):
             rest = parts[1].split("**", 1)
             score_text = rest[0].strip()
             remaining = rest[1].strip() if len(rest) > 1 else ""
-            formatted_score = f"<div style='background:#4c1d95;color:white;padding:8px;border-radius:6px;margin-bottom:5px;'><b>Score:</b> {score_text}</div>"
-            return formatted_score + f"<p>{remaining}</p>"
+            return f"<p><b>Score:</b> {score_text}</p><p>{remaining}</p>"
         else:
             return f"<p>{analysis}</p>"
 
-    edu_analysis = style_analysis(resume.get("Education Analysis", "N/A").replace("\n", "<br>"))
-    exp_analysis = style_analysis(resume.get("Experience Analysis", "N/A").replace("\n", "<br>"))
-    skills_analysis = style_analysis(resume.get("Skills Analysis", "N/A").replace("\n", "<br>"))
-    lang_analysis = style_analysis(resume.get("Language Analysis", "N/A").replace("\n", "<br>"))
-    keyword_analysis = style_analysis(resume.get("Keyword Analysis", "N/A").replace("\n", "<br>"))
-    final_thoughts = resume.get("Final Thoughts", "N/A").replace("\n", "<br>")
+    edu_analysis = style_analysis(resume.get("Education Analysis", "N/A").replace("\n", "<br/>"))
+    exp_analysis = style_analysis(resume.get("Experience Analysis", "N/A").replace("\n", "<br/>"))
+    skills_analysis = style_analysis(resume.get("Skills Analysis", "N/A").replace("\n", "<br/>"))
+    lang_analysis = style_analysis(resume.get("Language Analysis", "N/A").replace("\n", "<br/>"))
+    keyword_analysis = style_analysis(resume.get("Keyword Analysis", "N/A").replace("\n", "<br/>"))
+    final_thoughts = resume.get("Final Thoughts", "N/A").replace("\n", "<br/>")
 
     ats_match = resume.get('ATS Match %', 'N/A')
     edu_score = resume.get('Education Score', 'N/A')
@@ -1977,91 +2056,101 @@ def generate_resume_report_html(resume):
     skills_score = resume.get('Skills Score', 'N/A')
     lang_score = resume.get('Language Score', 'N/A')
     keyword_score = resume.get('Keyword Score', 'N/A')
-    masculine_count = resume.get('Masculine Words', 0)
-    feminine_count = resume.get('Feminine Words', 0)
+    masculine_count = len(masculine_words_list)
+    feminine_count = len(feminine_words_list)
     bias_score = resume.get('Bias Score (0 = Fair, 1 = Biased)', 'N/A')
 
-    return f"""<!DOCTYPE html><html><head><meta charset="UTF-8">
-    <title>{candidate_name} - Resume Analysis Report</title>
-    <style>
-        body{{font-family:'Segoe UI',sans-serif;margin:40px;background:#f5f7fa;color:#333}}
-        h1,h2{{color:#2f4f6f}}.section{{margin-bottom:30px}}
-        .highlight{{background-color:#eef;padding:10px;border-radius:6px;margin-top:10px;font-size:14px}}
-        .metric-box{{display:inline-block;background:#dbeaff;padding:10px 20px;margin:10px;border-radius:10px;font-weight:bold}}
-        .resume-box{{background-color:#f9f9ff;padding:15px;border-radius:8px;border:1px solid #ccc;white-space:pre-wrap}}
-        .report-box{{background:#fffbe6;border-left:5px solid #f7d794;padding:10px;margin-top:10px;border-radius:6px}}
-        .card-header{{background:#5b3cc4;color:white;padding:10px;border-radius:6px 6px 0 0}}
-        .card-body{{background:#2d2d3a;color:white;padding:10px;border-radius:0 0 6px 6px}}
-    </style>
-    </head><body>
-    <h1>{icon_img("resume")}Resume Analysis Report</h1>
+    return f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: Helvetica, sans-serif;
+                font-size: 12pt;
+                line-height: 1.5;
+            }}
+            h1, h2 {{
+                color: #2f4f6f;
+            }}
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 15px;
+            }}
+            td {{
+                padding: 4px;
+                vertical-align: top;
+            }}
+            .section-title {{
+                background-color: #e0e0e0;
+                font-weight: bold;
+                padding: 4px;
+                margin-top: 10px;
+            }}
+            .box {{
+                border: 1px solid #999;
+                padding: 8px;
+                margin-top: 6px;
+            }}
+        </style>
+    </head>
+    <body>
 
-    <div class="section">
-        <h2>Candidate: {candidate_name}</h2>
-        <p><strong>Resume File:</strong> {resume_name}</p>
-    </div>
+    <h1>Resume Analysis Report</h1>
 
-    <div class="section">
-        <h2>{icon_img("ats")}ATS Evaluation</h2>
-        <div class="metric-box">ATS Match: {ats_match}%</div>
-        <div class="metric-box">Education: {edu_score}</div>
-        <div class="metric-box">Experience: {exp_score}</div>
-        <div class="metric-box">Skills: {skills_score}</div>
-        <div class="metric-box">Language: {lang_score}</div>
-        <div class="metric-box">Keyword: {keyword_score}</div>
+    <h2>Candidate: {candidate_name}</h2>
+    <p><b>Resume File:</b> {resume_name}</p>
 
-        <div class="report-box">
-            <h3>ATS Evaluation Report</h3>
-            {ats_report_html}
-        </div>
+    <h2>ATS Evaluation</h2>
+    <table border="1">
+        <tr><td><b>ATS Match</b></td><td>{ats_match}%</td></tr>
+        <tr><td><b>Education</b></td><td>{edu_score}</td></tr>
+        <tr><td><b>Experience</b></td><td>{exp_score}</td></tr>
+        <tr><td><b>Skills</b></td><td>{skills_score}</td></tr>
+        <tr><td><b>Language</b></td><td>{lang_score}</td></tr>
+        <tr><td><b>Keyword</b></td><td>{keyword_score}</td></tr>
+    </table>
 
-        <div style="margin-top:20px;">
-            <div class="card-header">{icon_img("edu")}Education Analysis</div>
-            <div class="card-body">{edu_analysis}</div>
-        </div>
+    <div class="section-title">ATS Report</div>
+    <div class="box">{ats_report_html}</div>
 
-        <div style="margin-top:20px;">
-            <div class="card-header">{icon_img("exp")}Experience Analysis</div>
-            <div class="card-body">{exp_analysis}</div>
-        </div>
+    <div class="section-title">Education Analysis</div>
+    <div class="box">{edu_analysis}</div>
 
-        <div style="margin-top:20px;">
-            <div class="card-header">{icon_img("skills")}Skills Analysis</div>
-            <div class="card-body">{skills_analysis}</div>
-        </div>
+    <div class="section-title">Experience Analysis</div>
+    <div class="box">{exp_analysis}</div>
 
-        <div style="margin-top:20px;">
-            <div class="card-header">{icon_img("lang")}Language Quality Analysis</div>
-            <div class="card-body">{lang_analysis}</div>
-        </div>
+    <div class="section-title">Skills Analysis</div>
+    <div class="box">{skills_analysis}</div>
 
-        <div style="margin-top:20px;">
-            <div class="card-header">{icon_img("keyword")}Keyword Analysis</div>
-            <div class="card-body">{keyword_analysis}</div>
-        </div>
+    <div class="section-title">Language Analysis</div>
+    <div class="box">{lang_analysis}</div>
 
-        <div style="margin-top:20px;">
-            <div class="card-header">{icon_img("final")}Final Thoughts</div>
-            <div class="card-body">{final_thoughts}</div>
-        </div>
-    </div>
+    <div class="section-title">Keyword Analysis</div>
+    <div class="box">{keyword_analysis}</div>
 
-    <div class="section">
-        <h2>{icon_img("bias")}Gender Bias Analysis</h2>
-        <div class="metric-box" style="background:#f0f8ff;">Masculine Words: {masculine_count}</div>
-        <div class="metric-box" style="background:#fff0f5;">Feminine Words: {feminine_count}</div>
-        <p><strong>Bias Score (0=Fair, 1=Biased):</strong> {bias_score}</p>
-        <div class="highlight"><strong>Masculine Words Detected:</strong><br>{masculine_words}</div>
-        <div class="highlight"><strong>Feminine Words Detected:</strong><br>{feminine_words}</div>
-    </div>
+    <div class="section-title">Final Thoughts</div>
+    <div class="box">{final_thoughts}</div>
 
-    <div class="section">
-        <h2>{icon_img("final")}Rewritten Bias-Free Resume</h2>
-        <div class="resume-box">{rewritten_text}</div>
-    </div>
+    <h2>Gender Bias Analysis</h2>
+    <table border="1">
+        <tr><td><b>Masculine Words</b></td><td>{masculine_count}</td></tr>
+        <tr><td><b>Feminine Words</b></td><td>{feminine_count}</td></tr>
+        <tr><td><b>Bias Score (0 = Fair, 1 = Biased)</b></td><td>{bias_score}</td></tr>
+    </table>
 
-    </body></html>"""
+    <div class="section-title">Masculine Words Detected</div>
+    <div class="box">{masculine_words}</div>
 
+    <div class="section-title">Feminine Words Detected</div>
+    <div class="box">{feminine_words}</div>
+
+    <h2>Rewritten Bias-Free Resume</h2>
+    <div class="box">{rewritten_text}</div>
+
+    </body>
+    </html>
+    """
 
 
 
@@ -3171,159 +3260,138 @@ if st.session_state.certificate_links:
             """
             certificate_links_html += card_html
 
-
-
 html_content = f"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{st.session_state['name']} - Resume</title>
     <style>
         body {{
             font-family: Arial, sans-serif;
-            margin: 40px;
+            font-size: 12pt;
             color: #2f2f2f;
+            margin: 20px;
         }}
         h2 {{
-            font-size: 32px;
-            margin: 0;
+            font-size: 24pt;
             color: #336699;
+            margin-bottom: 5px;
         }}
         h4 {{
-            font-size: 24px;
-            margin: 0;
+            font-size: 16pt;
             color: #336699;
+            margin-top: 15px;
+            margin-bottom: 5px;
+        }}
+        hr {{
+            border: none;
+            border-top: 1px solid #bbb;
+            margin: 10px 0;
+        }}
+        .icon {{
+            width: 12px;
+            height: 12px;
+            vertical-align: middle;
         }}
         a {{
             color: #007acc;
             text-decoration: none;
         }}
-        a:hover {{
-            text-decoration: underline;
-        }}
-        hr {{
-            border: none;
-            border-top: 2px solid #bbb;
-            margin: 20px 0;
-        }}
-        .container {{
-            display: table;
-            width: 100%;
-        }}
-        .left, .right {{
-            display: table-cell;
+        td {{
             vertical-align: top;
-        }}
-        .left {{
-            width: 30%;
-            border-right: 2px solid #ccc;
-            padding-right: 20px;
-        }}
-        .right {{
-            width: 70%;
-            padding-left: 20px;
-        }}
-        .icon {{
-            width: 16px;
-            height: 16px;
-            margin-right: 6px;
-        }}
-        .contact-row {{
-            display: flex;
-            align-items: center;
-            margin-bottom: 5px;
-        }}
-        .section-title {{
-            color: #336699;
-            margin-top: 30px;
-            margin-bottom: 5px;
+            padding: 2px 0;
         }}
     </style>
 </head>
 <body>
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <div>
-            <h2>{st.session_state['name']}</h2>
-            <h4>{st.session_state['job_title']}</h4>
-        </div>
-        <div>
-            {profile_img_html}
-        </div>
-    </div>
+    <!-- Header -->
+    <table width="100%">
+        <tr>
+            <td>
+                <h2>{st.session_state['name']}</h2>
+                <h4>{st.session_state['job_title']}</h4>
+            </td>
+            <td align="right">
+                {profile_img_html}
+            </td>
+        </tr>
+    </table>
     <hr>
 
-    <div class="container">
-        <div class="left">
-            <div class="contact-row">
-                <img src="https://img.icons8.com/ios-filled/50/000000/marker.png" class="icon"/>
-                <span>{st.session_state['location']}</span>
-            </div>
-            <div class="contact-row">
-                <img src="https://img.icons8.com/ios-filled/50/000000/phone.png" class="icon"/>
-                <span>{st.session_state['phone']}</span>
-            </div>
-            <div class="contact-row">
-                <img src="https://img.icons8.com/ios-filled/50/000000/email.png" class="icon"/>
-                <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a>
-            </div>
-            <div class="contact-row">
-                <img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" class="icon"/>
-                <a href="{st.session_state['linkedin']}">LinkedIn</a>
-            </div>
-            <div class="contact-row">
-                <img src="https://img.icons8.com/ios-filled/50/000000/domain.png" class="icon"/>
-                <a href="{st.session_state['portfolio']}">Portfolio</a>
-            </div>
+    <!-- Two Column Layout -->
+    <table width="100%" cellpadding="10" cellspacing="0">
+        <tr valign="top">
+            <!-- Left Column -->
+            <td width="35%" style="border-right: 1px solid #ccc;">
 
-            <h4 class="section-title">Skills</h4>
-            <hr>
-            {skills_html}
+                <table>
+                    <tr>
+                        <td><img src="https://img.icons8.com/ios-filled/50/000000/marker.png" class="icon" /></td>
+                        <td>{st.session_state['location']}</td>
+                    </tr>
+                    <tr>
+                        <td><img src="https://img.icons8.com/ios-filled/50/000000/phone.png" class="icon" /></td>
+                        <td>{st.session_state['phone']}</td>
+                    </tr>
+                    <tr>
+                        <td><img src="https://img.icons8.com/ios-filled/50/000000/email.png" class="icon" /></td>
+                        <td><a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a></td>
+                    </tr>
+                    <tr>
+                        <td><img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" class="icon" /></td>
+                        <td><a href="{st.session_state['linkedin']}">LinkedIn</a></td>
+                    </tr>
+                    <tr>
+                        <td><img src="https://img.icons8.com/ios-filled/50/000000/domain.png" class="icon" /></td>
+                        <td><a href="{st.session_state['portfolio']}">Portfolio</a></td>
+                    </tr>
+                </table>
 
-            <h4 class="section-title">Languages</h4>
-            <hr>
-            {languages_html}
+                <h4>Skills</h4><hr>
+                {skills_html}
 
-            <h4 class="section-title">Interests</h4>
-            <hr>
-            {interests_html}
+                <h4>Languages</h4><hr>
+                {languages_html}
 
-            <h4 class="section-title">Softskills</h4>
-            <hr>
-            {Softskills_html}
-        </div>
+                <h4>Interests</h4><hr>
+                {interests_html}
 
-        <div class="right">
-            <h4 class="section-title">Summary</h4>
-            <hr>
-            <p>{summary_html}</p>
+                <h4>Softskills</h4><hr>
+                {Softskills_html}
+            </td>
 
-            <h4 class="section-title">Experience</h4>
-            <hr>
-            {experience_html}
+            <!-- Right Column -->
+            <td width="65%">
+                <h4>Summary</h4><hr>
+                <p>{summary_html}</p>
 
-            <h4 class="section-title">Education</h4>
-            <hr>
-            {education_html}
+                <h4>Experience</h4><hr>
+                {experience_html}
 
-            <h4 class="section-title">Projects</h4>
-            <hr>
-            {projects_html}
+                <h4>Education</h4><hr>
+                {education_html}
 
-            {project_links_html}
-            {certificate_links_html}
-        </div>
-    </div>
+                <h4>Projects</h4><hr>
+                {projects_html}
+
+                {project_links_html}
+                {certificate_links_html}
+            </td>
+        </tr>
+    </table>
+
 </body>
 </html>
 """
+
+
 html_bytes = html_content.encode("utf-8")
 html_file = BytesIO(html_bytes)
 
 # Convert HTML resume to PDF bytes
-
+pdf_resume_bytes = html_to_pdf_bytes(html_content)
 
 with tab2:
     # ==========================
@@ -3335,11 +3403,85 @@ with tab2:
         file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.html",
         mime="text/html",
         key="download_resume_html"
-    )    
-with tab2:
- st.markdown("""
-✅ After downloading your HTML resume, you can [click here to convert it to PDF](https://www.sejda.com/html-to-pdf) using Sejda's free online tool.
-""")
+    )
+
+    st.download_button(
+        label="📥 Download Resume (PDF)",
+        data=pdf_resume_bytes,
+        file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.pdf",
+        mime="application/pdf",
+        key="download_resume_pdf"
+    )
+
+    # ==========================
+    # 📩 Cover Letter Expander
+    # ==========================
+    with st.expander("📩 Generate Cover Letter from This Resume"):
+        generate_cover_letter_from_resume_builder()
+
+    # ==========================
+    # ✉️ Generated Cover Letter Preview & Downloads
+    # ==========================
+    if "cover_letter" in st.session_state:
+        st.markdown("""
+        <h3 style="color: #003366; margin-top: 30px;">✉️ Generated Cover Letter</h3>
+        """, unsafe_allow_html=True)
+
+        styled_cover_letter = st.session_state.get("cover_letter_html", "")
+        st.markdown(styled_cover_letter, unsafe_allow_html=True)
+
+        # ✅ Generate PDF from styled HTML
+        pdf_file = html_to_pdf_bytes(styled_cover_letter)
+
+        # ✅ Create DOCX function
+        from io import BytesIO
+        from docx import Document
+
+        def create_docx(text, filename="cover_letter.docx"):
+            doc = Document()
+            doc.add_heading("Cover Letter", 0)
+            doc.add_paragraph(text)
+            bio = BytesIO()
+            doc.save(bio)
+            bio.seek(0)
+            return bio
+
+        # ==========================
+        # 📥 Cover Letter Download Buttons
+        # ==========================
+        st.markdown("""
+        <div style="margin-top: 20px; margin-bottom: 10px;">
+            <strong>⬇️ Download Your Cover Letter:</strong>
+        </div>
+        """, unsafe_allow_html=True)
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.download_button(
+                label="📥 Download Cover Letter (.docx)",
+                data=create_docx(st.session_state["cover_letter"]),
+                file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                key="download_coverletter_docx"
+            )
+        with col2:
+            st.download_button(
+                label="📥 Download Cover Letter (PDF)",
+                data=pdf_file,
+                file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.pdf",
+                mime="application/pdf",
+                key="download_coverletter_pdf"
+            )
+
+
+    st.markdown("""
+    ✅ After downloading your HTML resume, you can [click here to convert it to PDF](https://www.sejda.com/html-to-pdf) using Sejda's free online tool.
+    """)
+
+# Convert HTML resume to PDF bytes
+
+
+
 with tab3:
     st.header("🔍 Job Search Across LinkedIn, Naukri, and FoundIt")
 

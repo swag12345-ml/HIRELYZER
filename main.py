@@ -2506,7 +2506,7 @@ with tab2:
             st.success("✅ Resume Generated Successfully! Scroll down to preview or download.")
 
     # Optional style for visual enhancement (safe for HTML rendering)
-    st.markdown("""
+        st.markdown("""
     <style>
         .heading-large {
             font-size: 36px;
@@ -4112,4 +4112,3 @@ if user_input:
 
     # Save interaction to memory
     st.session_state.memory.save_context({"input": user_input}, {"output": answer})
-

@@ -3260,132 +3260,154 @@ if st.session_state.certificate_links:
             """
             certificate_links_html += card_html
 
+
+
 html_content = f"""
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{st.session_state['name']} - Resume</title>
     <style>
         body {{
             font-family: Arial, sans-serif;
-            font-size: 12pt;
+            margin: 40px;
             color: #2f2f2f;
-            margin: 20px;
         }}
         h2 {{
-            font-size: 24pt;
+            font-size: 32px;
+            margin: 0;
             color: #336699;
-            margin-bottom: 5px;
         }}
         h4 {{
-            font-size: 16pt;
+            font-size: 24px;
+            margin: 0;
             color: #336699;
-            margin-top: 15px;
-            margin-bottom: 5px;
-        }}
-        hr {{
-            border: none;
-            border-top: 1px solid #bbb;
-            margin: 10px 0;
-        }}
-        .icon {{
-            width: 12px;
-            height: 12px;
-            vertical-align: middle;
         }}
         a {{
             color: #007acc;
             text-decoration: none;
         }}
-        td {{
+        a:hover {{
+            text-decoration: underline;
+        }}
+        hr {{
+            border: none;
+            border-top: 2px solid #bbb;
+            margin: 20px 0;
+        }}
+        .container {{
+            display: table;
+            width: 100%;
+        }}
+        .left, .right {{
+            display: table-cell;
             vertical-align: top;
-            padding: 2px 0;
+        }}
+        .left {{
+            width: 30%;
+            border-right: 2px solid #ccc;
+            padding-right: 20px;
+        }}
+        .right {{
+            width: 70%;
+            padding-left: 20px;
+        }}
+        .icon {{
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+        }}
+        .contact-row {{
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }}
+        .section-title {{
+            color: #336699;
+            margin-top: 30px;
+            margin-bottom: 5px;
         }}
     </style>
 </head>
 <body>
 
-    <!-- Header -->
-    <table width="100%">
-        <tr>
-            <td>
-                <h2>{st.session_state['name']}</h2>
-                <h4>{st.session_state['job_title']}</h4>
-            </td>
-            <td align="right">
-                {profile_img_html}
-            </td>
-        </tr>
-    </table>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <div>
+            <h2>{st.session_state['name']}</h2>
+            <h4>{st.session_state['job_title']}</h4>
+        </div>
+        <div>
+            {profile_img_html}
+        </div>
+    </div>
     <hr>
 
-    <!-- Two Column Layout -->
-    <table width="100%" cellpadding="10" cellspacing="0">
-        <tr valign="top">
-            <!-- Left Column -->
-            <td width="35%" style="border-right: 1px solid #ccc;">
+    <div class="container">
+        <div class="left">
+            <div class="contact-row">
+                <img src="https://img.icons8.com/ios-filled/50/000000/marker.png" class="icon"/>
+                <span>{st.session_state['location']}</span>
+            </div>
+            <div class="contact-row">
+                <img src="https://img.icons8.com/ios-filled/50/000000/phone.png" class="icon"/>
+                <span>{st.session_state['phone']}</span>
+            </div>
+            <div class="contact-row">
+                <img src="https://img.icons8.com/ios-filled/50/000000/email.png" class="icon"/>
+                <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a>
+            </div>
+            <div class="contact-row">
+                <img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" class="icon"/>
+                <a href="{st.session_state['linkedin']}">LinkedIn</a>
+            </div>
+            <div class="contact-row">
+                <img src="https://img.icons8.com/ios-filled/50/000000/domain.png" class="icon"/>
+                <a href="{st.session_state['portfolio']}">Portfolio</a>
+            </div>
 
-                <table>
-                    <tr>
-                        <td><img src="https://img.icons8.com/ios-filled/50/000000/marker.png" class="icon" /></td>
-                        <td>{st.session_state['location']}</td>
-                    </tr>
-                    <tr>
-                        <td><img src="https://img.icons8.com/ios-filled/50/000000/phone.png" class="icon" /></td>
-                        <td>{st.session_state['phone']}</td>
-                    </tr>
-                    <tr>
-                        <td><img src="https://img.icons8.com/ios-filled/50/000000/email.png" class="icon" /></td>
-                        <td><a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a></td>
-                    </tr>
-                    <tr>
-                        <td><img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" class="icon" /></td>
-                        <td><a href="{st.session_state['linkedin']}">LinkedIn</a></td>
-                    </tr>
-                    <tr>
-                        <td><img src="https://img.icons8.com/ios-filled/50/000000/domain.png" class="icon" /></td>
-                        <td><a href="{st.session_state['portfolio']}">Portfolio</a></td>
-                    </tr>
-                </table>
+            <h4 class="section-title">Skills</h4>
+            <hr>
+            {skills_html}
 
-                <h4>Skills</h4><hr>
-                {skills_html}
+            <h4 class="section-title">Languages</h4>
+            <hr>
+            {languages_html}
 
-                <h4>Languages</h4><hr>
-                {languages_html}
+            <h4 class="section-title">Interests</h4>
+            <hr>
+            {interests_html}
 
-                <h4>Interests</h4><hr>
-                {interests_html}
+            <h4 class="section-title">Softskills</h4>
+            <hr>
+            {Softskills_html}
+        </div>
 
-                <h4>Softskills</h4><hr>
-                {Softskills_html}
-            </td>
+        <div class="right">
+            <h4 class="section-title">Summary</h4>
+            <hr>
+            <p>{summary_html}</p>
 
-            <!-- Right Column -->
-            <td width="65%">
-                <h4>Summary</h4><hr>
-                <p>{summary_html}</p>
+            <h4 class="section-title">Experience</h4>
+            <hr>
+            {experience_html}
 
-                <h4>Experience</h4><hr>
-                {experience_html}
+            <h4 class="section-title">Education</h4>
+            <hr>
+            {education_html}
 
-                <h4>Education</h4><hr>
-                {education_html}
+            <h4 class="section-title">Projects</h4>
+            <hr>
+            {projects_html}
 
-                <h4>Projects</h4><hr>
-                {projects_html}
-
-                {project_links_html}
-                {certificate_links_html}
-            </td>
-        </tr>
-    </table>
-
+            {project_links_html}
+            {certificate_links_html}
+        </div>
+    </div>
 </body>
 </html>
 """
-
 
 from io import BytesIO
 

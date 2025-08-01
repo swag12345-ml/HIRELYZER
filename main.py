@@ -3455,7 +3455,7 @@ with tab2:
         </div>
         """, unsafe_allow_html=True)
 
-        col1, col2 = st.columns(2)
+        col1, col2 , col3= st.columns(3)
         with col1:
             st.download_button(
                 label="📥 Download Cover Letter (.docx)",
@@ -3472,7 +3472,14 @@ with tab2:
                 mime="application/pdf",
                 key="download_coverletter_pdf"
             )
-
+        with col3:
+            st.download_button(
+                label="📥 Download Cover Letter (HTML)",
+                data=st.session_state["cover_letter_html"],
+                file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.html",
+                mime="text/html",
+                key="download_coverletter_html"
+            )
 
     st.markdown("""
     ✅ After downloading your HTML resume, you can [click here to convert it to PDF](https://www.sejda.com/html-to-pdf) using Sejda's free online tool.

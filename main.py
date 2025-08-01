@@ -3387,31 +3387,51 @@ html_content = f"""
 """
 
 
+from io import BytesIO
+
+# Convert HTML to bytes for download
 html_bytes = html_content.encode("utf-8")
 html_file = BytesIO(html_bytes)
 
-# Convert HTML resume to PDF bytes
+# Convert HTML to PDF using XHTML2PDF-compatible function
 pdf_resume_bytes = html_to_pdf_bytes(html_content)
 
 with tab2:
     # ==========================
-    # 📥 Download Resume buttons
+    # Resume Download Header (Clean & Professional)
     # ==========================
-    st.download_button(
-        label="📥 Download Resume (HTML)",
-        data=html_file,
-        file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.html",
-        mime="text/html",
-        key="download_resume_html"
+    st.markdown(
+        """
+        <div style='text-align: center; margin-top: 20px; margin-bottom: 30px;'>
+            <h2 style='color: #2f4f6f; font-family: Arial, sans-serif; font-size: 24px;'>
+                📥 Download Your Resume
+            </h2>
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
-    st.download_button(
-        label="📥 Download Resume (PDF)",
-        data=pdf_resume_bytes,
-        file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.pdf",
-        mime="application/pdf",
-        key="download_resume_pdf"
-    )
+    col1, col2 = st.columns([1, 1])
+
+    # HTML Resume Download Button
+    with col1:
+        st.download_button(
+            label="⬇️ Download as HTML",
+            data=html_file,
+            file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.html",
+            mime="text/html",
+            key="download_resume_html"
+        )
+
+    # PDF Resume Download Button
+    with col2:
+        st.download_button(
+            label="⬇️ Download as PDF",
+            data=pdf_resume_bytes,
+            file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.pdf",
+            mime="application/pdf",
+            key="download_resume_pdf"
+        )
 
     # ==========================
     # 📩 Cover Letter Expander

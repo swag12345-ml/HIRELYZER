@@ -1598,8 +1598,9 @@ import pandas as pd
 import altair as alt
 import streamlit as st
 from llm_manager import call_llm
+from db_manager import detect_domain_from_title_and_description
 
-# ✅ Grammar score via LLM (new function)
+# ✅ Grammar evaluation using LLM
 def get_grammar_score_with_llm(text, max_score=5):
     grammar_prompt = f"""
 You are a grammar evaluator AI. Analyze the following resume text and:
@@ -1616,21 +1617,29 @@ Feedback: <one-sentence grammar and tone summary>
 {text}
 ---
 """
-
     response = call_llm(grammar_prompt, session=st.session_state).strip()
-
     score_match = re.search(r"Score:\s*(\d+)", response)
     feedback_match = re.search(r"Feedback:\s*(.+)", response)
 
     score = int(score_match.group(1)) if score_match else 3
     feedback = feedback_match.group(1).strip() if feedback_match else "No grammar feedback provided."
-
     return score, feedback
 
-# ✅ ATS Evaluation Function
+
+# ✅ Keyword overlap score logic
+def keyword_overlap_score(resume_text, jd, weight=10):
+    resume_words = set(re.findall(r'\w+', resume_text.lower()))
+    jd_words = set(re.findall(r'\w+', jd.lower()))
+    common = resume_words & jd_words
+    ratio = len(common) / len(jd_words) if jd_words else 0
+    return min(round(ratio * weight), weight)
+
+
+# ✅ Main ATS Evaluation Function
 def ats_percentage_score(
     resume_text,
     job_description,
+    job_title="Unknown",
     logic_profile_score=None,
     edu_weight=20,
     exp_weight=35,
@@ -1638,25 +1647,48 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    # ⛔ Removed grammar tool; using LLM for score and feedback
+    # 🎯 Step 1: Grammar scoring
     grammar_score, grammar_feedback = get_grammar_score_with_llm(resume_text, max_score=lang_weight)
 
+    # 🎯 Step 2: Keyword overlap logic
+    keyword_score = keyword_overlap_score(resume_text, job_description, weight=keyword_weight)
+
+    # 🎯 Step 3: Domain relevance penalty
+    resume_domain = detect_domain_from_title_and_description("Unknown", resume_text)
+    job_domain = detect_domain_from_title_and_description(job_title, job_description)
+    domain_penalty = 15 if resume_domain != job_domain else 0
+
+    # Optional logic profile note
     logic_score_note = (
         f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
         if logic_profile_score else ""
     )
 
+    # 🧠 Step 4: LLM Prompt with full section explanation
     prompt = f"""
-You are an AI-powered ATS evaluator. Evaluate the candidate's resume with **detailed analysis for each section** in a structured format as follows.
+You are an AI-powered ATS evaluator. Assess the candidate's resume against the job description. Return a detailed, **section-by-section analysis**, with **scoring for each area**. Follow the format precisely below.
 
-For the **Language Quality Analysis** section:
+🎯 Section Breakdown:
 
-- Use the following grammar score and feedback.
-- Provide additional insights on tone, clarity, and professionalism.
-- Append the provided feedback in bold at the end of the section.
+1. **Candidate Name** — Extract from resume.
+2. **Education Analysis** — Evaluate degrees and field match vs job.
+3. **Experience Analysis** — Evaluate role match, years, seniority, project impact, relevance to JD.
+4. **Skills Analysis** — Check for:
+   - Technical tools
+   - Domain-specific expertise
+   - Soft skills
+   Provide 3 types of skills + list missing skills from JD.
+5. **Language Quality** — Use grammar score provided. Analyze tone, clarity, professionalism.
+6. **Keyword Analysis** — Evaluate presence of critical keywords from job description.
+7. **Final Thoughts** — Give holistic fit assessment (4–6 sentences).
 
-Grammar Score: {grammar_score} / {lang_weight}
-Feedback Summary: {grammar_feedback}
+Use this context:
+
+- Grammar Score: {grammar_score} / {lang_weight}
+- Grammar Feedback: {grammar_feedback}
+- Resume Domain: {resume_domain}
+- Job Domain: {job_domain}
+- Penalty if domains don't match: {domain_penalty}
 
 ---
 
@@ -1664,22 +1696,22 @@ Feedback Summary: {grammar_feedback}
 <Full name or "Not Found">
 
 ### 🏫 Education Analysis
-**Score:** <0–{edu_weight}> / {edu_weight}
-**Degree Match:** <Detailed explanation of degree title and field relevance.>
+**Score:** <0–{edu_weight}> / {edu_weight}  
+**Degree Match:** <Discuss degree level, specialization, and how it matches the job.>
 
 ### 💼 Experience Analysis
-**Score:** <0–{exp_weight}> / {exp_weight}
-**Experience Details:** <Detailed explanation of years, role match, domain relevance, and notable achievements.>
+**Score:** <0–{exp_weight}> / {exp_weight}  
+**Experience Details:** <Talk about seniority, project relevance, domain fit, and leadership.>
 
 ### 🛠 Skills Analysis
-**Score:** <0–{skills_weight}> / {skills_weight}
+**Score:** <0–{skills_weight}> / {skills_weight}  
 **Current Skills:**
 - Technical: <list>
 - Soft Skills: <list>
 - Domain-Specific: <list>
 
 **Skill Proficiency:**  
-<Detailed explanation of proficiency levels, strengths, and areas needing examples.>
+<Explain how effectively these skills are demonstrated with examples or achievements.>
 
 **Missing Skills:**
 - Skill 1
@@ -1687,78 +1719,84 @@ Feedback Summary: {grammar_feedback}
 - Skill 3
 
 ### 🗣 Language Quality Analysis
-**Score:** {grammar_score} / {lang_weight}
-**Grammar & Tone:** <Your detailed analysis here>  
+**Score:** {grammar_score} / {lang_weight}  
+**Grammar & Tone:** <LLM-based comment on clarity, fluency, tone>  
 **Feedback Summary:** **{grammar_feedback}**
 
 ### 🔑 Keyword Analysis
-**Score:** <0–{keyword_weight}> / {keyword_weight}
+**Score:** {keyword_score} / {keyword_weight}  
 **Missing Keywords:**
 - Keyword1
 - Keyword2
 - Keyword3
 
 **Keyword Analysis:**  
-<Detailed explanation of which keywords were matched or missing and their importance.>
+<Which key terms were present/missing and how critical they are.>
 
 ### ✅ Final Thoughts
-<4–6 sentence detailed summary highlighting strengths, areas of improvement, and overall fit.>
+<Summarize domain fit, core strengths, red flags, and whether this resume deserves further review.>
 
 ---
+
 **Instructions:**
-- Return each section in Markdown format with proper bullet points and bold subsection titles as shown.
-- Use the provided grammar score as-is.
-- Ensure clarity, conciseness, and professionalism.
-- Keep technical terms as in the resume.
+- Use markdown formatting.
+- Follow the section titles and bold formatting strictly.
+- Keep tone professional and ATS-focused.
+- Use the provided grammar score and domain info as context.
 
 ---
-### 📄 Job Description
+
+📄 Job Description:
 \"\"\"{job_description}\"\"\"
 
-### 📄 Resume
+📄 Resume:
 \"\"\"{resume_text}\"\"\"
 
 {logic_score_note}
 """
 
-    # 🔁 Call your LLM
+    # Step 5: LLM call
     ats_result = call_llm(prompt, session=st.session_state).strip()
 
-    # 🧪 Extract structured data from LLM result
+    # Step 6: Parse LLM output
     def extract_section(pattern, text, default="N/A"):
         match = re.search(pattern, text, re.DOTALL)
         return match.group(1).strip() if match else default
 
-    candidate_name = extract_section(r"### 🏷️ Candidate Name(.*?)###", ats_result, default="Not Found")
+    def extract_score(pattern, text, default=0):
+        match = re.search(pattern, text)
+        return int(match.group(1)) if match else default
+
+    candidate_name = extract_section(r"### 🏷️ Candidate Name(.*?)###", ats_result, "Not Found")
     edu_analysis = extract_section(r"### 🏫 Education Analysis(.*?)###", ats_result)
     exp_analysis = extract_section(r"### 💼 Experience Analysis(.*?)###", ats_result)
     skills_analysis = extract_section(r"### 🛠 Skills Analysis(.*?)###", ats_result)
-    lang_analysis_llm = extract_section(r"### 🗣 Language Quality Analysis(.*?)###", ats_result)
+    lang_analysis = extract_section(r"### 🗣 Language Quality Analysis(.*?)###", ats_result)
     keyword_analysis = extract_section(r"### 🔑 Keyword Analysis(.*?)###", ats_result)
     final_thoughts = extract_section(r"### ✅ Final Thoughts(.*)", ats_result)
 
     missing_keywords = extract_section(r"\*\*Missing Keywords:\*\*(.*?)(?:###|\Z)", keyword_analysis).replace("-", "").strip().replace("\n", ", ")
     missing_skills = extract_section(r"\*\*Missing Skills:\*\*(.*?)(?:###|\Z)", skills_analysis).replace("-", "").strip().replace("\n", ", ")
 
-    def extract_score(pattern, text, default=0):
-        match = re.search(pattern, text)
-        return int(match.group(1)) if match else default
-
     edu_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis)
     exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)
     skills_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
-    keyword_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis)
 
-    total_score = min(edu_score + exp_score + skills_score + grammar_score + keyword_score, 100)
+    # Step 7: Final scoring with domain penalty
+    total_score = edu_score + exp_score + skills_score + grammar_score + keyword_score
+    total_score = max(total_score - domain_penalty, 0)
+    total_score = min(total_score, 100)
+
     formatted_score = (
-        "Excellent" if total_score >= 85 else
-        "Good" if total_score >= 70 else
-        "Average" if total_score >= 50 else
-        "Poor"
+        "🌟 Excellent" if total_score >= 85 else
+        "✅ Good" if total_score >= 70 else
+        "⚠️ Average" if total_score >= 50 else
+        "❌ Poor"
     )
 
-    updated_lang_analysis = f"{lang_analysis_llm}<br><b>LLM Feedback Summary:</b> {grammar_feedback}"
+    updated_lang_analysis = f"{lang_analysis}<br><b>LLM Feedback Summary:</b> {grammar_feedback}"
 
+    # Step 8: Return all details
     return ats_result, {
         "Candidate Name": candidate_name,
         "Education Score": edu_score,
@@ -1775,8 +1813,12 @@ Feedback Summary: {grammar_feedback}
         "Keyword Analysis": keyword_analysis,
         "Final Thoughts": final_thoughts,
         "Missing Keywords": missing_keywords,
-        "Missing Skills": missing_skills
+        "Missing Skills": missing_skills,
+        "Resume Domain": resume_domain,
+        "Job Domain": job_domain,
+        "Domain Penalty": domain_penalty
     }
+
 
 
 

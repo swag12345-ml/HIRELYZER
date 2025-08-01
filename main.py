@@ -357,7 +357,7 @@ if not st.session_state.authenticated:
     # -------- Counter Section --------
     total_users = get_total_registered_users()
     active_logins = get_logins_today()
-    resumes_uploaded = 431
+    resumes_uploaded = 15
     states_accessed = 29
 
     components.html(f"""

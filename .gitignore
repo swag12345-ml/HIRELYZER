@@ -1,0 +1,8 @@
+# Ignore API keys and sensitive data
+config.json
+
+# Optional: also ignore Python cache and virtual environments
+__pycache__/
+*.pyc
+.env
+venv/

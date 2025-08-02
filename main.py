@@ -1625,13 +1625,6 @@ Feedback: <one-sentence grammar and tone summary>
     feedback = feedback_match.group(1).strip() if feedback_match else "No grammar feedback provided."
     return score, feedback
 
-# ✅ Keyword overlap score logic
-def keyword_overlap_score(resume_text, jd, weight=10):
-    resume_words = set(re.findall(r'\w+', resume_text.lower()))
-    jd_words = set(re.findall(r'\w+', jd.lower()))
-    common = resume_words & jd_words
-    ratio = len(common) / len(jd_words) if jd_words else 0
-    return min(round(ratio * weight), weight)
 
 # ✅ Main ATS Evaluation Function
 def ats_percentage_score(
@@ -1646,7 +1639,6 @@ def ats_percentage_score(
     keyword_weight=10
 ):
     grammar_score, grammar_feedback = get_grammar_score_with_llm(resume_text, max_score=lang_weight)
-    keyword_score = keyword_overlap_score(resume_text, job_description, weight=keyword_weight)
 
     resume_domain = detect_domain_from_title_and_description("Unknown", resume_text)
     job_domain = detect_domain_from_title_and_description(job_title, job_description)
@@ -1719,7 +1711,7 @@ Use this context:
 **Feedback Summary:** **{grammar_feedback}**
 
 ### 🔑 Keyword Analysis
-**Score:** {keyword_score} / {keyword_weight}  
+**Score:** <0–{keyword_weight}> / {keyword_weight}  
 **Missing Keywords:**
 - Keyword1
 - Keyword2
@@ -1768,12 +1760,14 @@ Use this context:
     keyword_analysis = extract_section(r"### 🔑 Keyword Analysis(.*?)###", ats_result)
     final_thoughts = extract_section(r"### ✅ Final Thoughts(.*)", ats_result)
 
-    missing_keywords = extract_section(r"\*\*Missing Keywords:\*\*(.*?)(?:###|\Z)", keyword_analysis).replace("-", "").strip().replace("\n", ", ")
-    missing_skills = extract_section(r"\*\*Missing Skills:\*\*(.*?)(?:###|\Z)", skills_analysis).replace("-", "").strip().replace("\n", ", ")
-
+    # ✅ Extract all scores from LLM sections
     edu_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis)
     exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)
     skills_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
+    keyword_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis)
+
+    missing_keywords = extract_section(r"\*\*Missing Keywords:\*\*(.*?)(?:###|\Z)", keyword_analysis).replace("-", "").strip().replace("\n", ", ")
+    missing_skills = extract_section(r"\*\*Missing Skills:\*\*(.*?)(?:###|\Z)", skills_analysis).replace("-", "").strip().replace("\n", ", ")
 
     total_score = edu_score + exp_score + skills_score + grammar_score + keyword_score
     total_score = max(total_score - domain_penalty, 0)
@@ -1788,7 +1782,6 @@ Use this context:
 
     updated_lang_analysis = f"{lang_analysis}<br><b>LLM Feedback Summary:</b> {grammar_feedback}"
     
-    # ✅ Append domain score and penalty summary to Final Thoughts
     final_thoughts += f"\n\n📉 Domain Similarity Score: {similarity_score:.2f}\n🔻 Domain Penalty Applied: {domain_penalty} / {MAX_DOMAIN_PENALTY}"
 
     return ats_result, {
@@ -1797,7 +1790,7 @@ Use this context:
         "Experience Score": exp_score,
         "Skills Score": skills_score,
         "Language Score": grammar_score,
-        "Keyword Score": keyword_score,
+        "Keyword Score": keyword_score,  # ✅ From LLM only
         "ATS Match %": total_score,
         "Formatted Score": formatted_score,
         "Education Analysis": edu_analysis,
@@ -1813,8 +1806,6 @@ Use this context:
         "Domain Penalty": domain_penalty,
         "Domain Similarity Score": similarity_score
     }
-
-
 
 # Setup Vector DB
 def setup_vectorstore(documents):
@@ -1917,7 +1908,7 @@ if uploaded_files and job_description:
                 st.warning(f"⚠️ Could not extract text from {uploaded_file.name}. Skipping.")
                 continue
 
-            all_text.extend(text)
+            all_text.append(" ".join(text))
             full_text = " ".join(text)
 
             # ✅ Bias detection
@@ -1928,7 +1919,7 @@ if uploaded_files and job_description:
                 full_text, replacement_mapping, user_location
             )
 
-            # ✅ ATS Evaluation (LLM-only version)
+            # ✅ LLM-based ATS Evaluation
             ats_result, ats_scores = ats_percentage_score(
                 resume_text=full_text,
                 job_description=job_description,
@@ -1947,7 +1938,7 @@ if uploaded_files and job_description:
             exp_score = ats_scores.get("Experience Score", 0)
             skills_score = ats_scores.get("Skills Score", 0)
             lang_score = ats_scores.get("Language Score", 0)
-            keyword_score = ats_scores.get("Keyword Score", 0)
+            keyword_score = ats_scores.get("Keyword Score", 0)  # ✅ LLM-based only
             formatted_score = ats_scores.get("Formatted Score", "N/A")
             fit_summary = ats_scores.get("Final Thoughts", "N/A")
             language_analysis_full = ats_scores.get("Language Analysis", "N/A")
@@ -1962,6 +1953,7 @@ if uploaded_files and job_description:
             bias_flag = "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair"
             ats_flag = "⚠️ Low ATS" if ats_score < 50 else "✅ Good ATS"
 
+            # 📊 ATS Chart
             ats_df = pd.DataFrame({
                 'Component': ['Education', 'Experience', 'Skills', 'Language', 'Keywords'],
                 'Score': [edu_score, exp_score, skills_score, lang_score, keyword_score]
@@ -1987,7 +1979,7 @@ if uploaded_files and job_description:
                 "Experience Score": exp_score,
                 "Skills Score": skills_score,
                 "Language Score": lang_score,
-                "Keyword Score": keyword_score,
+                "Keyword Score": keyword_score,  # ✅ Only LLM keyword score retained
                 "Education Analysis": ats_scores.get("Education Analysis", ""),
                 "Experience Analysis": ats_scores.get("Experience Analysis", ""),
                 "Skills Analysis": ats_scores.get("Skills Analysis", ""),
@@ -2008,7 +2000,7 @@ if uploaded_files and job_description:
                 "Domain": domain
             })
 
-            insert_candidate((
+            insert_candidate((  # 📥 Store in DB
                 uploaded_file.name,
                 candidate_name,
                 ats_score,
@@ -2024,6 +2016,7 @@ if uploaded_files and job_description:
             st.session_state.processed_files.add(uploaded_file.name)
 
     st.success("✅ All resumes processed!")
+
 
 
     # ✅ Optional vectorstore setup

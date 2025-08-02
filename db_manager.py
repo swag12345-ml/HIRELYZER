@@ -144,6 +144,59 @@ def get_daily_ats_stats():
 from collections import defaultdict
 
 from collections import defaultdict
+def get_domain_similarity(resume_domain, job_domain):
+    resume_domain = resume_domain.strip().lower()
+    job_domain = job_domain.strip().lower()
+
+    normalization = {
+        "frontend": "frontend development",
+        "backend": "backend development",
+        "fullstack": "full stack development",
+        "ui/ux": "ui/ux design",
+        "ux/ui": "ui/ux design",
+        "software developer": "software engineering",
+        "mobile developer": "mobile development",
+        "android developer": "mobile development",
+        "ios developer": "mobile development",
+        "ai": "ai/ml",
+        "machine learning": "ai/ml",
+        "ml": "ai/ml",
+        "cloud": "cloud & devops",
+        "cloud engineer": "cloud & devops",
+        "devops": "devops & infrastructure",
+        "cyber security": "cybersecurity",
+        "cybersecurity engineer": "cybersecurity",
+        "security analyst": "cybersecurity"
+    }
+
+    resume_domain = normalization.get(resume_domain, resume_domain)
+    job_domain = normalization.get(job_domain, job_domain)
+
+    similarity_map = {
+        ("full stack development", "frontend development"): 0.8,
+        ("full stack development", "backend development"): 0.8,
+        ("full stack development", "ui/ux design"): 0.7,
+        ("frontend development", "ui/ux design"): 0.9,
+        ("backend development", "frontend development"): 0.6,
+        ("data science", "ai/ml"): 0.9,
+        ("cloud engineering", "devops & infrastructure"): 0.85,
+        ("software engineering", "full stack development"): 0.75,
+        ("software engineering", "frontend development"): 0.6,
+        ("ai/ml", "data science"): 0.9,
+        ("software engineering", "general"): 0.5,
+        ("mobile development", "software engineering"): 0.6,
+        ("mobile development", "full stack development"): 0.65,
+        ("cybersecurity", "software engineering"): 0.5,
+        ("cybersecurity", "devops & infrastructure"): 0.65,
+        ("cloud & devops", "devops & infrastructure"): 0.8,
+        ("cloud & devops", "software engineering"): 0.5
+    }
+
+    if resume_domain == job_domain:
+        return 1.0
+
+    return similarity_map.get((resume_domain, job_domain)) or \
+           similarity_map.get((job_domain, resume_domain)) or 0.3
 
 def detect_domain_from_title_and_description(job_title, job_description):
     title = job_title.lower().strip()
@@ -290,11 +343,5 @@ def get_flagged_candidates(threshold: float = 0.6):
     ORDER BY bias_score DESC
     """
     return pd.read_sql_query(query, conn, params=(threshold,))
-
-
-
-
-
-
 
 

@@ -1598,7 +1598,7 @@ import pandas as pd
 import altair as alt
 import streamlit as st
 from llm_manager import call_llm
-from db_manager import detect_domain_from_title_and_description
+from db_manager import detect_domain_from_title_and_description, get_domain_similarity
 
 # ✅ Grammar evaluation using LLM
 def get_grammar_score_with_llm(text, max_score=5):
@@ -1625,7 +1625,6 @@ Feedback: <one-sentence grammar and tone summary>
     feedback = feedback_match.group(1).strip() if feedback_match else "No grammar feedback provided."
     return score, feedback
 
-
 # ✅ Keyword overlap score logic
 def keyword_overlap_score(resume_text, jd, weight=10):
     resume_words = set(re.findall(r'\w+', resume_text.lower()))
@@ -1633,7 +1632,6 @@ def keyword_overlap_score(resume_text, jd, weight=10):
     common = resume_words & jd_words
     ratio = len(common) / len(jd_words) if jd_words else 0
     return min(round(ratio * weight), weight)
-
 
 # ✅ Main ATS Evaluation Function
 def ats_percentage_score(
@@ -1647,24 +1645,21 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    # 🎯 Step 1: Grammar scoring
     grammar_score, grammar_feedback = get_grammar_score_with_llm(resume_text, max_score=lang_weight)
-
-    # 🎯 Step 2: Keyword overlap logic
     keyword_score = keyword_overlap_score(resume_text, job_description, weight=keyword_weight)
 
-    # 🎯 Step 3: Domain relevance penalty
     resume_domain = detect_domain_from_title_and_description("Unknown", resume_text)
     job_domain = detect_domain_from_title_and_description(job_title, job_description)
-    domain_penalty = 15 if resume_domain != job_domain else 0
+    similarity_score = get_domain_similarity(resume_domain, job_domain)
 
-    # Optional logic profile note
+    MAX_DOMAIN_PENALTY = 15
+    domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
+
     logic_score_note = (
         f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
         if logic_profile_score else ""
     )
 
-    # 🧠 Step 4: LLM Prompt with full section explanation
     prompt = f"""
 You are an AI-powered ATS evaluator. Assess the candidate's resume against the job description. Return a detailed, **section-by-section analysis**, with **scoring for each area**. Follow the format precisely below.
 
@@ -1688,7 +1683,7 @@ Use this context:
 - Grammar Feedback: {grammar_feedback}
 - Resume Domain: {resume_domain}
 - Job Domain: {job_domain}
-- Penalty if domains don't match: {domain_penalty}
+- Penalty if domains don't match: {domain_penalty} (Based on domain similarity score {similarity_score:.2f}, max penalty is {MAX_DOMAIN_PENALTY})
 
 ---
 
@@ -1755,10 +1750,8 @@ Use this context:
 {logic_score_note}
 """
 
-    # Step 5: LLM call
     ats_result = call_llm(prompt, session=st.session_state).strip()
 
-    # Step 6: Parse LLM output
     def extract_section(pattern, text, default="N/A"):
         match = re.search(pattern, text, re.DOTALL)
         return match.group(1).strip() if match else default
@@ -1782,7 +1775,6 @@ Use this context:
     exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)
     skills_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
 
-    # Step 7: Final scoring with domain penalty
     total_score = edu_score + exp_score + skills_score + grammar_score + keyword_score
     total_score = max(total_score - domain_penalty, 0)
     total_score = min(total_score, 100)
@@ -1795,8 +1787,10 @@ Use this context:
     )
 
     updated_lang_analysis = f"{lang_analysis}<br><b>LLM Feedback Summary:</b> {grammar_feedback}"
+    
+    # ✅ Append domain score and penalty summary to Final Thoughts
+    final_thoughts += f"\n\n📉 Domain Similarity Score: {similarity_score:.2f}\n🔻 Domain Penalty Applied: {domain_penalty} / {MAX_DOMAIN_PENALTY}"
 
-    # Step 8: Return all details
     return ats_result, {
         "Candidate Name": candidate_name,
         "Education Score": edu_score,
@@ -1816,12 +1810,9 @@ Use this context:
         "Missing Skills": missing_skills,
         "Resume Domain": resume_domain,
         "Job Domain": job_domain,
-        "Domain Penalty": domain_penalty
+        "Domain Penalty": domain_penalty,
+        "Domain Similarity Score": similarity_score
     }
-
-
-
-
 
 
 

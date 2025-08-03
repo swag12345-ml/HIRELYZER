@@ -30,13 +30,16 @@ conn.commit()
 # ✅ Insert a new candidate entry with local timestamp
 # ✅ Insert a new candidate entry with normalized domain
 def insert_candidate(data: tuple, job_title: str = "", job_description: str = ""):
+    from datetime import datetime
+    import pytz
+
     local_tz = pytz.timezone("Asia/Kolkata")
     local_time = datetime.now(local_tz).strftime("%Y-%m-%d %H:%M:%S")
 
-    # 🧠 Always detect domain from title and description
+    # ✅ Detect domain from job title + description
     detected_domain = detect_domain_from_title_and_description(job_title, job_description)
 
-    # Optional: final normalization (though detect already normalizes it)
+    # ✅ Normalize domain name
     normalization_map = {
         "AI / Machine Learning": "AI/ML",
         "Artificial Intelligence": "AI/ML",
@@ -53,10 +56,10 @@ def insert_candidate(data: tuple, job_title: str = "", job_description: str = ""
 
     normalized_domain = normalization_map.get(detected_domain, detected_domain)
 
-    # ⚠️ Do NOT use data[9] anymore — forcefully replace with detected domain
+    # ✅ Use only first 9 values and append domain
     normalized_data = data[:9] + (normalized_domain,)
 
-    # ✅ Insert into DB
+    # ✅ Insert into database
     cursor.execute("""
         INSERT INTO candidates (
             resume_name, candidate_name, ats_score, edu_score, exp_score,
@@ -64,6 +67,7 @@ def insert_candidate(data: tuple, job_title: str = "", job_description: str = ""
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, normalized_data + (local_time,))
     conn.commit()
+
 
 
 # 📊 Top domains by ATS
@@ -226,13 +230,14 @@ def get_domain_similarity(resume_domain, job_domain):
            similarity_map.get((job_domain, resume_domain)) or 0.3
 
 def detect_domain_from_title_and_description(job_title, job_description):
+    from collections import defaultdict
+
     title = job_title.lower().strip()
-    jd = job_description.lower().strip()
-    combined = f"{title} {jd}"
+    desc = job_description.lower().strip()
 
     domain_scores = defaultdict(int)
-    domain_match_counts = defaultdict(int)
 
+    # Domain weights
     WEIGHTS = {
         "Data Science": 3,
         "AI / Machine Learning": 3,
@@ -321,30 +326,30 @@ def detect_domain_from_title_and_description(job_title, job_description):
         ]
     }
 
-    # Step 1: Count matches and assign weighted scores
+    # Step 1: Count title & description matches separately, apply weights
     for domain, kws in keywords.items():
-        match_count = sum(1 for kw in kws if kw in combined)
-        domain_match_counts[domain] = match_count
-        domain_scores[domain] = match_count * WEIGHTS[domain]
+        title_hits = sum(1 for kw in kws if kw in title)
+        desc_hits = sum(1 for kw in kws if kw in desc)
+        weighted_score = (2 * title_hits + 1 * desc_hits) * WEIGHTS[domain]
+        domain_scores[domain] = weighted_score
 
-    # Step 2: Handle Full Stack more intelligently
-    frontend_hits = domain_match_counts["Frontend Development"]
-    backend_hits = domain_match_counts["Backend Development"]
-    fullstack_mentioned = "full stack" in combined or "fullstack" in combined
+    # Step 2: Handle Full Stack special case
+    frontend_hits = sum(1 for kw in keywords["Frontend Development"] if kw in title or kw in desc)
+    backend_hits = sum(1 for kw in keywords["Backend Development"] if kw in title or kw in desc)
+    fullstack_mentioned = "full stack" in title or "fullstack" in title or "full stack" in desc
 
     if fullstack_mentioned:
-        domain_scores["Full Stack Development"] += 5  # Boost if explicitly mentioned
+        domain_scores["Full Stack Development"] += 5
 
     if frontend_hits >= 5 and backend_hits >= 5:
-        domain_scores["Full Stack Development"] += 8  # Boost for dual presence
+        domain_scores["Full Stack Development"] += 8
 
-    # Avoid false full stack assignment when one side dominates
     if frontend_hits > backend_hits * 2 and not fullstack_mentioned:
         domain_scores["Full Stack Development"] = 0
     elif backend_hits > frontend_hits * 2 and not fullstack_mentioned:
         domain_scores["Full Stack Development"] = 0
 
-    # Step 3: Return highest scoring normalized domain
+    # Step 3: Pick highest scoring domain and normalize
     if domain_scores:
         top_domain = max(domain_scores, key=domain_scores.get)
         if domain_scores[top_domain] > 0:
@@ -358,7 +363,8 @@ def detect_domain_from_title_and_description(job_title, job_description):
             }
             return normalization_map.get(top_domain, top_domain)
 
-    return "General"
+    return "Software Engineering"
+
 
     
 # 🚩 Get all flagged candidates (bias_score > threshold)
@@ -370,12 +376,3 @@ def get_flagged_candidates(threshold: float = 0.6):
     ORDER BY bias_score DESC
     """
     return pd.read_sql_query(query, conn, params=(threshold,))
-
-
-
-
-
-
-
-
-

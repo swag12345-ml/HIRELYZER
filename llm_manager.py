@@ -1,4 +1,3 @@
-# llm_manager.py
 import hashlib, os, shelve
 from langchain_groq import ChatGroq
 
@@ -48,7 +47,10 @@ def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=
     if cached:
         return cached
 
-    user_key = session.get("user_groq_key", "").strip()
+    # ✅ Safe handling of user key
+    user_key = session.get("user_groq_key")
+    user_key = user_key.strip() if isinstance(user_key, str) else ""
+
     admin_keys = load_groq_api_keys()
     admin_keys = [k for k in admin_keys if k]
     last_error = None

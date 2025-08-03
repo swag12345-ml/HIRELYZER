@@ -11,13 +11,13 @@ def load_groq_api_keys():
         import streamlit as st
         secret_keys = st.secrets.get("GROQ_API_KEYS", "")
         if secret_keys:
-            return [k.strip() for k in secret_keys.split(",")]
+            return [k.strip() for k in secret_keys.split(",") if k.strip()]
     except Exception as e:
         print(f"⚠️ Could not load st.secrets: {e}")
 
     env_keys = os.getenv("GROQ_API_KEYS")
     if env_keys:
-        return [k.strip() for k in env_keys.split(",")]
+        return [k.strip() for k in env_keys.split(",") if k.strip()]
 
     raise ValueError("❌ No Groq API keys found. Use st.secrets or the GROQ_API_KEYS environment variable.")
 
@@ -49,12 +49,11 @@ def try_call_llm(prompt, api_key, model, temperature):
 
 # ---- Main LLM Call with Dual Key Logic ----
 def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=0):
-    # ✅ Cache check
     cached = get_cached_response(prompt)
     if cached:
         return cached
 
-    # ✅ Handle user key safely
+    # ✅ Normalize user key
     user_key = session.get("user_groq_key")
     user_key = user_key.strip() if isinstance(user_key, str) else ""
     last_error = None
@@ -62,10 +61,15 @@ def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=
     # ✅ Load and filter admin keys
     admin_keys = load_groq_api_keys()
     admin_keys = [k for k in admin_keys if k]
-    bad_keys = session.get("bad_keys", set())
-    admin_keys = [k for k in admin_keys if k not in bad_keys]
 
-    # 1️⃣ Try user key (first)
+    # Initialize bad_keys in session
+    if "bad_keys" not in session:
+        session["bad_keys"] = set()
+
+    # Filter out exhausted keys
+    admin_keys = [k for k in admin_keys if k not in session["bad_keys"]]
+
+    # 1️⃣ Try user key first
     if user_key:
         try:
             print("🔑 Trying user API key")
@@ -90,8 +94,6 @@ def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=
                 return response
             except Exception as e:
                 print(f"❌ Admin key {idx + 1} failed: {e}")
-                if "bad_keys" not in session:
-                    session["bad_keys"] = set()
                 session["bad_keys"].add(key)
                 last_error = e
 

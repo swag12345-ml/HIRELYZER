@@ -811,10 +811,8 @@ torch.backends.cudnn.benchmark = True
 working_dir = os.path.dirname(os.path.abspath(__file__))
 
 # ------------------- API Key & Caching Manager -------------------
-from llm_manager import get_next_groq_key  # <- NEW
+from llm_manager import call_llm
 
-# Select current API key from rotation
-groq_api_key = get_next_groq_key(st.session_state)
 
 # ------------------- Lazy Initialization -------------------
 @st.cache_resource(show_spinner=False)

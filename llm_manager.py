@@ -1,22 +1,19 @@
 # llm_manager.py
+# llm_manager.py
 import hashlib, os, shelve, json
 from langchain_groq import ChatGroq
+import streamlit as st  # ✅ Required for secrets on Streamlit Cloud
 
 # ---- CONFIG ----
 WORKING_DIR = os.path.dirname(os.path.abspath(__file__))
 CACHE_FILE = os.path.join(WORKING_DIR, "llm_cache.db")
-CONFIG_PATH = os.path.join(WORKING_DIR, "config.json")
 
-# ---- Load Admin API Keys from Environment or config.json ----
+# ---- Load Admin API Keys from Streamlit secrets ----
 def load_groq_api_keys():
-    env_keys = os.getenv("GROQ_API_KEYS")
-    if env_keys:
-        return env_keys.split(",")
-    if os.path.exists(CONFIG_PATH):
-        with open(CONFIG_PATH, "r") as f:
-            data = json.load(f)
-        return data.get("GROQ_API_KEYS", [])
-    raise ValueError("❌ No Groq API keys found.")
+    keys_string = st.secrets.get("GROQ_API_KEYS", "")
+    if not keys_string:
+        raise ValueError("❌ No Groq API keys found in st.secrets. Set GROQ_API_KEYS in secrets.")
+    return [k.strip() for k in keys_string.split(",") if k.strip()]
 
 # ---- Select API Key (prioritize based on admin vs user) ----
 def get_next_groq_key(session, tried_keys=None):
@@ -29,9 +26,8 @@ def get_next_groq_key(session, tried_keys=None):
 
     keys_to_try = []
 
-    # Admins try admin keys first
     if is_admin:
-        keys_to_try = load_groq_api_keys()
+        keys_to_try.extend(load_groq_api_keys())
         if user_key:
             keys_to_try.append(user_key)
     else:
@@ -39,8 +35,9 @@ def get_next_groq_key(session, tried_keys=None):
             keys_to_try.append(user_key)
         keys_to_try.extend(load_groq_api_keys())
 
-    # Filter already tried or bad keys
+    # Remove already tried or failed keys
     keys_to_try = [k for k in keys_to_try if k not in tried_keys and k not in bad_keys]
+
     if not keys_to_try:
         raise RuntimeError("❌ All Groq API keys have failed or been exhausted.")
 
@@ -49,7 +46,7 @@ def get_next_groq_key(session, tried_keys=None):
     session["key_index"] = idx + 1
     return key
 
-# ---- Caching ----
+# ---- Prompt Caching ----
 def hash_prompt(prompt: str) -> str:
     return hashlib.sha256(prompt.encode("utf-8")).hexdigest()
 
@@ -61,9 +58,8 @@ def set_cached_response(prompt: str, response: str):
     with shelve.open(CACHE_FILE) as db:
         db[hash_prompt(prompt)] = response
 
-# ---- Main LLM Call ----
+# ---- Main LLM Call with Retry ----
 def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=0):
-    # Check cache
     cached = get_cached_response(prompt)
     if cached:
         return cached
@@ -88,4 +84,5 @@ def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=
             session.setdefault("bad_keys", set()).add(key)
             last_error = e
 
+    # Final failure after all attempts
     raise RuntimeError(f"❌ All Groq API key attempts failed. Last error: {last_error}")

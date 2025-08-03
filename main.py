@@ -1653,21 +1653,17 @@ def ats_percentage_score(
     )
 
     prompt = f"""
-You are an AI-powered ATS evaluator. Assess the candidate's resume against the job description. Return a detailed, **section-by-section analysis**, with **scoring for each area**. Follow the format precisely below.
+You are an AI-powered ATS evaluator. Assess the candidate's resume against the job description. Return a detailed, **section-by-section analysis**, with **scoring for each area**. Follow the exact format below and only show what's found or relevant.
 
 🎯 Section Breakdown:
 
 1. **Candidate Name** — Extract from resume.
-2. **Education Analysis** — Evaluate degrees and field match vs job.
-3. **Experience Analysis** — Evaluate role match, years, seniority, project impact, relevance to JD.
-4. **Skills Analysis** — Check for:
-   - Technical tools
-   - Domain-specific expertise
-   - Soft skills
-   Provide 3 types of skills + list missing skills from JD.
-5. **Language Quality** — Use grammar score provided. Analyze tone, clarity, professionalism.
-6. **Keyword Analysis** — Evaluate presence of critical keywords from job description.
-7. **Final Thoughts** — Give holistic fit assessment (4–6 sentences).
+2. **Education Analysis** — Evaluate degree, major, and alignment with job.
+3. **Experience Analysis** — Analyze job titles, years of experience, domain relevance, seniority, and impact.
+4. **Skills Analysis** — Categorize matched and missing skills accurately. No hallucination.
+5. **Language Quality** — Use grammar score provided. Analyze tone and clarity.
+6. **Keyword Analysis** — Show **only** matched and **actual missing** keywords from JD.
+7. **Final Thoughts** — Give a holistic fit review (4–6 lines), considering scores and domain match.
 
 Use this context:
 
@@ -1675,7 +1671,7 @@ Use this context:
 - Grammar Feedback: {grammar_feedback}
 - Resume Domain: {resume_domain}
 - Job Domain: {job_domain}
-- Penalty if domains don't match: {domain_penalty} (Based on domain similarity score {similarity_score:.2f}, max penalty is {MAX_DOMAIN_PENALTY})
+- Domain Similarity Score: {similarity_score:.2f} → Penalty: {domain_penalty} / {MAX_DOMAIN_PENALTY}
 
 ---
 
@@ -1684,54 +1680,58 @@ Use this context:
 
 ### 🏫 Education Analysis
 **Score:** <0–{edu_weight}> / {edu_weight}  
-**Degree Match:** <Discuss degree level, specialization, and how it matches the job.>
+**Details:** <Evaluate degree type, major, and match to job requirements.>
 
 ### 💼 Experience Analysis
 **Score:** <0–{exp_weight}> / {exp_weight}  
-**Experience Details:** <Talk about seniority, project relevance, domain fit, and leadership.>
+**Details:** <Describe job roles, total years, impact, and JD relevance.>
 
 ### 🛠 Skills Analysis
 **Score:** <0–{skills_weight}> / {skills_weight}  
-**Current Skills:**
-- Technical: <list>
-- Soft Skills: <list>
-- Domain-Specific: <list>
 
-**Skill Proficiency:**  
-<Detailed explanation of proficiency levels, strengths, and areas needing examples.>
+**Matched Skills:**
+- Technical: <Only those from resume & JD intersection>
+- Domain-Specific: <Only relevant to the job>
+- Soft Skills: <Found in resume>
 
 **Missing Skills:**
-- Skill 1
-- Skill 2
+<Only list those in JD not found in resume>
+- Skill 1  
+- Skill 2  
 - Skill 3
+
+**Skill Proficiency:**  
+<Assess how well the skills are demonstrated. Mention specific tools or projects if present.>
 
 ### 🗣 Language Quality Analysis
 **Score:** {grammar_score} / {lang_weight}  
-**Grammar & Tone:** <LLM-based comment on clarity, fluency, tone>  
-**Feedback Summary:** **{grammar_feedback}**
+**Grammar & Tone Feedback:**  
+{grammar_feedback}  
+<Evaluate clarity, tone, and fluency using LLM-based observation.>
 
 ### 🔑 Keyword Analysis
-**Score:** <0–{keyword_weight}> / {keyword_weight}  
-**Missing Keywords:**
-- Keyword1
-- Keyword2
-- Keyword3
+**Score:** <0–{keyword_weight}> / {keyword_weight}>  
 
-**Keyword Analysis:**  
-<Which key terms were present/missing and how critical they are.>
+**Missing Keywords:**  
+<Only from JD not in resume>  
+- Keyword1  
+- Keyword2  
+- Keyword3  
+
+**Keyword Use Analysis:**  
+<Evaluate presence of important terms from JD, don't invent extras.>
 
 ### ✅ Final Thoughts
-<Summarize domain fit, core strengths, red flags, and whether this resume deserves further review.>
+<Provide a balanced, ATS-style review. Mention domain alignment, strong/weak sections, and whether the resume should proceed. Keep it objective, specific, and concise.>
 
 ---
 
 **Instructions:**
 - Use markdown formatting.
 - Follow the section titles and bold formatting strictly.
-- Keep tone professional and ATS-focused.
-- Use the provided grammar score and domain info as context.
-
----
+- Do not hallucinate skills or keywords. Only show what’s matched or truly missing.
+- Keep tone formal and ATS-evaluator-like.
+"""
 
 📄 Job Description:
 \"\"\"{job_description}\"\"\"

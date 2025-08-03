@@ -4062,71 +4062,47 @@ with tab5:
     st.markdown("### 📊 Domain Distribution by Count")
 
     # ✅ Cached data loading
-    @st.cache_data
-    def load_domain_distribution():
-        df = get_domain_distribution()
-        if not df.empty:
-            total = df["count"].sum()
-            df["percent"] = (df["count"] / total) * 100
-            df = df.sort_values(by="count", ascending=False).reset_index(drop=True)
-        return df
+    # 🔄 Uncached live data fetch
+def load_domain_distribution():
+    df = get_domain_distribution()
+    if not df.empty:
+        total = df["count"].sum()
+        df["percent"] = (df["count"] / total) * 100
+        df = df.sort_values(by="count", ascending=False).reset_index(drop=True)
+    return df
 
-    # Load data
-    df_domain_dist = load_domain_distribution()
+# Load updated domain distribution
+df_domain_dist = load_domain_distribution()
 
-    if not df_domain_dist.empty:
-        # 🔘 Radio to toggle between chart views
-        chart_type = st.radio("📊 Select View:", ["📈 Percentage View", "📉 Count View"], horizontal=True)
+if not df_domain_dist.empty:
+    chart_type = st.radio("📊 Select View:", ["📈 Percentage View", "📉 Count View"], horizontal=True)
 
-        if chart_type == "📈 Percentage View":
-            fig_percent, ax_percent = plt.subplots(figsize=(9, 5))
-            bars_percent = ax_percent.bar(df_domain_dist["domain"], df_domain_dist["percent"], color="#33B5E5")
+    if chart_type == "📈 Percentage View":
+        fig_percent, ax_percent = plt.subplots(figsize=(9, 5))
+        ax_percent.bar(df_domain_dist["domain"], df_domain_dist["percent"], color="#33B5E5")
 
-            for bar, pct in zip(bars_percent, df_domain_dist["percent"]):
-                height = bar.get_height()
-                ax_percent.text(
-                    bar.get_x() + bar.get_width() / 2,
-                    height + 0.5,
-                    f"{pct:.1f}%",
-                    ha='center',
-                    va='bottom',
-                    fontsize=10
-                )
+        ax_percent.set_title("Resume Distribution by Domain (%)", fontsize=14, fontweight='bold')
+        ax_percent.set_ylabel("Percentage (%)", fontsize=12)
+        ax_percent.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=10)
+        ax_percent.set_ylim(0, df_domain_dist["percent"].max() * 1.25)
+        ax_percent.grid(axis='y', linestyle='--', alpha=0.4)
 
-            ax_percent.set_title("Resume Distribution by Domain (%)", fontsize=14, fontweight='bold')
-            ax_percent.set_ylabel("Percentage (%)", fontsize=12)
-            ax_percent.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=10)
-            ax_percent.set_ylim(0, df_domain_dist["percent"].max() * 1.25)
-            ax_percent.grid(axis='y', linestyle='--', alpha=0.4)
+        st.pyplot(fig_percent)
 
-            st.pyplot(fig_percent)
+    elif chart_type == "📉 Count View":
+        fig_count, ax_count = plt.subplots(figsize=(9, 5))
+        ax_count.bar(df_domain_dist["domain"], df_domain_dist["count"], color="#ff9933")
 
-        elif chart_type == "📉 Count View":
-            fig_count, ax_count = plt.subplots(figsize=(9, 5))
-            bars_count = ax_count.bar(df_domain_dist["domain"], df_domain_dist["count"], color="#ff9933")
+        ax_count.set_title("Resume Count by Domain", fontsize=14, fontweight='bold')
+        ax_count.set_ylabel("Resume Count", fontsize=12)
+        ax_count.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=10)
+        ax_count.set_ylim(0, df_domain_dist["count"].max() * 1.25)
+        ax_count.grid(axis='y', linestyle='--', alpha=0.4)
 
-            for bar, count in zip(bars_count, df_domain_dist["count"]):
-                height = bar.get_height()
-                ax_count.text(
-                    bar.get_x() + bar.get_width() / 2,
-                    height + 1,
-                    f"{int(count)}",
-                    ha='center',
-                    va='bottom',
-                    fontsize=10,
-                    color="black"
-                )
+        st.pyplot(fig_count)
+else:
+    st.info("No domain data found.")
 
-            ax_count.set_title("Resume Count by Domain", fontsize=14, fontweight='bold')
-            ax_count.set_ylabel("Resume Count", fontsize=12)
-            ax_count.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=10)
-            ax_count.set_ylim(0, df_domain_dist["count"].max() * 1.25)
-            ax_count.grid(axis='y', linestyle='--', alpha=0.4)
-
-            st.pyplot(fig_count)
-
-    else:
-        st.info("No domain data found.")
 
     st.markdown("### 📊 Average ATS Score by Domain")
     df_bar = get_average_ats_by_domain()

@@ -229,15 +229,30 @@ def get_domain_similarity(resume_domain, job_domain):
     return similarity_map.get((resume_domain, job_domain)) or \
            similarity_map.get((job_domain, resume_domain)) or 0.3
 
-def detect_domain_from_title_and_description(job_title, job_description):
-    from collections import defaultdict
+from collections import defaultdict
 
+def detect_domain_from_title_and_description(job_title, job_description):
     title = job_title.lower().strip()
     desc = job_description.lower().strip()
 
+    # 🔄 Normalize synonyms and spelling variants
+    replacements = {
+        "cyber security": "cybersecurity",
+        "ai engineer": "machine learning",
+        "ml engineer": "machine learning",
+        "software developer": "software engineer",
+        "frontend developer": "frontend",
+        "backend developer": "backend",
+        "fullstack developer": "full stack",
+        "devops engineer": "devops",
+        "cloud engineer": "cloud"
+    }
+    for old, new in replacements.items():
+        title = title.replace(old, new)
+        desc = desc.replace(old, new)
+
     domain_scores = defaultdict(int)
 
-    # Domain weights
     WEIGHTS = {
         "Data Science": 3,
         "AI / Machine Learning": 3,
@@ -253,93 +268,107 @@ def detect_domain_from_title_and_description(job_title, job_description):
     }
 
     keywords = {
-        "Data Science": [
-            "data analyst", "data scientist", "data science", "eda", "pandas", "numpy",
-            "data analysis", "statistics", "data visualization", "matplotlib", "seaborn",
-            "power bi", "tableau", "looker", "kpi", "sql", "excel", "dashboards",
-            "insights", "hypothesis testing", "a/b testing", "business intelligence", "data wrangling"
-        ],
-        "AI / Machine Learning": [
-            "machine learning", "ml engineer", "deep learning", "neural network",
-            "nlp", "computer vision", "ai engineer", "scikit-learn", "tensorflow", "pytorch",
-            "llm", "huggingface", "xgboost", "lightgbm", "classification", "regression",
-            "reinforcement learning", "transfer learning", "model training", "bert", "gpt"
-        ],
-        "UI/UX Design": [
-            "ui", "ux", "figma", "designer", "user interface", "user experience",
-            "adobe xd", "sketch", "wireframe", "prototyping", "interaction design",
-            "user research", "usability", "design system", "visual design", "accessibility",
-            "human-centered design", "affinity diagram"
-        ],
-        "Mobile Development": [
-            "android", "ios", "flutter", "kotlin", "swift", "mobile app", "react native",
-            "mobile application", "play store", "app store", "firebase", "mobile sdk",
-            "xcode", "android studio", "cross-platform", "native mobile"
-        ],
-        "Frontend Development": [
-            "frontend", "html", "css", "javascript", "react", "angular", "vue",
-            "typescript", "next.js", "webpack", "bootstrap", "tailwind", "sass", "es6",
-            "responsive design", "web accessibility", "dom", "jquery", "redux"
-        ],
-        "Backend Development": [
-            "backend", "node.js", "django", "flask", "express", "api development",
-            "sql", "nosql", "server-side", "mysql", "postgresql", "mongodb", "rest api",
-            "graphql", "java", "spring boot", "authentication", "authorization", "mvc",
-            "business logic", "orm", "database schema"
-        ],
-        "Full Stack Development": [
-           "full stack", "fullstack", "mern", "mean", "mevn", "lamp", "jamstack",
-           "frontend and backend", "end-to-end development", "full stack developer",
-            "api integration", "rest api", "graphql", "react + node", "react.js + express",
-            "monolith", "microservices", "serverless architecture", "integrated app",
-            "web application", "cross-functional development", "component-based architecture",
-            "database design", "middleware", "mvc", "mvvm", "authentication", "authorization",
-            "session management", "cloud deployment", "responsive ui", "performance tuning",
-            "state management", "redux", "context api", "axios", "fetch api",
-            "typescript", "es6", "html5", "css3", "javascript", "react", "next.js", "angular",
-            "node.js", "express.js", "spring boot", "java", "python", "django", "flask",
-            "mysql", "postgresql", "mongodb", "sqlite", "nosql", "sql", "orm", "prisma",
-            "docker", "ci/cd", "git", "github", "bitbucket", "testing", "jest", "mocha",
-            "unit testing", "integration testing", "agile", "scrum", "devops"
-        ],
-        "Cybersecurity": [
-            "cybersecurity", "security analyst", "penetration testing", "ethical hacking",
-            "owasp", "vulnerability", "threat analysis", "infosec", "red team", "blue team",
-            "incident response", "firewall", "ids", "ips", "malware", "encryption",
-            "cyber threat", "security operations", "siem", "zero-day", "cyber attack"
-        ],
-        "Cloud Engineering": [
-            "cloud", "aws", "azure", "gcp", "cloud engineer", "cloud computing",
-            "cloud infrastructure", "cloud security", "s3", "ec2", "cloud formation",
-            "load balancer", "auto scaling", "cloud storage", "cloud native", "cloud migration"
-        ],
-        "DevOps / Infrastructure": [
-            "devops", "docker", "kubernetes", "ci/cd", "jenkins", "ansible",
-            "infrastructure as code", "terraform", "monitoring", "prometheus", "grafana",
-            "deployment", "automation", "pipeline", "build and release", "scripting",
-            "bash", "shell script", "site reliability"
-        ],
-        "General Software Engineering": [
-            "software engineer", "web developer", "developer", "programmer",
-            "object oriented", "design patterns", "agile", "scrum", "git", "version control",
-            "unit testing", "integration testing", "debugging", "code review", "system design"
-        ]
-    }
+    "Data Science": [
+        "data analyst", "data scientist", "data science", "eda", "pandas", "numpy",
+        "data analysis", "statistics", "data visualization", "matplotlib", "seaborn",
+        "power bi", "tableau", "looker", "kpi", "sql", "excel", "dashboards",
+        "insights", "hypothesis testing", "a/b testing", "business intelligence", "data wrangling",
+        "feature engineering", "data storytelling", "exploratory analysis", "data mining",
+        "statistical modeling", "time series", "forecasting", "predictive analytics", "analytics engineer"
+    ],
+    "AI / Machine Learning": [
+        "machine learning", "ml engineer", "deep learning", "neural network",
+        "nlp", "computer vision", "ai engineer", "scikit-learn", "tensorflow", "pytorch",
+        "llm", "huggingface", "xgboost", "lightgbm", "classification", "regression",
+        "reinforcement learning", "transfer learning", "model training", "bert", "gpt",
+        "yolo", "transformer", "autoencoder", "ai models", "fine-tuning", "zero-shot", "one-shot",
+        "mistral", "llama", "openai", "langchain", "vector embeddings", "prompt engineering"
+    ],
+    "UI/UX Design": [
+        "ui", "ux", "figma", "designer", "user interface", "user experience",
+        "adobe xd", "sketch", "wireframe", "prototyping", "interaction design",
+        "user research", "usability", "design system", "visual design", "accessibility",
+        "human-centered design", "affinity diagram", "journey mapping", "heuristic evaluation",
+        "persona", "responsive design", "mobile-first", "ux audit", "design tokens", "design thinking"
+    ],
+    "Mobile Development": [
+        "android", "ios", "flutter", "kotlin", "swift", "mobile app", "react native",
+        "mobile application", "play store", "app store", "firebase", "mobile sdk",
+        "xcode", "android studio", "cross-platform", "native mobile", "push notifications",
+        "in-app purchases", "mobile ui", "mobile ux", "apk", "ipa", "expo", "capacitor", "cordova"
+    ],
+    "Frontend Development": [
+        "frontend", "html", "css", "javascript", "react", "angular", "vue",
+        "typescript", "next.js", "webpack", "bootstrap", "tailwind", "sass", "es6",
+        "responsive design", "web accessibility", "dom", "jquery", "redux",
+        "vite", "zustand", "framer motion", "storybook", "eslint", "vitepress", "pwa",
+        "single page application", "csr", "ssr", "hydration", "component-based ui"
+    ],
+    "Backend Development": [
+        "backend", "node.js", "django", "flask", "express", "api development",
+        "sql", "nosql", "server-side", "mysql", "postgresql", "mongodb", "rest api",
+        "graphql", "java", "spring boot", "authentication", "authorization", "mvc",
+        "business logic", "orm", "database schema", "asp.net", "laravel", "go", "fastapi",
+        "nest.js", "microservices", "websockets", "rabbitmq", "message broker", "cron jobs"
+    ],
+    "Full Stack Development": [
+        "full stack", "fullstack", "mern", "mean", "mevn", "lamp", "jamstack",
+        "frontend and backend", "end-to-end development", "full stack developer",
+        "api integration", "rest api", "graphql", "react + node", "react.js + express",
+        "monolith", "microservices", "serverless architecture", "integrated app",
+        "web application", "cross-functional development", "component-based architecture",
+        "database design", "middleware", "mvc", "mvvm", "authentication", "authorization",
+        "session management", "cloud deployment", "responsive ui", "performance tuning",
+        "state management", "redux", "context api", "axios", "fetch api",
+        "typescript", "es6", "html5", "css3", "javascript", "react", "next.js", "angular",
+        "node.js", "express.js", "spring boot", "java", "python", "django", "flask",
+        "mysql", "postgresql", "mongodb", "sqlite", "nosql", "sql", "orm", "prisma",
+        "docker", "ci/cd", "git", "github", "bitbucket", "testing", "jest", "mocha",
+        "unit testing", "integration testing", "agile", "scrum", "devops", "kubernetes"
+    ],
+    "Cybersecurity": [
+        "cybersecurity", "security analyst", "penetration testing", "ethical hacking",
+        "owasp", "vulnerability", "threat analysis", "infosec", "red team", "blue team",
+        "incident response", "firewall", "ids", "ips", "malware", "encryption",
+        "cyber threat", "security operations", "siem", "zero-day", "cyber attack",
+        "kali linux", "burp suite", "nmap", "wireshark", "cve", "forensics",
+        "security audit", "information security", "compliance", "ransomware"
+    ],
+    "Cloud Engineering": [
+        "cloud", "aws", "azure", "gcp", "cloud engineer", "cloud computing",
+        "cloud infrastructure", "cloud security", "s3", "ec2", "cloud formation",
+        "load balancer", "auto scaling", "cloud storage", "cloud native", "cloud migration",
+        "eks", "aks", "terraform", "cloudwatch", "cloudtrail", "iam", "rds", "elb"
+    ],
+    "DevOps / Infrastructure": [
+        "devops", "docker", "kubernetes", "ci/cd", "jenkins", "ansible",
+        "infrastructure as code", "terraform", "monitoring", "prometheus", "grafana",
+        "deployment", "automation", "pipeline", "build and release", "scripting",
+        "bash", "shell script", "site reliability", "sre", "argocd", "helm", "fluxcd",
+        "aws cli", "linux administration", "log aggregation", "observability", "splunk"
+    ],
+    "General Software Engineering": [
+        "software engineer", "web developer", "developer", "programmer",
+        "object oriented", "design patterns", "agile", "scrum", "git", "version control",
+        "unit testing", "integration testing", "debugging", "code review", "system design",
+        "tdd", "bdd", "pair programming", "refactoring", "uml", "dev environment", "ide"
+    ]
+}
 
-    # Step 1: Count title & description matches separately, apply weights
+
+    # Step 1: Compute weighted keyword matches (3x for title, 1x for desc)
     for domain, kws in keywords.items():
         title_hits = sum(1 for kw in kws if kw in title)
         desc_hits = sum(1 for kw in kws if kw in desc)
-        weighted_score = (2 * title_hits + 1 * desc_hits) * WEIGHTS[domain]
-        domain_scores[domain] = weighted_score
+        domain_scores[domain] = (3 * title_hits + 1 * desc_hits) * WEIGHTS[domain]
 
-    # Step 2: Handle Full Stack special case
+    # Step 2: Special handling for Full Stack
     frontend_hits = sum(1 for kw in keywords["Frontend Development"] if kw in title or kw in desc)
     backend_hits = sum(1 for kw in keywords["Backend Development"] if kw in title or kw in desc)
     fullstack_mentioned = "full stack" in title or "fullstack" in title or "full stack" in desc
 
     if fullstack_mentioned:
-        domain_scores["Full Stack Development"] += 5
+        domain_scores["Full Stack Development"] += 10
 
     if frontend_hits >= 5 and backend_hits >= 5:
         domain_scores["Full Stack Development"] += 8
@@ -349,7 +378,13 @@ def detect_domain_from_title_and_description(job_title, job_description):
     elif backend_hits > frontend_hits * 2 and not fullstack_mentioned:
         domain_scores["Full Stack Development"] = 0
 
-    # Step 3: Pick highest scoring domain and normalize
+    # Step 3: Filter short/noisy descriptions (to reduce false boosts)
+    if len(desc.split()) < 5:
+        for domain in domain_scores:
+            desc_hits = sum(1 for kw in keywords[domain] if kw in desc)
+            domain_scores[domain] -= desc_hits * WEIGHTS[domain]
+
+    # Step 4: Choose top domain and normalize
     if domain_scores:
         top_domain = max(domain_scores, key=domain_scores.get)
         if domain_scores[top_domain] > 0:
@@ -366,6 +401,7 @@ def detect_domain_from_title_and_description(job_title, job_description):
     return "Software Engineering"
 
 
+
     
 # 🚩 Get all flagged candidates (bias_score > threshold)
 def get_flagged_candidates(threshold: float = 0.6):
@@ -376,3 +412,10 @@ def get_flagged_candidates(threshold: float = 0.6):
     ORDER BY bias_score DESC
     """
     return pd.read_sql_query(query, conn, params=(threshold,))
+
+
+
+
+
+
+

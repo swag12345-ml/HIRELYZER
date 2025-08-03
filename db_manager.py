@@ -29,11 +29,14 @@ conn.commit()
 
 # ✅ Insert a new candidate entry with local timestamp
 # ✅ Insert a new candidate entry with normalized domain
-def insert_candidate(data: tuple):
+def insert_candidate(data: tuple, job_title: str = "", job_description: str = ""):
     local_tz = pytz.timezone("Asia/Kolkata")
     local_time = datetime.now(local_tz).strftime("%Y-%m-%d %H:%M:%S")
 
-    # Normalization mapping
+    # 🔍 Detect domain from title and description (instead of trusting data[9])
+    detected_domain = detect_domain_from_title_and_description(job_title, job_description)
+
+    # Normalize domain label (e.g., AI / Machine Learning → AI/ML)
     normalization_map = {
         "AI / Machine Learning": "AI/ML",
         "Artificial Intelligence": "AI/ML",
@@ -48,12 +51,12 @@ def insert_candidate(data: tuple):
         "Security Analyst": "Cybersecurity"
     }
 
-    # Extract and normalize domain
-    domain = data[9].strip() if len(data) > 9 else "General"
-    normalized_domain = normalization_map.get(domain, domain)
+    normalized_domain = normalization_map.get(detected_domain, detected_domain)
 
-    # Rebuild data with normalized domain
+    # Build final data tuple with normalized domain
     normalized_data = data[:9] + (normalized_domain,)
+
+    # Insert into database
     cursor.execute("""
         INSERT INTO candidates (
             resume_name, candidate_name, ats_score, edu_score, exp_score,
@@ -61,6 +64,7 @@ def insert_candidate(data: tuple):
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, normalized_data + (local_time,))
     conn.commit()
+
 
 # 📊 Top domains by ATS
 def get_top_domains_by_score(limit: int = 5) -> list:
@@ -366,6 +370,7 @@ def get_flagged_candidates(threshold: float = 0.6):
     ORDER BY bias_score DESC
     """
     return pd.read_sql_query(query, conn, params=(threshold,))
+
 
 
 

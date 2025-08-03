@@ -1947,7 +1947,7 @@ if uploaded_files and job_description:
             exp_score = ats_scores.get("Experience Score", 0)
             skills_score = ats_scores.get("Skills Score", 0)
             lang_score = ats_scores.get("Language Score", 0)
-            keyword_score = ats_scores.get("Keyword Score", 0)  # ✅ LLM-based only
+            keyword_score = ats_scores.get("Keyword Score", 0)
             formatted_score = ats_scores.get("Formatted Score", "N/A")
             fit_summary = ats_scores.get("Final Thoughts", "N/A")
             language_analysis_full = ats_scores.get("Language Analysis", "N/A")
@@ -1988,7 +1988,7 @@ if uploaded_files and job_description:
                 "Experience Score": exp_score,
                 "Skills Score": skills_score,
                 "Language Score": lang_score,
-                "Keyword Score": keyword_score,  # ✅ Only LLM keyword score retained
+                "Keyword Score": keyword_score,
                 "Education Analysis": ats_scores.get("Education Analysis", ""),
                 "Experience Analysis": ats_scores.get("Experience Analysis", ""),
                 "Skills Analysis": ats_scores.get("Skills Analysis", ""),
@@ -2009,18 +2009,21 @@ if uploaded_files and job_description:
                 "Domain": domain
             })
 
-            insert_candidate((  # 📥 Store in DB
-                uploaded_file.name,
-                candidate_name,
-                ats_score,
-                edu_score,
-                exp_score,
-                skills_score,
-                lang_score,
-                keyword_score,
-                bias_score,
-                domain
-            ))
+            insert_candidate(
+                (
+                    uploaded_file.name,
+                    candidate_name,
+                    ats_score,
+                    edu_score,
+                    exp_score,
+                    skills_score,
+                    lang_score,
+                    keyword_score,
+                    bias_score
+                ),
+                job_title=job_title,
+                job_description=job_description
+            )
 
             st.session_state.processed_files.add(uploaded_file.name)
 
@@ -4196,5 +4199,6 @@ if user_input:
 
     # Save interaction to memory
     st.session_state.memory.save_context({"input": user_input}, {"output": answer})
+
 
 

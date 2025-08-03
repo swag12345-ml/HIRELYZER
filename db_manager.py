@@ -27,38 +27,39 @@ CREATE TABLE IF NOT EXISTS candidates (
 """)
 conn.commit()
 
-# ✅ Normalize domain values
-def normalize_domain(domain: str) -> str:
-    mapping = {
+# ✅ Insert a new candidate entry with local timestamp
+# ✅ Insert a new candidate entry with normalized domain
+def insert_candidate(data: tuple):
+    local_tz = pytz.timezone("Asia/Kolkata")
+    local_time = datetime.now(local_tz).strftime("%Y-%m-%d %H:%M:%S")
+
+    # Normalization mapping
+    normalization_map = {
         "AI / Machine Learning": "AI/ML",
         "Artificial Intelligence": "AI/ML",
         "Machine Learning": "AI/ML",
         "DevOps / Infrastructure": "DevOps & Infrastructure",
         "Cloud Engineering": "Cloud & DevOps",
-        "General Software Engineering": "Software Engineering"
+        "General Software Engineering": "Software Engineering",
+        "Software Developer": "Software Engineering",
+        "Cloud Engineer": "Cloud & DevOps",
+        "Cyber Security": "Cybersecurity",
+        "Cybersecurity Engineer": "Cybersecurity",
+        "Security Analyst": "Cybersecurity"
     }
-    return mapping.get(domain.strip(), domain.strip())
 
-# ✅ Insert a new candidate entry with normalized domain
-def insert_candidate(data: tuple):
-    # Extract domain and normalize
-    domain = data[9]
-    normalized_domain = normalize_domain(domain)
+    # Extract and normalize domain
+    domain = data[9].strip() if len(data) > 9 else "General"
+    normalized_domain = normalization_map.get(domain, domain)
 
-    # Replace original domain with normalized version
-    updated_data = data[:9] + (data[9],) + (normalize_domain(data[9]),)
-
-    # Add timestamp
-    local_tz = pytz.timezone("Asia/Kolkata")
-    local_time = datetime.now(local_tz).strftime("%Y-%m-%d %H:%M:%S")
-
-    # Final insert
+    # Rebuild data with normalized domain
+    normalized_data = data[:9] + (normalized_domain,)
     cursor.execute("""
         INSERT INTO candidates (
             resume_name, candidate_name, ats_score, edu_score, exp_score,
             skills_score, lang_score, keyword_score, bias_score, domain, timestamp
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, data[:9] + (normalized_domain, local_time))
+    """, normalized_data + (local_time,))
     conn.commit()
 
 # 📊 Top domains by ATS
@@ -365,6 +366,10 @@ def get_flagged_candidates(threshold: float = 0.6):
     ORDER BY bias_score DESC
     """
     return pd.read_sql_query(query, conn, params=(threshold,))
+
+
+
+
 
 
 

@@ -27,13 +27,20 @@ def hash_prompt(prompt: str) -> str:
 
 def get_cached_response(prompt: str):
     key = hash_prompt(prompt)
-    with shelve.open(CACHE_FILE) as db:
-        return db.get(key)
+    try:
+        with shelve.open(CACHE_FILE) as db:
+            return db.get(key)
+    except Exception as e:
+        print(f"⚠️ Cache read error: {e}")
+        return None
 
 def set_cached_response(prompt: str, response: str):
     key = hash_prompt(prompt)
-    with shelve.open(CACHE_FILE) as db:
-        db[key] = response
+    try:
+        with shelve.open(CACHE_FILE) as db:
+            db[key] = response
+    except Exception as e:
+        print(f"⚠️ Cache write error: {e}")
 
 # ---- Internal: Call LLM with one key ----
 def try_call_llm(prompt, api_key, model, temperature):
@@ -47,26 +54,29 @@ def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=
     if cached:
         return cached
 
-    # ✅ Safe handling of user key
+    # ✅ Handle user key safely
     user_key = session.get("user_groq_key")
     user_key = user_key.strip() if isinstance(user_key, str) else ""
+    last_error = None
 
+    # ✅ Load and filter admin keys
     admin_keys = load_groq_api_keys()
     admin_keys = [k for k in admin_keys if k]
-    last_error = None
+    bad_keys = session.get("bad_keys", set())
+    admin_keys = [k for k in admin_keys if k not in bad_keys]
 
     # 1️⃣ Try user key (first)
     if user_key:
         try:
-            print("🔑 Trying user API key (1st attempt)")
+            print("🔑 Trying user API key")
             response = try_call_llm(prompt, user_key, model, temperature)
             set_cached_response(prompt, response)
             return response
         except Exception as e:
-            print(f"❌ User API key failed (1st): {e}")
+            print(f"❌ User API key failed: {e}")
             last_error = e
 
-    # 2️⃣ Try rotating admin keys
+    # 2️⃣ Rotate through admin keys
     if admin_keys:
         start_idx = session.get("key_index", 0)
         for i in range(len(admin_keys)):
@@ -80,18 +90,10 @@ def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=
                 return response
             except Exception as e:
                 print(f"❌ Admin key {idx + 1} failed: {e}")
+                if "bad_keys" not in session:
+                    session["bad_keys"] = set()
+                session["bad_keys"].add(key)
                 last_error = e
-
-    # 3️⃣ Retry user key again
-    if user_key:
-        try:
-            print("🔁 Retrying user API key (2nd attempt)")
-            response = try_call_llm(prompt, user_key, model, temperature)
-            set_cached_response(prompt, response)
-            return response
-        except Exception as e:
-            print(f"❌ User API key failed (2nd): {e}")
-            last_error = e
 
     # ❌ Final failure
     raise RuntimeError(f"❌ All Groq API keys failed. Last error: {last_error}")

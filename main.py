@@ -1698,7 +1698,7 @@ Use this context:
 - Domain-Specific: <list>
 
 **Skill Proficiency:**  
-<Explain how effectively these skills are demonstrated with examples or achievements.>
+<Detailed explanation of proficiency levels, strengths, and areas needing examples.>
 
 **Missing Skills:**
 - Skill 1

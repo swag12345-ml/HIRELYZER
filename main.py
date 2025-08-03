@@ -4061,60 +4061,50 @@ with tab5:
 
     st.markdown("### 📊 Domain Distribution by Count")
 
-    # ✅ Cached data loading
-    # 🔄 Uncached live data fetch
-def load_domain_distribution():
-    df = get_domain_distribution()
-    if not df.empty:
-        total = df["count"].sum()
-        df["percent"] = (df["count"] / total) * 100
-        df = df.sort_values(by="count", ascending=False).reset_index(drop=True)
-    return df
+    def load_domain_distribution():
+        df = get_domain_distribution()
+        if not df.empty:
+            total = df["count"].sum()
+            df["percent"] = (df["count"] / total) * 100
+            df = df.sort_values(by="count", ascending=False).reset_index(drop=True)
+        return df
 
-# Load updated domain distribution
-df_domain_dist = load_domain_distribution()
+    df_domain_dist = load_domain_distribution()
 
-if not df_domain_dist.empty:
-    chart_type = st.radio("📊 Select View:", ["📈 Percentage View", "📉 Count View"], horizontal=True)
+    if not df_domain_dist.empty:
+        chart_type = st.radio("📊 Select View:", ["📈 Percentage View", "📉 Count View"], horizontal=True)
 
-    if chart_type == "📈 Percentage View":
-        fig_percent, ax_percent = plt.subplots(figsize=(9, 5))
-        ax_percent.bar(df_domain_dist["domain"], df_domain_dist["percent"], color="#33B5E5")
+        if chart_type == "📈 Percentage View":
+            fig_percent, ax_percent = plt.subplots(figsize=(9, 5))
+            ax_percent.bar(df_domain_dist["domain"], df_domain_dist["percent"], color="#33B5E5")
+            ax_percent.set_title("Resume Distribution by Domain (%)", fontsize=14, fontweight='bold')
+            ax_percent.set_ylabel("Percentage (%)", fontsize=12)
+            ax_percent.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=10)
+            ax_percent.set_ylim(0, df_domain_dist["percent"].max() * 1.25)
+            ax_percent.grid(axis='y', linestyle='--', alpha=0.4)
+            st.pyplot(fig_percent)
 
-        ax_percent.set_title("Resume Distribution by Domain (%)", fontsize=14, fontweight='bold')
-        ax_percent.set_ylabel("Percentage (%)", fontsize=12)
-        ax_percent.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=10)
-        ax_percent.set_ylim(0, df_domain_dist["percent"].max() * 1.25)
-        ax_percent.grid(axis='y', linestyle='--', alpha=0.4)
-
-        st.pyplot(fig_percent)
-
-    elif chart_type == "📉 Count View":
-        fig_count, ax_count = plt.subplots(figsize=(9, 5))
-        ax_count.bar(df_domain_dist["domain"], df_domain_dist["count"], color="#ff9933")
-
-        ax_count.set_title("Resume Count by Domain", fontsize=14, fontweight='bold')
-        ax_count.set_ylabel("Resume Count", fontsize=12)
-        ax_count.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=10)
-        ax_count.set_ylim(0, df_domain_dist["count"].max() * 1.25)
-        ax_count.grid(axis='y', linestyle='--', alpha=0.4)
-
-        st.pyplot(fig_count)
-else:
-    st.info("No domain data found.")
-
+        elif chart_type == "📉 Count View":
+            fig_count, ax_count = plt.subplots(figsize=(9, 5))
+            ax_count.bar(df_domain_dist["domain"], df_domain_dist["count"], color="#ff9933")
+            ax_count.set_title("Resume Count by Domain", fontsize=14, fontweight='bold')
+            ax_count.set_ylabel("Resume Count", fontsize=12)
+            ax_count.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=10)
+            ax_count.set_ylim(0, df_domain_dist["count"].max() * 1.25)
+            ax_count.grid(axis='y', linestyle='--', alpha=0.4)
+            st.pyplot(fig_count)
+    else:
+        st.info("No domain data found.")
 
     st.markdown("### 📊 Average ATS Score by Domain")
     df_bar = get_average_ats_by_domain()
     if not df_bar.empty:
         fig2, ax2 = plt.subplots(figsize=(6, 4))
         bars = ax2.bar(df_bar["domain"], df_bar["avg_ats_score"], color="#3399ff")
-
         for i, bar in enumerate(bars):
             height = bar.get_height()
             ax2.text(bar.get_x() + bar.get_width() / 2, height + 0.5, f"{height:.1f}",
                      ha='center', va='bottom', fontsize=8)
-
         ax2.set_ylabel("Avg ATS Score")
         ax2.set_title("ATS by Domain")
         max_score = df_bar["avg_ats_score"].max()
@@ -4174,6 +4164,7 @@ else:
     else:
         st.success("✅ No flagged candidates.")
 
+
 if "memory" in st.session_state:
     history = st.session_state.memory.load_memory_variables({}).get("chat_history", [])
     for msg in history:
@@ -4205,3 +4196,5 @@ if user_input:
 
     # Save interaction to memory
     st.session_state.memory.save_context({"input": user_input}, {"output": answer})
+
+

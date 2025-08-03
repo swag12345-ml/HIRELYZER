@@ -811,30 +811,10 @@ torch.backends.cudnn.benchmark = True
 working_dir = os.path.dirname(os.path.abspath(__file__))
 
 # ------------------- API Key & Caching Manager -------------------
-from llm_manager import get_next_groq_key, load_groq_api_keys
+from llm_manager import get_next_groq_key  # <- NEW
 
-# ✅ Only run if user is authenticated
-if st.session_state.get("authenticated", False):
-    # Optional: Debug info for troubleshooting
-    st.write("✅ Logged in as:", st.session_state.get("username"))
-    st.write("🔐 User key:", st.session_state.get("user_groq_key"))
-    try:
-        admin_keys = load_groq_api_keys()
-        st.write("🔑 Admin keys loaded:", admin_keys)
-    except Exception as err:
-        st.write("❌ Could not load admin keys:", err)
-
-    # Try to get the current usable API key
-    try:
-        groq_api_key = get_next_groq_key(st.session_state)
-        st.session_state["groq_api_key"] = groq_api_key  # Optional: store it
-        st.success("✅ API key loaded and ready.")
-    except Exception as e:
-        st.error("❌ No valid Groq API key available. Please check your saved key or contact admin.")
-        st.stop()
-else:
-    groq_api_key = None
-
+# Select current API key from rotation
+groq_api_key = get_next_groq_key(st.session_state)
 
 # ------------------- Lazy Initialization -------------------
 @st.cache_resource(show_spinner=False)

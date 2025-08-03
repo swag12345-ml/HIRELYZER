@@ -1824,20 +1824,25 @@ def setup_vectorstore(documents):
     return FAISS.from_texts(doc_chunks, embeddings)
 
 # Create Conversational Chain
+from llm_manager import load_groq_api_keys
+
 def create_chain(vectorstore):
-    if "memory" not in st.session_state:
-        st.session_state.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+    # 🔁 Get a rotated admin key
+    keys = load_groq_api_keys()
+    index = st.session_state.get("key_index", 0)
+    groq_api_key = keys[index % len(keys)]
+    st.session_state["key_index"] = index + 1
 
+    # ✅ Create the ChatGroq object
     llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0, groq_api_key=groq_api_key)
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
 
-    return ConversationalRetrievalChain.from_llm(
+    # ✅ Build the chain
+    chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
-        retriever=retriever,
-        chain_type="stuff",
-        memory=st.session_state.memory,
-        verbose=False
+        retriever=vectorstore.as_retriever(),
+        return_source_documents=True
     )
+    return chain
 
 # App Title
 st.title("🦙 Chat with LEXIBOT - LLAMA 3.3 (Bias Detection + QA + GPU)")

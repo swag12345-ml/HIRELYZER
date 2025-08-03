@@ -33,10 +33,10 @@ def insert_candidate(data: tuple, job_title: str = "", job_description: str = ""
     local_tz = pytz.timezone("Asia/Kolkata")
     local_time = datetime.now(local_tz).strftime("%Y-%m-%d %H:%M:%S")
 
-    # 🔍 Detect domain from title and description (instead of trusting data[9])
+    # 🧠 Always detect domain from title and description
     detected_domain = detect_domain_from_title_and_description(job_title, job_description)
 
-    # Normalize domain label (e.g., AI / Machine Learning → AI/ML)
+    # Optional: final normalization (though detect already normalizes it)
     normalization_map = {
         "AI / Machine Learning": "AI/ML",
         "Artificial Intelligence": "AI/ML",
@@ -53,10 +53,10 @@ def insert_candidate(data: tuple, job_title: str = "", job_description: str = ""
 
     normalized_domain = normalization_map.get(detected_domain, detected_domain)
 
-    # Build final data tuple with normalized domain
+    # ⚠️ Do NOT use data[9] anymore — forcefully replace with detected domain
     normalized_data = data[:9] + (normalized_domain,)
 
-    # Insert into database
+    # ✅ Insert into DB
     cursor.execute("""
         INSERT INTO candidates (
             resume_name, candidate_name, ats_score, edu_score, exp_score,
@@ -370,6 +370,7 @@ def get_flagged_candidates(threshold: float = 0.6):
     ORDER BY bias_score DESC
     """
     return pd.read_sql_query(query, conn, params=(threshold,))
+
 
 
 

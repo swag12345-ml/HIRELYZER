@@ -27,16 +27,38 @@ CREATE TABLE IF NOT EXISTS candidates (
 """)
 conn.commit()
 
-# ✅ Insert a new candidate entry with local timestamp
+# ✅ Normalize domain values
+def normalize_domain(domain: str) -> str:
+    mapping = {
+        "AI / Machine Learning": "AI/ML",
+        "Artificial Intelligence": "AI/ML",
+        "Machine Learning": "AI/ML",
+        "DevOps / Infrastructure": "DevOps & Infrastructure",
+        "Cloud Engineering": "Cloud & DevOps",
+        "General Software Engineering": "Software Engineering"
+    }
+    return mapping.get(domain.strip(), domain.strip())
+
+# ✅ Insert a new candidate entry with normalized domain
 def insert_candidate(data: tuple):
+    # Extract domain and normalize
+    domain = data[9]
+    normalized_domain = normalize_domain(domain)
+
+    # Replace original domain with normalized version
+    updated_data = data[:9] + (data[9],) + (normalize_domain(data[9]),)
+
+    # Add timestamp
     local_tz = pytz.timezone("Asia/Kolkata")
     local_time = datetime.now(local_tz).strftime("%Y-%m-%d %H:%M:%S")
+
+    # Final insert
     cursor.execute("""
         INSERT INTO candidates (
             resume_name, candidate_name, ats_score, edu_score, exp_score,
             skills_score, lang_score, keyword_score, bias_score, domain, timestamp
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, data + (local_time,))
+    """, data[:9] + (normalized_domain, local_time))
     conn.commit()
 
 # 📊 Top domains by ATS
@@ -343,5 +365,6 @@ def get_flagged_candidates(threshold: float = 0.6):
     ORDER BY bias_score DESC
     """
     return pd.read_sql_query(query, conn, params=(threshold,))
+
 
 

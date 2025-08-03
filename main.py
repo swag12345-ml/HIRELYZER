@@ -1664,9 +1664,14 @@ You are an AI-powered ATS evaluator. Assess the candidate's resume against the j
    - Technical tools
    - Domain-specific expertise
    - Soft skills
-   Provide 3 types of skills + list missing skills from JD.
+
+✅ **Important: Provide missing skills in bullet points. Identify skills from the job description that are NOT found in the resume. Be specific and list at least 3 if applicable.**
+
 5. **Language Quality** — Use grammar score provided. Analyze tone, clarity, professionalism.
-6. **Keyword Analysis** — Evaluate presence of critical keywords from job description.
+6. **Keyword Analysis** — Evaluate presence of important keywords.
+
+✅ **Important: Provide missing keywords from the job description as a bullet list. Only include words/phrases present in the JD but absent in the resume. Give at least 3 if applicable.**
+
 7. **Final Thoughts** — Give holistic fit assessment (4–6 sentences).
 
 Use this context:
@@ -1700,10 +1705,11 @@ Use this context:
 **Skill Proficiency:**  
 <Detailed explanation of proficiency levels, strengths, and areas needing examples.>
 
-**Missing Skills:**
-- Skill 1
-- Skill 2
-- Skill 3
+**Missing Skills:**  
+- Skill 1  
+- Skill 2  
+- Skill 3  
+*(List based only on skills in job description but absent in resume)*
 
 ### 🗣 Language Quality Analysis
 **Score:** {grammar_score} / {lang_weight}  
@@ -1712,13 +1718,14 @@ Use this context:
 
 ### 🔑 Keyword Analysis
 **Score:** <0–{keyword_weight}> / {keyword_weight}  
-**Missing Keywords:**
-- Keyword1
-- Keyword2
-- Keyword3
+**Missing Keywords:**  
+- Keyword1  
+- Keyword2  
+- Keyword3  
+*(Extract keywords from JD not found in resume. Include role-related, domain-specific, and tool-based terms.)*
 
 **Keyword Analysis:**  
-<Which key terms were present/missing and how critical they are.>
+<Discuss importance of missing/present keywords and how they affect job match.>
 
 ### ✅ Final Thoughts
 <Summarize domain fit, core strengths, red flags, and whether this resume deserves further review.>
@@ -1730,14 +1737,16 @@ Use this context:
 - Follow the section titles and bold formatting strictly.
 - Keep tone professional and ATS-focused.
 - Use the provided grammar score and domain info as context.
+- Force output of missing skills and keywords using bullet lists.
+- Avoid generalizations — rely only on specific terms from JD and resume.
 
 ---
 
 📄 Job Description:
-\"\"\"{job_description}\"\"\"
+\"\"\"{job_description}\"\"\"  
 
 📄 Resume:
-\"\"\"{resume_text}\"\"\"
+\"\"\"{resume_text}\"\"\"  
 
 {logic_score_note}
 """

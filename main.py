@@ -1598,30 +1598,40 @@ import streamlit as st
 from llm_manager import call_llm
 from db_manager import detect_domain_from_title_and_description, get_domain_similarity
 
-# ✅ Grammar evaluation using LLM
+# ✅ Grammar evaluation using LLM with actionable feedback
 def get_grammar_score_with_llm(text, max_score=5):
     grammar_prompt = f"""
-You are a grammar evaluator AI. Analyze the following resume text and:
+You are a grammar and tone evaluator AI for resumes.
 
-1. Give a grammar score out of {max_score} based on grammar quality, sentence structure, clarity, and tone.
-2. Return a 1-sentence summary of the grammar quality.
-3. Keep the score an integer between 1 and {max_score}.
+Analyze the following resume text and return:
 
-Output format strictly:
+1. A grammar score out of {max_score} based on grammar quality, sentence structure, clarity, and tone.
+2. A one-sentence summary of overall grammar and tone quality.
+3. Three specific bullet-point suggestions identifying areas to improve clarity, grammar, or tone.
+
+Strict output format:
 Score: <number>
-Feedback: <one-sentence grammar and tone summary>
+Summary: <brief comment>
+Suggestions:
+- <suggestion 1>
+- <suggestion 2>
+- <suggestion 3>
 
 ---
 {text}
 ---
 """
     response = call_llm(grammar_prompt, session=st.session_state).strip()
+
     score_match = re.search(r"Score:\s*(\d+)", response)
-    feedback_match = re.search(r"Feedback:\s*(.+)", response)
+    summary_match = re.search(r"Summary:\s*(.+)", response)
+    suggestions = re.findall(r"- (.+)", response)
 
     score = int(score_match.group(1)) if score_match else 3
-    feedback = feedback_match.group(1).strip() if feedback_match else "No grammar feedback provided."
-    return score, feedback
+    summary = summary_match.group(1).strip() if summary_match else "No summary provided."
+    suggestions = suggestions[:3] if suggestions else ["No improvement suggestions provided."]
+
+    return score, summary, suggestions
 
 
 # ✅ Main ATS Evaluation Function
@@ -1636,7 +1646,7 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    grammar_score, grammar_feedback = get_grammar_score_with_llm(resume_text, max_score=lang_weight)
+    grammar_score, grammar_summary, grammar_suggestions = get_grammar_score_with_llm(resume_text, max_score=lang_weight)
 
     resume_domain = detect_domain_from_title_and_description("Unknown", resume_text)
     job_domain = detect_domain_from_title_and_description(job_title, job_description)
@@ -1649,6 +1659,8 @@ def ats_percentage_score(
         f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
         if logic_profile_score else ""
     )
+
+    formatted_grammar_suggestions = "\n".join(f"- {s}" for s in grammar_suggestions)
 
     prompt = f"""
 You are an AI-powered ATS evaluator. Assess the candidate's resume against the job description. Return a detailed, **section-by-section analysis**, with **scoring for each area**. Follow the format precisely below.
@@ -1675,7 +1687,7 @@ You are an AI-powered ATS evaluator. Assess the candidate's resume against the j
 Use this context:
 
 - Grammar Score: {grammar_score} / {lang_weight}
-- Grammar Feedback: {grammar_feedback}
+- Grammar Feedback: {grammar_summary}
 - Resume Domain: {resume_domain}
 - Job Domain: {job_domain}
 - Penalty if domains don't match: {domain_penalty} (Based on domain similarity score {similarity_score:.2f}, max penalty is {MAX_DOMAIN_PENALTY})
@@ -1707,12 +1719,13 @@ Use this context:
 - Skill 1  
 - Skill 2  
 - Skill 3  
-*(List based only on skills in job description but absent in resume)*
 
 ### 🗣 Language Quality Analysis
 **Score:** {grammar_score} / {lang_weight}  
-**Grammar & Tone:** <LLM-based comment on clarity, fluency, tone>  
-**Feedback Summary:** **{grammar_feedback}**
+**Grammar & Tone Summary:** {grammar_summary}  
+
+**Suggestions to Improve:**  
+{formatted_grammar_suggestions}
 
 ### 🔑 Keyword Analysis
 **Score:** <0–{keyword_weight}> / {keyword_weight}  
@@ -1720,35 +1733,23 @@ Use this context:
 - Keyword1  
 - Keyword2  
 - Keyword3  
-*(Extract keywords from JD not found in resume. Include role-related, domain-specific, and tool-based terms.)*
 
 **Keyword Analysis:**  
-<Discuss importance of missing/present keywords and how they affect job match.>
+<Discuss keyword match impact.>
 
 ### ✅ Final Thoughts
-<Summarize domain fit, core strengths, red flags, and whether this resume deserves further review.>
-
----
-
-**Instructions:**
-- Use markdown formatting.
-- Follow the section titles and bold formatting strictly.
-- Keep tone professional and ATS-focused.
-- Use the provided grammar score and domain info as context.
-- Force output of missing skills and keywords using bullet lists.
-- Avoid generalizations — rely only on specific terms from JD and resume.
+<Final conclusion about fit.>
 
 ---
 
 📄 Job Description:
-\"\"\"{job_description}\"\"\"  
+\"\"\"{job_description}\"\"\"
 
 📄 Resume:
-\"\"\"{resume_text}\"\"\"  
+\"\"\"{resume_text}\"\"\"
 
 {logic_score_note}
 """
-
     ats_result = call_llm(prompt, session=st.session_state).strip()
 
     def extract_section(pattern, text, default="N/A"):
@@ -1759,15 +1760,15 @@ Use this context:
         match = re.search(pattern, text)
         return int(match.group(1)) if match else default
 
-    candidate_name = extract_section(r"### 🏷️ Candidate Name(.*?)###", ats_result, "Not Found")
-    edu_analysis = extract_section(r"### 🏫 Education Analysis(.*?)###", ats_result)
-    exp_analysis = extract_section(r"### 💼 Experience Analysis(.*?)###", ats_result)
-    skills_analysis = extract_section(r"### 🛠 Skills Analysis(.*?)###", ats_result)
-    lang_analysis = extract_section(r"### 🗣 Language Quality Analysis(.*?)###", ats_result)
-    keyword_analysis = extract_section(r"### 🔑 Keyword Analysis(.*?)###", ats_result)
+    # ✅ Updated patterns — robust against emoji and heading issues
+    candidate_name = extract_section(r"### 🏷️ Candidate Name(.*?)### 🏫 Education Analysis", ats_result, "Not Found")
+    edu_analysis = extract_section(r"### 🏫 Education Analysis(.*?)### 💼 Experience Analysis", ats_result)
+    exp_analysis = extract_section(r"### 💼 Experience Analysis(.*?)### 🛠 Skills Analysis", ats_result)
+    skills_analysis = extract_section(r"### 🛠 Skills Analysis(.*?)### 🗣 Language Quality Analysis", ats_result)
+    lang_analysis = extract_section(r"### 🗣 Language Quality Analysis(.*?)### 🔑 Keyword Analysis", ats_result)
+    keyword_analysis = extract_section(r"### 🔑 Keyword Analysis(.*?)### ✅ Final Thoughts", ats_result)
     final_thoughts = extract_section(r"### ✅ Final Thoughts(.*)", ats_result)
 
-    # ✅ Extract all scores from LLM sections
     edu_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis)
     exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)
     skills_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
@@ -1787,8 +1788,6 @@ Use this context:
         "❌ Poor"
     )
 
-    updated_lang_analysis = f"{lang_analysis}<br><b>LLM Feedback Summary:</b> {grammar_feedback}"
-    
     final_thoughts += f"\n\n📉 Domain Similarity Score: {similarity_score:.2f}\n🔻 Domain Penalty Applied: {domain_penalty} / {MAX_DOMAIN_PENALTY}"
 
     return ats_result, {
@@ -1797,13 +1796,13 @@ Use this context:
         "Experience Score": exp_score,
         "Skills Score": skills_score,
         "Language Score": grammar_score,
-        "Keyword Score": keyword_score,  # ✅ From LLM only
+        "Keyword Score": keyword_score,
         "ATS Match %": total_score,
         "Formatted Score": formatted_score,
         "Education Analysis": edu_analysis,
         "Experience Analysis": exp_analysis,
         "Skills Analysis": skills_analysis,
-        "Language Analysis": updated_lang_analysis,
+        "Language Analysis": lang_analysis,
         "Keyword Analysis": keyword_analysis,
         "Final Thoughts": final_thoughts,
         "Missing Keywords": missing_keywords,
@@ -1813,6 +1812,8 @@ Use this context:
         "Domain Penalty": domain_penalty,
         "Domain Similarity Score": similarity_score
     }
+
+
 
 # Setup Vector DB
 def setup_vectorstore(documents):
@@ -1904,34 +1905,26 @@ resume_data = st.session_state.resume_data
 if uploaded_files and job_description:
     with st.spinner("✨ Creating magic for you... Hold on a minute!"):
         all_text = []
-
         for uploaded_file in uploaded_files:
             if uploaded_file.name in st.session_state.processed_files:
                 continue
 
-            # ✅ Save uploaded file
             file_path = os.path.join(working_dir, uploaded_file.name)
             with open(file_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
 
-            # ✅ Extract text from PDF
             text = extract_text_from_pdf(file_path)
             if not text:
                 st.warning(f"⚠️ Could not extract text from {uploaded_file.name}. Skipping.")
                 continue
 
-            all_text.append(" ".join(text))
             full_text = " ".join(text)
-
-            # ✅ Bias detection
             bias_score, masc_count, fem_count, detected_masc, detected_fem = detect_bias(full_text)
 
-            # ✅ Rewrite and highlight gender-biased words
             highlighted_text, rewritten_text, _, _, _, _ = rewrite_and_highlight(
                 full_text, replacement_mapping, user_location
             )
 
-            # ✅ LLM-based ATS Evaluation
             ats_result, ats_scores = ats_percentage_score(
                 resume_text=full_text,
                 job_description=job_description,
@@ -1943,7 +1936,7 @@ if uploaded_files and job_description:
                 keyword_weight=keyword_weight
             )
 
-            # ✅ Extract structured ATS values
+            # 🌟 Extract core scores
             candidate_name = ats_scores.get("Candidate Name", "Not Found")
             ats_score = ats_scores.get("ATS Match %", 0)
             edu_score = ats_scores.get("Education Score", 0)
@@ -1953,19 +1946,41 @@ if uploaded_files and job_description:
             keyword_score = ats_scores.get("Keyword Score", 0)
             formatted_score = ats_scores.get("Formatted Score", "N/A")
             fit_summary = ats_scores.get("Final Thoughts", "N/A")
-            language_analysis_full = ats_scores.get("Language Analysis", "N/A")
 
-            missing_keywords_raw = ats_scores.get("Missing Keywords", "N/A")
-            missing_skills_raw = ats_scores.get("Missing Skills", "N/A")
-            missing_keywords = [kw.strip() for kw in missing_keywords_raw.split(",") if kw.strip()] if missing_keywords_raw != "N/A" else []
-            missing_skills = [sk.strip() for sk in missing_skills_raw.split(",") if sk.strip()] if missing_skills_raw != "N/A" else []
+            # 🧠 Language Feedback Handling (Robust)
+            language_feedback_raw = ats_scores.get("Language Analysis", {})
 
+            language_score_summary = "No summary provided."
+            language_analysis_full = "No detailed feedback available."
+
+            if isinstance(language_feedback_raw, dict):
+                language_score_summary = language_feedback_raw.get("summary", "No summary provided.")
+                language_suggestions = language_feedback_raw.get("suggestions", [])
+                if isinstance(language_suggestions, list) and language_suggestions:
+                    language_analysis_full = "\n".join(f"• {s}" for s in language_suggestions)
+                elif isinstance(language_suggestions, str) and language_suggestions.strip():
+                    language_analysis_full = f"• {language_suggestions.strip()}"
+                language_score_value = language_feedback_raw.get("score", lang_score)
+                lang_score = language_score_value
+            elif isinstance(language_feedback_raw, str):
+                language_analysis_full = language_feedback_raw.strip()
+                if language_analysis_full:
+                    language_score_summary = language_feedback_raw[:100] + "..." if len(language_feedback_raw) > 100 else language_feedback_raw
+
+            # 🔍 Missing Keywords / Skills
+            missing_keywords_raw = ats_scores.get("Missing Keywords", "")
+            missing_skills_raw = ats_scores.get("Missing Skills", "")
+            missing_keywords = [kw.strip() for kw in missing_keywords_raw.split(",") if kw.strip()]
+            missing_skills = [sk.strip() for sk in missing_skills_raw.split(",") if sk.strip()]
+
+            # 🌐 Domain Detection
             domain = detect_domain_from_title_and_description(job_title, job_description)
 
+            # 🚦 Bias & ATS Flags
             bias_flag = "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair"
             ats_flag = "⚠️ Low ATS" if ats_score < 50 else "✅ Good ATS"
 
-            # 📊 ATS Chart
+            # 📊 Chart
             ats_df = pd.DataFrame({
                 'Component': ['Education', 'Experience', 'Skills', 'Language', 'Keywords'],
                 'Score': [edu_score, exp_score, skills_score, lang_score, keyword_score]
@@ -1981,6 +1996,7 @@ if uploaded_files and job_description:
                 height=300
             )
 
+            # 🧾 Save resume report to session
             st.session_state.resume_data.append({
                 "Resume Name": uploaded_file.name,
                 "Candidate Name": candidate_name,
@@ -1992,15 +2008,16 @@ if uploaded_files and job_description:
                 "Skills Score": skills_score,
                 "Language Score": lang_score,
                 "Keyword Score": keyword_score,
-                "Education Analysis": ats_scores.get("Education Analysis", ""),
-                "Experience Analysis": ats_scores.get("Experience Analysis", ""),
-                "Skills Analysis": ats_scores.get("Skills Analysis", ""),
+                "Education Analysis": ats_scores.get("Education Analysis", "No analysis."),
+                "Experience Analysis": ats_scores.get("Experience Analysis", "No analysis."),
+                "Skills Analysis": ats_scores.get("Skills Analysis", "No analysis."),
+                "Language Summary": language_score_summary,
                 "Language Analysis": language_analysis_full,
-                "Keyword Analysis": ats_scores.get("Keyword Analysis", ""),
+                "Keyword Analysis": ats_scores.get("Keyword Analysis", "No analysis."),
                 "Final Thoughts": fit_summary,
                 "Missing Keywords": missing_keywords,
                 "Missing Skills": missing_skills,
-                "Bias Score (0 = Fair, 1 = Biased)": bias_score,
+                "Bias Score (0 = Fair, 1 = Biased)": round(bias_score, 2),
                 "Bias Status": bias_flag,
                 "Masculine Words": masc_count,
                 "Feminine Words": fem_count,
@@ -2012,6 +2029,7 @@ if uploaded_files and job_description:
                 "Domain": domain
             })
 
+            # 💾 DB Insert
             insert_candidate(
                 (
                     uploaded_file.name,
@@ -2028,9 +2046,15 @@ if uploaded_files and job_description:
                 job_description=job_description
             )
 
+            # ✅ Mark as processed
             st.session_state.processed_files.add(uploaded_file.name)
 
     st.success("✅ All resumes processed!")
+
+
+
+
+
 
 
 
@@ -2070,21 +2094,34 @@ def generate_resume_report_html(resume):
     ats_report_html = resume.get("ATS Report", "").replace("\n", "<br/>")
 
     def style_analysis(analysis):
+        if not analysis or str(analysis).strip().lower() in ["n/a", "none", "no detailed feedback available."]:
+            return "<i>No detailed feedback available.</i>"
         if "**Score:**" in analysis:
-            parts = analysis.split("**Score:**")
-            rest = parts[1].split("**", 1)
-            score_text = rest[0].strip()
-            remaining = rest[1].strip() if len(rest) > 1 else ""
-            return f"<p><b>Score:</b> {score_text}</p><p>{remaining}</p>"
-        else:
-            return f"<p>{analysis}</p>"
+            try:
+                parts = analysis.split("**Score:**", 1)
+                score_text = parts[1].split("**", 1)[0].strip()
+                suggestions_raw = parts[1].split("**", 1)[1] if "**" in parts[1] else ""
+                suggestion_points = suggestions_raw.split("Suggestion")[1:] if "Suggestion" in suggestions_raw else [suggestions_raw]
+                formatted = "".join(f"<li>Suggestion{point.strip()}</li>" for point in suggestion_points if point.strip())
+                return f"<p><b>Score:</b> {score_text}</p><ul>{formatted or '<li>No suggestions provided.</li>'}</ul>"
+            except Exception as e:
+                return f"<i>Could not parse score and suggestions.</i><br/><pre>{analysis}</pre>"
+        return f"<p>{analysis}</p>"
 
-    edu_analysis = style_analysis(resume.get("Education Analysis", "N/A").replace("\n", "<br/>"))
-    exp_analysis = style_analysis(resume.get("Experience Analysis", "N/A").replace("\n", "<br/>"))
-    skills_analysis = style_analysis(resume.get("Skills Analysis", "N/A").replace("\n", "<br/>"))
-    lang_analysis = style_analysis(resume.get("Language Analysis", "N/A").replace("\n", "<br/>"))
-    keyword_analysis = style_analysis(resume.get("Keyword Analysis", "N/A").replace("\n", "<br/>"))
-    final_thoughts = resume.get("Final Thoughts", "N/A").replace("\n", "<br/>")
+    # Analysis sections
+    edu_analysis = style_analysis(resume.get("Education Analysis", "").replace("\n", "<br/>"))
+    exp_analysis = style_analysis(resume.get("Experience Analysis", "").replace("\n", "<br/>"))
+    skills_analysis = style_analysis(resume.get("Skills Analysis", "").replace("\n", "<br/>"))
+    keyword_analysis = style_analysis(resume.get("Keyword Analysis", "").replace("\n", "<br/>"))
+
+    # Handle Language Summary + Language Suggestions
+    lang_summary_raw = resume.get("Language Summary", "").strip()
+    lang_analysis_raw = resume.get("Language Analysis", "").strip()
+
+    lang_summary = lang_summary_raw.replace("\n", "<br/>") if lang_summary_raw else "<i>No summary provided.</i>"
+    lang_analysis = style_analysis(lang_analysis_raw.replace("\n", "<br/>"))
+
+    final_thoughts = resume.get("Final Thoughts", "").replace("\n", "<br/>") or "<i>No remarks available.</i>"
 
     ats_match = resume.get('ATS Match %', 'N/A')
     edu_score = resume.get('Education Score', 'N/A')
@@ -2159,7 +2196,10 @@ def generate_resume_report_html(resume):
     <div class="section-title">Skills Analysis</div>
     <div class="box">{skills_analysis}</div>
 
-    <div class="section-title">Language Analysis</div>
+    <div class="section-title">Language Summary</div>
+    <div class="box">{lang_summary}</div>
+
+    <div class="section-title">Language Suggestions & Score</div>
     <div class="box">{lang_analysis}</div>
 
     <div class="section-title">Keyword Analysis</div>
@@ -2190,32 +2230,37 @@ def generate_resume_report_html(resume):
 
 
 
+
+
 # === TAB 1: Dashboard ===
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import altair as alt
+import streamlit as st
+
 with tab1:
     resume_data = st.session_state.get("resume_data", [])
 
     if resume_data:
-        # ✅ Calculate total counts safely
         total_masc = sum(len(r.get("Detected Masculine Words", [])) for r in resume_data)
         total_fem = sum(len(r.get("Detected Feminine Words", [])) for r in resume_data)
         avg_bias = round(np.mean([r.get("Bias Score (0 = Fair, 1 = Biased)", 0) for r in resume_data]), 2)
         total_resumes = len(resume_data)
 
-        st.markdown("### 📊 Summary Statistics")
+        st.markdown("## 📈 Resume Upload Summary")
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric("📄 Resumes Uploaded", total_resumes)
+            st.metric("📄 Total Resumes", total_resumes)
         with col2:
-            st.metric("🔎 Avg. Bias Score", avg_bias)
+            st.metric("⚖ Avg. Bias Score", avg_bias)
         with col3:
-            st.metric("🔵 Total Masculine Words", total_masc)
+            st.metric("🔵 Masculine Words", total_masc)
         with col4:
-            st.metric("🔴 Total Feminine Words", total_fem)
+            st.metric("🔴 Feminine Words", total_fem)
 
-        st.markdown("### 🗂️ Resumes Overview")
+        st.markdown("## 🧾 Resume Score Overview")
         df = pd.DataFrame(resume_data)
-
-        # ✅ Add calculated count columns safely
         df["Masculine Words Count"] = df["Detected Masculine Words"].apply(lambda x: len(x) if isinstance(x, list) else 0)
         df["Feminine Words Count"] = df["Detected Feminine Words"].apply(lambda x: len(x) if isinstance(x, list) else 0)
 
@@ -2224,16 +2269,16 @@ with tab1:
             "Experience Score", "Skills Score", "Language Score", "Keyword Score",
             "Bias Score (0 = Fair, 1 = Biased)", "Masculine Words Count", "Feminine Words Count"
         ]
-
         st.dataframe(df[overview_cols], use_container_width=True)
 
-        st.markdown("### 📊 Visual Analysis")
-        chart_tab1, chart_tab2 = st.tabs(["📉 Bias Score Chart", "⚖ Gender-Coded Words"])
+        st.markdown("## 📊 Visual Insights")
+        chart_tab1, chart_tab2 = st.tabs(["📉 Bias Score Chart", "⚖ Gendered Words"])
         with chart_tab1:
-            st.subheader("Bias Score Comparison Across Resumes")
+            st.subheader("📊 Bias Score Distribution")
             st.bar_chart(df.set_index("Resume Name")[["Bias Score (0 = Fair, 1 = Biased)"]])
+
         with chart_tab2:
-            st.subheader("Masculine vs Feminine Word Usage")
+            st.subheader("🔍 Masculine vs Feminine Word Usage")
             fig, ax = plt.subplots(figsize=(10, 5))
             index = np.arange(len(df))
             bar_width = 0.35
@@ -2247,22 +2292,20 @@ with tab1:
             ax.legend()
             st.pyplot(fig)
 
-        st.markdown("### 📝 Detailed Resume Reports")
+        st.markdown("## 📂 Individual Resume Analysis")
         for resume in resume_data:
             candidate_name = resume.get("Candidate Name", "Not Found")
             resume_name = resume.get("Resume Name", "Unknown")
-            missing_keywords = resume.get("Missing Keywords", [])
-            missing_skills = resume.get("Missing Skills", [])
 
             with st.expander(f"📄 {resume_name} | {candidate_name}"):
-                st.markdown(f"### 📊 ATS Evaluation for: **{candidate_name}**")
+                st.markdown(f"### 📊 ATS Metrics for **{candidate_name}**")
                 score_col1, score_col2, score_col3 = st.columns(3)
                 with score_col1:
-                    st.metric("📈 Overall Match", f"{resume.get('ATS Match %', 'N/A')}%")
+                    st.metric("📈 ATS Match", f"{resume.get('ATS Match %', 'N/A')}%")
                 with score_col2:
                     st.metric("🏆 Formatted Score", resume.get("Formatted Score", "N/A"))
                 with score_col3:
-                    st.metric("🧠 Language Quality", f"{resume.get('Language Score', 'N/A')} / {lang_weight}")
+                    st.metric("🧠 Language Score", f"{resume.get('Language Score', 'N/A')} / {lang_weight}")
 
                 col_a, col_b, col_c, col_d = st.columns(4)
                 with col_a:
@@ -2272,19 +2315,16 @@ with tab1:
                 with col_c:
                     st.metric("🛠 Skills Score", f"{resume.get('Skills Score', 'N/A')} / {skills_weight}")
                 with col_d:
-                    st.metric("🔍 Keyword Score", f"{resume.get('Keyword Score', 'N/A')} / {keyword_weight}")
+                    st.metric("🔍 Keywords Score", f"{resume.get('Keyword Score', 'N/A')} / {keyword_weight}")
 
-                # Fit summary
-                st.markdown("### 📝 Fit Summary")
-                st.write(resume.get('Final Thoughts', 'N/A'))
+                st.markdown("### 💬 Final Fit Summary")
+                st.write(resume.get("Final Thoughts", "No final thoughts found."))
 
-                # ATS Report
                 if resume.get("ATS Report"):
-                    st.markdown("### 📋 ATS Evaluation Report")
+                    st.markdown("### 📋 ATS Text Report")
                     st.markdown(resume["ATS Report"], unsafe_allow_html=True)
 
-                # ATS Chart
-                st.markdown("### 📊 ATS Score Breakdown Chart")
+                st.markdown("### 📊 ATS Score Breakdown")
                 ats_df = pd.DataFrame({
                     'Component': ['Education', 'Experience', 'Skills', 'Language', 'Keywords'],
                     'Score': [
@@ -2307,35 +2347,52 @@ with tab1:
                 )
                 st.altair_chart(ats_chart, use_container_width=True)
 
-                # 🔷 Detailed ATS Analysis Cards with bold white score highlight
-                st.markdown("### 🔍 Detailed ATS Section Analyses")
-                for section_title, key in [
+                st.markdown("### 🧠 Section-Specific Analysis")
+
+                def render_feedback_section(title, content_key):
+                    raw = resume.get(content_key, "")
+                    if not raw or raw.strip().lower() in ["none", "no detailed feedback available."]:
+                        return
+
+                    score_html = ""
+                    feedback_html = raw.replace("\n", "<br/>")
+
+                    if "**Score:**" in raw:
+                        try:
+                            parts = raw.split("**Score:**")
+                            score_part = parts[1].split("**", 1)
+                            score = score_part[0].strip()
+                            rest = score_part[1].strip() if len(score_part) > 1 else ""
+                            score_html = f"<div style='background:#4c1d95;color:white;padding:8px;border-radius:6px;margin-bottom:5px;'><b>Score:</b> {score}</div>"
+                            feedback_html = rest.replace("\n", "<br/>")
+                        except:
+                            pass
+
+                    section_html = f"""
+<div style="background:#5b3cc4; color:white; padding:10px; border-radius:6px;">
+  <h3>{title}</h3>
+</div>
+<div style="background:#2d2d3a; color:white; padding:10px; border-radius:6px;">
+  {score_html}
+  <p>{feedback_html}</p>
+</div>
+"""
+                    st.markdown(section_html, unsafe_allow_html=True)
+
+                sections = [
                     ("🏫 Education Analysis", "Education Analysis"),
                     ("💼 Experience Analysis", "Experience Analysis"),
                     ("🛠 Skills Analysis", "Skills Analysis"),
-                    ("🗣 Language Quality Analysis", "Language Analysis"),
-                    ("🔑 Keyword Analysis", "Keyword Analysis"),
+                    ("🗣 Language Quality", "Language Analysis"),
+                    ("🔑 Keyword Relevance", "Keyword Analysis"),
                     ("✅ Final Thoughts", "Final Thoughts")
-                ]:
-                    analysis_content = resume.get(key, "N/A")
-                    if "**Score:**" in analysis_content:
-                        parts = analysis_content.split("**Score:**")
-                        rest = parts[1].split("**", 1)
-                        score_text = rest[0].strip()
-                        remaining = rest[1].strip() if len(rest) > 1 else ""
-                        formatted_score = f"<div style='background:#4c1d95;color:white;padding:8px;border-radius:6px;margin-bottom:5px;'><b>Score:</b> {score_text}</div>"
-                        analysis_html = formatted_score + f"<p>{remaining}</p>"
-                    else:
-                        analysis_html = f"<p>{analysis_content}</p>"
+                ]
+                for title, key in sections:
+                    render_feedback_section(title, key)
 
-                    st.markdown(f"""
-<div style="background:#5b3cc4; color:white; padding:10px; border-radius:6px;">
-  <h3>{section_title}</h3>
-</div>
-<div style="background:#2d2d3a; color:white; padding:10px; border-radius:6px;">
-{analysis_html}
-</div>
-""", unsafe_allow_html=True)
+
+
+
 
                 # ✅ Display Missing Skills and Keywords as badges
                 # ✅ Display Missing Skills as multiline bullet points
@@ -4202,6 +4259,5 @@ if user_input:
 
     # Save interaction to memory
     st.session_state.memory.save_context({"input": user_input}, {"output": answer})
-
 
 

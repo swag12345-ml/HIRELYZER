@@ -4037,6 +4037,14 @@ with tab5:
             t.set_weight("bold")
         st.pyplot(fig)
 
+    def load_domain_distribution():
+        df = get_domain_distribution()
+        if not df.empty:
+            total = df["count"].sum()
+            df["percent"] = (df["count"] / total) * 100
+            df = df.sort_values(by="count", ascending=True).reset_index(drop=True)
+        return df
+
     if "admin_logged_in" not in st.session_state:
         st.session_state.admin_logged_in = False
 
@@ -4132,58 +4140,69 @@ with tab5:
     else:
         st.info("ℹ️ No domain data available.")
 
-    st.markdown("### 📊 Domain Distribution by Count")
-
-    def load_domain_distribution():
-        df = get_domain_distribution()
-        if not df.empty:
-            total = df["count"].sum()
-            df["percent"] = (df["count"] / total) * 100
-            df = df.sort_values(by="count", ascending=False).reset_index(drop=True)
-        return df
+    st.markdown("### 📊 <span style='color:#336699;'>Domain Distribution by Count</span>", unsafe_allow_html=True)
 
     df_domain_dist = load_domain_distribution()
 
     if not df_domain_dist.empty:
-        chart_type = st.radio("📊 Select View:", ["📈 Percentage View", "📉 Count View"], horizontal=True)
+        chart_type = st.radio("📊 Select View Type:", ["📈 Percentage View", "📉 Count View"], horizontal=True)
+        orientation = st.radio("📐 Chart Orientation:", ["Horizontal", "Vertical"], horizontal=True)
+        bar_color = st.color_picker("🎨 Pick Bar Color", "#66c2a5")
 
         if chart_type == "📈 Percentage View":
-            fig_percent, ax_percent = plt.subplots(figsize=(7, 4))
-            bars = ax_percent.bar(df_domain_dist["domain"], df_domain_dist["percent"], color="#33B5E5")
-            for bar in bars:
-                height = bar.get_height()
-                ax_percent.annotate(f'{height:.1f}%',
-                                    xy=(bar.get_x() + bar.get_width() / 2, height),
-                                    xytext=(0, 4),
-                                    textcoords="offset points",
-                                    ha='center', va='bottom',
-                                    fontsize=9, fontweight='bold')
-            ax_percent.set_title("Resume Distribution by Domain (%)", fontsize=13, fontweight='bold')
-            ax_percent.set_ylabel("Percentage (%)", fontsize=11)
-            ax_percent.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=9)
-            ax_percent.set_ylim(0, df_domain_dist["percent"].max() * 1.25)
-            ax_percent.grid(axis='y', linestyle='--', alpha=0.3)
-            st.pyplot(fig_percent)
+            fig, ax = plt.subplots(figsize=(8, 5))
+            if orientation == "Horizontal":
+                bars = ax.barh(df_domain_dist["domain"], df_domain_dist["percent"], color=bar_color)
+                for bar in bars:
+                    width = bar.get_width()
+                    ax.text(width + 1, bar.get_y() + bar.get_height() / 2,
+                            f"{width:.1f}%", va='center', fontsize=9, fontweight='bold')
+                ax.set_xlabel("Percentage (%)", fontsize=11)
+                ax.set_xlim(0, df_domain_dist["percent"].max() * 1.25)
+                ax.grid(axis='x', linestyle='--', alpha=0.3)
+            else:
+                bars = ax.bar(df_domain_dist["domain"], df_domain_dist["percent"], color=bar_color)
+                for bar in bars:
+                    height = bar.get_height()
+                    ax.text(bar.get_x() + bar.get_width() / 2, height + 1,
+                            f"{height:.1f}%", ha='center', va='bottom', fontsize=9, fontweight='bold')
+                ax.set_ylabel("Percentage (%)", fontsize=11)
+                ax.set_ylim(0, df_domain_dist["percent"].max() * 1.25)
+                ax.set_xticklabels(df_domain_dist["domain"], rotation=45, ha="right", fontsize=9)
+                ax.grid(axis='y', linestyle='--', alpha=0.3)
+
+            ax.set_title("Resume Distribution by Domain (%)", fontsize=13, fontweight='bold')
+            fig.tight_layout()
+            st.pyplot(fig)
 
         elif chart_type == "📉 Count View":
-            fig_count, ax_count = plt.subplots(figsize=(7, 4))
-            bars = ax_count.bar(df_domain_dist["domain"], df_domain_dist["count"], color="#ff9933")
-            for bar in bars:
-                height = bar.get_height()
-                ax_count.annotate(f'{int(height)}',
-                                  xy=(bar.get_x() + bar.get_width() / 2, height),
-                                  xytext=(0, 4),
-                                  textcoords="offset points",
-                                  ha='center', va='bottom',
-                                  fontsize=9, fontweight='bold')
-            ax_count.set_title("Resume Count by Domain", fontsize=13, fontweight='bold')
-            ax_count.set_ylabel("Resume Count", fontsize=11)
-            ax_count.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=9)
-            ax_count.set_ylim(0, df_domain_dist["count"].max() * 1.25)
-            ax_count.grid(axis='y', linestyle='--', alpha=0.3)
-            st.pyplot(fig_count)
+            fig, ax = plt.subplots(figsize=(8, 5))
+            if orientation == "Horizontal":
+                bars = ax.barh(df_domain_dist["domain"], df_domain_dist["count"], color=bar_color)
+                for bar in bars:
+                    width = bar.get_width()
+                    ax.text(width + 0.5, bar.get_y() + bar.get_height() / 2,
+                            f"{int(width)}", va='center', fontsize=9, fontweight='bold')
+                ax.set_xlabel("Resume Count", fontsize=11)
+                ax.set_xlim(0, df_domain_dist["count"].max() * 1.25)
+                ax.grid(axis='x', linestyle='--', alpha=0.3)
+            else:
+                bars = ax.bar(df_domain_dist["domain"], df_domain_dist["count"], color=bar_color)
+                for bar in bars:
+                    height = bar.get_height()
+                    ax.text(bar.get_x() + bar.get_width() / 2, height + 1,
+                            f"{int(height)}", ha='center', va='bottom', fontsize=9, fontweight='bold')
+                ax.set_ylabel("Resume Count", fontsize=11)
+                ax.set_ylim(0, df_domain_dist["count"].max() * 1.25)
+                ax.set_xticklabels(df_domain_dist["domain"], rotation=45, ha="right", fontsize=9)
+                ax.grid(axis='y', linestyle='--', alpha=0.3)
+
+            ax.set_title("Resume Count by Domain", fontsize=13, fontweight='bold')
+            fig.tight_layout()
+            st.pyplot(fig)
+
     else:
-        st.info("No domain data found.")
+        st.info("ℹ️ No domain data found.")
 
     st.markdown("### 📊 <span style='color:#336699;'>Average ATS Score by Domain</span>", unsafe_allow_html=True)
     df_bar = get_average_ats_by_domain()
@@ -4284,17 +4303,13 @@ with tab5:
     if not flagged_df.empty:
         st.markdown(f"Showing candidates with bias score > **{bias_threshold}**")
         st.dataframe(
-            flagged_df[
-                ["id", "resume_name", "candidate_name", "bias_score", "ats_score", "domain", "timestamp"]
-            ].sort_values(
-                by="bias_score",
-                key=lambda x: pd.to_numeric(x, errors="coerce"),
-                ascending=False
-            ),
+            flagged_df[["id", "resume_name", "candidate_name", "bias_score", "ats_score", "domain", "timestamp"]]
+            .sort_values(by="bias_score", key=lambda x: pd.to_numeric(x, errors="coerce"), ascending=False),
             use_container_width=True
         )
     else:
         st.success("✅ No flagged candidates found above the selected threshold.")
+
 
 
 if "memory" in st.session_state:

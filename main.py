@@ -8,7 +8,7 @@ def html_to_pdf_bytes(html_string):
         <meta charset="UTF-8">
         <style>
             @page {{
-                size: 400mm 297mm;  /* Matches page-width & page-height */
+                size: 400mm 297mm;  /* Original custom large page size */
                 margin-top: 10mm;
                 margin-bottom: 10mm;
                 margin-left: 10mm;
@@ -18,6 +18,7 @@ def html_to_pdf_bytes(html_string):
                 font-size: 14pt;
                 font-family: "Segoe UI", "Helvetica", sans-serif;
                 line-height: 1.5;
+                color: #000;
             }}
             h1, h2, h3 {{
                 color: #2f4f6f;
@@ -30,17 +31,26 @@ def html_to_pdf_bytes(html_string):
             td {{
                 padding: 4px;
                 vertical-align: top;
+                border: 1px solid #ccc;
             }}
             .section-title {{
                 background-color: #e0e0e0;
                 font-weight: bold;
-                padding: 4px;
+                padding: 6px;
                 margin-top: 10px;
             }}
             .box {{
-                border: 1px solid #999;
                 padding: 8px;
                 margin-top: 6px;
+                background-color: #f9f9f9;
+                border-left: 4px solid #999;  /* More elegant than full border */
+            }}
+            ul {{
+                margin: 0.5em 0;
+                padding-left: 1.5em;
+            }}
+            li {{
+                margin-bottom: 5px;
             }}
         </style>
     </head>
@@ -54,6 +64,7 @@ def html_to_pdf_bytes(html_string):
     pisa.CreatePDF(styled_html, dest=pdf_io)
     pdf_io.seek(0)
     return pdf_io
+
 
 
 
@@ -2107,7 +2118,6 @@ def generate_resume_report_html(resume):
     keyword_analysis = style_analysis(resume.get("Keyword Analysis", "").replace("\n", "<br/>"))
     final_thoughts = resume.get("Final Thoughts", "N/A").replace("\n", "<br/>")
 
-    # ✅ Language Analysis (grammar + suggestions cleanly separated)
     lang_analysis_raw = resume.get("Language Analysis", "").replace("\n", "<br/>")
     lang_analysis = f"<div>{lang_analysis_raw}</div>" if lang_analysis_raw else "<p><i>No language analysis available.</i></p>"
 
@@ -2129,6 +2139,7 @@ def generate_resume_report_html(resume):
                 font-family: Helvetica, sans-serif;
                 font-size: 12pt;
                 line-height: 1.5;
+                color: #000;
             }}
             h1, h2 {{
                 color: #2f4f6f;
@@ -2141,17 +2152,27 @@ def generate_resume_report_html(resume):
             td {{
                 padding: 4px;
                 vertical-align: top;
+                border: 1px solid #ccc;
+            }}
+            ul {{
+                margin: 0.5em 0;
+                padding-left: 1.4em;
+            }}
+            li {{
+                margin-bottom: 5px;
             }}
             .section-title {{
                 background-color: #e0e0e0;
                 font-weight: bold;
-                padding: 4px;
-                margin-top: 10px;
+                padding: 6px;
+                margin-top: 12px;
+                border-left: 4px solid #666;
             }}
             .box {{
-                border: 1px solid #999;
-                padding: 8px;
+                padding: 10px;
                 margin-top: 6px;
+                background-color: #f9f9f9;
+                border-left: 4px solid #999;
             }}
         </style>
     </head>
@@ -2163,7 +2184,7 @@ def generate_resume_report_html(resume):
     <p><b>Resume File:</b> {resume_name}</p>
 
     <h2>ATS Evaluation</h2>
-    <table border="1">
+    <table>
         <tr><td><b>ATS Match</b></td><td>{ats_match}%</td></tr>
         <tr><td><b>Education</b></td><td>{edu_score}</td></tr>
         <tr><td><b>Experience</b></td><td>{exp_score}</td></tr>
@@ -2194,7 +2215,7 @@ def generate_resume_report_html(resume):
     <div class="box">{final_thoughts}</div>
 
     <h2>Gender Bias Analysis</h2>
-    <table border="1">
+    <table>
         <tr><td><b>Masculine Words</b></td><td>{masculine_count}</td></tr>
         <tr><td><b>Feminine Words</b></td><td>{feminine_count}</td></tr>
         <tr><td><b>Bias Score (0 = Fair, 1 = Biased)</b></td><td>{bias_score}</td></tr>
@@ -4084,13 +4105,32 @@ with tab5:
             else:
                 st.error("ID not found.")
 
-    st.markdown("### 📊 Top Domains by ATS Score")
+    st.markdown("### 📊 <span style='color:#336699;'>Top Domains by ATS Score</span>", unsafe_allow_html=True)
+
     top_domains = get_top_domains_by_score()
+
     if top_domains:
-        for domain, avg, count in top_domains:
-            st.info(f"📁 {domain} — Avg ATS: {avg:.2f} | Total: {count}")
+        df_top = pd.DataFrame(top_domains, columns=["domain", "avg_ats", "count"])
+
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            sort_order = st.radio("Sort by ATS", ["⬆️ High to Low", "⬇️ Low to High"], horizontal=True)
+        with col2:
+            limit = st.slider("Show Top N Domains", 1, len(df_top), value=min(5, len(df_top)))
+
+        ascending = sort_order == "⬇️ Low to High"
+        df_sorted = df_top.sort_values(by="avg_ats", ascending=ascending).head(limit).reset_index(drop=True)
+
+        for i, row in df_sorted.iterrows():
+            st.markdown(f"""
+            <div style="border: 1px solid #ccc; border-radius: 10px; padding: 10px; margin-bottom: 10px;">
+                <h5 style="margin: 0; color: #336699;">📁 {row['domain']}</h5>
+                <p style="margin: 5px 0;"><b>🧠 Average ATS:</b> <span style="color:#007acc;">{row['avg_ats']:.2f}</span></p>
+                <p style="margin: 5px 0;"><b>📄 Total Resumes:</b> {row['count']}</p>
+            </div>
+            """, unsafe_allow_html=True)
     else:
-        st.info("No domain data available.")
+        st.info("ℹ️ No domain data available.")
 
     st.markdown("### 📊 Domain Distribution by Count")
 
@@ -4108,94 +4148,153 @@ with tab5:
         chart_type = st.radio("📊 Select View:", ["📈 Percentage View", "📉 Count View"], horizontal=True)
 
         if chart_type == "📈 Percentage View":
-            fig_percent, ax_percent = plt.subplots(figsize=(9, 5))
-            ax_percent.bar(df_domain_dist["domain"], df_domain_dist["percent"], color="#33B5E5")
-            ax_percent.set_title("Resume Distribution by Domain (%)", fontsize=14, fontweight='bold')
-            ax_percent.set_ylabel("Percentage (%)", fontsize=12)
-            ax_percent.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=10)
+            fig_percent, ax_percent = plt.subplots(figsize=(7, 4))
+            bars = ax_percent.bar(df_domain_dist["domain"], df_domain_dist["percent"], color="#33B5E5")
+            for bar in bars:
+                height = bar.get_height()
+                ax_percent.annotate(f'{height:.1f}%',
+                                    xy=(bar.get_x() + bar.get_width() / 2, height),
+                                    xytext=(0, 4),
+                                    textcoords="offset points",
+                                    ha='center', va='bottom',
+                                    fontsize=9, fontweight='bold')
+            ax_percent.set_title("Resume Distribution by Domain (%)", fontsize=13, fontweight='bold')
+            ax_percent.set_ylabel("Percentage (%)", fontsize=11)
+            ax_percent.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=9)
             ax_percent.set_ylim(0, df_domain_dist["percent"].max() * 1.25)
-            ax_percent.grid(axis='y', linestyle='--', alpha=0.4)
+            ax_percent.grid(axis='y', linestyle='--', alpha=0.3)
             st.pyplot(fig_percent)
 
         elif chart_type == "📉 Count View":
-            fig_count, ax_count = plt.subplots(figsize=(9, 5))
-            ax_count.bar(df_domain_dist["domain"], df_domain_dist["count"], color="#ff9933")
-            ax_count.set_title("Resume Count by Domain", fontsize=14, fontweight='bold')
-            ax_count.set_ylabel("Resume Count", fontsize=12)
-            ax_count.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=10)
+            fig_count, ax_count = plt.subplots(figsize=(7, 4))
+            bars = ax_count.bar(df_domain_dist["domain"], df_domain_dist["count"], color="#ff9933")
+            for bar in bars:
+                height = bar.get_height()
+                ax_count.annotate(f'{int(height)}',
+                                  xy=(bar.get_x() + bar.get_width() / 2, height),
+                                  xytext=(0, 4),
+                                  textcoords="offset points",
+                                  ha='center', va='bottom',
+                                  fontsize=9, fontweight='bold')
+            ax_count.set_title("Resume Count by Domain", fontsize=13, fontweight='bold')
+            ax_count.set_ylabel("Resume Count", fontsize=11)
+            ax_count.set_xticklabels(df_domain_dist["domain"], rotation=30, ha="right", fontsize=9)
             ax_count.set_ylim(0, df_domain_dist["count"].max() * 1.25)
-            ax_count.grid(axis='y', linestyle='--', alpha=0.4)
+            ax_count.grid(axis='y', linestyle='--', alpha=0.3)
             st.pyplot(fig_count)
     else:
         st.info("No domain data found.")
 
-    st.markdown("### 📊 Average ATS Score by Domain")
+    st.markdown("### 📊 <span style='color:#336699;'>Average ATS Score by Domain</span>", unsafe_allow_html=True)
     df_bar = get_average_ats_by_domain()
     if not df_bar.empty:
-        fig2, ax2 = plt.subplots(figsize=(6, 4))
-        bars = ax2.bar(df_bar["domain"], df_bar["avg_ats_score"], color="#3399ff")
-        for i, bar in enumerate(bars):
-            height = bar.get_height()
-            ax2.text(bar.get_x() + bar.get_width() / 2, height + 0.5, f"{height:.1f}",
-                     ha='center', va='bottom', fontsize=8)
-        ax2.set_ylabel("Avg ATS Score")
-        ax2.set_title("ATS by Domain")
-        max_score = df_bar["avg_ats_score"].max()
-        ax2.set_yticks(np.arange(0, max_score + 5, 5))
-        ax2.set_xticks(np.arange(len(df_bar["domain"])))
-        ax2.set_xticklabels(df_bar["domain"], rotation=45, ha="right")
-        st.pyplot(fig2)
-    else:
-        st.info("No ATS domain data.")
+        chart_style = st.radio("Select Chart Style", ["Vertical Bar", "Horizontal Bar"], horizontal=True)
+        bar_color = st.color_picker("Pick Bar Color", "#3399ff")
+        fig, ax = plt.subplots(figsize=(8, 5))
 
-    st.markdown("### 📈 Resume Uploads Over Time")
+        if chart_style == "Vertical Bar":
+            bars = ax.bar(df_bar["domain"], df_bar["avg_ats_score"], color=bar_color)
+            ax.set_ylabel("Avg ATS Score")
+            ax.set_title("ATS by Domain", fontsize=13, fontweight="bold")
+            ax.set_xticks(np.arange(len(df_bar["domain"])))
+            ax.set_xticklabels(df_bar["domain"], rotation=45, ha="right", fontsize=9)
+            ax.set_ylim(0, df_bar["avg_ats_score"].max() * 1.25)
+            for bar in bars:
+                height = bar.get_height()
+                ax.text(bar.get_x() + bar.get_width() / 2, height + 0.5, f"{height:.1f}",
+                        ha='center', va='bottom', fontsize=8)
+
+        elif chart_style == "Horizontal Bar":
+            bars = ax.barh(df_bar["domain"], df_bar["avg_ats_score"], color=bar_color)
+            ax.set_xlabel("Avg ATS Score")
+            ax.set_title("ATS by Domain", fontsize=13, fontweight="bold")
+            ax.set_yticks(np.arange(len(df_bar["domain"])))
+            ax.set_yticklabels(df_bar["domain"], fontsize=9)
+            ax.set_xlim(0, df_bar["avg_ats_score"].max() * 1.25)
+            for bar in bars:
+                width = bar.get_width()
+                ax.text(width + 0.5, bar.get_y() + bar.get_height() / 2,
+                        f"{width:.1f}", ha="left", va="center", fontsize=8)
+
+        ax.grid(axis='y' if chart_style == "Vertical Bar" else 'x', linestyle='--', alpha=0.4)
+        fig.tight_layout()
+        st.pyplot(fig)
+    else:
+        st.info("ℹ️ No ATS domain data to display.")
+
+    st.markdown("### 📈 Resume Upload Timeline (Daily + 7-Day Trend)")
     df_timeline = get_resume_count_by_day()
+
     if not df_timeline.empty:
         df_timeline = df_timeline.sort_values("day")
-        fig3, ax3 = plt.subplots(figsize=(7, 4))
-        ax3.plot(df_timeline["day"], df_timeline["count"], marker="o", color="green", linewidth=2)
-        for i in range(len(df_timeline)):
-            ax3.annotate(
-                str(df_timeline["count"].iloc[i]),
-                (df_timeline["day"].iloc[i], df_timeline["count"].iloc[i]),
-                textcoords="offset points",
-                xytext=(0, 8),
-                ha='center',
-                fontsize=9,
-                color='black'
-            )
-        ax3.set_ylabel("Uploads")
-        ax3.set_xlabel("Date")
-        ax3.set_title("Resume Upload Timeline")
-        plt.xticks(rotation=60, ha='right')
-        fig3.tight_layout()
-        st.pyplot(fig3)
+        df_timeline["7_day_avg"] = df_timeline["count"].rolling(window=7, min_periods=1).mean()
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.plot(df_timeline["day"], df_timeline["count"], label="Daily Uploads", color="green", marker='o', linewidth=1)
+        for x, y in zip(df_timeline["day"], df_timeline["count"]):
+            ax.text(x, y + 0.5, str(int(y)), ha="center", va="bottom", fontsize=8)
+        ax.plot(df_timeline["day"], df_timeline["7_day_avg"], label="7-Day Avg", color="red", linestyle='--', linewidth=2)
+        ax.set_title("📈 Resume Upload Timeline (Daily + 7-Day Trend)", fontsize=13, weight='bold')
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Upload Count")
+        ax.legend()
+        ax.grid(axis='y', linestyle='--', alpha=0.5)
+        plt.xticks(rotation=45, ha='right')
+        fig.tight_layout()
+        st.pyplot(fig)
     else:
         st.info("ℹ️ No upload trend data to display.")
 
-    st.markdown("### 🧠 Fair vs Biased Resumes")
-    df_bias = get_bias_distribution()
-    if not df_bias.empty:
+    st.markdown("### 🧠 <span style='color:#336699;'>Fair vs Biased Resumes</span>", unsafe_allow_html=True)
+
+    bias_threshold_pie = st.slider("Select Bias Threshold", min_value=0.0, max_value=1.0, value=0.6, step=0.05)
+
+    df_bias = get_bias_distribution(threshold=bias_threshold_pie)
+
+    if not df_bias.empty and "bias_category" in df_bias.columns:
         fig4, ax4 = plt.subplots()
-        ax4.pie(df_bias["count"], labels=df_bias["bias_category"], autopct="%1.1f%%", startangle=90,
-                colors=["#ff6666", "#00cc66"])
+        ax4.pie(
+            df_bias["count"],
+            labels=df_bias["bias_category"],
+            autopct="%1.1f%%",
+            startangle=90,
+            colors=["#ff6666", "#00cc66"],
+            wedgeprops={"edgecolor": "black"}
+        )
         ax4.axis("equal")
         st.pyplot(fig4)
-    else:
-        st.info("No bias data to display.")
 
-    st.markdown("### 🚩 Flagged Candidates (Bias Score > 0.6)")
-    flagged_df = get_all_candidates(bias_threshold=0.6)
+        with st.expander("📋 View Bias Distribution Table"):
+            st.dataframe(df_bias, use_container_width=True)
+    else:
+        st.info("📭 No bias data available for the selected threshold.")
+
+    st.markdown("### 🚩 Flagged Candidates (Bias Score > Threshold)")
+
+    bias_threshold = st.slider(
+        "Set Bias Score Threshold",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.6,
+        step=0.05,
+        help="Only candidates with bias score above this value will be shown."
+    )
+
+    flagged_df = get_all_candidates(bias_threshold=bias_threshold)
+
     if not flagged_df.empty:
+        st.markdown(f"Showing candidates with bias score > **{bias_threshold}**")
         st.dataframe(
-            flagged_df[[
-                "id", "resume_name", "candidate_name",
-                "bias_score", "ats_score", "domain", "timestamp"
-            ]].sort_values(by="bias_score", key=lambda x: pd.to_numeric(x, errors="coerce"), ascending=False),
+            flagged_df[
+                ["id", "resume_name", "candidate_name", "bias_score", "ats_score", "domain", "timestamp"]
+            ].sort_values(
+                by="bias_score",
+                key=lambda x: pd.to_numeric(x, errors="coerce"),
+                ascending=False
+            ),
             use_container_width=True
         )
     else:
-        st.success("✅ No flagged candidates.")
+        st.success("✅ No flagged candidates found above the selected threshold.")
 
 
 if "memory" in st.session_state:

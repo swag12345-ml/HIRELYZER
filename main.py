@@ -4311,7 +4311,6 @@ with tab5:
         st.success("✅ No flagged candidates found above the selected threshold.")
 
 
-
 if "memory" in st.session_state:
     history = st.session_state.memory.load_memory_variables({}).get("chat_history", [])
     for msg in history:

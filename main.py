@@ -375,7 +375,7 @@ if not st.session_state.authenticated:
     </div>
     """, unsafe_allow_html=True)
 
-    # -------- Counter Section --------
+    # -------- Counter Section (Updated Layout & Style with tighter spacing) --------
 
     # Fetch counters
     total_users = get_total_registered_users()
@@ -383,76 +383,75 @@ if not st.session_state.authenticated:
     resumes_uploaded = 15
     states_accessed = 29
 
-    # Streamlit grid layout
-    col1, col2 = st.columns(2)
-    col3, col4 = st.columns(2)
-
-    # CSS Styling for compact cards
-    compact_counter_style = """
+    neon_counter_style = """
     <style>
+    .counter-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 250px);
+        column-gap: 40px;
+        row-gap: 25px;
+        justify-content: center;
+        padding: 30px 10px;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
     .counter-box {
-        background: linear-gradient(145deg, #0d1117, #0d1117);
+        background-color: #0d1117;
+        border: 2px solid #00FFFF;
         border-radius: 10px;
-        box-shadow: 0 0 6px rgba(0, 191, 255, 0.3);
-        border: 1.5px solid transparent;
-        border-image: linear-gradient(to right, #00BFFF, #00FFFF) 1;
-        padding: 18px 12px;
-        text-align: center;
-        color: #00BFFF;
+        width: 100%;
+        height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 0 12px rgba(0, 255, 255, 0.4);
         transition: transform 0.2s ease;
     }
+
     .counter-box:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 0 16px rgba(0,255,255,0.4);
+        transform: translateY(-5px);
+        box-shadow: 0 0 18px rgba(0, 255, 255, 0.7);
     }
+
     .counter-number {
-        font-size: 1.8em;
+        font-size: 2.2em;
         font-weight: bold;
-        margin: 0;
         color: #00BFFF;
+        margin: 0;
     }
+
     .counter-label {
-        margin: 4px 0 0;
-        font-size: 0.95em;
+        margin-top: 8px;
+        font-size: 1em;
         color: #c9d1d9;
     }
     </style>
     """
 
-    st.markdown(compact_counter_style, unsafe_allow_html=True)
+    st.markdown(neon_counter_style, unsafe_allow_html=True)
 
-    # Display each stat card
-    with col1:
-        st.markdown(f"""
+    st.markdown(f"""
+    <div class="counter-grid">
         <div class="counter-box">
             <div class="counter-number">{total_users}</div>
             <div class="counter-label">Total Users</div>
         </div>
-        """, unsafe_allow_html=True)
-
-    with col2:
-        st.markdown(f"""
         <div class="counter-box">
             <div class="counter-number">{states_accessed}</div>
             <div class="counter-label">States Accessed</div>
         </div>
-        """, unsafe_allow_html=True)
-
-    with col3:
-        st.markdown(f"""
         <div class="counter-box">
             <div class="counter-number">{resumes_uploaded}</div>
             <div class="counter-label">Resumes Uploaded</div>
         </div>
-        """, unsafe_allow_html=True)
-
-    with col4:
-        st.markdown(f"""
         <div class="counter-box">
             <div class="counter-number">{active_logins}</div>
             <div class="counter-label">Active Sessions</div>
         </div>
-        """, unsafe_allow_html=True)
+    </div>
+    """, unsafe_allow_html=True)
 
 
 

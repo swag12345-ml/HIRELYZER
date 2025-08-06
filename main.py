@@ -233,12 +233,15 @@ from user_login import (
 create_user_table()
 
 # ------------------- Initialize Session State -------------------
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-if "username" not in st.session_state:
-    st.session_state.username = None
-if "processed_files" not in st.session_state:
-    st.session_state.processed_files = set()
+# ------------------- Initialize Session State -------------------
+for key, default in {
+    "authenticated": False,
+    "username": None,
+    "processed_files": set(),
+}.items():
+    if key not in st.session_state:
+        st.session_state[key] = default
+
 
 # ------------------- CSS Styling -------------------
 st.markdown("""
@@ -307,15 +310,12 @@ body, .main {
 }
 </style>
 """, unsafe_allow_html=True)
-# 🔹 VIDEO BACKGROUND & GLOW TEXT
-
-
 
 
 # ------------------- BEFORE LOGIN -------------------
 if not st.session_state.authenticated:
 
-    # -------- Sidebar --------
+    # -------- Sidebar with Feature Cards --------
     with st.sidebar:
         st.markdown("<h1 style='color:#00BFFF;'>Smart Resume AI</h1>", unsafe_allow_html=True)
         st.markdown("<p style='color:#c9d1d9;'>Transform your career with AI-powered resume analysis, job matching, and smart insights.</p>", unsafe_allow_html=True)
@@ -337,7 +337,11 @@ if not st.session_state.authenticated:
             </div>
             """, unsafe_allow_html=True)
 
-    # -------- Animated Cards --------
+
+    # -------- Animated User Cards --------
+    from base64 import b64encode
+    import requests
+
     image_url = "https://cdn-icons-png.flaticon.com/512/3135/3135768.png"
     response = requests.get(image_url)
     img_base64 = b64encode(response.content).decode()
@@ -345,28 +349,28 @@ if not st.session_state.authenticated:
     st.markdown(f"""
     <style>
     .animated-cards {{
-      margin-top: 30px;
-      display: flex;
-      justify-content: center;
-      position: relative;
-      height: 300px;
+        margin-top: 40px;
+        display: flex;
+        justify-content: center;
+        position: relative;
+        height: 260px;
     }}
     .animated-cards img {{
-      position: absolute;
-      width: 240px;
-      animation: splitCards 2.5s ease-in-out infinite alternate;
-      z-index: 1;
+        position: absolute;
+        width: 220px;
+        animation: splitCards 2.5s ease-in-out infinite alternate;
+        z-index: 1;
     }}
     .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
     .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
     .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
     @keyframes splitCards {{
-      0% {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
-      100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
+        0% {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
+        100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
     }}
-    .card-left {{ --x-offset: -80px; --rot: -5deg; }}
+    .card-left {{ --x-offset: -80px; --rot: -4deg; }}
     .card-center {{ --x-offset: 0px; --rot: 0deg; }}
-    .card-right {{ --x-offset: 80px; --rot: 5deg; }}
+    .card-right {{ --x-offset: 80px; --rot: 4deg; }}
     </style>
     <div class="animated-cards">
         <img class="card-left" src="data:image/png;base64,{img_base64}" />
@@ -374,6 +378,7 @@ if not st.session_state.authenticated:
         <img class="card-right" src="data:image/png;base64,{img_base64}" />
     </div>
     """, unsafe_allow_html=True)
+
 
     # -------- Counter Section --------
     total_users = get_total_registered_users()
@@ -384,25 +389,42 @@ if not st.session_state.authenticated:
     components.html(f"""
     <style>
     .counter-wrapper {{
-        display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; margin-top: 40px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 30px;
+        margin-top: 40px;
+        padding: 0 20px;
     }}
     .counter {{
-        width: 230px; height: 140px;
+        width: 230px;
+        height: 140px;
         background: linear-gradient(145deg, #0d1117, #0d1117);
         color: #00BFFF;
         border-radius: 15px;
         box-shadow: 0 0 10px rgba(0, 191, 255, 0.4);
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         transition: transform 0.3s ease;
         border: 2px solid transparent;
         border-image: linear-gradient(to right, #00BFFF, #00FFFF) 1;
+        flex-shrink: 0;
     }}
     .counter:hover {{
         transform: translateY(-6px);
         box-shadow: 0 0 25px rgba(0,255,255,0.5);
     }}
-    .counter h1 {{ font-size: 2.8em; margin: 0; }}
-    .counter p {{ margin: 5px 0 0; font-size: 1.1em; color: #c9d1d9; }}
+    .counter h1 {{
+        font-size: 2.5em;
+        margin: 0;
+    }}
+    .counter p {{
+        margin: 5px 0 0;
+        font-size: 1.1em;
+        color: #c9d1d9;
+    }}
     </style>
     <div class="counter-wrapper">
         <div class="counter"><h1 id="totalUsers">0</h1><p>Total Users</p></div>
@@ -430,65 +452,6 @@ if not st.session_state.authenticated:
     </script>
     """, height=400)
 
-
-
-if not st.session_state.get("authenticated", False):
-    
-
-    # ✅ Use an online image of a female employee
-    image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
-    response = requests.get(image_url)
-    img_base64 = b64encode(response.content).decode()
-
-    # ✅ Inject animated shuffle CSS + HTML
-    st.markdown(f"""
-    <style>
-    .animated-cards {{
-      margin-top: 40px;
-      display: flex;
-      justify-content: center;
-      position: relative;
-      height: 260px;
-    }}
-    .animated-cards img {{
-      position: absolute;
-      width: 220px;
-      animation: splitCards 2.5s ease-in-out infinite alternate;
-      z-index: 1;
-    }}
-    .animated-cards img:nth-child(1) {{
-      animation-delay: 0s;
-      z-index: 3;
-    }}
-    .animated-cards img:nth-child(2) {{
-      animation-delay: 0.3s;
-      z-index: 2;
-    }}
-    .animated-cards img:nth-child(3) {{
-      animation-delay: 0.6s;
-      z-index: 1;
-    }}
-    @keyframes splitCards {{
-      0% {{
-        transform: scale(1) translateX(0) rotate(0deg);
-        opacity: 1;
-      }}
-      100% {{
-        transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot));
-        opacity: 1;
-      }}
-    }}
-    .card-left {{ --x-offset: -80px; --rot: -4deg; }}
-    .card-center {{ --x-offset: 0px; --rot: 0deg; }}
-    .card-right {{ --x-offset: 80px; --rot: 4deg; }}
-    </style>
-
-    <div class="animated-cards">
-        <img class="card-left" src="data:image/png;base64,{img_base64}" />
-        <img class="card-center" src="data:image/png;base64,{img_base64}" />
-        <img class="card-right" src="data:image/png;base64,{img_base64}" />
-    </div>
-    """, unsafe_allow_html=True)
 
     # -------- Login/Register Layout --------
     left, center, right = st.columns([1, 2, 1])

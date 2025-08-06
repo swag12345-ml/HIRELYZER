@@ -69,7 +69,10 @@ def html_to_pdf_bytes(html_string):
 
 
 def generate_cover_letter_from_resume_builder():
-    
+    import streamlit as st
+    from datetime import datetime
+    import re
+    from llm_manager import call_llm  # Ensure you import this
 
     name = st.session_state.get("name", "")
     job_title = st.session_state.get("job_title", "")
@@ -84,12 +87,14 @@ def generate_cover_letter_from_resume_builder():
     email = st.text_input("📧 Email", placeholder="e.g., you@example.com")
     mobile = st.text_input("📞 Mobile Number", placeholder="e.g., +91 9876543210")
 
-    # ✅ Show warning only after inputs
-    if not all([name, job_title, summary, skills, company, linkedin, email, mobile]):
-        st.warning("⚠️ Please fill in all fields including LinkedIn, email, and mobile.")
-        return
+    # ✅ Button to prevent relooping
+    if st.button("✉️ Generate Cover Letter"):
+        # ✅ Validate input before generating
+        if not all([name, job_title, summary, skills, company, linkedin, email, mobile]):
+            st.warning("⚠️ Please fill in all fields including LinkedIn, email, and mobile.")
+            return
 
-    prompt = f"""
+        prompt = f"""
 You are a professional cover letter writer.
 
 Write a formal and compelling cover letter using the information below. Format it as a real letter with:
@@ -119,39 +124,44 @@ Hiring Manager, {company}, {location}
 - Return only the final formatted cover letter without any HTML tags.
 """
 
-    # ✅ Call LLM for cover letter
-    cover_letter = call_llm(prompt, session=st.session_state)
+        # ✅ Call LLM
+        cover_letter = call_llm(prompt, session=st.session_state)
 
-    # ✅ Remove leading date line or raw HTML blocks if present
-    lines = cover_letter.strip().split("\n")
-    if len(lines) > 0 and (re.match(r'^\w+ \d{1,2}, \d{4}$', lines[0].strip()) or lines[0].strip().startswith('<div')):
-        lines = lines[1:]
-    cover_letter = "\n".join(lines)
+        # ✅ Clean leading line if needed
+        lines = cover_letter.strip().split("\n")
+        if len(lines) > 0 and (re.match(r'^\w+ \d{1,2}, \d{4}$', lines[0].strip()) or lines[0].strip().startswith('<div')):
+            lines = lines[1:]
+        cover_letter = "\n".join(lines)
+        st.session_state["cover_letter"] = cover_letter
 
-    st.session_state["cover_letter"] = cover_letter
+        # ✅ xhtml2pdf-compatible table layout
+        cover_letter_html = f"""
+<table width="100%" style="font-family: Georgia, serif; font-size: 12pt; color: #000;">
+    <tr>
+        <td align="center" colspan="2" style="font-size: 16pt; font-weight: bold; color: #003366;">{name}</td>
+    </tr>
+    <tr>
+        <td align="center" colspan="2" style="font-size: 14pt; color: #555;">{job_title}</td>
+    </tr>
+    <tr>
+        <td align="center" colspan="2" style="font-size: 10pt; padding: 5px;">
+            <a href="{linkedin}" style="color: #003366;">{linkedin}</a><br/>
+            📧 {email} | 📞 {mobile}
+        </td>
+    </tr>
+    <tr><td colspan="2" style="padding-top:10px;">{today_date}</td></tr>
+    <tr>
+        <td colspan="2">
+            <hr style="border: 0; border-top: 1px solid #000; margin: 10px 0;" />
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2" style="white-space: pre-wrap; line-height: 1.6;">{cover_letter}</td>
+    </tr>
+</table>
+"""
+        st.session_state["cover_letter_html"] = cover_letter_html
 
-    # ✅ Styled HTML template wrapping the LLM output with icons and date
-    cover_letter_html = f"""
-    <div style="font-family: Georgia, serif; line-height: 1.6; color: #333; border: 1px solid #ccc; padding: 20px; max-width: 700px; margin: auto;">
-        <div style="text-align: center;">
-            <h1 style="color: #003366; font-size: 26px; margin-bottom: 0;">{name}</h1>
-            <h2 style="font-style: normal; font-weight: normal; margin-top: 0; color: #555;">{job_title}</h2>
-            <p style="margin: 4px 0; font-size: 14px;">
-                <a href="{linkedin}" style="color: #003366;">{linkedin}</a><br>
-                <img src="https://img.icons8.com/ios-glyphs/16/000000/new-post.png" style="vertical-align: middle;"/> {email} |
-                <img src="https://img.icons8.com/ios-glyphs/16/000000/phone.png" style="vertical-align: middle;"/> {mobile}
-            </p>
-        </div>
-        <p style="text-align: left; font-size: 14px; margin-top: 20px;">{today_date}</p>
-        <hr style="border: 1px solid #ccc;">
-        <div style="white-space: pre-wrap; text-align: left; font-size: 14px; line-height: 1.6;">
-            {cover_letter}
-        </div>
-    </div>
-    """
-
-    # ✅ Save styled HTML to session state for download in Tab 2
-    st.session_state["cover_letter_html"] = cover_letter_html
 
 
 
@@ -366,84 +376,85 @@ if not st.session_state.authenticated:
     """, unsafe_allow_html=True)
 
     # -------- Counter Section --------
+
+    # Fetch counters
     total_users = get_total_registered_users()
     active_logins = get_logins_today()
     resumes_uploaded = 15
     states_accessed = 29
 
-    # Fetch counters
-total_users = get_total_registered_users()
-active_logins = get_logins_today()
-resumes_uploaded = 15
-states_accessed = 29
+    # Streamlit grid layout
+    col1, col2 = st.columns(2)
+    col3, col4 = st.columns(2)
 
-# Grid Layout using st.columns
-col1, col2 = st.columns(2)
-col3, col4 = st.columns(2)
+    # CSS Styling for compact cards
+    compact_counter_style = """
+    <style>
+    .counter-box {
+        background: linear-gradient(145deg, #0d1117, #0d1117);
+        border-radius: 10px;
+        box-shadow: 0 0 6px rgba(0, 191, 255, 0.3);
+        border: 1.5px solid transparent;
+        border-image: linear-gradient(to right, #00BFFF, #00FFFF) 1;
+        padding: 18px 12px;
+        text-align: center;
+        color: #00BFFF;
+        transition: transform 0.2s ease;
+    }
+    .counter-box:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 0 16px rgba(0,255,255,0.4);
+    }
+    .counter-number {
+        font-size: 1.8em;
+        font-weight: bold;
+        margin: 0;
+        color: #00BFFF;
+    }
+    .counter-label {
+        margin: 4px 0 0;
+        font-size: 0.95em;
+        color: #c9d1d9;
+    }
+    </style>
+    """
 
-counter_style = """
-<style>
-.counter-box {
-    background: linear-gradient(145deg, #0d1117, #0d1117);
-    border-radius: 15px;
-    box-shadow: 0 0 10px rgba(0, 191, 255, 0.4);
-    border: 2px solid transparent;
-    border-image: linear-gradient(to right, #00BFFF, #00FFFF) 1;
-    padding: 30px;
-    text-align: center;
-    color: #00BFFF;
-    transition: transform 0.3s ease;
-}
-.counter-box:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 0 25px rgba(0,255,255,0.5);
-}
-.counter-number {
-    font-size: 2.8em;
-    margin: 0;
-    color: #00BFFF;
-}
-.counter-label {
-    margin: 5px 0 0;
-    font-size: 1.1em;
-    color: #c9d1d9;
-}
-</style>
-"""
+    st.markdown(compact_counter_style, unsafe_allow_html=True)
 
-st.markdown(counter_style, unsafe_allow_html=True)
+    # Display each stat card
+    with col1:
+        st.markdown(f"""
+        <div class="counter-box">
+            <div class="counter-number">{total_users}</div>
+            <div class="counter-label">Total Users</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-with col1:
-    st.markdown(f"""
-    <div class="counter-box">
-        <div class="counter-number">{total_users}</div>
-        <div class="counter-label">Total Users</div>
-    </div>
-    """, unsafe_allow_html=True)
+    with col2:
+        st.markdown(f"""
+        <div class="counter-box">
+            <div class="counter-number">{states_accessed}</div>
+            <div class="counter-label">States Accessed</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-with col2:
-    st.markdown(f"""
-    <div class="counter-box">
-        <div class="counter-number">{states_accessed}</div>
-        <div class="counter-label">States Accessed</div>
-    </div>
-    """, unsafe_allow_html=True)
+    with col3:
+        st.markdown(f"""
+        <div class="counter-box">
+            <div class="counter-number">{resumes_uploaded}</div>
+            <div class="counter-label">Resumes Uploaded</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-with col3:
-    st.markdown(f"""
-    <div class="counter-box">
-        <div class="counter-number">{resumes_uploaded}</div>
-        <div class="counter-label">Resumes Uploaded</div>
-    </div>
-    """, unsafe_allow_html=True)
+    with col4:
+        st.markdown(f"""
+        <div class="counter-box">
+            <div class="counter-number">{active_logins}</div>
+            <div class="counter-label">Active Sessions</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-with col4:
-    st.markdown(f"""
-    <div class="counter-box">
-        <div class="counter-number">{active_logins}</div>
-        <div class="counter-label">Active Sessions</div>
-    </div>
-    """, unsafe_allow_html=True)
+
 
 
 
@@ -2780,7 +2791,7 @@ with tab2:
     st.markdown("## ✨ <span style='color:#336699;'>Enhanced AI Resume Preview</span>", unsafe_allow_html=True)
     st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
-    col1, col2 = st.columns([1, 2])
+    col1, spacer, col2 = st.columns([1, 0.2, 1])
 
     with col1:
         if st.button("🔁 Clear Preview"):
@@ -3033,13 +3044,6 @@ with tab2:
                 st.markdown("<h4 style='color:#336699;'>Project Links</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
                 for i, link in enumerate(st.session_state.project_links):
                     st.markdown(f"[🔗 Project {i+1}]({link})", unsafe_allow_html=True)
-
-
-
-
-
-
-
 
 
                   

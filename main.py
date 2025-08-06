@@ -2755,231 +2755,225 @@ with tab2:
     st.markdown("## ✨ <span style='color:#336699;'>Enhanced AI Resume Preview</span>", unsafe_allow_html=True)
     st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
-    # ------------------------- ENHANCE PROMPT -------------------------
-    enhance_prompt = f"""
-    You are a professional resume builder AI.
+    # Optional Clear Button
+    if st.button("🔁 Clear Preview"):
+        st.session_state.pop("ai_output", None)
 
-    Enhance the following resume sections based on the user's job title: "{st.session_state['job_title']}". The enhancements must be aligned **strictly and specifically** with the responsibilities, tools, skills, and certifications relevant to that job title.
+    # Trigger AI Enhancement
+    if st.button("🚀 Generate AI Resume Preview"):
+        enhance_prompt = f"""
+You are a professional resume builder AI.
 
-    Instructions:
-    1. Rewrite the summary to sound professional, achievement-driven, and role-specific using strong action verbs.
-    2. Expand experience and project descriptions into structured bullet points (• or A., B., C.). Highlight domain-specific responsibilities and achievements.
-    3. Maintain paragraph structure and meaningful line breaks.
-    4. Infer and recommend **only domain-accurate** items, even if not explicitly provided:
-       - 6–8 modern **technical Skills** (relevant to the job title; e.g., for Cyber Security: SIEM, Kali Linux, Wireshark, Burp Suite, Splunk, Nmap, Firewalls, OWASP Top 10, etc.)
-       - 6–8 strong **Soft Skills**
-       - 3–6 job-aligned **Interests** (e.g., bug bounty, ethical hacking, network defense)
-       - Only **spoken Languages**
-       - 3–6 globally recognized **Certificates** (e.g., CompTIA Security+, CEH, IBM Cybersecurity Analyst, Google Cybersecurity, Cisco CCNA Security)
+Enhance the following resume sections based on the user's job title: "{st.session_state['job_title']}". The enhancements must be aligned **strictly and specifically** with the responsibilities, tools, skills, and certifications relevant to that job title.
 
-    Important:
-    - Do not include irrelevant frontend/backend tools if the job title is from a different domain like Cyber Security, DevOps, Data Science, etc.
-    - The certificate names must match real-world course titles from platforms like Coursera, Udemy, Google, IBM, Cisco, Microsoft, etc.
+Instructions:
+1. Rewrite the summary to sound professional, achievement-driven, and role-specific using strong action verbs.
+2. Expand experience and project descriptions into structured bullet points (• or A., B., C.). Highlight domain-specific responsibilities and achievements.
+3. Maintain paragraph structure and meaningful line breaks.
+4. Infer and recommend **only domain-accurate** items, even if not explicitly provided:
+   - 6–8 modern **technical Skills** (relevant to the job title; e.g., for Cyber Security: SIEM, Kali Linux, Wireshark, Burp Suite, Splunk, Nmap, Firewalls, OWASP Top 10, etc.)
+   - 6–8 strong **Soft Skills**
+   - 3–6 job-aligned **Interests** (e.g., bug bounty, ethical hacking, network defense)
+   - Only **spoken Languages**
+   - 3–6 globally recognized **Certificates** (e.g., CompTIA Security+, CEH, IBM Cybersecurity Analyst, Google Cybersecurity, Cisco CCNA Security)
 
-    📌 Format the output exactly like this:
+Important:
+- Do not include irrelevant frontend/backend tools if the job title is from a different domain like Cyber Security, DevOps, Data Science, etc.
+- The certificate names must match real-world course titles from platforms like Coursera, Udemy, Google, IBM, Cisco, Microsoft, etc.
 
-    Summary:
-    • ...
+📌 Format the output exactly like this:
 
-    Experience:
-    A. Company Name (Duration)
-       • Role
-       • Responsibility 1
-       • Responsibility 2
+Summary:
+• ...
 
-    Projects:
-    A. <Project Title>
-       • Tech Stack: <Job-relevant tools only>
-       • Duration: <Start – End>
-       • Description:
-         - Clearly describe a specific feature, functionality, or implementation aligned with the job role.
-         - Mention a tool or technology used and explain its context in the project.
-         - Highlight performance improvements, solved challenges, or measurable impacts.
-         - Include a technical or collaborative achievement that enhanced project success.
-         - (Optional) Add an additional impactful point if it meaningfully supports the role.
+Experience:
+A. Company Name (Duration)
+   • Role
+   • Responsibility 1
+   • Responsibility 2
 
+Projects:
+A. <Project Title>
+   • Tech Stack: <Job-relevant tools only>
+   • Duration: <Start – End>
+   • Description:
+     - Clearly describe a specific feature, functionality, or implementation aligned with the job role.
+     - Mention a tool or technology used and explain its context in the project.
+     - Highlight performance improvements, solved challenges, or measurable impacts.
+     - Include a technical or collaborative achievement that enhanced project success.
+     - (Optional) Add an additional impactful point if it meaningfully supports the role.
 
-    Skills:
-    Kali Linux, Splunk, SIEM, ...
+Skills:
+Kali Linux, Splunk, SIEM, ...
 
-    SoftSkills:
-    Problem Solving, Critical Thinking...
+SoftSkills:
+Problem Solving, Critical Thinking...
 
-    Languages:
-    English, Hindi...
+Languages:
+English, Hindi...
 
-    Interests:
-    Capture The Flag (CTF), Ethical Hacking...
+Interests:
+Capture The Flag (CTF), Ethical Hacking...
 
-    Certificates:
-    Google Cybersecurity – Coursera (6 months)
-    IBM Cybersecurity Analyst – IBM (Professional Certificate)
-    CompTIA Security+ – CompTIA (5 months)
+Certificates:
+Google Cybersecurity – Coursera (6 months)
+IBM Cybersecurity Analyst – IBM (Professional Certificate)
+CompTIA Security+ – CompTIA (5 months)
 
-    Use ONLY the user's inputs below as a reference. Rewrite and improve them meaningfully and accurately.
+Use ONLY the user's inputs below as a reference. Rewrite and improve them meaningfully and accurately.
 
-    Summary:
-    {st.session_state['summary']}
+Summary:
+{st.session_state['summary']}
 
-    Experience:
-    {[exp for exp in st.session_state.experience_entries]}
+Experience:
+{[exp for exp in st.session_state.experience_entries]}
 
-    Projects:
-    {[proj for proj in st.session_state.project_entries]}
+Projects:
+{[proj for proj in st.session_state.project_entries]}
 
-    Skills:
-    {st.session_state['skills']}
+Skills:
+{st.session_state['skills']}
 
-    SoftSkills:
-    {st.session_state['Softskills']}
+SoftSkills:
+{st.session_state['Softskills']}
 
-    Languages:
-    {st.session_state['languages']}
+Languages:
+{st.session_state['languages']}
 
-    Interests:
-    {st.session_state['interests']}
+Interests:
+{st.session_state['interests']}
 
-    Certificates:
-    {[cert['name'] for cert in st.session_state.certificate_links if cert['name']]}
-    """
+Certificates:
+{[cert['name'] for cert in st.session_state.certificate_links if cert['name']]}
+        """
+        st.session_state["ai_output"] = call_llm(enhance_prompt, session=st.session_state)
 
-    # ------------------------- CALL LLM -------------------------
-    ai_output = call_llm(enhance_prompt, session=st.session_state)
+    # ------------------------- PARSE + RENDER -------------------------
+    if "ai_output" in st.session_state:
+        ai_output = st.session_state["ai_output"]
 
-    # ------------------------- PARSE OUTPUT -------------------------
-    def extract_section(label, output, default=""):
-        match = re.search(rf"{label}:\s*(.*?)(?=\n\w+:|\Z)", output, re.DOTALL)
-        return match.group(1).strip() if match else default
+        def extract_section(label, output, default=""):
+            match = re.search(rf"{label}:\s*(.*?)(?=\n\w+:|\Z)", output, re.DOTALL)
+            return match.group(1).strip() if match else default
 
-    summary_enhanced = extract_section("Summary", ai_output, st.session_state['summary'])
-    experience_raw = extract_section("Experience", ai_output)
-    experience_blocks = re.split(r"\n(?=[A-Z]\. )", experience_raw.strip())
-    projects_raw = extract_section("Projects", ai_output)
-    projects_blocks = re.split(r"\n(?=[A-Z]\. )", projects_raw.strip())
-    skills_list = extract_section("Skills", ai_output, st.session_state['skills'])
-    softskills_list = extract_section("SoftSkills", ai_output, st.session_state['Softskills'])
-    languages_list = extract_section("Languages", ai_output, st.session_state['languages'])
-    interests_list = extract_section("Interests", ai_output, st.session_state['interests'])
-    certificates_list = extract_section("Certificates", ai_output)
+        summary_enhanced = extract_section("Summary", ai_output, st.session_state['summary'])
+        experience_raw = extract_section("Experience", ai_output)
+        experience_blocks = re.split(r"\n(?=[A-Z]\. )", experience_raw.strip())
+        projects_raw = extract_section("Projects", ai_output)
+        projects_blocks = re.split(r"\n(?=[A-Z]\. )", projects_raw.strip())
+        skills_list = extract_section("Skills", ai_output, st.session_state['skills'])
+        softskills_list = extract_section("SoftSkills", ai_output, st.session_state['Softskills'])
+        languages_list = extract_section("Languages", ai_output, st.session_state['languages'])
+        interests_list = extract_section("Interests", ai_output, st.session_state['interests'])
+        certificates_list = extract_section("Certificates", ai_output)
 
-    # ------------------------- UI RENDER -------------------------
-    left, right = st.columns([1, 2])
+        # ------------------------- UI RENDER -------------------------
+        left, right = st.columns([1, 2])
 
-    with left:
-        st.markdown(f"""
-            <h2 style='color:#2f2f2f;margin-bottom:0;'>{st.session_state['name']}</h2>
-            <h4 style='margin-top:5px;color:#444;'>{st.session_state['job_title']}</h4>
-            <p style='font-size:14px;'>
-            📍 {st.session_state['location']}<br>
-            📞 {st.session_state['phone']}<br>
-            📧 <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a><br>
-            🔗 <a href="{st.session_state['linkedin']}" target="_blank">LinkedIn</a><br>
-            🌐 <a href="{st.session_state['portfolio']}" target="_blank">Portfolio</a>
-            </p>
-        """, unsafe_allow_html=True)
+        with left:
+            st.markdown(f"""
+                <h2 style='color:#2f2f2f;margin-bottom:0;'>{st.session_state['name']}</h2>
+                <h4 style='margin-top:5px;color:#444;'>{st.session_state['job_title']}</h4>
+                <p style='font-size:14px;'>
+                📍 {st.session_state['location']}<br>
+                📞 {st.session_state['phone']}<br>
+                📧 <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a><br>
+                🔗 <a href="{st.session_state['linkedin']}" target="_blank">LinkedIn</a><br>
+                🌐 <a href="{st.session_state['portfolio']}" target="_blank">Portfolio</a>
+                </p>
+            """, unsafe_allow_html=True)
 
-        def render_bullet_section(title, items):
-            st.markdown(f"<h4 style='color:#336699;'>{title}</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for item in [i.strip() for i in items.split(",") if i.strip()]:
-                st.markdown(f"<div style='margin-left:10px;'>• {item}</div>", unsafe_allow_html=True)
+            def render_bullet_section(title, items):
+                st.markdown(f"<h4 style='color:#336699;'>{title}</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+                for item in [i.strip() for i in items.split(",") if i.strip()]:
+                    st.markdown(f"<div style='margin-left:10px;'>• {item}</div>", unsafe_allow_html=True)
 
-        render_bullet_section("Skills", skills_list)
-        render_bullet_section("Languages", languages_list)
-        render_bullet_section("Interests", interests_list)
-        render_bullet_section("Soft Skills", softskills_list)
+            render_bullet_section("Skills", skills_list)
+            render_bullet_section("Languages", languages_list)
+            render_bullet_section("Interests", interests_list)
+            render_bullet_section("Soft Skills", softskills_list)
 
-    with right:
-        formatted_summary = summary_enhanced.replace('\n• ', '<br>• ').replace('\n', '<br>')
-        st.markdown("<h4 style='color:#336699;'>Summary</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-        st.markdown(f"<p style='font-size:17px;'>{formatted_summary}</p>", unsafe_allow_html=True)
+        with right:
+            formatted_summary = summary_enhanced.replace('\n• ', '<br>• ').replace('\n', '<br>')
+            st.markdown("<h4 style='color:#336699;'>Summary</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            st.markdown(f"<p style='font-size:17px;'>{formatted_summary}</p>", unsafe_allow_html=True)
 
-        # -------- Experience Section --------
-        if experience_blocks:
-            st.markdown("<h4 style='color:#336699;'>Experience</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            experience_titles = [entry.get("title", "").strip().upper() for entry in st.session_state.experience_entries]
-            for idx, exp_block in enumerate(experience_blocks):
-                lines = exp_block.strip().split("\n")
-                if not lines:
-                    continue
-                heading = lines[0]
-                description_lines = lines[1:]
-                match = re.match(r"[A-Z]\.\s*(.+?)\s*\((.*?)\)", heading)
-                if match:
-                    company = match.group(1).strip()
-                    duration = match.group(2).strip()
-                else:
-                    company = heading.replace(f"{chr(65 + idx)}. ", "").strip()
-                    duration = ""
-                role = experience_titles[idx] if idx < len(experience_titles) else ""
-                formatted_exp = "<br>".join(description_lines)
+            # Experience
+            if experience_blocks:
+                st.markdown("<h4 style='color:#336699;'>Experience</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+                experience_titles = [entry.get("title", "").strip().upper() for entry in st.session_state.experience_entries]
+                for idx, exp_block in enumerate(experience_blocks):
+                    lines = exp_block.strip().split("\n")
+                    if not lines:
+                        continue
+                    heading = lines[0]
+                    description_lines = lines[1:]
+                    match = re.match(r"[A-Z]\.\s*(.+?)\s*\((.*?)\)", heading)
+                    company, duration = (match.group(1).strip(), match.group(2).strip()) if match else (heading, "")
+                    role = experience_titles[idx] if idx < len(experience_titles) else ""
+                    formatted_exp = "<br>".join(description_lines)
 
-                st.markdown(f"""
-                <div style='margin-bottom:15px; padding:10px; border-radius:8px;'>
-                    <div style='display:flex; justify-content:space-between;'>
-                        <b>🏢 {company.upper()}</b><span style='color:gray;'>📆 {duration}</span>
+                    st.markdown(f"""
+                    <div style='margin-bottom:15px; padding:10px; border-radius:8px;'>
+                        <div style='display:flex; justify-content:space-between;'>
+                            <b>🏢 {company.upper()}</b><span style='color:gray;'>📆 {duration}</span>
+                        </div>
+                        <div style='font-size:14px;'>💼 <i>{role}</i></div>
+                        <div style='font-size:17px;'>📝 {formatted_exp}</div>
                     </div>
-                    <div style='font-size:14px;'>💼 <i>{role}</i></div>
-                    <div style='font-size:17px;'>📝 {formatted_exp}</div>
+                    """, unsafe_allow_html=True)
+
+            # Education
+            st.markdown("<h4 style='color:#336699;'>🎓 Education</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            for edu in st.session_state.education_entries:
+                st.markdown(f"""
+                <div style='margin-bottom:15px; padding:10px 15px; border-radius:8px;'>
+                    <div style='display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;'>
+                        <span>🏫 {edu['institution']}</span>
+                        <span style='color: gray;'>📅 {edu['year']}</span>
+                    </div>
+                    <div style='font-size: 14px;'>🎓 <i>{edu['degree']}</i></div>
+                    <div style='font-size: 14px;'>📄 {edu['details']}</div>
                 </div>
                 """, unsafe_allow_html=True)
 
-        # -------- Education Section --------
-        st.markdown("<h4 style='color:#336699;'>🎓 Education</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-        for edu in st.session_state.education_entries:
-            st.markdown(f"""
-            <div style='margin-bottom:15px; padding:10px 15px; border-radius:8px;'>
-                <div style='display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;'>
-                    <span>🏫 {edu['institution']}</span>
-                    <span style='color: gray;'>📅 {edu['year']}</span>
-                </div>
-                <div style='font-size: 14px;'>🎓 <i>{edu['degree']}</i></div>
-                <div style='font-size: 14px;'>📄 {edu['details']}</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        # -------- Projects Section --------
-        if projects_blocks:
-            st.markdown("<h4 style='color:#336699;'>Projects</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for idx, proj_block in enumerate(projects_blocks):
-                if idx < len(st.session_state.project_entries):
-                    proj = st.session_state.project_entries[idx]
+            # Projects
+            if projects_blocks:
+                st.markdown("<h4 style='color:#336699;'>Projects</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+                for idx, proj_block in enumerate(projects_blocks):
+                    proj = st.session_state.project_entries[idx] if idx < len(st.session_state.project_entries) else {}
                     title = proj.get("title", "")
                     tech = proj.get("tech", "")
                     duration = proj.get("duration", "")
-                else:
-                    title, tech, duration = "", "", ""
-                description = proj_block
-                if title and title in description:
-                    description = description.replace(title, "")
-                if tech and f"Tech Stack: {tech}" in description:
-                    description = description.replace(f"Tech Stack: {tech}", "")
-                if duration and f"Duration: {duration}" in description:
-                    description = description.replace(f"Duration: {duration}", "")
-                formatted_proj = description.strip().replace('\n• ', '<br>• ').replace('\n', '<br>').strip()
-                label = chr(65 + idx)
+                    description = proj_block
+                    for keyword in [title, f"Tech Stack: {tech}", f"Duration: {duration}"]:
+                        if keyword and keyword in description:
+                            description = description.replace(keyword, "")
+                    formatted_proj = description.strip().replace('\n• ', '<br>• ').replace('\n', '<br>')
+                    label = chr(65 + idx)
 
-                st.markdown(f"""
-                <div style='margin-bottom:15px; padding: 10px;'>
-                    <strong style='font-size:16px;'>📌 <span style='color:#444;'>{label}. </span>{title}</strong><br>
-                    <span style='font-size:14px;'>🛠️ <strong>Tech Stack:</strong> {tech}</span><br>
-                    <span style='font-size:14px;'>⏳ <strong>Duration:</strong> {duration}</span><br>
-                    <span style='font-size:17px;'>📄 <strong>Description:</strong></span><br>
-                    <div style='margin-top:4px; font-size:15px;'>{formatted_proj}</div>
-                </div>
-                """, unsafe_allow_html=True)
+                    st.markdown(f"""
+                    <div style='margin-bottom:15px; padding: 10px;'>
+                        <strong style='font-size:16px;'>📌 <span style='color:#444;'>{label}. </span>{title}</strong><br>
+                        <span style='font-size:14px;'>🛠️ <strong>Tech Stack:</strong> {tech}</span><br>
+                        <span style='font-size:14px;'>⏳ <strong>Duration:</strong> {duration}</span><br>
+                        <span style='font-size:17px;'>📄 <strong>Description:</strong></span><br>
+                        <div style='margin-top:4px; font-size:15px;'>{formatted_proj}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
+            # Certificates
+            if certificates_list:
+                st.markdown("<h4 style='color:#336699;'>📜 Certificates</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+                certs = re.split(r"\n|(?<=\))(?=\s*[A-Z])|(?<=[a-z]\))(?= [A-Z])", certificates_list)
+                for cert in [c.strip() for c in certs if c.strip()]:
+                    st.markdown(f"<div style='margin-left:10px;'>• {cert}</div>", unsafe_allow_html=True)
 
-        # -------- Certificates Section --------
-        if certificates_list:
-            st.markdown("<h4 style='color:#336699;'>📜 Certificates</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            certs = re.split(r"\n|(?<=\))(?=\s*[A-Z])|(?<=[a-z]\))(?= [A-Z])", certificates_list)
-            for cert in [c.strip() for c in certs if c.strip()]:
-                st.markdown(f"<div style='margin-left:10px;'>• {cert}</div>", unsafe_allow_html=True)
+            if st.session_state.project_links:
+                st.markdown("<h4 style='color:#336699;'>Project Links</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+                for i, link in enumerate(st.session_state.project_links):
+                    st.markdown(f"[🔗 Project {i+1}]({link})", unsafe_allow_html=True)
 
-        if st.session_state.project_links:
-            st.markdown("<h4 style='color:#336699;'>Project Links</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for i, link in enumerate(st.session_state.project_links):
-                st.markdown(f"[🔗 Project {i+1}]({link})", unsafe_allow_html=True)
 
 
 

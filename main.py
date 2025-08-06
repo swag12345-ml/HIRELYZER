@@ -371,54 +371,79 @@ if not st.session_state.authenticated:
     resumes_uploaded = 15
     states_accessed = 29
 
-    components.html(f"""
-    <style>
-    .counter-wrapper {{
-        display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; margin-top: 40px;
-    }}
-    .counter {{
-        width: 230px; height: 140px;
-        background: linear-gradient(145deg, #0d1117, #0d1117);
-        color: #00BFFF;
-        border-radius: 15px;
-        box-shadow: 0 0 10px rgba(0, 191, 255, 0.4);
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        transition: transform 0.3s ease;
-        border: 2px solid transparent;
-        border-image: linear-gradient(to right, #00BFFF, #00FFFF) 1;
-    }}
-    .counter:hover {{
-        transform: translateY(-6px);
-        box-shadow: 0 0 25px rgba(0,255,255,0.5);
-    }}
-    .counter h1 {{ font-size: 2.8em; margin: 0; }}
-    .counter p {{ margin: 5px 0 0; font-size: 1.1em; color: #c9d1d9; }}
-    </style>
-    <div class="counter-wrapper">
-        <div class="counter"><h1 id="totalUsers">0</h1><p>Total Users</p></div>
-        <div class="counter"><h1 id="states">0</h1><p>States Accessed</p></div>
-        <div class="counter"><h1 id="resumes">0</h1><p>Resumes Uploaded</p></div>
-        <div class="counter"><h1 id="activeSessions">0</h1><p>Active Sessions</p></div>
+    # Fetch counters
+total_users = get_total_registered_users()
+active_logins = get_logins_today()
+resumes_uploaded = 15
+states_accessed = 29
+
+# Grid Layout using st.columns
+col1, col2 = st.columns(2)
+col3, col4 = st.columns(2)
+
+counter_style = """
+<style>
+.counter-box {
+    background: linear-gradient(145deg, #0d1117, #0d1117);
+    border-radius: 15px;
+    box-shadow: 0 0 10px rgba(0, 191, 255, 0.4);
+    border: 2px solid transparent;
+    border-image: linear-gradient(to right, #00BFFF, #00FFFF) 1;
+    padding: 30px;
+    text-align: center;
+    color: #00BFFF;
+    transition: transform 0.3s ease;
+}
+.counter-box:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 0 25px rgba(0,255,255,0.5);
+}
+.counter-number {
+    font-size: 2.8em;
+    margin: 0;
+    color: #00BFFF;
+}
+.counter-label {
+    margin: 5px 0 0;
+    font-size: 1.1em;
+    color: #c9d1d9;
+}
+</style>
+"""
+
+st.markdown(counter_style, unsafe_allow_html=True)
+
+with col1:
+    st.markdown(f"""
+    <div class="counter-box">
+        <div class="counter-number">{total_users}</div>
+        <div class="counter-label">Total Users</div>
     </div>
-    <script>
-    function animateValue(id, start, end, duration) {{
-        const obj = document.getElementById(id);
-        const range = end - start;
-        const increment = end > start ? 1 : -1;
-        const stepTime = Math.abs(Math.floor(duration / range));
-        let current = start;
-        const timer = setInterval(() => {{
-            current += increment;
-            obj.innerHTML = current;
-            if (current == end) clearInterval(timer);
-        }}, stepTime);
-    }}
-    animateValue("totalUsers", 0, {total_users}, 1500);
-    animateValue("states", 0, {states_accessed}, 1200);
-    animateValue("resumes", 0, {resumes_uploaded}, 1300);
-    animateValue("activeSessions", 0, {active_logins}, 1500);
-    </script>
-    """, height=400)
+    """, unsafe_allow_html=True)
+
+with col2:
+    st.markdown(f"""
+    <div class="counter-box">
+        <div class="counter-number">{states_accessed}</div>
+        <div class="counter-label">States Accessed</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col3:
+    st.markdown(f"""
+    <div class="counter-box">
+        <div class="counter-number">{resumes_uploaded}</div>
+        <div class="counter-label">Resumes Uploaded</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col4:
+    st.markdown(f"""
+    <div class="counter-box">
+        <div class="counter-number">{active_logins}</div>
+        <div class="counter-label">Active Sessions</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 

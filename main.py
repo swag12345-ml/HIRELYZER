@@ -2749,104 +2749,139 @@ with tab2:
             </div>
             <div style='margin-bottom:10px; font-size:14px;'>{cert['description']}</div>
         """, unsafe_allow_html=True)
-with tab2:
-    import re
+import re
 
+with tab2:
     st.markdown("## ✨ <span style='color:#336699;'>Enhanced AI Resume Preview</span>", unsafe_allow_html=True)
     st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
-    # Optional Clear Button
-    if st.button("🔁 Clear Preview"):
-        st.session_state.pop("ai_output", None)
+    col1, col2 = st.columns([1, 2])
 
-    # Trigger AI Enhancement
-    if st.button("🚀 Generate AI Resume Preview"):
-        enhance_prompt = f"""
-You are a professional resume builder AI.
+    with col1:
+        if st.button("🔁 Clear Preview"):
+            st.session_state.pop("ai_output", None)
 
-Enhance the following resume sections based on the user's job title: "{st.session_state['job_title']}". The enhancements must be aligned **strictly and specifically** with the responsibilities, tools, skills, and certifications relevant to that job title.
+    with col2:
+        if st.button("🚀 Generate AI Resume Preview"):
+            # Normalize and ensure at least 2 experience entries
+            experience_entries = st.session_state.get('experience_entries', [])
+            normalized_experience_entries = []
+            for entry in experience_entries:
+                if isinstance(entry, dict):
+                    title = entry.get("title", "")
+                    desc = entry.get("description", "")
+                    formatted = f"{title}\n{desc}".strip()
+                else:
+                    formatted = entry.strip()
+                normalized_experience_entries.append(formatted)
+            while len(normalized_experience_entries) < 2:
+                normalized_experience_entries.append("Placeholder Experience")
 
-Instructions:
-1. Rewrite the summary to sound professional, achievement-driven, and role-specific using strong action verbs.
-2. Expand experience and project descriptions into structured bullet points (• or A., B., C.). Highlight domain-specific responsibilities and achievements.
-3. Maintain paragraph structure and meaningful line breaks.
-4. Infer and recommend **only domain-accurate** items, even if not explicitly provided:
-   - 6–8 modern **technical Skills** (relevant to the job title; e.g., for Cyber Security: SIEM, Kali Linux, Wireshark, Burp Suite, Splunk, Nmap, Firewalls, OWASP Top 10, etc.)
-   - 6–8 strong **Soft Skills**
-   - 3–6 job-aligned **Interests** (e.g., bug bounty, ethical hacking, network defense)
-   - Only **spoken Languages**
-   - 3–6 globally recognized **Certificates** (e.g., CompTIA Security+, CEH, IBM Cybersecurity Analyst, Google Cybersecurity, Cisco CCNA Security)
+            # Normalize and ensure at least 2 project entries
+            project_entries = st.session_state.get('project_entries', [])
+            normalized_project_entries = []
+            for entry in project_entries:
+                if isinstance(entry, dict):
+                    title = entry.get("title", "")
+                    desc = entry.get("description", "")
+                    formatted = f"{title}\n{desc}".strip()
+                else:
+                    formatted = entry.strip()
+                normalized_project_entries.append(formatted)
+            while len(normalized_project_entries) < 2:
+                normalized_project_entries.append("Placeholder Project")
 
-Important:
-- Do not include irrelevant frontend/backend tools if the job title is from a different domain like Cyber Security, DevOps, Data Science, etc.
-- The certificate names must match real-world course titles from platforms like Coursera, Udemy, Google, IBM, Cisco, Microsoft, etc.
+            enhance_prompt = f"""
+            You are a professional resume builder AI.
 
-📌 Format the output exactly like this:
+            Enhance the following resume sections based on the user's job title: "{st.session_state['job_title']}". The enhancements must be aligned **strictly and specifically** with the responsibilities, tools, skills, and certifications relevant to that job title.
+            
+            Instructions:
+            1. Rewrite the summary to sound professional, achievement-driven, and role-specific using strong action verbs.
+            2. Expand experience and project descriptions into structured bullet points (• or A., B., C.). Highlight domain-specific responsibilities and achievements.
+            3. Maintain paragraph structure and meaningful line breaks.
+            4. Infer and recommend **only domain-accurate** items, even if not explicitly provided:
+               - 6–8 modern **technical Skills** (relevant to the job title; e.g., for Cyber Security: SIEM, Kali Linux, Wireshark, Burp Suite, Splunk, Nmap, Firewalls, OWASP Top 10, etc.)
+               - 6–8 strong **Soft Skills**
+               - 3–6 job-aligned **Interests** (e.g., bug bounty, ethical hacking, network defense)
+               - Only **spoken Languages**
+               - 3–6 globally recognized **Certificates** (e.g., CompTIA Security+, CEH, IBM Cybersecurity Analyst, Google Cybersecurity, Cisco CCNA Security)
 
-Summary:
-• ...
+            Important:
+            - Do not include irrelevant frontend/backend tools if the job title is from a different domain like Cyber Security, DevOps, Data Science, etc.
+            - The certificate names must match real-world course titles from platforms like Coursera, Udemy, Google, IBM, Cisco, Microsoft, etc.
 
-Experience:
-A. Company Name (Duration)
-   • Role
-   • Responsibility 1
-   • Responsibility 2
+            📌 Format the output exactly like this:
 
-Projects:
-A. <Project Title>
-   • Tech Stack: <Job-relevant tools only>
-   • Duration: <Start – End>
-   • Description:
-     - Clearly describe a specific feature, functionality, or implementation aligned with the job role.
-     - Mention a tool or technology used and explain its context in the project.
-     - Highlight performance improvements, solved challenges, or measurable impacts.
-     - Include a technical or collaborative achievement that enhanced project success.
-     - (Optional) Add an additional impactful point if it meaningfully supports the role.
+            Summary:
+            • ...
 
-Skills:
-Kali Linux, Splunk, SIEM, ...
+            Experience:
+            A. Company Name (Duration)
+               • Role
+               • Responsibility 1
+               • Responsibility 2
 
-SoftSkills:
-Problem Solving, Critical Thinking...
+            Projects:
+            A. <Project Title>
+               • Tech Stack: <Job-relevant tools only>
+               • Duration: <Start – End>
+               • Description:
+                 - Clearly describe a specific feature, functionality, or implementation aligned with the job role.
+                 - Mention a tool or technology used and explain its context in the project.
+                 - Highlight performance improvements, solved challenges, or measurable impacts.
+                 - Include a technical or collaborative achievement that enhanced project success.
+                 - (Optional) Add an additional impactful point if it meaningfully supports the role.
 
-Languages:
-English, Hindi...
+            Skills:
+            Kali Linux, Splunk, SIEM, ...
 
-Interests:
-Capture The Flag (CTF), Ethical Hacking...
+            SoftSkills:
+            Problem Solving, Critical Thinking...
 
-Certificates:
-Google Cybersecurity – Coursera (6 months)
-IBM Cybersecurity Analyst – IBM (Professional Certificate)
-CompTIA Security+ – CompTIA (5 months)
+            Languages:
+            English, Hindi...
 
-Use ONLY the user's inputs below as a reference. Rewrite and improve them meaningfully and accurately.
+            Interests:
+            Capture The Flag (CTF), Ethical Hacking...
 
-Summary:
-{st.session_state['summary']}
+            Certificates:
+            Google Cybersecurity – Coursera (6 months)
+            IBM Cybersecurity Analyst – IBM (Professional Certificate)
+            CompTIA Security+ – CompTIA (5 months)
 
-Experience:
-{[exp for exp in st.session_state.experience_entries]}
+            Use ONLY the user's inputs below as a reference. Rewrite and improve them meaningfully and accurately.
 
-Projects:
-{[proj for proj in st.session_state.project_entries]}
+            Summary:
+            {st.session_state['summary']}
 
-Skills:
-{st.session_state['skills']}
+            Experience:
+            {normalized_experience_entries}
 
-SoftSkills:
-{st.session_state['Softskills']}
+            Projects:
+            {normalized_project_entries}
 
-Languages:
-{st.session_state['languages']}
+            Skills:
+            {st.session_state['skills']}
 
-Interests:
-{st.session_state['interests']}
+            SoftSkills:
+            {st.session_state['Softskills']}
 
-Certificates:
-{[cert['name'] for cert in st.session_state.certificate_links if cert['name']]}
-        """
-        st.session_state["ai_output"] = call_llm(enhance_prompt, session=st.session_state)
+            Languages:
+            {st.session_state['languages']}
+
+            Interests:
+            {st.session_state['interests']}
+
+            Certificates:
+            {[cert['name'] for cert in st.session_state['certificate_links'] if cert['name']]}
+            """
+
+            with st.spinner("🧠 Thinking..."):
+                ai_output = call_llm(enhance_prompt, session=st.session_state)
+                st.session_state["ai_output"] = ai_output
+
+
 
     # ------------------------- PARSE + RENDER -------------------------
     if "ai_output" in st.session_state:

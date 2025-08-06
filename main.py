@@ -69,10 +69,7 @@ def html_to_pdf_bytes(html_string):
 
 
 def generate_cover_letter_from_resume_builder():
-    import streamlit as st
-    from datetime import datetime
-    import re
-    from llm_manager import call_llm  # Ensure you import this
+    
 
     name = st.session_state.get("name", "")
     job_title = st.session_state.get("job_title", "")
@@ -87,14 +84,12 @@ def generate_cover_letter_from_resume_builder():
     email = st.text_input("📧 Email", placeholder="e.g., you@example.com")
     mobile = st.text_input("📞 Mobile Number", placeholder="e.g., +91 9876543210")
 
-    # ✅ Button to prevent relooping
-    if st.button("✉️ Generate Cover Letter"):
-        # ✅ Validate input before generating
-        if not all([name, job_title, summary, skills, company, linkedin, email, mobile]):
-            st.warning("⚠️ Please fill in all fields including LinkedIn, email, and mobile.")
-            return
+    # ✅ Show warning only after inputs
+    if not all([name, job_title, summary, skills, company, linkedin, email, mobile]):
+        st.warning("⚠️ Please fill in all fields including LinkedIn, email, and mobile.")
+        return
 
-        prompt = f"""
+    prompt = f"""
 You are a professional cover letter writer.
 
 Write a formal and compelling cover letter using the information below. Format it as a real letter with:
@@ -124,44 +119,39 @@ Hiring Manager, {company}, {location}
 - Return only the final formatted cover letter without any HTML tags.
 """
 
-        # ✅ Call LLM
-        cover_letter = call_llm(prompt, session=st.session_state)
+    # ✅ Call LLM for cover letter
+    cover_letter = call_llm(prompt, session=st.session_state)
 
-        # ✅ Clean leading line if needed
-        lines = cover_letter.strip().split("\n")
-        if len(lines) > 0 and (re.match(r'^\w+ \d{1,2}, \d{4}$', lines[0].strip()) or lines[0].strip().startswith('<div')):
-            lines = lines[1:]
-        cover_letter = "\n".join(lines)
-        st.session_state["cover_letter"] = cover_letter
+    # ✅ Remove leading date line or raw HTML blocks if present
+    lines = cover_letter.strip().split("\n")
+    if len(lines) > 0 and (re.match(r'^\w+ \d{1,2}, \d{4}$', lines[0].strip()) or lines[0].strip().startswith('<div')):
+        lines = lines[1:]
+    cover_letter = "\n".join(lines)
 
-        # ✅ xhtml2pdf-compatible table layout
-        cover_letter_html = f"""
-<table width="100%" style="font-family: Georgia, serif; font-size: 12pt; color: #000;">
-    <tr>
-        <td align="center" colspan="2" style="font-size: 16pt; font-weight: bold; color: #003366;">{name}</td>
-    </tr>
-    <tr>
-        <td align="center" colspan="2" style="font-size: 14pt; color: #555;">{job_title}</td>
-    </tr>
-    <tr>
-        <td align="center" colspan="2" style="font-size: 10pt; padding: 5px;">
-            <a href="{linkedin}" style="color: #003366;">{linkedin}</a><br/>
-            📧 {email} | 📞 {mobile}
-        </td>
-    </tr>
-    <tr><td colspan="2" style="padding-top:10px;">{today_date}</td></tr>
-    <tr>
-        <td colspan="2">
-            <hr style="border: 0; border-top: 1px solid #000; margin: 10px 0;" />
-        </td>
-    </tr>
-    <tr>
-        <td colspan="2" style="white-space: pre-wrap; line-height: 1.6;">{cover_letter}</td>
-    </tr>
-</table>
-"""
-        st.session_state["cover_letter_html"] = cover_letter_html
+    st.session_state["cover_letter"] = cover_letter
 
+    # ✅ Styled HTML template wrapping the LLM output with icons and date
+    cover_letter_html = f"""
+    <div style="font-family: Georgia, serif; line-height: 1.6; color: #333; border: 1px solid #ccc; padding: 20px; max-width: 700px; margin: auto;">
+        <div style="text-align: center;">
+            <h1 style="color: #003366; font-size: 26px; margin-bottom: 0;">{name}</h1>
+            <h2 style="font-style: normal; font-weight: normal; margin-top: 0; color: #555;">{job_title}</h2>
+            <p style="margin: 4px 0; font-size: 14px;">
+                <a href="{linkedin}" style="color: #003366;">{linkedin}</a><br>
+                <img src="https://img.icons8.com/ios-glyphs/16/000000/new-post.png" style="vertical-align: middle;"/> {email} |
+                <img src="https://img.icons8.com/ios-glyphs/16/000000/phone.png" style="vertical-align: middle;"/> {mobile}
+            </p>
+        </div>
+        <p style="text-align: left; font-size: 14px; margin-top: 20px;">{today_date}</p>
+        <hr style="border: 1px solid #ccc;">
+        <div style="white-space: pre-wrap; text-align: left; font-size: 14px; line-height: 1.6;">
+            {cover_letter}
+        </div>
+    </div>
+    """
+
+    # ✅ Save styled HTML to session state for download in Tab 2
+    st.session_state["cover_letter_html"] = cover_letter_html
 
 
 
@@ -233,15 +223,12 @@ from user_login import (
 create_user_table()
 
 # ------------------- Initialize Session State -------------------
-# ------------------- Initialize Session State -------------------
-for key, default in {
-    "authenticated": False,
-    "username": None,
-    "processed_files": set(),
-}.items():
-    if key not in st.session_state:
-        st.session_state[key] = default
-
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+if "username" not in st.session_state:
+    st.session_state.username = None
+if "processed_files" not in st.session_state:
+    st.session_state.processed_files = set()
 
 # ------------------- CSS Styling -------------------
 st.markdown("""
@@ -310,12 +297,15 @@ body, .main {
 }
 </style>
 """, unsafe_allow_html=True)
+# 🔹 VIDEO BACKGROUND & GLOW TEXT
+
+
 
 
 # ------------------- BEFORE LOGIN -------------------
 if not st.session_state.authenticated:
 
-    # -------- Sidebar with Feature Cards --------
+    # -------- Sidebar --------
     with st.sidebar:
         st.markdown("<h1 style='color:#00BFFF;'>Smart Resume AI</h1>", unsafe_allow_html=True)
         st.markdown("<p style='color:#c9d1d9;'>Transform your career with AI-powered resume analysis, job matching, and smart insights.</p>", unsafe_allow_html=True)
@@ -337,11 +327,7 @@ if not st.session_state.authenticated:
             </div>
             """, unsafe_allow_html=True)
 
-
-    # -------- Animated User Cards --------
-    from base64 import b64encode
-    import requests
-
+    # -------- Animated Cards --------
     image_url = "https://cdn-icons-png.flaticon.com/512/3135/3135768.png"
     response = requests.get(image_url)
     img_base64 = b64encode(response.content).decode()
@@ -349,28 +335,28 @@ if not st.session_state.authenticated:
     st.markdown(f"""
     <style>
     .animated-cards {{
-        margin-top: 40px;
-        display: flex;
-        justify-content: center;
-        position: relative;
-        height: 260px;
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+      position: relative;
+      height: 300px;
     }}
     .animated-cards img {{
-        position: absolute;
-        width: 220px;
-        animation: splitCards 2.5s ease-in-out infinite alternate;
-        z-index: 1;
+      position: absolute;
+      width: 240px;
+      animation: splitCards 2.5s ease-in-out infinite alternate;
+      z-index: 1;
     }}
     .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
     .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
     .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
     @keyframes splitCards {{
-        0% {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
-        100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
+      0% {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
+      100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
     }}
-    .card-left {{ --x-offset: -80px; --rot: -4deg; }}
+    .card-left {{ --x-offset: -80px; --rot: -5deg; }}
     .card-center {{ --x-offset: 0px; --rot: 0deg; }}
-    .card-right {{ --x-offset: 80px; --rot: 4deg; }}
+    .card-right {{ --x-offset: 80px; --rot: 5deg; }}
     </style>
     <div class="animated-cards">
         <img class="card-left" src="data:image/png;base64,{img_base64}" />
@@ -378,7 +364,6 @@ if not st.session_state.authenticated:
         <img class="card-right" src="data:image/png;base64,{img_base64}" />
     </div>
     """, unsafe_allow_html=True)
-
 
     # -------- Counter Section --------
     total_users = get_total_registered_users()
@@ -389,42 +374,25 @@ if not st.session_state.authenticated:
     components.html(f"""
     <style>
     .counter-wrapper {{
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 30px;
-        margin-top: 40px;
-        padding: 0 20px;
+        display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; margin-top: 40px;
     }}
     .counter {{
-        width: 230px;
-        height: 140px;
+        width: 230px; height: 140px;
         background: linear-gradient(145deg, #0d1117, #0d1117);
         color: #00BFFF;
         border-radius: 15px;
         box-shadow: 0 0 10px rgba(0, 191, 255, 0.4);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
         transition: transform 0.3s ease;
         border: 2px solid transparent;
         border-image: linear-gradient(to right, #00BFFF, #00FFFF) 1;
-        flex-shrink: 0;
     }}
     .counter:hover {{
         transform: translateY(-6px);
         box-shadow: 0 0 25px rgba(0,255,255,0.5);
     }}
-    .counter h1 {{
-        font-size: 2.5em;
-        margin: 0;
-    }}
-    .counter p {{
-        margin: 5px 0 0;
-        font-size: 1.1em;
-        color: #c9d1d9;
-    }}
+    .counter h1 {{ font-size: 2.8em; margin: 0; }}
+    .counter p {{ margin: 5px 0 0; font-size: 1.1em; color: #c9d1d9; }}
     </style>
     <div class="counter-wrapper">
         <div class="counter"><h1 id="totalUsers">0</h1><p>Total Users</p></div>
@@ -452,6 +420,65 @@ if not st.session_state.authenticated:
     </script>
     """, height=400)
 
+
+
+if not st.session_state.get("authenticated", False):
+    
+
+    # ✅ Use an online image of a female employee
+    image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
+    response = requests.get(image_url)
+    img_base64 = b64encode(response.content).decode()
+
+    # ✅ Inject animated shuffle CSS + HTML
+    st.markdown(f"""
+    <style>
+    .animated-cards {{
+      margin-top: 40px;
+      display: flex;
+      justify-content: center;
+      position: relative;
+      height: 260px;
+    }}
+    .animated-cards img {{
+      position: absolute;
+      width: 220px;
+      animation: splitCards 2.5s ease-in-out infinite alternate;
+      z-index: 1;
+    }}
+    .animated-cards img:nth-child(1) {{
+      animation-delay: 0s;
+      z-index: 3;
+    }}
+    .animated-cards img:nth-child(2) {{
+      animation-delay: 0.3s;
+      z-index: 2;
+    }}
+    .animated-cards img:nth-child(3) {{
+      animation-delay: 0.6s;
+      z-index: 1;
+    }}
+    @keyframes splitCards {{
+      0% {{
+        transform: scale(1) translateX(0) rotate(0deg);
+        opacity: 1;
+      }}
+      100% {{
+        transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot));
+        opacity: 1;
+      }}
+    }}
+    .card-left {{ --x-offset: -80px; --rot: -4deg; }}
+    .card-center {{ --x-offset: 0px; --rot: 0deg; }}
+    .card-right {{ --x-offset: 80px; --rot: 4deg; }}
+    </style>
+
+    <div class="animated-cards">
+        <img class="card-left" src="data:image/png;base64,{img_base64}" />
+        <img class="card-center" src="data:image/png;base64,{img_base64}" />
+        <img class="card-right" src="data:image/png;base64,{img_base64}" />
+    </div>
+    """, unsafe_allow_html=True)
 
     # -------- Login/Register Layout --------
     left, center, right = st.columns([1, 2, 1])
@@ -2728,7 +2755,7 @@ with tab2:
     st.markdown("## ✨ <span style='color:#336699;'>Enhanced AI Resume Preview</span>", unsafe_allow_html=True)
     st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
-    col1, spacer, col2 = st.columns([1, 0.2, 1])
+    col1, col2 = st.columns([1, 2])
 
     with col1:
         if st.button("🔁 Clear Preview"):
@@ -2981,6 +3008,13 @@ with tab2:
                 st.markdown("<h4 style='color:#336699;'>Project Links</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
                 for i, link in enumerate(st.session_state.project_links):
                     st.markdown(f"[🔗 Project {i+1}]({link})", unsafe_allow_html=True)
+
+
+
+
+
+
+
 
 
                   

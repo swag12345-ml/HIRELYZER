@@ -1876,7 +1876,6 @@ Use this context:
         "Domain Penalty": domain_penalty,
         "Domain Similarity Score": similarity_score
     }
-
 # Setup Vector DB
 def setup_vectorstore(documents):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")

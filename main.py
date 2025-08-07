@@ -1704,100 +1704,94 @@ def ats_percentage_score(
     )
 
     prompt = f"""
-You are an AI-powered ATS evaluator. Assess the candidate's resume against the job description. Return a detailed, **section-by-section analysis**, with **scoring for each area**. Follow the format precisely below.
+You are an AI-powered ATS evaluator. Evaluate how well the candidate’s resume matches the job description. Focus on real-world alignment based on **skills, tools, projects, and experience** — not just title or domain.
 
-🎯 Section Breakdown:
+👉 Use **projects from the resume** to support scoring in the **Experience**, **Skills**, and **Keyword** sections.
 
-1. **Candidate Name** — Extract from resume.
-2. **Education Analysis** — Evaluate degrees and field match vs job.
-3. **Experience Analysis** — Evaluate role match, years, seniority, project impact, relevance to JD.
-4. **Skills Analysis** — Check for:
-   - Technical tools
-   - Domain-specific expertise
-   - Soft skills
-
-✅ **Important: Provide missing skills in bullet points. Identify skills from the job description that are NOT found in the resume. Be specific and list at least 3 if applicable.**
-
-5. **Language Quality** — Use grammar score provided. Analyze tone, clarity, professionalism.
-6. **Keyword Analysis** — Evaluate presence of important keywords.
-
-✅ **Important: Provide missing keywords from the job description as a bullet list. Only include words/phrases present in the JD but absent in the resume. Give at least 3 if applicable.**
-
-7. **Final Thoughts** — Give holistic fit assessment (4–6 sentences).
-
-Use this context:
-
-- Grammar Score: {grammar_score} / {lang_weight}
-- Grammar Feedback: {grammar_feedback}
-- Resume Domain: {resume_domain}
-- Job Domain: {job_domain}
-- Penalty if domains don't match: {domain_penalty} (Based on domain similarity score {similarity_score:.2f}, max penalty is {MAX_DOMAIN_PENALTY})
+Even if the domain doesn't match, give credit for technical and project alignment. Evaluate **real project work**, responsibilities, and tool usage critically.
 
 ---
 
-### 🏷️ Candidate Name
-<Full name or "Not Found">
+🎯 Section Breakdown:
 
-### 🏫 Education Analysis
+1. **Candidate Name** — Extract full name from the resume, if available.
+
+2. **Education Analysis**
 **Score:** <0–{edu_weight}> / {edu_weight}  
-**Degree Match:** <Discuss degree level, specialization, and how it matches the job.>
+**Degree Match:** Evaluate the degree, field of study, and academic performance. Mention if it aligns with job expectations.
 
-### 💼 Experience Analysis
+3. **Experience Analysis**
 **Score:** <0–{exp_weight}> / {exp_weight}  
-**Experience Details:** <Talk about seniority, project relevance, domain fit, and leadership.>
+**Experience Details:**  
+Evaluate job titles, internships, and **projects** that involve responsibilities similar to the job. Give credit for hands-on exposure to relevant tools (e.g., Node.js, React, APIs, etc.), even if gained through freelance or academic work.
 
-### 🛠 Skills Analysis
+Assess:
+- Duration and intensity of experience
+- Leadership and ownership of outcomes
+- Team collaboration or solo work
+- Project delivery and impact
+
+4. **Skills Analysis**
 **Score:** <0–{skills_weight}> / {skills_weight}  
-**Current Skills:**
-- Technical: <list>
-- Soft Skills: <list>
-- Domain-Specific: <list>
+**Current Skills (from resume + projects):**
+- Technical: <List technologies, languages, tools>
+- Soft Skills: <List communication/teamwork traits>
+- Domain-Specific: <If applicable>
 
 **Skill Proficiency:**  
-<Detailed explanation of proficiency levels, strengths, and areas needing examples.>
+Critically assess how deeply the candidate applies relevant tools from the job description (React.js, APIs, DBs, CI/CD, etc.), even if via projects.
 
 **Missing Skills:**  
 - Skill 1  
 - Skill 2  
 - Skill 3  
-*(List based only on skills in job description but absent in resume)*
+(Identify only those from the job description that are not found in either resume or projects)
 
-### 🗣 Language Quality Analysis
+5. **Language Quality Analysis**
 **Score:** {grammar_score} / {lang_weight}  
-**Grammar & Tone:** <LLM-based comment on clarity, fluency, tone>  
+**Grammar & Tone:** <Use grammar score to summarize tone, fluency, and professionalism>  
 **Feedback Summary:** **{grammar_feedback}**
 
-### 🔑 Keyword Analysis
+6. **Keyword Analysis**
 **Score:** <0–{keyword_weight}> / {keyword_weight}  
-**Missing Keywords:**  
-- Keyword1  
-- Keyword2  
-- Keyword3  
-*(Extract keywords from JD not found in resume. Include role-related, domain-specific, and tool-based terms.)*
+**Missing Keywords (from JD but absent in both resume and projects):**  
+- Keyword 1  
+- Keyword 2  
+- Keyword 3  
 
 **Keyword Analysis:**  
-<Discuss importance of missing/present keywords and how they affect job match.>
+Evaluate how well the candidate's resume and project descriptions align with the tools, platforms, and terminology used in the job description (e.g., Git, Docker, REST, MongoDB, etc.).
 
-### ✅ Final Thoughts
-<Summarize domain fit, core strengths, red flags, and whether this resume deserves further review.>
+7. **Final Thoughts**
+Provide a realistic 4–6 sentence review summarizing the candidate’s overall fit for this specific job. Balance strengths (e.g., project tech stack match) against concerns (e.g., limited real-world deployment or DevOps).
+
+---
+
+📌 Use this context to guide your evaluation:
+
+- Grammar Score: {grammar_score} / {lang_weight}
+- Grammar Feedback: {grammar_feedback}
+- Resume Domain: {resume_domain or "N/A"}
+- Job Domain: {job_domain or "N/A"}
+- Domain Similarity Score: {similarity_score:.2f}
+- Domain Penalty (if applicable): {domain_penalty} / {MAX_DOMAIN_PENALTY}
 
 ---
 
 **Instructions:**
-- Use markdown formatting.
-- Follow the section titles and bold formatting strictly.
-- Keep tone professional and ATS-focused.
-- Use the provided grammar score and domain info as context.
-- Force output of missing skills and keywords using bullet lists.
-- Avoid generalizations — rely only on specific terms from JD and resume.
+- Follow markdown structure.
+- Score each section within the allowed range.
+- Always include bullet points for missing skills and keywords.
+- If the domain doesn’t match but project/skill alignment is strong, reduce or eliminate penalty.
+- Never assume — extract only from content provided.
 
 ---
 
 📄 Job Description:
-\"\"\"{job_description}\"\"\"  
+\"\"\"{job_description}\"\"\"
 
 📄 Resume:
-\"\"\"{resume_text}\"\"\"  
+\"\"\"{resume_text}\"\"\"
 
 {logic_score_note}
 """

@@ -1704,112 +1704,103 @@ def ats_percentage_score(
     )
 
     prompt = f"""
-You are an AI-powered ATS evaluator. Assess the candidate's resume against the job description. Return a detailed, **section-by-section analysis**, with **scoring for each area**. Make each section informative and easy to understand for the candidate. Highlight not just scores, but also context — like where skills came from, how experience aligns, and which keywords are critical.
+You are an AI-powered ATS evaluator. Assess the candidate's resume against the job description. Return a detailed, **section-by-section analysis**, with **scoring for each area**. Follow the format precisely below.
 
 🎯 Section Breakdown:
 
-1. **Candidate Name** — Extract full name from resume if found.
+1. **Candidate Name** — Extract from resume.
+2. **Education Analysis** — Evaluate degrees and field match vs job.
+3. **Experience Analysis** — Evaluate role match, years, seniority, project impact, relevance to JD.
+4. **Skills Analysis** — Check for:
+   - Technical tools
+   - Domain-specific expertise
+   - Soft skills
 
-2. **Education Analysis**
-**Score:** <0–{edu_weight}> / {edu_weight}  
-**Degree Match:**  
-- Degree and specialization  
-- Institution (if relevant)  
-- Academic performance (if stated)  
-- Relevance of degree to job title and tech stack
+✅ **Important: Provide missing skills in bullet points. Identify skills from the job description that are NOT found in the resume. Be specific and list at least 3 if applicable.**
 
-3. **Experience Analysis**
-**Score:** <0–{exp_weight}> / {exp_weight}  
-**Experience Details:**  
-Break down experience by:
-- 🧑‍💼 **Roles and Titles** (e.g. Intern, Developer, etc.)
-- 🕒 **Seniority and Duration** (How long, full-time/part-time/project-based?)
-- 🧩 **Technical Exposure**: Which tech/tools used that are relevant to JD
-- 📌 **Projects Contributing to Experience** (including internship, freelance, academic)
-    - Format:  
-        - **Project Name** — <Brief summary with tools used>  
-        - Was it team-based or solo?
-        - Was it deployed or just concept?
+5. **Language Quality** — Use grammar score provided. Analyze tone, clarity, professionalism.
+6. **Keyword Analysis** — Evaluate presence of important keywords.
 
-✅ Highlight if any experience substitutes for real-world job exposure.
+✅ **Important: Provide missing keywords from the job description as a bullet list. Only include words/phrases present in the JD but absent in the resume. Give at least 3 if applicable.**
 
-4. **Skills Analysis**
-**Score:** <0–{skills_weight}> / {skills_weight}  
-**Current Skills:**  
-Break into:
-- 🛠 **Technical Skills** (from resume + projects)
-- 🧠 **Soft Skills** (communication, teamwork, etc.)
-- 🎯 **Domain-Specific or Frameworks** (like MERN, Django, etc.)
+7. **Final Thoughts** — Give holistic fit assessment (4–6 sentences).
 
-**Skill Proficiency:**  
-- Rate practical strength and usage frequency (e.g. "React.js used in 2 projects", "Python only mentioned once")
-- Mention any certifications if present
-- Comment on whether the candidate uses modern stack (Docker, Git, REST, etc.)
-
-**Missing Skills:**  
-List 3+ key skills from JD not found in resume or projects:
-- Skill 1  
-- Skill 2  
-- Skill 3  
-
-5. **Language Quality Analysis**
-**Score:** {grammar_score} / {lang_weight}  
-**Grammar & Tone:**  
-- Is the language fluent, clear, and professional?
-- Is formatting consistent and appropriate?
-**Feedback Summary:** **{grammar_feedback}**
-
-6. **Keyword Analysis**
-**Score:** <0–{keyword_weight}> / {keyword_weight}  
-**Missing Keywords (from JD but not in resume or projects):**  
-- Keyword 1  
-- Keyword 2  
-- Keyword 3  
-
-**Keyword Analysis:**  
-- List keywords present and how they were used (e.g., in project, title, skills)
-- Explain why the missing ones matter for the job (e.g., “Docker is crucial for deployment pipelines in this role”)
-- Identify redundancy if keywords are repeated but not applied
-
-7. **Final Thoughts**
-Provide a fair 4–6 sentence summary of the overall fit. Include:
-- Strong points (like “Has hands-on MERN stack via academic project”)
-- Gaps (e.g., "No production experience with REST APIs or cloud")
-- Recommend suitability level (e.g., "Best fit for junior to mid-level role")
-- Mention domain penalty only if truly relevant
-
----
-
-📌 Use this context to guide your analysis:
+Use this context:
 
 - Grammar Score: {grammar_score} / {lang_weight}
 - Grammar Feedback: {grammar_feedback}
-- Resume Domain: {resume_domain or "N/A"}
-- Job Domain: {job_domain or "N/A"}
-- Domain Similarity Score: {similarity_score:.2f}
-- Domain Penalty: {domain_penalty} / {MAX_DOMAIN_PENALTY}
+- Resume Domain: {resume_domain}
+- Job Domain: {job_domain}
+- Penalty if domains don't match: {domain_penalty} (Based on domain similarity score {similarity_score:.2f}, max penalty is {MAX_DOMAIN_PENALTY})
+
+---
+
+### 🏷️ Candidate Name
+<Full name or "Not Found">
+
+### 🏫 Education Analysis
+**Score:** <0–{edu_weight}> / {edu_weight}  
+**Degree Match:** <Discuss degree level, specialization, and how it matches the job.>
+
+### 💼 Experience Analysis
+**Score:** <0–{exp_weight}> / {exp_weight}  
+**Experience Details:** <Talk about seniority, project relevance, domain fit, and leadership.>
+
+### 🛠 Skills Analysis
+**Score:** <0–{skills_weight}> / {skills_weight}  
+**Current Skills:**
+- Technical: <list>
+- Soft Skills: <list>
+- Domain-Specific: <list>
+
+**Skill Proficiency:**  
+<Detailed explanation of proficiency levels, strengths, and areas needing examples.>
+
+**Missing Skills:**  
+- Skill 1  
+- Skill 2  
+- Skill 3  
+*(List based only on skills in job description but absent in resume)*
+
+### 🗣 Language Quality Analysis
+**Score:** {grammar_score} / {lang_weight}  
+**Grammar & Tone:** <LLM-based comment on clarity, fluency, tone>  
+**Feedback Summary:** **{grammar_feedback}**
+
+### 🔑 Keyword Analysis
+**Score:** <0–{keyword_weight}> / {keyword_weight}  
+**Missing Keywords:**  
+- Keyword1  
+- Keyword2  
+- Keyword3  
+*(Extract keywords from JD not found in resume. Include role-related, domain-specific, and tool-based terms.)*
+
+**Keyword Analysis:**  
+<Discuss importance of missing/present keywords and how they affect job match.>
+
+### ✅ Final Thoughts
+<Summarize domain fit, core strengths, red flags, and whether this resume deserves further review.>
 
 ---
 
 **Instructions:**
-- Use markdown formatting
-- Make each section readable and visually structured
-- Support scoring with examples from the resume
-- Avoid guessing — extract only from resume and JD
-- Always give bullet points for missing keywords and skills
-- Don't be overly harsh if domain doesn’t match but project/tech alignment is strong
+- Use markdown formatting.
+- Follow the section titles and bold formatting strictly.
+- Keep tone professional and ATS-focused.
+- Use the provided grammar score and domain info as context.
+- Force output of missing skills and keywords using bullet lists.
+- Avoid generalizations — rely only on specific terms from JD and resume.
 
 ---
 
 📄 Job Description:
-\"\"\"{job_description}\"\"\"
+\"\"\"{job_description}\"\"\"  
 
 📄 Resume:
-\"\"\"{resume_text}\"\"\"
+\"\"\"{resume_text}\"\"\"  
 
 {logic_score_note}
 """
-
 
     ats_result = call_llm(prompt, session=st.session_state).strip()
 

@@ -1704,86 +1704,100 @@ def ats_percentage_score(
     )
 
     prompt = f"""
-You are an AI-powered ATS evaluator. Evaluate how well the candidate’s resume matches the job description. Focus on real-world alignment based on **skills, tools, projects, and experience** — not just title or domain.
-
-👉 Use **projects from the resume** to support scoring in the **Experience**, **Skills**, and **Keyword** sections.
-
-Even if the domain doesn't match, give credit for technical and project alignment. Evaluate **real project work**, responsibilities, and tool usage critically.
-
----
+You are an AI-powered ATS evaluator. Assess the candidate's resume against the job description. Return a detailed, **section-by-section analysis**, with **scoring for each area**. Make each section informative and easy to understand for the candidate. Highlight not just scores, but also context — like where skills came from, how experience aligns, and which keywords are critical.
 
 🎯 Section Breakdown:
 
-1. **Candidate Name** — Extract full name from the resume, if available.
+1. **Candidate Name** — Extract full name from resume if found.
 
 2. **Education Analysis**
 **Score:** <0–{edu_weight}> / {edu_weight}  
-**Degree Match:** Evaluate the degree, field of study, and academic performance. Mention if it aligns with job expectations.
+**Degree Match:**  
+- Degree and specialization  
+- Institution (if relevant)  
+- Academic performance (if stated)  
+- Relevance of degree to job title and tech stack
 
 3. **Experience Analysis**
 **Score:** <0–{exp_weight}> / {exp_weight}  
 **Experience Details:**  
-Evaluate job titles, internships, and **projects** that involve responsibilities similar to the job. Give credit for hands-on exposure to relevant tools (e.g., Node.js, React, APIs, etc.), even if gained through freelance or academic work.
+Break down experience by:
+- 🧑‍💼 **Roles and Titles** (e.g. Intern, Developer, etc.)
+- 🕒 **Seniority and Duration** (How long, full-time/part-time/project-based?)
+- 🧩 **Technical Exposure**: Which tech/tools used that are relevant to JD
+- 📌 **Projects Contributing to Experience** (including internship, freelance, academic)
+    - Format:  
+        - **Project Name** — <Brief summary with tools used>  
+        - Was it team-based or solo?
+        - Was it deployed or just concept?
 
-Assess:
-- Duration and intensity of experience
-- Leadership and ownership of outcomes
-- Team collaboration or solo work
-- Project delivery and impact
+✅ Highlight if any experience substitutes for real-world job exposure.
 
 4. **Skills Analysis**
 **Score:** <0–{skills_weight}> / {skills_weight}  
-**Current Skills (from resume + projects):**
-- Technical: <List technologies, languages, tools>
-- Soft Skills: <List communication/teamwork traits>
-- Domain-Specific: <If applicable>
+**Current Skills:**  
+Break into:
+- 🛠 **Technical Skills** (from resume + projects)
+- 🧠 **Soft Skills** (communication, teamwork, etc.)
+- 🎯 **Domain-Specific or Frameworks** (like MERN, Django, etc.)
 
 **Skill Proficiency:**  
-Critically assess how deeply the candidate applies relevant tools from the job description (React.js, APIs, DBs, CI/CD, etc.), even if via projects.
+- Rate practical strength and usage frequency (e.g. "React.js used in 2 projects", "Python only mentioned once")
+- Mention any certifications if present
+- Comment on whether the candidate uses modern stack (Docker, Git, REST, etc.)
 
 **Missing Skills:**  
+List 3+ key skills from JD not found in resume or projects:
 - Skill 1  
 - Skill 2  
 - Skill 3  
-(Identify only those from the job description that are not found in either resume or projects)
 
 5. **Language Quality Analysis**
 **Score:** {grammar_score} / {lang_weight}  
-**Grammar & Tone:** <Use grammar score to summarize tone, fluency, and professionalism>  
+**Grammar & Tone:**  
+- Is the language fluent, clear, and professional?
+- Is formatting consistent and appropriate?
 **Feedback Summary:** **{grammar_feedback}**
 
 6. **Keyword Analysis**
 **Score:** <0–{keyword_weight}> / {keyword_weight}  
-**Missing Keywords (from JD but absent in both resume and projects):**  
+**Missing Keywords (from JD but not in resume or projects):**  
 - Keyword 1  
 - Keyword 2  
 - Keyword 3  
 
 **Keyword Analysis:**  
-Evaluate how well the candidate's resume and project descriptions align with the tools, platforms, and terminology used in the job description (e.g., Git, Docker, REST, MongoDB, etc.).
+- List keywords present and how they were used (e.g., in project, title, skills)
+- Explain why the missing ones matter for the job (e.g., “Docker is crucial for deployment pipelines in this role”)
+- Identify redundancy if keywords are repeated but not applied
 
 7. **Final Thoughts**
-Provide a realistic 4–6 sentence review summarizing the candidate’s overall fit for this specific job. Balance strengths (e.g., project tech stack match) against concerns (e.g., limited real-world deployment or DevOps).
+Provide a fair 4–6 sentence summary of the overall fit. Include:
+- Strong points (like “Has hands-on MERN stack via academic project”)
+- Gaps (e.g., "No production experience with REST APIs or cloud")
+- Recommend suitability level (e.g., "Best fit for junior to mid-level role")
+- Mention domain penalty only if truly relevant
 
 ---
 
-📌 Use this context to guide your evaluation:
+📌 Use this context to guide your analysis:
 
 - Grammar Score: {grammar_score} / {lang_weight}
 - Grammar Feedback: {grammar_feedback}
 - Resume Domain: {resume_domain or "N/A"}
 - Job Domain: {job_domain or "N/A"}
 - Domain Similarity Score: {similarity_score:.2f}
-- Domain Penalty (if applicable): {domain_penalty} / {MAX_DOMAIN_PENALTY}
+- Domain Penalty: {domain_penalty} / {MAX_DOMAIN_PENALTY}
 
 ---
 
 **Instructions:**
-- Follow markdown structure.
-- Score each section within the allowed range.
-- Always include bullet points for missing skills and keywords.
-- If the domain doesn’t match but project/skill alignment is strong, reduce or eliminate penalty.
-- Never assume — extract only from content provided.
+- Use markdown formatting
+- Make each section readable and visually structured
+- Support scoring with examples from the resume
+- Avoid guessing — extract only from resume and JD
+- Always give bullet points for missing keywords and skills
+- Don't be overly harsh if domain doesn’t match but project/tech alignment is strong
 
 ---
 
@@ -1795,6 +1809,7 @@ Provide a realistic 4–6 sentence review summarizing the candidate’s overall 
 
 {logic_score_note}
 """
+
 
     ats_result = call_llm(prompt, session=st.session_state).strip()
 

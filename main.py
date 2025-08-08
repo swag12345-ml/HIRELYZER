@@ -1719,22 +1719,54 @@ You are an AI-powered ATS evaluator. Assess the candidate's resume against the j
 
 🎯 Section Breakdown:
 
-1. **Candidate Name** — Extract from resume.
-2. **Education Analysis** — Evaluate degrees and field match vs job.
-3. **Experience Analysis** — Evaluate role match, years, seniority, project impact, relevance to JD.
+1. **Candidate Name** — Extract the full name clearly from the resume header or first few lines.
+
+2. **Education Analysis** — Evaluate:
+   - Degree level (e.g., Bachelor’s, Master’s, PhD)
+   - Field of study alignment with job requirements
+   - Institution reputation (if mentioned)
+   - Graduation year (recency)
+   - Any certifications or training programs relevant to the role
+
+3. **Experience Analysis** — Evaluate:
+   - Total years of experience vs job expectations
+   - Role titles and their seniority levels (e.g., intern vs manager)
+   - Domain/industry relevance to the job
+   - Specific projects handled — explain **how they impacted the company, product, or client**
+   - Use of tools, technologies, or methodologies aligned with JD
+   - Evidence of leadership, teamwork, or initiative (e.g., “led a 5-person team”, “handled $100K budget”)
+
 4. **Skills Analysis** — Check for:
-   - Technical tools
-   - Domain-specific expertise
-   - Soft skills
+   - Technical tools (e.g., Python, SQL, Figma)
+   - Domain-specific skills (e.g., CRM for Sales, ML models for AI jobs)
+   - Soft skills (e.g., communication, adaptability)
 
 ✅ **Important: Provide missing skills in bullet points. Identify skills from the job description that are NOT found in the resume. Be specific and list at least 3 if applicable.**
 
-5. **Language Quality** — Use grammar score provided. Analyze tone, clarity, professionalism.
-6. **Keyword Analysis** — Evaluate presence of important keywords.
+Also evaluate:
+   - Depth of proficiency (basic, intermediate, expert)
+   - Recency of usage if mentioned
+   - Whether the skill is supported by projects or experience
+
+5. **Language Quality** — Use grammar score provided. Evaluate:
+   - Grammar and spelling quality
+   - Tone (professional, casual, inconsistent)
+   - Sentence clarity and structure
+   - Use of active voice and action verbs
+   - Formatting professionalism (bullet alignment, clean structure)
+
+6. **Keyword Analysis** — Identify and evaluate:
+   - Job-critical keywords from the JD (e.g., “data visualization”, “cloud computing”)
+   - Domain-specific jargon
+   - Tool names, role-specific terms
 
 ✅ **Important: Provide missing keywords from the job description as a bullet list. Only include words/phrases present in the JD but absent in the resume. Give at least 3 if applicable.**
 
-7. **Final Thoughts** — Give holistic fit assessment (4–6 sentences).
+7. **Final Thoughts** — Provide a 4–6 sentence holistic evaluation:
+   - Resume's overall alignment with the job
+   - Highlight major strengths (e.g., “strong domain fit”, “excellent language tone”)
+   - Point out red flags (e.g., “missing core tools”, “unclear experience timelines”)
+   - Mention if the resume deserves shortlisting or further screening
 
 Use this context:
 
@@ -1755,7 +1787,8 @@ Use this context:
 
 ### 💼 Experience Analysis
 **Score:** <0–{exp_weight}> / {exp_weight}  
-**Experience Details:** <Talk about seniority, project relevance, domain fit, and leadership.>
+**Experience Details:**  
+<Cover roles, total years, leadership, domain relevance, and **project outcomes**. Be specific: e.g., “developed a dashboard that reduced manual reporting by 60%” or “led migration saving 25% infra cost.”>
 
 ### 🛠 Skills Analysis
 **Score:** <0–{skills_weight}> / {skills_weight}  
@@ -1765,7 +1798,7 @@ Use this context:
 - Domain-Specific: <list>
 
 **Skill Proficiency:**  
-<Detailed explanation of proficiency levels, strengths, and areas needing examples.>
+<Evaluate depth of knowledge. Mention if skills are supported by projects or real work.>
 
 **Missing Skills:**  
 - Skill 1  
@@ -1812,6 +1845,7 @@ Use this context:
 
 {logic_score_note}
 """
+
 
     ats_result = call_llm(prompt, session=st.session_state).strip()
 

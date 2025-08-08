@@ -39,7 +39,6 @@ def create_user_table():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
 
-    # Create or upgrade 'users' table
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,7 +57,6 @@ def create_user_table():
     except sqlite3.OperationalError:
         pass
 
-    # Create user_logs table
     c.execute('''
         CREATE TABLE IF NOT EXISTS user_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -89,7 +87,7 @@ def add_user(username, password):
     finally:
         conn.close()
 
-# ------------------ Verify User & Return Saved API Key ------------------
+# ------------------ Verify User & Load Saved API Key ------------------
 def verify_user(username, password):
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -100,8 +98,15 @@ def verify_user(username, password):
     if result:
         stored_hashed, stored_key = result
         if bcrypt.checkpw(password.encode('utf-8'), stored_hashed.encode('utf-8')):
-            return True, stored_key
-    return False, None
+            # Store username in session
+            st.session_state.username = username
+            # If a key exists in DB, store it in session so LLM manager can use it
+            if stored_key:
+                st.session_state.user_groq_key = stored_key
+            else:
+                st.session_state.user_groq_key = ""
+            return True
+    return False
 
 # ------------------ Save or Update User's Groq API Key ------------------
 def save_user_api_key(username, api_key):
@@ -110,6 +115,8 @@ def save_user_api_key(username, api_key):
     c.execute("UPDATE users SET groq_api_key = ? WHERE username = ?", (api_key, username))
     conn.commit()
     conn.close()
+    # Also update in session so it's immediately available
+    st.session_state.user_groq_key = api_key
 
 # ------------------ Get User's Saved API Key ------------------
 def get_user_api_key(username):

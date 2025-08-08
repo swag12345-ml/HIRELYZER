@@ -4,16 +4,38 @@ import streamlit as st
 from datetime import datetime
 import pytz
 import re
+import smtplib
+from email.mime.text import MIMEText
+import random
 
 DB_NAME = "resume_data.db"
+OTP_STORE = {}  # Temporary store for OTPs {email: otp}
 
 # ------------------ Utility: Get IST Time ------------------
 def get_ist_time():
     ist = pytz.timezone("Asia/Kolkata")
     return datetime.now(ist)
 
-# Show IST Time in UI
 st.write("🕒 Current IST Time:", get_ist_time().strftime("%Y-%m-%d %H:%M:%S"))
+
+# ------------------ Email Sender ------------------
+def send_otp_email(to_email):
+    otp = str(random.randint(100000, 999999))
+    OTP_STORE[to_email] = otp
+
+    from_email = st.secrets["EMAIL_USER"]
+    password = st.secrets["EMAIL_PASS"]
+
+    msg = MIMEText(f"Your password reset OTP is: {otp}")
+    msg["Subject"] = "Password Reset OTP"
+    msg["From"] = from_email
+    msg["To"] = to_email
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(from_email, password)
+        server.send_message(msg)
+
+    return otp
 
 # ------------------ Password Strength Validator ------------------
 def is_strong_password(password):
@@ -25,38 +47,19 @@ def is_strong_password(password):
         re.search(r'[!@#$%^&*(),.?":{}|<>]', password)
     )
 
-# ------------------ Check if Username Already Exists ------------------
-def username_exists(username):
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute("SELECT 1 FROM users WHERE username = ?", (username,))
-    exists = c.fetchone() is not None
-    conn.close()
-    return exists
-
 # ------------------ Create Tables ------------------
 def create_user_table():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
-
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
-            email TEXT,
+            email TEXT UNIQUE NOT NULL,
             groq_api_key TEXT
         )
     ''')
-    try:
-        c.execute('ALTER TABLE users ADD COLUMN email TEXT')
-    except sqlite3.OperationalError:
-        pass
-    try:
-        c.execute('ALTER TABLE users ADD COLUMN groq_api_key TEXT')
-    except sqlite3.OperationalError:
-        pass
-
     c.execute('''
         CREATE TABLE IF NOT EXISTS user_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,66 +68,66 @@ def create_user_table():
             timestamp TEXT NOT NULL
         )
     ''')
-
     conn.commit()
     conn.close()
 
 # ------------------ Add User ------------------
-def add_user(username, password):
+def add_user(username, password, email):
     if not is_strong_password(password):
-        return False, "⚠️ Password must be at least 8 characters long and include uppercase, lowercase, number, and special character."
+        return False, "⚠️ Weak password."
 
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     try:
-        c.execute('INSERT INTO users (username, password) VALUES (?, ?)', 
-                  (username, hashed_password.decode('utf-8')))
+        c.execute('INSERT INTO users (username, password, email) VALUES (?, ?, ?)', 
+                  (username, hashed_password.decode('utf-8'), email))
         conn.commit()
-        return True, "✅ Registered! You can now login."
+        return True, "✅ Registered!"
     except sqlite3.IntegrityError:
-        return False, "🚫 Username already exists."
+        return False, "🚫 Username or Email exists."
     finally:
         conn.close()
 
-# ------------------ Verify User & Load Saved API Key ------------------
+# ------------------ Verify User ------------------
 def verify_user(username, password):
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute('SELECT password, groq_api_key FROM users WHERE username = ?', (username,))
     result = c.fetchone()
     conn.close()
-
     if result:
         stored_hashed, stored_key = result
         if bcrypt.checkpw(password.encode('utf-8'), stored_hashed.encode('utf-8')):
-            # Store username in session
             st.session_state.username = username
-            # Save key in session (if exists)
             st.session_state.user_groq_key = stored_key or ""
-            return True, stored_key  # ✅ still returns tuple
-    return False, None  # ✅ matches expected unpacking
+            return True, stored_key
+    return False, None
 
-# ------------------ Save or Update User's Groq API Key ------------------
+# ------------------ Reset Password ------------------
+def reset_password(email, new_password):
+    if not is_strong_password(new_password):
+        return False, "⚠️ Weak password."
+
+    hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("UPDATE users SET password = ? WHERE email = ?", 
+              (hashed_password.decode('utf-8'), email))
+    conn.commit()
+    conn.close()
+    return True, "✅ Password reset successful."
+
+# ------------------ Save API Key ------------------
 def save_user_api_key(username, api_key):
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute("UPDATE users SET groq_api_key = ? WHERE username = ?", (api_key, username))
     conn.commit()
     conn.close()
-    # Also update in session so it's immediately available
     st.session_state.user_groq_key = api_key
 
-# ------------------ Get User's Saved API Key ------------------
-def get_user_api_key(username):
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute("SELECT groq_api_key FROM users WHERE username = ?", (username,))
-    result = c.fetchone()
-    conn.close()
-    return result[0] if result and result[0] else None
-
-# ------------------ Log User Action ------------------
+# ------------------ Logs & Stats ------------------
 def log_user_action(username, action):
     timestamp = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
     conn = sqlite3.connect(DB_NAME)
@@ -134,7 +137,6 @@ def log_user_action(username, action):
     conn.commit()
     conn.close()
 
-# ------------------ Get Total Registered Users ------------------
 def get_total_registered_users():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -143,7 +145,6 @@ def get_total_registered_users():
     conn.close()
     return count
 
-# ------------------ Get Today's Logins (based on IST) ------------------
 def get_logins_today():
     today = get_ist_time().strftime('%Y-%m-%d')
     conn = sqlite3.connect(DB_NAME)
@@ -157,7 +158,6 @@ def get_logins_today():
     conn.close()
     return count
 
-# ------------------ Get All User Logs ------------------
 def get_all_user_logs():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
@@ -165,4 +165,3 @@ def get_all_user_logs():
     logs = c.fetchall()
     conn.close()
     return logs
-

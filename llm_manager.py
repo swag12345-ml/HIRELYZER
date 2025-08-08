@@ -1,6 +1,5 @@
 import hashlib
 import os
-import random
 import sqlite3
 from datetime import datetime, timedelta
 from langchain_groq import ChatGroq
@@ -9,10 +8,9 @@ from langchain_groq import ChatGroq
 WORKING_DIR = os.path.dirname(os.path.abspath(__file__))
 CACHE_FILE = os.path.join(WORKING_DIR, "llm_cache.sqlite")
 CACHE_EXPIRY_HOURS = 24
-FAILURE_COOLDOWN_MINUTES = 5       # Temporary failure cooldown
-QUOTA_COOLDOWN_MINUTES = 60        # Longer cooldown for quota exhaustion
+FAILURE_COOLDOWN_MINUTES = 5
 
-# In-memory tracker: {api_key: {"time": datetime, "reason": str}}
+# In-memory cooldown tracker: {api_key: datetime_of_last_failure}
 _failed_keys = {}
 
 # ---- Initialize DB ----
@@ -35,17 +33,13 @@ def load_groq_api_keys():
         import streamlit as st
         secret_keys = st.secrets.get("GROQ_API_KEYS", "")
         if secret_keys:
-            keys = [k.strip() for k in secret_keys.split(",") if k.strip()]
-            random.shuffle(keys)  # Shuffle at load for fair distribution
-            return keys
+            return [k.strip() for k in secret_keys.split(",") if k.strip()]
     except Exception as e:
         print(f"⚠️ Could not load st.secrets: {e}")
 
     env_keys = os.getenv("GROQ_API_KEYS")
     if env_keys:
-        keys = [k.strip() for k in env_keys.split(",") if k.strip()]
-        random.shuffle(keys)
-        return keys
+        return [k.strip() for k in env_keys.split(",") if k.strip()]
 
     raise ValueError("❌ No Groq API keys found. Add them to st.secrets or env variable.")
 
@@ -76,9 +70,9 @@ def set_cached_response(prompt: str, response: str):
             VALUES (?, ?, ?)
         """, (key, response, ts))
 
-# ---- Cooldown Tracking ----
-def mark_key_failure(api_key, reason="error"):
-    _failed_keys[api_key] = {"time": datetime.utcnow(), "reason": reason}
+# ---- Cooldown Tracking (in-memory) ----
+def mark_key_failure(api_key):
+    _failed_keys[api_key] = datetime.utcnow()
 
 def clear_key_failure(api_key):
     if api_key in _failed_keys:
@@ -88,11 +82,9 @@ def get_healthy_keys(api_keys):
     now = datetime.utcnow()
     healthy = []
     for key in api_keys:
-        fail_data = _failed_keys.get(key)
-        if fail_data:
-            cooldown = QUOTA_COOLDOWN_MINUTES if fail_data["reason"] == "quota" else FAILURE_COOLDOWN_MINUTES
-            if (now - fail_data["time"]).total_seconds() < cooldown * 60:
-                continue  # Still cooling down
+        last_fail = _failed_keys.get(key)
+        if last_fail and (now - last_fail).total_seconds() < FAILURE_COOLDOWN_MINUTES * 60:
+            continue  # still cooling down
         healthy.append(key)
     return healthy
 
@@ -107,47 +99,38 @@ def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=
     if cached:
         return cached
 
-    # Randomize starting key index for fairer load distribution
-    if "key_index" not in session:
-        session["key_index"] = random.randint(0, len(load_groq_api_keys()) - 1)
-
     user_key = session.get("user_groq_key", "").strip() if isinstance(session.get("user_groq_key"), str) else ""
     last_error = None
 
-    # Try user key first
+    # Try user key
     if user_key:
         try:
-            print(f"🔑 Trying user key: {user_key[:6]}...{user_key[-4:]}")
+            print("🔑 Trying user key")
             response = try_call_llm(prompt, user_key, model, temperature)
             set_cached_response(prompt, response)
             return response
         except Exception as e:
-            reason = "quota" if "quota" in str(e).lower() else "error"
-            print(f"❌ User key failed ({reason}): {e}")
-            mark_key_failure(user_key, reason=reason)
+            print(f"❌ User key failed: {e}")
+            mark_key_failure(user_key)
             last_error = e
 
-    # Try admin key pool
+    # Try admin pool
     admin_keys = get_healthy_keys(load_groq_api_keys())
     if admin_keys:
-        start = session["key_index"]
+        start = session.get("key_index", 0)
         for i in range(len(admin_keys)):
             idx = (start + i) % len(admin_keys)
             key = admin_keys[idx]
             try:
-                print(f"🔁 Trying admin key {idx+1}/{len(admin_keys)}: {key[:6]}...{key[-4:]}")
+                print(f"🔁 Trying admin key {idx + 1} of {len(admin_keys)}")
                 response = try_call_llm(prompt, key, model, temperature)
                 session["key_index"] = (idx + 1) % len(admin_keys)
                 set_cached_response(prompt, response)
                 clear_key_failure(key)
                 return response
             except Exception as e:
-                reason = "quota" if "quota" in str(e).lower() else "error"
-                print(f"❌ Admin key {idx+1} failed ({reason}): {e}")
-                mark_key_failure(key, reason=reason)
+                print(f"❌ Admin key {idx + 1} failed: {e}")
+                mark_key_failure(key)
                 last_error = e
 
-    # Graceful fallback instead of crash
-    print(f"⚠️ All LLM keys failed. Last error: {last_error}")
-    return "LLM unavailable: using fallback response"
-
+    raise RuntimeError(f"❌ All keys failed. Last error: {last_error}")

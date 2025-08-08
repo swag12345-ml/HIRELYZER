@@ -6,7 +6,6 @@ import pytz
 import re
 
 DB_NAME = "resume_data.db"
-LLM_DB = "llm_cache.sqlite"  # API key usage DB
 
 # ------------------ Utility: Get IST Time ------------------
 def get_ist_time():
@@ -50,7 +49,6 @@ def create_user_table():
             groq_api_key TEXT
         )
     ''')
-
     try:
         c.execute('ALTER TABLE users ADD COLUMN email TEXT')
     except sqlite3.OperationalError:
@@ -160,42 +158,6 @@ def get_all_user_logs():
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute("SELECT username, action, timestamp FROM user_logs ORDER BY timestamp DESC")
-    logs = c.fetchall()
-    conn.close()
-    return logs
-
-# ------------------ Get API Key Usage Stats ------------------
-def get_api_key_usage():
-    """Reads from llm_cache.sqlite to show API key usage history."""
-    conn = sqlite3.connect(LLM_DB)
-    c = conn.cursor()
-    c.execute("""
-        SELECT api_key, last_used, success_count, fail_count, last_error
-        FROM key_usage
-        ORDER BY last_used DESC
-    """)
-    keys = c.fetchall()
-    conn.close()
-    return keys
-
-# ------------------ Get Per-User LLM Request Logs ------------------
-def get_user_llm_requests(username=None):
-    """Reads from llm_cache.sqlite to show each user's LLM request log."""
-    conn = sqlite3.connect(LLM_DB)
-    c = conn.cursor()
-    if username:
-        c.execute("""
-            SELECT username, api_key, timestamp, success, error_msg
-            FROM llm_requests
-            WHERE username = ?
-            ORDER BY timestamp DESC
-        """, (username,))
-    else:
-        c.execute("""
-            SELECT username, api_key, timestamp, success, error_msg
-            FROM llm_requests
-            ORDER BY timestamp DESC
-        """)
     logs = c.fetchall()
     conn.close()
     return logs

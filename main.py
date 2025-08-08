@@ -225,9 +225,8 @@ from user_login import (
     get_logins_today,
     get_total_registered_users,
     log_user_action,
-    username_exists
+    username_exists  # 👈 add this line
 )
-
 
 
 # ------------------- Initialize -------------------
@@ -455,7 +454,11 @@ if not st.session_state.authenticated:
     """, unsafe_allow_html=True)
 
 
+
+
+
 if not st.session_state.get("authenticated", False):
+    
 
     # ✅ Use an online image of a female employee
     image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
@@ -521,7 +524,7 @@ if not st.session_state.get("authenticated", False):
             unsafe_allow_html=True,
         )
 
-        login_tab, register_tab, forgot_tab = st.tabs(["🔑 Login", "🆕 Register", "❓ Forgot Password"])
+        login_tab, register_tab = st.tabs(["🔑 Login", "🆕 Register"])
 
         # ---------------- LOGIN TAB ----------------
         with login_tab:
@@ -534,6 +537,7 @@ if not st.session_state.get("authenticated", False):
                     st.session_state.authenticated = True
                     st.session_state.username = user.strip()
 
+                    # ✅ Load saved Groq key into session
                     if saved_key:
                         st.session_state["user_groq_key"] = saved_key
 
@@ -547,9 +551,9 @@ if not st.session_state.get("authenticated", False):
         with register_tab:
             new_user = st.text_input("Choose a Username", key="reg_user")
             new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
-            new_email = st.text_input("Your Email Address", key="reg_email")
             st.caption("🔒 Password must be at least 8 characters and include uppercase, lowercase, number, and special character.")
 
+            # ✅ Live Username Availability Check
             if new_user.strip():
                 if username_exists(new_user.strip()):
                     st.error("🚫 Username already exists.")
@@ -557,45 +561,15 @@ if not st.session_state.get("authenticated", False):
                     st.info("✅ Username is available.")
 
             if st.button("Register", key="register_btn"):
-                if new_user.strip() and new_pass.strip() and new_email.strip():
-                    success, message = add_user(new_user.strip(), new_pass.strip(), new_email.strip())
+                if new_user.strip() and new_pass.strip():
+                    success, message = add_user(new_user.strip(), new_pass.strip())
                     if success:
                         st.success(message)
                         log_user_action(new_user.strip(), "register")
                     else:
                         st.error(message)
                 else:
-                    st.warning("⚠️ Please fill in all fields.")
-
-        # ---------------- FORGOT PASSWORD TAB ----------------
-        with forgot_tab:
-            if "otp_sent" not in st.session_state:
-                st.session_state.otp_sent = False
-
-            forgot_email = st.text_input("Enter your registered email", key="forgot_email")
-
-            if not st.session_state.otp_sent:
-                if st.button("Send OTP", key="send_otp_btn"):
-                    if forgot_email.strip():
-                        send_otp_email(forgot_email.strip())
-                        st.session_state.otp_sent = True
-                        st.success("📩 OTP sent to your email.")
-                    else:
-                        st.warning("⚠️ Please enter your email.")
-            else:
-                entered_otp = st.text_input("Enter the OTP sent to your email", key="entered_otp")
-                new_password = st.text_input("Enter New Password", type="password", key="new_password")
-
-                if st.button("Reset Password", key="reset_pass_btn"):
-                    if OTP_STORE.get(forgot_email.strip()) == entered_otp.strip():
-                        success, msg = reset_password(forgot_email.strip(), new_password.strip())
-                        if success:
-                            st.success(msg)
-                            st.session_state.otp_sent = False
-                        else:
-                            st.error(msg)
-                    else:
-                        st.error("❌ Invalid OTP.")
+                    st.warning("⚠️ Please fill in both fields.")
 
         st.markdown("</div>", unsafe_allow_html=True)
 

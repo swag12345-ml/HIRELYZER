@@ -224,8 +224,7 @@ from user_login import (
     verify_user,
     get_logins_today,
     get_total_registered_users,
-    log_user_action,
-    username_exists  # 👈 add this line
+    log_user_action
 )
 
 

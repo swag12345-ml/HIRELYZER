@@ -20,6 +20,7 @@ st.write("🕒 Current IST Time:", get_ist_time().strftime("%Y-%m-%d %H:%M:%S"))
 
 # ------------------ Email Sender ------------------
 def send_otp_email(to_email):
+    """Send a password reset OTP to the given email."""
     otp = str(random.randint(100000, 999999))
     OTP_STORE[to_email] = otp
 
@@ -31,14 +32,18 @@ def send_otp_email(to_email):
     msg["From"] = from_email
     msg["To"] = to_email
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(from_email, password)
-        server.send_message(msg)
-
-    return otp
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(from_email, password)
+            server.send_message(msg)
+        return otp
+    except Exception as e:
+        st.error(f"❌ Failed to send OTP: {e}")
+        return None
 
 # ------------------ Password Strength Validator ------------------
 def is_strong_password(password):
+    """Check if the password meets the security policy."""
     return (
         len(password) >= 8 and
         re.search(r'[A-Z]', password) and
@@ -49,8 +54,10 @@ def is_strong_password(password):
 
 # ------------------ Create Tables ------------------
 def create_user_table():
+    """Create users and logs tables if not exist."""
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
+
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -73,24 +80,26 @@ def create_user_table():
 
 # ------------------ Add User ------------------
 def add_user(username, password, email):
+    """Register a new user with email."""
     if not is_strong_password(password):
-        return False, "⚠️ Weak password."
+        return False, "⚠️ Password must include upper, lower, number, special char and be at least 8 characters long."
 
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     try:
-        c.execute('INSERT INTO users (username, password, email) VALUES (?, ?, ?)', 
+        c.execute('INSERT INTO users (username, password, email) VALUES (?, ?, ?)',
                   (username, hashed_password.decode('utf-8'), email))
         conn.commit()
-        return True, "✅ Registered!"
+        return True, "✅ Registered successfully!"
     except sqlite3.IntegrityError:
-        return False, "🚫 Username or Email exists."
+        return False, "🚫 Username or Email already exists."
     finally:
         conn.close()
 
 # ------------------ Verify User ------------------
 def verify_user(username, password):
+    """Check username and password for login."""
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute('SELECT password, groq_api_key FROM users WHERE username = ?', (username,))
@@ -106,6 +115,7 @@ def verify_user(username, password):
 
 # ------------------ Reset Password ------------------
 def reset_password(email, new_password):
+    """Reset password for a given email."""
     if not is_strong_password(new_password):
         return False, "⚠️ Weak password."
 

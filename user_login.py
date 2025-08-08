@@ -16,8 +16,6 @@ def get_ist_time():
     ist = pytz.timezone("Asia/Kolkata")
     return datetime.now(ist)
 
-st.write("🕒 Current IST Time:", get_ist_time().strftime("%Y-%m-%d %H:%M:%S"))
-
 # ------------------ Email Sender ------------------
 def send_otp_email(to_email):
     """Send a password reset OTP to the given email."""
@@ -57,7 +55,6 @@ def create_user_table():
     """Create users and logs tables if not exist."""
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
-
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -136,6 +133,16 @@ def save_user_api_key(username, api_key):
     conn.commit()
     conn.close()
     st.session_state.user_groq_key = api_key
+
+# ------------------ Username Exists ------------------
+def username_exists(username):
+    """Check if a username already exists in the database."""
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM users WHERE username = ?", (username,))
+    exists = c.fetchone() is not None
+    conn.close()
+    return exists
 
 # ------------------ Logs & Stats ------------------
 def log_user_action(username, action):

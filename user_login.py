@@ -16,6 +16,10 @@ def get_ist_time():
     ist = pytz.timezone("Asia/Kolkata")
     return datetime.now(ist)
 
+def show_current_time():
+    """Call this to display IST time in the UI."""
+    st.write("🕒 Current IST Time:", get_ist_time().strftime("%Y-%m-%d %H:%M:%S"))
+
 # ------------------ Email Sender ------------------
 def send_otp_email(to_email):
     """Send a password reset OTP to the given email."""
@@ -49,6 +53,15 @@ def is_strong_password(password):
         re.search(r'[0-9]', password) and
         re.search(r'[!@#$%^&*(),.?":{}|<>]', password)
     )
+
+# ------------------ Username Exists ------------------
+def username_exists(username):
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM users WHERE username = ?", (username,))
+    exists = c.fetchone() is not None
+    conn.close()
+    return exists
 
 # ------------------ Create Tables ------------------
 def create_user_table():
@@ -134,15 +147,14 @@ def save_user_api_key(username, api_key):
     conn.close()
     st.session_state.user_groq_key = api_key
 
-# ------------------ Username Exists ------------------
-def username_exists(username):
-    """Check if a username already exists in the database."""
+# ------------------ Get User API Key ------------------
+def get_user_api_key(username):
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
-    c.execute("SELECT 1 FROM users WHERE username = ?", (username,))
-    exists = c.fetchone() is not None
+    c.execute("SELECT groq_api_key FROM users WHERE username = ?", (username,))
+    result = c.fetchone()
     conn.close()
-    return exists
+    return result[0] if result and result[0] else None
 
 # ------------------ Logs & Stats ------------------
 def log_user_action(username, action):

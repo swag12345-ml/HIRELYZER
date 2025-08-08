@@ -7,17 +7,14 @@ from langchain_groq import ChatGroq
 
 # ---- CONFIG ----
 WORKING_DIR = os.path.dirname(os.path.abspath(__file__))
-CACHE_FILE = os.path.join(WORKING_DIR, "llm_cache.sqlite")
+DB_FILE = os.path.join(WORKING_DIR, "llm_data.sqlite")
 CACHE_EXPIRY_HOURS = 24
-FAILURE_COOLDOWN_MINUTES = 5       # Temporary failure cooldown
-QUOTA_COOLDOWN_MINUTES = 60        # Longer cooldown for quota exhaustion
-
-# In-memory tracker: {api_key: {"time": datetime, "reason": str}}
-_failed_keys = {}
+FAILURE_COOLDOWN_MINUTES = 5       # Temporary error cooldown
+QUOTA_COOLDOWN_MINUTES = 60        # Quota exhaustion cooldown
 
 # ---- Initialize DB ----
 def init_db():
-    with sqlite3.connect(CACHE_FILE) as conn:
+    with sqlite3.connect(DB_FILE) as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS llm_cache (
                 prompt_hash TEXT PRIMARY KEY,
@@ -25,7 +22,14 @@ def init_db():
                 timestamp DATETIME
             )
         """)
-    print("✅ Cache initialized (in-memory cooldown tracking).")
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS key_failures (
+                api_key TEXT PRIMARY KEY,
+                fail_time DATETIME,
+                reason TEXT
+            )
+        """)
+    print("✅ DB initialized (cache + cooldown persistence).")
 
 init_db()
 
@@ -36,7 +40,7 @@ def load_groq_api_keys():
         secret_keys = st.secrets.get("GROQ_API_KEYS", "")
         if secret_keys:
             keys = [k.strip() for k in secret_keys.split(",") if k.strip()]
-            random.shuffle(keys)  # Shuffle at load for fair distribution
+            random.shuffle(keys)
             return keys
     except Exception as e:
         print(f"⚠️ Could not load st.secrets: {e}")
@@ -57,7 +61,7 @@ def hash_prompt(prompt: str) -> str:
 def get_cached_response(prompt: str):
     key = hash_prompt(prompt)
     cutoff = datetime.utcnow() - timedelta(hours=CACHE_EXPIRY_HOURS)
-    with sqlite3.connect(CACHE_FILE) as conn:
+    with sqlite3.connect(DB_FILE) as conn:
         cur = conn.execute("SELECT response, timestamp FROM llm_cache WHERE prompt_hash = ?", (key,))
         row = cur.fetchone()
     if row:
@@ -70,7 +74,7 @@ def get_cached_response(prompt: str):
 def set_cached_response(prompt: str, response: str):
     key = hash_prompt(prompt)
     ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-    with sqlite3.connect(CACHE_FILE) as conn:
+    with sqlite3.connect(DB_FILE) as conn:
         conn.execute("""
             INSERT OR REPLACE INTO llm_cache (prompt_hash, response, timestamp)
             VALUES (?, ?, ?)
@@ -78,22 +82,29 @@ def set_cached_response(prompt: str, response: str):
 
 # ---- Cooldown Tracking ----
 def mark_key_failure(api_key, reason="error"):
-    _failed_keys[api_key] = {"time": datetime.utcnow(), "reason": reason}
+    with sqlite3.connect(DB_FILE) as conn:
+        conn.execute("""
+            INSERT OR REPLACE INTO key_failures (api_key, fail_time, reason)
+            VALUES (?, ?, ?)
+        """, (api_key, datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"), reason))
 
 def clear_key_failure(api_key):
-    if api_key in _failed_keys:
-        del _failed_keys[api_key]
+    with sqlite3.connect(DB_FILE) as conn:
+        conn.execute("DELETE FROM key_failures WHERE api_key = ?", (api_key,))
 
 def get_healthy_keys(api_keys):
     now = datetime.utcnow()
     healthy = []
-    for key in api_keys:
-        fail_data = _failed_keys.get(key)
-        if fail_data:
-            cooldown = QUOTA_COOLDOWN_MINUTES if fail_data["reason"] == "quota" else FAILURE_COOLDOWN_MINUTES
-            if (now - fail_data["time"]).total_seconds() < cooldown * 60:
-                continue  # Still cooling down
-        healthy.append(key)
+    with sqlite3.connect(DB_FILE) as conn:
+        for key in api_keys:
+            row = conn.execute("SELECT fail_time, reason FROM key_failures WHERE api_key = ?", (key,)).fetchone()
+            if row:
+                fail_time, reason = row
+                fail_dt = datetime.strptime(fail_time, "%Y-%m-%d %H:%M:%S")
+                cooldown = QUOTA_COOLDOWN_MINUTES if reason == "quota" else FAILURE_COOLDOWN_MINUTES
+                if (now - fail_dt).total_seconds() < cooldown * 60:
+                    continue
+            healthy.append(key)
     return healthy
 
 # ---- Call LLM ----
@@ -107,7 +118,6 @@ def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=
     if cached:
         return cached
 
-    # Randomize starting key index for fairer load distribution
     if "key_index" not in session:
         session["key_index"] = random.randint(0, len(load_groq_api_keys()) - 1)
 
@@ -122,12 +132,12 @@ def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=
             set_cached_response(prompt, response)
             return response
         except Exception as e:
-            reason = "quota" if "quota" in str(e).lower() else "error"
+            reason = "quota" if any(w in str(e).lower() for w in ["quota", "rate limit", "429"]) else "error"
             print(f"❌ User key failed ({reason}): {e}")
-            mark_key_failure(user_key, reason=reason)
+            mark_key_failure(user_key, reason)
             last_error = e
 
-    # Try admin key pool
+    # Try admin pool
     admin_keys = get_healthy_keys(load_groq_api_keys())
     if admin_keys:
         start = session["key_index"]
@@ -142,11 +152,10 @@ def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=
                 clear_key_failure(key)
                 return response
             except Exception as e:
-                reason = "quota" if "quota" in str(e).lower() else "error"
+                reason = "quota" if any(w in str(e).lower() for w in ["quota", "rate limit", "429"]) else "error"
                 print(f"❌ Admin key {idx+1} failed ({reason}): {e}")
-                mark_key_failure(key, reason=reason)
+                mark_key_failure(key, reason)
                 last_error = e
 
-    # Graceful fallback instead of crash
     print(f"⚠️ All LLM keys failed. Last error: {last_error}")
     return "LLM unavailable: using fallback response"

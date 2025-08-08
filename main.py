@@ -637,8 +637,34 @@ from user_login import get_all_user_logs
 
 if st.session_state.username == "admin":
     st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown("<h3 style='color:#00BFFF;'>📋 Admin Activity Log</h3>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#00BFFF;'>📊 Admin Dashboard</h2>", unsafe_allow_html=True)
 
+    # Metrics row
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("👤 Total Registered Users", get_total_registered_users())
+    with col2:
+        st.metric("📅 Logins Today (IST)", get_logins_today())
+
+    # API key usage
+    st.markdown("<h3 style='color:#FFA500;'>🔑 API Key Usage</h3>", unsafe_allow_html=True)
+    api_data = get_api_key_usage()
+    if api_data:
+        st.dataframe(
+            {
+                "API Key": [row[0] for row in api_data],
+                "Last Used": [row[1] for row in api_data],
+                "Success Count": [row[2] for row in api_data],
+                "Fail Count": [row[3] for row in api_data],
+                "Last Error": [row[4] for row in api_data]
+            },
+            use_container_width=True
+        )
+    else:
+        st.info("No API key usage data found.")
+
+    # Activity log
+    st.markdown("<h3 style='color:#00BFFF;'>📋 Admin Activity Log</h3>", unsafe_allow_html=True)
     logs = get_all_user_logs()
     if logs:
         st.dataframe(

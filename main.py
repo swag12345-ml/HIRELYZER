@@ -633,8 +633,8 @@ if st.session_state.get("authenticated"):
 
 
 
-from user_login import get_all_user_logs, get_api_key_usage, get_total_registered_users, get_logins_today
-
+from user_login import get_all_user_logs, get_total_registered_users, get_logins_today
+import streamlit as st
 
 if st.session_state.username == "admin":
     st.markdown("<hr>", unsafe_allow_html=True)
@@ -647,23 +647,7 @@ if st.session_state.username == "admin":
     with col2:
         st.metric("📅 Logins Today (IST)", get_logins_today())
 
-    # API key usage
-    st.markdown("<h3 style='color:#FFA500;'>🔑 API Key Usage</h3>", unsafe_allow_html=True)
-    api_data = get_api_key_usage()
-    if api_data:
-        st.dataframe(
-            {
-                "API Key": [row[0] for row in api_data],
-                "Last Used": [row[1] for row in api_data],
-                "Success Count": [row[2] for row in api_data],
-                "Fail Count": [row[3] for row in api_data],
-                "Last Error": [row[4] for row in api_data]
-            },
-            use_container_width=True
-        )
-    else:
-        st.info("No API key usage data found.")
-
+    # Removed API key usage section (no longer tracked)
     # Activity log
     st.markdown("<h3 style='color:#00BFFF;'>📋 Admin Activity Log</h3>", unsafe_allow_html=True)
     logs = get_all_user_logs()

@@ -10,6 +10,9 @@ CACHE_FILE = os.path.join(WORKING_DIR, "llm_cache.sqlite")
 CACHE_EXPIRY_HOURS = 24
 FAILURE_COOLDOWN_MINUTES = 5
 
+# In-memory cooldown tracker: {api_key: datetime_of_last_failure}
+_failed_keys = {}
+
 # ---- Initialize DB ----
 def init_db():
     with sqlite3.connect(CACHE_FILE) as conn:
@@ -20,18 +23,11 @@ def init_db():
                 timestamp DATETIME
             )
         """)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS key_usage (
-                api_key TEXT PRIMARY KEY,
-                last_used DATETIME,
-                fail_count INTEGER DEFAULT 0
-            )
-        """)
-    print("✅ Cache + minimal key_usage initialized.")
+    print("✅ Cache initialized (in-memory cooldown tracking).")
 
 init_db()
 
-# ---- Load API Keys from Streamlit secrets or env ----
+# ---- Load API Keys ----
 def load_groq_api_keys():
     try:
         import streamlit as st
@@ -74,44 +70,22 @@ def set_cached_response(prompt: str, response: str):
             VALUES (?, ?, ?)
         """, (key, response, ts))
 
-# ---- Cooldown Tracking Only ----
+# ---- Cooldown Tracking (in-memory) ----
 def mark_key_failure(api_key):
-    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-    with sqlite3.connect(CACHE_FILE) as conn:
-        conn.execute("""
-            INSERT INTO key_usage (api_key, last_used, fail_count)
-            VALUES (?, ?, 1)
-            ON CONFLICT(api_key) DO UPDATE SET
-                last_used = excluded.last_used,
-                fail_count = fail_count + 1
-        """, (api_key, now))
+    _failed_keys[api_key] = datetime.utcnow()
 
 def clear_key_failure(api_key):
-    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-    with sqlite3.connect(CACHE_FILE) as conn:
-        conn.execute("""
-            INSERT INTO key_usage (api_key, last_used, fail_count)
-            VALUES (?, ?, 0)
-            ON CONFLICT(api_key) DO UPDATE SET
-                last_used = excluded.last_used,
-                fail_count = 0
-        """, (api_key, now))
+    if api_key in _failed_keys:
+        del _failed_keys[api_key]
 
-# ---- Filter Keys Not in Cooldown ----
 def get_healthy_keys(api_keys):
     now = datetime.utcnow()
     healthy = []
-    with sqlite3.connect(CACHE_FILE) as conn:
-        for key in api_keys:
-            cur = conn.execute("SELECT last_used, fail_count FROM key_usage WHERE api_key = ?", (key,))
-            row = cur.fetchone()
-            if row:
-                last_used_str, fail_count = row
-                if fail_count > 0 and last_used_str:
-                    last_used = datetime.strptime(last_used_str, "%Y-%m-%d %H:%M:%S")
-                    if (now - last_used).total_seconds() < FAILURE_COOLDOWN_MINUTES * 60:
-                        continue  # cooling down
-            healthy.append(key)
+    for key in api_keys:
+        last_fail = _failed_keys.get(key)
+        if last_fail and (now - last_fail).total_seconds() < FAILURE_COOLDOWN_MINUTES * 60:
+            continue  # still cooling down
+        healthy.append(key)
     return healthy
 
 # ---- Call LLM ----
@@ -119,7 +93,7 @@ def try_call_llm(prompt, api_key, model, temperature):
     llm = ChatGroq(model=model, temperature=temperature, groq_api_key=api_key)
     return llm.invoke(prompt).content
 
-# ---- Public Main Entry ----
+# ---- Main Entry ----
 def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=0):
     cached = get_cached_response(prompt)
     if cached:

@@ -8,12 +8,11 @@ from langchain_groq import ChatGroq
 WORKING_DIR = os.path.dirname(os.path.abspath(__file__))
 CACHE_FILE = os.path.join(WORKING_DIR, "llm_cache.sqlite")
 CACHE_EXPIRY_HOURS = 24
-FAILURE_COOLDOWN_MINUTES = 5  # Wait before retrying a failed key
+FAILURE_COOLDOWN_MINUTES = 5
 
-# ---- Initialize SQLite DB ----
+# ---- Initialize DB ----
 def init_db():
     with sqlite3.connect(CACHE_FILE) as conn:
-        # Cache table
         conn.execute("""
             CREATE TABLE IF NOT EXISTS llm_cache (
                 prompt_hash TEXT PRIMARY KEY,
@@ -21,33 +20,18 @@ def init_db():
                 timestamp DATETIME
             )
         """)
-        # API key usage stats
         conn.execute("""
             CREATE TABLE IF NOT EXISTS key_usage (
                 api_key TEXT PRIMARY KEY,
                 last_used DATETIME,
-                success_count INTEGER DEFAULT 0,
-                fail_count INTEGER DEFAULT 0,
-                last_error TEXT
+                fail_count INTEGER DEFAULT 0
             )
         """)
-        # Per-user request logging
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS llm_requests (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT,
-                api_key TEXT,
-                prompt_hash TEXT,
-                timestamp DATETIME,
-                success INTEGER,
-                error_msg TEXT
-            )
-        """)
-    print("✅ SQLite cache & key usage tables initialized.")
+    print("✅ Cache + minimal key_usage initialized.")
 
 init_db()
 
-# ---- Load Admin API Keys ----
+# ---- Load API Keys from Streamlit secrets or env ----
 def load_groq_api_keys():
     try:
         import streamlit as st
@@ -61,21 +45,19 @@ def load_groq_api_keys():
     if env_keys:
         return [k.strip() for k in env_keys.split(",") if k.strip()]
 
-    raise ValueError("❌ No Groq API keys found. Use st.secrets or the GROQ_API_KEYS environment variable.")
+    raise ValueError("❌ No Groq API keys found. Add them to st.secrets or env variable.")
 
 # ---- Prompt Hashing ----
 def hash_prompt(prompt: str) -> str:
     return hashlib.sha256(prompt.encode("utf-8")).hexdigest()
 
-# ---- Cache Functions ----
+# ---- Cache Handling ----
 def get_cached_response(prompt: str):
     key = hash_prompt(prompt)
     cutoff = datetime.utcnow() - timedelta(hours=CACHE_EXPIRY_HOURS)
-
     with sqlite3.connect(CACHE_FILE) as conn:
         cur = conn.execute("SELECT response, timestamp FROM llm_cache WHERE prompt_hash = ?", (key,))
         row = cur.fetchone()
-
     if row:
         response, ts_str = row
         ts = datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S")
@@ -86,116 +68,95 @@ def get_cached_response(prompt: str):
 def set_cached_response(prompt: str, response: str):
     key = hash_prompt(prompt)
     ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-
     with sqlite3.connect(CACHE_FILE) as conn:
         conn.execute("""
             INSERT OR REPLACE INTO llm_cache (prompt_hash, response, timestamp)
             VALUES (?, ?, ?)
         """, (key, response, ts))
 
-# ---- Key Usage Tracking ----
-def update_key_usage(api_key, success=True, error_msg=None):
-    now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-    with sqlite3.connect(CACHE_FILE) as conn:
-        if success:
-            conn.execute("""
-                INSERT INTO key_usage (api_key, last_used, success_count, fail_count, last_error)
-                VALUES (?, ?, 1, 0, NULL)
-                ON CONFLICT(api_key) DO UPDATE SET
-                    last_used = excluded.last_used,
-                    success_count = success_count + 1,
-                    last_error = NULL
-            """, (api_key, now_str))
-        else:
-            conn.execute("""
-                INSERT INTO key_usage (api_key, last_used, success_count, fail_count, last_error)
-                VALUES (?, ?, 0, 1, ?)
-                ON CONFLICT(api_key) DO UPDATE SET
-                    last_used = excluded.last_used,
-                    fail_count = fail_count + 1,
-                    last_error = excluded.last_error
-            """, (api_key, now_str, error_msg))
-
-# ---- Per-User Request Logging ----
-def log_llm_request(username, api_key, prompt, success, error_msg=None):
-    prompt_hash = hash_prompt(prompt)
-    ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+# ---- Cooldown Tracking Only ----
+def mark_key_failure(api_key):
+    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     with sqlite3.connect(CACHE_FILE) as conn:
         conn.execute("""
-            INSERT INTO llm_requests (username, api_key, prompt_hash, timestamp, success, error_msg)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (username, api_key, prompt_hash, ts, int(success), error_msg))
+            INSERT INTO key_usage (api_key, last_used, fail_count)
+            VALUES (?, ?, 1)
+            ON CONFLICT(api_key) DO UPDATE SET
+                last_used = excluded.last_used,
+                fail_count = fail_count + 1
+        """, (api_key, now))
 
-# ---- Get Healthy Keys ----
-def get_healthy_keys(admin_keys):
-    """Return keys that are not in cooldown from last failure."""
-    now = datetime.utcnow()
-    healthy_keys = []
+def clear_key_failure(api_key):
+    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     with sqlite3.connect(CACHE_FILE) as conn:
-        for key in admin_keys:
+        conn.execute("""
+            INSERT INTO key_usage (api_key, last_used, fail_count)
+            VALUES (?, ?, 0)
+            ON CONFLICT(api_key) DO UPDATE SET
+                last_used = excluded.last_used,
+                fail_count = 0
+        """, (api_key, now))
+
+# ---- Filter Keys Not in Cooldown ----
+def get_healthy_keys(api_keys):
+    now = datetime.utcnow()
+    healthy = []
+    with sqlite3.connect(CACHE_FILE) as conn:
+        for key in api_keys:
             cur = conn.execute("SELECT last_used, fail_count FROM key_usage WHERE api_key = ?", (key,))
             row = cur.fetchone()
             if row:
                 last_used_str, fail_count = row
-                if last_used_str:
+                if fail_count > 0 and last_used_str:
                     last_used = datetime.strptime(last_used_str, "%Y-%m-%d %H:%M:%S")
-                    if fail_count > 0 and (now - last_used).total_seconds() < FAILURE_COOLDOWN_MINUTES * 60:
-                        continue  # still cooling down
-            healthy_keys.append(key)
-    return healthy_keys
+                    if (now - last_used).total_seconds() < FAILURE_COOLDOWN_MINUTES * 60:
+                        continue  # cooling down
+            healthy.append(key)
+    return healthy
 
-# ---- Internal LLM Call ----
+# ---- Call LLM ----
 def try_call_llm(prompt, api_key, model, temperature):
     llm = ChatGroq(model=model, temperature=temperature, groq_api_key=api_key)
     return llm.invoke(prompt).content
 
-# ---- Main Call ----
+# ---- Public Main Entry ----
 def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=0):
     cached = get_cached_response(prompt)
     if cached:
         return cached
 
-    username = session.get("username", "anonymous")  # track which user
     user_key = session.get("user_groq_key", "").strip() if isinstance(session.get("user_groq_key"), str) else ""
     last_error = None
 
-    # Load admin keys & filter
-    admin_keys = get_healthy_keys([k for k in load_groq_api_keys() if k])
-
-    # Try user key first
+    # Try user key
     if user_key:
         try:
-            print("🔑 Trying user API key")
+            print("🔑 Trying user key")
             response = try_call_llm(prompt, user_key, model, temperature)
             set_cached_response(prompt, response)
-            update_key_usage(user_key, success=True)
-            log_llm_request(username, user_key, prompt, True)
             return response
         except Exception as e:
-            print(f"❌ User API key failed: {e}")
-            update_key_usage(user_key, success=False, error_msg=str(e))
-            log_llm_request(username, user_key, prompt, False, str(e))
+            print(f"❌ User key failed: {e}")
+            mark_key_failure(user_key)
             last_error = e
 
-    # Rotate admin keys
+    # Try admin pool
+    admin_keys = get_healthy_keys(load_groq_api_keys())
     if admin_keys:
-        start_idx = session.get("key_index", 0)
+        start = session.get("key_index", 0)
         for i in range(len(admin_keys)):
-            idx = (start_idx + i) % len(admin_keys)
+            idx = (start + i) % len(admin_keys)
             key = admin_keys[idx]
             try:
-                print(f"🔁 Trying admin API key {idx + 1} of {len(admin_keys)}")
+                print(f"🔁 Trying admin key {idx + 1} of {len(admin_keys)}")
                 response = try_call_llm(prompt, key, model, temperature)
                 session["key_index"] = (idx + 1) % len(admin_keys)
                 set_cached_response(prompt, response)
-                update_key_usage(key, success=True)
-                log_llm_request(username, key, prompt, True)
+                clear_key_failure(key)
                 return response
             except Exception as e:
                 print(f"❌ Admin key {idx + 1} failed: {e}")
-                update_key_usage(key, success=False, error_msg=str(e))
-                log_llm_request(username, key, prompt, False, str(e))
+                mark_key_failure(key)
                 last_error = e
 
-    # All failed
-    raise RuntimeError(f"❌ All Groq API keys failed. Last error: {last_error}")
+    raise RuntimeError(f"❌ All keys failed. Last error: {last_error}")

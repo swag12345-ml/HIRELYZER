@@ -633,7 +633,8 @@ if st.session_state.get("authenticated"):
 
 
 
-from user_login import get_all_user_logs
+from user_login import get_all_user_logs, get_api_key_usage, get_total_registered_users, get_logins_today
+
 
 if st.session_state.username == "admin":
     st.markdown("<hr>", unsafe_allow_html=True)

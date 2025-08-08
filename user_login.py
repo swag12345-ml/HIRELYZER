@@ -100,13 +100,10 @@ def verify_user(username, password):
         if bcrypt.checkpw(password.encode('utf-8'), stored_hashed.encode('utf-8')):
             # Store username in session
             st.session_state.username = username
-            # If a key exists in DB, store it in session so LLM manager can use it
-            if stored_key:
-                st.session_state.user_groq_key = stored_key
-            else:
-                st.session_state.user_groq_key = ""
-            return True
-    return False
+            # Save key in session (if exists)
+            st.session_state.user_groq_key = stored_key or ""
+            return True, stored_key  # ✅ still returns tuple
+    return False, None  # ✅ matches expected unpacking
 
 # ------------------ Save or Update User's Groq API Key ------------------
 def save_user_api_key(username, api_key):
@@ -168,3 +165,4 @@ def get_all_user_logs():
     logs = c.fetchall()
     conn.close()
     return logs
+

@@ -164,4 +164,4 @@ def get_all_user_logs():
     c.execute("SELECT username, action, timestamp FROM user_logs ORDER BY timestamp DESC")
     logs = c.fetchall()
     conn.close()
-    return logs
+    return logs

@@ -1,14 +1,4 @@
 from xhtml2pdf import pisa
-from user_login import (
-    create_user_table,
-    add_user,
-    verify_user,
-    get_logins_today,
-    get_total_registered_users,
-    log_user_action,
-    username_exists
-)
-
 from io import BytesIO
 
 def html_to_pdf_bytes(html_string):
@@ -235,10 +225,8 @@ from user_login import (
     get_logins_today,
     get_total_registered_users,
     log_user_action,
-    username_exists,          # ✅ Added username_exists
-    forgot_password_flow      # ✅ Added forgot password function
+    username_exists  # 👈 add this line
 )
-
 
 
 # ------------------- Initialize -------------------
@@ -470,6 +458,7 @@ if not st.session_state.authenticated:
 
 
 if not st.session_state.get("authenticated", False):
+    
 
     # ✅ Use an online image of a female employee
     image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
@@ -542,35 +531,27 @@ if not st.session_state.get("authenticated", False):
             user = st.text_input("Username", key="login_user")
             pwd = st.text_input("Password", type="password", key="login_pass")
 
-            col1, col2 = st.columns([2, 1])
-            with col1:
-                if st.button("Login", key="login_btn", use_container_width=True):
-                    success, saved_key = verify_user(user.strip(), pwd.strip())
-                    if success:
-                        st.session_state.authenticated = True
-                        st.session_state.username = user.strip()
+            if st.button("Login", key="login_btn"):
+                success, saved_key = verify_user(user.strip(), pwd.strip())
+                if success:
+                    st.session_state.authenticated = True
+                    st.session_state.username = user.strip()
 
-                        # ✅ Load saved Groq key into session
-                        if saved_key:
-                            st.session_state["user_groq_key"] = saved_key
+                    # ✅ Load saved Groq key into session
+                    if saved_key:
+                        st.session_state["user_groq_key"] = saved_key
 
-                        log_user_action(user.strip(), "login")
-                        st.success("✅ Login successful!")
-                        st.rerun()
-                    else:
-                        st.error("❌ Invalid credentials.")
-            with col2:
-                if st.button("Forgot Password?", key="forgot_btn", use_container_width=True):
-                    st.session_state.show_forgot_password = True
+                    log_user_action(user.strip(), "login")
+                    st.success("✅ Login successful!")
                     st.rerun()
+                else:
+                    st.error("❌ Invalid credentials.")
 
         # ---------------- REGISTER TAB ----------------
         with register_tab:
             new_user = st.text_input("Choose a Username", key="reg_user")
             new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
-            st.caption(
-                "🔒 Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
-            )
+            st.caption("🔒 Password must be at least 8 characters and include uppercase, lowercase, number, and special character.")
 
             # ✅ Live Username Availability Check
             if new_user.strip():
@@ -579,7 +560,7 @@ if not st.session_state.get("authenticated", False):
                 else:
                     st.info("✅ Username is available.")
 
-            if st.button("Register", key="register_btn", use_container_width=True):
+            if st.button("Register", key="register_btn"):
                 if new_user.strip() and new_pass.strip():
                     success, message = add_user(new_user.strip(), new_pass.strip())
                     if success:
@@ -593,11 +574,6 @@ if not st.session_state.get("authenticated", False):
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()
-
-# 🔹 If forgot password flow is triggered
-if st.session_state.get("show_forgot_password"):
-    forgot_password_flow()
-
 
 
 

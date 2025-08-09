@@ -1,4 +1,14 @@
 from xhtml2pdf import pisa
+from user_login import (
+    create_user_table,
+    add_user,
+    verify_user,
+    get_logins_today,
+    get_total_registered_users,
+    log_user_action,
+    username_exists
+)
+
 from io import BytesIO
 
 def html_to_pdf_bytes(html_string):

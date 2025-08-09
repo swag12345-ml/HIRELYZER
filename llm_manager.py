@@ -186,3 +186,4 @@ def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=
                 last_error = e
 
     return f"LLM unavailable: {last_error}"
+

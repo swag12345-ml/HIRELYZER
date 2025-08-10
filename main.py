@@ -1661,8 +1661,8 @@ def get_grammar_score_with_llm(text, max_score=5):
 You are a grammar and tone evaluator AI. Analyze the following resume text and:
 
 1. Give a grammar score out of {max_score} based on grammar quality, sentence structure, clarity, and tone.
-2. Return a 1-sentence summary of the grammar and tone.
-3. Provide 3 to 5 **specific improvement suggestions** (bullet points) for enhancing grammar, clarity, tone, or structure.
+2. Return a short 1-sentence summary of the grammar and tone.
+3. Provide 3 to 5 **specific, constructive improvement suggestions** (bullet points) for enhancing grammar, clarity, tone, or structure.
 
 Return response in the exact format below:
 
@@ -1677,7 +1677,6 @@ Suggestions:
 {text}
 ---
 """
-
     response = call_llm(grammar_prompt, session=st.session_state).strip()
     score_match = re.search(r"Score:\s*(\d+)", response)
     feedback_match = re.search(r"Feedback:\s*(.+)", response)
@@ -1688,7 +1687,7 @@ Suggestions:
     return score, feedback, suggestions
 
 
-# ✅ Main ATS Evaluation Function
+# ✅ Main ATS Evaluation Function (Balanced & Fair)
 def ats_percentage_score(
     resume_text,
     job_description,
@@ -1715,58 +1714,51 @@ def ats_percentage_score(
     )
 
     prompt = f"""
-You are an AI-powered ATS evaluator. Assess the candidate's resume against the job description. Return a detailed, **section-by-section analysis**, with **scoring for each area**. Follow the format precisely below.
+You are an AI-powered ATS evaluator. Assess the candidate's resume against the job description. 
+Provide a detailed **section-by-section analysis** with fair scoring that considers both experienced professionals and fresh graduates. 
+Highlight strengths clearly, but also mention gaps in a constructive way.
 
 🎯 Section Breakdown:
 
-1. **Candidate Name** — Extract the full name clearly from the resume header or first few lines.
+1. **Candidate Name** — Extract the full name clearly from the resume header or first lines.
 
 2. **Education Analysis** — Evaluate:
-   - Degree level (e.g., Bachelor’s, Master’s, PhD)
-   - Field of study alignment with job requirements
-   - Institution reputation (if mentioned)
-   - Graduation year (recency)
-   - Any certifications or training programs relevant to the role
+   - Degree level & field match
+   - Institution (if mentioned)
+   - Recency of graduation
+   - Relevant certifications/training
+   - For freshers: give weight to strong academic or project work
 
 3. **Experience Analysis** — Evaluate:
-   - Total years of experience vs job expectations
-   - Role titles and their seniority levels (e.g., intern vs manager)
-   - Domain/industry relevance to the job
-   - Specific projects handled — explain **how they impacted the company, product, or client**
-   - Use of tools, technologies, or methodologies aligned with JD
-   - Evidence of leadership, teamwork, or initiative (e.g., “led a 5-person team”, “handled $100K budget”)
+   - Total years of relevant work
+   - Job titles & responsibilities
+   - Industry/domain match
+   - Specific project achievements with measurable impact
+   - Tools/technologies/methodologies used
+   - Leadership, teamwork, or initiative evidence
+   - If limited experience: consider internships, academic projects, or volunteer work
 
-4. **Skills Analysis** — Check for:
-   - Technical tools (e.g., Python, SQL, Figma)
-   - Domain-specific skills (e.g., CRM for Sales, ML models for AI jobs)
-   - Soft skills (e.g., communication, adaptability)
+4. **Skills Analysis** — Check:
+   - Technical skills
+   - Domain-specific skills
+   - Soft skills
+   - Depth of proficiency and real-world application
+   - **Missing Skills:** Bullet list of at least 3 skills from JD not in resume
 
-✅ **Important: Provide missing skills in bullet points. Identify skills from the job description that are NOT found in the resume. Be specific and list at least 3 if applicable.**
+5. **Language Quality** — Based on provided grammar score:
+   - Grammar & spelling accuracy
+   - Tone & clarity
+   - Formatting & professionalism
 
-Also evaluate:
-   - Depth of proficiency (basic, intermediate, expert)
-   - Recency of usage if mentioned
-   - Whether the skill is supported by projects or experience
+6. **Keyword Analysis** — Identify:
+   - Important keywords from JD missing in resume (min 3)
+   - Impact of missing keywords on ATS ranking
 
-5. **Language Quality** — Use grammar score provided. Evaluate:
-   - Grammar and spelling quality
-   - Tone (professional, casual, inconsistent)
-   - Sentence clarity and structure
-   - Use of active voice and action verbs
-   - Formatting professionalism (bullet alignment, clean structure)
-
-6. **Keyword Analysis** — Identify and evaluate:
-   - Job-critical keywords from the JD (e.g., “data visualization”, “cloud computing”)
-   - Domain-specific jargon
-   - Tool names, role-specific terms
-
-✅ **Important: Provide missing keywords from the job description as a bullet list. Only include words/phrases present in the JD but absent in the resume. Give at least 3 if applicable.**
-
-7. **Final Thoughts** — Provide a 4–6 sentence holistic evaluation:
-   - Resume's overall alignment with the job
-   - Highlight major strengths (e.g., “strong domain fit”, “excellent language tone”)
-   - Point out red flags (e.g., “missing core tools”, “unclear experience timelines”)
-   - Mention if the resume deserves shortlisting or further screening
+7. **Final Thoughts** — Summarize:
+   - Overall match & domain fit
+   - Key strengths
+   - Areas for improvement (constructive)
+   - Whether candidate is shortlist-ready or needs improvement
 
 Use this context:
 
@@ -1774,7 +1766,7 @@ Use this context:
 - Grammar Feedback: {grammar_feedback}
 - Resume Domain: {resume_domain}
 - Job Domain: {job_domain}
-- Penalty if domains don't match: {domain_penalty} (Based on domain similarity score {similarity_score:.2f}, max penalty is {MAX_DOMAIN_PENALTY})
+- Penalty if domains don't match: {domain_penalty} (Based on similarity score {similarity_score:.2f}, max penalty {MAX_DOMAIN_PENALTY})
 
 ---
 
@@ -1783,12 +1775,11 @@ Use this context:
 
 ### 🏫 Education Analysis
 **Score:** <0–{edu_weight}> / {edu_weight}  
-**Degree Match:** <Discuss degree level, specialization, and how it matches the job.>
+**Degree Match:** <Details>
 
 ### 💼 Experience Analysis
 **Score:** <0–{exp_weight}> / {exp_weight}  
-**Experience Details:**  
-<Cover roles, total years, leadership, domain relevance, and **project outcomes**. Be specific: e.g., “developed a dashboard that reduced manual reporting by 60%” or “led migration saving 25% infra cost.”>
+**Experience Details:** <Details>
 
 ### 🛠 Skills Analysis
 **Score:** <0–{skills_weight}> / {skills_weight}  
@@ -1797,18 +1788,13 @@ Use this context:
 - Soft Skills: <list>
 - Domain-Specific: <list>
 
-**Skill Proficiency:**  
-<Evaluate depth of knowledge. Mention if skills are supported by projects or real work.>
-
 **Missing Skills:**  
 - Skill 1  
 - Skill 2  
 - Skill 3  
-*(List based only on skills in job description but absent in resume)*
 
 ### 🗣 Language Quality Analysis
 **Score:** {grammar_score} / {lang_weight}  
-**Grammar & Tone:** <LLM-based comment on clarity, fluency, tone>  
 **Feedback Summary:** **{grammar_feedback}**
 
 ### 🔑 Keyword Analysis
@@ -1817,23 +1803,9 @@ Use this context:
 - Keyword1  
 - Keyword2  
 - Keyword3  
-*(Extract keywords from JD not found in resume. Include role-related, domain-specific, and tool-based terms.)*
-
-**Keyword Analysis:**  
-<Discuss importance of missing/present keywords and how they affect job match.>
 
 ### ✅ Final Thoughts
-<Summarize domain fit, core strengths, red flags, and whether this resume deserves further review.>
-
----
-
-**Instructions:**
-- Use markdown formatting.
-- Follow the section titles and bold formatting strictly.
-- Keep tone professional and ATS-focused.
-- Use the provided grammar score and domain info as context.
-- Force output of missing skills and keywords using bullet lists.
-- Avoid generalizations — rely only on specific terms from JD and resume.
+<Summary>
 
 ---
 

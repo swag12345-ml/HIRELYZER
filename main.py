@@ -1677,6 +1677,7 @@ Suggestions:
 {text}
 ---
 """
+
     response = call_llm(grammar_prompt, session=st.session_state).strip()
     score_match = re.search(r"Score:\s*(\d+)", response)
     feedback_match = re.search(r"Feedback:\s*(.+)", response)
@@ -1687,7 +1688,7 @@ Suggestions:
     return score, feedback, suggestions
 
 
-# ✅ Main ATS Evaluation Function (Balanced Scoring)
+# ✅ Main ATS Evaluation Function
 def ats_percentage_score(
     resume_text,
     job_description,
@@ -1714,52 +1715,63 @@ def ats_percentage_score(
     )
 
     prompt = f"""
-You are an AI-powered ATS evaluator. Assess the candidate's resume against the job description. Return a detailed, **section-by-section analysis**, with **scoring for each area**. Follow the format precisely below.
+You are an AI-powered ATS evaluator. Assess the candidate's resume against the job description.
+Return a detailed, **section-by-section analysis**, with **scoring for each area**. 
+
+⚠ IMPORTANT:
+- Do NOT skip any section.
+- If information is missing, explicitly write “Not Found” or “Not Mentioned”.
+- For Education, always check the **entire resume** for certifications, training, or workshops, even if they appear outside the education section.
+- Apply balanced scoring — not overly harsh or overly lenient.
 
 🎯 Section Breakdown:
 
-1. **Candidate Name** — Extract the full name clearly from the resume header or first few lines.
+1. **Candidate Name** — Extract the full name clearly from the resume header or first few lines.  
+If not found, write: Not Found.
 
 2. **Education Analysis** — Evaluate:
-   - Degree level (e.g., Bachelor’s, Master’s, PhD)
-   - Field of study alignment with job requirements
-   - Institution reputation (if mentioned)
-   - Graduation year (recency)
-   - Any certifications or training programs relevant to the role
+   - Degree level (e.g., Bachelor’s, Master’s, PhD) — if missing, write: Not Found.
+   - Field of study alignment with job requirements — if missing, write: Not Mentioned.
+   - Institution reputation (if mentioned) — if missing, write: Not Found.
+   - Graduation year (recency) — if missing, write: Not Mentioned.
+   - Certifications/training programs relevant to the role (check the **entire resume**) — if missing, write: None Found.
 
-3. **Experience Analysis** — Scoring Rules (Balanced):
-   - Award full points only if candidate meets or exceeds required years of relevant full-time experience.
-   - Internships = 0.5 years each (max 2 points per internship).
-   - Academic projects = max 1 point each if directly relevant.
-   - If total calculated experience is less than JD requirement, cap score at 60% of {exp_weight}.
-   - Strong, high-impact projects or leadership roles can partially offset lack of years.
-   - Prioritize quality and relevance over number of roles.
+3. **Experience Analysis** — Evaluate:
+   - Total years of experience vs job expectations — if missing, write: Not Found.
+   - Role titles and seniority levels — if missing, write: Not Found.
+   - Domain/industry relevance to the job — if missing, write: Not Mentioned.
+   - Specific projects handled — if missing, write: None Provided.
+   - Tools, technologies, or methodologies aligned with JD — if missing, write: Not Found.
+   - Evidence of leadership, teamwork, or initiative — if missing, write: Not Found.
 
-4. **Skills Analysis** — Scoring Rules (Balanced):
-   - Award higher points for technical/domain skills that directly match JD.
-   - Give partial credit for related/transferable skills.
-   - Deduct moderately for missing secondary skills; stronger deductions for missing core JD skills.
-   - Highlight missing critical skills from JD (at least 3 if absent).
-   - Consider recency of usage; outdated skills get reduced points.
+4. **Skills Analysis** — Check for:
+   - Technical tools — if missing, write: Not Found.
+   - Domain-specific skills — if missing, write: Not Found.
+   - Soft skills — if missing, write: Not Found.
 
-5. **Language Quality** — Use grammar score provided. Evaluate:
-   - Grammar and spelling quality
-   - Tone (professional, casual, inconsistent)
-   - Sentence clarity and structure
-   - Use of active voice and action verbs
-   - Formatting professionalism
+✅ **Important:** Provide “Missing Skills” list of at least 3 items if applicable, based strictly on JD.
 
-6. **Keyword Analysis** — Scoring Rules (Balanced):
-   - Identify critical keywords from JD — these should heavily influence the score.
-   - Award partial credit for related terms if exact match not found.
-   - Deduct more for missing essential keywords; less for secondary ones.
-   - List missing JD keywords as bullet points (at least 3 if applicable).
+Also evaluate:
+   - Depth of proficiency — if missing, write: Not Mentioned.
+   - Recency of usage — if missing, write: Not Mentioned.
+   - Whether skills are supported by projects — if missing, write: Not Mentioned.
 
-7. **Final Thoughts** — Provide a 4–6 sentence holistic evaluation:
-   - Resume's overall alignment with the job
-   - Highlight major strengths
-   - Point out red flags
-   - Mention if the resume deserves shortlisting or further screening
+5. **Language Quality** — Use grammar score provided.
+   - Grammar and spelling quality — if missing, write: Not Mentioned.
+   - Tone — if missing, write: Not Mentioned.
+   - Sentence clarity and structure — if missing, write: Not Mentioned.
+   - Formatting professionalism — if missing, write: Not Mentioned.
+
+6. **Keyword Analysis** — Identify and evaluate:
+   - Job-critical keywords — if missing, write: Not Found.
+   - Domain-specific jargon — if missing, write: Not Found.
+   - Tool names and role-specific terms — if missing, write: Not Found.
+
+✅ **Important:** Provide missing keywords list of at least 3 if applicable.
+
+7. **Final Thoughts** — Provide a holistic evaluation. If information is insufficient, explicitly mention “Resume lacks sufficient detail in some sections”.
+
+---
 
 Use this context:
 
@@ -1776,22 +1788,22 @@ Use this context:
 
 ### 🏫 Education Analysis
 **Score:** <0–{edu_weight}> / {edu_weight}  
-**Degree Match:** <Discuss degree level, specialization, and how it matches the job.>
+**Degree Match:** <details or "Not Found">  
+**Field of Study Alignment:** <details or "Not Mentioned">  
+**Institution:** <details or "Not Found">  
+**Graduation Year:** <details or "Not Mentioned">  
+**Certifications/Training:** <list or "None Found">
 
 ### 💼 Experience Analysis
 **Score:** <0–{exp_weight}> / {exp_weight}  
-**Experience Details:**  
-<Give breakdown of years, relevance, and notable achievements. Explicitly mention when years of experience are below the requirement.>
+**Experience Details:** <details or "Not Found">
 
 ### 🛠 Skills Analysis
 **Score:** <0–{skills_weight}> / {skills_weight}  
 **Current Skills:**
-- Technical: <list>
-- Soft Skills: <list>
-- Domain-Specific: <list>
-
-**Skill Proficiency:**  
-<Evaluate depth of knowledge and recency. Mention if skills are supported by projects or work experience.>
+- Technical: <list or "Not Found">
+- Soft Skills: <list or "Not Found">
+- Domain-Specific: <list or "Not Found">
 
 **Missing Skills:**  
 - Skill 1  
@@ -1800,29 +1812,22 @@ Use this context:
 
 ### 🗣 Language Quality Analysis
 **Score:** {grammar_score} / {lang_weight}  
-**Grammar & Tone:** <LLM-based comment on clarity, fluency, tone>  
+**Grammar & Tone:** <LLM-based comment or "Not Mentioned">  
 **Feedback Summary:** **{grammar_feedback}**
 
 ### 🔑 Keyword Analysis
 **Score:** <0–{keyword_weight}> / {keyword_weight}  
 **Missing Keywords:**  
-- Keyword 1  
-- Keyword 2  
-- Keyword 3  
+- Keyword1  
+- Keyword2  
+- Keyword3  
 
-**Keyword Analysis:**  
-<Discuss importance of missing/present keywords and how they affect job match.>
+**Keyword Analysis:** <details or "Not Found">
 
 ### ✅ Final Thoughts
-<Summarize domain fit, core strengths, red flags, and whether this resume deserves further review.>
+<summary or "Resume lacks sufficient detail in some sections">
 
 ---
-
-**Instructions:**
-- Keep tone professional and ATS-focused.
-- Follow the exact section structure.
-- Always list missing skills and keywords if applicable.
-- Be consistent — same resume and JD should always yield the same score.
 
 📄 Job Description:
 \"\"\"{job_description}\"\"\"  
@@ -1832,6 +1837,8 @@ Use this context:
 
 {logic_score_note}
 """
+
+    
 
 
 

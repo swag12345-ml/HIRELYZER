@@ -1655,84 +1655,40 @@ import streamlit as st
 from llm_manager import call_llm
 from db_manager import detect_domain_from_title_and_description, get_domain_similarity
 
-# ✅ Enhanced Grammar evaluation using LLM with advanced suggestions
+# ✅ Enhanced Grammar evaluation using LLM with suggestions
 def get_grammar_score_with_llm(text, max_score=5):
     grammar_prompt = f"""
-You are an elite grammar and professional communication evaluator AI with expertise in resume optimization. Conduct a comprehensive analysis of the following resume text with industry-standard evaluation criteria:
+You are a grammar and tone evaluator AI. Analyze the following resume text and:
 
-**EVALUATION FRAMEWORK:**
-1. **Grammar & Syntax Analysis** (40% weight):
-   - Subject-verb agreement accuracy
-   - Proper tense consistency (past tense for previous roles, present for current)
-   - Sentence structure complexity and variety
-   - Punctuation precision and professional standards
-
-2. **Professional Tone Assessment** (30% weight):
-   - Industry-appropriate language and terminology
-   - Action verb strength and impact
-   - Quantifiable achievement presentation
-   - Professional confidence without overselling
-
-3. **Clarity & Readability** (20% weight):
-   - Information flow and logical organization
-   - Conciseness vs. completeness balance
-   - Technical jargon appropriateness
-   - Bullet point effectiveness
-
-4. **ATS Optimization** (10% weight):
-   - Keyword integration naturalness
-   - Formatting compatibility
-   - Scannable structure quality
-
-**SCORING CRITERIA:**
-- {max_score}: Exceptional professional writing, publication-ready quality
-- {max_score-1}: Strong professional standard with minor refinements needed
-- {max_score-2}: Good quality with moderate improvements required
-- {max_score-3}: Acceptable but needs significant enhancement
-- {max_score-4}: Below professional standard, major revision needed
-- 0-1: Poor quality requiring complete rewrite
-
-**ADVANCED IMPROVEMENT FRAMEWORK:**
-Provide 4-6 **specific, actionable suggestions** categorized by:
-- **CRITICAL:** Must-fix issues affecting professional credibility
-- **ENHANCEMENT:** Improvements for competitive advantage
-- **OPTIMIZATION:** Fine-tuning for maximum impact
+1. Give a grammar score out of {max_score} based on grammar quality, sentence structure, clarity, and tone.
+2. Return a 1-sentence summary of the grammar and tone.
+3. Provide 3 to 5 **specific improvement suggestions** (bullet points) for enhancing grammar, clarity, tone, or structure.
 
 Return response in the exact format below:
 
 Score: <number>
-Feedback: <comprehensive 2-sentence professional assessment>
+Feedback: <summary>
 Suggestions:
-- CRITICAL: <specific improvement with example>
-- ENHANCEMENT: <specific improvement with example>
-- OPTIMIZATION: <specific improvement with example>
-- CRITICAL: <another critical fix if needed>
-- ENHANCEMENT: <another enhancement if needed>
-- OPTIMIZATION: <another optimization if needed>
+- <suggestion 1>
+- <suggestion 2>
+...
 
 ---
-RESUME TEXT FOR ANALYSIS:
 {text}
 ---
 """
 
     response = call_llm(grammar_prompt, session=st.session_state).strip()
     score_match = re.search(r"Score:\s*(\d+)", response)
-    feedback_match = re.search(r"Feedback:\s*(.+?)(?=Suggestions:|$)", response, re.DOTALL)
-    suggestions = re.findall(r"- (CRITICAL|ENHANCEMENT|OPTIMIZATION):\s*(.+)", response)
+    feedback_match = re.search(r"Feedback:\s*(.+)", response)
+    suggestions = re.findall(r"- (.+)", response)
 
-    score = int(score_match.group(1)) if score_match else max_score//2
-    feedback = feedback_match.group(1).strip() if feedback_match else "Professional writing assessment completed with standard evaluation criteria."
-    
-    # Format suggestions with categories
-    formatted_suggestions = []
-    for category, suggestion in suggestions:
-        formatted_suggestions.append(f"**{category}**: {suggestion}")
-    
-    return score, feedback, formatted_suggestions
+    score = int(score_match.group(1)) if score_match else 3
+    feedback = feedback_match.group(1).strip() if feedback_match else "No grammar feedback provided."
+    return score, feedback, suggestions
 
 
-# ✅ Production-Ready Main ATS Evaluation Function
+# ✅ PRODUCTION-READY BALANCED ATS SCORING FUNCTION
 def ats_percentage_score(
     resume_text,
     job_description,
@@ -1744,413 +1700,315 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    # Advanced grammar evaluation with categorized feedback
-    grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(resume_text, max_score=lang_weight)
+    """
+    Production-ready ATS scoring function with balanced and consistent scoring.
+    Implements multiple validation layers and fallback mechanisms.
+    """
+    
+    # Input validation
+    if not resume_text or not job_description:
+        st.error("Resume text and job description are required")
+        return None, {}
+    
+    if resume_text.strip() == "" or job_description.strip() == "":
+        st.error("Resume text and job description cannot be empty")
+        return None, {}
+    
+    # Validate weights sum to 100
+    total_weights = edu_weight + exp_weight + skills_weight + lang_weight + keyword_weight
+    if total_weights != 100:
+        st.error(f"Weights must sum to 100, currently sum to {total_weights}")
+        return None, {}
 
-    # Domain analysis with enhanced similarity scoring
-    resume_domain = detect_domain_from_title_and_description("Unknown", resume_text)
-    job_domain = detect_domain_from_title_and_description(job_title, job_description)
-    similarity_score = get_domain_similarity(resume_domain, job_domain)
+    try:
+        # Get grammar score with error handling
+        try:
+            grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(resume_text, max_score=lang_weight)
+        except Exception as e:
+            st.warning(f"Grammar scoring failed, using default: {e}")
+            grammar_score = lang_weight // 2  # Use half the weight as default
+            grammar_feedback = "Grammar evaluation temporarily unavailable"
+            grammar_suggestions = ["Please check spelling and grammar manually"]
 
-    # Dynamic penalty system based on domain mismatch severity
-    MAX_DOMAIN_PENALTY = 15
-    domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
+        # Domain similarity with fallbacks
+        try:
+            resume_domain = detect_domain_from_title_and_description("Unknown", resume_text)
+            job_domain = detect_domain_from_title_and_description(job_title, job_description)
+            similarity_score = get_domain_similarity(resume_domain, job_domain)
+        except Exception as e:
+            st.warning(f"Domain analysis failed, using neutral score: {e}")
+            resume_domain = "General"
+            job_domain = "General"
+            similarity_score = 0.8  # Neutral similarity
 
-    # Enhanced logic score integration
-    logic_score_note = (
-        f"\n\n🔍 **SYSTEM INTELLIGENCE NOTE:** Advanced logic-based profile analysis calculated a supplementary score of {logic_profile_score}/100 based on resume comprehensiveness, experience depth, and skills diversity metrics."
-        if logic_profile_score else ""
-    )
+        # Calculate domain penalty with bounds
+        MAX_DOMAIN_PENALTY = 15
+        domain_penalty = max(0, min(round((1 - similarity_score) * MAX_DOMAIN_PENALTY), MAX_DOMAIN_PENALTY))
 
-    # 🚀 ADVANCED PRODUCTION-READY ATS EVALUATION PROMPT
-    prompt = f"""
-You are an **ELITE ATS EVALUATION SYSTEM** powered by advanced AI algorithms used by Fortune 500 companies and top-tier recruitment firms. Your evaluation standards match those of Google, Microsoft, Amazon, and other industry leaders.
+        # Enhanced prompt for more consistent LLM responses
+        logic_score_note = (
+            f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
+            if logic_profile_score else ""
+        )
 
-🎯 **ENTERPRISE-GRADE EVALUATION FRAMEWORK**
+        prompt = f"""
+You are an AI-powered ATS evaluator with STRICT BALANCED SCORING standards. You must provide consistent, evidence-based evaluation. Apply penalties for missing elements and require CONCRETE PROOF for higher scores.
 
-**CRITICAL EVALUATION PRINCIPLES:**
-- **EVIDENCE-DRIVEN SCORING**: Every point awarded must be backed by concrete evidence from the resume
-- **INDUSTRY BENCHMARK STANDARDS**: Apply evaluation criteria used by top-tier companies
-- **BALANCED ASSESSMENT METHODOLOGY**: Prevent score inflation while recognizing genuine excellence
-- **COMPREHENSIVE IMPACT ANALYSIS**: Evaluate both technical competency and business impact potential
-- **STRATEGIC HIRING ALIGNMENT**: Assess long-term value and growth potential
+🎯 **CRITICAL SCORING REQUIREMENTS:**
+- Be BALANCED - avoid extreme scores (0-5 or 95-100) unless absolutely justified
+- NORMAL DISTRIBUTION: Most scores should fall between 40-80
+- EVIDENCE REQUIRED: Every point awarded must have specific justification from the resume
+- CONSISTENCY: Similar resumes should receive similar scores
 
-🏆 **ADVANCED SCORING RUBRICS - ENTERPRISE STANDARDS:**
+**SCORING DISTRIBUTION TARGETS:**
+- Poor Match (0-35): Only for completely mismatched resumes
+- Below Average (35-50): Missing major requirements but some relevance
+- Average (50-65): Meets basic requirements with some gaps
+- Good (65-80): Strong match with minor gaps
+- Excellent (80-95): Outstanding match with minimal gaps
+- Perfect (95-100): Exceptional match exceeding all requirements
 
-**📚 EDUCATION EVALUATION MATRIX ({edu_weight} points maximum):**
-- **18-20 EXCEPTIONAL**: Advanced degree from top-tier institution + relevant certifications + continuous learning evidence
-- **15-17 STRONG**: Relevant degree + professional certifications + specialized training
-- **12-14 GOOD**: Appropriate degree + some additional qualifications + recent skill updates
-- **8-11 ADEQUATE**: Basic degree requirements met + minimal additional learning
-- **4-7 BELOW STANDARD**: Degree present but limited relevance + no additional qualifications
-- **0-3 INSUFFICIENT**: Missing degree requirements or completely irrelevant education
+🎯 **SECTION SCORING CRITERIA:**
 
-**💼 EXPERIENCE ASSESSMENT FRAMEWORK ({exp_weight} points maximum):**
-- **32-35 EXCEPTIONAL**: Exceeds experience requirements + proven leadership + quantified major achievements + industry recognition
-- **28-31 STRONG**: Meets experience requirements + leadership evidence + multiple quantified achievements + career progression
-- **23-27 GOOD**: Adequate experience + some quantified results + clear role progression + relevant projects
-- **18-22 SATISFACTORY**: Basic experience requirements + limited quantification + standard responsibilities
-- **12-17 BELOW STANDARD**: Insufficient experience + no quantified achievements + unclear progression
-- **0-11 INADEQUATE**: Major experience gaps + no relevant achievements + misaligned background
+**EDUCATION SCORING ({edu_weight} points max):**
+- 0-{edu_weight//4}: No relevant education or major field mismatch
+- {edu_weight//4+1}-{edu_weight//2}: Basic education but missing key requirements
+- {edu_weight//2+1}-{edu_weight*3//4}: Good educational match with minor gaps
+- {edu_weight*3//4+1}-{edu_weight}: Perfect educational alignment
 
-**🛠️ SKILLS COMPETENCY MATRIX ({skills_weight} points maximum):**
-- **27-30 EXCEPTIONAL**: All critical skills + advanced proficiency + emerging technologies + innovation evidence
-- **23-26 STRONG**: Most critical skills + good proficiency + current technologies + practical application
-- **19-22 GOOD**: Core skills covered + adequate proficiency + standard technologies + project evidence
-- **15-18 SATISFACTORY**: Basic skills present + limited proficiency + older technologies + minimal evidence
-- **10-14 BELOW STANDARD**: Missing critical skills + unclear proficiency + outdated technologies
-- **0-9 INADEQUATE**: Major skill gaps + no proficiency evidence + irrelevant technologies
+**EXPERIENCE SCORING ({exp_weight} points max):**
+- 0-{exp_weight//5}: No relevant experience or major skill gaps
+- {exp_weight//5+1}-{exp_weight*2//5}: Some experience but lacks required depth
+- {exp_weight*2//5+1}-{exp_weight*3//5}: Adequate experience with notable gaps
+- {exp_weight*3//5+1}-{exp_weight*4//5}: Strong experience with minor gaps
+- {exp_weight*4//5+1}-{exp_weight}: Exceptional experience exceeding requirements
 
-**🔑 KEYWORD OPTIMIZATION ANALYSIS ({keyword_weight} points maximum):**
-- **9-10 EXCEPTIONAL**: Perfect keyword integration + industry terminology + ATS optimization + natural flow
-- **7-8 STRONG**: Good keyword coverage + relevant terminology + solid ATS compatibility
-- **5-6 ADEQUATE**: Basic keywords present + standard terminology + acceptable ATS score
-- **3-4 BELOW STANDARD**: Limited keywords + missing terminology + poor ATS optimization
-- **0-2 INADEQUATE**: Critical keywords missing + no industry terminology + ATS incompatible
+**SKILLS SCORING ({skills_weight} points max):**
+- 0-{skills_weight//5}: Major skill gaps, missing critical requirements
+- {skills_weight//5+1}-{skills_weight*2//5}: Basic skills, missing advanced tools
+- {skills_weight*2//5+1}-{skills_weight*3//5}: Good skill coverage with some gaps
+- {skills_weight*3//5+1}-{skills_weight*4//5}: Strong skills with minor gaps
+- {skills_weight*4//5+1}-{skills_weight}: Complete skill mastery with proof
 
-🎯 **MANDATORY PENALTY ENFORCEMENT SYSTEM:**
-- **QUANTIFICATION PENALTY**: -5 points if fewer than 3 quantified achievements
-- **LEADERSHIP PENALTY**: -3 points for senior roles without leadership evidence
-- **CURRENCY PENALTY**: -2 points for outdated skills/technologies (>3 years)
-- **RELEVANCE PENALTY**: -4 points for each major skill gap in top 5 requirements
-- **EXPERIENCE PENALTY**: -8 points if experience < 80% of job requirement
-- **CERTIFICATION PENALTY**: -3 points for missing industry-standard certifications
-- **DOMAIN MISMATCH PENALTY**: -{domain_penalty} points (calculated: {similarity_score:.2f} similarity)
+**KEYWORD SCORING ({keyword_weight} points max):**
+- 0-{keyword_weight//5}: Missing most critical keywords
+- {keyword_weight//5+1}-{keyword_weight*2//5}: Basic keywords present
+- {keyword_weight*2//5+1}-{keyword_weight*3//5}: Good keyword coverage
+- {keyword_weight*3//5+1}-{keyword_weight*4//5}: Strong keyword alignment
+- {keyword_weight*4//5+1}-{keyword_weight}: Perfect keyword optimization
 
-🎯 **ADVANCED SECTION ANALYSIS:**
+🎯 **MANDATORY SCORING RULES:**
+1. JUSTIFY every score with specific evidence from resume
+2. Apply penalties systematically for missing requirements
+3. NO INFLATION - be realistic and evidence-driven
+4. Consider domain mismatch penalty: {domain_penalty} points
+5. Most candidates should score between 45-75 (realistic range)
 
-### 🏷️ Candidate Name
-**EXTRACTION PROTOCOL**: Identify full professional name from resume header, contact section, or document properties
-
-### 📚 Education Analysis - Enterprise Standards
-**EVALUATION CRITERIA**:
-- **Degree Relevance Assessment**: Direct alignment with job requirements and industry standards
-- **Institution Credibility Analysis**: Academic reputation and program quality evaluation
-- **Certification Portfolio Review**: Professional certifications, licenses, and continuing education
-- **Learning Currency Evaluation**: Recent educational activities and skill updates
-- **Academic Achievement Recognition**: GPA, honors, relevant coursework, research experience
-
-**SCORING METHODOLOGY**:
-- Cross-reference degree requirements with job specifications
-- Evaluate educational timeline for career progression logic
-- Assess additional qualifications beyond basic requirements
-- Consider industry-specific educational standards
-
-### 💼 Experience Analysis - Executive Level Assessment
-**COMPREHENSIVE EVALUATION FRAMEWORK**:
-- **Quantified Impact Analysis**: Revenue generation, cost savings, efficiency improvements, team growth
-- **Leadership Competency Assessment**: Team size, budget responsibility, strategic initiatives, change management
-- **Technical Proficiency Validation**: Tool mastery, methodology expertise, innovation implementation
-- **Career Progression Evaluation**: Role advancement, responsibility growth, industry mobility
-- **Project Complexity Assessment**: Scope, stakeholders, technical challenges, business impact
-
-**EVIDENCE REQUIREMENTS FOR HIGH SCORES**:
-- Minimum 3 quantified achievements with specific metrics
-- Clear demonstration of increasing responsibility
-- Evidence of cross-functional collaboration
-- Proof of problem-solving and innovation
-- Industry-relevant project portfolio
-
-### 🛠️ Skills Analysis - Technical Competency Matrix
-**ADVANCED SKILL EVALUATION**:
-- **Core Competency Verification**: Essential skills from job description with proficiency evidence
-- **Technology Stack Assessment**: Current vs. legacy technologies, version-specific knowledge
-- **Skill Application Validation**: Project-based evidence of skill utilization
-- **Proficiency Level Determination**: Beginner/Intermediate/Advanced/Expert classification
-- **Emerging Technology Awareness**: Cutting-edge skills and future-ready capabilities
-
-**MISSING SKILLS IMPACT CLASSIFICATION**:
-**🔴 CRITICAL MISSING (Deal-breaker level)**:
-- Skills that would immediately disqualify the candidate
-- Core technologies essential for day-one productivity
-- Industry-standard tools with no acceptable alternatives
-
-**🟡 SIGNIFICANT MISSING (Competitive disadvantage)**:
-- Skills that substantially weaken candidacy
-- Important tools that affect efficiency and collaboration
-- Methodologies that impact project success
-
-**🟢 MINOR MISSING (Development opportunity)**:
-- Nice-to-have skills for optimization
-- Emerging technologies for future growth
-- Specialized tools with learning curve potential
-
-### 🗣️ Language Quality Analysis - Professional Communication Standards
-**COMPREHENSIVE COMMUNICATION ASSESSMENT**:
-- **Grammar Score Integration**: {grammar_score}/{lang_weight} (AI-powered evaluation)
-- **Professional Tone Analysis**: Industry-appropriate language and confidence level
-- **Clarity and Conciseness**: Information density and readability optimization
-- **Action Verb Utilization**: Strong, impactful language that demonstrates ownership
-- **Formatting Excellence**: Visual hierarchy, consistency, and ATS compatibility
-
-### 🔑 Keyword Analysis - Strategic ATS Optimization
-**ADVANCED KEYWORD STRATEGY EVALUATION**:
-- **Primary Keywords (40% weight)**: Job title, core functions, primary responsibilities
-- **Technical Keywords (35% weight)**: Tools, platforms, methodologies, certifications
-- **Industry Keywords (25% weight)**: Domain-specific terminology, compliance standards, best practices
-
-**MISSING KEYWORDS STRATEGIC IMPACT**:
-**🚨 CRITICAL ATS IMPACT (Immediate rejection risk)**:
-- Primary job function keywords
-- Essential technical requirements
-- Industry-standard terminology
-
-**⚠️ SIGNIFICANT ATS IMPACT (Reduced visibility)**:
-- Important methodologies and frameworks
-- Relevant tools and platforms
-- Professional certifications and standards
-
-**💡 OPTIMIZATION OPPORTUNITIES (Competitive advantage)**:
-- Emerging industry terminology
-- Advanced technical concepts
-- Leadership and soft skill keywords
-
-### ✅ Final Assessment - Executive Summary
-**HOLISTIC EVALUATION FRAMEWORK**:
-- **Strategic Fit Analysis**: Long-term potential and cultural alignment
-- **Competitive Positioning**: Comparison to market standards and peer candidates
-- **Risk Assessment**: Potential concerns and mitigation strategies
-- **Growth Potential**: Learning agility and advancement capability
-- **Hiring Recommendation**: Clear decision framework with supporting rationale
-
-**RECOMMENDATION CATEGORIES**:
-- **🌟 STRONG HIRE**: Exceptional candidate exceeding requirements
-- **✅ HIRE**: Solid candidate meeting all key criteria
-- **🤔 MAYBE**: Potential candidate with notable gaps
-- **❌ NO HIRE**: Insufficient qualifications or major concerns
-
----
-
-**EVALUATION CONTEXT & INTELLIGENCE**:
-- Grammar Assessment: {grammar_score}/{lang_weight} points
-- Professional Communication Feedback: {grammar_feedback}
-- Resume Domain Classification: {resume_domain}
-- Target Job Domain: {job_domain}
-- Domain Alignment Score: {similarity_score:.2f}/1.0
-- Applied Domain Penalty: {domain_penalty}/{MAX_DOMAIN_PENALTY} points
-
----
+🎯 **REQUIRED OUTPUT FORMAT - FOLLOW EXACTLY:**
 
 ### 🏷️ Candidate Name
-<Extract full professional name or "Not Found">
+<Extract full name or "Not Found">
 
-### 📚 Education Analysis
-**Score:** <0–{edu_weight}> / {edu_weight}  
-**Scoring Justification:** <Detailed evidence-based explanation for score assignment>
-**Educational Alignment Assessment:**  
-<Comprehensive analysis of degree relevance, institution quality, certifications, and learning currency>
-**Applied Penalties/Bonuses:** <Document any score adjustments with specific reasoning>
+### 🏫 Education Analysis
+**Score:** <score 0-{edu_weight}> / {edu_weight}
+**Justification:** <Evidence-based explanation for this specific score>
+**Analysis:** <Detailed evaluation of degree relevance, institution, certifications>
 
-### 💼 Experience Analysis
-**Score:** <0–{exp_weight}> / {exp_weight}  
-**Scoring Justification:** <Evidence-based score explanation with specific examples>
-**Professional Experience Evaluation:**  
-<Detailed analysis of years, progression, quantified achievements, leadership evidence, and industry relevance>
-**Quantified Achievements Identified:** <List specific metrics, percentages, dollar amounts, team sizes>
-**Leadership & Impact Evidence:** <Document management experience, strategic initiatives, and business impact>
-**Applied Penalties:** <Record any deductions for missing requirements with explanations>
+### 💼 Experience Analysis  
+**Score:** <score 0-{exp_weight}> / {exp_weight}
+**Justification:** <Evidence-based explanation for this specific score>
+**Analysis:** <Detailed evaluation of years, roles, achievements, industry relevance>
+**Quantified Achievements:** <List specific metrics found>
 
-### 🛠️ Skills Analysis
-**Score:** <0–{skills_weight}> / {skills_weight}  
-**Scoring Justification:** <Evidence-based assessment of skill coverage and proficiency>
-**Technical Competency Matrix:**
-- **Core Skills Verified:** <List with proficiency evidence and project applications>
-- **Technology Stack Assessment:** <Evaluate current vs. required technologies>
-- **Skill Application Evidence:** <Document project-based skill utilization>
+### 🛠 Skills Analysis
+**Score:** <score 0-{skills_weight}> / {skills_weight}
+**Justification:** <Evidence-based explanation for this specific score>
+**Analysis:** <Detailed evaluation of technical skills, proficiency, tool usage>
+**Missing Critical Skills:** <List important missing skills>
 
-**Missing Skills Impact Analysis:**  
-**🔴 CRITICAL MISSING (Deal-breaker level):**
-- <Skill 1>: <Impact explanation and business consequence>
-- <Skill 2>: <Impact explanation and business consequence>
-
-**🟡 SIGNIFICANT MISSING (Competitive disadvantage):**
-- <Skill 3>: <Impact explanation and efficiency concern>
-- <Skill 4>: <Impact explanation and collaboration impact>
-
-**🟢 MINOR MISSING (Development opportunity):**
-- <Skill 5>: <Growth opportunity explanation>
-
-### 🗣️ Language Quality Analysis
-**Score:** {grammar_score} / {lang_weight}  
-**Professional Communication Assessment:** <Evaluate clarity, tone, industry language, and formatting quality>
-**AI-Powered Grammar Feedback:** **{grammar_feedback}**
-**Presentation Quality:** <Assess resume structure, visual hierarchy, and professional presentation>
+### 🗣 Language Quality Analysis
+**Score:** {grammar_score} / {lang_weight}
+**Analysis:** {grammar_feedback}
+**Suggestions:** {', '.join(grammar_suggestions) if grammar_suggestions else 'None'}
 
 ### 🔑 Keyword Analysis
-**Score:** <0–{keyword_weight}> / {keyword_weight}  
-**Scoring Justification:** <Evidence-based keyword optimization assessment>
+**Score:** <score 0-{keyword_weight}> / {keyword_weight}
+**Justification:** <Evidence-based explanation for this specific score>
+**Analysis:** <Detailed keyword optimization assessment>
+**Missing Keywords:** <List important missing keywords>
 
-**Strategic Keyword Gap Analysis:**  
-**🚨 CRITICAL ATS IMPACT (Immediate rejection risk):**
-- <Keyword1>: <Primary job function - essential for ATS matching>
-- <Keyword2>: <Core technical requirement - mandatory for consideration>
+### ✅ Final Assessment
+**Strengths:** <Top 2 evidence-based strengths>
+**Critical Gaps:** <Major concerns with specific examples>
+**Recommendation:** <Clear hire/consider/no-hire with reasoning>
 
-**⚠️ SIGNIFICANT ATS IMPACT (Reduced visibility):**  
-- <Keyword3>: <Important methodology - affects search ranking>
-- <Keyword4>: <Relevant platform - impacts technical assessment>
+**REMEMBER:** 
+- Most scores should be in 45-75 range for realistic evaluation
+- Avoid extremes unless truly justified
+- Every point must have evidence from the resume
+- Be consistent across similar candidates
 
-**💡 OPTIMIZATION OPPORTUNITIES (Competitive advantage):**
-- <Keyword5>: <Emerging terminology - future-proofing benefit>
-- <Keyword6>: <Advanced concept - differentiation opportunity>
+Context Information:
+- Grammar Score: {grammar_score}/{lang_weight} (already calculated)
+- Resume Domain: {resume_domain}
+- Job Domain: {job_domain}  
+- Domain Similarity: {similarity_score:.2f}
+- Domain Penalty: {domain_penalty} points
 
-**ATS Optimization Strategy:** <Comprehensive assessment of search compatibility and ranking potential>
+📄 **Job Description:**
+{job_description}
 
-### ✅ Final Assessment - Executive Summary
-**STRATEGIC STRENGTHS (Evidence-Based):**
-1. <Primary strength with quantified supporting evidence>
-2. <Secondary strength with specific project examples>
-
-**CRITICAL CONCERNS & RISK FACTORS:**
-- <Major concern 1 with business impact assessment>
-- <Major concern 2 with mitigation difficulty evaluation>
-
-**COMPETITIVE POSITIONING:** <Market comparison and peer benchmarking analysis>
-**GROWTH POTENTIAL ASSESSMENT:** <Learning agility and advancement capability evaluation>
-**HIRING RECOMMENDATION:** <Clear decision with comprehensive supporting rationale>
-
-**STRATEGIC DEVELOPMENT PRIORITIES:**
-1. <Highest impact improvement area with timeline>
-2. <Secondary development focus with resource requirements>  
-3. <Long-term growth opportunity with strategic value>
-
----
-
-**EVALUATION ACCOUNTABILITY FRAMEWORK:**
-- Every score justified with specific resume evidence
-- All penalties applied systematically with documentation
-- Cross-verification of job requirements against candidate qualifications
-- Balanced assessment preventing both grade inflation and unfair penalization
-- Strategic hiring perspective considering long-term value and potential
-
----
-
-📋 **JOB REQUIREMENTS ANALYSIS:**
-\"\"\"{job_description}\"\"\"  
-
-📄 **CANDIDATE PROFILE EVALUATION:**
-\"\"\"{resume_text}\"\"\"  
-
+📄 **Resume Text:**  
+{resume_text}
 {logic_score_note}
 """
 
-    # Execute advanced LLM evaluation
-    ats_result = call_llm(prompt, session=st.session_state).strip()
+        # Get LLM response with retry mechanism
+        max_retries = 3
+        ats_result = None
+        
+        for attempt in range(max_retries):
+            try:
+                ats_result = call_llm(prompt, session=st.session_state).strip()
+                if ats_result and len(ats_result) > 100:  # Basic validation
+                    break
+            except Exception as e:
+                st.warning(f"LLM call attempt {attempt + 1} failed: {e}")
+                if attempt == max_retries - 1:
+                    raise Exception("All LLM attempts failed")
 
-    # Enhanced section extraction with error handling
-    def extract_section(pattern, text, default="N/A"):
-        try:
-            match = re.search(pattern, text, re.DOTALL)
-            return match.group(1).strip() if match else default
-        except Exception:
-            return default
+        if not ats_result:
+            raise Exception("No valid response from LLM")
 
-    def extract_score(pattern, text, default=0):
-        try:
-            match = re.search(pattern, text)
-            return int(match.group(1)) if match else default
-        except Exception:
-            return default
+        # Robust extraction functions with fallbacks
+        def safe_extract_section(pattern, text, default="N/A"):
+            try:
+                match = re.search(pattern, text, re.DOTALL)
+                return match.group(1).strip() if match else default
+            except Exception:
+                return default
 
-    # Extract comprehensive analysis sections
-    candidate_name = extract_section(r"### 🏷️ Candidate Name(.*?)###", ats_result, "Not Found")
-    edu_analysis = extract_section(r"### 📚 Education Analysis(.*?)###", ats_result)
-    exp_analysis = extract_section(r"### 💼 Experience Analysis(.*?)###", ats_result)
-    skills_analysis = extract_section(r"### 🛠️ Skills Analysis(.*?)###", ats_result)
-    lang_analysis = extract_section(r"### 🗣️ Language Quality Analysis(.*?)###", ats_result)
-    keyword_analysis = extract_section(r"### 🔑 Keyword Analysis(.*?)###", ats_result)
-    final_thoughts = extract_section(r"### ✅ Final Assessment(.*)", ats_result)
+        def safe_extract_score(pattern, text, default_score, max_score):
+            try:
+                match = re.search(pattern, text)
+                if match:
+                    score = int(match.group(1))
+                    # Validate score is within bounds
+                    return max(0, min(score, max_score))
+                return default_score
+            except Exception:
+                return default_score
 
-    # Extract scores with validation
-    edu_score = min(extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis), edu_weight)
-    exp_score = min(extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis), exp_weight)
-    skills_score = min(extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis), skills_weight)
-    keyword_score = min(extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis), keyword_weight)
+        # Extract sections with fallbacks
+        candidate_name = safe_extract_section(r"### 🏷️ Candidate Name(.*?)(?:###|\n\n|\Z)", ats_result, "Not Found").replace("###", "").strip()
+        
+        edu_analysis = safe_extract_section(r"### 🏫 Education Analysis(.*?)(?:###|\Z)", ats_result, "Analysis not available")
+        exp_analysis = safe_extract_section(r"### 💼 Experience Analysis(.*?)(?:###|\Z)", ats_result, "Analysis not available")
+        skills_analysis = safe_extract_section(r"### 🛠 Skills Analysis(.*?)(?:###|\Z)", ats_result, "Analysis not available")
+        lang_analysis = safe_extract_section(r"### 🗣 Language Quality Analysis(.*?)(?:###|\Z)", ats_result, "Analysis not available")
+        keyword_analysis = safe_extract_section(r"### 🔑 Keyword Analysis(.*?)(?:###|\Z)", ats_result, "Analysis not available")
+        final_thoughts = safe_extract_section(r"### ✅ Final Assessment(.*?)(?:###|\Z)", ats_result, "Assessment not available")
 
-    # Enhanced missing elements extraction
-    missing_keywords = extract_section(r"\*\*Missing Keywords:\*\*(.*?)(?:###|\Z)", keyword_analysis).replace("-", "").strip().replace("\n", ", ")
-    missing_skills = extract_section(r"\*\*Missing Skills:\*\*(.*?)(?:###|\Z)", skills_analysis).replace("-", "").strip().replace("\n", ", ")
+        # Extract scores with validation and fallbacks
+        edu_score = safe_extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis, edu_weight//2, edu_weight)
+        exp_score = safe_extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis, exp_weight//2, exp_weight)
+        skills_score = safe_extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis, skills_weight//2, skills_weight)
+        keyword_score = safe_extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis, keyword_weight//2, keyword_weight)
 
-    # Calculate final score with validation
-    total_score = edu_score + exp_score + skills_score + grammar_score + keyword_score
-    total_score = max(total_score - domain_penalty, 0)
-    total_score = min(total_score, 100)
+        # Extract missing items with fallbacks
+        missing_keywords = safe_extract_section(r"\*\*Missing Keywords:\*\*(.*?)(?:\*\*|\n\n|\Z)", keyword_analysis, "").replace("-", "").strip()
+        missing_skills = safe_extract_section(r"\*\*Missing Critical Skills:\*\*(.*?)(?:\*\*|\n\n|\Z)", skills_analysis, "").replace("-", "").strip()
 
-    # Enhanced score formatting with detailed categories
-    if total_score >= 90:
-        formatted_score = "🌟 Exceptional - Top 5% Candidate"
-    elif total_score >= 85:
-        formatted_score = "⭐ Excellent - Strong Hire Recommendation"
-    elif total_score >= 75:
-        formatted_score = "✅ Good - Solid Candidate"
-    elif total_score >= 65:
-        formatted_score = "🤔 Average - Consider with Reservations"
-    elif total_score >= 50:
-        formatted_score = "⚠️ Below Average - Significant Gaps"
-    else:
-        formatted_score = "❌ Poor - Not Recommended"
+        # Calculate total score with bounds checking
+        raw_total = edu_score + exp_score + skills_score + grammar_score + keyword_score
+        total_score_before_penalty = max(0, min(raw_total, 100))
+        total_score = max(0, min(total_score_before_penalty - domain_penalty, 100))
 
-    # Enhanced suggestions formatting with categories
-    suggestions_html = ""
-    if grammar_suggestions:
-        suggestions_html = "<div class='suggestions-container'>"
-        for suggestion in grammar_suggestions:
-            if "CRITICAL" in suggestion:
-                suggestions_html += f"<div class='critical-suggestion'>🔴 {suggestion}</div>"
-            elif "ENHANCEMENT" in suggestion:
-                suggestions_html += f"<div class='enhancement-suggestion'>🟡 {suggestion}</div>"
-            elif "OPTIMIZATION" in suggestion:
-                suggestions_html += f"<div class='optimization-suggestion'>🟢 {suggestion}</div>"
-            else:
-                suggestions_html += f"<div class='general-suggestion'>💡 {suggestion}</div>"
-        suggestions_html += "</div>"
+        # Score formatting with validation
+        if total_score >= 80:
+            formatted_score = "🌟 Excellent"
+        elif total_score >= 65:
+            formatted_score = "✅ Good"
+        elif total_score >= 45:
+            formatted_score = "⚠️ Average"
+        else:
+            formatted_score = "❌ Below Average"
 
-    # Enhanced language analysis with advanced feedback
-    updated_lang_analysis = f"""
+        # Enhanced language analysis with suggestions
+        suggestions_html = ""
+        if grammar_suggestions:
+            suggestions_html = "<ul>" + "".join([f"<li>{s}</li>" for s in grammar_suggestions]) + "</ul>"
+
+        updated_lang_analysis = f"""
 {lang_analysis}
-<br><br><div class='feedback-section'>
-<b>🎯 AI-Powered Professional Assessment:</b> {grammar_feedback}
-<br><br><b>📈 Targeted Improvement Recommendations:</b><br>
-{suggestions_html}
-</div>
+<br><b>Grammar Feedback:</b> {grammar_feedback}
+<br><b>Improvement Suggestions:</b> {suggestions_html}
 """
 
-    # Enhanced final thoughts with comprehensive metrics
-    final_thoughts += f"""
+        # Enhanced final thoughts with domain analysis
+        final_thoughts += f"\n\n📊 **Domain Analysis:**\n📈 Resume Domain: {resume_domain}\n🎯 Job Domain: {job_domain}\n🔗 Similarity Score: {similarity_score:.2f}\n🔻 Domain Penalty Applied: {domain_penalty}/{MAX_DOMAIN_PENALTY} points"
 
-<div class='metrics-summary'>
-<h4>📊 EVALUATION METRICS SUMMARY</h4>
-<ul>
-<li><b>Domain Alignment Score:</b> {similarity_score:.2f}/1.0 ({int(similarity_score*100)}% match)</li>
-<li><b>Domain Penalty Applied:</b> {domain_penalty}/{MAX_DOMAIN_PENALTY} points</li>
-<li><b>Resume Domain:</b> {resume_domain}</li>
-<li><b>Target Job Domain:</b> {job_domain}</li>
-<li><b>Overall ATS Compatibility:</b> {total_score}/100</li>
-</ul>
-</div>
-"""
+        # Compile results with validation
+        results = {
+            "Candidate Name": candidate_name,
+            "Education Score": edu_score,
+            "Experience Score": exp_score,
+            "Skills Score": skills_score,
+            "Language Score": grammar_score,
+            "Keyword Score": keyword_score,
+            "ATS Match %": total_score,
+            "Raw Score Before Penalty": total_score_before_penalty,
+            "Formatted Score": formatted_score,
+            "Education Analysis": edu_analysis,
+            "Experience Analysis": exp_analysis,
+            "Skills Analysis": skills_analysis,
+            "Language Analysis": updated_lang_analysis,
+            "Keyword Analysis": keyword_analysis,
+            "Final Thoughts": final_thoughts,
+            "Missing Keywords": missing_keywords.replace("\n", ", ") if missing_keywords else "None identified",
+            "Missing Skills": missing_skills.replace("\n", ", ") if missing_skills else "None identified",
+            "Resume Domain": resume_domain,
+            "Job Domain": job_domain,
+            "Domain Penalty": domain_penalty,
+            "Domain Similarity Score": similarity_score,
+            "Grammar Feedback": grammar_feedback,
+            "Grammar Suggestions": grammar_suggestions
+        }
 
-    return ats_result, {
-        "Candidate Name": candidate_name,
-        "Education Score": edu_score,
-        "Experience Score": exp_score,
-        "Skills Score": skills_score,
-        "Language Score": grammar_score,
-        "Keyword Score": keyword_score,
-        "ATS Match %": total_score,
-        "Formatted Score": formatted_score,
-        "Education Analysis": edu_analysis,
-        "Experience Analysis": exp_analysis,
-        "Skills Analysis": skills_analysis,
-        "Language Analysis": updated_lang_analysis,
-        "Keyword Analysis": keyword_analysis,
-        "Final Thoughts": final_thoughts,
-        "Missing Keywords": missing_keywords,
-        "Missing Skills": missing_skills,
-        "Resume Domain": resume_domain,
-        "Job Domain": job_domain,
-        "Domain Penalty": domain_penalty,
-        "Domain Similarity Score": similarity_score
-    }
+        # Final validation
+        if total_score < 0 or total_score > 100:
+            st.error(f"Invalid total score: {total_score}. Using fallback.")
+            results["ATS Match %"] = 50  # Safe fallback
+
+        return ats_result, results
+
+    except Exception as e:
+        st.error(f"ATS scoring failed: {str(e)}")
+        # Return safe fallback results
+        fallback_results = {
+            "Candidate Name": "Analysis Failed",
+            "Education Score": edu_weight // 2,
+            "Experience Score": exp_weight // 2,
+            "Skills Score": skills_weight // 2,
+            "Language Score": lang_weight // 2,
+            "Keyword Score": keyword_weight // 2,
+            "ATS Match %": 50,
+            "Formatted Score": "⚠️ Analysis Failed",
+            "Education Analysis": "Analysis temporarily unavailable",
+            "Experience Analysis": "Analysis temporarily unavailable",
+            "Skills Analysis": "Analysis temporarily unavailable",
+            "Language Analysis": "Analysis temporarily unavailable",
+            "Keyword Analysis": "Analysis temporarily unavailable",
+            "Final Thoughts": f"Analysis failed due to technical error: {str(e)}",
+            "Missing Keywords": "Unable to analyze",
+            "Missing Skills": "Unable to analyze",
+            "Resume Domain": "Unknown",
+            "Job Domain": "Unknown",
+            "Domain Penalty": 0,
+            "Domain Similarity Score": 0.5
+        }
+        return f"Analysis failed: {str(e)}", fallback_results
+
 # Setup Vector DB
 def setup_vectorstore(documents):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -2272,6 +2130,7 @@ if uploaded_files and job_description:
             ats_result, ats_scores = ats_percentage_score(
                 resume_text=full_text,
                 job_description=job_description,
+                job_title=job_title,
                 logic_profile_score=None,
                 edu_weight=edu_weight,
                 exp_weight=exp_weight,

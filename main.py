@@ -1715,63 +1715,58 @@ def ats_percentage_score(
     )
 
     prompt = f"""
-You are an AI-powered ATS evaluator. Assess the candidate's resume against the job description.
-Return a detailed, **section-by-section analysis**, with **scoring for each area**. 
-
-⚠ IMPORTANT:
-- Do NOT skip any section.
-- If information is missing, explicitly write “Not Found” or “Not Mentioned”.
-- For Education, always check the **entire resume** for certifications, training, or workshops, even if they appear outside the education section.
-- Apply balanced scoring — not overly harsh or overly lenient.
+You are an AI-powered ATS evaluator. Assess the candidate's resume against the job description. Return a detailed, **section-by-section analysis**, with **scoring for each area**. Follow the format precisely below.
 
 🎯 Section Breakdown:
 
-1. **Candidate Name** — Extract the full name clearly from the resume header or first few lines.  
-If not found, write: Not Found.
+1. **Candidate Name** — Extract the full name clearly from the resume header or first few lines.
 
 2. **Education Analysis** — Evaluate:
-   - Degree level (e.g., Bachelor’s, Master’s, PhD) — if missing, write: Not Found.
-   - Field of study alignment with job requirements — if missing, write: Not Mentioned.
-   - Institution reputation (if mentioned) — if missing, write: Not Found.
-   - Graduation year (recency) — if missing, write: Not Mentioned.
-   - Certifications/training programs relevant to the role (check the **entire resume**) — if missing, write: None Found.
+   - Degree level (e.g., Bachelor’s, Master’s, PhD)
+   - Field of study alignment with job requirements
+   - Institution reputation (if mentioned)
+   - Graduation year (recency)
+   - Any certifications or training programs relevant to the role
 
 3. **Experience Analysis** — Evaluate:
-   - Total years of experience vs job expectations — if missing, write: Not Found.
-   - Role titles and seniority levels — if missing, write: Not Found.
-   - Domain/industry relevance to the job — if missing, write: Not Mentioned.
-   - Specific projects handled — if missing, write: None Provided.
-   - Tools, technologies, or methodologies aligned with JD — if missing, write: Not Found.
-   - Evidence of leadership, teamwork, or initiative — if missing, write: Not Found.
+   - Total years of experience vs job expectations
+   - Role titles and their seniority levels (e.g., intern vs manager)
+   - Domain/industry relevance to the job
+   - Specific projects handled — explain **how they impacted the company, product, or client**
+   - Use of tools, technologies, or methodologies aligned with JD
+   - Evidence of leadership, teamwork, or initiative (e.g., “led a 5-person team”, “handled $100K budget”)
 
 4. **Skills Analysis** — Check for:
-   - Technical tools — if missing, write: Not Found.
-   - Domain-specific skills — if missing, write: Not Found.
-   - Soft skills — if missing, write: Not Found.
+   - Technical tools (e.g., Python, SQL, Figma)
+   - Domain-specific skills (e.g., CRM for Sales, ML models for AI jobs)
+   - Soft skills (e.g., communication, adaptability)
 
-✅ **Important:** Provide “Missing Skills” list of at least 3 items if applicable, based strictly on JD.
+✅ **Important: Provide missing skills in bullet points. Identify skills from the job description that are NOT found in the resume. Be specific and list at least 3 if applicable.**
 
 Also evaluate:
-   - Depth of proficiency — if missing, write: Not Mentioned.
-   - Recency of usage — if missing, write: Not Mentioned.
-   - Whether skills are supported by projects — if missing, write: Not Mentioned.
+   - Depth of proficiency (basic, intermediate, expert)
+   - Recency of usage if mentioned
+   - Whether the skill is supported by projects or experience
 
-5. **Language Quality** — Use grammar score provided.
-   - Grammar and spelling quality — if missing, write: Not Mentioned.
-   - Tone — if missing, write: Not Mentioned.
-   - Sentence clarity and structure — if missing, write: Not Mentioned.
-   - Formatting professionalism — if missing, write: Not Mentioned.
+5. **Language Quality** — Use grammar score provided. Evaluate:
+   - Grammar and spelling quality
+   - Tone (professional, casual, inconsistent)
+   - Sentence clarity and structure
+   - Use of active voice and action verbs
+   - Formatting professionalism (bullet alignment, clean structure)
 
 6. **Keyword Analysis** — Identify and evaluate:
-   - Job-critical keywords — if missing, write: Not Found.
-   - Domain-specific jargon — if missing, write: Not Found.
-   - Tool names and role-specific terms — if missing, write: Not Found.
+   - Job-critical keywords from the JD (e.g., “data visualization”, “cloud computing”)
+   - Domain-specific jargon
+   - Tool names, role-specific terms
 
-✅ **Important:** Provide missing keywords list of at least 3 if applicable.
+✅ **Important: Provide missing keywords from the job description as a bullet list. Only include words/phrases present in the JD but absent in the resume. Give at least 3 if applicable.**
 
-7. **Final Thoughts** — Provide a holistic evaluation. If information is insufficient, explicitly mention “Resume lacks sufficient detail in some sections”.
-
----
+7. **Final Thoughts** — Provide a 4–6 sentence holistic evaluation:
+   - Resume's overall alignment with the job
+   - Highlight major strengths (e.g., “strong domain fit”, “excellent language tone”)
+   - Point out red flags (e.g., “missing core tools”, “unclear experience timelines”)
+   - Mention if the resume deserves shortlisting or further screening
 
 Use this context:
 
@@ -1788,31 +1783,32 @@ Use this context:
 
 ### 🏫 Education Analysis
 **Score:** <0–{edu_weight}> / {edu_weight}  
-**Degree Match:** <details or "Not Found">  
-**Field of Study Alignment:** <details or "Not Mentioned">  
-**Institution:** <details or "Not Found">  
-**Graduation Year:** <details or "Not Mentioned">  
-**Certifications/Training:** <list or "None Found">
+**Degree Match:** <Discuss degree level, specialization, and how it matches the job.>
 
 ### 💼 Experience Analysis
 **Score:** <0–{exp_weight}> / {exp_weight}  
-**Experience Details:** <details or "Not Found">
+**Experience Details:**  
+<Cover roles, total years, leadership, domain relevance, and **project outcomes**. Be specific: e.g., “developed a dashboard that reduced manual reporting by 60%” or “led migration saving 25% infra cost.”>
 
 ### 🛠 Skills Analysis
 **Score:** <0–{skills_weight}> / {skills_weight}  
 **Current Skills:**
-- Technical: <list or "Not Found">
-- Soft Skills: <list or "Not Found">
-- Domain-Specific: <list or "Not Found">
+- Technical: <list>
+- Soft Skills: <list>
+- Domain-Specific: <list>
+
+**Skill Proficiency:**  
+<Evaluate depth of knowledge. Mention if skills are supported by projects or real work.>
 
 **Missing Skills:**  
 - Skill 1  
 - Skill 2  
 - Skill 3  
+*(List based only on skills in job description but absent in resume)*
 
 ### 🗣 Language Quality Analysis
 **Score:** {grammar_score} / {lang_weight}  
-**Grammar & Tone:** <LLM-based comment or "Not Mentioned">  
+**Grammar & Tone:** <LLM-based comment on clarity, fluency, tone>  
 **Feedback Summary:** **{grammar_feedback}**
 
 ### 🔑 Keyword Analysis
@@ -1821,11 +1817,23 @@ Use this context:
 - Keyword1  
 - Keyword2  
 - Keyword3  
+*(Extract keywords from JD not found in resume. Include role-related, domain-specific, and tool-based terms.)*
 
-**Keyword Analysis:** <details or "Not Found">
+**Keyword Analysis:**  
+<Discuss importance of missing/present keywords and how they affect job match.>
 
 ### ✅ Final Thoughts
-<summary or "Resume lacks sufficient detail in some sections">
+<Summarize domain fit, core strengths, red flags, and whether this resume deserves further review.>
+
+---
+
+**Instructions:**
+- Use markdown formatting.
+- Follow the section titles and bold formatting strictly.
+- Keep tone professional and ATS-focused.
+- Use the provided grammar score and domain info as context.
+- Force output of missing skills and keywords using bullet lists.
+- Avoid generalizations — rely only on specific terms from JD and resume.
 
 ---
 
@@ -1837,9 +1845,6 @@ Use this context:
 
 {logic_score_note}
 """
-
-    
-
 
 
     ats_result = call_llm(prompt, session=st.session_state).strip()

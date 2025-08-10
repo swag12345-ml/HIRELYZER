@@ -1715,58 +1715,107 @@ def ats_percentage_score(
     )
 
     prompt = f"""
-You are an AI-powered ATS evaluator. Assess the candidate's resume against the job description. Return a detailed, **section-by-section analysis**, with **scoring for each area**. Follow the format precisely below.
+You are an AI-powered ATS evaluator with STRICT BALANCED SCORING standards. Assess the candidate's resume against the job description using EVIDENCE-BASED evaluation. Apply penalties for missing elements and require CONCRETE PROOF for higher scores. Follow the format precisely below.
+
+🎯 **ADVANCED SCORING RUBRIC - BE STRICT AND BALANCED:**
+
+**EDUCATION SCORING CRITERIA ({edu_weight} points max):**
+- 0-5: No relevant education or major mismatch
+- 6-10: Partially relevant degree, missing key educational requirements
+- 11-15: Good educational match but missing certifications or advanced qualifications
+- 16-20: Perfect educational alignment with all requirements met
+
+**EXPERIENCE SCORING CRITERIA ({exp_weight} points max):**
+- 0-7: No relevant experience or major skill gaps
+- 8-14: Some relevant experience but lacks depth/seniority required
+- 15-21: Good experience match but missing 2-3 key requirements
+- 22-28: Strong experience with minor gaps
+- 29-35: Exceptional experience exceeding requirements
+
+**SKILLS SCORING CRITERIA ({skills_weight} points max):**
+- 0-6: Major skill gaps, missing critical technical requirements
+- 7-12: Has basic skills but lacks advanced/specialized tools
+- 13-18: Good skill coverage but missing 3-4 important skills
+- 19-24: Strong skills with 1-2 minor gaps
+- 25-30: Complete skill mastery with evidence of real usage
+
+**KEYWORD SCORING CRITERIA ({keyword_weight} points max):**
+- 0-2: Missing most critical industry keywords and terms
+- 3-4: Has basic keywords but missing specialized terminology
+- 5-6: Good keyword coverage with few gaps
+- 7-8: Strong keyword alignment with minor omissions
+- 9-10: Perfect keyword optimization
+
+🎯 **MANDATORY PENALTY SYSTEM:**
+- Deduct 3 points if no quantifiable achievements mentioned
+- Deduct 2 points for each critical skill missing from top 5 job requirements
+- Deduct 5 points if experience level doesn't match seniority requirement
+- Deduct 2 points for each missing essential certification/tool
+- Apply domain penalty: {domain_penalty} points (already calculated)
 
 🎯 Section Breakdown:
 
 1. **Candidate Name** — Extract the full name clearly from the resume header or first few lines.
 
-2. **Education Analysis** — Evaluate:
-   - Degree level (e.g., Bachelor’s, Master’s, PhD)
-   - Field of study alignment with job requirements
-   - Institution reputation (if mentioned)
-   - Graduation year (recency)
-   - Any certifications or training programs relevant to the role
+2. **Education Analysis** — STRICT EVALUATION:
+   - **MUST HAVE:** Degree relevance to job field (not just any degree)
+   - **REQUIRED:** Graduation timeframe analysis (recent vs outdated)
+   - **EVIDENCE NEEDED:** Institution credibility and program quality
+   - **ADVANCED:** Certifications, specialized training, continuing education
+   - **PENALTY:** -5 points if degree field has no connection to job domain
+   - **BONUS:** +2 points for advanced degrees in relevant fields
 
-3. **Experience Analysis** — Evaluate:
-   - Total years of experience vs job expectations
-   - Role titles and their seniority levels (e.g., intern vs manager)
-   - Domain/industry relevance to the job
-   - Specific projects handled — explain **how they impacted the company, product, or client**
-   - Use of tools, technologies, or methodologies aligned with JD
-   - Evidence of leadership, teamwork, or initiative (e.g., “led a 5-person team”, “handled $100K budget”)
+3. **Experience Analysis** — EVIDENCE-BASED SCORING:
+   - **MANDATORY:** Years of experience must meet job minimum requirements
+   - **CRITICAL:** Role progression and leadership evidence required for senior roles
+   - **QUANTIFIED IMPACT:** Specific metrics, percentages, dollar amounts, team sizes
+   - **PROJECT DEPTH:** Detailed technical implementations, not just task lists
+   - **INDUSTRY RELEVANCE:** Direct domain experience weighted heavily
+   - **PENALTY SYSTEM:**
+     - -10 points if experience years < 80% of job requirement
+     - -5 points for each missing quantified achievement (need minimum 3)
+     - -3 points if no leadership evidence for roles requiring management
 
-4. **Skills Analysis** — Check for:
-   - Technical tools (e.g., Python, SQL, Figma)
-   - Domain-specific skills (e.g., CRM for Sales, ML models for AI jobs)
-   - Soft skills (e.g., communication, adaptability)
+4. **Skills Analysis** — ADVANCED TECHNICAL ASSESSMENT:
+   - **CORE REQUIREMENTS:** All must-have technical skills from JD
+   - **PROFICIENCY EVIDENCE:** Projects/work samples showing skill application
+   - **TOOL MASTERY:** Version-specific knowledge and advanced features
+   - **SKILL DEPTH:** Basic mention vs. demonstrated expertise
 
-✅ **Important: Provide missing skills in bullet points. Identify skills from the job description that are NOT found in the resume. Be specific and list at least 3 if applicable.**
+✅ **CRITICAL: List missing skills with IMPACT RATING:**
+   - **HIGH IMPACT MISSING:** Skills that would immediately disqualify
+   - **MEDIUM IMPACT MISSING:** Skills that significantly weaken candidacy
+   - **LOW IMPACT MISSING:** Nice-to-have skills that are absent
 
-Also evaluate:
-   - Depth of proficiency (basic, intermediate, expert)
-   - Recency of usage if mentioned
-   - Whether the skill is supported by projects or experience
+   Rate each missing skill as HIGH/MEDIUM/LOW impact and explain why.
 
-5. **Language Quality** — Use grammar score provided. Evaluate:
-   - Grammar and spelling quality
-   - Tone (professional, casual, inconsistent)
-   - Sentence clarity and structure
-   - Use of active voice and action verbs
-   - Formatting professionalism (bullet alignment, clean structure)
+5. **Language Quality** — PROFESSIONAL STANDARDS:
+   - Grammar score: {grammar_score}/{lang_weight} (provided by LLM)
+   - **BONUS/PENALTY:** +1 for exceptional clarity, -1 for poor formatting
+   - **PROFESSIONAL TONE:** Industry-appropriate language and terminology
+   - **ACTION VERBS:** Strong, quantifiable language usage
 
-6. **Keyword Analysis** — Identify and evaluate:
-   - Job-critical keywords from the JD (e.g., “data visualization”, “cloud computing”)
-   - Domain-specific jargon
-   - Tool names, role-specific terms
+6. **Keyword Analysis** — STRATEGIC ATS OPTIMIZATION:
+   - **PRIMARY KEYWORDS:** Job title, core role functions (weight: 40%)
+   - **TECHNICAL KEYWORDS:** Tools, platforms, methodologies (weight: 35%)
+   - **INDUSTRY KEYWORDS:** Domain-specific terminology (weight: 25%)
+   
+✅ **CATEGORIZED MISSING KEYWORDS:**
+   - **CRITICAL MISSING:** Keywords that trigger ATS rejection
+   - **IMPORTANT MISSING:** Keywords reducing match score significantly  
+   - **SUPPLEMENTARY MISSING:** Keywords for optimization
 
-✅ **Important: Provide missing keywords from the job description as a bullet list. Only include words/phrases present in the JD but absent in the resume. Give at least 3 if applicable.**
+7. **Final Thoughts** — BALANCED ASSESSMENT:
+   - **STRENGTHS:** Maximum 2 key strengths with evidence
+   - **CRITICAL GAPS:** All deal-breaker issues identified
+   - **RECOMMENDATION:** Clear hire/no-hire with reasoning
+   - **IMPROVEMENT PRIORITY:** Top 3 areas for candidate development
 
-7. **Final Thoughts** — Provide a 4–6 sentence holistic evaluation:
-   - Resume's overall alignment with the job
-   - Highlight major strengths (e.g., “strong domain fit”, “excellent language tone”)
-   - Point out red flags (e.g., “missing core tools”, “unclear experience timelines”)
-   - Mention if the resume deserves shortlisting or further screening
+**SCORING ACCOUNTABILITY:**
+- Justify every point awarded with specific evidence from resume
+- Apply all relevant penalties systematically
+- Cross-reference job requirements against resume content
+- No inflation - be realistic and evidence-driven
 
 Use this context:
 
@@ -1783,57 +1832,87 @@ Use this context:
 
 ### 🏫 Education Analysis
 **Score:** <0–{edu_weight}> / {edu_weight}  
-**Degree Match:** <Discuss degree level, specialization, and how it matches the job.>
+**Scoring Justification:** <Explain why this specific score was awarded with evidence>
+**Degree Match:** <Analyze degree relevance, recency, institution quality, and additional certifications>
+**Applied Penalties/Bonuses:** <List any deductions or additions with reasons>
 
 ### 💼 Experience Analysis
 **Score:** <0–{exp_weight}> / {exp_weight}  
-**Experience Details:**  
-<Cover roles, total years, leadership, domain relevance, and **project outcomes**. Be specific: e.g., “developed a dashboard that reduced manual reporting by 60%” or “led migration saving 25% infra cost.”>
+**Scoring Justification:** <Provide evidence for score with specific examples>
+**Experience Depth Analysis:**  
+<Evaluate years, seniority progression, quantified achievements, industry relevance>
+**Quantified Achievements Found:** <List specific metrics, percentages, impacts>
+**Applied Penalties:** <Document any deductions for missing requirements>
+**Leadership Evidence:** <Evaluate management/leadership capabilities if required>
 
 ### 🛠 Skills Analysis
 **Score:** <0–{skills_weight}> / {skills_weight}  
-**Current Skills:**
-- Technical: <list>
-- Soft Skills: <list>
-- Domain-Specific: <list>
+**Scoring Justification:** <Evidence-based score explanation>
+**Skills Coverage Analysis:**
+- **Technical Skills Found:** <List with proficiency evidence>
+- **Core Requirements Met:** <Percentage of essential skills covered>
+- **Skill Depth Assessment:** <Evaluate demonstration of expertise vs mere mention>
 
-**Skill Proficiency:**  
-<Evaluate depth of knowledge. Mention if skills are supported by projects or real work.>
+**Missing Skills by Impact:**  
+**HIGH IMPACT MISSING:**
+- Skill 1 (Critical because...)
+- Skill 2 (Essential for...)
 
-**Missing Skills:**  
-- Skill 1  
-- Skill 2  
-- Skill 3  
-*(List based only on skills in job description but absent in resume)*
+**MEDIUM IMPACT MISSING:**
+- Skill 3 (Important for...)
+- Skill 4 (Significantly affects...)
+
+**LOW IMPACT MISSING:**
+- Skill 5 (Nice to have for...)
 
 ### 🗣 Language Quality Analysis
 **Score:** {grammar_score} / {lang_weight}  
-**Grammar & Tone:** <LLM-based comment on clarity, fluency, tone>  
+**Professional Assessment:** <Evaluate clarity, tone, industry language usage>
 **Feedback Summary:** **{grammar_feedback}**
+**Formatting Quality:** <Assess resume structure and presentation>
 
 ### 🔑 Keyword Analysis
 **Score:** <0–{keyword_weight}> / {keyword_weight}  
-**Missing Keywords:**  
-- Keyword1  
-- Keyword2  
-- Keyword3  
-*(Extract keywords from JD not found in resume. Include role-related, domain-specific, and tool-based terms.)*
+**Scoring Justification:** <Evidence for keyword optimization score>
 
-**Keyword Analysis:**  
-<Discuss importance of missing/present keywords and how they affect job match.>
+**Categorized Missing Keywords:**  
+**CRITICAL MISSING (ATS Impact: High):**
+- Keyword1 (Primary job function)
+- Keyword2 (Essential tool/platform)
+
+**IMPORTANT MISSING (ATS Impact: Medium):**  
+- Keyword3 (Significant methodology)
+- Keyword4 (Industry standard)
+
+**SUPPLEMENTARY MISSING (ATS Impact: Low):**
+- Keyword5 (Optimization opportunity)
+
+**Keyword Optimization Analysis:** <Strategic assessment of ATS compatibility>
 
 ### ✅ Final Thoughts
-<Summarize domain fit, core strengths, red flags, and whether this resume deserves further review.>
+**STRENGTHS (Evidence-Based):**
+1. <Specific strength with supporting evidence>
+2. <Another strength with concrete examples>
+
+**CRITICAL GAPS:**
+- <Deal-breaker issue 1>
+- <Major concern 2>
+
+**HIRING RECOMMENDATION:** <Clear hire/no-hire with reasoning>
+**IMPROVEMENT PRIORITIES:** 
+1. <Top priority area>
+2. <Second priority area>  
+3. <Third priority area>
 
 ---
 
-**Instructions:**
-- Use markdown formatting.
-- Follow the section titles and bold formatting strictly.
-- Keep tone professional and ATS-focused.
-- Use the provided grammar score and domain info as context.
-- Force output of missing skills and keywords using bullet lists.
-- Avoid generalizations — rely only on specific terms from JD and resume.
+**STRICT INSTRUCTIONS:**
+- Award points only with concrete evidence from resume
+- Apply ALL relevant penalties systematically  
+- Cross-check every job requirement against resume
+- No score inflation - maintain balanced, realistic evaluation
+- Provide specific justification for each section score
+- Use quantified achievements as primary evidence for experience scoring
 
 ---
 
@@ -1845,7 +1924,6 @@ Use this context:
 
 {logic_score_note}
 """
-
 
     ats_result = call_llm(prompt, session=st.session_state).strip()
 

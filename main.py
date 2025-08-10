@@ -1677,7 +1677,6 @@ Suggestions:
 {text}
 ---
 """
-
     response = call_llm(grammar_prompt, session=st.session_state).strip()
     score_match = re.search(r"Score:\s*(\d+)", response)
     feedback_match = re.search(r"Feedback:\s*(.+)", response)
@@ -1688,7 +1687,7 @@ Suggestions:
     return score, feedback, suggestions
 
 
-# ✅ Main ATS Evaluation Function
+# ✅ Main ATS Evaluation Function (Balanced Scoring)
 def ats_percentage_score(
     resume_text,
     job_description,
@@ -1728,44 +1727,38 @@ You are an AI-powered ATS evaluator. Assess the candidate's resume against the j
    - Graduation year (recency)
    - Any certifications or training programs relevant to the role
 
-3. **Experience Analysis** — Evaluate:
-   - Total years of experience vs job expectations
-   - Role titles and their seniority levels (e.g., intern vs manager)
-   - Domain/industry relevance to the job
-   - Specific projects handled — explain **how they impacted the company, product, or client**
-   - Use of tools, technologies, or methodologies aligned with JD
-   - Evidence of leadership, teamwork, or initiative (e.g., “led a 5-person team”, “handled $100K budget”)
+3. **Experience Analysis** — Scoring Rules (Balanced):
+   - Award full points only if candidate meets or exceeds required years of relevant full-time experience.
+   - Internships = 0.5 years each (max 2 points per internship).
+   - Academic projects = max 1 point each if directly relevant.
+   - If total calculated experience is less than JD requirement, cap score at 60% of {exp_weight}.
+   - Strong, high-impact projects or leadership roles can partially offset lack of years.
+   - Prioritize quality and relevance over number of roles.
 
-4. **Skills Analysis** — Check for:
-   - Technical tools (e.g., Python, SQL, Figma)
-   - Domain-specific skills (e.g., CRM for Sales, ML models for AI jobs)
-   - Soft skills (e.g., communication, adaptability)
-
-✅ **Important: Provide missing skills in bullet points. Identify skills from the job description that are NOT found in the resume. Be specific and list at least 3 if applicable.**
-
-Also evaluate:
-   - Depth of proficiency (basic, intermediate, expert)
-   - Recency of usage if mentioned
-   - Whether the skill is supported by projects or experience
+4. **Skills Analysis** — Scoring Rules (Balanced):
+   - Award higher points for technical/domain skills that directly match JD.
+   - Give partial credit for related/transferable skills.
+   - Deduct moderately for missing secondary skills; stronger deductions for missing core JD skills.
+   - Highlight missing critical skills from JD (at least 3 if absent).
+   - Consider recency of usage; outdated skills get reduced points.
 
 5. **Language Quality** — Use grammar score provided. Evaluate:
    - Grammar and spelling quality
    - Tone (professional, casual, inconsistent)
    - Sentence clarity and structure
    - Use of active voice and action verbs
-   - Formatting professionalism (bullet alignment, clean structure)
+   - Formatting professionalism
 
-6. **Keyword Analysis** — Identify and evaluate:
-   - Job-critical keywords from the JD (e.g., “data visualization”, “cloud computing”)
-   - Domain-specific jargon
-   - Tool names, role-specific terms
-
-✅ **Important: Provide missing keywords from the job description as a bullet list. Only include words/phrases present in the JD but absent in the resume. Give at least 3 if applicable.**
+6. **Keyword Analysis** — Scoring Rules (Balanced):
+   - Identify critical keywords from JD — these should heavily influence the score.
+   - Award partial credit for related terms if exact match not found.
+   - Deduct more for missing essential keywords; less for secondary ones.
+   - List missing JD keywords as bullet points (at least 3 if applicable).
 
 7. **Final Thoughts** — Provide a 4–6 sentence holistic evaluation:
    - Resume's overall alignment with the job
-   - Highlight major strengths (e.g., “strong domain fit”, “excellent language tone”)
-   - Point out red flags (e.g., “missing core tools”, “unclear experience timelines”)
+   - Highlight major strengths
+   - Point out red flags
    - Mention if the resume deserves shortlisting or further screening
 
 Use this context:
@@ -1788,7 +1781,7 @@ Use this context:
 ### 💼 Experience Analysis
 **Score:** <0–{exp_weight}> / {exp_weight}  
 **Experience Details:**  
-<Cover roles, total years, leadership, domain relevance, and **project outcomes**. Be specific: e.g., “developed a dashboard that reduced manual reporting by 60%” or “led migration saving 25% infra cost.”>
+<Give breakdown of years, relevance, and notable achievements. Explicitly mention when years of experience are below the requirement.>
 
 ### 🛠 Skills Analysis
 **Score:** <0–{skills_weight}> / {skills_weight}  
@@ -1798,13 +1791,12 @@ Use this context:
 - Domain-Specific: <list>
 
 **Skill Proficiency:**  
-<Evaluate depth of knowledge. Mention if skills are supported by projects or real work.>
+<Evaluate depth of knowledge and recency. Mention if skills are supported by projects or work experience.>
 
 **Missing Skills:**  
 - Skill 1  
 - Skill 2  
 - Skill 3  
-*(List based only on skills in job description but absent in resume)*
 
 ### 🗣 Language Quality Analysis
 **Score:** {grammar_score} / {lang_weight}  
@@ -1814,10 +1806,9 @@ Use this context:
 ### 🔑 Keyword Analysis
 **Score:** <0–{keyword_weight}> / {keyword_weight}  
 **Missing Keywords:**  
-- Keyword1  
-- Keyword2  
-- Keyword3  
-*(Extract keywords from JD not found in resume. Include role-related, domain-specific, and tool-based terms.)*
+- Keyword 1  
+- Keyword 2  
+- Keyword 3  
 
 **Keyword Analysis:**  
 <Discuss importance of missing/present keywords and how they affect job match.>
@@ -1828,14 +1819,10 @@ Use this context:
 ---
 
 **Instructions:**
-- Use markdown formatting.
-- Follow the section titles and bold formatting strictly.
 - Keep tone professional and ATS-focused.
-- Use the provided grammar score and domain info as context.
-- Force output of missing skills and keywords using bullet lists.
-- Avoid generalizations — rely only on specific terms from JD and resume.
-
----
+- Follow the exact section structure.
+- Always list missing skills and keywords if applicable.
+- Be consistent — same resume and JD should always yield the same score.
 
 📄 Job Description:
 \"\"\"{job_description}\"\"\"  
@@ -1845,6 +1832,7 @@ Use this context:
 
 {logic_score_note}
 """
+
 
 
     ats_result = call_llm(prompt, session=st.session_state).strip()

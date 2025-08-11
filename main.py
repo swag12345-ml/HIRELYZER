@@ -380,7 +380,7 @@ if not st.session_state.authenticated:
     # Fetch counters
     total_users = get_total_registered_users()
     active_logins = get_logins_today()
-    resumes_uploaded = 15
+    resumes_uploaded = 183
     states_accessed = 29
 
     neon_counter_style = """

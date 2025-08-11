@@ -1715,7 +1715,7 @@ def ats_percentage_score(
     )
 
     prompt = f"""
-You are a professional ATS evaluator with expertise in talent assessment. Your role is to provide **balanced, objective scoring** that reflects industry standards — neither overly harsh nor overly lenient — while ensuring that **every skill or keyword in the job description that is missing from the resume is explicitly listed**, even if optional or marked as "preferred"/"plus".
+You are a professional ATS evaluator with expertise in talent assessment. Your role is to provide **balanced, objective scoring** that reflects industry standards - neither overly harsh nor overly lenient.
 
 🎯 **CRITICAL SCORING GUIDELINES:**
 
@@ -1791,9 +1791,8 @@ Follow this exact structure and be **specific with evidence**:
 - Skill Currency: <How recent/updated are the skills>
 
 **Missing Critical Skills:**
-List **every technical, soft, or domain-specific skill** from the job description that is **absent from the resume**, including optional or "preferred" ones.
 - <Skill 1 from job description>
-- <Skill 2 from job description>
+- <Skill 2 from job description>  
 - <Skill 3 from job description>
 - <Additional if applicable>
 
@@ -1813,7 +1812,6 @@ List **every technical, soft, or domain-specific skill** from the job descriptio
 - Technical Vocabulary: <Tool/technology names alignment>
 
 **Missing Critical Keywords:**
-List **every keyword or phrase** from the job description that is **absent from the resume**, even if optional or preferred.
 - <Keyword 1 from job description>
 - <Keyword 2 from job description>
 - <Keyword 3 from job description>
@@ -1838,9 +1836,9 @@ List **every keyword or phrase** from the job description that is **absent from 
 **IMPORTANT REMINDERS:**
 - Be objective and evidence-based in scoring
 - Reference specific resume content to justify scores
-- Missing lists **must include all JD terms absent from the resume**, even if optional
 - Consider industry standards and role level expectations
 - Balance thoroughness with practicality
+- Missing skills/keywords should be directly from job description only
 
 Context for Evaluation:
 - Grammar Score: {grammar_score} / {lang_weight}
@@ -1859,8 +1857,6 @@ Context for Evaluation:
 
 {logic_score_note}
 """
-
-
 
     ats_result = call_llm(prompt, session=st.session_state).strip()
 

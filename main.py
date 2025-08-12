@@ -1688,7 +1688,7 @@ Suggestions:
     return score, feedback, suggestions
 
 
-# ✅ Main ATS Evaluation Function (Balanced)
+# ✅ Main ATS Evaluation Function
 def ats_percentage_score(
     resume_text,
     job_description,
@@ -1706,7 +1706,6 @@ def ats_percentage_score(
     job_domain = detect_domain_from_title_and_description(job_title, job_description)
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
-    # Softer domain penalty to reduce impact on final score
     MAX_DOMAIN_PENALTY = 15
     domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
 
@@ -1716,48 +1715,46 @@ def ats_percentage_score(
     )
 
     prompt = f"""
-You are a professional ATS evaluator with expertise in talent assessment. Your role is to provide **balanced, consistent scoring** that reflects industry standards – avoid extreme penalties unless there is clear, strong evidence.
+You are a professional ATS evaluator with expertise in talent assessment. Your role is to provide **balanced, objective scoring** that reflects industry standards — neither overly harsh nor overly lenient — while ensuring that **every skill or keyword in the job description that is missing from the resume is explicitly listed**, even if optional or marked as "preferred"/"plus".
 
-🎯 **BALANCED SCORING GUIDELINES:**
+🎯 **CRITICAL SCORING GUIDELINES:**
 
 **Education Scoring Framework ({edu_weight} points max):**
-- 17-{edu_weight}: Excellent (fully relevant degree + good institution + recent + certifications)
-- 14-16: Strong (relevant degree + good institution OR certifications)
-- 11-13: Adequate (related field OR relevant training)
-- 8-10: Partial fit (transferable education, some relevance)
-- 5-7: Below average (minor relevance)
-- 0-4: Poor match (unrelated degree, no relevant training)
+- 17-{edu_weight}: Excellent match (relevant degree, recognized institution, recent completion, plus certifications)
+- 14-16: Strong alignment (relevant degree OR strong certifications, even if from less recognized institution)
+- 10-13: Moderate fit (related field OR transferable academic background, possibly older completion date)
+- 6-9: Limited alignment (education somewhat related, but lacking formal training/certifications)
+- 0-5: Minimal relevance (unrelated degree with no complementary learning)
 
 **Experience Scoring Framework ({exp_weight} points max):**
-- 30-{exp_weight}: Excellent (exceeds years required + strong domain fit + leadership + measurable outcomes)
-- 25-29: Strong (meets years + domain fit + some leadership)
-- 20-24: Adequate (meets most requirements, some achievements)
-- 15-19: Partial (some gaps in years OR domain)
-- 10-14: Below average (clear gaps)
-- 0-9: Poor fit (major deficiencies)
+- 28-{exp_weight}: Exceptional (exceeds years required + strong domain fit + leadership + measurable results)
+- 23-27: Strong (meets years + good domain fit + some leadership or strong achievements)
+- 18-22: Good (adequate years and relevant domain OR strong responsibilities despite fewer years)
+- 12-17: Fair (some domain overlap or transferable experience, but notable gaps)
+- 6-11: Limited (relevant exposure but missing depth in multiple areas)
+- 0-5: Minimal (largely unrelated experience)
 
 **Skills Scoring Framework ({skills_weight} points max):**
-- 27-{skills_weight}: Excellent (90%+ required skills + strong proficiency)
-- 22-26: Strong (75%+ required skills)
-- 17-21: Adequate (60%+ skills)
-- 12-16: Partial (40-60% skills)
-- 6-11: Below average (20-40% skills)
-- 0-5: Poor (<20% skills)
+- 26-{skills_weight}: Outstanding (80%+ required skills + strong proficiency + recent application)
+- 21-25: Very good (65-80% skills covered, decent proficiency)
+- 15-20: Adequate (50-65% skills covered, some proficiency)
+- 9-14: Partial match (30-50% skills, or related alternatives to required ones)
+- 3-8: Limited (10-30% skills, but some relevant transferable skills present)
+- 0-2: Minimal (<10% skills from JD)
 
 **Keyword Scoring Framework ({keyword_weight} points max):**
-- 9-{keyword_weight}: Excellent coverage (90%+ critical terms present)
-- 7-8: Strong coverage (70-90% terms)
-- 5-6: Adequate coverage (50-70% terms)
-- 3-4: Partial coverage (30-50% terms)
-- 1-2: Low coverage (10-30% terms)
-- 0: Very poor (<10% terms)
+- 9-{keyword_weight}: Excellent (80%+ critical terms present)
+- 7-8: Good coverage (60-80% critical terms)
+- 5-6: Adequate (40-60% critical terms)
+- 3-4: Limited (20-40% critical terms)
+- 1-2: Minimal (5-20% critical terms)
+- 0: Very minimal (<5% critical terms)
 
 ---
 
 **EVALUATION INSTRUCTIONS:**
-- If evidence is mixed, lean toward **mid-range** rather than extreme low scores.
-- Penalize only when **multiple critical factors** are missing.
-- Consider transferable skills and related experiences before assigning low marks.
+
+Follow this exact structure and be **specific with evidence**:
 
 ### 🏷️ Candidate Name
 <Extract full name clearly - check resume header, contact section, or first few lines>
@@ -1794,9 +1791,11 @@ You are a professional ATS evaluator with expertise in talent assessment. Your r
 - Skill Currency: <How recent/updated are the skills>
 
 **Missing Critical Skills:**
+List **every technical, soft, or domain-specific skill** from the job description that is **absent from the resume**, including optional or "preferred" ones.
 - <Skill 1 from job description>
-- <Skill 2 from job description>  
+- <Skill 2 from job description>
 - <Skill 3 from job description>
+- <Additional if applicable>
 
 **Score Justification:** <Percentage of required skills present + proficiency assessment>
 
@@ -1814,19 +1813,34 @@ You are a professional ATS evaluator with expertise in talent assessment. Your r
 - Technical Vocabulary: <Tool/technology names alignment>
 
 **Missing Critical Keywords:**
+List **every keyword or phrase** from the job description that is **absent from the resume**, even if optional or preferred.
 - <Keyword 1 from job description>
 - <Keyword 2 from job description>
 - <Keyword 3 from job description>
+- <Additional high-impact terms>
 
 **Score Justification:** <Percentage of critical keywords present>
 
 ### ✅ Final Assessment
-<4-6 sentences covering strengths, gaps, and recommendation for interview>
 
-**Red Flags Identified:** <List any concerning gaps>
-**Competitive Advantages:** <Unique strengths>
+**Overall Evaluation:**
+<4-6 sentences covering:>
+- Primary strengths that make this candidate competitive
+- Key gaps that may concern hiring managers  
+- Cultural/team fit indicators from resume presentation
+- Recommendation for interview progression (Yes/No/Maybe with reasoning)
+
+**Red Flags Identified:** <List any concerning gaps, inconsistencies, or missing elements>
+**Competitive Advantages:** <Unique strengths that differentiate this candidate>
 
 ---
+
+**IMPORTANT REMINDERS:**
+- Be objective and evidence-based in scoring
+- Reference specific resume content to justify scores
+- Missing lists **must include all JD terms absent from the resume**, even if optional
+- Consider industry standards and role level expectations
+- Balance thoroughness with practicality
 
 Context for Evaluation:
 - Grammar Score: {grammar_score} / {lang_weight}
@@ -1845,6 +1859,8 @@ Context for Evaluation:
 
 {logic_score_note}
 """
+
+
 
     ats_result = call_llm(prompt, session=st.session_state).strip()
 

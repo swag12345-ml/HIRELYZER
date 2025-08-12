@@ -1706,7 +1706,7 @@ def ats_percentage_score(
     job_domain = detect_domain_from_title_and_description(job_title, job_description)
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
-    # Keep domain penalty as is
+    # Keep domain penalty exactly as before
     MAX_DOMAIN_PENALTY = 15
     domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
 
@@ -1718,44 +1718,43 @@ def ats_percentage_score(
     prompt = f"""
 You are a professional ATS evaluator with expertise in talent assessment. Your role is to provide **balanced, objective scoring** that reflects industry standards — neither overly harsh nor overly lenient — while ensuring that **every skill or keyword in the job description that is missing from the resume is explicitly listed**, even if optional or marked as "preferred"/"plus".
 
-🎯 **CRITICAL SCORING GUIDELINES (Balanced Version):**
+🎯 **BALANCED SCORING GUIDELINES:**
 
-**Education Scoring Framework ({edu_weight} points max):**
+**Education ({edu_weight} points max):**
 - 16–{edu_weight}: Excellent match (relevant degree, recognized institution, recent completion, plus certifications)
-- 13–15: Strong alignment (relevant degree OR strong certifications, even if from less recognized institution)
-- 10–12: Moderate fit (related field OR transferable academic background, possibly older completion date)
-- 7–9: Limited alignment (education somewhat related, but lacking formal training/certifications)
-- 0–6: Minimal relevance (unrelated degree with no complementary learning)
+- 13–15: Strong alignment (relevant degree OR certifications)
+- 10–12: Moderate fit (related or partially relevant degree)
+- 7–9: Limited relevance but some related learning or coursework
+- 0–6: Unrelated degree with no supporting credentials
 
-**Experience Scoring Framework ({exp_weight} points max):**
-- 27–{exp_weight}: Exceptional (exceeds years required + strong domain fit + leadership + measurable results)
-- 22–26: Strong (meets years + good domain fit + some leadership or strong achievements)
-- 17–21: Good (adequate years and relevant domain OR strong responsibilities despite fewer years)
-- 12–16: Fair (some domain overlap or transferable experience, but notable gaps)
-- 6–11: Limited (relevant exposure but missing depth in multiple areas)
-- 0–5: Minimal (largely unrelated experience)
-- *Note:* Internships, volunteer work, and transferable skills should boost score within range.
+**Experience ({exp_weight} points max):**
+- 27–{exp_weight}: Exceptional (exceeds years required + strong domain fit + measurable achievements)
+- 22–26: Strong (meets years + domain fit + some notable results)
+- 17–21: Good (some domain fit or strong transferable experience even if fewer years)
+- 12–16: Fair (internships, academic projects, or partially relevant work)
+- 6–11: Limited (minimal exposure but some relevant elements)
+- 0–5: Largely unrelated experience
+- *Note:* Internships, academic projects, volunteer roles in relevant tech should significantly raise score within range.
 
-**Skills Scoring Framework ({skills_weight} points max):**
-- 25–{skills_weight}: Outstanding (80%+ required skills + strong proficiency + recent application)
-- 20–24: Very good (65–80% skills covered, decent proficiency)
-- 15–19: Adequate (50–65% skills covered, some proficiency)
-- 10–14: Partial match (30–50% skills, or related alternatives to required ones)
-- 5–9: Limited (10–30% skills, but some relevant transferable skills present)
-- 0–4: Minimal (<10% skills from JD)
-- *Note:* Related or alternative skills should still count toward partial coverage.
+**Skills ({skills_weight} points max):**
+- 25–{skills_weight}: Outstanding (80%+ required skills + proficiency evidence)
+- 20–24: Very good (65–80% coverage or strong related alternatives)
+- 15–19: Adequate (50–65% coverage)
+- 10–14: Partial match (30–50% coverage or relevant substitutions)
+- 5–9: Limited (10–30% coverage but transferable skills)
+- 0–4: Minimal (<10% coverage)
+- *Note:* Similar technologies or frameworks count as partial matches.
 
-**Keyword Scoring Framework ({keyword_weight} points max):**
-- 9–{keyword_weight}: Excellent (80%+ critical terms present)
-- 7–8: Good coverage (60–80% critical terms)
-- 5–6: Adequate (40–60% critical terms)
-- 3–4: Limited (20–40% critical terms)
-- 1–2: Minimal (5–20% critical terms)
-- 0: Very minimal (<5% critical terms)
-- *Note:* Partial matches and synonyms earn partial credit.
+**Keywords ({keyword_weight} points max):**
+- 9–{keyword_weight}: Excellent (80%+ exact/related terms)
+- 7–8: Good coverage (60–80%)
+- 5–6: Adequate (40–60%)
+- 3–4: Limited (20–40%)
+- 1–2: Minimal (5–20%)
+- 0: Very minimal (<5%)
+- *Note:* Use partial credit for synonyms and abbreviations.
 
 ---
-
 
 
 **EVALUATION INSTRUCTIONS:**

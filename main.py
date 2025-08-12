@@ -1655,6 +1655,7 @@ import streamlit as st
 from llm_manager import call_llm
 from db_manager import detect_domain_from_title_and_description, get_domain_similarity
 
+
 # ✅ Enhanced Grammar evaluation using LLM with suggestions
 def get_grammar_score_with_llm(text, max_score=5):
     grammar_prompt = f"""
@@ -1677,7 +1678,6 @@ Suggestions:
 {text}
 ---
 """
-
     response = call_llm(grammar_prompt, session=st.session_state).strip()
     score_match = re.search(r"Score:\s*(\d+)", response)
     feedback_match = re.search(r"Feedback:\s*(.+)", response)
@@ -1706,6 +1706,7 @@ def ats_percentage_score(
     job_domain = detect_domain_from_title_and_description(job_title, job_description)
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
+    # Keep domain penalty as is
     MAX_DOMAIN_PENALTY = 15
     domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
 
@@ -1717,40 +1718,45 @@ def ats_percentage_score(
     prompt = f"""
 You are a professional ATS evaluator with expertise in talent assessment. Your role is to provide **balanced, objective scoring** that reflects industry standards — neither overly harsh nor overly lenient — while ensuring that **every skill or keyword in the job description that is missing from the resume is explicitly listed**, even if optional or marked as "preferred"/"plus".
 
-🎯 **CRITICAL SCORING GUIDELINES:**
+🎯 **CRITICAL SCORING GUIDELINES (Balanced Version):**
 
 **Education Scoring Framework ({edu_weight} points max):**
-- 17-{edu_weight}: Excellent match (relevant degree, recognized institution, recent completion, plus certifications)
-- 14-16: Strong alignment (relevant degree OR strong certifications, even if from less recognized institution)
-- 10-13: Moderate fit (related field OR transferable academic background, possibly older completion date)
-- 6-9: Limited alignment (education somewhat related, but lacking formal training/certifications)
-- 0-5: Minimal relevance (unrelated degree with no complementary learning)
+- 16–{edu_weight}: Excellent match (relevant degree, recognized institution, recent completion, plus certifications)
+- 13–15: Strong alignment (relevant degree OR strong certifications, even if from less recognized institution)
+- 10–12: Moderate fit (related field OR transferable academic background, possibly older completion date)
+- 7–9: Limited alignment (education somewhat related, but lacking formal training/certifications)
+- 0–6: Minimal relevance (unrelated degree with no complementary learning)
 
 **Experience Scoring Framework ({exp_weight} points max):**
-- 28-{exp_weight}: Exceptional (exceeds years required + strong domain fit + leadership + measurable results)
-- 23-27: Strong (meets years + good domain fit + some leadership or strong achievements)
-- 18-22: Good (adequate years and relevant domain OR strong responsibilities despite fewer years)
-- 12-17: Fair (some domain overlap or transferable experience, but notable gaps)
-- 6-11: Limited (relevant exposure but missing depth in multiple areas)
-- 0-5: Minimal (largely unrelated experience)
+- 27–{exp_weight}: Exceptional (exceeds years required + strong domain fit + leadership + measurable results)
+- 22–26: Strong (meets years + good domain fit + some leadership or strong achievements)
+- 17–21: Good (adequate years and relevant domain OR strong responsibilities despite fewer years)
+- 12–16: Fair (some domain overlap or transferable experience, but notable gaps)
+- 6–11: Limited (relevant exposure but missing depth in multiple areas)
+- 0–5: Minimal (largely unrelated experience)
+- *Note:* Internships, volunteer work, and transferable skills should boost score within range.
 
 **Skills Scoring Framework ({skills_weight} points max):**
-- 26-{skills_weight}: Outstanding (80%+ required skills + strong proficiency + recent application)
-- 21-25: Very good (65-80% skills covered, decent proficiency)
-- 15-20: Adequate (50-65% skills covered, some proficiency)
-- 9-14: Partial match (30-50% skills, or related alternatives to required ones)
-- 3-8: Limited (10-30% skills, but some relevant transferable skills present)
-- 0-2: Minimal (<10% skills from JD)
+- 25–{skills_weight}: Outstanding (80%+ required skills + strong proficiency + recent application)
+- 20–24: Very good (65–80% skills covered, decent proficiency)
+- 15–19: Adequate (50–65% skills covered, some proficiency)
+- 10–14: Partial match (30–50% skills, or related alternatives to required ones)
+- 5–9: Limited (10–30% skills, but some relevant transferable skills present)
+- 0–4: Minimal (<10% skills from JD)
+- *Note:* Related or alternative skills should still count toward partial coverage.
 
 **Keyword Scoring Framework ({keyword_weight} points max):**
-- 9-{keyword_weight}: Excellent (80%+ critical terms present)
-- 7-8: Good coverage (60-80% critical terms)
-- 5-6: Adequate (40-60% critical terms)
-- 3-4: Limited (20-40% critical terms)
-- 1-2: Minimal (5-20% critical terms)
+- 9–{keyword_weight}: Excellent (80%+ critical terms present)
+- 7–8: Good coverage (60–80% critical terms)
+- 5–6: Adequate (40–60% critical terms)
+- 3–4: Limited (20–40% critical terms)
+- 1–2: Minimal (5–20% critical terms)
 - 0: Very minimal (<5% critical terms)
+- *Note:* Partial matches and synonyms earn partial credit.
 
 ---
+
+
 
 **EVALUATION INSTRUCTIONS:**
 

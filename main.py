@@ -1655,7 +1655,6 @@ import streamlit as st
 from llm_manager import call_llm
 from db_manager import detect_domain_from_title_and_description, get_domain_similarity
 
-
 # ✅ Enhanced Grammar evaluation using LLM with suggestions
 def get_grammar_score_with_llm(text, max_score=5):
     grammar_prompt = f"""
@@ -1678,6 +1677,7 @@ Suggestions:
 {text}
 ---
 """
+
     response = call_llm(grammar_prompt, session=st.session_state).strip()
     score_match = re.search(r"Score:\s*(\d+)", response)
     feedback_match = re.search(r"Feedback:\s*(.+)", response)
@@ -1706,7 +1706,6 @@ def ats_percentage_score(
     job_domain = detect_domain_from_title_and_description(job_title, job_description)
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
-    # Keep domain penalty exactly as before
     MAX_DOMAIN_PENALTY = 15
     domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
 
@@ -1716,46 +1715,42 @@ def ats_percentage_score(
     )
 
     prompt = f"""
-You are a professional ATS evaluator with expertise in talent assessment. Your role is to provide **balanced, objective scoring** that reflects industry standards — neither overly harsh nor overly lenient — while ensuring that **every skill or keyword in the job description that is missing from the resume is explicitly listed**, even if optional or marked as "preferred"/"plus".
+You are a professional ATS evaluator with expertise in talent assessment. Your role is to provide **balanced, objective scoring** that reflects industry standards - neither overly harsh nor overly lenient.
 
-🎯 **BALANCED SCORING GUIDELINES:**
+🎯 **CRITICAL SCORING GUIDELINES:**
 
-**Education ({edu_weight} points max):**
-- 16–{edu_weight}: Excellent match (relevant degree, recognized institution, recent completion, plus certifications)
-- 13–15: Strong alignment (relevant degree OR certifications)
-- 10–12: Moderate fit (related or partially relevant degree)
-- 7–9: Limited relevance but some related learning or coursework
-- 0–6: Unrelated degree with no supporting credentials
+**Education Scoring Framework ({edu_weight} points max):**
+- 18-{edu_weight}: Perfect alignment (relevant degree + top institution + recent + certifications)
+- 14-17: Strong match (relevant degree + good institution OR strong certifications)
+- 10-13: Adequate (related field OR some relevant coursework/training)
+- 6-9: Partial fit (transferable education OR significant gap in relevance)
+- 0-5: Poor match (unrelated degree AND no relevant training)
 
-**Experience ({exp_weight} points max):**
-- 27–{exp_weight}: Exceptional (exceeds years required + strong domain fit + measurable achievements)
-- 22–26: Strong (meets years + domain fit + some notable results)
-- 17–21: Good (some domain fit or strong transferable experience even if fewer years)
-- 12–16: Fair (internships, academic projects, or partially relevant work)
-- 6–11: Limited (minimal exposure but some relevant elements)
-- 0–5: Largely unrelated experience
-- *Note:* Internships, academic projects, volunteer roles in relevant tech should significantly raise score within range.
+**Experience Scoring Framework ({exp_weight} points max):**
+- 30-{exp_weight}: Exceptional (exceeds years required + perfect domain fit + leadership + measurable outcomes)
+- 24-29: Strong (meets years + good domain fit + some leadership + clear results)
+- 18-23: Good (adequate years + relevant domain + decent responsibilities)
+- 12-17: Fair (some gaps in years OR domain OR responsibilities)
+- 6-11: Below expectations (significant gaps in multiple areas)
+- 0-5: Poor fit (major deficiencies)
 
-**Skills ({skills_weight} points max):**
-- 25–{skills_weight}: Outstanding (80%+ required skills + proficiency evidence)
-- 20–24: Very good (65–80% coverage or strong related alternatives)
-- 15–19: Adequate (50–65% coverage)
-- 10–14: Partial match (30–50% coverage or relevant substitutions)
-- 5–9: Limited (10–30% coverage but transferable skills)
-- 0–4: Minimal (<10% coverage)
-- *Note:* Similar technologies or frameworks count as partial matches.
+**Skills Scoring Framework ({skills_weight} points max):**
+- 27-{skills_weight}: Outstanding (90%+ required skills + advanced proficiency + recent usage)
+- 21-26: Very good (75%+ required skills + good proficiency)
+- 15-20: Adequate (60%+ required skills + basic-intermediate proficiency)
+- 9-14: Needs improvement (40-60% skills + mixed proficiency)
+- 3-8: Insufficient (20-40% skills)
+- 0-2: Major gaps (<20% skills)
 
-**Keywords ({keyword_weight} points max):**
-- 9–{keyword_weight}: Excellent (80%+ exact/related terms)
-- 7–8: Good coverage (60–80%)
-- 5–6: Adequate (40–60%)
-- 3–4: Limited (20–40%)
-- 1–2: Minimal (5–20%)
-- 0: Very minimal (<5%)
-- *Note:* Use partial credit for synonyms and abbreviations.
+**Keyword Scoring Framework ({keyword_weight} points max):**
+- 9-{keyword_weight}: Excellent keyword optimization (90%+ critical terms present)
+- 7-8: Good coverage (70-90% critical terms)
+- 5-6: Adequate (50-70% critical terms)
+- 3-4: Needs improvement (30-50% critical terms)
+- 1-2: Poor coverage (10-30% critical terms)
+- 0: Very poor (<10% critical terms)
 
 ---
-
 
 **EVALUATION INSTRUCTIONS:**
 
@@ -1796,9 +1791,8 @@ Follow this exact structure and be **specific with evidence**:
 - Skill Currency: <How recent/updated are the skills>
 
 **Missing Critical Skills:**
-List **every technical, soft, or domain-specific skill** from the job description that is **absent from the resume**, including optional or "preferred" ones.
 - <Skill 1 from job description>
-- <Skill 2 from job description>
+- <Skill 2 from job description>  
 - <Skill 3 from job description>
 - <Additional if applicable>
 
@@ -1818,7 +1812,6 @@ List **every technical, soft, or domain-specific skill** from the job descriptio
 - Technical Vocabulary: <Tool/technology names alignment>
 
 **Missing Critical Keywords:**
-List **every keyword or phrase** from the job description that is **absent from the resume**, even if optional or preferred.
 - <Keyword 1 from job description>
 - <Keyword 2 from job description>
 - <Keyword 3 from job description>
@@ -1843,9 +1836,9 @@ List **every keyword or phrase** from the job description that is **absent from 
 **IMPORTANT REMINDERS:**
 - Be objective and evidence-based in scoring
 - Reference specific resume content to justify scores
-- Missing lists **must include all JD terms absent from the resume**, even if optional
 - Consider industry standards and role level expectations
 - Balance thoroughness with practicality
+- Missing skills/keywords should be directly from job description only
 
 Context for Evaluation:
 - Grammar Score: {grammar_score} / {lang_weight}
@@ -1864,8 +1857,6 @@ Context for Evaluation:
 
 {logic_score_note}
 """
-
-
 
     ats_result = call_llm(prompt, session=st.session_state).strip()
 

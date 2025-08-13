@@ -14,7 +14,7 @@ import logging
 from threading import Lock
 import os
 
-# Configure logging
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -1182,4 +1182,5 @@ if __name__ == "__main__":
     print("Database Manager initialized successfully!")
     stats = get_database_stats()
     print(f"Database Statistics: {stats}")
+
 

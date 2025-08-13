@@ -4816,6 +4816,7 @@ with tab5:
     </div>
     """.format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
 
+
 if "memory" in st.session_state:
     history = st.session_state.memory.load_memory_variables({}).get("chat_history", [])
     for msg in history:

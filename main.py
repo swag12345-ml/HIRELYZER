@@ -1,4 +1,4 @@
-rom xhtml2pdf import pisa
+from xhtml2pdf import pisa
 from io import BytesIO
 
 def html_to_pdf_bytes(html_string):

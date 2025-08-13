@@ -1647,6 +1647,7 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
     )
 
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
+
 import re
 import pandas as pd
 import altair as alt
@@ -1662,8 +1663,6 @@ You are a grammar and tone evaluator AI. Analyze the following resume text and:
 1. Give a grammar score out of {max_score} based on grammar quality, sentence structure, clarity, and tone.
 2. Return a 1-sentence summary of the grammar and tone.
 3. Provide 3 to 5 **specific improvement suggestions** (bullet points) for enhancing grammar, clarity, tone, or structure.
-
-**Be generous in scoring - focus on overall communication effectiveness rather than minor imperfections.**
 
 Return response in the exact format below:
 
@@ -1684,7 +1683,7 @@ Suggestions:
     feedback_match = re.search(r"Feedback:\s*(.+)", response)
     suggestions = re.findall(r"- (.+)", response)
 
-    score = int(score_match.group(1)) if score_match else 4  # Changed from 3 to 4 for more generous default
+    score = int(score_match.group(1)) if score_match else 3
     feedback = feedback_match.group(1).strip() if feedback_match else "No grammar feedback provided."
     return score, feedback, suggestions
 
@@ -1707,7 +1706,7 @@ def ats_percentage_score(
     job_domain = detect_domain_from_title_and_description(job_title, job_description)
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
-    MAX_DOMAIN_PENALTY = 8  # Reduced from 15 to 8 for less harsh domain penalties
+    MAX_DOMAIN_PENALTY = 15
     domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
 
     logic_score_note = (
@@ -1716,159 +1715,137 @@ def ats_percentage_score(
     )
 
     prompt = f"""
-You are a professional ATS evaluator with expertise in talent assessment. Your role is to provide **balanced, fair scoring** that recognizes potential and transferable skills while maintaining professional standards. **Be generous where appropriate and focus on candidate strengths.**
+You are an AI-powered ATS evaluator. Assess the candidate's resume against the job description. Return a detailed, **section-by-section analysis**, with **scoring for each area**. Follow the format precisely below.
 
-🎯 **CRITICAL SCORING GUIDELINES - BALANCED APPROACH:**
+🎯 Section Breakdown:
 
-**Education Scoring Framework ({edu_weight} points max):**
-- 16-{edu_weight}: Strong alignment (relevant degree OR strong certifications OR equivalent experience)
-- 12-15: Good match (related field OR relevant coursework/training OR self-taught with evidence)
-- 8-11: Adequate (transferable education OR some relevant background OR strong practical experience)
-- 4-7: Partial fit (some educational foundation OR significant practical learning)
-- 0-3: Major mismatch (no relevant education AND no compensating factors)
+1. **Candidate Name** — Extract the full name clearly from the resume header or first few lines.
 
-**Experience Scoring Framework ({exp_weight} points max):**
-- 28-{exp_weight}: Exceptional (meets/exceeds requirements + strong domain fit + clear achievements)
-- 22-27: Strong (adequate years + good domain fit OR excellent skills with less experience)
-- 16-21: Good (reasonable experience + relevant domain OR strong transferable skills)
-- 10-15: Fair (some experience gaps BUT compensated by other strengths)
-- 5-9: Below expectations (significant gaps with limited compensation)
-- 0-4: Poor fit (major deficiencies across multiple areas)
+2. **Education Analysis** — Evaluate:
+   - Degree level (e.g., Bachelor’s, Master’s, PhD)
+   - Field of study alignment with job requirements
+   - Institution reputation (if mentioned)
+   - Graduation year (recency)
+   - Any certifications or training programs relevant to the role
 
-**Skills Scoring Framework ({skills_weight} points max):**
-- 24-{skills_weight}: Outstanding (70%+ required skills + good proficiency + willingness to learn)
-- 18-23: Very good (60%+ required skills + decent proficiency OR strong foundational skills)
-- 12-17: Adequate (50%+ required skills + basic proficiency OR strong transferable skills)
-- 6-11: Developing (30-50% skills + some proficiency OR good learning potential)
-- 3-5: Needs development (20-30% skills BUT shows learning ability)
-- 0-2: Major gaps (<20% skills with no evidence of learning capacity)
+3. **Experience Analysis** — Evaluate:
+   - Total years of experience vs job expectations
+   - Role titles and their seniority levels (e.g., intern vs manager)
+   - Domain/industry relevance to the job
+   - Specific projects handled — explain **how they impacted the company, product, or client**
+   - Use of tools, technologies, or methodologies aligned with JD
+   - Evidence of leadership, teamwork, or initiative (e.g., “led a 5-person team”, “handled $100K budget”)
 
-**Keyword Scoring Framework ({keyword_weight} points max):**
-- 8-{keyword_weight}: Excellent keyword optimization (70%+ critical terms present OR strong conceptual alignment)
-- 6-7: Good coverage (60-70% critical terms OR good industry understanding)
-- 4-5: Adequate (40-60% critical terms OR relevant experience described differently)
-- 2-3: Needs improvement (25-40% critical terms OR some relevant concepts)
-- 1: Limited coverage (15-25% critical terms)
-- 0: Very poor (<15% critical terms AND no conceptual alignment)
+4. **Skills Analysis** — Check for:
+   - Technical tools (e.g., Python, SQL, Figma)
+   - Domain-specific skills (e.g., CRM for Sales, ML models for AI jobs)
+   - Soft skills (e.g., communication, adaptability)
 
----
+✅ **Important: Provide missing skills in bullet points. Identify skills from the job description that are NOT found in the resume. Be specific and list at least 3 if applicable.**
 
-**EVALUATION INSTRUCTIONS:**
+Also evaluate:
+   - Depth of proficiency (basic, intermediate, expert)
+   - Recency of usage if mentioned
+   - Whether the skill is supported by projects or experience
 
-Follow this exact structure and be **generous while evidence-based**:
+5. **Language Quality** — Use grammar score provided. Evaluate:
+   - Grammar and spelling quality
+   - Tone (professional, casual, inconsistent)
+   - Sentence clarity and structure
+   - Use of active voice and action verbs
+   - Formatting professionalism (bullet alignment, clean structure)
 
-### 🏷️ Candidate Name
-<Extract full name clearly - check resume header, contact section, or first few lines>
+6. **Keyword Analysis** — Identify and evaluate:
+   - Job-critical keywords from the JD (e.g., “data visualization”, “cloud computing”)
+   - Domain-specific jargon
+   - Tool names, role-specific terms
 
-### 🏫 Education Analysis
-**Score:** <0–{edu_weight}> / {edu_weight}
+✅ **Important: Provide missing keywords from the job description as a bullet list. Only include words/phrases present in the JD but absent in the resume. Give at least 3 if applicable.**
 
-**Scoring Rationale:**
-- Degree Level & Relevance: <Focus on how education supports the role, including transferable knowledge>
-- Institution Quality: <Be fair - most institutions provide solid education>
-- Recency: <Consider continuous learning and practical application over graduation date>
-- Additional Credentials: <Give credit for all forms of learning - certifications, bootcamps, self-study>
-- **Score Justification:** <Emphasize strengths and potential, acknowledge any gaps fairly>
+7. **Final Thoughts** — Provide a 4–6 sentence holistic evaluation:
+   - Resume's overall alignment with the job
+   - Highlight major strengths (e.g., “strong domain fit”, “excellent language tone”)
+   - Point out red flags (e.g., “missing core tools”, “unclear experience timelines”)
+   - Mention if the resume deserves shortlisting or further screening
 
-### 💼 Experience Analysis  
-**Score:** <0–{exp_weight}> / {exp_weight}
+Use this context:
 
-**Experience Breakdown:**
-- Total Years: <X years - consider quality over pure quantity>
-- Role Progression: <Look for growth and learning, not just linear advancement>
-- Domain Relevance: <Credit transferable skills and adjacent experience>
-- Leadership Evidence: <Include informal leadership, mentoring, project ownership>
-- Quantified Achievements: <Give credit for any measurable impact, however small>
-- Technology/Tools Usage: <Acknowledge all relevant technical experience>
-- **Score Justification:** <Focus on potential and transferable value, be generous with adjacent experience>
-
-### 🛠 Skills Analysis
-**Score:** <0–{skills_weight}> / {skills_weight}
-
-**Skills Assessment:**
-- Technical Skills Present: <Credit all relevant skills, including foundational ones>
-- Soft Skills Demonstrated: <Look for evidence in experience descriptions>
-- Domain-Specific Expertise: <Include adjacent and transferable expertise>
-- Skill Currency: <Consider learning ability and adaptability>
-
-**Missing Critical Skills:**
-- <Only list truly essential skills that cannot be quickly learned>
-- <Focus on hard requirements, not nice-to-haves>
-- <Limit to 3-4 most critical gaps>
-
-**Detailed Skills Comparison:**
-**Skills Found in Resume:** <List ALL technical and soft skills mentioned in resume>
-**Skills Required in JD:** <List ALL skills mentioned in job description>
-**Missing Skills from JD:** <Comprehensive list of ALL skills in JD but not in resume>
-**Additional Skills in Resume:** <Skills in resume not mentioned in JD>
-
-**Score Justification:** <Be generous with transferable skills and learning potential>
-
-### 🗣 Language Quality Analysis
-**Score:** {grammar_score} / {lang_weight}
-**Grammar & Professional Tone:** {grammar_feedback}
-**Assessment:** <Focus on overall communication effectiveness, be forgiving of minor issues>
-
-### 🔑 Keyword Analysis
-**Score:** <0–{keyword_weight}> / {keyword_weight}
-
-**Keyword Assessment:**
-- Industry Terminology: <Credit conceptual understanding even if exact terms differ>
-- Role-Specific Terms: <Look for equivalent expressions and related concepts>
-- Technical Vocabulary: <Include similar tools and technologies>
-
-**Missing Critical Keywords:**
-- <Only list keywords that are truly essential and not easily substitutable>
-- <Focus on core concepts rather than specific brand names>
-- <Limit to most important missing terms>
-
-**Detailed Keyword Comparison:**
-**Keywords Found in Resume:** <List ALL industry terms, technologies, tools, methodologies found in resume>
-**Keywords in Job Description:** <List ALL keywords, technologies, tools, methodologies in JD>
-**Missing Keywords from JD:** <Comprehensive list of ALL keywords in JD but not in resume>
-**Additional Keywords in Resume:** <Keywords in resume not mentioned in JD>
-
-**Score Justification:** <Be generous with conceptual matches and equivalent terms>
-
-### ✅ Final Assessment
-
-**Overall Evaluation:**
-<4-6 sentences covering:>
-- Primary strengths and potential that make this candidate worth considering
-- Any significant gaps that need addressing (focus on learnable vs. fundamental issues)
-- Positive indicators of cultural fit and growth potential
-- Strong recommendation for interview progression unless major red flags exist
-
-**Areas for Development:** <Frame gaps as growth opportunities rather than failures>
-**Key Strengths:** <Highlight unique value propositions and competitive advantages>
-
----
-
-**IMPORTANT REMINDERS:**
-- **Be generous and focus on potential** - look for reasons to advance candidates
-- Give credit for transferable skills and adjacent experience
-- Consider learning ability and growth mindset indicators
-- Balance thoroughness with fairness
-- Only flag truly critical gaps, not nice-to-have skills
-- **Default to giving candidates the benefit of the doubt**
-
-Context for Evaluation:
 - Grammar Score: {grammar_score} / {lang_weight}
-- Grammar Feedback: {grammar_feedback}  
+- Grammar Feedback: {grammar_feedback}
 - Resume Domain: {resume_domain}
 - Job Domain: {job_domain}
-- Domain Mismatch Penalty: {domain_penalty} points (similarity: {similarity_score:.2f})
+- Penalty if domains don't match: {domain_penalty} (Based on domain similarity score {similarity_score:.2f}, max penalty is {MAX_DOMAIN_PENALTY})
 
 ---
 
-📄 **Job Description:**
-{job_description}
+### 🏷️ Candidate Name
+<Full name or "Not Found">
 
-📄 **Resume Text:**
-{resume_text}
+### 🏫 Education Analysis
+**Score:** <0–{edu_weight}> / {edu_weight}  
+**Degree Match:** <Discuss degree level, specialization, and how it matches the job.>
+
+### 💼 Experience Analysis
+**Score:** <0–{exp_weight}> / {exp_weight}  
+**Experience Details:**  
+<Cover roles, total years, leadership, domain relevance, and **project outcomes**. Be specific: e.g., “developed a dashboard that reduced manual reporting by 60%” or “led migration saving 25% infra cost.”>
+
+### 🛠 Skills Analysis
+**Score:** <0–{skills_weight}> / {skills_weight}  
+**Current Skills:**
+- Technical: <list>
+- Soft Skills: <list>
+- Domain-Specific: <list>
+
+**Skill Proficiency:**  
+<Evaluate depth of knowledge. Mention if skills are supported by projects or real work.>
+
+**Missing Skills:**  
+- Skill 1  
+- Skill 2  
+- Skill 3  
+*(List based only on skills in job description but absent in resume)*
+
+### 🗣 Language Quality Analysis
+**Score:** {grammar_score} / {lang_weight}  
+**Grammar & Tone:** <LLM-based comment on clarity, fluency, tone>  
+**Feedback Summary:** **{grammar_feedback}**
+
+### 🔑 Keyword Analysis
+**Score:** <0–{keyword_weight}> / {keyword_weight}  
+**Missing Keywords:**  
+- Keyword1  
+- Keyword2  
+- Keyword3  
+*(Extract keywords from JD not found in resume. Include role-related, domain-specific, and tool-based terms.)*
+
+**Keyword Analysis:**  
+<Discuss importance of missing/present keywords and how they affect job match.>
+
+### ✅ Final Thoughts
+<Summarize domain fit, core strengths, red flags, and whether this resume deserves further review.>
+
+---
+
+**Instructions:**
+- Use markdown formatting.
+- Follow the section titles and bold formatting strictly.
+- Keep tone professional and ATS-focused.
+- Use the provided grammar score and domain info as context.
+- Force output of missing skills and keywords using bullet lists.
+- Avoid generalizations — rely only on specific terms from JD and resume.
+
+---
+
+📄 Job Description:
+\"\"\"{job_description}\"\"\"  
+
+📄 Resume:
+\"\"\"{resume_text}\"\"\"  
 
 {logic_score_note}
 """
+
 
     ats_result = call_llm(prompt, session=st.session_state).strip()
 
@@ -1887,52 +1864,26 @@ Context for Evaluation:
     skills_analysis = extract_section(r"### 🛠 Skills Analysis(.*?)###", ats_result)
     lang_analysis = extract_section(r"### 🗣 Language Quality Analysis(.*?)###", ats_result)
     keyword_analysis = extract_section(r"### 🔑 Keyword Analysis(.*?)###", ats_result)
-    final_thoughts = extract_section(r"### ✅ Final Assessment(.*)", ats_result)
+    final_thoughts = extract_section(r"### ✅ Final Thoughts(.*)", ats_result)
 
-    # Extract scores with improved patterns
+    # Extract scores
     edu_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis)
-    exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)  
+    exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)
     skills_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
     keyword_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis)
 
-    # Extract missing items with better parsing
-    missing_keywords_section = extract_section(r"\*\*Missing Critical Keywords:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)
-    missing_skills_section = extract_section(r"\*\*Missing Critical Skills:\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
-    
-    # Extract comprehensive missing items
-    missing_keywords_section = extract_section(r"\*\*Missing Keywords from JD:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)
-    missing_skills_section = extract_section(r"\*\*Missing Skills from JD:\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
-    
-    # Extract found items for better analysis
-    found_keywords_section = extract_section(r"\*\*Keywords Found in Resume:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)
-    found_skills_section = extract_section(r"\*\*Skills Found in Resume:\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
-    
-    # Extract JD requirements for comparison
-    jd_keywords_section = extract_section(r"\*\*Keywords in Job Description:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)
-    jd_skills_section = extract_section(r"\*\*Skills Required in JD:\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
-    
-    # Clean and format the extracted content
-    missing_keywords = re.sub(r'^-\s*', '', missing_keywords_section.strip(), flags=re.MULTILINE).replace('\n', ', ').strip() if missing_keywords_section.strip() else "None identified"
-    missing_skills = re.sub(r'^-\s*', '', missing_skills_section.strip(), flags=re.MULTILINE).replace('\n', ', ').strip() if missing_skills_section.strip() else "None identified"
-    
-    found_keywords = re.sub(r'^-\s*', '', found_keywords_section.strip(), flags=re.MULTILINE).replace('\n', ', ').strip() if found_keywords_section.strip() else "None identified"
-    found_skills = re.sub(r'^-\s*', '', found_skills_section.strip(), flags=re.MULTILINE).replace('\n', ', ').strip() if found_skills_section.strip() else "None identified"
-    
-    jd_keywords = re.sub(r'^-\s*', '', jd_keywords_section.strip(), flags=re.MULTILINE).replace('\n', ', ').strip() if jd_keywords_section.strip() else "None identified"
-    jd_skills = re.sub(r'^-\s*', '', jd_skills_section.strip(), flags=re.MULTILINE).replace('\n', ', ').strip() if jd_skills_section.strip() else "None identified"
+    missing_keywords = extract_section(r"\*\*Missing Keywords:\*\*(.*?)(?:###|\Z)", keyword_analysis).replace("-", "").strip().replace("\n", ", ")
+    missing_skills = extract_section(r"\*\*Missing Skills:\*\*(.*?)(?:###|\Z)", skills_analysis).replace("-", "").strip().replace("\n", ", ")
 
-    # Calculate total score with more generous constraints
     total_score = edu_score + exp_score + skills_score + grammar_score + keyword_score
     total_score = max(total_score - domain_penalty, 0)
     total_score = min(total_score, 100)
 
-    # More generous score formatting with lower thresholds
     formatted_score = (
-        "🌟 Exceptional Match" if total_score >= 85 else  # Reduced from 90
-        "✅ Strong Match" if total_score >= 70 else        # Reduced from 75
-        "🟡 Good Potential" if total_score >= 55 else     # Reduced from 60
-        "⚠️ Fair Match" if total_score >= 40 else         # Reduced from 45
-        "❌ Poor Match"
+        "🌟 Excellent" if total_score >= 85 else
+        "✅ Good" if total_score >= 70 else
+        "⚠️ Average" if total_score >= 50 else
+        "❌ Poor"
     )
 
     # ✅ Format suggestions nicely
@@ -1943,18 +1894,10 @@ Context for Evaluation:
     updated_lang_analysis = f"""
 {lang_analysis}
 <br><b>LLM Feedback Summary:</b> {grammar_feedback}
-<br><b>Improvement Suggestions:</b> {suggestions_html}
+<br><b>Suggestions to Improve:</b> {suggestions_html}
 """
 
-    # Enhanced final thoughts with domain analysis
-    final_thoughts += f"""
-
-**📊 Technical Assessment Details:**
-- Domain Similarity Score: {similarity_score:.2f}/1.0  
-- Domain Penalty Applied: {domain_penalty}/{MAX_DOMAIN_PENALTY} points
-- Resume Domain: {resume_domain}
-- Target Job Domain: {job_domain}
-"""
+    final_thoughts += f"\n\n📉 Domain Similarity Score: {similarity_score:.2f}\n🔻 Domain Penalty Applied: {domain_penalty} / {MAX_DOMAIN_PENALTY}"
 
     return ats_result, {
         "Candidate Name": candidate_name,
@@ -1973,10 +1916,6 @@ Context for Evaluation:
         "Final Thoughts": final_thoughts,
         "Missing Keywords": missing_keywords,
         "Missing Skills": missing_skills,
-        "Found Keywords": found_keywords,
-        "Found Skills": found_skills,
-        "JD Keywords": jd_keywords,
-        "JD Skills": jd_skills,
         "Resume Domain": resume_domain,
         "Job Domain": job_domain,
         "Domain Penalty": domain_penalty,

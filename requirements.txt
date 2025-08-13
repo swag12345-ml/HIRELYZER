@@ -9,6 +9,7 @@ pdfkit
 fpdf
 pdf2image
 pymupdf
+plotly
 python-docx
 pytesseract
 language-tool-python

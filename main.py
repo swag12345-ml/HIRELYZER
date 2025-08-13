@@ -194,7 +194,7 @@ import numpy as np
 import pandas as pd
 
 import base64
-
+from db_manager import insert_candidate, get_top_domains_by_score
 
     
 from PIL import Image
@@ -4213,8 +4213,6 @@ with tab4:
                 with cols[idx % 2]:
                     st.markdown(f"**{title}**")
                     st.video(url)
-
-
 with tab5:
     import sqlite3
     import pandas as pd
@@ -4817,6 +4815,7 @@ with tab5:
         <p>Last updated: {}</p>
     </div>
     """.format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
+
 if "memory" in st.session_state:
     history = st.session_state.memory.load_memory_variables({}).get("chat_history", [])
     for msg in history:

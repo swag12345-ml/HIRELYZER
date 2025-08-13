@@ -1727,6 +1727,7 @@ You are an expert technical recruiter. Analyze the resume against job requiremen
 4. Consider context and recency
 5. Calculate weighted score based on importance and match quality
 
+**IMPORTANT**: If resume and job are in the same domain (e.g., both Full Stack Development), focus on skill depth and experience quality rather than penalizing for domain mismatch.
 Job Description:
 {job_description}
 
@@ -1847,13 +1848,17 @@ def ats_percentage_score(
     job_domain = detect_domain_from_title_and_description(job_title, job_description)
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
-    # ✅ ENHANCED: Variable domain penalty based on role requirements
-    if similarity_score < 0.3:
-        domain_penalty = 15  # High penalty for completely unrelated domains
-    elif similarity_score < 0.6:
-        domain_penalty = 8   # Moderate penalty for somewhat related domains
+    # ✅ FIXED: More accurate domain penalty based on actual similarity
+    if similarity_score >= 0.85:
+        domain_penalty = 0   # No penalty for very similar domains (like Full Stack to Full Stack)
+    elif similarity_score >= 0.7:
+        domain_penalty = 2   # Minimal penalty for closely related domains
+    elif similarity_score >= 0.5:
+        domain_penalty = 5   # Small penalty for somewhat related domains
+    elif similarity_score >= 0.3:
+        domain_penalty = 10  # Moderate penalty for loosely related domains
     else:
-        domain_penalty = 3   # Low penalty for related domains
+        domain_penalty = 15  # High penalty for completely unrelated domains
 
     # ✅ NEW: Use specialized scoring functions for better differentiation
     enhanced_skills_score = calculate_weighted_skills_score(resume_text, job_description, skills_weight)
@@ -2011,6 +2016,9 @@ Context for Evaluation:
 - Resume Domain: {resume_domain}
 - Job Domain: {job_domain}
 - Domain Similarity: {similarity_score:.2f}
+- Domain Penalty Applied: {domain_penalty} points (0 = perfect match, 15 = completely unrelated)
+
+**DOMAIN MATCHING NOTE**: If both resume and job are in the same field (similarity ≥ 0.85), NO domain penalty should be applied.
 
 📄 **Job Description:**
 {job_description}

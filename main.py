@@ -1715,7 +1715,7 @@ def ats_percentage_score(
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
     # ✅ REDUCED domain penalty for more balanced scoring
-    MAX_DOMAIN_PENALTY = 15  # Reduced from 15 to 8
+    MAX_DOMAIN_PENALTY = 8  # Reduced from 15 to 8
     domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
 
     logic_score_note = (
@@ -4460,18 +4460,17 @@ with tab5:
     if not df_timeline.empty:
         df_timeline = df_timeline.sort_values("day")
         df_timeline["7_day_avg"] = df_timeline["count"].rolling(window=7, min_periods=1).mean()
-        fig, ax = plt.subplots(figsize=(10, 4))
+        fig, ax = plt.subplots(figsize=(10, 5))
         ax.plot(df_timeline["day"], df_timeline["count"], label="Daily Uploads", color="green", marker='o', linewidth=1)
         for x, y in zip(df_timeline["day"], df_timeline["count"]):
-            ax.text(x, y + 0.2, str(int(y)), ha="center", va="bottom", fontsize=8)
+            ax.text(x, y + 0.5, str(int(y)), ha="center", va="bottom", fontsize=8)
         ax.plot(df_timeline["day"], df_timeline["7_day_avg"], label="7-Day Avg", color="red", linestyle='--', linewidth=2)
-        ax.set_title("📈 Resume Upload Timeline (Daily + 7-Day Trend)", fontsize=13, weight='bold',pad=10)
+        ax.set_title("📈 Resume Upload Timeline (Daily + 7-Day Trend)", fontsize=13, weight='bold')
         ax.set_xlabel("Date")
         ax.set_ylabel("Upload Count")
         ax.legend()
         ax.grid(axis='y', linestyle='--', alpha=0.5)
         plt.xticks(rotation=45, ha='right')
-        plt.subplots_adjust(top=0.88, bottom=0.2)
         fig.tight_layout()
         st.pyplot(fig)
     else:

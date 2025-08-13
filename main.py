@@ -1655,6 +1655,7 @@ import streamlit as st
 from llm_manager import call_llm
 from db_manager import detect_domain_from_title_and_description, get_domain_similarity
 
+
 # ✅ Enhanced Grammar evaluation using LLM with suggestions
 def get_grammar_score_with_llm(text, max_score=5):
     grammar_prompt = f"""
@@ -1677,7 +1678,6 @@ Suggestions:
 {text}
 ---
 """
-
     response = call_llm(grammar_prompt, session=st.session_state).strip()
     score_match = re.search(r"Score:\s*(\d+)", response)
     feedback_match = re.search(r"Feedback:\s*(.+)", response)
@@ -1700,7 +1700,9 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(resume_text, max_score=lang_weight)
+    grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(
+        resume_text, max_score=lang_weight
+    )
 
     resume_domain = detect_domain_from_title_and_description("Unknown", resume_text)
     job_domain = detect_domain_from_title_and_description(job_title, job_description)
@@ -1711,46 +1713,47 @@ def ats_percentage_score(
 
     logic_score_note = (
         f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
-        if logic_profile_score else ""
+        if logic_profile_score
+        else ""
     )
 
     prompt = f"""
-You are a professional ATS evaluator with expertise in talent assessment. Your role is to provide **balanced, objective scoring** that reflects industry standards - neither overly harsh nor overly lenient.
+You are a professional ATS evaluator with expertise in talent assessment. 
+Your role is to provide **balanced, fair, and constructive scoring** that celebrates strengths while clearly pointing out areas for growth.
+Avoid overly harsh or negative phrasing — instead, frame improvement areas as opportunities.
 
-🎯 **CRITICAL SCORING GUIDELINES:**
+🎯 **Balanced Scoring Guidelines:**
 
-**Education Scoring Framework ({edu_weight} points max):**
-- 18-{edu_weight}: Perfect alignment (relevant degree + top institution + recent + certifications)
-- 14-17: Strong match (relevant degree + good institution OR strong certifications)
-- 10-13: Adequate (related field OR some relevant coursework/training)
-- 6-9: Partial fit (transferable education OR significant gap in relevance)
-- 0-5: Poor match (unrelated degree AND no relevant training)
+**Education ({edu_weight} max points):**
+- 18–{edu_weight}: Excellent alignment (highly relevant degree + strong institution + recent + valuable certifications)
+- 14–17: Strong fit (relevant degree + good institution OR strong certifications)
+- 10–13: Solid foundation (related field OR relevant coursework/training)
+- 6–9: Some connection (transferable education but partial match to role)
+- 0–5: Opportunity to strengthen educational alignment (unrelated field and limited relevant training)
 
-**Experience Scoring Framework ({exp_weight} points max):**
-- 30-{exp_weight}: Exceptional (exceeds years required + perfect domain fit + leadership + measurable outcomes)
-- 24-29: Strong (meets years + good domain fit + some leadership + clear results)
-- 18-23: Good (adequate years + relevant domain + decent responsibilities)
-- 12-17: Fair (some gaps in years OR domain OR responsibilities)
-- 6-11: Below expectations (significant gaps in multiple areas)
-- 0-5: Poor fit (major deficiencies)
+**Experience ({exp_weight} max points):**
+- 30–{exp_weight}: Exceptional (exceeds required years + strong domain match + leadership + measurable impact)
+- 24–29: Strong (meets required years + good domain fit + leadership or results examples)
+- 18–23: Good (adequate years + relevant domain + clear responsibilities)
+- 12–17: Developing (some gaps in years, domain, or role scope)
+- 6–11: Limited (several aspects to build on for this role)
+- 0–5: Early stage (experience not yet aligned with the role’s core requirements)
 
-**Skills Scoring Framework ({skills_weight} points max):**
-- 27-{skills_weight}: Outstanding (90%+ required skills + advanced proficiency + recent usage)
-- 21-26: Very good (75%+ required skills + good proficiency)
-- 15-20: Adequate (60%+ required skills + basic-intermediate proficiency)
-- 9-14: Needs improvement (40-60% skills + mixed proficiency)
-- 3-8: Insufficient (20-40% skills)
-- 0-2: Major gaps (<20% skills)
+**Skills ({skills_weight} max points):**
+- 27–{skills_weight}: Outstanding (90%+ required skills + advanced proficiency + recent use)
+- 21–26: Very good (75%+ required skills + good proficiency)
+- 15–20: Adequate (60%+ required skills + basic–intermediate proficiency)
+- 9–14: Developing (40–60% skills with mixed proficiency)
+- 3–8: Limited coverage (20–40% skills)
+- 0–2: Opportunity to build key skills (<20% skills)
 
-**Keyword Scoring Framework ({keyword_weight} points max):**
-- 9-{keyword_weight}: Excellent keyword optimization (90%+ critical terms present)
-- 7-8: Good coverage (70-90% critical terms)
-- 5-6: Adequate (50-70% critical terms)
-- 3-4: Needs improvement (30-50% critical terms)
-- 1-2: Poor coverage (10-30% critical terms)
-- 0: Very poor (<10% critical terms)
-
----
+**Keywords ({keyword_weight} max points):**
+- 9–{keyword_weight}: Excellent coverage (90%+ critical terms present)
+- 7–8: Good coverage (70–90% terms present)
+- 5–6: Adequate (50–70% terms)
+- 3–4: Needs expansion (30–50% terms)
+- 1–2: Limited coverage (10–30% terms)
+- 0: Very limited (<10% terms)
 
 **EVALUATION INSTRUCTIONS:**
 
@@ -1857,6 +1860,7 @@ Context for Evaluation:
 
 {logic_score_note}
 """
+
 
     ats_result = call_llm(prompt, session=st.session_state).strip()
 

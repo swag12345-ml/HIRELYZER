@@ -1715,7 +1715,7 @@ def ats_percentage_score(
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
     # ✅ REDUCED domain penalty for more balanced scoring
-    MAX_DOMAIN_PENALTY = 8  # Reduced from 15 to 8
+    MAX_DOMAIN_PENALTY = 15  # Reduced from 15 to 8
     domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
 
     logic_score_note = (

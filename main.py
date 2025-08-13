@@ -4647,76 +4647,101 @@ with tab5:
 
     # Enhanced Timeline Analysis
     st.markdown("### 📈 Resume Upload Timeline & Trends")
-    
+
+try:
+    # Ensure get_daily_ats_stats can accept days_limit parameter
     try:
-        df_timeline = get_resume_count_by_day()
         df_daily_ats = get_daily_ats_stats(days_limit=90)
-        
-        if not df_timeline.empty:
-            df_timeline = df_timeline.sort_values("day")
-            df_timeline["7_day_avg"] = df_timeline["count"].rolling(window=7, min_periods=1).mean()
-            df_timeline["30_day_avg"] = df_timeline["count"].rolling(window=30, min_periods=1).mean()
-            
-            # Create subplot with secondary y-axis
-            fig = make_subplots(
-                rows=2, cols=1,
-                subplot_titles=('Daily Upload Count with Moving Averages', 'Daily Average ATS Score Trend'),
-                vertical_spacing=0.1
-            )
-            
-            # Upload count plot
+    except TypeError:
+        # Fallback if wrapper doesn't accept keyword argument
+        df_daily_ats = get_daily_ats_stats(90)
+
+    df_timeline = get_resume_count_by_day()
+
+    if not df_timeline.empty:
+        df_timeline = df_timeline.sort_values("day")
+
+        # Safe rolling averages even with small datasets
+        df_timeline["7_day_avg"] = df_timeline["count"].rolling(
+            window=min(7, len(df_timeline)), min_periods=1
+        ).mean()
+        df_timeline["30_day_avg"] = df_timeline["count"].rolling(
+            window=min(30, len(df_timeline)), min_periods=1
+        ).mean()
+
+        # Create subplot
+        fig = make_subplots(
+            rows=2, cols=1,
+            subplot_titles=(
+                'Daily Upload Count with Moving Averages',
+                'Daily Average ATS Score Trend'
+            ),
+            vertical_spacing=0.1
+        )
+
+        # Upload count plot
+        fig.add_trace(
+            go.Scatter(
+                x=df_timeline["day"], y=df_timeline["count"], 
+                mode='lines+markers', name='Daily Uploads',
+                line=dict(color='#1f77b4', width=2)
+            ),
+            row=1, col=1
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=df_timeline["day"], y=df_timeline["7_day_avg"], 
+                mode='lines', name='7-Day Average',
+                line=dict(color='#ff7f0e', width=2, dash='dash')
+            ),
+            row=1, col=1
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=df_timeline["day"], y=df_timeline["30_day_avg"], 
+                mode='lines', name='30-Day Average',
+                line=dict(color='#2ca02c', width=2, dash='dot')
+            ),
+            row=1, col=1
+        )
+
+        # ATS trend plot if data is available
+        if isinstance(df_daily_ats, pd.DataFrame) and not df_daily_ats.empty:
             fig.add_trace(
-                go.Scatter(x=df_timeline["day"], y=df_timeline["count"], 
-                          mode='lines+markers', name='Daily Uploads',
-                          line=dict(color='#1f77b4', width=2)),
-                row=1, col=1
+                go.Scatter(
+                    x=df_daily_ats["date"], y=df_daily_ats["avg_ats"], 
+                    mode='lines+markers', name='Daily Avg ATS',
+                    line=dict(color='#d62728', width=2)
+                ),
+                row=2, col=1
             )
-            
-            fig.add_trace(
-                go.Scatter(x=df_timeline["day"], y=df_timeline["7_day_avg"], 
-                          mode='lines', name='7-Day Average',
-                          line=dict(color='#ff7f0e', width=2, dash='dash')),
-                row=1, col=1
-            )
-            
-            fig.add_trace(
-                go.Scatter(x=df_timeline["day"], y=df_timeline["30_day_avg"], 
-                          mode='lines', name='30-Day Average',
-                          line=dict(color='#2ca02c', width=2, dash='dot')),
-                row=1, col=1
-            )
-            
-            # ATS trend plot
-            if not df_daily_ats.empty:
-                fig.add_trace(
-                    go.Scatter(x=df_daily_ats["date"], y=df_daily_ats["avg_ats"], 
-                              mode='lines+markers', name='Daily Avg ATS',
-                              line=dict(color='#d62728', width=2)),
-                    row=2, col=1
-                )
-            
-            fig.update_layout(height=600, showlegend=True)
-            fig.update_xaxes(title_text="Date", row=2, col=1)
-            fig.update_yaxes(title_text="Upload Count", row=1, col=1)
-            fig.update_yaxes(title_text="Average ATS Score", row=2, col=1)
-            
-            st.plotly_chart(fig, use_container_width=True)
-            
-            # Timeline statistics
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.metric("Total Days", len(df_timeline))
-            with col2:
-                st.metric("Peak Daily Uploads", df_timeline["count"].max())
-            with col3:
-                st.metric("Avg Daily Uploads", f"{df_timeline['count'].mean():.1f}")
-            with col4:
-                if not df_daily_ats.empty:
-                    st.metric("Avg ATS Trend", f"{df_daily_ats['avg_ats'].mean():.2f}")
-        else:
-            st.info("ℹ️ No timeline data available.")
-    except Exception as e:
-        st.error(f"Error loading timeline data: {e}")
+
+        fig.update_layout(height=600, showlegend=True)
+        fig.update_xaxes(title_text="Date", row=2, col=1)
+        fig.update_yaxes(title_text="Upload Count", row=1, col=1)
+        fig.update_yaxes(title_text="Average ATS Score", row=2, col=1)
+
+        st.plotly_chart(fig, use_container_width=True)
+
+        # Timeline statistics
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Total Days", len(df_timeline))
+        with col2:
+            st.metric("Peak Daily Uploads", df_timeline["count"].max())
+        with col3:
+            st.metric("Avg Daily Uploads", f"{df_timeline['count'].mean():.1f}")
+        with col4:
+            if isinstance(df_daily_ats, pd.DataFrame) and not df_daily_ats.empty:
+                st.metric("Avg ATS Trend", f"{df_daily_ats['avg_ats'].mean():.2f}")
+    else:
+        st.info("ℹ️ No timeline data available.")
+
+except Exception as e:
+    st.error(f"Error loading timeline data: {e}")
+
 
     # Enhanced Bias Analysis
     st.markdown("### 🧠 Advanced Bias Analysis")

@@ -194,7 +194,7 @@ import numpy as np
 import pandas as pd
 
 import base64
-from db_manager import insert_candidate, get_top_domains_by_score
+
 
     
 from PIL import Image

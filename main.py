@@ -4576,38 +4576,51 @@ with tab5:
 
     # Enhanced Domain Distribution
     st.markdown("### 📊 Domain Distribution Analysis")
-    
+
     try:
         df_domain_dist = load_domain_distribution()
         if not df_domain_dist.empty:
             col1, col2 = st.columns(2)
             with col1:
-                chart_type = st.radio("📊 Visualization Type:", 
-                                    ["📈 Interactive Bar Chart", "🥧 Interactive Pie Chart"], 
-                                    horizontal=True)
+                chart_type = st.radio(
+                    "📊 Visualization Type:",
+                    ["📈 Interactive Bar Chart", "🥧 Interactive Pie Chart"],
+                    horizontal=True
+                )
             with col2:
-                show_top_n = st.slider("Show Top N Domains", 5, len(df_domain_dist), 
-                                     value=min(10, len(df_domain_dist)))
-            
+                max_val = len(df_domain_dist)
+                if max_val <= 5:
+                    show_top_n = max_val  # No slider, just show all available domains
+                else:
+                    show_top_n = st.slider(
+                        "Show Top N Domains",
+                        min_value=5,
+                        max_value=max_val,
+                        value=min(10, max_val)
+                    )
+
             df_top_domains = df_domain_dist.head(show_top_n)
-            
+
             if chart_type == "📈 Interactive Bar Chart":
                 fig = create_enhanced_bar_chart(df_top_domains, "domain", "count", 
-                                              "Resume Count by Domain")
+                                                "Resume Count by Domain")
                 st.plotly_chart(fig, use_container_width=True)
             else:
                 fig = create_enhanced_pie_chart(df_top_domains, "count", "domain", 
-                                              "Domain Distribution")
+                                                "Domain Distribution")
                 st.plotly_chart(fig, use_container_width=True)
-            
+
             # Summary statistics
             with st.expander("📋 Domain Statistics Summary"):
-                st.dataframe(df_domain_dist.style.format({'percentage': '{:.2f}%'}), 
-                           use_container_width=True)
+                st.dataframe(
+                    df_domain_dist.style.format({'percentage': '{:.2f}%'}),
+                    use_container_width=True
+                )
         else:
             st.info("ℹ️ No domain distribution data available.")
     except Exception as e:
         st.error(f"Error loading domain distribution: {e}")
+
 
     # Enhanced ATS Performance Analysis
     st.markdown("### 📈 ATS Performance Analysis")

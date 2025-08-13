@@ -1832,11 +1832,16 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - Technical Vocabulary: <Value understanding even if different tools>
 
 **Keyword Enhancement Opportunities:**
-- <Keyword 1 - suggest how to incorporate>
-- <Keyword 2 - note if concept is present but not explicitly stated>
-- <Keyword 3 - frame as resume optimization opportunity>
-- <Keyword 4 - additional opportunities>
-- <Keyword 5 - more suggestions if applicable>
+- <Keyword 1 from job description>
+- <Keyword 2 from job description>
+- <Keyword 3 from job description>
+- <Keyword 4 from job description>
+- <Keyword 5 from job description>
+- <Keyword 6 from job description>
+- <Keyword 7 from job description>
+- <Keyword 8 from job description>
+
+**INSTRUCTION**: Extract ALL important keywords, technical terms, industry jargon, tool names, certification names, and role-specific terminology from the job description that are missing from the resume. Include variations and synonyms.
 
 **Score Justification:** <Credit understanding of concepts even if terminology differs>
 
@@ -1864,6 +1869,12 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - Recognize that great employees come from varied backgrounds
 - LIST ALL missing skills and keywords comprehensively (aim for 5-8 items each if gaps exist)
 - Be thorough in identifying development opportunities from the job description
+- **CRITICAL**: Analyze the ENTIRE job description systematically - go through each requirement, skill, and qualification mentioned
+- **KEYWORD EXTRACTION**: Identify ALL technical terms, tools, frameworks, methodologies, certifications mentioned in job description
+- **SKILL MAPPING**: Compare each job requirement against resume content - if not found, list it as missing
+- **CONTEXT UNDERSTANDING**: Consider synonyms and related terms (e.g., "JavaScript" and "JS", "Machine Learning" and "ML")
+- **PRIORITY RANKING**: Focus on must-have vs nice-to-have requirements from job description
+- **EXPERIENCE MATCHING**: Look for similar roles, projects, or responsibilities even if not exact title matches
 
 Context for Evaluation:
 - Grammar Score: {grammar_score} / {lang_weight}

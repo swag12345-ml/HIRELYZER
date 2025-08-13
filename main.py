@@ -1647,7 +1647,6 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
     )
 
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
-
 import re
 import pandas as pd
 import altair as alt
@@ -1797,6 +1796,12 @@ Follow this exact structure and be **generous while evidence-based**:
 - <Focus on hard requirements, not nice-to-haves>
 - <Limit to 3-4 most critical gaps>
 
+**Detailed Skills Comparison:**
+**Skills Found in Resume:** <List ALL technical and soft skills mentioned in resume>
+**Skills Required in JD:** <List ALL skills mentioned in job description>
+**Missing Skills from JD:** <Comprehensive list of ALL skills in JD but not in resume>
+**Additional Skills in Resume:** <Skills in resume not mentioned in JD>
+
 **Score Justification:** <Be generous with transferable skills and learning potential>
 
 ### 🗣 Language Quality Analysis
@@ -1816,6 +1821,12 @@ Follow this exact structure and be **generous while evidence-based**:
 - <Only list keywords that are truly essential and not easily substitutable>
 - <Focus on core concepts rather than specific brand names>
 - <Limit to most important missing terms>
+
+**Detailed Keyword Comparison:**
+**Keywords Found in Resume:** <List ALL industry terms, technologies, tools, methodologies found in resume>
+**Keywords in Job Description:** <List ALL keywords, technologies, tools, methodologies in JD>
+**Missing Keywords from JD:** <Comprehensive list of ALL keywords in JD but not in resume>
+**Additional Keywords in Resume:** <Keywords in resume not mentioned in JD>
 
 **Score Justification:** <Be generous with conceptual matches and equivalent terms>
 
@@ -1888,8 +1899,27 @@ Context for Evaluation:
     missing_keywords_section = extract_section(r"\*\*Missing Critical Keywords:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)
     missing_skills_section = extract_section(r"\*\*Missing Critical Skills:\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
     
-    missing_keywords = re.sub(r'^-\s*', '', missing_keywords_section.strip(), flags=re.MULTILINE).replace('\n', ', ').strip()
-    missing_skills = re.sub(r'^-\s*', '', missing_skills_section.strip(), flags=re.MULTILINE).replace('\n', ', ').strip()
+    # Extract comprehensive missing items
+    missing_keywords_section = extract_section(r"\*\*Missing Keywords from JD:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)
+    missing_skills_section = extract_section(r"\*\*Missing Skills from JD:\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
+    
+    # Extract found items for better analysis
+    found_keywords_section = extract_section(r"\*\*Keywords Found in Resume:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)
+    found_skills_section = extract_section(r"\*\*Skills Found in Resume:\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
+    
+    # Extract JD requirements for comparison
+    jd_keywords_section = extract_section(r"\*\*Keywords in Job Description:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)
+    jd_skills_section = extract_section(r"\*\*Skills Required in JD:\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
+    
+    # Clean and format the extracted content
+    missing_keywords = re.sub(r'^-\s*', '', missing_keywords_section.strip(), flags=re.MULTILINE).replace('\n', ', ').strip() if missing_keywords_section.strip() else "None identified"
+    missing_skills = re.sub(r'^-\s*', '', missing_skills_section.strip(), flags=re.MULTILINE).replace('\n', ', ').strip() if missing_skills_section.strip() else "None identified"
+    
+    found_keywords = re.sub(r'^-\s*', '', found_keywords_section.strip(), flags=re.MULTILINE).replace('\n', ', ').strip() if found_keywords_section.strip() else "None identified"
+    found_skills = re.sub(r'^-\s*', '', found_skills_section.strip(), flags=re.MULTILINE).replace('\n', ', ').strip() if found_skills_section.strip() else "None identified"
+    
+    jd_keywords = re.sub(r'^-\s*', '', jd_keywords_section.strip(), flags=re.MULTILINE).replace('\n', ', ').strip() if jd_keywords_section.strip() else "None identified"
+    jd_skills = re.sub(r'^-\s*', '', jd_skills_section.strip(), flags=re.MULTILINE).replace('\n', ', ').strip() if jd_skills_section.strip() else "None identified"
 
     # Calculate total score with more generous constraints
     total_score = edu_score + exp_score + skills_score + grammar_score + keyword_score
@@ -1943,6 +1973,10 @@ Context for Evaluation:
         "Final Thoughts": final_thoughts,
         "Missing Keywords": missing_keywords,
         "Missing Skills": missing_skills,
+        "Found Keywords": found_keywords,
+        "Found Skills": found_skills,
+        "JD Keywords": jd_keywords,
+        "JD Skills": jd_skills,
         "Resume Domain": resume_domain,
         "Job Domain": job_domain,
         "Domain Penalty": domain_penalty,

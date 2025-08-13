@@ -1654,41 +1654,17 @@ import altair as alt
 import streamlit as st
 from llm_manager import call_llm
 from db_manager import detect_domain_from_title_and_description, get_domain_similarity
-import hashlib
-import json
-from collections import Counter
-from datetime import datetime
 
-# ✅ Cache for consistent LLM responses
-@st.cache_data(ttl=3600)  # Cache for 1 hour
-def cached_llm_call(prompt_hash, prompt, session_id):
-    """Cache LLM responses to ensure consistency for same inputs"""
-    return call_llm(prompt, session=st.session_state)
-
-def get_prompt_hash(text):
-    """Generate hash for caching LLM responses"""
-    return hashlib.md5(text.encode()).hexdigest()
-
-# ✅ Enhanced Grammar evaluation with consistency
+# ✅ Enhanced Grammar evaluation using LLM with suggestions
 def get_grammar_score_with_llm(text, max_score=5):
-    """Enhanced grammar evaluation with caching for consistency"""
-    
-    # Create hash for caching
-    prompt_hash = get_prompt_hash(f"grammar_{text[:500]}")
-    
     grammar_prompt = f"""
 You are a grammar and tone evaluator AI. Analyze the following resume text and:
-
-SCORING GUIDELINES (BE CONSISTENT):
-- Score 5/{max_score}: Excellent grammar, professional tone, clear structure
-- Score 4/{max_score}: Good grammar with minor issues, professional tone
-- Score 3/{max_score}: Average grammar, some clarity issues but readable
-- Score 2/{max_score}: Poor grammar with multiple errors affecting readability
-- Score 1/{max_score}: Very poor grammar, unprofessional, hard to understand
 
 1. Give a grammar score out of {max_score} based on grammar quality, sentence structure, clarity, and tone.
 2. Return a 1-sentence summary of the grammar and tone.
 3. Provide 3 to 5 **specific improvement suggestions** (bullet points) for enhancing grammar, clarity, tone, or structure.
+
+**Be generous in scoring - focus on overall communication effectiveness rather than minor imperfections.**
 
 Return response in the exact format below:
 
@@ -1704,113 +1680,17 @@ Suggestions:
 ---
 """
 
-    try:
-        response = cached_llm_call(prompt_hash, grammar_prompt, st.session_state.get('session_id', 'default'))
-        
-        score_match = re.search(r"Score:\s*(\d+)", response)
-        feedback_match = re.search(r"Feedback:\s*(.+)", response)
-        suggestions = re.findall(r"- (.+)", response)
+    response = call_llm(grammar_prompt, session=st.session_state).strip()
+    score_match = re.search(r"Score:\s*(\d+)", response)
+    feedback_match = re.search(r"Feedback:\s*(.+)", response)
+    suggestions = re.findall(r"- (.+)", response)
 
-        score = int(score_match.group(1)) if score_match else 3
-        # Ensure score is within bounds
-        score = max(1, min(score, max_score))
-        
-        feedback = feedback_match.group(1).strip() if feedback_match else "Grammar appears acceptable."
-        
-        return score, feedback, suggestions
-        
-    except Exception as e:
-        # Fallback scoring
-        return 3, "Grammar evaluated with fallback method.", ["Review for clarity and professional tone"]
+    score = int(score_match.group(1)) if score_match else 4  # Changed from 3 to 4 for more generous default
+    feedback = feedback_match.group(1).strip() if feedback_match else "No grammar feedback provided."
+    return score, feedback, suggestions
 
-# ✅ Domain-aware keyword extraction
-def extract_domain_keywords(job_description, job_domain):
-    """Extract keywords based on job domain for better relevance"""
-    
-    # Domain-specific keyword patterns
-    domain_keywords = {
-        'technology': ['python', 'java', 'javascript', 'react', 'angular', 'node.js', 'sql', 'mongodb', 'aws', 'docker', 'kubernetes', 'git', 'api', 'microservices', 'cloud', 'devops'],
-        'data_science': ['python', 'r', 'sql', 'machine learning', 'deep learning', 'tensorflow', 'pytorch', 'pandas', 'numpy', 'matplotlib', 'tableau', 'power bi', 'statistics', 'analytics'],
-        'marketing': ['seo', 'sem', 'google analytics', 'social media', 'content marketing', 'email marketing', 'crm', 'lead generation', 'conversion', 'roi', 'kpi'],
-        'finance': ['excel', 'financial modeling', 'valuation', 'risk management', 'compliance', 'audit', 'accounting', 'budgeting', 'forecasting', 'investment'],
-        'healthcare': ['hipaa', 'clinical', 'patient care', 'medical records', 'healthcare', 'nursing', 'pharmacy', 'diagnosis', 'treatment'],
-        'sales': ['crm', 'salesforce', 'lead generation', 'pipeline', 'quota', 'b2b', 'b2c', 'negotiation', 'closing', 'prospecting']
-    }
-    
-    # Extract general keywords from job description
-    jd_words = set(re.findall(r'\b[a-zA-Z]{3,}\b', job_description.lower()))
-    
-    # Add domain-specific keywords if they appear in JD
-    domain_specific = domain_keywords.get(job_domain.lower(), [])
-    relevant_domain_keywords = [kw for kw in domain_specific if kw in job_description.lower()]
-    
-    # Combine and prioritize
-    all_keywords = list(jd_words) + relevant_domain_keywords
-    
-    return list(set(all_keywords))  # Remove duplicates
 
-# ✅ Adaptive skills extraction based on domain
-def extract_domain_skills(resume_text, job_description, job_domain):
-    """Extract skills adaptively based on job domain"""
-    
-    # Domain-specific skill categories
-    skill_categories = {
-        'technology': {
-            'programming': ['python', 'java', 'javascript', 'c++', 'c#', 'php', 'ruby', 'go', 'rust', 'swift', 'kotlin'],
-            'web': ['html', 'css', 'react', 'angular', 'vue', 'node.js', 'express', 'django', 'flask', 'spring'],
-            'database': ['sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'elasticsearch', 'oracle', 'sqlite'],
-            'cloud': ['aws', 'azure', 'gcp', 'docker', 'kubernetes', 'terraform', 'jenkins', 'ci/cd'],
-            'tools': ['git', 'jira', 'confluence', 'slack', 'vs code', 'intellij', 'postman']
-        },
-        'data_science': {
-            'programming': ['python', 'r', 'sql', 'scala', 'julia'],
-            'ml_frameworks': ['tensorflow', 'pytorch', 'scikit-learn', 'keras', 'xgboost'],
-            'data_tools': ['pandas', 'numpy', 'matplotlib', 'seaborn', 'plotly', 'tableau', 'power bi'],
-            'big_data': ['spark', 'hadoop', 'kafka', 'airflow', 'databricks'],
-            'cloud': ['aws', 'azure', 'gcp', 'sagemaker', 'dataflow']
-        },
-        'marketing': {
-            'digital': ['seo', 'sem', 'google ads', 'facebook ads', 'linkedin ads'],
-            'analytics': ['google analytics', 'adobe analytics', 'mixpanel', 'hotjar'],
-            'tools': ['hubspot', 'marketo', 'mailchimp', 'hootsuite', 'buffer'],
-            'content': ['wordpress', 'canva', 'photoshop', 'video editing']
-        },
-        'finance': {
-            'software': ['excel', 'bloomberg', 'reuters', 'quickbooks', 'sap'],
-            'analysis': ['financial modeling', 'valuation', 'risk analysis', 'forecasting'],
-            'compliance': ['sox', 'gaap', 'ifrs', 'basel', 'mifid']
-        }
-    }
-    
-    # Get relevant skill categories for the domain
-    domain_skills = skill_categories.get(job_domain.lower(), skill_categories['technology'])
-    
-    # Extract skills from resume
-    resume_lower = resume_text.lower()
-    jd_lower = job_description.lower()
-    
-    found_skills = []
-    required_skills = []
-    
-    # Check each category
-    for category, skills in domain_skills.items():
-        for skill in skills:
-            if skill in resume_lower:
-                found_skills.append(skill)
-            if skill in jd_lower:
-                required_skills.append(skill)
-    
-    # Add soft skills (universal)
-    soft_skills = ['leadership', 'communication', 'teamwork', 'problem solving', 'project management', 'analytical', 'creative']
-    for skill in soft_skills:
-        if skill in resume_lower:
-            found_skills.append(skill)
-        if skill in jd_lower:
-            required_skills.append(skill)
-    
-    return found_skills, required_skills
-
-# ✅ Main ATS Evaluation Function - IMPROVED with Smart LLM
+# ✅ Main ATS Evaluation Function
 def ats_percentage_score(
     resume_text,
     job_description,
@@ -1822,128 +1702,164 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    """Improved ATS scoring with smart LLM integration and domain awareness"""
-    
-    # Get consistent grammar score
     grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(resume_text, max_score=lang_weight)
-    
-    # Domain analysis
+
     resume_domain = detect_domain_from_title_and_description("Unknown", resume_text)
     job_domain = detect_domain_from_title_and_description(job_title, job_description)
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
-    # Reduced domain penalty (less harsh)
-    MAX_DOMAIN_PENALTY = 10  # Reduced from 15
+    MAX_DOMAIN_PENALTY = 8  # Reduced from 15 to 8 for less harsh domain penalties
     domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
-
-    # Extract domain-aware keywords and skills
-    domain_keywords = extract_domain_keywords(job_description, job_domain)
-    found_skills, required_skills = extract_domain_skills(resume_text, job_description, job_domain)
 
     logic_score_note = (
         f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
         if logic_profile_score else ""
     )
 
-    # Enhanced prompt with domain context and scoring guidelines
     prompt = f"""
-You are an AI-powered ATS evaluator with domain expertise. Assess the candidate's resume against the job description with the following context:
+You are a professional ATS evaluator with expertise in talent assessment. Your role is to provide **balanced, fair scoring** that recognizes potential and transferable skills while maintaining professional standards. **Be generous where appropriate and focus on candidate strengths.**
 
-**DOMAIN CONTEXT:**
-- Resume Domain: {resume_domain}
-- Job Domain: {job_domain}
-- Domain Similarity: {similarity_score:.2f}
-- Domain-Specific Keywords Available: {', '.join(domain_keywords[:10])}
-- Skills Found in Resume: {', '.join(found_skills[:10])}
-- Skills Required by Job: {', '.join(required_skills[:10])}
+🎯 **CRITICAL SCORING GUIDELINES - BALANCED APPROACH:**
 
-**SCORING GUIDELINES (BE CONSISTENT AND FAIR):**
+**Education Scoring Framework ({edu_weight} points max):**
+- 16-{edu_weight}: Strong alignment (relevant degree OR strong certifications OR equivalent experience)
+- 12-15: Good match (related field OR relevant coursework/training OR self-taught with evidence)
+- 8-11: Adequate (transferable education OR some relevant background OR strong practical experience)
+- 4-7: Partial fit (some educational foundation OR significant practical learning)
+- 0-3: Major mismatch (no relevant education AND no compensating factors)
 
-Education ({edu_weight} points):
-- Perfect match (20): Advanced degree in exact field
-- Excellent (16-19): Relevant degree with good alignment  
-- Good (12-15): Related degree or strong certifications
-- Average (8-11): Basic degree or some relevant education
-- Poor (0-7): No relevant education mentioned
+**Experience Scoring Framework ({exp_weight} points max):**
+- 28-{exp_weight}: Exceptional (meets/exceeds requirements + strong domain fit + clear achievements)
+- 22-27: Strong (adequate years + good domain fit OR excellent skills with less experience)
+- 16-21: Good (reasonable experience + relevant domain OR strong transferable skills)
+- 10-15: Fair (some experience gaps BUT compensated by other strengths)
+- 5-9: Below expectations (significant gaps with limited compensation)
+- 0-4: Poor fit (major deficiencies across multiple areas)
 
-Experience ({exp_weight} points):
-- Excellent (28-35): 5+ years, highly relevant roles, clear progression
-- Good (21-27): 3-5 years, relevant experience, some leadership
-- Average (14-20): 1-3 years, some relevant experience
-- Entry Level (7-13): <1 year or internships, but relevant
-- Poor (0-6): No relevant experience
+**Skills Scoring Framework ({skills_weight} points max):**
+- 24-{skills_weight}: Outstanding (70%+ required skills + good proficiency + willingness to learn)
+- 18-23: Very good (60%+ required skills + decent proficiency OR strong foundational skills)
+- 12-17: Adequate (50%+ required skills + basic proficiency OR strong transferable skills)
+- 6-11: Developing (30-50% skills + some proficiency OR good learning potential)
+- 3-5: Needs development (20-30% skills BUT shows learning ability)
+- 0-2: Major gaps (<20% skills with no evidence of learning capacity)
 
-Skills ({skills_weight} points):
-- Excellent (24-30): 80%+ required skills, advanced proficiency
-- Good (18-23): 60-79% required skills, good proficiency  
-- Average (12-17): 40-59% required skills, basic proficiency
-- Poor (6-11): 20-39% required skills
-- Very Poor (0-5): <20% required skills
-
-Keywords ({keyword_weight} points):
-- Excellent (8-10): 80%+ domain keywords present
-- Good (6-7): 60-79% domain keywords present
-- Average (4-5): 40-59% domain keywords present  
-- Poor (0-3): <40% domain keywords present
-
-**IMPORTANT INSTRUCTIONS:**
-1. Use the provided grammar score: {grammar_score}/{lang_weight}
-2. Be consistent with scoring guidelines above
-3. Focus on domain-relevant skills and keywords
-4. Provide specific, actionable feedback
-5. Extract missing items from job description only
-
-Return a detailed, **section-by-section analysis** following the format precisely:
+**Keyword Scoring Framework ({keyword_weight} points max):**
+- 8-{keyword_weight}: Excellent keyword optimization (70%+ critical terms present OR strong conceptual alignment)
+- 6-7: Good coverage (60-70% critical terms OR good industry understanding)
+- 4-5: Adequate (40-60% critical terms OR relevant experience described differently)
+- 2-3: Needs improvement (25-40% critical terms OR some relevant concepts)
+- 1: Limited coverage (15-25% critical terms)
+- 0: Very poor (<15% critical terms AND no conceptual alignment)
 
 ---
+
+**EVALUATION INSTRUCTIONS:**
+
+Follow this exact structure and be **generous while evidence-based**:
 
 ### 🏷️ Candidate Name
-<Extract full name or "Not Found">
+<Extract full name clearly - check resume header, contact section, or first few lines>
 
 ### 🏫 Education Analysis
-**Score:** <0–{edu_weight}> / {edu_weight}  
-**Analysis:** <Evaluate degree level, field relevance, certifications. Consider {job_domain} domain requirements.>
+**Score:** <0–{edu_weight}> / {edu_weight}
 
-### 💼 Experience Analysis
-**Score:** <0–{exp_weight}> / {exp_weight}  
-**Experience Details:** <Analyze years, role progression, domain relevance to {job_domain}. Mention specific achievements and impact.>
+**Scoring Rationale:**
+- Degree Level & Relevance: <Focus on how education supports the role, including transferable knowledge>
+- Institution Quality: <Be fair - most institutions provide solid education>
+- Recency: <Consider continuous learning and practical application over graduation date>
+- Additional Credentials: <Give credit for all forms of learning - certifications, bootcamps, self-study>
+- **Score Justification:** <Emphasize strengths and potential, acknowledge any gaps fairly>
+
+### 💼 Experience Analysis  
+**Score:** <0–{exp_weight}> / {exp_weight}
+
+**Experience Breakdown:**
+- Total Years: <X years - consider quality over pure quantity>
+- Role Progression: <Look for growth and learning, not just linear advancement>
+- Domain Relevance: <Credit transferable skills and adjacent experience>
+- Leadership Evidence: <Include informal leadership, mentoring, project ownership>
+- Quantified Achievements: <Give credit for any measurable impact, however small>
+- Technology/Tools Usage: <Acknowledge all relevant technical experience>
+- **Score Justification:** <Focus on potential and transferable value, be generous with adjacent experience>
 
 ### 🛠 Skills Analysis
-**Score:** <0–{skills_weight}> / {skills_weight}  
-**Current Skills:** {', '.join(found_skills[:15])}
-**Required Skills:** {', '.join(required_skills[:15])}
-**Skill Match Analysis:** <Evaluate skill alignment with {job_domain} requirements>
+**Score:** <0–{skills_weight}> / {skills_weight}
 
-**Missing Skills:**  
-- <List 3-5 specific skills from job description not found in resume>
+**Skills Assessment:**
+- Technical Skills Present: <Credit all relevant skills, including foundational ones>
+- Soft Skills Demonstrated: <Look for evidence in experience descriptions>
+- Domain-Specific Expertise: <Include adjacent and transferable expertise>
+- Skill Currency: <Consider learning ability and adaptability>
+
+**Missing Critical Skills:**
+- <Only list truly essential skills that cannot be quickly learned>
+- <Focus on hard requirements, not nice-to-haves>
+- <Limit to 3-4 most critical gaps>
+
+**Score Justification:** <Be generous with transferable skills and learning potential>
 
 ### 🗣 Language Quality Analysis
-**Score:** {grammar_score} / {lang_weight}  
-**Grammar & Tone:** <Use provided grammar feedback: {grammar_feedback}>
+**Score:** {grammar_score} / {lang_weight}
+**Grammar & Professional Tone:** {grammar_feedback}
+**Assessment:** <Focus on overall communication effectiveness, be forgiving of minor issues>
 
 ### 🔑 Keyword Analysis
-**Score:** <0–{keyword_weight}> / {keyword_weight}  
-**Domain Keywords Found:** <List relevant {job_domain} keywords found>
-**Missing Keywords:**  
-- <List 3-5 important keywords from job description not in resume>
+**Score:** <0–{keyword_weight}> / {keyword_weight}
 
-### ✅ Final Thoughts
-<Provide balanced assessment considering {job_domain} requirements, domain similarity ({similarity_score:.2f}), and overall fit.>
+**Keyword Assessment:**
+- Industry Terminology: <Credit conceptual understanding even if exact terms differ>
+- Role-Specific Terms: <Look for equivalent expressions and related concepts>
+- Technical Vocabulary: <Include similar tools and technologies>
+
+**Missing Critical Keywords:**
+- <Only list keywords that are truly essential and not easily substitutable>
+- <Focus on core concepts rather than specific brand names>
+- <Limit to most important missing terms>
+
+**Score Justification:** <Be generous with conceptual matches and equivalent terms>
+
+### ✅ Final Assessment
+
+**Overall Evaluation:**
+<4-6 sentences covering:>
+- Primary strengths and potential that make this candidate worth considering
+- Any significant gaps that need addressing (focus on learnable vs. fundamental issues)
+- Positive indicators of cultural fit and growth potential
+- Strong recommendation for interview progression unless major red flags exist
+
+**Areas for Development:** <Frame gaps as growth opportunities rather than failures>
+**Key Strengths:** <Highlight unique value propositions and competitive advantages>
 
 ---
 
-📄 Job Description:
-\"\"\"{job_description}\"\"\"  
+**IMPORTANT REMINDERS:**
+- **Be generous and focus on potential** - look for reasons to advance candidates
+- Give credit for transferable skills and adjacent experience
+- Consider learning ability and growth mindset indicators
+- Balance thoroughness with fairness
+- Only flag truly critical gaps, not nice-to-have skills
+- **Default to giving candidates the benefit of the doubt**
 
-📄 Resume:
-\"\"\"{resume_text}\"\"\"  
+Context for Evaluation:
+- Grammar Score: {grammar_score} / {lang_weight}
+- Grammar Feedback: {grammar_feedback}  
+- Resume Domain: {resume_domain}
+- Job Domain: {job_domain}
+- Domain Mismatch Penalty: {domain_penalty} points (similarity: {similarity_score:.2f})
+
+---
+
+📄 **Job Description:**
+{job_description}
+
+📄 **Resume Text:**
+{resume_text}
 
 {logic_score_note}
 """
 
-    # Use cached LLM call for consistency
-    prompt_hash = get_prompt_hash(prompt)
-    ats_result = cached_llm_call(prompt_hash, prompt, st.session_state.get('session_id', 'default'))
+    ats_result = call_llm(prompt, session=st.session_state).strip()
 
     def extract_section(pattern, text, default="N/A"):
         match = re.search(pattern, text, re.DOTALL)
@@ -1951,44 +1867,45 @@ Return a detailed, **section-by-section analysis** following the format precisel
 
     def extract_score(pattern, text, default=0):
         match = re.search(pattern, text)
-        if match:
-            score = int(match.group(1))
-            return score
-        return default
+        return int(match.group(1)) if match else default
 
-    # Extract sections
+    # Extract key sections
     candidate_name = extract_section(r"### 🏷️ Candidate Name(.*?)###", ats_result, "Not Found")
     edu_analysis = extract_section(r"### 🏫 Education Analysis(.*?)###", ats_result)
     exp_analysis = extract_section(r"### 💼 Experience Analysis(.*?)###", ats_result)
     skills_analysis = extract_section(r"### 🛠 Skills Analysis(.*?)###", ats_result)
     lang_analysis = extract_section(r"### 🗣 Language Quality Analysis(.*?)###", ats_result)
     keyword_analysis = extract_section(r"### 🔑 Keyword Analysis(.*?)###", ats_result)
-    final_thoughts = extract_section(r"### ✅ Final Thoughts(.*)", ats_result)
+    final_thoughts = extract_section(r"### ✅ Final Assessment(.*)", ats_result)
 
-    # Extract scores with validation
-    edu_score = min(max(extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis), 0), edu_weight)
-    exp_score = min(max(extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis), 0), exp_weight)
-    skills_score = min(max(extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis), 0), skills_weight)
-    keyword_score = min(max(extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis), 0), keyword_weight)
+    # Extract scores with improved patterns
+    edu_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis)
+    exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)  
+    skills_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
+    keyword_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis)
 
-    # Extract missing items
-    missing_keywords = extract_section(r"\*\*Missing Keywords:\*\*(.*?)(?:###|\Z)", keyword_analysis).replace("-", "").strip().replace("\n", ", ")
-    missing_skills = extract_section(r"\*\*Missing Skills:\*\*(.*?)(?:###|\Z)", skills_analysis).replace("-", "").strip().replace("\n", ", ")
+    # Extract missing items with better parsing
+    missing_keywords_section = extract_section(r"\*\*Missing Critical Keywords:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)
+    missing_skills_section = extract_section(r"\*\*Missing Critical Skills:\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
+    
+    missing_keywords = re.sub(r'^-\s*', '', missing_keywords_section.strip(), flags=re.MULTILINE).replace('\n', ', ').strip()
+    missing_skills = re.sub(r'^-\s*', '', missing_skills_section.strip(), flags=re.MULTILINE).replace('\n', ', ').strip()
 
-    # Calculate total with bounds checking
+    # Calculate total score with more generous constraints
     total_score = edu_score + exp_score + skills_score + grammar_score + keyword_score
     total_score = max(total_score - domain_penalty, 0)
     total_score = min(total_score, 100)
 
-    # More balanced score categories
+    # More generous score formatting with lower thresholds
     formatted_score = (
-        "🌟 Excellent" if total_score >= 80 else  # Reduced from 85
-        "✅ Good" if total_score >= 65 else       # Reduced from 70
-        "⚠️ Average" if total_score >= 45 else   # Reduced from 50
-        "❌ Poor"
+        "🌟 Exceptional Match" if total_score >= 85 else  # Reduced from 90
+        "✅ Strong Match" if total_score >= 70 else        # Reduced from 75
+        "🟡 Good Potential" if total_score >= 55 else     # Reduced from 60
+        "⚠️ Fair Match" if total_score >= 40 else         # Reduced from 45
+        "❌ Poor Match"
     )
 
-    # Format suggestions
+    # ✅ Format suggestions nicely
     suggestions_html = ""
     if grammar_suggestions:
         suggestions_html = "<ul>" + "".join([f"<li>{s}</li>" for s in grammar_suggestions]) + "</ul>"
@@ -1996,10 +1913,18 @@ Return a detailed, **section-by-section analysis** following the format precisel
     updated_lang_analysis = f"""
 {lang_analysis}
 <br><b>LLM Feedback Summary:</b> {grammar_feedback}
-<br><b>Suggestions to Improve:</b> {suggestions_html}
+<br><b>Improvement Suggestions:</b> {suggestions_html}
 """
 
-    final_thoughts += f"\n\n📉 Domain Similarity Score: {similarity_score:.2f}\n🔻 Domain Penalty Applied: {domain_penalty} / {MAX_DOMAIN_PENALTY}"
+    # Enhanced final thoughts with domain analysis
+    final_thoughts += f"""
+
+**📊 Technical Assessment Details:**
+- Domain Similarity Score: {similarity_score:.2f}/1.0  
+- Domain Penalty Applied: {domain_penalty}/{MAX_DOMAIN_PENALTY} points
+- Resume Domain: {resume_domain}
+- Target Job Domain: {job_domain}
+"""
 
     return ats_result, {
         "Candidate Name": candidate_name,
@@ -2021,9 +1946,7 @@ Return a detailed, **section-by-section analysis** following the format precisel
         "Resume Domain": resume_domain,
         "Job Domain": job_domain,
         "Domain Penalty": domain_penalty,
-        "Domain Similarity Score": similarity_score,
-        "Found Skills": ', '.join(found_skills[:10]),
-        "Required Skills": ', '.join(required_skills[:10])
+        "Domain Similarity Score": similarity_score
     }
 # Setup Vector DB
 def setup_vectorstore(documents):

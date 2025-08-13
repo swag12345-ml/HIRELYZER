@@ -1813,6 +1813,8 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - <Skill 1 - frame as development opportunity>
 - <Skill 2 - suggest how existing skills could transfer>  
 - <Skill 3 - note if easily learnable>
+- <Skill 4 - additional growth areas>
+- <Skill 5 - more opportunities if applicable>
 
 **Score Justification:** <Focus on existing strengths + learning potential>
 
@@ -1833,6 +1835,8 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - <Keyword 1 - suggest how to incorporate>
 - <Keyword 2 - note if concept is present but not explicitly stated>
 - <Keyword 3 - frame as resume optimization opportunity>
+- <Keyword 4 - additional opportunities>
+- <Keyword 5 - more suggestions if applicable>
 
 **Score Justification:** <Credit understanding of concepts even if terminology differs>
 
@@ -1858,6 +1862,8 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - Credit all forms of learning and skill development
 - Be constructive in feedback - focus on opportunities
 - Recognize that great employees come from varied backgrounds
+- LIST ALL missing skills and keywords comprehensively (aim for 5-8 items each if gaps exist)
+- Be thorough in identifying development opportunities from the job description
 
 Context for Evaluation:
 - Grammar Score: {grammar_score} / {lang_weight}
@@ -1918,8 +1924,32 @@ Context for Evaluation:
     if not missing_skills_section.strip():
         missing_skills_section = extract_section(r"\*\*Missing Critical Skills:\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
     
-    missing_keywords = re.sub(r'^-\s*', '', missing_keywords_section.strip(), flags=re.MULTILINE).replace('\n', ', ').strip()
-    missing_skills = re.sub(r'^-\s*', '', missing_skills_section.strip(), flags=re.MULTILINE).replace('\n', ', ').strip()
+    # Improved extraction - handle multiple formats and get all items
+    def extract_list_items(text):
+        if not text.strip():
+            return "None identified"
+        
+        # Find all bullet points with various formats
+        items = []
+        lines = text.strip().split('\n')
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Remove various bullet point formats
+            cleaned_line = re.sub(r'^[-•*]\s*', '', line)  # Remove -, •, * bullets
+            cleaned_line = re.sub(r'^\d+\.\s*', '', cleaned_line)  # Remove numbered lists
+            cleaned_line = cleaned_line.strip()
+            
+            if cleaned_line and len(cleaned_line) > 2:  # Avoid empty or very short items
+                items.append(cleaned_line)
+        
+        return ', '.join(items) if items else "None identified"
+    
+    missing_keywords = extract_list_items(missing_keywords_section)
+    missing_skills = extract_list_items(missing_skills_section)
 
     # ✅ IMPROVED: More balanced total score calculation
     total_score = edu_score + exp_score + skills_score + grammar_score + keyword_score

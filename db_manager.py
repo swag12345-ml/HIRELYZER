@@ -954,26 +954,23 @@ class DatabaseManager:
             return pd.DataFrame()
 
     def get_daily_ats_stats(self, days_limit: int = 90) -> pd.DataFrame:
-    """ATS score trend over time with limit"""
-    try:
-        # Using f-string for cleaner formatting and avoiding .format() issues
-        query = f"""
-            SELECT DATE(timestamp) AS date, 
-                   ROUND(AVG(ats_score), 2) AS avg_ats,
-                   COUNT(*) AS daily_count
-            FROM candidates
-            WHERE DATE(timestamp) >= DATE('now', '-{days_limit} days')
-            GROUP BY DATE(timestamp)
-            ORDER BY DATE(timestamp)
-        """
-        
-        with self.get_connection() as conn:
-            return pd.read_sql_query(query, conn)
-
-    except Exception as e:
-        logger.error(f"Error getting daily ATS stats: {e}")
-        return pd.DataFrame()
-
+        """ATS score trend over time with limit"""
+        try:
+            query = """
+                SELECT DATE(timestamp) AS date, 
+                       ROUND(AVG(ats_score), 2) AS avg_ats,
+                       COUNT(*) as daily_count
+                FROM candidates
+                WHERE DATE(timestamp) >= DATE('now', '-{} days')
+                GROUP BY DATE(timestamp)
+                ORDER BY DATE(timestamp)
+            """.format(days_limit)
+            
+            with self.get_connection() as conn:
+                return pd.read_sql_query(query, conn)
+        except Exception as e:
+            logger.error(f"Error getting daily ATS stats: {e}")
+            return pd.DataFrame()
 
     def get_flagged_candidates(self, threshold: float = 0.6) -> pd.DataFrame:
         """Get all flagged candidates with validation"""
@@ -1185,4 +1182,3 @@ if __name__ == "__main__":
     print("Database Manager initialized successfully!")
     stats = get_database_stats()
     print(f"Database Statistics: {stats}")
-

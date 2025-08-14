@@ -3721,35 +3721,25 @@ html_content = f"""
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             line-height: 1.6;
             color: #1a202c;
-            background: #ffffff; /* Removed purple gradient */
+            background: #ffffff;
             min-height: 100vh;
-            padding: 40px 20px;
         }}
         
         .resume-container {{
-            max-width: 1200px;
-            margin: 0 auto;
+            width: 100%;
+            min-height: 100vh;
             background: #ffffff;
-            border-radius: 20px;
-            box-shadow: 
-                0 25px 50px rgba(0, 0, 0, 0.15),
-                0 10px 25px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            position: relative;
         }}
         
         .resume-container::before {{
             content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
+            display: block;
             height: 6px;
-            background: #667eea; /* Optional: Keep a small accent bar */
+            background: #667eea;
         }}
         
         .header-section {{
-            background: #f8fafc; /* Removed gradient, kept clean light tone */
+            background: #f8fafc;
             padding: 40px;
             display: flex;
             justify-content: space-between;
@@ -3787,7 +3777,7 @@ html_content = f"""
         
         .sidebar {{
             width: 350px;
-            background: #f7fafc; /* Removed gradient */
+            background: #f7fafc;
             padding: 40px 30px;
             border-right: 1px solid #e2e8f0;
         }}
@@ -3859,7 +3849,6 @@ html_content = f"""
             padding: 25px;
             border-radius: 12px;
             border-left: 4px solid #667eea;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
         }}
         
         @media (max-width: 768px) {{
@@ -3886,10 +3875,6 @@ html_content = f"""
         }}
         
         @media (max-width: 480px) {{
-            body {{
-                padding: 20px 10px;
-            }}
-            
             .header-section, .sidebar, .main-section {{
                 padding: 20px;
             }}
@@ -3911,7 +3896,6 @@ html_content = f"""
         <div class="main-content">
             <div class="sidebar">
                 <div class="contact-info">
-                    <!-- Contact Info -->
                     <div class="contact-item">
                         <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
@@ -4000,6 +3984,7 @@ html_content = f"""
 </body>
 </html>
 """
+
 
 
 from io import BytesIO

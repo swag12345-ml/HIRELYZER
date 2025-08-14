@@ -3585,8 +3585,7 @@ if st.session_state.certificate_links:
         '></div>
         Certificates
     </h4>
-    <hr style='margin-bottom: 20px; border: none; height: 2px; background: linear-gradient(90deg, #059669, #10b981, #34d399);'>
-    """
+    """  # Removed the <hr> line here
     for cert in st.session_state.certificate_links:
         if cert["name"] and cert["link"]:
             description = cert.get('description', '').replace('\n', '<br>')
@@ -3703,6 +3702,7 @@ if st.session_state.certificate_links:
             </div>
             """
             certificate_links_html += card_html
+
 
 # Enhanced HTML Content with modern CSS
 html_content = f"""

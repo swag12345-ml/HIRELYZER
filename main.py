@@ -1696,6 +1696,73 @@ Suggestions:
     return score, feedback, suggestions
 
 
+# ✅ Enhanced name extraction function
+def extract_candidate_name(resume_text):
+    """Extract candidate name from resume text using multiple strategies"""
+    
+    # Strategy 1: Look for common name patterns at the beginning
+    lines = resume_text.strip().split('\n')
+    first_few_lines = lines[:5]  # Check first 5 lines
+    
+    for line in first_few_lines:
+        line = line.strip()
+        if not line:
+            continue
+            
+        # Remove common prefixes and clean the line
+        cleaned_line = re.sub(r'^(Name:|Full Name:|Candidate:|Resume of|CV of)\s*', '', line, flags=re.IGNORECASE)
+        cleaned_line = re.sub(r'[^\w\s\.]', ' ', cleaned_line)  # Remove special chars except dots
+        cleaned_line = ' '.join(cleaned_line.split())  # Normalize whitespace
+        
+        # Check if it looks like a name (2-4 words, proper case, no numbers)
+        words = cleaned_line.split()
+        if (2 <= len(words) <= 4 and 
+            all(word.replace('.', '').isalpha() for word in words) and
+            all(len(word) >= 2 for word in words) and
+            any(word[0].isupper() for word in words)):
+            return cleaned_line
+    
+    # Strategy 2: Look for email and extract name from it
+    email_match = re.search(r'([a-zA-Z0-9._%+-]+)@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', resume_text)
+    if email_match:
+        email_prefix = email_match.group(1)
+        # Try to convert email prefix to name
+        name_parts = re.split(r'[._-]', email_prefix)
+        if len(name_parts) >= 2:
+            name = ' '.join(part.capitalize() for part in name_parts[:2] if part.isalpha())
+            if len(name) > 3:
+                return name
+    
+    # Strategy 3: Look for phone number context
+    phone_context = re.search(r'([A-Z][a-z]+ [A-Z][a-z]+).*?[\d\s\-\(\)]{10,}', resume_text)
+    if phone_context:
+        potential_name = phone_context.group(1).strip()
+        words = potential_name.split()
+        if len(words) == 2 and all(word.isalpha() and len(word) >= 2 for word in words):
+            return potential_name
+    
+    # Strategy 4: Look for common resume headers
+    header_patterns = [
+        r'(?:^|\n)\s*([A-Z][a-z]+ [A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s*(?:\n|$)',
+        r'([A-Z][A-Z\s]+)\s*\n.*?(?:email|phone|address)',
+    ]
+    
+    for pattern in header_patterns:
+        match = re.search(pattern, resume_text, re.MULTILINE | re.IGNORECASE)
+        if match:
+            potential_name = match.group(1).strip()
+            # Convert all caps to proper case
+            if potential_name.isupper():
+                potential_name = ' '.join(word.capitalize() for word in potential_name.split())
+            
+            words = potential_name.split()
+            if (2 <= len(words) <= 3 and 
+                all(word.isalpha() and len(word) >= 2 for word in words)):
+                return potential_name
+    
+    return "Name Not Found"
+
+
 # ✅ Main ATS Evaluation Function
 def ats_percentage_score(
     resume_text,
@@ -1715,13 +1782,16 @@ def ats_percentage_score(
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
     # ✅ REDUCED domain penalty for more balanced scoring
-    MAX_DOMAIN_PENALTY = 8  # Reduced from 15 to 8
+    MAX_DOMAIN_PENALTY = 15  # Reduced from 15 to 8
     domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
 
     logic_score_note = (
         f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
         if logic_profile_score else ""
     )
+
+    # ✅ Extract candidate name before LLM call
+    extracted_name = extract_candidate_name(resume_text)
 
     prompt = f"""
 You are a professional ATS evaluator with expertise in talent assessment. Your role is to provide **balanced, objective scoring** that reflects industry standards and recognizes candidate potential while maintaining professional standards.
@@ -1773,7 +1843,7 @@ You are a professional ATS evaluator with expertise in talent assessment. Your r
 Follow this exact structure and be **specific with evidence while highlighting strengths**:
 
 ### 🏷️ Candidate Name
-<Extract full name clearly - check resume header, contact section, or first few lines>
+{extracted_name}
 
 ### 🏫 Education Analysis
 **Score:** <0–{edu_weight}> / {edu_weight}
@@ -1904,8 +1974,8 @@ Context for Evaluation:
         match = re.search(pattern, text)
         return int(match.group(1)) if match else default
 
-    # Extract key sections
-    candidate_name = extract_section(r"### 🏷️ Candidate Name(.*?)###", ats_result, "Not Found")
+    # Extract key sections - Fixed candidate name extraction
+    candidate_name = extracted_name  # Use the pre-extracted name instead of parsing from LLM response
     edu_analysis = extract_section(r"### 🏫 Education Analysis(.*?)###", ats_result)
     exp_analysis = extract_section(r"### 💼 Experience Analysis(.*?)###", ats_result)
     skills_analysis = extract_section(r"### 🛠 Skills Analysis(.*?)###", ats_result)
@@ -1970,7 +2040,7 @@ Context for Evaluation:
     
     # ✅ IMPROVED: More generous score caps and bonus for well-rounded candidates
     if all(score >= weight * 0.6 for score, weight in [(edu_score, edu_weight), (exp_score, exp_weight), (skills_score, skills_weight)]):
-        total_score += 3  # Bonus for well-rounded candidates
+        total_score += 3  
     
     total_score = min(total_score, 100)
     total_score = max(total_score, 15)  # Minimum score of 15 to avoid completely crushing candidates

@@ -3721,7 +3721,7 @@ html_content = f"""
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             line-height: 1.6;
             color: #1a202c;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #ffffff; /* Removed purple gradient */
             min-height: 100vh;
             padding: 40px 20px;
         }}
@@ -3745,11 +3745,11 @@ html_content = f"""
             left: 0;
             right: 0;
             height: 6px;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+            background: #667eea; /* Optional: Keep a small accent bar */
         }}
         
         .header-section {{
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            background: #f8fafc; /* Removed gradient, kept clean light tone */
             padding: 40px;
             display: flex;
             justify-content: space-between;
@@ -3766,10 +3766,6 @@ html_content = f"""
             font-weight: 800;
             color: #1a202c;
             margin-bottom: 8px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
         }}
         
         .name-title h2 {{
@@ -3791,7 +3787,7 @@ html_content = f"""
         
         .sidebar {{
             width: 350px;
-            background: linear-gradient(180deg, #f7fafc 0%, #edf2f7 100%);
+            background: #f7fafc; /* Removed gradient */
             padding: 40px 30px;
             border-right: 1px solid #e2e8f0;
         }}
@@ -3846,7 +3842,7 @@ html_content = f"""
             content: '';
             flex: 1;
             height: 3px;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            background: #667eea;
             margin-left: 15px;
             border-radius: 2px;
         }}
@@ -3859,7 +3855,7 @@ html_content = f"""
             font-size: 16px;
             line-height: 1.8;
             color: #4a5568;
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            background: #f8fafc;
             padding: 25px;
             border-radius: 12px;
             border-left: 4px solid #667eea;
@@ -3915,6 +3911,7 @@ html_content = f"""
         <div class="main-content">
             <div class="sidebar">
                 <div class="contact-info">
+                    <!-- Contact Info -->
                     <div class="contact-item">
                         <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
@@ -4003,6 +4000,7 @@ html_content = f"""
 </body>
 </html>
 """
+
 
 from io import BytesIO
 

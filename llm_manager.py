@@ -11,7 +11,7 @@ DB_FILE = os.path.join(WORKING_DIR, "llm_data.sqlite")
 CACHE_EXPIRY_HOURS = 24
 FAILURE_COOLDOWN_MINUTES = 5
 QUOTA_COOLDOWN_MINUTES = 60
-DAILY_KEY_LIMIT = 14400
+DAILY_KEY_LIMIT = 800
 DEAD_KEY_REMOVE_DAYS = 3  # auto-remove permanently dead keys after X days
 
 # ---- DB Init ----
@@ -199,5 +199,6 @@ def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=
                 last_error = e
 
     return f"LLM unavailable: {last_error}"
+
 
 

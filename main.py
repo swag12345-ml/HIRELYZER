@@ -4577,7 +4577,7 @@ with tab5:
             fig = make_subplots(
                 rows=2, cols=1,
                 subplot_titles=('Daily Upload Count with Moving Averages', 'Daily Average ATS Score Trend'),
-                vertical_spacing=0.15,
+                vertical_spacing=0.25,
                 specs=[[{"secondary_y": False}], [{"secondary_y": False}]]
             )
             
@@ -4629,20 +4629,20 @@ with tab5:
                     xanchor="right",
                     x=1
                 ),
-                margin=dict(t=80, b=50, l=50, r=50)
+                margin=dict(t=80, b=70, l=50, r=50)
             )
             
             # Update x-axes for proper date formatting and spacing
             fig.update_xaxes(title_text="Date", row=2, col=1)
             fig.update_xaxes(
                 tickformat="%Y-%m-%d",
-                tickangle=45,
+                tickangle=30,
                 dtick="D1" if len(df_timeline) <= 30 else "D7",
                 row=1, col=1
             )
             fig.update_xaxes(
                 tickformat="%Y-%m-%d",
-                tickangle=45,
+                tickangle=30,
                 dtick="D1" if len(df_daily_ats) <= 30 else "D7",
                 row=2, col=1
             )

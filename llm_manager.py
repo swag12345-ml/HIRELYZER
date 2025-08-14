@@ -122,11 +122,9 @@ def clear_key_failure(api_key):
 def get_healthy_keys(api_keys, session=None):
     now = datetime.utcnow()
     healthy = []
-    bad_in_session = session.get("bad_keys", set()) if session else set()
     with sqlite3.connect(DB_FILE, check_same_thread=False) as conn:
         for key in api_keys:
-            if key in bad_in_session:
-                continue
+            # Always check DB cooldown, not just session
             row = conn.execute("SELECT fail_time, reason FROM key_failures WHERE api_key = ?", (key,)).fetchone()
             if row:
                 fail_time, reason = row
@@ -143,6 +141,7 @@ def get_healthy_keys(api_keys, session=None):
                     mark_key_failure(key, "quota")
                     continue
             healthy.append(key)
+    random.shuffle(healthy)
     return healthy
 
 # ---- LLM Call ----
@@ -152,15 +151,13 @@ def try_call_llm(prompt, api_key, model, temperature):
 
 # ---- Main ----
 def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=0):
-    cleanup_cache()  # auto-clean on each call
+    cleanup_cache()
     cached = get_cached_response(prompt, model)
     if cached:
         return cached
 
     if "key_index" not in session:
         session["key_index"] = 0
-    if "bad_keys" not in session:
-        session["bad_keys"] = set()
 
     user_key = session.get("user_groq_key", "").strip() if isinstance(session.get("user_groq_key"), str) else ""
     last_error = None
@@ -175,15 +172,15 @@ def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=
         except Exception as e:
             reason = "quota" if any(w in str(e).lower() for w in ["quota", "rate limit", "429"]) else "error"
             mark_key_failure(user_key, reason)
-            session["bad_keys"].add(user_key)
             last_error = e
 
     # Try admin keys
     admin_keys = get_healthy_keys(load_groq_api_keys(), session)
     if admin_keys:
-        start = session["key_index"]
-        for i in range(len(admin_keys)):
-            idx = (start + i) % len(admin_keys)
+        # Rotate fairly
+        start_index = session["key_index"] % len(admin_keys)
+        for offset in range(len(admin_keys)):
+            idx = (start_index + offset) % len(admin_keys)
             key = admin_keys[idx]
             try:
                 response = try_call_llm(prompt, key, model, temperature)
@@ -195,7 +192,6 @@ def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=
             except Exception as e:
                 reason = "quota" if any(w in str(e).lower() for w in ["quota", "rate limit", "429"]) else "error"
                 mark_key_failure(key, reason)
-                session["bad_keys"].add(key)
                 last_error = e
 
     return f"LLM unavailable: {last_error}"

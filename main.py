@@ -3522,11 +3522,6 @@ if st.session_state.project_links:
             margin-bottom: 8px; /* smaller gap */
             display: flex;
             align-items: center;
-            border-bottom: 2px solid transparent;
-            background-image: linear-gradient(90deg, #1e40af, #3b82f6, #60a5fa);
-            background-repeat: no-repeat;
-            background-size: 100% 2px;
-            background-position: bottom left;
             padding-bottom: 4px;
         '>
             <div style='
@@ -3568,6 +3563,7 @@ if st.session_state.project_links:
         """
         for i, link in enumerate(st.session_state.project_links)
     )
+
 
 # Enhanced CERTIFICATES with luxury card design
 certificate_links_html = ""

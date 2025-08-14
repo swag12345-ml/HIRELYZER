@@ -1970,7 +1970,7 @@ Context for Evaluation:
     
     # ✅ IMPROVED: More generous score caps and bonus for well-rounded candidates
     ##if all(score >= weight * 0.6 for score, weight in [(edu_score, edu_weight), (exp_score, exp_weight), (skills_score, skills_weight)]):
-        total_score += 3  # Bonus for well-rounded candidates##
+        ###total_score += 3  # Bonus for well-rounded candidates###
     
     total_score = min(total_score, 100)
     total_score = max(total_score, 15)  # Minimum score of 15 to avoid completely crushing candidates

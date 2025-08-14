@@ -2550,7 +2550,7 @@ with tab2:
     st.markdown("## 🧾 <span style='color:#336699;'>Advanced Resume Builder</span>", unsafe_allow_html=True)
     st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
-    # 📸 Upload profile photo
+    # 📸 Upload profile photo with enhanced styling
     uploaded_image = st.file_uploader("Upload a Profile Image", type=["png", "jpg", "jpeg"])
 
     profile_img_html = ""
@@ -2562,7 +2562,7 @@ with tab2:
         # 🔄 Save to session state for reuse in preview/export
         st.session_state["encoded_profile_image"] = encoded_image
 
-        # 🖼️ Show image preview with enhanced styling
+        # 🖼️ Enhanced image preview with modern styling
         profile_img_html = f"""
         <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
             <img src="data:image/png;base64,{encoded_image}" alt="Profile Photo"
@@ -2572,11 +2572,11 @@ with tab2:
                     border-radius: 50%;
                     object-fit: cover;
                     object-position: center;
-                    border: 4px solid #2563eb;
-                    box-shadow: 
-                        0 8px 32px rgba(37, 99, 235, 0.3),
-                        0 4px 16px rgba(37, 99, 235, 0.2),
-                        inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+                    border: 4px solid #ffffff;
+                    box-shadow:
+                        0 0 0 3px #4da6ff,
+                        0 8px 25px rgba(77, 166, 255, 0.3),
+                        0 4px 15px rgba(0, 0, 0, 0.1);
                     transition: all 0.3s ease;
                 " />
         </div>
@@ -2696,300 +2696,125 @@ with tab2:
         if submitted:
             st.success("✅ Resume Generated Successfully! Scroll down to preview or download.")
 
-        # Enhanced CSS styling
         st.markdown("""
         <style>
             .heading-large {
                 font-size: 36px;
-                font-weight: 700;
-                color: #1e40af;
-                text-shadow: 0 2px 4px rgba(30, 64, 175, 0.1);
+                font-weight: bold;
+                color: #336699;
             }
             .subheading-large {
                 font-size: 30px;
-                font-weight: 600;
-                color: #2563eb;
-                margin-bottom: 1rem;
+                font-weight: bold;
+                color: #336699;
             }
             .tab-section {
                 margin-top: 20px;
-                padding: 1.5rem;
-                background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-                border-radius: 12px;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            }
-            .enhanced-card {
-                background: white;
-                border-radius: 16px;
-                padding: 24px;
-                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-                border: 1px solid rgba(226, 232, 240, 0.8);
-                transition: all 0.3s ease;
-            }
-            .enhanced-card:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
             }
         </style>
         """, unsafe_allow_html=True)
 
-    # --- Visual Resume Preview Section ---
-    st.markdown("## 🧾 <span style='color:#2563eb;'>Resume Preview</span>", unsafe_allow_html=True)
-    st.markdown("<hr style='border-top: 3px solid #e2e8f0; border-radius: 2px;'>", unsafe_allow_html=True)
+        # --- Visual Resume Preview Section ---
+        st.markdown("## 🧾 <span style='color:#336699;'>Resume Preview</span>", unsafe_allow_html=True)
+        st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
-    left, right = st.columns([1, 2])
+        left, right = st.columns([1, 2])
 
-    with left:
-        st.markdown(f"""
-            <div style='background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); 
-                        padding: 24px; border-radius: 16px; margin-bottom: 20px;
-                        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);'>
-                <h2 style='color:#1e293b; margin-bottom: 8px; font-weight: 700; font-size: 28px;'>{st.session_state['name']}</h2>
-                <h4 style='margin-top: 0; color:#475569; font-weight: 500; font-size: 18px;'>{st.session_state['job_title']}</h4>
-                
-                <div style='background: white; padding: 16px; border-radius: 12px; margin-top: 16px;
-                           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);'>
-                    <p style='font-size: 15px; line-height: 1.6; margin: 0;'>
-                        <span style='display: flex; align-items: center; margin-bottom: 8px;'>
-                            <span style='color: #2563eb; margin-right: 8px;'>📍</span>
-                            <span style='color: #374151;'>{st.session_state['location']}</span>
-                        </span>
-                        <span style='display: flex; align-items: center; margin-bottom: 8px;'>
-                            <span style='color: #2563eb; margin-right: 8px;'>📞</span>
-                            <span style='color: #374151;'>{st.session_state['phone']}</span>
-                        </span>
-                        <span style='display: flex; align-items: center; margin-bottom: 8px;'>
-                            <span style='color: #2563eb; margin-right: 8px;'>📧</span>
-                            <a href="mailto:{st.session_state['email']}" style='color: #2563eb; text-decoration: none;'>{st.session_state['email']}</a>
-                        </span>
-                        <span style='display: flex; align-items: center; margin-bottom: 8px;'>
-                            <span style='color: #2563eb; margin-right: 8px;'>🔗</span>
-                            <a href="{st.session_state['linkedin']}" target="_blank" style='color: #2563eb; text-decoration: none;'>LinkedIn</a>
-                        </span>
-                        <span style='display: flex; align-items: center;'>
-                            <span style='color: #2563eb; margin-right: 8px;'>🌐</span>
-                            <a href="{st.session_state['portfolio']}" target="_blank" style='color: #2563eb; text-decoration: none;'>Portfolio</a>
-                        </span>
-                    </p>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-
-        # Enhanced Skills Section
-        st.markdown("<h4 style='color:#1e40af; font-weight: 600; margin-bottom: 12px;'>💼 Skills</h4>", unsafe_allow_html=True)
-        st.markdown("<hr style='margin-top: -8px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
-        for skill in [s.strip() for s in st.session_state["skills"].split(",") if s.strip()]:
+        with left:
             st.markdown(f"""
-                <div style='background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); 
-                           color: #1e40af; padding: 8px 16px; margin: 6px 0; 
-                           border-radius: 20px; font-size: 14px; font-weight: 500;
-                           box-shadow: 0 2px 4px rgba(30, 64, 175, 0.1);
-                           border: 1px solid rgba(59, 130, 246, 0.2);'>
-                    • {skill}
-                </div>
+                <h2 style='color:#2f2f2f;margin-bottom:0;'>{st.session_state['name']}</h2>
+                <h4 style='margin-top:5px;color:#444;'>{st.session_state['job_title']}</h4>
+
+                <p style='font-size:14px;'>
+                📍 {st.session_state['location']}<br>
+                📞 {st.session_state['phone']}<br>
+                📧 <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a><br>
+                🔗 <a href="{st.session_state['linkedin']}" target="_blank">LinkedIn</a><br>
+                🌐 <a href="{st.session_state['portfolio']}" target="_blank">Portfolio</a>
+                </p>
             """, unsafe_allow_html=True)
 
-        # Enhanced Languages Section
-        st.markdown("<h4 style='color:#1e40af; font-weight: 600; margin-bottom: 12px; margin-top: 24px;'>🌍 Languages</h4>", unsafe_allow_html=True)
-        st.markdown("<hr style='margin-top: -8px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
-        for lang in [l.strip() for l in st.session_state["languages"].split(",") if l.strip()]:
-            st.markdown(f"""
-                <div style='background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); 
-                           color: #065f46; padding: 8px 16px; margin: 6px 0; 
-                           border-radius: 20px; font-size: 14px; font-weight: 500;
-                           box-shadow: 0 2px 4px rgba(6, 95, 70, 0.1);
-                           border: 1px solid rgba(34, 197, 94, 0.2);'>
-                    • {lang}
-                </div>
-            """, unsafe_allow_html=True)
+            st.markdown("<h4 style='color:#336699;'>Skills</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            for skill in [s.strip() for s in st.session_state["skills"].split(",") if s.strip()]:
+                st.markdown(f"<div style='margin-left:10px;'>• {skill}</div>", unsafe_allow_html=True)
 
-        # Enhanced Interests Section
-        st.markdown("<h4 style='color:#1e40af; font-weight: 600; margin-bottom: 12px; margin-top: 24px;'>🎯 Interests</h4>", unsafe_allow_html=True)
-        st.markdown("<hr style='margin-top: -8px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
-        for interest in [i.strip() for i in st.session_state["interests"].split(",") if i.strip()]:
-            st.markdown(f"""
-                <div style='background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); 
-                           color: #92400e; padding: 8px 16px; margin: 6px 0; 
-                           border-radius: 20px; font-size: 14px; font-weight: 500;
-                           box-shadow: 0 2px 4px rgba(146, 64, 14, 0.1);
-                           border: 1px solid rgba(245, 158, 11, 0.2);'>
-                    • {interest}
-                </div>
-            """, unsafe_allow_html=True)
+            st.markdown("<h4 style='color:#336699;'>Languages</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            for lang in [l.strip() for l in st.session_state["languages"].split(",") if l.strip()]:
+               st.markdown(f"<div style='margin-left:10px;'>• {lang}</div>", unsafe_allow_html=True)
 
-        # Enhanced Soft Skills Section
-        st.markdown("<h4 style='color:#1e40af; font-weight: 600; margin-bottom: 12px; margin-top: 24px;'>🧠 Soft Skills</h4>", unsafe_allow_html=True)
-        st.markdown("<hr style='margin-top: -8px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
-        for softskill in [i.strip() for i in st.session_state["Softskills"].split(",") if i.strip()]:
-            st.markdown(f"""
-                <div style='background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%); 
-                           color: #be185d; padding: 8px 16px; margin: 6px 0; 
-                           border-radius: 20px; font-size: 14px; font-weight: 500;
-                           box-shadow: 0 2px 4px rgba(190, 24, 93, 0.1);
-                           border: 1px solid rgba(236, 72, 153, 0.2);'>
-                    • {softskill}
-                </div>
-            """, unsafe_allow_html=True)
+            st.markdown("<h4 style='color:#336699;'>Interests</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            for interest in [i.strip() for i in st.session_state["interests"].split(",") if i.strip()]:
+               st.markdown(f"<div style='margin-left:10px;'>• {interest}</div>", unsafe_allow_html=True)
 
-    with right:
-        # Enhanced Summary Section
-        st.markdown("<h4 style='color:#1e40af; font-weight: 600; margin-bottom: 12px;'>📝 Summary</h4>", unsafe_allow_html=True)
-        st.markdown("<hr style='margin-top: -8px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
-        summary_text = st.session_state['summary'].replace('\n', '<br>')
-        st.markdown(f"""
-            <div style='background: white; padding: 20px; border-radius: 12px; 
-                       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); 
-                       border-left: 4px solid #2563eb; margin-bottom: 24px;'>
-                <p style='font-size: 16px; line-height: 1.7; color: #374151; margin: 0;'>{summary_text}</p>
-            </div>
-        """, unsafe_allow_html=True)
+            st.markdown("<h4 style='color:#336699;'>Softskills</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            for Softskills  in [i.strip() for i in st.session_state["Softskills"].split(",") if i.strip()]:
+               st.markdown(f"<div style='margin-left:10px;'>• {Softskills}</div>", unsafe_allow_html=True)   
 
-        # Enhanced Experience Section
-        st.markdown("<h4 style='color:#1e40af; font-weight: 600; margin-bottom: 12px;'>💼 Experience</h4>", unsafe_allow_html=True)
-        st.markdown("<hr style='margin-top: -8px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
-        for exp in st.session_state.experience_entries:
-            if exp["company"] or exp["title"]:
-                st.markdown(f"""
-                    <div style='background: white; margin-bottom: 20px; padding: 24px; 
-                               border-radius: 16px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-                               border: 1px solid rgba(226, 232, 240, 0.8);
-                               transition: all 0.3s ease;'>
-                        <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;'>
-                            <div style='display: flex; align-items: center;'>
-                                <span style='color: #2563eb; font-size: 18px; margin-right: 8px;'>🏢</span>
-                                <b style='color: #1e293b; font-size: 18px; font-weight: 700;'>{exp['company']}</b>
-                            </div>
-                            <div style='display: flex; align-items: center;'>
-                                <span style='color: #6b7280; font-size: 16px; margin-right: 6px;'>📆</span>
-                                <span style='color: #6b7280; font-size: 14px; font-weight: 500;'>{exp['duration']}</span>
-                            </div>
-                        </div>
-                        <div style='display: flex; align-items: center; margin-bottom: 16px;'>
-                            <span style='color: #2563eb; font-size: 16px; margin-right: 8px;'>💼</span>
-                            <i style='color: #475569; font-size: 16px; font-weight: 500;'>{exp['title']}</i>
-                        </div>
-                        <div style='background: #f8fafc; padding: 16px; border-radius: 8px; border-left: 3px solid #2563eb;'>
-                            <div style='display: flex; align-items: flex-start;'>
-                                <span style='color: #2563eb; font-size: 16px; margin-right: 8px; margin-top: 2px;'>📝</span>
-                                <div style='color: #374151; font-size: 15px; line-height: 1.6;'>{exp['description']}</div>
-                            </div>
-                        </div>
-                    </div>
-                """, unsafe_allow_html=True)
+        with right:
+            st.markdown("<h4 style='color:#336699;'>Summary</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            summary_text = st.session_state['summary'].replace('\n', '<br>')
+            st.markdown(f"<p style='font-size:17px;'>{summary_text}</p>", unsafe_allow_html=True)
 
-        # Enhanced Education Section
-        st.markdown("<h4 style='color:#1e40af; font-weight: 600; margin-bottom: 12px;'>🎓 Education</h4>", unsafe_allow_html=True)
-        st.markdown("<hr style='margin-top: -8px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
-        for edu in st.session_state.education_entries:
-            if edu["institution"] or edu["degree"]:
-                st.markdown(f"""
-                    <div style='background: white; margin-bottom: 20px; padding: 24px; 
-                               border-radius: 16px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-                               border: 1px solid rgba(226, 232, 240, 0.8);'>
-                        <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;'>
-                            <div style='display: flex; align-items: center;'>
-                                <span style='color: #059669; font-size: 18px; margin-right: 8px;'>🏫</span>
-                                <span style='color: #1e293b; font-size: 18px; font-weight: 700;'>{edu['institution']}</span>
-                            </div>
-                            <div style='display: flex; align-items: center;'>
-                                <span style='color: #6b7280; font-size: 16px; margin-right: 6px;'>📅</span>
-                                <span style='color: #6b7280; font-size: 14px; font-weight: 500;'>{edu['year']}</span>
-                            </div>
-                        </div>
-                        <div style='display: flex; align-items: center; margin-bottom: 12px;'>
-                            <span style='color: #059669; font-size: 16px; margin-right: 8px;'>🎓</span>
-                            <i style='color: #475569; font-size: 16px; font-weight: 500;'>{edu['degree']}</i>
-                        </div>
-                        <div style='background: #f0fdf4; padding: 16px; border-radius: 8px; border-left: 3px solid #059669;'>
-                            <div style='display: flex; align-items: flex-start;'>
-                                <span style='color: #059669; font-size: 16px; margin-right: 8px; margin-top: 2px;'>📄</span>
-                                <div style='color: #374151; font-size: 15px; line-height: 1.6;'>{edu['details']}</div>
-                            </div>
-                        </div>
-                    </div>
-                """, unsafe_allow_html=True)
-
-        # Enhanced Projects Section
-        st.markdown("<h4 style='color:#1e40af; font-weight: 600; margin-bottom: 12px;'>🛠 Projects</h4>", unsafe_allow_html=True)
-        st.markdown("<hr style='margin-top: -8px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
-        for proj in st.session_state.project_entries:
-            st.markdown(f"""
-                <div style='background: white; margin-bottom: 20px; padding: 24px; 
-                           border-radius: 16px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-                           border: 1px solid rgba(226, 232, 240, 0.8);'>
-                    <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;'>
-                        <div style='display: flex; align-items: center;'>
-                            <span style='color: #7c3aed; font-size: 18px; margin-right: 8px;'>🚀</span>
-                            <strong style='color: #1e293b; font-size: 18px; font-weight: 700;'>{proj['title']}</strong>
-                        </div>
-                        <div style='display: flex; align-items: center;'>
-                            <span style='color: #6b7280; font-size: 16px; margin-right: 6px;'>⏳</span>
-                            <span style='color: #6b7280; font-size: 14px; font-weight: 500;'>{proj['duration']}</span>
-                        </div>
-                    </div>
-                    <div style='display: flex; align-items: center; margin-bottom: 16px;'>
-                        <span style='color: #7c3aed; font-size: 16px; margin-right: 8px;'>🛠️</span>
-                        <span style='color: #475569; font-size: 15px;'><strong>Tech Stack:</strong> {proj['tech']}</span>
-                    </div>
-                    <div style='background: #faf5ff; padding: 16px; border-radius: 8px; border-left: 3px solid #7c3aed;'>
-                        <div style='display: flex; align-items: flex-start;'>
-                            <span style='color: #7c3aed; font-size: 16px; margin-right: 8px; margin-top: 2px;'>📝</span>
-                            <div>
-                                <span style='color: #374151; font-size: 15px; font-weight: 600;'>Description:</span>
-                                <div style='color: #374151; font-size: 15px; line-height: 1.6; margin-top: 4px;'>{proj['description']}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-
-        # Enhanced Project Links
-        if st.session_state.project_links:
-            st.markdown("<h4 style='color:#1e40af; font-weight: 600; margin-bottom: 12px;'>🔗 Project Links</h4>", unsafe_allow_html=True)
-            st.markdown("<hr style='margin-top: -8px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
-            for i, link in enumerate(st.session_state.project_links):
-                st.markdown(f"""
-                    <div style='background: white; padding: 16px; margin-bottom: 12px; 
-                               border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-                               border: 1px solid rgba(226, 232, 240, 0.8);'>
-                        <a href="{link}" target="_blank" style='color: #2563eb; text-decoration: none; 
-                                                              display: flex; align-items: center; font-weight: 500;'>
-                            <span style='margin-right: 8px;'>🔗</span>
-                            Project {i+1}
-                        </a>
-                    </div>
-                """, unsafe_allow_html=True)
-
-        # Enhanced Certificates
-        if st.session_state.certificate_links:
-            st.markdown("<h4 style='color:#1e40af; font-weight: 600; margin-bottom: 12px;'>📜 Certificates</h4>", unsafe_allow_html=True)
-            st.markdown("<hr style='margin-top: -8px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
-            
-            for cert in st.session_state.certificate_links:
-                if cert["name"] and cert["link"]:
+            st.markdown("<h4 style='color:#336699;'>Experience</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            for exp in st.session_state.experience_entries:
+                if exp["company"] or exp["title"]:
                     st.markdown(f"""
-                        <div style='background: white; margin-bottom: 20px; padding: 24px; 
-                                   border-radius: 16px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-                                   border: 1px solid rgba(226, 232, 240, 0.8);'>
-                            <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;'>
-                                <div style='display: flex; align-items: center;'>
-                                    <span style='color: #dc2626; font-size: 18px; margin-right: 8px;'>📄</span>
-                                    <a href="{cert['link']}" target="_blank" style='color: #1e293b; text-decoration: none; 
-                                                                                   font-size: 18px; font-weight: 700;'>{cert['name']}</a>
-                                </div>
-                                <span style='color: #6b7280; font-size: 14px; font-weight: 500;'>{cert['duration']}</span>
-                            </div>
-                            <div style='background: #fef2f2; padding: 16px; border-radius: 8px; border-left: 3px solid #dc2626;'>
-                                <div style='color: #374151; font-size: 15px; line-height: 1.6;'>{cert['description']}</div>
-                            </div>
+                    <div style='margin-bottom:15px; padding:10px; border-radius:8px;'>
+                        <div style='display:flex; justify-content:space-between;'>
+                            <b>🏢 {exp['company']}</b><span style='color:gray;'>📆  {exp['duration']}</span>
                         </div>
+                        <div style='font-size:14px;'>💼 <i>{exp['title']}</i></div>
+                        <div style='font-size:17px;'>📝 {exp['description']}</div>
+                    </div>
                     """, unsafe_allow_html=True)
+
+            st.markdown("<h4 style='color:#336699;'>🎓 Education</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            for edu in st.session_state.education_entries:
+                if edu["institution"] or edu["degree"]:
+                    st.markdown(f"""
+                    <div style='margin-bottom: 15px; padding: 10px 15px;color: white; border-radius: 8px;'>
+                        <div style='display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;'>
+                            <span>🏫 {edu['institution']}</span>
+                            <span style='color: gray;'>📅 {edu['year']}</span>
+                        </div>
+                        <div style='font-size: 14px; margin-top: 5px;'>🎓 <i>{edu['degree']}</i></div>
+                        <div style='font-size: 14px;'>📄 {edu['details']}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            st.markdown("<h4 style='color:#336699;'>Projects</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            for proj in st.session_state.project_entries:
+                st.markdown(f"""
+                <div style='margin-bottom:15px; padding: 10px;'>
+                <strong style='font-size:16px;'>{proj['title']}</strong><br>
+                <span style='font-size:14px;'>🛠️ <strong>Tech Stack:</strong> {proj['tech']}</span><br>
+                <span style='font-size:14px;'>⏳ <strong>Duration:</strong> {proj['duration']}</span><br>
+                <span style='font-size:17px;'>📝 <strong>Description:</strong> {proj['description']}</span>
+                </div>
+                """, unsafe_allow_html=True)
+
+            if st.session_state.project_links:
+                st.markdown("<h4 style='color:#336699;'>Project Links</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+                for i, link in enumerate(st.session_state.project_links):
+                    st.markdown(f"[🔗 Project {i+1}]({link})", unsafe_allow_html=True)
+
+            if st.session_state.certificate_links:
+                st.markdown("<h4 style='color:#336699;'>Certificates</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+                
+                for cert in st.session_state.certificate_links:
+                    if cert["name"] and cert["link"]:
+                        st.markdown(f"""
+                        <div style='display:flex; justify-content:space-between;'>
+                            <a href="{cert['link']}" target="_blank"><b>📄 {cert['name']}</b></a><span style='color:gray;'>{cert['duration']}</span>
+                        </div>
+                        <div style='margin-bottom:10px; font-size:14px;'>{cert['description']}</div>
+                        """, unsafe_allow_html=True)
 
 import re
 
 with tab2:
-    st.markdown("## ✨ <span style='color:#2563eb;'>Enhanced AI Resume Preview</span>", unsafe_allow_html=True)
-    st.markdown("<hr style='border-top: 3px solid #e2e8f0; border-radius: 2px;'>", unsafe_allow_html=True)
+    st.markdown("## ✨ <span style='color:#336699;'>Enhanced AI Resume Preview</span>", unsafe_allow_html=True)
+    st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
     col1, spacer, col2 = st.columns([1, 0.2, 1])
 
@@ -3141,98 +2966,35 @@ with tab2:
 
         with left:
             st.markdown(f"""
-                <div style='background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); 
-                            padding: 24px; border-radius: 16px; margin-bottom: 20px;
-                            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);'>
-                    <h2 style='color:#1e293b; margin-bottom: 8px; font-weight: 700; font-size: 28px;'>{st.session_state['name']}</h2>
-                    <h4 style='margin-top: 0; color:#475569; font-weight: 500; font-size: 18px;'>{st.session_state['job_title']}</h4>
-                    
-                    <div style='background: white; padding: 16px; border-radius: 12px; margin-top: 16px;
-                               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);'>
-                        <p style='font-size: 15px; line-height: 1.6; margin: 0;'>
-                            <span style='display: flex; align-items: center; margin-bottom: 8px;'>
-                                <span style='color: #2563eb; margin-right: 8px;'>📍</span>
-                                <span style='color: #374151;'>{st.session_state['location']}</span>
-                            </span>
-                            <span style='display: flex; align-items: center; margin-bottom: 8px;'>
-                                <span style='color: #2563eb; margin-right: 8px;'>📞</span>
-                                <span style='color: #374151;'>{st.session_state['phone']}</span>
-                            </span>
-                            <span style='display: flex; align-items: center; margin-bottom: 8px;'>
-                                <span style='color: #2563eb; margin-right: 8px;'>📧</span>
-                                <a href="mailto:{st.session_state['email']}" style='color: #2563eb; text-decoration: none;'>{st.session_state['email']}</a>
-                            </span>
-                            <span style='display: flex; align-items: center; margin-bottom: 8px;'>
-                                <span style='color: #2563eb; margin-right: 8px;'>🔗</span>
-                                <a href="{st.session_state['linkedin']}" target="_blank" style='color: #2563eb; text-decoration: none;'>LinkedIn</a>
-                            </span>
-                            <span style='display: flex; align-items: center;'>
-                                <span style='color: #2563eb; margin-right: 8px;'>🌐</span>
-                                <a href="{st.session_state['portfolio']}" target="_blank" style='color: #2563eb; text-decoration: none;'>Portfolio</a>
-                            </span>
-                        </p>
-                    </div>
-                </div>
+                <h2 style='color:#2f2f2f;margin-bottom:0;'>{st.session_state['name']}</h2>
+                <h4 style='margin-top:5px;color:#444;'>{st.session_state['job_title']}</h4>
+                <p style='font-size:14px;'>
+                📍 {st.session_state['location']}<br>
+                📞 {st.session_state['phone']}<br>
+                📧 <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a><br>
+                🔗 <a href="{st.session_state['linkedin']}" target="_blank">LinkedIn</a><br>
+                🌐 <a href="{st.session_state['portfolio']}" target="_blank">Portfolio</a>
+                </p>
             """, unsafe_allow_html=True)
 
-            def render_bullet_section(title, items, color_scheme):
-                st.markdown(f"<h4 style='color:#1e40af; font-weight: 600; margin-bottom: 12px;'>{title}</h4>", unsafe_allow_html=True)
-                st.markdown("<hr style='margin-top: -8px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
+            def render_bullet_section(title, items):
+                st.markdown(f"<h4 style='color:#336699;'>{title}</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
                 for item in [i.strip() for i in items.split(",") if i.strip()]:
-                    st.markdown(f"""
-                        <div style='background: {color_scheme["bg"]}; 
-                                   color: {color_scheme["text"]}; padding: 8px 16px; margin: 6px 0; 
-                                   border-radius: 20px; font-size: 14px; font-weight: 500;
-                                   box-shadow: 0 2px 4px {color_scheme["shadow"]};
-                                   border: 1px solid {color_scheme["border"]};'>
-                            • {item}
-                        </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown(f"<div style='margin-left:10px;'>• {item}</div>", unsafe_allow_html=True)
 
-            render_bullet_section("💼 Skills", skills_list, {
-                "bg": "linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)",
-                "text": "#1e40af",
-                "shadow": "rgba(30, 64, 175, 0.1)",
-                "border": "rgba(59, 130, 246, 0.2)"
-            })
-            
-            render_bullet_section("🌍 Languages", languages_list, {
-                "bg": "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)",
-                "text": "#065f46",
-                "shadow": "rgba(6, 95, 70, 0.1)",
-                "border": "rgba(34, 197, 94, 0.2)"
-            })
-            
-            render_bullet_section("🎯 Interests", interests_list, {
-                "bg": "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
-                "text": "#92400e",
-                "shadow": "rgba(146, 64, 14, 0.1)",
-                "border": "rgba(245, 158, 11, 0.2)"
-            })
-            
-            render_bullet_section("🧠 Soft Skills", softskills_list, {
-                "bg": "linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)",
-                "text": "#be185d",
-                "shadow": "rgba(190, 24, 93, 0.1)",
-                "border": "rgba(236, 72, 153, 0.2)"
-            })
+            render_bullet_section("Skills", skills_list)
+            render_bullet_section("Languages", languages_list)
+            render_bullet_section("Interests", interests_list)
+            render_bullet_section("Soft Skills", softskills_list)
 
         with right:
             formatted_summary = summary_enhanced.replace('\n• ', '<br>• ').replace('\n', '<br>')
-            st.markdown("<h4 style='color:#1e40af; font-weight: 600; margin-bottom: 12px;'>📝 Summary</h4>", unsafe_allow_html=True)
-            st.markdown("<hr style='margin-top: -8px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
-            st.markdown(f"""
-                <div style='background: white; padding: 20px; border-radius: 12px; 
-                           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); 
-                           border-left: 4px solid #2563eb; margin-bottom: 24px;'>
-                    <p style='font-size: 16px; line-height: 1.7; color: #374151; margin: 0;'>{formatted_summary}</p>
-                </div>
-            """, unsafe_allow_html=True)
+            st.markdown("<h4 style='color:#336699;'>Summary</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            st.markdown(f"<p style='font-size:17px;'>{formatted_summary}</p>", unsafe_allow_html=True)
 
             # Experience
             if experience_blocks:
-                st.markdown("<h4 style='color:#1e40af; font-weight: 600; margin-bottom: 12px;'>💼 Experience</h4>", unsafe_allow_html=True)
-                st.markdown("<hr style='margin-top: -8px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
+                st.markdown("<h4 style='color:#336699;'>Experience</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
                 experience_titles = [entry.get("title", "").strip().upper() for entry in st.session_state.experience_entries]
                 for idx, exp_block in enumerate(experience_blocks):
                     lines = exp_block.strip().split("\n")
@@ -3246,67 +3008,32 @@ with tab2:
                     formatted_exp = "<br>".join(description_lines)
 
                     st.markdown(f"""
-                        <div style='background: white; margin-bottom: 20px; padding: 24px; 
-                                   border-radius: 16px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-                                   border: 1px solid rgba(226, 232, 240, 0.8);'>
-                            <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;'>
-                                <div style='display: flex; align-items: center;'>
-                                    <span style='color: #2563eb; font-size: 18px; margin-right: 8px;'>🏢</span>
-                                    <b style='color: #1e293b; font-size: 18px; font-weight: 700;'>{company.upper()}</b>
-                                </div>
-                                <div style='display: flex; align-items: center;'>
-                                    <span style='color: #6b7280; font-size: 16px; margin-right: 6px;'>📆</span>
-                                    <span style='color: #6b7280; font-size: 14px; font-weight: 500;'>{duration}</span>
-                                </div>
-                            </div>
-                            <div style='display: flex; align-items: center; margin-bottom: 16px;'>
-                                <span style='color: #2563eb; font-size: 16px; margin-right: 8px;'>💼</span>
-                                <i style='color: #475569; font-size: 16px; font-weight: 500;'>{role}</i>
-                            </div>
-                            <div style='background: #f8fafc; padding: 16px; border-radius: 8px; border-left: 3px solid #2563eb;'>
-                                <div style='display: flex; align-items: flex-start;'>
-                                    <span style='color: #2563eb; font-size: 16px; margin-right: 8px; margin-top: 2px;'>📝</span>
-                                    <div style='color: #374151; font-size: 15px; line-height: 1.6;'>{formatted_exp}</div>
-                                </div>
-                            </div>
+                    <div style='margin-bottom:15px; padding:10px; border-radius:8px;'>
+                        <div style='display:flex; justify-content:space-between;'>
+                            <b>🏢 {company.upper()}</b><span style='color:gray;'>📆 {duration}</span>
                         </div>
+                        <div style='font-size:14px;'>💼 <i>{role}</i></div>
+                        <div style='font-size:17px;'>📝 {formatted_exp}</div>
+                    </div>
                     """, unsafe_allow_html=True)
 
             # Education
-            st.markdown("<h4 style='color:#1e40af; font-weight: 600; margin-bottom: 12px;'>🎓 Education</h4>", unsafe_allow_html=True)
-            st.markdown("<hr style='margin-top: -8px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
+            st.markdown("<h4 style='color:#336699;'>🎓 Education</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
             for edu in st.session_state.education_entries:
                 st.markdown(f"""
-                    <div style='background: white; margin-bottom: 20px; padding: 24px; 
-                               border-radius: 16px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-                               border: 1px solid rgba(226, 232, 240, 0.8);'>
-                        <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;'>
-                            <div style='display: flex; align-items: center;'>
-                                <span style='color: #059669; font-size: 18px; margin-right: 8px;'>🏫</span>
-                                <span style='color: #1e293b; font-size: 18px; font-weight: 700;'>{edu['institution']}</span>
-                            </div>
-                            <div style='display: flex; align-items: center;'>
-                                <span style='color: #6b7280; font-size: 16px; margin-right: 6px;'>📅</span>
-                                <span style='color: #6b7280; font-size: 14px; font-weight: 500;'>{edu['year']}</span>
-                            </div>
-                        </div>
-                        <div style='display: flex; align-items: center; margin-bottom: 12px;'>
-                            <span style='color: #059669; font-size: 16px; margin-right: 8px;'>🎓</span>
-                            <i style='color: #475569; font-size: 16px; font-weight: 500;'>{edu['degree']}</i>
-                        </div>
-                        <div style='background: #f0fdf4; padding: 16px; border-radius: 8px; border-left: 3px solid #059669;'>
-                            <div style='display: flex; align-items: flex-start;'>
-                                <span style='color: #059669; font-size: 16px; margin-right: 8px; margin-top: 2px;'>📄</span>
-                                <div style='color: #374151; font-size: 15px; line-height: 1.6;'>{edu['details']}</div>
-                            </div>
-                        </div>
+                <div style='margin-bottom:15px; padding:10px 15px; border-radius:8px;'>
+                    <div style='display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;'>
+                        <span>🏫 {edu['institution']}</span>
+                        <span style='color: gray;'>📅 {edu['year']}</span>
                     </div>
+                    <div style='font-size: 14px;'>🎓 <i>{edu['degree']}</i></div>
+                    <div style='font-size: 14px;'>📄 {edu['details']}</div>
+                </div>
                 """, unsafe_allow_html=True)
 
             # Projects
             if projects_blocks:
-                st.markdown("<h4 style='color:#1e40af; font-weight: 600; margin-bottom: 12px;'>🛠 Projects</h4>", unsafe_allow_html=True)
-                st.markdown("<hr style='margin-top: -8px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
+                st.markdown("<h4 style='color:#336699;'>Projects</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
                 for idx, proj_block in enumerate(projects_blocks):
                     proj = st.session_state.project_entries[idx] if idx < len(st.session_state.project_entries) else {}
                     title = proj.get("title", "")
@@ -3320,79 +3047,42 @@ with tab2:
                     label = chr(65 + idx)
 
                     st.markdown(f"""
-                        <div style='background: white; margin-bottom: 20px; padding: 24px; 
-                                   border-radius: 16px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-                                   border: 1px solid rgba(226, 232, 240, 0.8);'>
-                            <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;'>
-                                <div style='display: flex; align-items: center;'>
-                                    <span style='color: #7c3aed; font-size: 18px; margin-right: 8px;'>🚀</span>
-                                    <strong style='color: #1e293b; font-size: 18px; font-weight: 700;'>
-                                        <span style='color: #6b7280;'>{label}. </span>{title}
-                                    </strong>
-                                </div>
-                                <div style='display: flex; align-items: center;'>
-                                    <span style='color: #6b7280; font-size: 16px; margin-right: 6px;'>⏳</span>
-                                    <span style='color: #6b7280; font-size: 14px; font-weight: 500;'>{duration}</span>
-                                </div>
-                            </div>
-                            <div style='display: flex; align-items: center; margin-bottom: 16px;'>
-                                <span style='color: #7c3aed; font-size: 16px; margin-right: 8px;'>🛠️</span>
-                                <span style='color: #475569; font-size: 15px;'><strong>Tech Stack:</strong> {tech}</span>
-                            </div>
-                            <div style='background: #faf5ff; padding: 16px; border-radius: 8px; border-left: 3px solid #7c3aed;'>
-                                <div style='display: flex; align-items: flex-start;'>
-                                    <span style='color: #7c3aed; font-size: 16px; margin-right: 8px; margin-top: 2px;'>📄</span>
-                                    <div>
-                                        <span style='color: #374151; font-size: 15px; font-weight: 600;'>Description:</span>
-                                        <div style='color: #374151; font-size: 15px; line-height: 1.6; margin-top: 4px;'>{formatted_proj}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <div style='margin-bottom:15px; padding: 10px;'>
+                        <strong style='font-size:16px;'>📌 <span style='color:#444;'>{label}. </span>{title}</strong><br>
+                        <span style='font-size:14px;'>🛠️ <strong>Tech Stack:</strong> {tech}</span><br>
+                        <span style='font-size:14px;'>⏳ <strong>Duration:</strong> {duration}</span><br>
+                        <span style='font-size:17px;'>📄 <strong>Description:</strong></span><br>
+                        <div style='margin-top:4px; font-size:15px;'>{formatted_proj}</div>
+                    </div>
                     """, unsafe_allow_html=True)
 
             # Certificates
             if certificates_list:
-                st.markdown("<h4 style='color:#1e40af; font-weight: 600; margin-bottom: 12px;'>📜 Certificates</h4>", unsafe_allow_html=True)
-                st.markdown("<hr style='margin-top: -8px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
+                st.markdown("<h4 style='color:#336699;'>📜 Certificates</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
                 certs = re.split(r"\n|(?<=\))(?=\s*[A-Z])|(?<=[a-z]\))(?= [A-Z])", certificates_list)
                 for cert in [c.strip() for c in certs if c.strip()]:
-                    st.markdown(f"""
-                        <div style='background: white; padding: 16px; margin-bottom: 12px; 
-                                   border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-                                   border: 1px solid rgba(226, 232, 240, 0.8); border-left: 3px solid #dc2626;'>
-                            <div style='display: flex; align-items: center;'>
-                                <span style='color: #dc2626; font-size: 16px; margin-right: 8px;'>📜</span>
-                                <div style='color: #374151; font-size: 15px; font-weight: 500;'>{cert}</div>
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown(f"<div style='margin-left:10px;'>• {cert}</div>", unsafe_allow_html=True)
 
             if st.session_state.project_links:
-                st.markdown("<h4 style='color:#1e40af; font-weight: 600; margin-bottom: 12px;'>🔗 Project Links</h4>", unsafe_allow_html=True)
-                st.markdown("<hr style='margin-top: -8px; border: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
+                st.markdown("<h4 style='color:#336699;'>Project Links</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
                 for i, link in enumerate(st.session_state.project_links):
-                    st.markdown(f"""
-                        <div style='background: white; padding: 16px; margin-bottom: 12px; 
-                                   border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-                                   border: 1px solid rgba(226, 232, 240, 0.8);'>
-                            <a href="{link}" target="_blank" style='color: #2563eb; text-decoration: none; 
-                                                                  display: flex; align-items: center; font-weight: 500;'>
-                                <span style='margin-right: 8px;'>🔗</span>
-                                Project {i+1}
-                            </a>
-                        </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown(f"[🔗 Project {i+1}]({link})", unsafe_allow_html=True)
 
-# Enhanced HTML generation with modern styling
+# Enhanced SKILLS with modern pill design
 skills_html = "".join(
     f"""
-    <div style='display:inline-block; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); 
-                color: #1e40af; padding: 10px 18px; margin: 8px 8px 8px 0; 
-                border-radius: 25px; font-size: 14px; font-weight: 600;
-                box-shadow: 0 4px 6px rgba(30, 64, 175, 0.15);
-                border: 1px solid rgba(59, 130, 246, 0.3);
-                transition: all 0.3s ease;'>
+    <div style='display:inline-block; 
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white; 
+                padding: 10px 18px; 
+                margin: 8px 8px 8px 0; 
+                border-radius: 25px; 
+                font-size: 14px; 
+                font-weight: 600;
+                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                transition: all 0.3s ease;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                border: 1px solid rgba(255,255,255,0.2);'>
         {s.strip()}
     </div>
     """
@@ -3400,14 +3090,21 @@ skills_html = "".join(
     if s.strip()
 )
 
+# Enhanced LANGUAGES with gradient design
 languages_html = "".join(
     f"""
-    <div style='display:inline-block; background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); 
-                color: #065f46; padding: 10px 18px; margin: 8px 8px 8px 0; 
-                border-radius: 25px; font-size: 14px; font-weight: 600;
-                box-shadow: 0 4px 6px rgba(6, 95, 70, 0.15);
-                border: 1px solid rgba(34, 197, 94, 0.3);
-                transition: all 0.3s ease;'>
+    <div style='display:inline-block; 
+                background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+                color: white; 
+                padding: 10px 18px; 
+                margin: 8px 8px 8px 0; 
+                border-radius: 25px; 
+                font-size: 14px; 
+                font-weight: 600;
+                box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+                transition: all 0.3s ease;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                border: 1px solid rgba(255,255,255,0.2);'>
         {lang.strip()}
     </div>
     """
@@ -3415,14 +3112,21 @@ languages_html = "".join(
     if lang.strip()
 )
 
+# Enhanced INTERESTS with vibrant colors
 interests_html = "".join(
     f"""
-    <div style='display:inline-block; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); 
-                color: #92400e; padding: 10px 18px; margin: 8px 8px 8px 0; 
-                border-radius: 25px; font-size: 14px; font-weight: 600;
-                box-shadow: 0 4px 6px rgba(146, 64, 14, 0.15);
-                border: 1px solid rgba(245, 158, 11, 0.3);
-                transition: all 0.3s ease;'>
+    <div style='display:inline-block; 
+                background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+                color: white; 
+                padding: 10px 18px; 
+                margin: 8px 8px 8px 0; 
+                border-radius: 25px; 
+                font-size: 14px; 
+                font-weight: 600;
+                box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+                transition: all 0.3s ease;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                border: 1px solid rgba(255,255,255,0.2);'>
         {interest.strip()}
     </div>
     """
@@ -3430,172 +3134,150 @@ interests_html = "".join(
     if interest.strip()
 )
 
+# Enhanced SOFT SKILLS with premium styling
 Softskills_html = "".join(
     f"""
-    <div style='display:inline-block; background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%); 
-                color: #be185d; padding: 10px 18px; margin: 8px 8px 8px 0; 
-                border-radius: 25px; font-size: 14px; font-weight: 600;
-                box-shadow: 0 4px 6px rgba(190, 24, 93, 0.15);
-                border: 1px solid rgba(236, 72, 153, 0.3);
-                transition: all 0.3s ease;'>
-        {skill.strip().capitalize()}
+    <div style='display:inline-block; 
+                background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+                color: #2c3e50; 
+                padding: 10px 20px; 
+                margin: 8px 8px 8px 0; 
+                border-radius: 25px; 
+                font-size: 14px; 
+                font-family: "Segoe UI", sans-serif; 
+                font-weight: 600;
+                box-shadow: 0 4px 15px rgba(252, 182, 159, 0.4);
+                transition: all 0.3s ease;
+                border: 2px solid rgba(255,255,255,0.8);'>
+        {skill.strip().title()}
     </div>
     """
     for skill in st.session_state['Softskills'].split(',')
     if skill.strip()
 )
 
-# Enhanced Experience HTML with modern card design
+# Enhanced EXPERIENCE with modern card design
 experience_html = ""
 for exp in st.session_state.experience_entries:
     if exp["company"] or exp["title"]:
+        # Handle paragraphs and single line breaks
         description_lines = [line.strip() for line in exp["description"].strip().split("\n\n")]
         description_html = "".join(
-            f"<div style='margin-bottom: 12px; line-height: 1.6;'>{line.replace(chr(10), '<br>')}</div>"
+            f"<div style='margin-bottom: 10px; line-height: 1.6;'>{line.replace(chr(10), '<br>')}</div>"
             for line in description_lines if line
         )
 
         experience_html += f"""
-<div style='
-    margin-bottom: 32px;
-    padding: 28px 32px;
-    border-radius: 20px;
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    box-shadow: 
-        0 10px 25px rgba(0, 0, 0, 0.08),
-        0 4px 10px rgba(0, 0, 0, 0.03);
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
-    color: #1e293b;
-    line-height: 1.6;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-'>
-    <!-- Subtle gradient overlay -->
-    <div style='
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #2563eb 0%, #3b82f6 50%, #60a5fa 100%);
-        border-radius: 20px 20px 0 0;
-    '></div>
-    
-    <!-- Header Card -->
-    <div style='
-        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-        border-radius: 16px;
-        padding: 20px 24px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        border: 1px solid rgba(203, 213, 225, 0.5);
-    '>
         <div style='
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 28px;
+            padding: 24px;
+            border-radius: 16px;
+            background: linear-gradient(145deg, #f0f8ff 0%, #e6f3ff 100%);
+            box-shadow: 
+                0 8px 32px rgba(0, 100, 200, 0.1),
+                0 2px 8px rgba(0, 0, 0, 0.05);
+            font-family: "Inter", "Segoe UI", sans-serif;
+            color: #1a365d;
+            line-height: 1.6;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            position: relative;
+            overflow: hidden;
         '>
-            <div style='display: flex; align-items: center;'>
-                <div style='
-                    width: 12px;
-                    height: 12px;
-                    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-                    border-radius: 50%;
-                    margin-right: 12px;
-                    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-                '></div>
-                <span style='
-                    font-size: 20px;
-                    font-weight: 700;
-                    color: #0f172a;
-                    letter-spacing: -0.025em;
-                '>{exp['company']}</span>
-            </div>
+            <!-- Decorative gradient bar -->
             <div style='
-                background: white;
-                padding: 8px 16px;
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                background: linear-gradient(90deg, #4299e1, #63b3ed, #90cdf4);
+            '></div>
+            
+            <!-- Header Card -->
+            <div style='
+                background: rgba(255, 255, 255, 0.7);
                 border-radius: 12px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-                border: 1px solid rgba(203, 213, 225, 0.5);
+                padding: 16px 20px;
+                margin-bottom: 16px;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.9);
             '>
-                <span style='
-                    color: #64748b;
-                    font-size: 14px;
-                    font-weight: 600;
+                <div style='
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    font-weight: 700;
+                    font-size: 18px;
+                    margin-bottom: 8px;
+                    color: #2d3748;
+                    width: 100%;
+                '>
+                    <div style='display: flex; align-items: center;'>
+                        <div style='
+                            width: 8px; 
+                            height: 8px; 
+                            background: linear-gradient(45deg, #4299e1, #63b3ed);
+                            border-radius: 50%; 
+                            margin-right: 12px;
+                            box-shadow: 0 0 8px rgba(66, 153, 225, 0.5);
+                        '></div>
+                        <span>{exp['company']}</span>
+                    </div>
+                    <div style='
+                        background: linear-gradient(135deg, #e6fffa, #b2f5ea);
+                        color: #234e52;
+                        padding: 6px 16px;
+                        border-radius: 20px;
+                        font-size: 14px;
+                        font-weight: 600;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                    '>
+                        📅 {exp['duration']}
+                    </div>
+                </div>
+
+                <div style='
                     display: flex;
                     align-items: center;
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #2b6cb0;
                 '>
-                    <span style='margin-right: 6px;'>📅</span>
-                    {exp['duration']}
-                </span>
+                    <div style='
+                        width: 6px; 
+                        height: 6px; 
+                        background: #4299e1;
+                        border-radius: 50%; 
+                        margin-right: 10px;
+                    '></div>
+                    <span>{exp['title']}</span>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div style='
+                font-size: 15px;
+                font-weight: 500;
+                color: #2d3748;
+                line-height: 1.7;
+                padding-left: 8px;
+            '>
+                <div style='
+                    border-left: 3px solid #4299e1;
+                    padding-left: 16px;
+                    margin-left: 8px;
+                '>
+                    {description_html}
+                </div>
             </div>
         </div>
-
-        <div style='
-            display: flex;
-            align-items: center;
-            background: white;
-            padding: 12px 16px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            border: 1px solid rgba(203, 213, 225, 0.3);
-        '>
-            <div style='
-                width: 8px;
-                height: 8px;
-                background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-                border-radius: 50%;
-                margin-right: 10px;
-                box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.2);
-            '></div>
-            <span style='
-                font-size: 17px;
-                font-weight: 600;
-                color: #0f172a;
-            '>{exp['title']}</span>
-        </div>
-    </div>
-
-    <!-- Description -->
-    <div style='
-        background: linear-gradient(135deg, #fafbff 0%, #f1f5f9 100%);
-        padding: 24px;
-        border-radius: 16px;
-        border-left: 4px solid #2563eb;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    '>
-        <div style='
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 8px;
-        '>
-            <div style='
-                width: 6px;
-                height: 6px;
-                background: #2563eb;
-                border-radius: 50%;
-                margin-right: 12px;
-                margin-top: 8px;
-                flex-shrink: 0;
-            '></div>
-            <div style='
-                color: #334155;
-                font-size: 16px;
-                line-height: 1.7;
-                font-weight: 500;
-            '>{description_html}</div>
-        </div>
-    </div>
-</div>
-"""
+        """
 
 # Convert experience to list if multiple lines
+# Escape HTML and convert line breaks
 summary_html = st.session_state['summary'].replace('\n', '<br>')
 
-# Enhanced Education HTML
+# Enhanced EDUCATION with modern styling
 education_html = ""
 for edu in st.session_state.education_entries:
     if edu.get("institution") or edu.get("details"):
@@ -3606,132 +3288,98 @@ for edu in st.session_state.education_entries:
                 degree_val = ", ".join(degree_val)
             degree_text = f"""
             <div style='
-                display: flex;
-                align-items: center;
-                background: white;
-                padding: 12px 16px;
-                border-radius: 10px;
-                margin-bottom: 16px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-                border: 1px solid rgba(203, 213, 225, 0.3);
+                display: flex; 
+                align-items: center; 
+                font-size: 15px; 
+                color: #2b6cb0; 
+                margin-bottom: 8px;
+                font-weight: 600;
             '>
                 <div style='
-                    width: 8px;
-                    height: 8px;
-                    background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
-                    border-radius: 50%;
+                    width: 6px; 
+                    height: 6px; 
+                    background: linear-gradient(45deg, #4299e1, #63b3ed);
+                    border-radius: 50%; 
                     margin-right: 10px;
-                    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
                 '></div>
-                <b style='color: #0f172a; font-size: 16px;'>{degree_val}</b>
+                <b>{degree_val}</b>
             </div>
             """
 
         education_html += f"""
         <div style='
-            margin-bottom: 32px;
-            padding: 28px 32px;
-            border-radius: 20px;
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            margin-bottom: 26px;
+            padding: 22px 26px;
+            border-radius: 16px;
+            background: linear-gradient(145deg, #fef5e7 0%, #fed7aa 100%);
             box-shadow: 
-                0 10px 25px rgba(0, 0, 0, 0.08),
-                0 4px 10px rgba(0, 0, 0, 0.03);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            font-family: "Inter", "Segoe UI", system-ui, sans-serif;
-            color: #1e293b;
+                0 8px 32px rgba(251, 146, 60, 0.15),
+                0 2px 8px rgba(0, 0, 0, 0.05);
+            font-family: "Inter", "Segoe UI", sans-serif;
+            color: #92400e;
             line-height: 1.6;
+            border: 1px solid rgba(255, 255, 255, 0.8);
             position: relative;
             overflow: hidden;
         '>
-            <!-- Gradient top border -->
+            <!-- Decorative gradient bar -->
             <div style='
                 position: absolute;
                 top: 0;
                 left: 0;
                 right: 0;
                 height: 4px;
-                background: linear-gradient(90deg, #059669 0%, #10b981 50%, #34d399 100%);
-                border-radius: 20px 20px 0 0;
+                background: linear-gradient(90deg, #f59e0b, #fbbf24, #fcd34d);
             '></div>
-            
+
             <div style='
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 20px;
-                background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-                padding: 20px 24px;
-                border-radius: 16px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-                border: 1px solid rgba(34, 197, 94, 0.2);
+                font-size: 18px;
+                font-weight: 700;
+                margin-bottom: 12px;
+                width: 100%;
+                color: #92400e;
             '>
                 <div style='display: flex; align-items: center;'>
                     <div style='
-                        width: 12px;
-                        height: 12px;
-                        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-                        border-radius: 50%;
+                        width: 8px; 
+                        height: 8px; 
+                        background: linear-gradient(45deg, #f59e0b, #fbbf24);
+                        border-radius: 50%; 
                         margin-right: 12px;
-                        box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
+                        box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
                     '></div>
-                    <span style='
-                        font-size: 20px;
-                        font-weight: 700;
-                        color: #0f172a;
-                        letter-spacing: -0.025em;
-                    '>{edu.get('institution', '')}</span>
+                    <span>{edu.get('institution', '')}</span>
                 </div>
                 <div style='
-                    background: white;
-                    padding: 8px 16px;
-                    border-radius: 12px;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-                    border: 1px solid rgba(203, 213, 225, 0.5);
+                    background: rgba(255, 255, 255, 0.8);
+                    color: #92400e;
+                    padding: 6px 16px;
+                    border-radius: 20px;
+                    font-weight: 600;
+                    font-size: 14px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
                 '>
-                    <span style='
-                        color: #64748b;
-                        font-size: 14px;
-                        font-weight: 600;
-                        display: flex;
-                        align-items: center;
-                    '>
-                        <span style='margin-right: 6px;'>📅</span>
-                        {edu.get('year', '')}
-                    </span>
+                    📅 {edu.get('year', '')}
                 </div>
             </div>
             {degree_text}
             <div style='
-                background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-                padding: 20px;
-                border-radius: 12px;
-                border-left: 4px solid #059669;
+                font-size: 14px; 
+                font-style: italic;
+                color: #a16207;
+                line-height: 1.6;
+                padding-left: 18px;
+                border-left: 3px solid #f59e0b;
             '>
-                <div style='
-                    display: flex;
-                    align-items: flex-start;
-                '>
-                    <div style='
-                        width: 6px;
-                        height: 6px;
-                        background: #059669;
-                        border-radius: 50%;
-                        margin-right: 12px;
-                        margin-top: 8px;
-                        flex-shrink: 0;
-                    '></div>
-                    <div style='
-                        color: #0f172a;
-                        font-size: 15px;
-                        line-height: 1.6;
-                        font-weight: 500;
-                    '>{edu.get('details', '')}</div>
-                </div>
+                {edu.get('details', '')}
             </div>
         </div>
         """
 
-# Enhanced Projects HTML
+# Enhanced PROJECTS with premium card design
 projects_html = ""
 for proj in st.session_state.project_entries:
     if proj.get("title") or proj.get("description"):
@@ -3740,178 +3388,202 @@ for proj in st.session_state.project_entries:
             tech_val = ", ".join(tech_val)
         tech_text = f"""
         <div style='
-            display: flex;
-            align-items: center;
-            background: white;
-            padding: 12px 16px;
-            border-radius: 10px;
-            margin-bottom: 16px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            border: 1px solid rgba(203, 213, 225, 0.3);
+            display: flex; 
+            align-items: center; 
+            font-size: 14px; 
+            color: #1e293b; 
+            margin-bottom: 12px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 8px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.9);
         '>
             <div style='
-                width: 8px;
-                height: 8px;
-                background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-                border-radius: 50%;
+                width: 6px; 
+                height: 6px; 
+                background: linear-gradient(45deg, #7c3aed, #a855f7);
+                border-radius: 50%; 
                 margin-right: 10px;
-                box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
             '></div>
-            <b style='color: #0f172a; font-size: 15px;'>Technologies:</b>
-            <span style='color: #475569; margin-left: 8px; font-size: 15px;'>{tech_val if tech_val else ''}</span>
+            <b>Technologies:</b>&nbsp;&nbsp;{tech_val if tech_val else ''}
         </div>
         """ if tech_val else ""
 
         description_items = ""
         if proj.get("description"):
             description_lines = [line.strip() for line in proj["description"].splitlines() if line.strip()]
-            description_items = "".join(f"<li style='margin-bottom: 8px; line-height: 1.6;'>{line}</li>" for line in description_lines)
+            description_items = "".join(f"<li style='margin-bottom: 6px; line-height: 1.6;'>{line}</li>" for line in description_lines)
 
         projects_html += f"""
         <div style='
-            margin-bottom: 32px;
-            padding: 28px 32px;
-            border-radius: 20px;
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            margin-bottom: 30px;
+            padding: 26px;
+            border-radius: 18px;
+            background: linear-gradient(145deg, #f3e8ff 0%, #e9d5ff 100%);
             box-shadow: 
-                0 10px 25px rgba(0, 0, 0, 0.08),
-                0 4px 10px rgba(0, 0, 0, 0.03);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            font-family: "Inter", "Segoe UI", system-ui, sans-serif;
-            color: #1e293b;
-            line-height: 1.6;
+                0 10px 40px rgba(139, 92, 246, 0.15),
+                0 4px 12px rgba(0, 0, 0, 0.05);
+            font-family: "Inter", "Segoe UI", sans-serif;
+            color: #581c87;
+            line-height: 1.7;
+            border: 1px solid rgba(255, 255, 255, 0.8);
             position: relative;
             overflow: hidden;
         '>
-            <!-- Gradient top border -->
+            <!-- Decorative gradient bar -->
             <div style='
                 position: absolute;
                 top: 0;
                 left: 0;
                 right: 0;
                 height: 4px;
-                background: linear-gradient(90deg, #7c3aed 0%, #8b5cf6 50%, #a78bfa 100%);
-                border-radius: 20px 20px 0 0;
+                background: linear-gradient(90deg, #7c3aed, #a855f7, #c084fc);
             '></div>
-            
+
             <div style='
+                font-size: 19px;
+                font-weight: 700;
+                margin-bottom: 16px;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 20px;
-                background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
-                padding: 20px 24px;
-                border-radius: 16px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-                border: 1px solid rgba(124, 58, 237, 0.2);
+                color: #581c87;
+                width: 100%;
             '>
                 <div style='display: flex; align-items: center;'>
                     <div style='
-                        width: 12px;
-                        height: 12px;
-                        background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
-                        border-radius: 50%;
+                        width: 10px; 
+                        height: 10px; 
+                        background: linear-gradient(45deg, #7c3aed, #a855f7);
+                        border-radius: 50%; 
                         margin-right: 12px;
-                        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+                        box-shadow: 0 0 10px rgba(124, 58, 237, 0.6);
                     '></div>
-                    <span style='
-                        font-size: 20px;
-                        font-weight: 700;
-                        color: #0f172a;
-                        letter-spacing: -0.025em;
-                    '>{proj.get('title', '')}</span>
+                    <span>{proj.get('title', '')}</span>
                 </div>
                 <div style='
-                    background: white;
-                    padding: 8px 16px;
-                    border-radius: 12px;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-                    border: 1px solid rgba(203, 213, 225, 0.5);
+                    background: linear-gradient(135deg, #ddd6fe, #c4b5fd);
+                    color: #581c87;
+                    padding: 8px 18px;
+                    border-radius: 20px;
+                    font-weight: 600;
+                    font-size: 14px;
+                    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
                 '>
-                    <span style='
-                        color: #64748b;
-                        font-size: 14px;
-                        font-weight: 600;
-                        display: flex;
-                        align-items: center;
-                    '>
-                        <span style='margin-right: 6px;'>⏱️</span>
-                        {proj.get('duration', '')}
-                    </span>
+                    ⏱️ {proj.get('duration', '')}
                 </div>
             </div>
             {tech_text}
             <div style='
-                background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
-                padding: 20px;
+                font-size: 15px; 
+                color: #581c87;
+                background: rgba(255, 255, 255, 0.6);
+                padding: 18px;
                 border-radius: 12px;
-                border-left: 4px solid #7c3aed;
+                border: 1px solid rgba(255, 255, 255, 0.9);
             '>
                 <div style='
-                    display: flex;
-                    align-items: flex-start;
+                    font-weight: 600; 
                     margin-bottom: 12px;
+                    color: #4c1d95;
+                    display: flex;
+                    align-items: center;
                 '>
                     <div style='
-                        width: 6px;
-                        height: 6px;
+                        width: 6px; 
+                        height: 6px; 
                         background: #7c3aed;
-                        border-radius: 50%;
-                        margin-right: 12px;
-                        margin-top: 8px;
-                        flex-shrink: 0;
+                        border-radius: 50%; 
+                        margin-right: 10px;
                     '></div>
-                    <div>
-                        <b style='color: #0f172a; font-size: 16px; margin-bottom: 8px; display: block;'>Description:</b>
-                        <ul style='
-                            margin: 0;
-                            padding-left: 20px;
-                            color: #334155;
-                            font-size: 15px;
-                            line-height: 1.6;
-                        '>
-                            {description_items}
-                        </ul>
-                    </div>
+                    Description:
                 </div>
+                <ul style='
+                    margin-top: 8px; 
+                    padding-left: 24px; 
+                    color: #581c87;
+                    list-style-type: none;
+                '>
+                    {description_items}
+                </ul>
             </div>
         </div>
         """
 
-# Enhanced Project Links HTML
+# Enhanced PROJECT LINKS
 project_links_html = ""
 if st.session_state.project_links:
-    project_links_html = "<h4 class='section-title' style='color: #1e40af; font-weight: 600; margin-bottom: 16px;'>🔗 Project Links</h4><hr style='border: 1px solid #e2e8f0; margin-bottom: 20px;'>" + "".join(
-        f'''
+    project_links_html = """
+    <h4 class='section-title' style='
+        color: #1e40af;
+        font-size: 20px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+    '>
         <div style='
-            background: white;
-            padding: 16px 20px;
-            margin-bottom: 12px;
+            width: 8px; 
+            height: 8px; 
+            background: linear-gradient(45deg, #1e40af, #3b82f6);
+            border-radius: 50%; 
+            margin-right: 12px;
+        '></div>
+        Project Links
+    </h4>
+    <hr style='margin-bottom: 20px; border: none; height: 2px; background: linear-gradient(90deg, #1e40af, #3b82f6, #60a5fa);'>
+    """ + "".join(
+        f"""
+        <div style='
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            padding: 14px 20px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            transition: all 0.3s ease;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
         '>
-            <a href="{link}" target="_blank" style='
-                color: #2563eb;
+            <div style='
+                width: 6px; 
+                height: 6px; 
+                background: #1e40af;
+                border-radius: 50%; 
+                display: inline-block;
+                margin-right: 12px;
+                vertical-align: middle;
+            '></div>
+            <a href="{link}" style='
+                color: #1e40af; 
+                font-weight: 600; 
                 text-decoration: none;
-                display: flex;
-                align-items: center;
-                font-weight: 500;
                 font-size: 15px;
-            '>
-                <span style='margin-right: 10px; font-size: 16px;'>🔗</span>
-                Project {i+1}
-            </a>
+            '>🔗 Project {i+1}</a>
         </div>
-        '''
+        """
         for i, link in enumerate(st.session_state.project_links)
     )
 
-# Enhanced Certificate Links HTML
+# Enhanced CERTIFICATES with luxury card design
 certificate_links_html = ""
 if st.session_state.certificate_links:
-    certificate_links_html = "<h4 class='section-title' style='color: #1e40af; font-weight: 600; margin-bottom: 16px;'>📜 Certificates</h4><hr style='border: 1px solid #e2e8f0; margin-bottom: 20px;'>"
+    certificate_links_html = """
+    <h4 class='section-title' style='
+        color: #059669;
+        font-size: 20px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+    '>
+        <div style='
+            width: 8px; 
+            height: 8px; 
+            background: linear-gradient(45deg, #059669, #10b981);
+            border-radius: 50%; 
+            margin-right: 12px;
+        '></div>
+        Certificates
+    </h4>
+    <hr style='margin-bottom: 20px; border: none; height: 2px; background: linear-gradient(90deg, #059669, #10b981, #34d399);'>
+    """
     for cert in st.session_state.certificate_links:
         if cert["name"] and cert["link"]:
             description = cert.get('description', '').replace('\n', '<br>')
@@ -3921,116 +3593,115 @@ if st.session_state.certificate_links:
 
             card_html = f"""
             <div style='
-                background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-                padding: 28px 32px;
-                border-radius: 20px;
-                margin-bottom: 24px;
+                background: linear-gradient(145deg, #ecfdf5 0%, #d1fae5 100%);
+                padding: 24px 28px;
+                border-radius: 18px;
+                margin-bottom: 26px;
                 box-shadow: 
-                    0 10px 25px rgba(0, 0, 0, 0.08),
-                    0 4px 10px rgba(0, 0, 0, 0.03);
-                border: 1px solid rgba(226, 232, 240, 0.8);
-                font-family: "Inter", "Segoe UI", system-ui, sans-serif;
-                color: #1e293b;
+                    0 10px 40px rgba(16, 185, 129, 0.15),
+                    0 4px 12px rgba(0, 0, 0, 0.05);
+                font-family: "Inter", "Segoe UI", sans-serif;
+                color: #064e3b;
                 position: relative;
+                line-height: 1.7;
+                border: 1px solid rgba(255, 255, 255, 0.8);
                 overflow: hidden;
-                line-height: 1.6;
             '>
-                <!-- Gradient top border -->
+                <!-- Decorative gradient bar -->
                 <div style='
                     position: absolute;
                     top: 0;
                     left: 0;
                     right: 0;
                     height: 4px;
-                    background: linear-gradient(90deg, #dc2626 0%, #ef4444 50%, #f87171 100%);
-                    border-radius: 20px 20px 0 0;
+                    background: linear-gradient(90deg, #059669, #10b981, #34d399);
                 '></div>
 
                 <!-- Duration Badge -->
                 <div style='
                     position: absolute;
                     top: 20px;
-                    right: 32px;
-                    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+                    right: 28px;
+                    font-size: 13px;
+                    font-weight: 700;
+                    color: #064e3b;
+                    background: linear-gradient(135deg, #ffffff, #f0fdf4);
                     padding: 8px 16px;
                     border-radius: 20px;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-                    border: 1px solid rgba(220, 38, 38, 0.2);
+                    box-shadow: 
+                        0 4px 12px rgba(16, 185, 129, 0.2),
+                        inset 0 1px 2px rgba(255, 255, 255, 0.8);
+                    border: 1px solid rgba(16, 185, 129, 0.2);
                 '>
-                    <span style='
-                        font-size: 13px;
-                        font-weight: 600;
-                        color: #991b1b;
-                        display: flex;
-                        align-items: center;
-                    '>
-                        <span style='margin-right: 6px;'>⏱️</span>
-                        {duration}
-                    </span>
+                    <div style='
+                        width: 6px; 
+                        height: 6px; 
+                        background: #10b981;
+                        border-radius: 50%; 
+                        display: inline-block;
+                        margin-right: 8px;
+                        vertical-align: middle;
+                    '></div>
+                    {duration}
                 </div>
 
                 <!-- Certificate Title -->
                 <div style='
-                    margin-bottom: 20px;
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #064e3b;
+                    margin-bottom: 12px;
                     margin-right: 120px;
+                    display: flex;
+                    align-items: center;
                 '>
                     <div style='
-                        display: flex;
-                        align-items: center;
-                        margin-bottom: 8px;
-                    '>
-                        <div style='
-                            width: 12px;
-                            height: 12px;
-                            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-                            border-radius: 50%;
-                            margin-right: 12px;
-                            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
-                        '></div>
-                        <a href="{link}" target="_blank" style='
-                            color: #0f172a;
-                            text-decoration: none;
-                            font-size: 20px;
-                            font-weight: 700;
-                            letter-spacing: -0.025em;
-                            transition: color 0.3s ease;
-                        '>{name}</a>
-                    </div>
+                        width: 10px; 
+                        height: 10px; 
+                        background: linear-gradient(45deg, #059669, #10b981);
+                        border-radius: 50%; 
+                        margin-right: 12px;
+                        box-shadow: 0 0 10px rgba(5, 150, 105, 0.6);
+                    '></div>
+                    <a href="{link}" target="_blank" style='
+                        color: #064e3b;
+                        text-decoration: none;
+                        transition: color 0.3s ease;
+                    '>{name}</a>
                 </div>
 
                 <!-- Description -->
                 <div style='
-                    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-                    padding: 20px;
+                    font-size: 15px;
+                    color: #047857;
+                    background: rgba(255, 255, 255, 0.7);
+                    padding: 16px;
                     border-radius: 12px;
-                    border-left: 4px solid #dc2626;
+                    border: 1px solid rgba(255, 255, 255, 0.9);
+                    line-height: 1.6;
                 '>
                     <div style='
                         display: flex;
                         align-items: flex-start;
+                        margin-bottom: 8px;
                     '>
                         <div style='
-                            width: 6px;
-                            height: 6px;
-                            background: #dc2626;
-                            border-radius: 50%;
+                            width: 6px; 
+                            height: 6px; 
+                            background: #10b981;
+                            border-radius: 50%; 
                             margin-right: 12px;
                             margin-top: 8px;
                             flex-shrink: 0;
                         '></div>
-                        <div style='
-                            color: #0f172a;
-                            font-size: 15px;
-                            line-height: 1.6;
-                            font-weight: 500;
-                        '>{description}</div>
+                        <div>{description}</div>
                     </div>
                 </div>
             </div>
             """
             certificate_links_html += card_html
 
-# Enhanced HTML content with modern styling
+# Enhanced HTML Content with modern CSS
 html_content = f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -4041,16 +3712,16 @@ html_content = f"""
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {{
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }}
         
         body {{
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             line-height: 1.6;
-            color: #1e293b;
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #1a202c;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 40px 20px;
         }}
@@ -4058,313 +3729,275 @@ html_content = f"""
         .resume-container {{
             max-width: 1200px;
             margin: 0 auto;
-            background: white;
-            border-radius: 24px;
+            background: #ffffff;
+            border-radius: 20px;
             box-shadow: 
-                0 25px 50px rgba(0, 0, 0, 0.1),
-                0 10px 25px rgba(0, 0, 0, 0.05);
+                0 25px 50px rgba(0, 0, 0, 0.15),
+                0 10px 25px rgba(0, 0, 0, 0.1);
             overflow: hidden;
-            border: 1px solid rgba(226, 232, 240, 0.8);
-        }}
-        
-        .header {{
-            background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
-            color: white;
-            padding: 48px 48px 40px;
             position: relative;
-            overflow: hidden;
         }}
         
-        .header::before {{
+        .resume-container::before {{
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.03)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-            opacity: 0.3;
+            height: 6px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%);
         }}
         
-        .header-content {{
-            position: relative;
-            z-index: 1;
+        .header-section {{
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid #e2e8f0;
         }}
         
         .name-title {{
             flex: 1;
         }}
         
-        .name {{
+        .name-title h1 {{
             font-size: 42px;
             font-weight: 800;
+            color: #1a202c;
             margin-bottom: 8px;
-            letter-spacing: -0.025em;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }}
         
-        .job-title {{
-            font-size: 22px;
-            font-weight: 500;
-            opacity: 0.9;
-            letter-spacing: 0.025em;
+        .name-title h2 {{
+            font-size: 24px;
+            font-weight: 600;
+            color: #4a5568;
+            margin: 0;
         }}
         
         .profile-image {{
+            flex-shrink: 0;
             margin-left: 40px;
         }}
         
         .main-content {{
-            display: grid;
-            grid-template-columns: 350px 1fr;
-            gap: 0;
-            min-height: 600px;
+            display: flex;
+            min-height: 800px;
         }}
         
         .sidebar {{
-            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-            padding: 48px 40px;
-            border-right: 1px solid rgba(226, 232, 240, 0.8);
+            width: 350px;
+            background: linear-gradient(180deg, #f7fafc 0%, #edf2f7 100%);
+            padding: 40px 30px;
+            border-right: 1px solid #e2e8f0;
         }}
         
-        .content {{
-            padding: 48px 48px 48px 40px;
-            background: white;
-        }}
-        
-        .section-title {{
-            color: #1e40af;
-            font-size: 20px;
-            font-weight: 700;
-            margin: 32px 0 16px 0;
-            letter-spacing: -0.025em;
-            display: flex;
-            align-items: center;
-        }}
-        
-        .section-title:first-child {{
-            margin-top: 0;
-        }}
-        
-        .section-title::after {{
-            content: '';
+        .main-section {{
             flex: 1;
-            height: 2px;
-            background: linear-gradient(90deg, #2563eb 0%, transparent 100%);
-            margin-left: 16px;
-            border-radius: 1px;
+            padding: 40px;
+            background: #ffffff;
         }}
         
         .contact-info {{
-            background: white;
-            padding: 24px;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            margin-bottom: 32px;
+            margin-bottom: 40px;
         }}
         
         .contact-item {{
             display: flex;
             align-items: center;
             margin-bottom: 12px;
-            font-size: 15px;
-            color: #475569;
-        }}
-        
-        .contact-item:last-child {{
-            margin-bottom: 0;
+            padding: 8px 0;
         }}
         
         .contact-icon {{
-            width: 18px;
-            height: 18px;
-            margin-right: 12px;
-            color: #2563eb;
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            opacity: 0.8;
         }}
         
-        .contact-item a {{
-            color: #2563eb;
+        .contact-item span, .contact-item a {{
+            font-size: 14px;
+            color: #4a5568;
             text-decoration: none;
             font-weight: 500;
-            transition: color 0.3s ease;
         }}
         
         .contact-item a:hover {{
-            color: #1d4ed8;
-            text-decoration: underline;
+            color: #667eea;
+            transition: color 0.3s ease;
         }}
         
-        .summary {{
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            padding: 32px;
-            border-radius: 16px;
-            border-left: 4px solid #2563eb;
-            margin-bottom: 40px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            border: 1px solid rgba(226, 232, 240, 0.8);
+        .section-title {{
+            font-size: 22px;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 35px 0 20px 0;
+            display: flex;
+            align-items: center;
+            position: relative;
         }}
         
-        .summary p {{
+        .section-title::after {{
+            content: '';
+            flex: 1;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            margin-left: 15px;
+            border-radius: 2px;
+        }}
+        
+        .section-content {{
+            margin-bottom: 30px;
+        }}
+        
+        .summary-text {{
             font-size: 16px;
             line-height: 1.8;
-            color: #374151;
-            margin: 0;
-            font-weight: 500;
+            color: #4a5568;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
         }}
         
         @media (max-width: 768px) {{
-            body {{
-                padding: 20px 10px;
+            .main-content {{
+                flex-direction: column;
             }}
             
-            .resume-container {{
-                border-radius: 16px;
+            .sidebar {{
+                width: 100%;
             }}
             
-            .header {{
-                padding: 32px 24px;
-            }}
-            
-            .header-content {{
+            .header-section {{
                 flex-direction: column;
                 text-align: center;
             }}
             
             .profile-image {{
-                margin: 24px 0 0 0;
+                margin: 20px 0 0 0;
             }}
             
-            .name {{
+            .name-title h1 {{
                 font-size: 32px;
-            }}
-            
-            .job-title {{
-                font-size: 18px;
-            }}
-            
-            .main-content {{
-                grid-template-columns: 1fr;
-            }}
-            
-            .sidebar {{
-                padding: 32px 24px;
-                border-right: none;
-                border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-            }}
-            
-            .content {{
-                padding: 32px 24px;
             }}
         }}
         
-        @media print {{
+        @media (max-width: 480px) {{
             body {{
-                background: white;
-                padding: 0;
+                padding: 20px 10px;
             }}
             
-            .resume-container {{
-                box-shadow: none;
-                border: none;
-                border-radius: 0;
-            }}
-            
-            .header {{
-                background: #1e40af !important;
-                -webkit-print-color-adjust: exact;
-                color-adjust: exact;
-            }}
-            
-            .sidebar {{
-                background: #f8fafc !important;
-                -webkit-print-color-adjust: exact;
-                color-adjust: exact;
+            .header-section, .sidebar, .main-section {{
+                padding: 20px;
             }}
         }}
     </style>
 </head>
 <body>
     <div class="resume-container">
-        <header class="header">
-            <div class="header-content">
-                <div class="name-title">
-                    <h1 class="name">{st.session_state['name']}</h1>
-                    <h2 class="job-title">{st.session_state['job_title']}</h2>
-                </div>
-                <div class="profile-image">
-                    {profile_img_html}
-                </div>
+        <div class="header-section">
+            <div class="name-title">
+                <h1>{st.session_state['name']}</h1>
+                <h2>{st.session_state['job_title']}</h2>
             </div>
-        </header>
+            <div class="profile-image">
+                {profile_img_html}
+            </div>
+        </div>
 
         <div class="main-content">
-            <aside class="sidebar">
+            <div class="sidebar">
                 <div class="contact-info">
                     <div class="contact-item">
-                        <span class="contact-icon">📍</span>
+                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                        </svg>
                         <span>{st.session_state['location']}</span>
                     </div>
                     <div class="contact-item">
-                        <span class="contact-icon">📞</span>
+                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path>
+                        </svg>
                         <span>{st.session_state['phone']}</span>
                     </div>
                     <div class="contact-item">
-                        <span class="contact-icon">📧</span>
+                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                        </svg>
                         <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a>
                     </div>
                     <div class="contact-item">
-                        <span class="contact-icon">🔗</span>
+                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                        </svg>
                         <a href="{st.session_state['linkedin']}" target="_blank">LinkedIn</a>
                     </div>
                     <div class="contact-item">
-                        <span class="contact-icon">🌐</span>
+                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.498-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z" clip-rule="evenodd"></path>
+                        </svg>
                         <a href="{st.session_state['portfolio']}" target="_blank">Portfolio</a>
                     </div>
                 </div>
 
-                <h3 class="section-title">💼 Skills</h3>
-                <div style="margin-bottom: 24px;">
-                    {skills_html}
+                <div class="section-content">
+                    <h3 class="section-title">Skills</h3>
+                    <div>{skills_html}</div>
                 </div>
 
-                <h3 class="section-title">🌍 Languages</h3>
-                <div style="margin-bottom: 24px;">
-                    {languages_html}
+                <div class="section-content">
+                    <h3 class="section-title">Languages</h3>
+                    <div>{languages_html}</div>
                 </div>
 
-                <h3 class="section-title">🎯 Interests</h3>
-                <div style="margin-bottom: 24px;">
-                    {interests_html}
+                <div class="section-content">
+                    <h3 class="section-title">Interests</h3>
+                    <div>{interests_html}</div>
                 </div>
 
-                <h3 class="section-title">🧠 Soft Skills</h3>
-                <div>
-                    {Softskills_html}
+                <div class="section-content">
+                    <h3 class="section-title">Soft Skills</h3>
+                    <div>{Softskills_html}</div>
                 </div>
-            </aside>
+            </div>
 
-            <main class="content">
-                <h3 class="section-title">📝 Summary</h3>
-                <div class="summary">
-                    <p>{summary_html}</p>
+            <div class="main-section">
+                <div class="section-content">
+                    <h3 class="section-title">Professional Summary</h3>
+                    <div class="summary-text">{summary_html}</div>
                 </div>
 
-                <h3 class="section-title">💼 Experience</h3>
-                {experience_html}
+                <div class="section-content">
+                    <h3 class="section-title">Work Experience</h3>
+                    {experience_html}
+                </div>
 
-                <h3 class="section-title">🎓 Education</h3>
-                {education_html}
+                <div class="section-content">
+                    <h3 class="section-title">Education</h3>
+                    {education_html}
+                </div>
 
-                <h3 class="section-title">🛠 Projects</h3>
-                {projects_html}
+                <div class="section-content">
+                    <h3 class="section-title">Projects</h3>
+                    {projects_html}
+                </div>
 
-                {project_links_html}
-                {certificate_links_html}
-            </main>
+                <div class="section-content">
+                    {project_links_html}
+                </div>
+
+                <div class="section-content">
+                    {certificate_links_html}
+                </div>
+            </div>
         </div>
     </div>
 </body>
@@ -4381,35 +4014,36 @@ html_file = BytesIO(html_bytes)
 pdf_resume_bytes = html_to_pdf_bytes(html_content)
 
 with tab2:
-    # Enhanced Download Section
+    # ==========================
+    # Enhanced Resume Download Header
+    # ==========================
     st.markdown(
         """
         <div style='
             text-align: center; 
-            margin: 40px 0; 
-            padding: 32px;
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            border-radius: 20px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(226, 232, 240, 0.8);
+            margin: 30px 0 40px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
         '>
             <h2 style='
-                color: #1e40af; 
+                color: white; 
                 font-family: "Inter", sans-serif; 
                 font-size: 28px;
                 font-weight: 700;
-                margin-bottom: 12px;
-                letter-spacing: -0.025em;
+                margin: 0;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.2);
             '>
                 📥 Download Your Professional Resume
             </h2>
             <p style='
-                color: #64748b;
+                color: rgba(255,255,255,0.9);
                 font-size: 16px;
-                margin-bottom: 24px;
+                margin: 8px 0 0 0;
                 font-weight: 500;
             '>
-                Choose your preferred format and start applying today
+                Choose your preferred format below
             </p>
         </div>
         """,
@@ -4418,49 +4052,62 @@ with tab2:
 
     col1, col2 = st.columns([1, 1])
 
-    # Enhanced Download Buttons
+    # Enhanced HTML Resume Download Button
     with col1:
         st.download_button(
-            label="⬇️ Download as HTML",
+            label="📄 Download as HTML",
             data=html_file,
-            file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.html",
+            file_name=f"{st.session_state['name'].replace(' ', '_')}_Professional_Resume.html",
             mime="text/html",
-            key="download_resume_html",
-            help="Download as HTML file - perfect for online sharing and customization"
+            key="download_resume_html"
         )
 
+    # Enhanced PDF Resume Download Button
     with col2:
         st.download_button(
-            label="⬇️ Download as PDF",
+            label="📑 Download as PDF",
             data=pdf_resume_bytes,
-            file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.pdf",
+            file_name=f"{st.session_state['name'].replace(' ', '_')}_Professional_Resume.pdf",
             mime="application/pdf",
-            key="download_resume_pdf",
-            help="Download as PDF file - ideal for printing and email attachments"
+            key="download_resume_pdf"
         )
 
-    # Cover Letter Section
+    # ==========================
+    # Enhanced Cover Letter Expander
+    # ==========================
     with st.expander("📩 Generate Cover Letter from This Resume", expanded=False):
         generate_cover_letter_from_resume_builder()
 
-    # Generated Cover Letter Preview & Downloads
+    # ==========================
+    # Enhanced Generated Cover Letter Preview & Downloads
+    # ==========================
     if "cover_letter" in st.session_state:
         st.markdown("""
         <div style='
-            margin-top: 40px;
-            padding: 32px;
-            background: linear-gradient(135deg, #fefefe 0%, #f8fafc 100%);
-            border-radius: 20px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(226, 232, 240, 0.8);
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            padding: 25px;
+            border-radius: 16px;
+            margin-top: 30px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            box-shadow: 0 8px 32px rgba(56, 189, 248, 0.1);
         '>
             <h3 style="
-                color: #1e40af; 
-                margin-bottom: 24px;
+                color: #0369a1; 
+                margin: 0 0 20px 0;
                 font-size: 24px;
                 font-weight: 700;
-                letter-spacing: -0.025em;
-            ">✉️ Generated Cover Letter</h3>
+                display: flex;
+                align-items: center;
+            ">
+                <div style='
+                    width: 8px; 
+                    height: 8px; 
+                    background: linear-gradient(45deg, #0369a1, #0284c7);
+                    border-radius: 50%; 
+                    margin-right: 12px;
+                '></div>
+                ✉️ Generated Cover Letter
+            </h3>
         </div>
         """, unsafe_allow_html=True)
 
@@ -4483,78 +4130,89 @@ with tab2:
             bio.seek(0)
             return bio
 
+        # ==========================
         # Enhanced Cover Letter Download Buttons
+        # ==========================
         st.markdown("""
         <div style="
-            margin: 32px 0 16px 0;
-            padding: 24px;
-            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-            border-radius: 16px;
-            text-align: center;
+            background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border: 1px solid rgba(245, 158, 11, 0.2);
         ">
             <strong style="
-                color: #1e40af;
+                color: #92400e;
                 font-size: 18px;
-                font-weight: 600;
-            ">⬇️ Download Your Cover Letter</strong>
+                display: flex;
+                align-items: center;
+            ">
+                <div style='
+                    width: 6px; 
+                    height: 6px; 
+                    background: #92400e;
+                    border-radius: 50%; 
+                    margin-right: 10px;
+                '></div>
+                ⬇️ Download Your Cover Letter
+            </strong>
         </div>
         """, unsafe_allow_html=True)
 
         col1, col2, col3 = st.columns(3)
         with col1:
             st.download_button(
-                label="📥 Download (.docx)",
+                label="📝 Download (.docx)",
                 data=create_docx(st.session_state["cover_letter"]),
                 file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                key="download_coverletter_docx",
-                help="Download as Word document - easy to edit and customize"
+                key="download_coverletter_docx"
             )
         with col2:
             st.download_button(
-                label="📥 Download (PDF)",
+                label="📑 Download (PDF)",
                 data=pdf_file,
                 file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.pdf",
                 mime="application/pdf",
-                key="download_coverletter_pdf",
-                help="Download as PDF - professional format for applications"
+                key="download_coverletter_pdf"
             )
         with col3:
             st.download_button(
-                label="📥 Download (HTML)",
+                label="📄 Download (HTML)",
                 data=st.session_state["cover_letter_html"],
                 file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.html",
                 mime="text/html",
-                key="download_coverletter_html",
-                help="Download as HTML - for web sharing and further customization"
+                key="download_coverletter_html"
             )
 
-    # Additional Resources
+    # Enhanced conversion tip
     st.markdown("""
     <div style='
-        margin-top: 40px;
-        padding: 24px;
-        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-        border-radius: 16px;
-        border-left: 4px solid #2563eb;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        padding: 20px;
+        border-radius: 12px;
+        margin-top: 20px;
+        border-left: 4px solid #22c55e;
+        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.1);
     '>
         <p style='
-            color: #1e40af;
-            font-size: 16px;
-            font-weight: 500;
+            color: #166534;
+            font-weight: 600;
             margin: 0;
-            line-height: 1.6;
+            display: flex;
+            align-items: center;
         '>
-            ✅ <strong>Pro Tip:</strong> After downloading your HTML resume, you can 
-            <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: 600;">
-                convert it to PDF using Sejda's free online tool
-            </a> for additional formatting options.
+            <div style='
+                width: 6px; 
+                height: 6px; 
+                background: #22c55e;
+                border-radius: 50%; 
+                margin-right: 10px;
+            '></div>
+            ✅ Need PDF conversion? <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color: #166534; text-decoration: underline;">Click here to convert HTML to PDF</a> using Sejda's free online tool.
         </p>
     </div>
     """, unsafe_allow_html=True)
-
-
 
 
 

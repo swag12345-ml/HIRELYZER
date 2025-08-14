@@ -1772,7 +1772,8 @@ You are a professional ATS evaluator with expertise in talent assessment. Your r
 
 Follow this exact structure and be **specific with evidence while highlighting strengths**:
 
-**CANDIDATE NAME:** [Extract the full name from the resume - look in header, contact info, or first line]
+### 🏷️ Candidate Name
+<Extract full name clearly - check resume header, contact section, or first few lines>
 
 ### 🏫 Education Analysis
 **Score:** <0–{edu_weight}> / {edu_weight}
@@ -1896,51 +1897,27 @@ Context for Evaluation:
     ats_result = call_llm(prompt, session=st.session_state).strip()
 
     def extract_section(pattern, text, default="N/A"):
-        match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
+        match = re.search(pattern, text, re.DOTALL)
         return match.group(1).strip() if match else default
 
     def extract_score(pattern, text, default=0):
-        match = re.search(pattern, text, re.IGNORECASE)
+        match = re.search(pattern, text)
         return int(match.group(1)) if match else default
 
-    # ✅ FIXED: Better candidate name extraction
-    candidate_name = extract_section(r"\*\*CANDIDATE NAME:\*\*\s*\[?([^\[\]\n]+)\]?", ats_result, "Not Found")
-    if candidate_name == "Not Found":
-        # Fallback patterns for name extraction
-        candidate_name = extract_section(r"CANDIDATE NAME:\s*([^\n]+)", ats_result, "Not Found")
-        if candidate_name == "Not Found":
-            candidate_name = extract_section(r"Name:\s*([^\n]+)", ats_result, "Not Found")
-    
-    # Clean up the extracted name
-    candidate_name = re.sub(r'^\[|\]$', '', candidate_name.strip())
-
-    # ✅ FIXED: Better section extraction patterns
-    edu_analysis = extract_section(r"### 🏫 Education Analysis(.*?)(?=###|$)", ats_result)
-    exp_analysis = extract_section(r"### 💼 Experience Analysis(.*?)(?=###|$)", ats_result)
-    skills_analysis = extract_section(r"### 🛠 Skills Analysis(.*?)(?=###|$)", ats_result)
-    lang_analysis = extract_section(r"### 🗣 Language Quality Analysis(.*?)(?=###|$)", ats_result)
-    keyword_analysis = extract_section(r"### 🔑 Keyword Analysis(.*?)(?=###|$)", ats_result)
+    # Extract key sections
+    candidate_name = extract_section(r"### 🏷️ Candidate Name(.*?)###", ats_result, "Not Found")
+    edu_analysis = extract_section(r"### 🏫 Education Analysis(.*?)###", ats_result)
+    exp_analysis = extract_section(r"### 💼 Experience Analysis(.*?)###", ats_result)
+    skills_analysis = extract_section(r"### 🛠 Skills Analysis(.*?)###", ats_result)
+    lang_analysis = extract_section(r"### 🗣 Language Quality Analysis(.*?)###", ats_result)
+    keyword_analysis = extract_section(r"### 🔑 Keyword Analysis(.*?)###", ats_result)
     final_thoughts = extract_section(r"### ✅ Final Assessment(.*)", ats_result)
 
-    # ✅ FIXED: Better score extraction with multiple patterns
-    def extract_score_robust(text, default=0):
-        patterns = [
-            r"\*\*Score:\*\*\s*(\d+)",
-            r"Score:\s*(\d+)",
-            r"Score\s*[:=]\s*(\d+)",
-            r"(\d+)\s*/\s*\d+"  # Matches "15 / 20" format
-        ]
-        
-        for pattern in patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                return int(match.group(1))
-        return default
-
-    edu_score = extract_score_robust(edu_analysis)
-    exp_score = extract_score_robust(exp_analysis)
-    skills_score = extract_score_robust(skills_analysis)
-    keyword_score = extract_score_robust(keyword_analysis)
+    # Extract scores with improved patterns
+    edu_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis)
+    exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)  
+    skills_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
+    keyword_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis)
 
     # ✅ IMPROVED: More generous minimum scores to avoid harsh penalties
     edu_score = max(edu_score, int(edu_weight * 0.15))  # Minimum 15% of weight
@@ -1948,30 +1925,17 @@ Context for Evaluation:
     skills_score = max(skills_score, int(skills_weight * 0.15))  # Minimum 15% of weight
     keyword_score = max(keyword_score, int(keyword_weight * 0.10))  # Minimum 10% of weight
 
-    # ✅ FIXED: Better extraction of missing items with multiple fallback patterns
-    def extract_missing_items(text, section_name):
-        patterns = [
-            rf"\*\*{section_name}:\*\*(.*?)(?:\*\*|###|\Z)",
-            rf"{section_name}:(.*?)(?:\*\*|###|\Z)",
-            rf"\*\*{section_name}\*\*(.*?)(?:\*\*|###|\Z)"
-        ]
-        
-        for pattern in patterns:
-            match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
-            if match:
-                return match.group(1).strip()
-        return ""
-
-    missing_keywords_section = extract_missing_items(keyword_analysis, "Keyword Enhancement Opportunities")
-    missing_skills_section = extract_missing_items(skills_analysis, "Skills Gaps \\(Opportunities for Growth\\)")
+    # Extract missing items with better parsing - now called "opportunities"
+    missing_keywords_section = extract_section(r"\*\*Keyword Enhancement Opportunities:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)
+    missing_skills_section = extract_section(r"\*\*Skills Gaps \(Opportunities for Growth\):\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
     
-    # Additional fallback patterns
+    # Fallback to old patterns if new ones don't match
     if not missing_keywords_section.strip():
-        missing_keywords_section = extract_missing_items(keyword_analysis, "Missing Critical Keywords")
+        missing_keywords_section = extract_section(r"\*\*Missing Critical Keywords:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)
     if not missing_skills_section.strip():
-        missing_skills_section = extract_missing_items(skills_analysis, "Missing Critical Skills")
+        missing_skills_section = extract_section(r"\*\*Missing Critical Skills:\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
     
-    # ✅ FIXED: Improved extraction - handle multiple formats and get all items
+    # Improved extraction - handle multiple formats and get all items
     def extract_list_items(text):
         if not text.strip():
             return "None identified"
@@ -1988,7 +1952,6 @@ Context for Evaluation:
             # Remove various bullet point formats
             cleaned_line = re.sub(r'^[-•*]\s*', '', line)  # Remove -, •, * bullets
             cleaned_line = re.sub(r'^\d+\.\s*', '', cleaned_line)  # Remove numbered lists
-            cleaned_line = re.sub(r'^[<>]\s*', '', cleaned_line)  # Remove < > bullets
             cleaned_line = cleaned_line.strip()
             
             if cleaned_line and len(cleaned_line) > 2:  # Avoid empty or very short items

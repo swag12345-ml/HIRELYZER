@@ -1696,73 +1696,6 @@ Suggestions:
     return score, feedback, suggestions
 
 
-# ✅ Enhanced name extraction function
-def extract_candidate_name(resume_text):
-    """Extract candidate name from resume text using multiple strategies"""
-    
-    # Strategy 1: Look for common name patterns at the beginning
-    lines = resume_text.strip().split('\n')
-    first_few_lines = lines[:5]  # Check first 5 lines
-    
-    for line in first_few_lines:
-        line = line.strip()
-        if not line:
-            continue
-            
-        # Remove common prefixes and clean the line
-        cleaned_line = re.sub(r'^(Name:|Full Name:|Candidate:|Resume of|CV of)\s*', '', line, flags=re.IGNORECASE)
-        cleaned_line = re.sub(r'[^\w\s\.]', ' ', cleaned_line)  # Remove special chars except dots
-        cleaned_line = ' '.join(cleaned_line.split())  # Normalize whitespace
-        
-        # Check if it looks like a name (2-4 words, proper case, no numbers)
-        words = cleaned_line.split()
-        if (2 <= len(words) <= 4 and 
-            all(word.replace('.', '').isalpha() for word in words) and
-            all(len(word) >= 2 for word in words) and
-            any(word[0].isupper() for word in words)):
-            return cleaned_line
-    
-    # Strategy 2: Look for email and extract name from it
-    email_match = re.search(r'([a-zA-Z0-9._%+-]+)@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', resume_text)
-    if email_match:
-        email_prefix = email_match.group(1)
-        # Try to convert email prefix to name
-        name_parts = re.split(r'[._-]', email_prefix)
-        if len(name_parts) >= 2:
-            name = ' '.join(part.capitalize() for part in name_parts[:2] if part.isalpha())
-            if len(name) > 3:
-                return name
-    
-    # Strategy 3: Look for phone number context
-    phone_context = re.search(r'([A-Z][a-z]+ [A-Z][a-z]+).*?[\d\s\-\(\)]{10,}', resume_text)
-    if phone_context:
-        potential_name = phone_context.group(1).strip()
-        words = potential_name.split()
-        if len(words) == 2 and all(word.isalpha() and len(word) >= 2 for word in words):
-            return potential_name
-    
-    # Strategy 4: Look for common resume headers
-    header_patterns = [
-        r'(?:^|\n)\s*([A-Z][a-z]+ [A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s*(?:\n|$)',
-        r'([A-Z][A-Z\s]+)\s*\n.*?(?:email|phone|address)',
-    ]
-    
-    for pattern in header_patterns:
-        match = re.search(pattern, resume_text, re.MULTILINE | re.IGNORECASE)
-        if match:
-            potential_name = match.group(1).strip()
-            # Convert all caps to proper case
-            if potential_name.isupper():
-                potential_name = ' '.join(word.capitalize() for word in potential_name.split())
-            
-            words = potential_name.split()
-            if (2 <= len(words) <= 3 and 
-                all(word.isalpha() and len(word) >= 2 for word in words)):
-                return potential_name
-    
-    return "Name Not Found"
-
-
 # ✅ Main ATS Evaluation Function
 def ats_percentage_score(
     resume_text,
@@ -1789,9 +1722,6 @@ def ats_percentage_score(
         f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
         if logic_profile_score else ""
     )
-
-    # ✅ Extract candidate name before LLM call
-    extracted_name = extract_candidate_name(resume_text)
 
     prompt = f"""
 You are a professional ATS evaluator with expertise in talent assessment. Your role is to provide **balanced, objective scoring** that reflects industry standards and recognizes candidate potential while maintaining professional standards.
@@ -1843,7 +1773,7 @@ You are a professional ATS evaluator with expertise in talent assessment. Your r
 Follow this exact structure and be **specific with evidence while highlighting strengths**:
 
 ### 🏷️ Candidate Name
-{extracted_name}
+<Extract full name clearly - check resume header, contact section, or first few lines>
 
 ### 🏫 Education Analysis
 **Score:** <0–{edu_weight}> / {edu_weight}
@@ -1974,8 +1904,8 @@ Context for Evaluation:
         match = re.search(pattern, text)
         return int(match.group(1)) if match else default
 
-    # Extract key sections - Fixed candidate name extraction
-    candidate_name = extracted_name  # Use the pre-extracted name instead of parsing from LLM response
+    # Extract key sections
+    candidate_name = extract_section(r"### 🏷️ Candidate Name(.*?)###", ats_result, "Not Found")
     edu_analysis = extract_section(r"### 🏫 Education Analysis(.*?)###", ats_result)
     exp_analysis = extract_section(r"### 💼 Experience Analysis(.*?)###", ats_result)
     skills_analysis = extract_section(r"### 🛠 Skills Analysis(.*?)###", ats_result)
@@ -2040,7 +1970,7 @@ Context for Evaluation:
     
     # ✅ IMPROVED: More generous score caps and bonus for well-rounded candidates
     if all(score >= weight * 0.6 for score, weight in [(edu_score, edu_weight), (exp_score, exp_weight), (skills_score, skills_weight)]):
-        total_score += 3  
+        total_score += 3  # Bonus for well-rounded candidates
     
     total_score = min(total_score, 100)
     total_score = max(total_score, 15)  # Minimum score of 15 to avoid completely crushing candidates
@@ -4691,6 +4621,7 @@ with tab5:
     except Exception as e:
         st.error(f"Error loading domain distribution: {e}")
 
+
     # Enhanced ATS Performance Analysis
     st.markdown("### 📈 ATS Performance Analysis")
     
@@ -4702,7 +4633,7 @@ with tab5:
                 chart_orientation = st.radio("Chart Style", ["Vertical", "Horizontal"], horizontal=True)
             with col2:
                 color_scheme = st.selectbox("Color Scheme", 
-                                          ["plasma", "viridis", "inferno", "magma", "turbo"])
+                                          ["viridis", "plasma", "inferno", "magma", "cividis"])
             
             orientation = 'v' if chart_orientation == "Vertical" else 'h'
             fig = px.bar(df_ats, 
@@ -4712,30 +4643,12 @@ with tab5:
                         orientation=orientation,
                         color="avg_ats_score",
                         color_continuous_scale=color_scheme,
-                        text="avg_ats_score",
-                        template="plotly_dark")  # Use dark theme for better readability
+                        text="avg_ats_score")
             
             fig.update_traces(texttemplate='%{text:.1f}', textposition='outside')
             if orientation == 'v':
                 fig.update_xaxes(tickangle=45)
-            
-            # Enhanced layout for better readability
-            fig.update_layout(
-                showlegend=False,
-                plot_bgcolor='rgba(0,0,0,0.1)',
-                paper_bgcolor='rgba(0,0,0,0.05)',
-                font=dict(color='white', size=12),
-                title=dict(font=dict(size=16, color='white')),
-                xaxis=dict(
-                    gridcolor='rgba(255,255,255,0.2)',
-                    tickfont=dict(color='white')
-                ),
-                yaxis=dict(
-                    gridcolor='rgba(255,255,255,0.2)',
-                    tickfont=dict(color='white')
-                ),
-                margin=dict(t=60, b=80, l=80, r=50)
-            )
+            fig.update_layout(showlegend=False)
             
             st.plotly_chart(fig, use_container_width=True)
         else:
@@ -4755,23 +4668,18 @@ with tab5:
             df_timeline["7_day_avg"] = df_timeline["count"].rolling(window=7, min_periods=1).mean()
             df_timeline["30_day_avg"] = df_timeline["count"].rolling(window=30, min_periods=1).mean()
             
-            # Create subplot with proper spacing and formatting
+            # Create subplot with secondary y-axis
             fig = make_subplots(
                 rows=2, cols=1,
                 subplot_titles=('Daily Upload Count with Moving Averages', 'Daily Average ATS Score Trend'),
-                vertical_spacing=0.15,
-                specs=[[{"secondary_y": False}], [{"secondary_y": False}]]
+                vertical_spacing=0.1
             )
-            
-            # Convert day column to datetime for proper spacing
-            df_timeline['day'] = pd.to_datetime(df_timeline['day'])
             
             # Upload count plot
             fig.add_trace(
                 go.Scatter(x=df_timeline["day"], y=df_timeline["count"], 
                           mode='lines+markers', name='Daily Uploads',
-                          line=dict(color='#1f77b4', width=2),
-                          marker=dict(size=6)),
+                          line=dict(color='#1f77b4', width=2)),
                 row=1, col=1
             )
             
@@ -4791,44 +4699,15 @@ with tab5:
             
             # ATS trend plot
             if not df_daily_ats.empty:
-                df_daily_ats['date'] = pd.to_datetime(df_daily_ats['date'])
                 fig.add_trace(
                     go.Scatter(x=df_daily_ats["date"], y=df_daily_ats["avg_ats"], 
                               mode='lines+markers', name='Daily Avg ATS',
-                              line=dict(color='#d62728', width=2),
-                              marker=dict(size=6)),
+                              line=dict(color='#d62728', width=2)),
                     row=2, col=1
                 )
             
-            # Update layout for better spacing and readability
-            fig.update_layout(
-                height=700, 
-                showlegend=True,
-                legend=dict(
-                    orientation="h",
-                    yanchor="bottom",
-                    y=1.02,
-                    xanchor="right",
-                    x=1
-                ),
-                margin=dict(t=80, b=50, l=50, r=50)
-            )
-            
-            # Update x-axes for proper date formatting and spacing
+            fig.update_layout(height=600, showlegend=True)
             fig.update_xaxes(title_text="Date", row=2, col=1)
-            fig.update_xaxes(
-                tickformat="%Y-%m-%d",
-                tickangle=45,
-                dtick="D1" if len(df_timeline) <= 30 else "D7",
-                row=1, col=1
-            )
-            fig.update_xaxes(
-                tickformat="%Y-%m-%d",
-                tickangle=45,
-                dtick="D1" if len(df_daily_ats) <= 30 else "D7",
-                row=2, col=1
-            )
-            
             fig.update_yaxes(title_text="Upload Count", row=1, col=1)
             fig.update_yaxes(title_text="Average ATS Score", row=2, col=1)
             

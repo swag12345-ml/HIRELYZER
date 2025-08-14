@@ -4576,51 +4576,38 @@ with tab5:
 
     # Enhanced Domain Distribution
     st.markdown("### 📊 Domain Distribution Analysis")
-
+    
     try:
         df_domain_dist = load_domain_distribution()
         if not df_domain_dist.empty:
             col1, col2 = st.columns(2)
             with col1:
-                chart_type = st.radio(
-                    "📊 Visualization Type:",
-                    ["📈 Interactive Bar Chart", "🥧 Interactive Pie Chart"],
-                    horizontal=True
-                )
+                chart_type = st.radio("📊 Visualization Type:", 
+                                    ["📈 Interactive Bar Chart", "🥧 Interactive Pie Chart"], 
+                                    horizontal=True)
             with col2:
-                max_val = len(df_domain_dist)
-                if max_val <= 5:
-                    show_top_n = max_val  # No slider, just show all available domains
-                else:
-                    show_top_n = st.slider(
-                        "Show Top N Domains",
-                        min_value=5,
-                        max_value=max_val,
-                        value=min(10, max_val)
-                    )
-
+                show_top_n = st.slider("Show Top N Domains", 5, len(df_domain_dist), 
+                                     value=min(10, len(df_domain_dist)))
+            
             df_top_domains = df_domain_dist.head(show_top_n)
-
+            
             if chart_type == "📈 Interactive Bar Chart":
                 fig = create_enhanced_bar_chart(df_top_domains, "domain", "count", 
-                                                "Resume Count by Domain")
+                                              "Resume Count by Domain")
                 st.plotly_chart(fig, use_container_width=True)
             else:
                 fig = create_enhanced_pie_chart(df_top_domains, "count", "domain", 
-                                                "Domain Distribution")
+                                              "Domain Distribution")
                 st.plotly_chart(fig, use_container_width=True)
-
+            
             # Summary statistics
             with st.expander("📋 Domain Statistics Summary"):
-                st.dataframe(
-                    df_domain_dist.style.format({'percentage': '{:.2f}%'}),
-                    use_container_width=True
-                )
+                st.dataframe(df_domain_dist.style.format({'percentage': '{:.2f}%'}), 
+                           use_container_width=True)
         else:
             st.info("ℹ️ No domain distribution data available.")
     except Exception as e:
         st.error(f"Error loading domain distribution: {e}")
-
 
     # Enhanced ATS Performance Analysis
     st.markdown("### 📈 ATS Performance Analysis")
@@ -4633,7 +4620,7 @@ with tab5:
                 chart_orientation = st.radio("Chart Style", ["Vertical", "Horizontal"], horizontal=True)
             with col2:
                 color_scheme = st.selectbox("Color Scheme", 
-                                          ["viridis", "plasma", "inferno", "magma", "cividis"])
+                                          ["plasma", "viridis", "inferno", "magma", "turbo"])
             
             orientation = 'v' if chart_orientation == "Vertical" else 'h'
             fig = px.bar(df_ats, 
@@ -4643,12 +4630,30 @@ with tab5:
                         orientation=orientation,
                         color="avg_ats_score",
                         color_continuous_scale=color_scheme,
-                        text="avg_ats_score")
+                        text="avg_ats_score",
+                        template="plotly_dark")  # Use dark theme for better readability
             
             fig.update_traces(texttemplate='%{text:.1f}', textposition='outside')
             if orientation == 'v':
                 fig.update_xaxes(tickangle=45)
-            fig.update_layout(showlegend=False)
+            
+            # Enhanced layout for better readability
+            fig.update_layout(
+                showlegend=False,
+                plot_bgcolor='rgba(0,0,0,0.1)',
+                paper_bgcolor='rgba(0,0,0,0.05)',
+                font=dict(color='white', size=12),
+                title=dict(font=dict(size=16, color='white')),
+                xaxis=dict(
+                    gridcolor='rgba(255,255,255,0.2)',
+                    tickfont=dict(color='white')
+                ),
+                yaxis=dict(
+                    gridcolor='rgba(255,255,255,0.2)',
+                    tickfont=dict(color='white')
+                ),
+                margin=dict(t=60, b=80, l=80, r=50)
+            )
             
             st.plotly_chart(fig, use_container_width=True)
         else:
@@ -4668,18 +4673,23 @@ with tab5:
             df_timeline["7_day_avg"] = df_timeline["count"].rolling(window=7, min_periods=1).mean()
             df_timeline["30_day_avg"] = df_timeline["count"].rolling(window=30, min_periods=1).mean()
             
-            # Create subplot with secondary y-axis
+            # Create subplot with proper spacing and formatting
             fig = make_subplots(
                 rows=2, cols=1,
                 subplot_titles=('Daily Upload Count with Moving Averages', 'Daily Average ATS Score Trend'),
-                vertical_spacing=0.1
+                vertical_spacing=0.15,
+                specs=[[{"secondary_y": False}], [{"secondary_y": False}]]
             )
+            
+            # Convert day column to datetime for proper spacing
+            df_timeline['day'] = pd.to_datetime(df_timeline['day'])
             
             # Upload count plot
             fig.add_trace(
                 go.Scatter(x=df_timeline["day"], y=df_timeline["count"], 
                           mode='lines+markers', name='Daily Uploads',
-                          line=dict(color='#1f77b4', width=2)),
+                          line=dict(color='#1f77b4', width=2),
+                          marker=dict(size=6)),
                 row=1, col=1
             )
             
@@ -4699,15 +4709,44 @@ with tab5:
             
             # ATS trend plot
             if not df_daily_ats.empty:
+                df_daily_ats['date'] = pd.to_datetime(df_daily_ats['date'])
                 fig.add_trace(
                     go.Scatter(x=df_daily_ats["date"], y=df_daily_ats["avg_ats"], 
                               mode='lines+markers', name='Daily Avg ATS',
-                              line=dict(color='#d62728', width=2)),
+                              line=dict(color='#d62728', width=2),
+                              marker=dict(size=6)),
                     row=2, col=1
                 )
             
-            fig.update_layout(height=600, showlegend=True)
+            # Update layout for better spacing and readability
+            fig.update_layout(
+                height=700, 
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                ),
+                margin=dict(t=80, b=50, l=50, r=50)
+            )
+            
+            # Update x-axes for proper date formatting and spacing
             fig.update_xaxes(title_text="Date", row=2, col=1)
+            fig.update_xaxes(
+                tickformat="%Y-%m-%d",
+                tickangle=45,
+                dtick="D1" if len(df_timeline) <= 30 else "D7",
+                row=1, col=1
+            )
+            fig.update_xaxes(
+                tickformat="%Y-%m-%d",
+                tickangle=45,
+                dtick="D1" if len(df_daily_ats) <= 30 else "D7",
+                row=2, col=1
+            )
+            
             fig.update_yaxes(title_text="Upload Count", row=1, col=1)
             fig.update_yaxes(title_text="Average ATS Score", row=2, col=1)
             

@@ -3716,6 +3716,9 @@ with tab2:
 
 
 
+import streamlit as st
+
+# Your existing tab3 code with enhanced CSS styling
 with tab3:
     st.header("🔍 Job Search Across LinkedIn, Naukri, and FoundIt")
 
@@ -3749,43 +3752,55 @@ with tab3:
                 platform = job["title"].split(":")[0].strip().lower()
 
                 if platform == "linkedin":
-                    icon = "🔵 <b style='color:#0e76a8;'>in LinkedIn</b>"
+                    icon = "🔵 <b style='color:#0e76a8;'>LinkedIn</b>"
                     btn_color = "#0e76a8"
+                    platform_gradient = "linear-gradient(135deg, #0e76a8 0%, #1a8cc8 100%)"
                 elif platform == "naukri":
                     icon = "🏢 <b style='color:#ff5722;'>Naukri</b>"
                     btn_color = "#ff5722"
+                    platform_gradient = "linear-gradient(135deg, #ff5722 0%, #ff7043 100%)"
                 elif "foundit" in platform:
                     icon = "🌐 <b style='color:#7c4dff;'>Foundit (Monster)</b>"
                     btn_color = "#7c4dff"
+                    platform_gradient = "linear-gradient(135deg, #7c4dff 0%, #9c64ff 100%)"
                 else:
                     icon = f"📄 <b>{platform.title()}</b>"
                     btn_color = "#00c4cc"
+                    platform_gradient = "linear-gradient(135deg, #00c4cc 0%, #26d0ce 100%)"
 
                 st.markdown(f"""
-<div style="
-    background-color:#1e1e1e;
-    padding:20px;
-    border-radius:15px;
-    margin-bottom:20px;
-    border-left: 5px solid {btn_color};
-    box-shadow: 0 0 15px {btn_color};
+<div class="job-result-card" style="
+    background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+    padding: 25px;
+    border-radius: 20px;
+    margin-bottom: 25px;
+    border-left: 6px solid {btn_color};
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px {btn_color}40;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 ">
-    <div style="font-size:20px; margin-bottom:8px;">{icon}</div>
-    <div style="color:#ffffff; font-size:17px; margin-bottom:15px;">
+    <div class="shimmer-overlay"></div>
+    <div style="font-size: 22px; margin-bottom: 12px; z-index: 2; position: relative;">{icon}</div>
+    <div style="color: #ffffff; font-size: 18px; margin-bottom: 20px; font-weight: 500; z-index: 2; position: relative; line-height: 1.4;">
         {job['title'].split(':')[1].strip()}
     </div>
-    <a href="{job['link']}" target="_blank" style="text-decoration:none;">
-        <button style="
-            background-color:{btn_color};
-            color:white;
-            padding:10px 15px;
-            border:none;
-            border-radius:8px;
-            font-size:15px;
-            cursor:pointer;
-            box-shadow: 0 0 10px {btn_color};
+    <a href="{job['link']}" target="_blank" style="text-decoration: none; z-index: 2; position: relative;">
+        <button class="job-button" style="
+            background: {platform_gradient};
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px {btn_color}50;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         ">
-            🚀 View Jobs on {platform.title()} &rarr;
+            <span style="position: relative; z-index: 2;">🚀 View Jobs on {platform.title()} →</span>
         </button>
     </a>
 </div>
@@ -3793,71 +3808,257 @@ with tab3:
         else:
             st.warning("⚠️ Please enter both the Job Role and Location to perform the search.")
 
-
-    # Inject Glowing CSS for Cards
+    # Enhanced CSS with advanced animations and effects
     st.markdown("""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    /* Global Enhancements */
+    .stApp {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    /* Advanced Glow Animation */
     @keyframes glow {
         0% {
-            box-shadow: 0 0 5px rgba(255,255,255,0.2);
+            box-shadow: 0 0 5px rgba(255,255,255,0.1), 0 0 10px rgba(0,255,255,0.1), 0 0 15px rgba(0,255,255,0.1);
         }
         50% {
-            box-shadow: 0 0 20px rgba(0,255,255,0.6);
+            box-shadow: 0 0 10px rgba(255,255,255,0.2), 0 0 20px rgba(0,255,255,0.4), 0 0 30px rgba(0,255,255,0.3);
         }
         100% {
-            box-shadow: 0 0 5px rgba(255,255,255,0.2);
+            box-shadow: 0 0 5px rgba(255,255,255,0.1), 0 0 10px rgba(0,255,255,0.1), 0 0 15px rgba(0,255,255,0.1);
         }
     }
-
+    
+    /* Shimmer Effect */
+    @keyframes shimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(100%);
+        }
+    }
+    
+    .shimmer-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+        transform: translateX(-100%);
+        animation: shimmer 3s infinite;
+        z-index: 1;
+    }
+    
+    /* Floating Animation */
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-5px);
+        }
+    }
+    
+    /* Pulse Animation */
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.02);
+        }
+    }
+    
+    /* Enhanced Company Cards */
     .company-card {
-        background-color: #1e1e1e;
+        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
         color: #ffffff;
-        border-radius: 15px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         cursor: pointer;
         text-decoration: none;
         display: block;
-        animation: glow 3s infinite alternate;
+        animation: glow 4s infinite alternate, float 6s ease-in-out infinite;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.1);
     }
-
+    
+    .company-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(0,255,255,0.1) 0%, rgba(255,0,255,0.1) 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 1;
+    }
+    
+    .company-card:hover::before {
+        opacity: 1;
+    }
+    
     .company-card:hover {
-        transform: scale(1.03);
-        box-shadow: 0 0 25px rgba(0, 255, 255, 0.7), 0 0 10px rgba(0, 255, 255, 0.5);
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 30px rgba(0, 255, 255, 0.3);
+        border-color: rgba(0,255,255,0.5);
     }
-
+    
+    /* Job Result Cards */
+    .job-result-card:hover {
+        transform: translateY(-5px) scale(1.01);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.4) !important;
+    }
+    
+    /* Enhanced Buttons */
+    .job-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+        z-index: 1;
+    }
+    
+    .job-button:hover::before {
+        left: 100%;
+    }
+    
+    .job-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+    
+    /* Enhanced Pills */
     .pill {
         display: inline-block;
-        background-color: #333;
-        padding: 6px 12px;
-        border-radius: 999px;
-        margin: 4px 6px 0 0;
+        background: linear-gradient(135deg, #333 0%, #444 100%);
+        padding: 8px 16px;
+        border-radius: 25px;
+        margin: 6px 8px 0 0;
         font-size: 13px;
+        font-weight: 500;
+        border: 1px solid rgba(255,255,255,0.1);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
     }
-
+    
+    .pill::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(0,255,255,0.2) 0%, rgba(255,0,255,0.2) 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .pill:hover::before {
+        opacity: 1;
+    }
+    
+    .pill:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,255,255,0.3);
+    }
+    
+    /* Enhanced Title Headers */
     .title-header {
-        color: white;
-        font-size: 26px;
-        margin-top: 40px;
-        font-weight: bold;
+        color: #ffffff;
+        font-size: 28px;
+        margin-top: 50px;
+        margin-bottom: 30px;
+        font-weight: 700;
+        text-align: center;
+        background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        position: relative;
+        animation: pulse 3s infinite;
     }
-
+    
+    .title-header::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 3px;
+        background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
+        border-radius: 2px;
+    }
+    
+    /* Company Logo Enhancement */
     .company-logo {
-        font-size: 26px;
-        margin-right: 8px;
+        font-size: 28px;
+        margin-right: 12px;
+        filter: drop-shadow(0 0 8px rgba(255,255,255,0.3));
+        animation: float 4s ease-in-out infinite;
     }
-
+    
     .company-header {
-        font-size: 22px;
-        font-weight: bold;
+        font-size: 24px;
+        font-weight: 700;
         display: flex;
         align-items: center;
+        margin-bottom: 15px;
+        position: relative;
+        z-index: 2;
+    }
+    
+    /* Responsive Enhancements */
+    @media (max-width: 768px) {
+        .company-card, .job-result-card {
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .title-header {
+            font-size: 24px;
+        }
+        
+        .company-header {
+            font-size: 20px;
+        }
+    }
+    
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #1e1e1e;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #26d0ce 0%, #9c64ff 100%);
     }
     </style>
     """, unsafe_allow_html=True)
-
 
     # ---------- Featured Companies ----------
     st.markdown("### <div class='title-header'>🏢 Featured Companies</div>", unsafe_allow_html=True)
@@ -3873,8 +4074,8 @@ with tab3:
                 <span class="company-logo">{company.get('emoji', '🏢')}</span>
                 {company['name']}
             </div>
-            <p>{company['description']}</p>
-            {category_tags}
+            <p style="margin-bottom: 15px; line-height: 1.6; position: relative; z-index: 2;">{company['description']}</p>
+            <div style="position: relative; z-index: 2;">{category_tags}</div>
         </a>
         """, unsafe_allow_html=True)
 
@@ -3883,22 +4084,22 @@ with tab3:
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("#### 🚀 Trending Skills")
+        st.markdown("#### <div style='color: #00c4cc; font-size: 20px; font-weight: 600; margin-bottom: 20px;'>🚀 Trending Skills</div>", unsafe_allow_html=True)
         for skill in JOB_MARKET_INSIGHTS["trending_skills"]:
             st.markdown(f"""
             <div class="company-card">
-                <h4>🔧 {skill['name']}</h4>
-                <p>📈 Growth Rate: {skill['growth']}</p>
+                <h4 style="color: #00c4cc; margin-bottom: 10px; position: relative; z-index: 2;">🔧 {skill['name']}</h4>
+                <p style="position: relative; z-index: 2;">📈 Growth Rate: <span style="color: #4ade80; font-weight: 600;">{skill['growth']}</span></p>
             </div>
             """, unsafe_allow_html=True)
 
     with col2:
-        st.markdown("#### 🌍 Top Job Locations")
+        st.markdown("#### <div style='color: #7c4dff; font-size: 20px; font-weight: 600; margin-bottom: 20px;'>🌍 Top Job Locations</div>", unsafe_allow_html=True)
         for loc in JOB_MARKET_INSIGHTS["top_locations"]:
             st.markdown(f"""
             <div class="company-card">
-                <h4>📍 {loc['name']}</h4>
-                <p>💼 Openings: {loc['jobs']}</p>
+                <h4 style="color: #7c4dff; margin-bottom: 10px; position: relative; z-index: 2;">📍 {loc['name']}</h4>
+                <p style="position: relative; z-index: 2;">💼 Openings: <span style="color: #fbbf24; font-weight: 600;">{loc['jobs']}</span></p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -3907,9 +4108,9 @@ with tab3:
     for role in JOB_MARKET_INSIGHTS["salary_insights"]:
         st.markdown(f"""
         <div class="company-card">
-            <h4>💼 {role['role']}</h4>
-            <p>📅 Experience: {role['experience']}</p>
-            <p>💵 Salary Range: {role['range']}</p>
+            <h4 style="color: #10b981; margin-bottom: 10px; position: relative; z-index: 2;">💼 {role['role']}</h4>
+            <p style="margin-bottom: 8px; position: relative; z-index: 2;">📅 Experience: <span style="color: #60a5fa; font-weight: 500;">{role['experience']}</span></p>
+            <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
 with tab4:

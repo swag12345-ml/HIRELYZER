@@ -3515,23 +3515,30 @@ for proj in st.session_state.project_entries:
 project_links_html = ""
 if st.session_state.project_links:
     project_links_html = """
-    <h4 class='section-title' style='
-        color: #1e40af;
-        font-size: 20px;
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-    '>
-        <div style='
-            width: 8px; 
-            height: 8px; 
-            background: linear-gradient(45deg, #1e40af, #3b82f6);
-            border-radius: 50%; 
-            margin-right: 12px;
-        '></div>
-        Project Links
-    </h4>
-    <hr style='margin-bottom: 20px; border: none; height: 2px; background: linear-gradient(90deg, #1e40af, #3b82f6, #60a5fa);'>
+    <div style='margin-bottom: 20px;'>
+        <h4 class='section-title' style='
+            color: #1e40af;
+            font-size: 20px;
+            margin-bottom: 8px; /* smaller gap */
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid transparent;
+            background-image: linear-gradient(90deg, #1e40af, #3b82f6, #60a5fa);
+            background-repeat: no-repeat;
+            background-size: 100% 2px;
+            background-position: bottom left;
+            padding-bottom: 4px;
+        '>
+            <div style='
+                width: 8px; 
+                height: 8px; 
+                background: linear-gradient(45deg, #1e40af, #3b82f6);
+                border-radius: 50%; 
+                margin-right: 12px;
+            '></div>
+            Project Links
+        </h4>
+    </div>
     """ + "".join(
         f"""
         <div style='

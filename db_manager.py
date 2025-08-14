@@ -794,4 +794,3 @@ def analyze_domain_transitions():
     ORDER BY frequency DESC
     """
     return pd.read_sql_query(query, conn)
-S

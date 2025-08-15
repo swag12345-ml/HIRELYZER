@@ -4603,88 +4603,268 @@ with tab4:
     # Inject CSS styles
     st.markdown("""
         <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
         .header-box {
-            background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-            border: 2px solid #00c3ff;
-            padding: 20px;
-            border-radius: 15px;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 25%, #2d3561 50%, #3f4787 75%, #5158ae 100%);
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            position: relative;
+            padding: 25px;
+            border-radius: 20px;
             text-align: center;
-            margin-bottom: 30px;
-            box-shadow: 0 0 15px #00c3ff88;
+            margin-bottom: 35px;
+            box-shadow: 
+                0 8px 32px rgba(0, 195, 255, 0.15),
+                0 4px 16px rgba(0, 195, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .header-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, #00c3ff, #0066cc, #00c3ff, #0066cc);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
+            z-index: -1;
+            border-radius: 20px;
+            padding: 2px;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
 
         .header-box h2 {
-            font-size: 30px;
-            color: #fff;
+            font-size: 32px;
+            color: #ffffff;
             margin: 0;
-            font-weight: bold;
+            font-weight: 700;
+            text-shadow: 
+                0 0 20px rgba(0, 195, 255, 0.5),
+                0 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: -0.5px;
         }
 
         .glow-header {
-            font-size: 22px;
+            font-size: 24px;
             text-align: center;
             color: #00c3ff;
-            text-shadow: 0 0 10px #00c3ff;
-            margin-top: 10px;
-            margin-bottom: 5px;
+            text-shadow: 
+                0 0 20px rgba(0, 195, 255, 0.8),
+                0 0 40px rgba(0, 195, 255, 0.4);
+            margin: 20px 0 15px 0;
             font-weight: 600;
+            letter-spacing: -0.3px;
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.02); }
         }
 
         .stRadio > div {
             flex-direction: row !important;
             justify-content: center !important;
-            gap: 12px;
+            gap: 16px;
+            flex-wrap: wrap;
         }
 
         .stRadio label {
-            background: #1a1a1a;
-            border: 1px solid #00c3ff;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 2px solid #00c3ff;
             color: #00c3ff;
-            padding: 10px 20px;
-            margin: 4px;
-            border-radius: 10px;
+            padding: 14px 24px;
+            margin: 6px;
+            border-radius: 12px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             font-weight: 500;
-            min-width: 180px;
+            min-width: 190px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 4px 15px rgba(0, 195, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .stRadio label::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 195, 255, 0.2), transparent);
+            transition: left 0.5s;
         }
 
         .stRadio label:hover {
-            background-color: #00c3ff33;
+            background: linear-gradient(135deg, #00c3ff15 0%, #00c3ff25 100%);
+            transform: translateY(-2px);
+            box-shadow: 
+                0 8px 25px rgba(0, 195, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .stRadio label:hover::before {
+            left: 100%;
         }
 
         .stRadio input:checked + div > label {
-            background-color: #00c3ff;
-            color: #000;
-            font-weight: bold;
+            background: linear-gradient(135deg, #00c3ff 0%, #0099cc 100%);
+            color: #000000;
+            font-weight: 600;
+            transform: scale(1.05);
+            box-shadow: 
+                0 8px 30px rgba(0, 195, 255, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
 
         .card {
-            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-            border: 2px solid #00c3ff;
-            border-radius: 15px;
-            padding: 15px 20px;
-            margin: 10px 0;
-            box-shadow: 0 0 15px #00c3ff88;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: linear-gradient(135deg, #0f1419 0%, #1a2332 25%, #253447 50%, #30455c 75%, #3b5671 100%);
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin: 12px 0;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 4px 20px rgba(0, 195, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, #00c3ff, #0066cc);
+            z-index: -1;
+            border-radius: 16px;
+            padding: 2px;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            opacity: 0.8;
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s;
         }
 
         .card:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0 25px #00c3ffcc;
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 
+                0 12px 40px rgba(0, 195, 255, 0.25),
+                0 8px 20px rgba(0, 195, 255, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .card:hover::after {
+            left: 100%;
         }
 
         .card a {
             color: #00c3ff;
-            font-weight: bold;
+            font-weight: 600;
             font-size: 16px;
             text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 10px rgba(0, 195, 255, 0.3);
         }
 
         .card a:hover {
             color: #ffffff;
-            text-decoration: underline;
+            text-decoration: none;
+            text-shadow: 
+                0 0 15px rgba(255, 255, 255, 0.5),
+                0 0 30px rgba(0, 195, 255, 0.3);
+            transform: translateX(4px);
+        }
+
+        /* Enhanced selectbox styling */
+        .stSelectbox > div > div {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 2px solid #00c3ff;
+            border-radius: 10px;
+            color: #00c3ff;
+        }
+
+        .stSelectbox > div > div:hover {
+            box-shadow: 0 0 15px rgba(0, 195, 255, 0.3);
+        }
+
+        /* Enhanced subheader styling */
+        .stApp h3 {
+            color: #00c3ff;
+            text-shadow: 0 0 10px rgba(0, 195, 255, 0.5);
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        /* Learning path container */
+        .learning-path-container {
+            text-align: center;
+            margin: 30px 0 20px 0;
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(0, 195, 255, 0.05) 0%, rgba(0, 195, 255, 0.1) 100%);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 195, 255, 0.2);
+        }
+
+        .learning-path-text {
+            color: #00c3ff;
+            font-weight: 600;
+            font-size: 20px;
+            text-shadow: 0 0 15px rgba(0, 195, 255, 0.6);
+            letter-spacing: -0.3px;
+        }
+
+        /* Video container enhancements */
+        .stVideo {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .stVideo:hover {
+            transform: scale(1.02);
+        }
+
+        /* Info message styling */
+        .stAlert {
+            background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%);
+            border: 1px solid rgba(0, 195, 255, 0.3);
+            border-radius: 10px;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -4698,12 +4878,12 @@ with tab4:
 
     # Subheader
     st.markdown('<div class="glow-header">🎓 Explore Career Resources</div>', unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:#ccc;'>Curated courses and videos for your career growth, resume tips, and interview success.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#ccc; font-size: 16px; margin-bottom: 25px;'>Curated courses and videos for your career growth, resume tips, and interview success.</p>", unsafe_allow_html=True)
 
     # Learning path label
     st.markdown("""
-        <div style="text-align:center; margin-top: 25px; margin-bottom: 10px;">
-            <span style="color: #00c3ff; font-weight: bold; font-size: 20px; text-shadow: 0 0 10px #00c3ff;">
+        <div class="learning-path-container">
+            <span class="learning-path-text">
                 🧭 Choose Your Learning Path
             </span>
         </div>

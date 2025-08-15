@@ -2543,7 +2543,6 @@ with tab1:
 
     else:           
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
-
 with tab2:
     st.session_state.active_tab = "Resume Builder"
 

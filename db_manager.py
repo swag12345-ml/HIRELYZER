@@ -1,11 +1,14 @@
 import sqlite3
 import pandas as pd
+from datetime import datetime
+import pytz
+from collections import defaultdict
 from contextlib import contextmanager
-from typing import List, Tuple, Optional, Dict, Any
-
+from typing import Optional, List, Tuple, Dict, Any
 import logging
 from threading import Lock
 import os
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -13,26 +16,25 @@ logger = logging.getLogger(__name__)
 class DatabaseManager:
     """
     Enhanced Database Manager with connection pooling and optimized queries
-    for handling user resumes and ATS results.
+    for handling large-scale user structures
     """
-
+    
     def __init__(self, db_path: str = "resume_data.db", pool_size: int = 10):
         self.db_path = db_path
         self.pool_size = pool_size
         self._connection_pool = []
         self._pool_lock = Lock()
         self._initialize_database()
-
+        
     def _initialize_database(self):
-        """Initialize database with schema and indexes"""
+        """Initialize database with optimized schema and indexes"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
-
-            # ✅ Main candidates table
+            
+            # Create main candidates table with optimized schema
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS candidates (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    username TEXT NOT NULL,
                     resume_name TEXT NOT NULL,
                     candidate_name TEXT NOT NULL,
                     ats_score INTEGER NOT NULL CHECK(ats_score >= 0 AND ats_score <= 100),
@@ -46,10 +48,9 @@ class DatabaseManager:
                     timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-
-            # ✅ Indexes for performance
+            
+            # Create optimized indexes for better query performance
             indexes = [
-                "CREATE INDEX IF NOT EXISTS idx_candidates_username ON candidates(username)",
                 "CREATE INDEX IF NOT EXISTS idx_candidates_domain ON candidates(domain)",
                 "CREATE INDEX IF NOT EXISTS idx_candidates_ats_score ON candidates(ats_score)",
                 "CREATE INDEX IF NOT EXISTS idx_candidates_timestamp ON candidates(timestamp)",
@@ -57,15 +58,18 @@ class DatabaseManager:
                 "CREATE INDEX IF NOT EXISTS idx_candidates_domain_ats ON candidates(domain, ats_score)",
                 "CREATE INDEX IF NOT EXISTS idx_candidates_timestamp_domain ON candidates(timestamp, domain)"
             ]
-            for sql in indexes:
-                cursor.execute(sql)
-
+            
+            for index_sql in indexes:
+                cursor.execute(index_sql)
+            
             conn.commit()
-            logger.info("✅ Database initialized with schema + indexes")
+            logger.info("Database initialized with optimized schema and indexes")
 
     @contextmanager
     def get_connection(self):
-        """Context manager for pooled database connections"""
+        """
+        Context manager for database connections with connection pooling
+        """
         conn = None
         try:
             with self._pool_lock:
@@ -73,22 +77,22 @@ class DatabaseManager:
                     conn = self._connection_pool.pop()
                 else:
                     conn = sqlite3.connect(
-                        self.db_path,
+                        self.db_path, 
                         check_same_thread=False,
-                        timeout=30.0
+                        timeout=30.0  # 30 second timeout for large operations
                     )
-                    # Performance tuning
+                    # Optimize SQLite settings for performance
                     conn.execute("PRAGMA journal_mode=WAL")
                     conn.execute("PRAGMA synchronous=NORMAL")
                     conn.execute("PRAGMA cache_size=10000")
                     conn.execute("PRAGMA temp_store=MEMORY")
-
+            
             yield conn
-
+            
         except Exception as e:
             if conn:
                 conn.rollback()
-            logger.error(f"❌ Database error: {e}")
+            logger.error(f"Database error: {e}")
             raise
         finally:
             if conn:
@@ -98,78 +102,62 @@ class DatabaseManager:
                     else:
                         conn.close()
 
-    # ------------------ Resume Methods ------------------
+    # ------------------ New Resume Methods ------------------
 
-    def insert_resume_data(
-        self,
-        username: str,
-        resume_name: str,
-        candidate_name: str,
-        domain: str,
-        ats_score: int,
-        edu_score: int,
-        exp_score: int,
-        skills_score: int,
-        lang_score: int,
-        keyword_score: int,
-        bias_score: float
-    ):
+    def insert_resume_data(self, resume_name: str, candidate_name: str, domain: str,
+                           ats_score: int, edu_score: int, exp_score: int,
+                           skills_score: int, lang_score: int, keyword_score: int,
+                           bias_score: float):
         """
-        Always insert a new resume analysis record (no overwrite).
+        Insert a new resume analysis record with full ATS breakdown.
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                INSERT INTO candidates
-                (username, resume_name, candidate_name, domain,
-                 ats_score, edu_score, exp_score,
-                 skills_score, lang_score, keyword_score,
-                 bias_score, timestamp)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                INSERT INTO candidates 
+                (resume_name, candidate_name, domain, ats_score, edu_score, exp_score,
+                 skills_score, lang_score, keyword_score, bias_score, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             """, (
-                username, resume_name, candidate_name, domain,
+                resume_name, candidate_name, domain,
                 ats_score, edu_score, exp_score,
                 skills_score, lang_score, keyword_score,
                 bias_score
             ))
             conn.commit()
 
-    def get_existing_analysis(self, username: str, resume_name: str) -> Optional[Tuple]:
+    def get_existing_analysis(self, candidate_name: str, resume_name: str):
         """
-        Get the most recent analysis for a given user + resume.
-        Returns scores tuple if found, else None.
-        (Optional: only used if you want to show last run)
+        Fetch the most recent analysis for a given candidate + resume name.
+        Returns (ats_score, edu_score, exp_score, skills_score, lang_score, keyword_score, bias_score, timestamp)
+        if found, else None.
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT ats_score, edu_score, exp_score,
-                       skills_score, lang_score, keyword_score,
-                       bias_score, timestamp
+                SELECT ats_score, edu_score, exp_score, skills_score, lang_score, keyword_score, bias_score, timestamp
                 FROM candidates
-                WHERE username = ? AND resume_name = ?
+                WHERE candidate_name = ? AND resume_name = ?
                 ORDER BY timestamp DESC
                 LIMIT 1
-            """, (username, resume_name))
+            """, (candidate_name, resume_name))
             return cursor.fetchone()
 
-    def get_user_resume_history(self, username: str, limit: int = 10) -> List[Tuple]:
+    def get_user_resume_history(self, candidate_name: str, limit: int = 10):
         """
         Fetch the last N resumes analyzed for a user.
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT resume_name, domain,
-                       ats_score, edu_score, exp_score,
-                       skills_score, lang_score, keyword_score,
-                       bias_score, timestamp
+                SELECT domain, ats_score, edu_score, exp_score, skills_score, lang_score, keyword_score, bias_score, timestamp
                 FROM candidates
-                WHERE username = ?
+                WHERE candidate_name = ?
                 ORDER BY timestamp DESC
                 LIMIT ?
-            """, (username, limit))
+            """, (candidate_name, limit))
             return cursor.fetchall()
+
 
                         
 
@@ -1251,10 +1239,3 @@ if __name__ == "__main__":
 
 # Initialize a global instance of DatabaseManager
 db = DatabaseManager()
-
-
-
-
-
-
-

@@ -1,3 +1,4 @@
+from db_manager import db
 from xhtml2pdf import pisa
 from io import BytesIO
 
@@ -2346,7 +2347,6 @@ if uploaded_files and job_description:
     st.success("✅ All resumes processed!")
 
 
-
     # ✅ Optional vectorstore setup
     if all_text:
         st.session_state.vectorstore = setup_vectorstore(all_text)
@@ -2363,7 +2363,17 @@ if st.button("🔄 Reset Resume Upload Memory"):
     st.success("✅ Cleared uploaded resume history and all caches. You can re-upload now.")
 
 # ✅ ADD CACHE STATUS DISPLAY
+if st.sidebar.button("📊 Show Cache Status"):
+    st.sidebar.write(f"🧠 LLM Cache: {len(st.session_state.llm_cache)} items")
+    st.sidebar.write(f"🔍 Bias Cache: {len(st.session_state.bias_cache)} items")
+    st.sidebar.write(f"📈 ATS Cache: {len(st.session_state.ats_cache)} items")
 
+# ✅ ADD CACHE CLEAR BUTTON
+if st.sidebar.button("🧹 Clear All Caches"):
+    st.session_state.llm_cache.clear()
+    st.session_state.bias_cache.clear()
+    st.session_state.ats_cache.clear()
+    st.sidebar.success("✅ All caches cleared!")
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", 
@@ -5861,3 +5871,4 @@ if user_input:
 
     # Save interaction to memory
     st.session_state.memory.save_context({"input": user_input}, {"output": answer})
+

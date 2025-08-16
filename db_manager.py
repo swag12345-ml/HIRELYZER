@@ -1,8 +1,3 @@
-"""
-Enhanced Database Manager for Resume Analysis System
-Optimized for large-scale user structures with improved performance and reliability
-"""
-
 import sqlite3
 import pandas as pd
 from datetime import datetime
@@ -110,9 +105,11 @@ class DatabaseManager:
     # ------------------ New Resume Methods ------------------
 
     def insert_resume_data(self, resume_name: str, candidate_name: str, domain: str,
-                           ats_score: int, llm_score: int, bias_score: float):
+                           ats_score: int, edu_score: int, exp_score: int,
+                           skills_score: int, lang_score: int, keyword_score: int,
+                           bias_score: float):
         """
-        Insert a new resume analysis record.
+        Insert a new resume analysis record with full ATS breakdown.
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -120,19 +117,25 @@ class DatabaseManager:
                 INSERT INTO candidates 
                 (resume_name, candidate_name, domain, ats_score, edu_score, exp_score,
                  skills_score, lang_score, keyword_score, bias_score, timestamp)
-                VALUES (?, ?, ?, ?, 0, 0, 0, 0, 0, ?, CURRENT_TIMESTAMP)
-            """, (resume_name, candidate_name, domain, ats_score, bias_score))
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            """, (
+                resume_name, candidate_name, domain,
+                ats_score, edu_score, exp_score,
+                skills_score, lang_score, keyword_score,
+                bias_score
+            ))
             conn.commit()
 
     def get_existing_analysis(self, candidate_name: str, resume_name: str):
         """
         Fetch the most recent analysis for a given candidate + resume name.
-        Returns (ats_score, bias_score, timestamp) if found, else None.
+        Returns (ats_score, edu_score, exp_score, skills_score, lang_score, keyword_score, bias_score, timestamp)
+        if found, else None.
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT ats_score, bias_score, timestamp
+                SELECT ats_score, edu_score, exp_score, skills_score, lang_score, keyword_score, bias_score, timestamp
                 FROM candidates
                 WHERE candidate_name = ? AND resume_name = ?
                 ORDER BY timestamp DESC
@@ -147,13 +150,14 @@ class DatabaseManager:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT domain, ats_score, bias_score, timestamp
+                SELECT domain, ats_score, edu_score, exp_score, skills_score, lang_score, keyword_score, bias_score, timestamp
                 FROM candidates
                 WHERE candidate_name = ?
                 ORDER BY timestamp DESC
                 LIMIT ?
             """, (candidate_name, limit))
             return cursor.fetchall()
+
 
                         
 
@@ -1232,6 +1236,7 @@ if __name__ == "__main__":
     print("Database Manager initialized successfully!")
     stats = get_database_stats()
     print(f"Database Statistics: {stats}")
+
 
 
 

@@ -2288,7 +2288,7 @@ if uploaded_files and job_description:
                 resume_name, candidate_name, domain,
                 ats_score, edu_score, exp_score,
                 skills_score, lang_score, keyword_score,
-                bias_score
+                bias_score,username
             )
 
             # ✅ Mark as processed for this session

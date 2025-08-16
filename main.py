@@ -233,7 +233,7 @@ from user_login import (
     username_exists  # 👈 add this line
 )
 
-# ✅ ENHANCED CACHING UTILITIES
+# ✅ ENHANCED CACHING UTILITIES WITH PERSISTENT STORAGE
 def generate_cache_key(*args):
     """Generate a unique cache key from arguments"""
     content = str(args)
@@ -247,9 +247,15 @@ def set_cached_result(cache_key, result, cache_dict):
     """Cache a result"""
     cache_dict[cache_key] = result
 
-# ✅ INITIALIZE CACHE DICTIONARIES IN SESSION STATE
-if "comprehensive_cache" not in st.session_state:
-    st.session_state.comprehensive_cache = {}
+# ✅ INITIALIZE COMPREHENSIVE CACHE SYSTEM
+if "master_resume_cache" not in st.session_state:
+    st.session_state.master_resume_cache = {}
+if "llm_cache" not in st.session_state:
+    st.session_state.llm_cache = {}
+if "bias_cache" not in st.session_state:
+    st.session_state.bias_cache = {}
+if "ats_cache" not in st.session_state:
+    st.session_state.ats_cache = {}
 
 # ------------------- Initialize -------------------
 create_user_table()
@@ -1115,112 +1121,6 @@ gender_words = {
         "gentle communicator", "open-minded"
     ]
 }
-
-replacement_mapping = {
-    "masculine": {
-        "active": "engaged",
-        "aggressive": "proactive",
-        "ambitious": "motivated",
-        "analytical": "detail-oriented",
-        "assertive": "confident",
-        "autonomous": "self-directed",
-        "boast": "highlight",
-        "bold": "confident",
-        "challenging": "demanding",
-        "competitive": "goal-oriented",
-        "confident": "self-assured",
-        "courageous": "bold",
-        "decisive": "action-oriented",
-        "determined": "focused",
-        "dominant": "influential",
-        "driven": "committed",
-        "dynamic": "adaptable",
-        "forceful": "persuasive",
-        "guru":"technical expert",
-        "independent": "self-sufficient",
-        "individualistic": "self-motivated",
-        "intellectual": "knowledgeable",
-        "lead": "guide",
-        "leader": "team lead",
-        "objective": "unbiased",
-        "outspoken": "expressive",
-        "persistent": "resilient",
-        "principled": "ethical",
-        "proactive": "initiative-taking",
-        "resilient": "adaptable",
-        "self-reliant": "resourceful",
-        "self-sufficient": "capable",
-        "strong": "capable",
-        "superior": "exceptional",
-        "tenacious": "determined",
-        "technical guru": "technical expert",
-        "visionary": "forward-thinking",
-        "manpower": "workforce",
-        "strongman": "resilient individual",
-        "command": "direct",
-        "assert": "state confidently",
-        "headstrong": "determined",
-        "rockstar": "top performer",
-        "superstar": "outstanding contributor",
-        "go-getter": "initiative-taker",
-        "trailblazer": "innovator",
-        "results-driven": "outcome-focused",
-        "fast-paced": "dynamic",
-        "determination": "commitment",
-        "competitive spirit": "goal-oriented mindset"
-    },
-    
-    "feminine": {
-        "affectionate": "approachable",
-        "agreeable": "cooperative",
-        "attentive": "observant",
-        "collaborative": "team-oriented",
-        "collaborate": "team-oriented",
-        "collaborated": "worked together",
-        "committed": "dedicated",
-        "compassionate": "caring",
-        "considerate": "thoughtful",
-        "cooperative": "supportive",
-        "dependable": "reliable",
-        "dependent": "team-oriented",
-        "emotional": "passionate",
-        "empathetic": "understanding",
-        "enthusiastic": "positive",
-        "gentle": "respectful",
-        "honest": "trustworthy",
-        "inclusive": "open-minded",
-        "interpersonal": "people-focused",
-        "kind": "respectful",
-        "loyal": "dedicated",
-        "modest": "humble",
-        "nurturing": "supportive",
-        "pleasant": "positive",
-        "polite": "professional",
-        "sensitive": "attentive",
-        "supportive": "encouraging",
-        "sympathetic": "understanding",
-        "tactful": "diplomatic",
-        "tender": "considerate",
-        "trustworthy": "reliable",
-        "understanding": "empathetic",
-        "warm": "welcoming",
-        "yield": "adaptable",
-        "adaptable": "flexible",
-        "communal": "team-centered",
-        "helpful": "supportive",
-        "dedicated": "committed",
-        "respectful": "considerate",
-        "nurture": "develop",
-        "sociable": "friendly",
-        "relationship-oriented": "team-focused",
-        "team player": "collaborative member",
-        "people-oriented": "person-focused",
-        "empathetic listener": "active listener",
-        "gentle communicator": "considerate communicator",
-        "open-minded": "inclusive"
-    }
-}
-
 # Sample job search function
 import uuid
 import urllib.parse
@@ -1363,198 +1263,343 @@ def extract_text_from_images(pdf_path):
         st.error(f"⚠ Error extracting from image: {e}")
         return []
 
-# ✅ OPTIMIZED: Single comprehensive analysis function
-def comprehensive_resume_analysis(
-    resume_text, 
-    job_description, 
-    job_title, 
-    user_location,
-    edu_weight=20,
-    exp_weight=35,
-    skills_weight=30,
-    lang_weight=5,
-    keyword_weight=10
-):
-    """
-    OPTIMIZED: Single LLM call that performs ALL analysis tasks:
-    - ATS scoring with detailed breakdown
-    - Grammar evaluation
-    - Bias detection and rewriting
-    - Job recommendations
-    """
-    
-    # ✅ Generate comprehensive cache key
-    cache_key = generate_cache_key(
-        "comprehensive_analysis", resume_text, job_description, job_title, 
-        user_location, edu_weight, exp_weight, skills_weight, lang_weight, keyword_weight
-    )
+# ✅ OPTIMIZED BIAS DETECTION - NO LLM CALLS, PURE REGEX
+def detect_bias(text):
+    # ✅ Generate cache key for this text
+    cache_key = generate_cache_key("bias_detection", text)
     
     # ✅ Check if result is already cached
-    cached_result = get_cached_result(cache_key, st.session_state.comprehensive_cache)
+    cached_result = get_cached_result(cache_key, st.session_state.bias_cache)
+    if cached_result:
+        return cached_result
+    
+    # Split into sentences using simple delimiters
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+
+    masc_set, fem_set = set(), set()
+    masculine_found, feminine_found = [] , []
+
+    masculine_words = sorted(gender_words["masculine"], key=len, reverse=True)
+    feminine_words = sorted(gender_words["feminine"], key=len, reverse=True)
+
+    for sent in sentences:
+        sent_text = sent.strip()
+        sent_lower = sent_text.lower()
+        matched_spans = []
+
+        def is_overlapping(start, end):
+            return any(start < e and end > s for s, e in matched_spans)
+
+        # 🔵 Highlight masculine words in blue
+        for word in masculine_words:
+            pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
+            for match in pattern.finditer(sent_lower):
+                start, end = match.span()
+                if not is_overlapping(start, end):
+                    matched_spans.append((start, end))
+                    key = (word.lower(), sent_text)
+                    if key not in masc_set:
+                        masc_set.add(key)
+                        highlighted = re.sub(
+                            rf'\b({re.escape(word)})\b',
+                            r'<span style="color:blue;">\1</span>',
+                            sent_text,
+                            flags=re.IGNORECASE
+                        )
+                        masculine_found.append({
+                            "word": word,
+                            "sentence": highlighted
+                        })
+
+        # 🔴 Highlight feminine words in red
+        for word in feminine_words:
+            pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
+            for match in pattern.finditer(sent_lower):
+                start, end = match.span()
+                if not is_overlapping(start, end):
+                    matched_spans.append((start, end))
+                    key = (word.lower(), sent_text)
+                    if key not in fem_set:
+                        fem_set.add(key)
+                        highlighted = re.sub(
+                            rf'\b({re.escape(word)})\b',
+                            r'<span style="color:red;">\1</span>',
+                            sent_text,
+                            flags=re.IGNORECASE
+                        )
+                        feminine_found.append({
+                            "word": word,
+                            "sentence": highlighted
+                        })
+
+    masc = len(masculine_found)
+    fem = len(feminine_found)
+    total = masc + fem
+    bias_score = min(total / 20, 1.0) if total > 0 else 0.0
+
+    result = (round(bias_score, 2), masc, fem, masculine_found, feminine_found)
+    
+    # ✅ Cache the result
+    set_cached_result(cache_key, result, st.session_state.bias_cache)
+    
+    return result
+
+gender_words = {
+    "masculine": [
+        "active", "aggressive", "ambitious", "analytical", "assertive", "autonomous", "boast", "bold",
+        "challenging", "competitive", "confident", "courageous", "decisive", "determined", "dominant", "driven",
+        "dynamic", "forceful", "independent", "individualistic", "intellectual", "lead", "leader", "objective",
+        "outspoken", "persistent", "principled", "proactive", "resilient", "self-reliant", "self-sufficient",
+        "strong", "superior", "tenacious","guru","tech guru","technical guru", "visionary", "manpower", "strongman", "command",
+        "assert", "headstrong", "rockstar", "superstar", "go-getter", "trailblazer", "results-driven",
+        "fast-paced", "driven", "determination", "competitive spirit"
+    ],
+    
+    "feminine": [
+        "affectionate", "agreeable", "attentive", "collaborative", "committed", "compassionate", "considerate",
+        "cooperative", "dependable", "dependent", "emotional", "empathetic", "enthusiastic", "gentle",
+        "honest", "inclusive", "interpersonal", "kind", "loyal", "modest", "nurturing", "pleasant", "polite",
+        "sensitive", "supportive", "sympathetic", "tactful", "tender", "trustworthy", "understanding", "warm",
+        "yield", "adaptable", "communal", "helpful", "dedicated", "respectful", "nurture", "sociable",
+        "relationship-oriented", "team player", "dependable", "people-oriented", "empathetic listener",
+        "gentle communicator", "open-minded"
+    ]
+}
+replacement_mapping = {
+    "masculine": {
+        "active": "engaged",
+        "aggressive": "proactive",
+        "ambitious": "motivated",
+        "analytical": "detail-oriented",
+        "assertive": "confident",
+        "autonomous": "self-directed",
+        "boast": "highlight",
+        "bold": "confident",
+        "challenging": "demanding",
+        "competitive": "goal-oriented",
+        "confident": "self-assured",
+        "courageous": "bold",
+        "decisive": "action-oriented",
+        "determined": "focused",
+        "dominant": "influential",
+        "driven": "committed",
+        "dynamic": "adaptable",
+        "forceful": "persuasive",
+        "guru":"technical expert",
+        "independent": "self-sufficient",
+        "individualistic": "self-motivated",
+        "intellectual": "knowledgeable",
+        "lead": "guide",
+        "leader": "team lead",
+        "objective": "unbiased",
+        "outspoken": "expressive",
+        "persistent": "resilient",
+        "principled": "ethical",
+        "proactive": "initiative-taking",
+        "resilient": "adaptable",
+        "self-reliant": "resourceful",
+        "self-sufficient": "capable",
+        "strong": "capable",
+        "superior": "exceptional",
+        "tenacious": "determined",
+        "technical guru": "technical expert",
+        "visionary": "forward-thinking",
+        "manpower": "workforce",
+        "strongman": "resilient individual",
+        "command": "direct",
+        "assert": "state confidently",
+        "headstrong": "determined",
+        "rockstar": "top performer",
+        "superstar": "outstanding contributor",
+        "go-getter": "initiative-taker",
+        "trailblazer": "innovator",
+        "results-driven": "outcome-focused",
+        "fast-paced": "dynamic",
+        "determination": "commitment",
+        "competitive spirit": "goal-oriented mindset"
+    },
+    
+    "feminine": {
+        "affectionate": "approachable",
+        "agreeable": "cooperative",
+        "attentive": "observant",
+        "collaborative": "team-oriented",
+        "collaborate": "team-oriented",
+        "collaborated": "worked together",
+        "committed": "dedicated",
+        "compassionate": "caring",
+        "considerate": "thoughtful",
+        "cooperative": "supportive",
+        "dependable": "reliable",
+        "dependent": "team-oriented",
+        "emotional": "passionate",
+        "empathetic": "understanding",
+        "enthusiastic": "positive",
+        "gentle": "respectful",
+        "honest": "trustworthy",
+        "inclusive": "open-minded",
+        "interpersonal": "people-focused",
+        "kind": "respectful",
+        "loyal": "dedicated",
+        "modest": "humble",
+        "nurturing": "supportive",
+        "pleasant": "positive",
+        "polite": "professional",
+        "sensitive": "attentive",
+        "supportive": "encouraging",
+        "sympathetic": "understanding",
+        "tactful": "diplomatic",
+        "tender": "considerate",
+        "trustworthy": "reliable",
+        "understanding": "empathetic",
+        "warm": "welcoming",
+        "yield": "adaptable",
+        "adaptable": "flexible",
+        "communal": "team-centered",
+        "helpful": "supportive",
+        "dedicated": "committed",
+        "respectful": "considerate",
+        "nurture": "develop",
+        "sociable": "friendly",
+        "relationship-oriented": "team-focused",
+        "team player": "collaborative member",
+        "people-oriented": "person-focused",
+        "empathetic listener": "active listener",
+        "gentle communicator": "considerate communicator",
+        "open-minded": "inclusive"
+    }
+}
+
+# ✅ MASTER FUNCTION - SINGLE LLM CALL FOR ALL ANALYSIS
+def analyze_resume_comprehensive(resume_text, job_description, job_title, user_location, weights):
+    """
+    MASTER FUNCTION: Single LLM call that handles ALL analysis tasks:
+    - ATS scoring with detailed breakdown
+    - Grammar evaluation with suggestions  
+    - Bias-free rewriting with job suggestions
+    - Missing skills and keywords identification
+    
+    This replaces multiple separate LLM calls with one comprehensive analysis.
+    """
+    
+    # ✅ Generate master cache key for complete analysis
+    cache_key = generate_cache_key(
+        "comprehensive_analysis", resume_text, job_description, job_title, 
+        user_location, str(weights)
+    )
+    
+    # ✅ Check if complete analysis is already cached
+    cached_result = get_cached_result(cache_key, st.session_state.master_resume_cache)
     if cached_result:
         return cached_result
 
-    # Create replacement mapping text
-    formatted_mapping = "\n".join(
-        [f'- "{key}" → "{value}"' for category in replacement_mapping.values() for key, value in category.items()]
-    )
+    # Create replacement mapping text for prompt
+    all_replacements = {**replacement_mapping["masculine"], **replacement_mapping["feminine"]}
+    formatted_mapping = "\n".join([f'- "{key}" → "{value}"' for key, value in all_replacements.items()])
 
     # ✅ SINGLE COMPREHENSIVE PROMPT
-    comprehensive_prompt = f"""
-You are an expert resume analyzer, bias detector, and career advisor. Perform a complete analysis in ONE response.
+    master_prompt = f"""
+You are an expert resume analyzer, ATS evaluator, and career advisor. Perform a COMPLETE analysis of this resume in ONE response.
 
-**TASK 1: EXTRACT CANDIDATE NAME**
-Extract the candidate's full name from the resume header/contact section.
+**ANALYSIS REQUIREMENTS:**
 
-**TASK 2: ATS EVALUATION WITH DETAILED SCORING**
+1. **ATS EVALUATION** - Score each component and provide detailed analysis:
+   - Education: /{weights['edu_weight']} points
+   - Experience: /{weights['exp_weight']} points  
+   - Skills: /{weights['skills_weight']} points
+   - Language Quality: /{weights['lang_weight']} points
+   - Keywords: /{weights['keyword_weight']} points
 
-Score each component and provide detailed analysis:
+2. **GRAMMAR & LANGUAGE ANALYSIS** - Evaluate writing quality and provide specific improvement suggestions
 
-**Education Scoring ({edu_weight} points max):**
-- 18-{edu_weight}: Outstanding alignment + top credentials
-- 15-17: Excellent relevance + strong institution
-- 12-14: Very Good related field + decent institution
-- 9-11: Good transferable education
-- 6-8: Fair basic education
-- 3-5: Basic shows learning ability
-- 0-2: Insufficient
+3. **BIAS-FREE REWRITING** - Rewrite the entire resume using neutral language with the replacement mapping provided
 
-**Experience Scoring ({exp_weight} points max):**
-- 32-{exp_weight}: Exceptional - exceeds requirements
-- 28-31: Excellent - meets/exceeds with strong fit
-- 24-27: Very Good - adequate with good fit
-- 20-23: Good - reasonable experience
-- 15-19: Fair - some gaps but potential
-- 10-14: Basic - limited but relevant
-- 5-9: Entry Level - minimal but promising
-- 0-4: Insufficient
+4. **JOB MATCHING** - Suggest 5 relevant job titles with reasoning and LinkedIn search URLs
 
-**Skills Scoring ({skills_weight} points max):**
-- 28-{skills_weight}: Outstanding - 90%+ required skills
-- 24-27: Excellent - 80%+ required skills
-- 20-23: Very Good - 70%+ required skills
-- 16-19: Good - 60%+ required skills
-- 12-15: Fair - 50%+ required skills
-- 8-11: Basic - 40%+ skills with potential
-- 4-7: Limited - 30%+ skills
-- 0-3: Insufficient
+5. **SKILLS & KEYWORDS GAPS** - Identify missing elements from job description
 
-**Language Quality ({lang_weight} points max):**
-- {lang_weight}: Perfect grammar and professional tone
-- {lang_weight-1}: Very good with minor issues
-- {lang_weight-2}: Good with some issues
-- {lang_weight-3}: Fair but readable
-- {lang_weight-4}: Poor with multiple errors
-- 0-1: Very poor
+**SCORING GUIDELINES:**
+- Be balanced and encouraging while maintaining professional standards
+- Consider transferable skills and growth potential
+- Provide specific, actionable feedback
+- Focus on opportunities rather than just gaps
 
-**Keyword Matching ({keyword_weight} points max):**
-- 9-{keyword_weight}: Excellent optimization (85%+ terms)
-- 8: Very Good (75%+ terms)
-- 6-7: Good (65%+ terms)
-- 4-5: Fair (50%+ terms)
-- 2-3: Basic (35%+ terms)
-- 1: Limited (20%+ terms)
-- 0: Poor (<20% terms)
-
-**TASK 3: BIAS DETECTION**
-Identify ALL gender-coded words from these lists:
-
-Masculine words: {', '.join(gender_words['masculine'])}
-Feminine words: {', '.join(gender_words['feminine'])}
-
-For each detected word, provide the sentence context.
-
-**TASK 4: BIAS-FREE REWRITE**
-Rewrite the entire resume using these replacements:
+**REPLACEMENT MAPPING** (apply these exact substitutions):
 {formatted_mapping}
 
-Maintain original structure and length while improving clarity.
-
-**TASK 5: JOB RECOMMENDATIONS**
-Suggest 5 relevant job titles for {user_location} with LinkedIn search URLs.
-
----
-
-**RESPONSE FORMAT (EXACT STRUCTURE REQUIRED):**
+**RESPONSE FORMAT** (follow this structure exactly):
 
 ### 🏷️ CANDIDATE NAME
-[Extract full name]
+[Extract candidate name from resume]
 
 ### 📊 ATS EVALUATION SCORES
-Education Score: [0-{edu_weight}]
-Experience Score: [0-{exp_weight}]
-Skills Score: [0-{skills_weight}]
-Language Score: [0-{lang_weight}]
-Keyword Score: [0-{keyword_weight}]
-Total ATS Score: [sum of above]
+**Education Score:** [0-{weights['edu_weight']}] / {weights['edu_weight']}
+**Experience Score:** [0-{weights['exp_weight']}] / {weights['exp_weight']}
+**Skills Score:** [0-{weights['skills_weight']}] / {weights['skills_weight']}
+**Language Score:** [0-{weights['lang_weight']}] / {weights['lang_weight']}
+**Keyword Score:** [0-{weights['keyword_weight']}] / {weights['keyword_weight']}
+**TOTAL ATS SCORE:** [0-100] / 100
 
 ### 🏫 EDUCATION ANALYSIS
-**Score:** [score] / {edu_weight}
-[Detailed analysis of education relevance, quality, recency]
+**Score Rationale:**
+[Detailed analysis of education alignment, institution quality, relevance, additional credentials]
 
 ### 💼 EXPERIENCE ANALYSIS  
-**Score:** [score] / {exp_weight}
-[Detailed analysis of experience relevance, progression, achievements]
+**Score Rationale:**
+[Analysis of years, progression, domain relevance, achievements, transferable skills]
 
 ### 🛠 SKILLS ANALYSIS
-**Score:** [score] / {skills_weight}
-[Analysis of technical and soft skills match]
+**Score Rationale:**
+[Assessment of technical skills, soft skills, domain expertise, learning ability]
 
-**Skills Gaps (Development Opportunities):**
-- [Missing skill 1]
-- [Missing skill 2]
-- [Missing skill 3]
-- [Missing skill 4]
-- [Missing skill 5]
+**Missing Critical Skills:**
+- [Skill 1 from job description]
+- [Skill 2 from job description]
+- [Continue listing all missing skills]
 
 ### 🗣 LANGUAGE QUALITY ANALYSIS
-**Score:** [score] / {lang_weight}
-[Grammar and tone assessment]
+**Grammar Score:** [0-{weights['lang_weight']}] / {weights['lang_weight']}
+**Assessment:** [Evaluation of grammar, clarity, professional tone]
 
-**Grammar Improvement Suggestions:**
-- [Suggestion 1]
-- [Suggestion 2]
-- [Suggestion 3]
+**Improvement Suggestions:**
+- [Specific suggestion 1]
+- [Specific suggestion 2]
+- [Continue with 3-5 suggestions]
 
 ### 🔑 KEYWORD ANALYSIS
-**Score:** [score] / {keyword_weight}
-[Analysis of keyword optimization]
+**Score Rationale:**
+[Analysis of industry terminology, role-specific terms, technical vocabulary]
 
-**Missing Keywords:**
-[List ALL missing keywords from job description separated by commas]
-
-### 🔍 BIAS DETECTION RESULTS
-**Masculine Words Found:** [count]
-**Feminine Words Found:** [count]
-**Bias Score:** [0.0-1.0]
-
-**Detected Masculine Words:**
-[For each: "word": "sentence context"]
-
-**Detected Feminine Words:**
-[For each: "word": "sentence context"]
-
-### ✨ BIAS-FREE REWRITTEN RESUME
-[Complete rewritten resume with bias-free language]
-
-### 🎯 JOB RECOMMENDATIONS FOR {user_location}
-1. **[Job Title 1]** — [Brief reason]
-🔗 https://www.linkedin.com/jobs/search/?keywords=[encoded title]&location={urllib.parse.quote_plus(user_location)}
-
-2. **[Job Title 2]** — [Brief reason]
-🔗 https://www.linkedin.com/jobs/search/?keywords=[encoded title]&location={urllib.parse.quote_plus(user_location)}
-
-3. **[Job Title 3]** — [Brief reason]
-🔗 https://www.linkedin.com/jobs/search/?keywords=[encoded title]&location={urllib.parse.quote_plus(user_location)}
-
-4. **[Job Title 4]** — [Brief reason]
-🔗 https://www.linkedin.com/jobs/search/?keywords=[encoded title]&location={urllib.parse.quote_plus(user_location)}
-
-5. **[Job Title 5]** — [Brief reason]
-🔗 https://www.linkedin.com/jobs/search/?keywords=[encoded title]&location={urllib.parse.quote_plus(user_location)}
+**Missing Critical Keywords:**
+- [Keyword 1 from job description]
+- [Keyword 2 from job description]
+- [Continue listing all missing keywords]
 
 ### ✅ FINAL ASSESSMENT
-[Overall evaluation, strengths, development areas, recommendation]
+**Overall Evaluation:**
+[4-6 sentences covering strengths, growth areas, cultural fit, recommendation]
+
+**Formatted Score:** [Exceptional Match/Strong Match/Good Potential/Fair Match/Needs Development/Poor Match]
+
+### ✨ BIAS-FREE REWRITTEN RESUME
+[Complete rewritten resume with neutral language, proper structure, same length as original]
+
+### 🎯 SUGGESTED JOB TITLES FOR {user_location}
+
+1. **[Job Title 1]** — [Detailed reason for relevance]
+🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%201&location={user_location})
+
+2. **[Job Title 2]** — [Detailed reason for relevance]
+🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%202&location={user_location})
+
+3. **[Job Title 3]** — [Detailed reason for relevance]
+🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%203&location={user_location})
+
+4. **[Job Title 4]** — [Detailed reason for relevance]
+🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%204&location={user_location})
+
+5. **[Job Title 5]** — [Detailed reason for relevance]
+🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%205&location={user_location})
 
 ---
 
@@ -1566,7 +1611,7 @@ Total ATS Score: [sum of above]
 """
 
     # ✅ SINGLE LLM CALL FOR EVERYTHING
-    response = call_llm(comprehensive_prompt, session=st.session_state)
+    response = call_llm(master_prompt, session=st.session_state)
     
     # ✅ Parse the comprehensive response
     def extract_section(pattern, text, default="N/A"):
@@ -1578,15 +1623,15 @@ Total ATS Score: [sum of above]
         return int(match.group(1)) if match else default
 
     # Extract all sections
-    candidate_name = extract_section(r"### 🏷️ CANDIDATE NAME(.*?)###", response, "Not Found")
+    candidate_name = extract_section(r"### 🏷️ CANDIDATE NAME\s*(.*?)###", response, "Not Found")
     
     # Extract scores
-    edu_score = extract_score(r"Education Score:\s*(\d+)", response)
-    exp_score = extract_score(r"Experience Score:\s*(\d+)", response)
-    skills_score = extract_score(r"Skills Score:\s*(\d+)", response)
-    lang_score = extract_score(r"Language Score:\s*(\d+)", response)
-    keyword_score = extract_score(r"Keyword Score:\s*(\d+)", response)
-    total_ats_score = extract_score(r"Total ATS Score:\s*(\d+)", response)
+    edu_score = extract_score(r"Education Score:\*\*\s*(\d+)", response)
+    exp_score = extract_score(r"Experience Score:\*\*\s*(\d+)", response)
+    skills_score = extract_score(r"Skills Score:\*\*\s*(\d+)", response)
+    lang_score = extract_score(r"Language Score:\*\*\s*(\d+)", response)
+    keyword_score = extract_score(r"Keyword Score:\*\*\s*(\d+)", response)
+    total_score = extract_score(r"TOTAL ATS SCORE:\*\*\s*(\d+)", response)
 
     # Extract detailed analyses
     edu_analysis = extract_section(r"### 🏫 EDUCATION ANALYSIS(.*?)###", response)
@@ -1594,39 +1639,13 @@ Total ATS Score: [sum of above]
     skills_analysis = extract_section(r"### 🛠 SKILLS ANALYSIS(.*?)###", response)
     lang_analysis = extract_section(r"### 🗣 LANGUAGE QUALITY ANALYSIS(.*?)###", response)
     keyword_analysis = extract_section(r"### 🔑 KEYWORD ANALYSIS(.*?)###", response)
-    
-    # Extract bias results
-    masc_count = extract_score(r"Masculine Words Found:\s*(\d+)", response)
-    fem_count = extract_score(r"Feminine Words Found:\s*(\d+)", response)
-    bias_score_match = re.search(r"Bias Score:\s*([\d.]+)", response)
-    bias_score = float(bias_score_match.group(1)) if bias_score_match else 0.0
+    final_assessment = extract_section(r"### ✅ FINAL ASSESSMENT(.*?)###", response)
+    rewritten_resume = extract_section(r"### ✨ BIAS-FREE REWRITTEN RESUME(.*?)###", response)
+    job_suggestions = extract_section(r"### 🎯 SUGGESTED JOB TITLES(.*?)$", response)
 
-    # Extract detected words sections
-    masc_words_section = extract_section(r"Detected Masculine Words:(.*?)(?:###|\*\*Detected Feminine Words|\Z)", response)
-    fem_words_section = extract_section(r"Detected Feminine Words:(.*?)(?:###|\Z)", response)
-    
-    # Parse detected words
-    def parse_detected_words(section_text):
-        words = []
-        lines = section_text.strip().split('\n')
-        for line in lines:
-            if ':' in line and line.strip():
-                parts = line.split(':', 1)
-                if len(parts) == 2:
-                    word = parts[0].strip().strip('"')
-                    sentence = parts[1].strip().strip('"')
-                    words.append({"word": word, "sentence": sentence})
-        return words
-
-    detected_masculine = parse_detected_words(masc_words_section)
-    detected_feminine = parse_detected_words(fem_words_section)
-
-    # Extract rewritten resume
-    rewritten_text = extract_section(r"### ✨ BIAS-FREE REWRITTEN RESUME(.*?)###", response)
-    
     # Extract missing items
-    missing_skills_section = extract_section(r"Skills Gaps \(Development Opportunities\):(.*?)(?:###|\*\*)", skills_analysis)
-    missing_keywords_section = extract_section(r"Missing Keywords:(.*?)(?:###|\Z)", keyword_analysis)
+    missing_skills_section = extract_section(r"\*\*Missing Critical Skills:\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
+    missing_keywords_section = extract_section(r"\*\*Missing Critical Keywords:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)
     
     def extract_list_items(text):
         if not text.strip():
@@ -1635,70 +1654,27 @@ Total ATS Score: [sum of above]
         lines = text.strip().split('\n')
         for line in lines:
             line = line.strip()
-            if line and not line.startswith('#'):
-                cleaned_line = re.sub(r'^[-•*]\s*', '', line)
-                cleaned_line = re.sub(r'^\d+\.\s*', '', cleaned_line)
-                if cleaned_line.strip():
-                    items.append(cleaned_line.strip())
+            if not line:
+                continue
+            cleaned_line = re.sub(r'^[-•*]\s*', '', line)
+            cleaned_line = re.sub(r'^\d+\.\s*', '', cleaned_line)
+            cleaned_line = cleaned_line.strip()
+            if cleaned_line and len(cleaned_line) > 2:
+                items.append(cleaned_line)
         return items
-
+    
     missing_skills = extract_list_items(missing_skills_section)
-    missing_keywords_raw = missing_keywords_section.strip()
-    missing_keywords = [kw.strip() for kw in missing_keywords_raw.split(",") if kw.strip()] if missing_keywords_raw else []
+    missing_keywords = extract_list_items(missing_keywords_section)
 
-    # Extract final assessment
-    final_thoughts = extract_section(r"### ✅ FINAL ASSESSMENT(.*?)(?:###|\Z)", response)
+    # Extract formatted score
+    formatted_score_match = re.search(r"\*\*Formatted Score:\*\*\s*(.+)", final_assessment)
+    formatted_score = formatted_score_match.group(1).strip() if formatted_score_match else "N/A"
 
-    # Create highlighted text (local processing, no LLM needed)
-    highlighted_text = resume_text
-    matched_spans = []
+    # Extract grammar suggestions
+    suggestions_section = extract_section(r"\*\*Improvement Suggestions:\*\*(.*?)(?:\*\*|###|\Z)", lang_analysis)
+    grammar_suggestions = extract_list_items(suggestions_section)
 
-    def span_overlaps(start, end):
-        return any(s < end and e > start for s, e in matched_spans)
-
-    # Highlight masculine words in blue
-    for word_data in detected_masculine:
-        word = word_data["word"]
-        pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
-        for match in pattern.finditer(highlighted_text):
-            start, end = match.span()
-            if span_overlaps(start, end):
-                continue
-            word_match = match.group(0)
-            colored = f"<span style='color:blue;'>{word_match}</span>"
-            highlighted_text = highlighted_text[:start] + colored + highlighted_text[end:]
-            shift = len(colored) - len(word_match)
-            matched_spans = [(s if s < start else s + shift, e if s < start else e + shift) for s, e in matched_spans]
-            matched_spans.append((start, start + len(colored)))
-            break
-
-    # Highlight feminine words in red
-    for word_data in detected_feminine:
-        word = word_data["word"]
-        pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
-        for match in pattern.finditer(highlighted_text):
-            start, end = match.span()
-            if span_overlaps(start, end):
-                continue
-            word_match = match.group(0)
-            colored = f"<span style='color:red;'>{word_match}</span>"
-            highlighted_text = highlighted_text[:start] + colored + highlighted_text[end:]
-            shift = len(colored) - len(word_match)
-            matched_spans = [(s if s < start else s + shift, e if s < start else e + shift) for s, e in matched_spans]
-            matched_spans.append((start, start + len(colored)))
-            break
-
-    # Format score
-    formatted_score = (
-        "🌟 Exceptional Match" if total_ats_score >= 85 else
-        "✅ Strong Match" if total_ats_score >= 70 else
-        "🟡 Good Potential" if total_ats_score >= 55 else
-        "⚠️ Fair Match" if total_ats_score >= 40 else
-        "🔄 Needs Development" if total_ats_score >= 25 else
-        "❌ Poor Match"
-    )
-
-    # Compile comprehensive result
+    # ✅ Compile comprehensive result
     result = {
         "candidate_name": candidate_name,
         "ats_scores": {
@@ -1707,7 +1683,7 @@ Total ATS Score: [sum of above]
             "Skills Score": skills_score,
             "Language Score": lang_score,
             "Keyword Score": keyword_score,
-            "ATS Match %": total_ats_score,
+            "ATS Match %": total_score,
             "Formatted Score": formatted_score
         },
         "detailed_analysis": {
@@ -1716,28 +1692,120 @@ Total ATS Score: [sum of above]
             "Skills Analysis": skills_analysis,
             "Language Analysis": lang_analysis,
             "Keyword Analysis": keyword_analysis,
-            "Final Thoughts": final_thoughts
-        },
-        "bias_results": {
-            "bias_score": bias_score,
-            "masculine_count": masc_count,
-            "feminine_count": fem_count,
-            "detected_masculine": detected_masculine,
-            "detected_feminine": detected_feminine,
-            "highlighted_text": highlighted_text,
-            "rewritten_text": rewritten_text
+            "Final Thoughts": final_assessment
         },
         "missing_items": {
-            "missing_skills": missing_skills,
-            "missing_keywords": missing_keywords
+            "Missing Skills": missing_skills,
+            "Missing Keywords": missing_keywords
         },
+        "rewritten_resume": rewritten_resume,
+        "job_suggestions": job_suggestions,
+        "grammar_suggestions": grammar_suggestions,
         "full_response": response
     }
     
     # ✅ Cache the comprehensive result
-    set_cached_result(cache_key, result, st.session_state.comprehensive_cache)
+    set_cached_result(cache_key, result, st.session_state.master_resume_cache)
     
     return result
+
+# ✅ OPTIMIZED HIGHLIGHT FUNCTION - NO LLM CALLS
+def highlight_bias_words(text):
+    """
+    Highlight bias words without LLM calls - pure regex processing
+    """
+    cache_key = generate_cache_key("highlight_bias", text)
+    cached_result = get_cached_result(cache_key, st.session_state.bias_cache)
+    if cached_result:
+        return cached_result
+    
+    highlighted_text = text
+    masculine_count, feminine_count = 0, 0
+    detected_masculine_words, detected_feminine_words = [], []
+    matched_spans = []
+
+    masculine_words = sorted(gender_words["masculine"], key=len, reverse=True)
+    feminine_words = sorted(gender_words["feminine"], key=len, reverse=True)
+
+    def span_overlaps(start, end):
+        return any(s < end and e > start for s, e in matched_spans)
+
+    # Highlight masculine words
+    for word in masculine_words:
+        pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
+        for match in pattern.finditer(highlighted_text):
+            start, end = match.span()
+            if span_overlaps(start, end):
+                continue
+
+            word_match = match.group(0)
+            colored = f"<span style='color:blue;'>{word_match}</span>"
+
+            highlighted_text = highlighted_text[:start] + colored + highlighted_text[end:]
+            shift = len(colored) - len(word_match)
+            matched_spans = [(s if s < start else s + shift, e if s < start else e + shift) for s, e in matched_spans]
+            matched_spans.append((start, start + len(colored)))
+
+            masculine_count += 1
+
+            sentence_match = re.search(r'([^.]*?\b' + re.escape(word_match) + r'\b[^.]*\.)', text, re.IGNORECASE)
+            if sentence_match:
+                sentence = sentence_match.group(1).strip()
+                colored_sentence = re.sub(
+                    rf'\b({re.escape(word_match)})\b',
+                    r"<span style='color:blue;'>\1</span>",
+                    sentence,
+                    flags=re.IGNORECASE
+                )
+                detected_masculine_words.append({
+                    "word": word_match,
+                    "sentence": colored_sentence
+                })
+            break
+
+    # Highlight feminine words
+    for word in feminine_words:
+        pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
+        for match in pattern.finditer(highlighted_text):
+            start, end = match.span()
+            if span_overlaps(start, end):
+                continue
+
+            word_match = match.group(0)
+            colored = f"<span style='color:red;'>{word_match}</span>"
+
+            highlighted_text = highlighted_text[:start] + colored + highlighted_text[end:]
+            shift = len(colored) - len(word_match)
+            matched_spans = [(s if s < start else s + shift, e if s < start else e + shift) for s, e in matched_spans]
+            matched_spans.append((start, start + len(colored)))
+
+            feminine_count += 1
+
+            sentence_match = re.search(r'([^.]*?\b' + re.escape(word_match) + r'\b[^.]*\.)', text, re.IGNORECASE)
+            if sentence_match:
+                sentence = sentence_match.group(1).strip()
+                colored_sentence = re.sub(
+                    rf'\b({re.escape(word_match)})\b',
+                    r"<span style='color:red;'>\1</span>",
+                    sentence,
+                    flags=re.IGNORECASE
+                )
+                detected_feminine_words.append({
+                    "word": word_match,
+                    "sentence": colored_sentence
+                })
+            break
+
+    result = (highlighted_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words)
+    set_cached_result(cache_key, result, st.session_state.bias_cache)
+    return result
+
+import re
+import pandas as pd
+import altair as alt
+import streamlit as st
+from llm_manager import call_llm
+from db_manager import detect_domain_from_title_and_description, get_domain_similarity
 
 # Setup Vector DB
 def setup_vectorstore(documents):
@@ -1770,14 +1838,14 @@ def create_chain(vectorstore):
     return chain
 
 # App Title
-st.title("🦙 Chat with LEXIBOT - LLAMA 3.3 (Optimized Single-Call Analysis)")
+st.title("🦙 Chat with LEXIBOT - LLAMA 3.3 (Bias Detection + QA + GPU)")
 
 # Chat history
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 st.sidebar.markdown("### 🏷️ Job Information")
-job_title = st.sidebar.text_input("💼 Job Title")
+job_title = st.sidebar.text_input("💼 Job Title")  # <-- New input for job title
 
 st.sidebar.markdown("### 📝 Paste Job Description")
 job_description = st.sidebar.text_area("Enter the Job Description here", height=200)
@@ -1811,7 +1879,7 @@ import pandas as pd
 import altair as alt
 from datetime import datetime
 from db_manager import insert_candidate, detect_domain_from_title_and_description
-from llm_manager import call_llm
+from llm_manager import call_llm  # ensure this calls your LLM
 
 # ✅ Initialize state
 if "resume_data" not in st.session_state:
@@ -1822,7 +1890,7 @@ if "processed_files" not in st.session_state:
 
 resume_data = st.session_state.resume_data
 
-# ✅ OPTIMIZED: Single LLM call per resume
+# ✅ OPTIMIZED RESUME EVALUATION - SINGLE LLM CALL PER RESUME
 if uploaded_files and job_description:
     with st.spinner("✨ Creating magic for you... Hold on a minute!"):
         all_text = []
@@ -1862,6 +1930,10 @@ if uploaded_files and job_description:
                 st.success(f"⚡ Loaded previous analysis for {uploaded_file.name} (from {ts})")
                 st.warning("⏪ Using cached DB result — no new LLM calls made.")
 
+                # ✅ Get bias detection (no LLM call)
+                bias_score_calc, masc_count, fem_count, detected_masc, detected_fem = detect_bias(full_text)
+                highlighted_text, _, _, _, _ = highlight_bias_words(full_text)
+
                 candidate_name = username
                 domain = detect_domain_from_title_and_description(job_title, job_description)
 
@@ -1886,48 +1958,52 @@ if uploaded_files and job_description:
                     "Missing Skills": [],
                     "Bias Score (0 = Fair, 1 = Biased)": bias_score,
                     "Bias Status": "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair",
-                    "Masculine Words": 0,
-                    "Feminine Words": 0,
-                    "Detected Masculine Words": [],
-                    "Detected Feminine Words": [],
+                    "Masculine Words": masc_count,
+                    "Feminine Words": fem_count,
+                    "Detected Masculine Words": detected_masc,
+                    "Detected Feminine Words": detected_fem,
                     "Text Preview": full_text[:300] + "...",
-                    "Highlighted Text": "",
-                    "Rewritten Text": "",
+                    "Highlighted Text": highlighted_text,
+                    "Rewritten Text": "Use cached DB version",
                     "Domain": domain,
                     "Cached Result": True
                 })
 
             else:
-                st.info("🆕 No cache found, running optimized single-call analysis...")
+                st.info("🆕 No cache found, running SINGLE comprehensive LLM analysis...")
 
                 # ✅ SINGLE COMPREHENSIVE LLM CALL
-                analysis_result = comprehensive_resume_analysis(
-                    resume_text=full_text,
-                    job_description=job_description,
-                    job_title=job_title,
-                    user_location=user_location,
-                    edu_weight=edu_weight,
-                    exp_weight=exp_weight,
-                    skills_weight=skills_weight,
-                    lang_weight=lang_weight,
-                    keyword_weight=keyword_weight
+                weights = {
+                    'edu_weight': edu_weight,
+                    'exp_weight': exp_weight,
+                    'skills_weight': skills_weight,
+                    'lang_weight': lang_weight,
+                    'keyword_weight': keyword_weight
+                }
+                
+                comprehensive_analysis = analyze_resume_comprehensive(
+                    full_text, job_description, job_title, user_location, weights
                 )
 
-                # ✅ Extract all results from single analysis
-                candidate_name = analysis_result["candidate_name"]
-                ats_scores = analysis_result["ats_scores"]
-                detailed_analysis = analysis_result["detailed_analysis"]
-                bias_results = analysis_result["bias_results"]
-                missing_items = analysis_result["missing_items"]
+                # ✅ Get bias detection (no LLM call - pure regex)
+                bias_score, masc_count, fem_count, detected_masc, detected_fem = detect_bias(full_text)
+                highlighted_text, _, _, _, _ = highlight_bias_words(full_text)
+
+                # ✅ Extract all data from single LLM response
+                candidate_name = comprehensive_analysis["candidate_name"]
+                ats_scores = comprehensive_analysis["ats_scores"]
+                detailed_analysis = comprehensive_analysis["detailed_analysis"]
+                missing_items = comprehensive_analysis["missing_items"]
+                rewritten_text = comprehensive_analysis["rewritten_resume"]
 
                 domain = detect_domain_from_title_and_description(job_title, job_description)
-                bias_flag = "🔴 High Bias" if bias_results["bias_score"] > 0.6 else "🟢 Fair"
+                bias_flag = "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair"
 
                 # ✅ Store everything in session state
                 st.session_state.resume_data.append({
                     "Resume Name": uploaded_file.name,
                     "Candidate Name": candidate_name,
-                    "ATS Report": analysis_result["full_response"],
+                    "ATS Report": comprehensive_analysis["full_response"],
                     "ATS Match %": ats_scores["ATS Match %"],
                     "Formatted Score": ats_scores["Formatted Score"],
                     "Education Score": ats_scores["Education Score"],
@@ -1941,17 +2017,17 @@ if uploaded_files and job_description:
                     "Language Analysis": detailed_analysis["Language Analysis"],
                     "Keyword Analysis": detailed_analysis["Keyword Analysis"],
                     "Final Thoughts": detailed_analysis["Final Thoughts"],
-                    "Missing Keywords": missing_items["missing_keywords"],
-                    "Missing Skills": missing_items["missing_skills"],
-                    "Bias Score (0 = Fair, 1 = Biased)": bias_results["bias_score"],
+                    "Missing Keywords": missing_items["Missing Keywords"],
+                    "Missing Skills": missing_items["Missing Skills"],
+                    "Bias Score (0 = Fair, 1 = Biased)": bias_score,
                     "Bias Status": bias_flag,
-                    "Masculine Words": bias_results["masculine_count"],
-                    "Feminine Words": bias_results["feminine_count"],
-                    "Detected Masculine Words": bias_results["detected_masculine"],
-                    "Detected Feminine Words": bias_results["detected_feminine"],
+                    "Masculine Words": masc_count,
+                    "Feminine Words": fem_count,
+                    "Detected Masculine Words": detected_masc,
+                    "Detected Feminine Words": detected_fem,
                     "Text Preview": full_text[:300] + "...",
-                    "Highlighted Text": bias_results["highlighted_text"],
-                    "Rewritten Text": bias_results["rewritten_text"],
+                    "Highlighted Text": highlighted_text,
+                    "Rewritten Text": rewritten_text,
                     "Domain": domain,
                     "Cached Result": False
                 })
@@ -1961,13 +2037,13 @@ if uploaded_files and job_description:
                     resume_name, candidate_name, domain,
                     ats_scores["ATS Match %"], ats_scores["Education Score"], ats_scores["Experience Score"],
                     ats_scores["Skills Score"], ats_scores["Language Score"], ats_scores["Keyword Score"],
-                    bias_results["bias_score"]
+                    bias_score
                 )
 
             # ✅ Mark as processed
             st.session_state.processed_files.add(uploaded_file.name)
 
-    st.success("✅ All resumes processed with optimized single-call analysis!")
+    st.success("✅ All resumes processed with OPTIMIZED single LLM call per resume!")
 
     # ✅ Optional vectorstore setup
     if all_text:
@@ -1978,17 +2054,26 @@ if uploaded_files and job_description:
 if st.button("🔄 Reset Resume Upload Memory"):
     st.session_state.processed_files.clear()
     st.session_state.resume_data.clear()
-    # ✅ CLEAR COMPREHENSIVE CACHE
-    st.session_state.comprehensive_cache.clear()
+    # ✅ CLEAR ALL CACHES
+    st.session_state.master_resume_cache.clear()
+    st.session_state.llm_cache.clear()
+    st.session_state.bias_cache.clear()
+    st.session_state.ats_cache.clear()
     st.success("✅ Cleared uploaded resume history and all caches. You can re-upload now.")
 
-# ✅ UPDATED CACHE STATUS DISPLAY
+# ✅ ENHANCED CACHE STATUS DISPLAY
 if st.sidebar.button("📊 Show Cache Status"):
-    st.sidebar.write(f"🧠 Comprehensive Cache: {len(st.session_state.comprehensive_cache)} items")
+    st.sidebar.write(f"🎯 Master Cache: {len(st.session_state.master_resume_cache)} items")
+    st.sidebar.write(f"🧠 LLM Cache: {len(st.session_state.llm_cache)} items")
+    st.sidebar.write(f"🔍 Bias Cache: {len(st.session_state.bias_cache)} items")
+    st.sidebar.write(f"📈 ATS Cache: {len(st.session_state.ats_cache)} items")
 
-# ✅ UPDATED CACHE CLEAR BUTTON
+# ✅ ADD CACHE CLEAR BUTTON
 if st.sidebar.button("🧹 Clear All Caches"):
-    st.session_state.comprehensive_cache.clear()
+    st.session_state.master_resume_cache.clear()
+    st.session_state.llm_cache.clear()
+    st.session_state.bias_cache.clear()
+    st.session_state.ats_cache.clear()
     st.sidebar.success("✅ All caches cleared!")
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -2094,7 +2179,7 @@ def generate_resume_report_html(resume):
     </head>
     <body>
 
-    <h1>Resume Analysis Report - OPTIMIZED SINGLE-CALL VERSION</h1>
+    <h1>Resume Analysis Report</h1>
 
     <h2>Candidate: {candidate_name}</h2>
     <p><b>Resume File:</b> {resume_name}</p>

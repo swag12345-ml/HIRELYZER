@@ -70,10 +70,12 @@ def load_groq_api_keys():
 
 # ---- Hash Prompt ----
 def hash_prompt(prompt: str, model: str) -> str:
+    """Create a unique hash for caching based on model + prompt"""
     return hashlib.sha256(f"{model}|{prompt}".encode("utf-8")).hexdigest()
 
 # ---- Cache Handling ----
 def get_cached_response(prompt: str, model: str):
+    """Fetch cached response if still valid"""
     key = hash_prompt(prompt, model)
     cutoff = datetime.utcnow() - timedelta(hours=CACHE_EXPIRY_HOURS)
     with sqlite3.connect(DB_FILE, check_same_thread=False) as conn:
@@ -85,6 +87,7 @@ def get_cached_response(prompt: str, model: str):
     return None
 
 def set_cached_response(prompt: str, model: str, response: str):
+    """Store response in cache"""
     key = hash_prompt(prompt, model)
     ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     with sqlite3.connect(DB_FILE, check_same_thread=False) as conn:
@@ -95,6 +98,7 @@ def set_cached_response(prompt: str, model: str, response: str):
 
 # ---- Key Tracking ----
 def increment_key_usage(api_key):
+    """Track daily usage count per key"""
     today = datetime.utcnow().strftime("%Y-%m-%d")
     with sqlite3.connect(DB_FILE, check_same_thread=False) as conn:
         row = conn.execute("SELECT usage_count, last_reset FROM key_usage WHERE api_key=?", (api_key,)).fetchone()
@@ -109,6 +113,7 @@ def increment_key_usage(api_key):
                          (api_key, 1, today))
 
 def mark_key_failure(api_key, reason="error"):
+    """Mark a key as failed (with cooldown tracking)"""
     with sqlite3.connect(DB_FILE, check_same_thread=False) as conn:
         conn.execute("""
             INSERT OR REPLACE INTO key_failures (api_key, fail_time, reason)
@@ -116,15 +121,17 @@ def mark_key_failure(api_key, reason="error"):
         """, (api_key, datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"), reason))
 
 def clear_key_failure(api_key):
+    """Remove a key from failure list"""
     with sqlite3.connect(DB_FILE, check_same_thread=False) as conn:
         conn.execute("DELETE FROM key_failures WHERE api_key = ?", (api_key,))
 
-def get_healthy_keys(api_keys, session=None):
+def get_healthy_keys(api_keys):
+    """Return keys that are not in cooldown and under quota"""
     now = datetime.utcnow()
     healthy = []
     with sqlite3.connect(DB_FILE, check_same_thread=False) as conn:
         for key in api_keys:
-            # Always check DB cooldown, not just session
+            # Check cooldown
             row = conn.execute("SELECT fail_time, reason FROM key_failures WHERE api_key = ?", (key,)).fetchone()
             if row:
                 fail_time, reason = row
@@ -132,6 +139,7 @@ def get_healthy_keys(api_keys, session=None):
                 cooldown = QUOTA_COOLDOWN_MINUTES if reason == "quota" else FAILURE_COOLDOWN_MINUTES
                 if (now - fail_dt).total_seconds() < cooldown * 60:
                     continue
+            # Check quota
             usage = conn.execute("SELECT usage_count, last_reset FROM key_usage WHERE api_key=?", (key,)).fetchone()
             if usage:
                 usage_count, last_reset = usage
@@ -146,11 +154,14 @@ def get_healthy_keys(api_keys, session=None):
 
 # ---- LLM Call ----
 def try_call_llm(prompt, api_key, model, temperature):
+    """Make a single LLM call"""
     llm = ChatGroq(model=model, temperature=temperature, groq_api_key=api_key)
     return llm.invoke(prompt).content
 
 # ---- Main ----
 def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=0):
+    """Main entry: checks cache, tries user key, falls back to admin keys"""
+    # 🔹 Step 1: Cache first
     cleanup_cache()
     cached = get_cached_response(prompt, model)
     if cached:
@@ -162,7 +173,7 @@ def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=
     user_key = session.get("user_groq_key", "").strip() if isinstance(session.get("user_groq_key"), str) else ""
     last_error = None
 
-    # Try user key first
+    # 🔹 Step 2: Try user-provided key
     if user_key:
         try:
             response = try_call_llm(prompt, user_key, model, temperature)
@@ -174,10 +185,9 @@ def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=
             mark_key_failure(user_key, reason)
             last_error = e
 
-    # Try admin keys
-    admin_keys = get_healthy_keys(load_groq_api_keys(), session)
+    # 🔹 Step 3: Rotate through admin keys
+    admin_keys = get_healthy_keys(load_groq_api_keys())
     if admin_keys:
-        # Rotate fairly
         start_index = session["key_index"] % len(admin_keys)
         for offset in range(len(admin_keys)):
             idx = (start_index + offset) % len(admin_keys)
@@ -194,4 +204,4 @@ def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=
                 mark_key_failure(key, reason)
                 last_error = e
 
-    return f"LLM unavailable: {last_error}"
+    return f"❌ LLM unavailable: {last_error or 'No healthy API keys left'}"

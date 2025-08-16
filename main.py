@@ -1,4 +1,3 @@
-from db_manager import db
 from xhtml2pdf import pisa
 from io import BytesIO
 
@@ -67,6 +66,8 @@ def html_to_pdf_bytes(html_string):
     return pdf_io
 
 
+
+
 def generate_cover_letter_from_resume_builder():
     import streamlit as st
     from datetime import datetime
@@ -86,20 +87,14 @@ def generate_cover_letter_from_resume_builder():
     email = st.text_input("📧 Email", placeholder="e.g., you@example.com")
     mobile = st.text_input("📞 Mobile Number", placeholder="e.g., +91 9876543210")
 
-    # ✅ Button to prevent relooping - ADD UNIQUE KEY
-    if st.button("✉️ Generate Cover Letter", key="generate_cover_letter_btn"):
+    # ✅ Button to prevent relooping
+    if st.button("✉️ Generate Cover Letter"):
         # ✅ Validate input before generating
         if not all([name, job_title, summary, skills, company, linkedin, email, mobile]):
             st.warning("⚠️ Please fill in all fields including LinkedIn, email, and mobile.")
             return
 
-        # ✅ CHECK IF ALREADY GENERATED TO PREVENT DUPLICATE CALLS
-        cover_letter_key = f"cover_letter_{company}_{job_title}_{name}"
-        if cover_letter_key in st.session_state:
-            st.info("✅ Cover letter already generated! Using cached version.")
-            cover_letter = st.session_state[cover_letter_key]
-        else:
-            prompt = f"""
+        prompt = f"""
 You are a professional cover letter writer.
 
 Write a formal and compelling cover letter using the information below. Format it as a real letter with:
@@ -129,9 +124,8 @@ Hiring Manager, {company}, {location}
 - Return only the final formatted cover letter without any HTML tags.
 """
 
-            # ✅ Call LLM ONLY ONCE and cache result
-            cover_letter = call_llm(prompt, session=st.session_state)
-            st.session_state[cover_letter_key] = cover_letter
+        # ✅ Call LLM
+        cover_letter = call_llm(prompt, session=st.session_state)
 
         # ✅ Clean leading line if needed
         lines = cover_letter.strip().split("\n")
@@ -169,6 +163,8 @@ Hiring Manager, {company}, {location}
         st.session_state["cover_letter_html"] = cover_letter_html
 
 
+
+
 import streamlit as st
 import streamlit.components.v1 as components
 from base64 import b64encode
@@ -186,7 +182,6 @@ import datetime
 import os, json, random, string, re, asyncio, io
 import urllib.parse
 from collections import Counter
-import hashlib
 
 # ------------------- External Libraries -------------------
 import torch
@@ -233,27 +228,6 @@ from user_login import (
     username_exists  # 👈 add this line
 )
 
-# ✅ ADD CACHING UTILITIES
-def generate_cache_key(*args):
-    """Generate a unique cache key from arguments"""
-    content = str(args)
-    return hashlib.md5(content.encode()).hexdigest()
-
-def get_cached_result(cache_key, cache_dict):
-    """Get cached result if exists"""
-    return cache_dict.get(cache_key)
-
-def set_cached_result(cache_key, result, cache_dict):
-    """Cache a result"""
-    cache_dict[cache_key] = result
-
-# ✅ INITIALIZE CACHE DICTIONARIES IN SESSION STATE
-if "llm_cache" not in st.session_state:
-    st.session_state.llm_cache = {}
-if "bias_cache" not in st.session_state:
-    st.session_state.bias_cache = {}
-if "ats_cache" not in st.session_state:
-    st.session_state.ats_cache = {}
 
 # ------------------- Initialize -------------------
 create_user_table()
@@ -334,6 +308,8 @@ body, .main {
 </style>
 """, unsafe_allow_html=True)
 # 🔹 VIDEO BACKGROUND & GLOW TEXT
+
+
 
 
 # ------------------- BEFORE LOGIN -------------------
@@ -478,6 +454,9 @@ if not st.session_state.authenticated:
     """, unsafe_allow_html=True)
 
 
+
+
+
 if not st.session_state.get("authenticated", False):
     
 
@@ -597,6 +576,8 @@ if not st.session_state.get("authenticated", False):
     st.stop()
 
 
+
+
 # ------------------- AFTER LOGIN -------------------
 from user_login import save_user_api_key, get_user_api_key  # Ensure both are imported
 
@@ -646,6 +627,10 @@ if st.session_state.get("authenticated"):
         st.session_state["user_groq_key"] = None
         save_user_api_key(st.session_state.username, None)
         st.sidebar.success("✅ Cleared saved Groq API key. Now using shared admin key.")
+
+
+
+
 
 
 from user_login import get_all_user_logs, get_total_registered_users, get_logins_today
@@ -902,6 +887,9 @@ lemmatizer = ensure_nltk()
 reader = get_easyocr_reader()
 
 from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
+
+
+
 
 
 FEATURED_COMPANIES = {
@@ -1261,16 +1249,34 @@ def extract_text_from_images(pdf_path):
         st.error(f"⚠ Error extracting from image: {e}")
         return []
 
-# ✅ CACHED BIAS DETECTION FUNCTION
+# Detect bias in resume
+
+import re
+
+# Predefined gender-coded word lists
+gender_words = {
+    "masculine": [
+        "active", "aggressive", "ambitious", "analytical", "assertive", "autonomous", "boast", "bold",
+        "challenging", "competitive", "confident", "courageous", "decisive", "determined", "dominant", "driven",
+        "dynamic", "forceful", "independent", "individualistic", "intellectual", "lead", "leader", "objective",
+        "outspoken", "persistent", "principled", "proactive", "resilient", "self-reliant", "self-sufficient",
+        "strong", "superior", "tenacious","guru","tech guru","technical guru", "visionary", "manpower", "strongman", "command",
+        "assert", "headstrong", "rockstar", "superstar", "go-getter", "trailblazer", "results-driven",
+        "fast-paced", "driven", "determination", "competitive spirit"
+    ],
+    
+    "feminine": [
+        "affectionate", "agreeable", "attentive", "collaborative", "committed", "compassionate", "considerate",
+        "cooperative", "dependable", "dependent", "emotional", "empathetic", "enthusiastic", "friendly", "gentle",
+        "honest", "inclusive", "interpersonal", "kind", "loyal", "modest", "nurturing", "pleasant", "polite",
+        "sensitive", "supportive", "sympathetic", "tactful", "tender", "trustworthy", "understanding", "warm",
+        "yield", "adaptable", "communal", "helpful", "dedicated", "respectful", "nurture", "sociable",
+        "relationship-oriented", "team player", "dependable", "people-oriented", "empathetic listener",
+        "gentle communicator", "open-minded"
+    ]
+}
+
 def detect_bias(text):
-    # ✅ Generate cache key for this text
-    cache_key = generate_cache_key("bias_detection", text)
-    
-    # ✅ Check if result is already cached
-    cached_result = get_cached_result(cache_key, st.session_state.bias_cache)
-    if cached_result:
-        return cached_result
-    
     # Split into sentences using simple delimiters
     sentences = re.split(r'(?<=[.!?])\s+', text.strip())
 
@@ -1335,12 +1341,7 @@ def detect_bias(text):
     total = masc + fem
     bias_score = min(total / 20, 1.0) if total > 0 else 0.0
 
-    result = (round(bias_score, 2), masc, fem, masculine_found, feminine_found)
-    
-    # ✅ Cache the result
-    set_cached_result(cache_key, result, st.session_state.bias_cache)
-    
-    return result
+    return round(bias_score, 2), masc, fem, masculine_found, feminine_found
 
 gender_words = {
     "masculine": [
@@ -1468,21 +1469,12 @@ replacement_mapping = {
     }
 }
 
-# ✅ CACHED LLM REWRITE FUNCTION
 def rewrite_text_with_llm(text, replacement_mapping, user_location):
     """
     Uses LLM to rewrite a resume with bias-free language, while preserving
     the original content length. Enhances grammar, structure, and clarity.
     Ensures structured formatting and includes relevant links and job suggestions.
     """
-    
-    # ✅ Generate cache key for this specific rewrite request
-    cache_key = generate_cache_key("rewrite_llm", text, str(replacement_mapping), user_location)
-    
-    # ✅ Check if result is already cached
-    cached_result = get_cached_result(cache_key, st.session_state.llm_cache)
-    if cached_result:
-        return cached_result
 
     # Create a clear mapping in bullet format
     formatted_mapping = "\n".join(
@@ -1558,26 +1550,14 @@ Your tasks:
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%205&location={user_location})
 """
 
-    # ✅ Call the LLM only once and cache result
+    # Call the LLM of your choice
     response = call_llm(prompt, session=st.session_state)
-    
-    # ✅ Cache the result
-    set_cached_result(cache_key, response, st.session_state.llm_cache)
-    
     return response
 
 
 import re
 
 def rewrite_and_highlight(text, replacement_mapping, user_location):
-    # ✅ Generate cache key for this specific request
-    cache_key = generate_cache_key("rewrite_highlight", text, str(replacement_mapping), user_location)
-    
-    # ✅ Check if result is already cached
-    cached_result = get_cached_result(cache_key, st.session_state.llm_cache)
-    if cached_result:
-        return cached_result
-    
     highlighted_text = text
     masculine_count, feminine_count = 0, 0
     detected_masculine_words, detected_feminine_words = [], []
@@ -1659,19 +1639,14 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
                 })
             break  # Only one match per word
 
-    # ✅ Rewrite text with neutral terms (cached)
+    # Rewrite text with neutral terms
     rewritten_text = rewrite_text_with_llm(
         text,
         replacement_mapping["masculine"] | replacement_mapping["feminine"],
         user_location
     )
 
-    result = (highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words)
-    
-    # ✅ Cache the result
-    set_cached_result(cache_key, result, st.session_state.llm_cache)
-    
-    return result
+    return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
 
 import re
 import pandas as pd
@@ -1680,16 +1655,8 @@ import streamlit as st
 from llm_manager import call_llm
 from db_manager import detect_domain_from_title_and_description, get_domain_similarity
 
-# ✅ Enhanced Grammar evaluation using LLM with suggestions (CACHED)
+# ✅ Enhanced Grammar evaluation using LLM with suggestions
 def get_grammar_score_with_llm(text, max_score=5):
-    # ✅ Generate cache key for this grammar evaluation
-    cache_key = generate_cache_key("grammar_score", text, max_score)
-    
-    # ✅ Check if result is already cached
-    cached_result = get_cached_result(cache_key, st.session_state.llm_cache)
-    if cached_result:
-        return cached_result
-    
     grammar_prompt = f"""
 You are a grammar and tone evaluator AI. Analyze the following resume text and:
 
@@ -1726,16 +1693,10 @@ Suggestions:
 
     score = int(score_match.group(1)) if score_match else max(3, max_score-2)  # More generous default
     feedback = feedback_match.group(1).strip() if feedback_match else "Grammar appears adequate for professional communication."
-    
-    result = (score, feedback, suggestions)
-    
-    # ✅ Cache the result
-    set_cached_result(cache_key, result, st.session_state.llm_cache)
-    
-    return result
+    return score, feedback, suggestions
 
 
-# ✅ CACHED ATS EVALUATION FUNCTION
+# ✅ Main ATS Evaluation Function
 def ats_percentage_score(
     resume_text,
     job_description,
@@ -1747,17 +1708,6 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    # ✅ Generate cache key for this ATS evaluation
-    cache_key = generate_cache_key(
-        "ats_score", resume_text, job_description, job_title, 
-        edu_weight, exp_weight, skills_weight, lang_weight, keyword_weight
-    )
-    
-    # ✅ Check if result is already cached
-    cached_result = get_cached_result(cache_key, st.session_state.ats_cache)
-    if cached_result:
-        return cached_result
-    
     grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(resume_text, max_score=lang_weight)
 
     resume_domain = detect_domain_from_title_and_description("Unknown", resume_text)
@@ -2018,6 +1968,10 @@ Context for Evaluation:
     # Apply domain penalty more gently
     total_score = max(total_score - domain_penalty, int(total_score * 0.7))  # Never go below 70% of pre-penalty score
     
+    # ✅ IMPROVED: More generous score caps and bonus for well-rounded candidates
+    #####if all(score >= weight * 0.6 for score, weight in [(edu_score, edu_weight), (exp_score, exp_weight), (skills_score, skills_weight)]):#####
+        ########total_score += 3  # Bonus for well-rounded candidates##########
+    
     total_score = min(total_score, 100)
     total_score = max(total_score, 15)  # Minimum score of 15 to avoid completely crushing candidates
 
@@ -2057,7 +2011,7 @@ Context for Evaluation:
 - Growth opportunities highlighted rather than just gaps identified
 """
 
-    result = (ats_result, {
+    return ats_result, {
         "Candidate Name": candidate_name,
         "Education Score": edu_score,
         "Experience Score": exp_score,
@@ -2078,13 +2032,7 @@ Context for Evaluation:
         "Job Domain": job_domain,
         "Domain Penalty": domain_penalty,
         "Domain Similarity Score": similarity_score
-    })
-    
-    # ✅ Cache the result
-    set_cached_result(cache_key, result, st.session_state.ats_cache)
-    
-    return result
-
+    }
 # Setup Vector DB
 def setup_vectorstore(documents):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -2122,7 +2070,7 @@ st.title("🦙 Chat with LEXIBOT - LLAMA 3.3 (Bias Detection + QA + GPU)")
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-st.sidebar.markdown("### 🏷️ Job Information")
+    st.sidebar.markdown("### 🏷️ Job Information")
 job_title = st.sidebar.text_input("💼 Job Title")  # <-- New input for job title
 
 st.sidebar.markdown("### 📝 Paste Job Description")
@@ -2134,6 +2082,7 @@ if job_description.strip() == "":
 user_location = st.sidebar.text_input("📍 Preferred Job Location (City, Country)")
 
 st.sidebar.markdown("### 🎛️ Customize ATS Scoring Weights")
+
 
 edu_weight = st.sidebar.slider("🎓 Education Weight", 0, 50, 20)
 exp_weight = st.sidebar.slider("💼 Experience Weight", 0, 50, 35)
@@ -2148,7 +2097,9 @@ if total_weight != 100:
 else:
     st.sidebar.success("✅ Total weight = 100")
 
+
 uploaded_files = st.file_uploader("Upload PDF Resumes", type=["pdf"], accept_multiple_files=True)
+
 
 import os
 import re
@@ -2168,15 +2119,13 @@ if "processed_files" not in st.session_state:
 
 resume_data = st.session_state.resume_data
 
-# ✏️ Resume Evaluation Logic - DB Caching + Full Storage
+# ✏️ Resume Evaluation Logic
 if uploaded_files and job_description:
     with st.spinner("✨ Creating magic for you... Hold on a minute!"):
         all_text = []
 
         for uploaded_file in uploaded_files:
-            # ✅ Prevent duplicate in same session
             if uploaded_file.name in st.session_state.processed_files:
-                st.info(f"📄 {uploaded_file.name} already processed in this session. Skipping.")
                 continue
 
             # ✅ Save uploaded file
@@ -2193,160 +2142,116 @@ if uploaded_files and job_description:
             all_text.append(" ".join(text))
             full_text = " ".join(text)
 
-            username = st.session_state.get("username", "guest")
-            resume_name = uploaded_file.name  # use resume file name as key
+            # ✅ Bias detection
+            bias_score, masc_count, fem_count, detected_masc, detected_fem = detect_bias(full_text)
 
-            # ✅ Check if resume already exists in DB
-            existing = db.get_existing_analysis(username, resume_name)
+            # ✅ Rewrite and highlight gender-biased words
+            highlighted_text, rewritten_text, _, _, _, _ = rewrite_and_highlight(
+                full_text, replacement_mapping, user_location
+            )
 
-            if existing:
+            # ✅ LLM-based ATS Evaluation
+            ats_result, ats_scores = ats_percentage_score(
+                resume_text=full_text,
+                job_description=job_description,
+                logic_profile_score=None,
+                edu_weight=edu_weight,
+                exp_weight=exp_weight,
+                skills_weight=skills_weight,
+                lang_weight=lang_weight,
+                keyword_weight=keyword_weight
+            )
+
+            # ✅ Extract structured ATS values
+            candidate_name = ats_scores.get("Candidate Name", "Not Found")
+            ats_score = ats_scores.get("ATS Match %", 0)
+            edu_score = ats_scores.get("Education Score", 0)
+            exp_score = ats_scores.get("Experience Score", 0)
+            skills_score = ats_scores.get("Skills Score", 0)
+            lang_score = ats_scores.get("Language Score", 0)
+            keyword_score = ats_scores.get("Keyword Score", 0)
+            formatted_score = ats_scores.get("Formatted Score", "N/A")
+            fit_summary = ats_scores.get("Final Thoughts", "N/A")
+            language_analysis_full = ats_scores.get("Language Analysis", "N/A")
+
+            missing_keywords_raw = ats_scores.get("Missing Keywords", "N/A")
+            missing_skills_raw = ats_scores.get("Missing Skills", "N/A")
+            missing_keywords = [kw.strip() for kw in missing_keywords_raw.split(",") if kw.strip()] if missing_keywords_raw != "N/A" else []
+            missing_skills = [sk.strip() for sk in missing_skills_raw.split(",") if sk.strip()] if missing_skills_raw != "N/A" else []
+
+            domain = detect_domain_from_title_and_description(job_title, job_description)
+
+            bias_flag = "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair"
+            ats_flag = "⚠️ Low ATS" if ats_score < 50 else "✅ Good ATS"
+
+            # 📊 ATS Chart
+            ats_df = pd.DataFrame({
+                'Component': ['Education', 'Experience', 'Skills', 'Language', 'Keywords'],
+                'Score': [edu_score, exp_score, skills_score, lang_score, keyword_score]
+            })
+            ats_chart = alt.Chart(ats_df).mark_bar().encode(
+                x=alt.X('Component', sort=None),
+                y=alt.Y('Score', scale=alt.Scale(domain=[0, 50])),
+                color='Component',
+                tooltip=['Component', 'Score']
+            ).properties(
+                title="ATS Evaluation Breakdown",
+                width=600,
+                height=300
+            )
+
+            # ✅ Store everything in session state
+            st.session_state.resume_data.append({
+                "Resume Name": uploaded_file.name,
+                "Candidate Name": candidate_name,
+                "ATS Report": ats_result,
+                "ATS Match %": ats_score,
+                "Formatted Score": formatted_score,
+                "Education Score": edu_score,
+                "Experience Score": exp_score,
+                "Skills Score": skills_score,
+                "Language Score": lang_score,
+                "Keyword Score": keyword_score,
+                "Education Analysis": ats_scores.get("Education Analysis", ""),
+                "Experience Analysis": ats_scores.get("Experience Analysis", ""),
+                "Skills Analysis": ats_scores.get("Skills Analysis", ""),
+                "Language Analysis": language_analysis_full,
+                "Keyword Analysis": ats_scores.get("Keyword Analysis", ""),
+                "Final Thoughts": fit_summary,
+                "Missing Keywords": missing_keywords,
+                "Missing Skills": missing_skills,
+                "Bias Score (0 = Fair, 1 = Biased)": bias_score,
+                "Bias Status": bias_flag,
+                "Masculine Words": masc_count,
+                "Feminine Words": fem_count,
+                "Detected Masculine Words": detected_masc,
+                "Detected Feminine Words": detected_fem,
+                "Text Preview": full_text[:300] + "...",
+                "Highlighted Text": highlighted_text,
+                "Rewritten Text": rewritten_text,
+                "Domain": domain
+            })
+
+            insert_candidate(
                 (
-                    ats_score, edu_score, exp_score, skills_score,
-                    lang_score, keyword_score, bias_score, ts
-                ) = existing
-
-                st.success(f"⚡ Loaded previous analysis for {uploaded_file.name} (from {ts})")
-                st.warning("⏪ Using cached DB result — no new LLM calls made.")
-
-                candidate_name = username
-                domain = detect_domain_from_title_and_description(job_title, job_description)
-
-                st.session_state.resume_data.append({
-                    "Resume Name": uploaded_file.name,
-                    "Candidate Name": candidate_name,
-                    "ATS Report": f"Previously processed resume ({ts})",
-                    "ATS Match %": ats_score,
-                    "Formatted Score": "N/A",
-                    "Education Score": edu_score,
-                    "Experience Score": exp_score,
-                    "Skills Score": skills_score,
-                    "Language Score": lang_score,
-                    "Keyword Score": keyword_score,
-                    "Education Analysis": "",
-                    "Experience Analysis": "",
-                    "Skills Analysis": "",
-                    "Language Analysis": "",
-                    "Keyword Analysis": "",
-                    "Final Thoughts": "",
-                    "Missing Keywords": [],
-                    "Missing Skills": [],
-                    "Bias Score (0 = Fair, 1 = Biased)": bias_score,
-                    "Bias Status": "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair",
-                    "Masculine Words": 0,
-                    "Feminine Words": 0,
-                    "Detected Masculine Words": [],
-                    "Detected Feminine Words": [],
-                    "Text Preview": full_text[:300] + "...",
-                    "Highlighted Text": "",
-                    "Rewritten Text": "",
-                    "Domain": domain,
-                    "Cached Result": True
-                })
-
-            else:
-                st.info("🆕 No cache found, running full LLM pipeline...")
-
-                # ✅ Fresh pipeline since resume not cached in DB
-                bias_score, masc_count, fem_count, detected_masc, detected_fem = detect_bias(full_text)
-
-                highlighted_text, rewritten_text, _, _, _, _ = rewrite_and_highlight(
-                    full_text, replacement_mapping, user_location
-                )
-
-                ats_result, ats_scores = ats_percentage_score(
-                    resume_text=full_text,
-                    job_description=job_description,
-                    job_title=job_title,
-                    logic_profile_score=None,
-                    edu_weight=edu_weight,
-                    exp_weight=exp_weight,
-                    skills_weight=skills_weight,
-                    lang_weight=lang_weight,
-                    keyword_weight=keyword_weight
-                )
-
-                # ✅ Extract ATS fields
-                candidate_name = ats_scores.get("Candidate Name", "Not Found")
-                ats_score = ats_scores.get("ATS Match %", 0)
-                edu_score = ats_scores.get("Education Score", 0)
-                exp_score = ats_scores.get("Experience Score", 0)
-                skills_score = ats_scores.get("Skills Score", 0)
-                lang_score = ats_scores.get("Language Score", 0)
-                keyword_score = ats_scores.get("Keyword Score", 0)
-                formatted_score = ats_scores.get("Formatted Score", "N/A")
-                fit_summary = ats_scores.get("Final Thoughts", "N/A")
-                language_analysis_full = ats_scores.get("Language Analysis", "N/A")
-
-                missing_keywords_raw = ats_scores.get("Missing Keywords", "N/A")
-                missing_skills_raw = ats_scores.get("Missing Skills", "N/A")
-                missing_keywords = [kw.strip() for kw in missing_keywords_raw.split(",") if kw.strip()] if missing_keywords_raw != "N/A" else []
-                missing_skills = [sk.strip() for sk in missing_skills_raw.split(",") if sk.strip()] if missing_skills_raw != "N/A" else []
-
-                domain = detect_domain_from_title_and_description(job_title, job_description)
-
-                bias_flag = "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair"
-
-                # 📊 ATS Chart
-                ats_df = pd.DataFrame({
-                    'Component': ['Education', 'Experience', 'Skills', 'Language', 'Keywords'],
-                    'Score': [edu_score, exp_score, skills_score, lang_score, keyword_score]
-                })
-                ats_chart = alt.Chart(ats_df).mark_bar().encode(
-                    x=alt.X('Component', sort=None),
-                    y=alt.Y('Score', scale=alt.Scale(domain=[0, 50])),
-                    color='Component',
-                    tooltip=['Component', 'Score']
-                ).properties(
-                    title="ATS Evaluation Breakdown",
-                    width=600,
-                    height=300
-                )
-
-                # ✅ Store everything in session state (full data)
-                st.session_state.resume_data.append({
-                    "Resume Name": uploaded_file.name,
-                    "Candidate Name": candidate_name,
-                    "ATS Report": ats_result,
-                    "ATS Match %": ats_score,
-                    "Formatted Score": formatted_score,
-                    "Education Score": edu_score,
-                    "Experience Score": exp_score,
-                    "Skills Score": skills_score,
-                    "Language Score": lang_score,
-                    "Keyword Score": keyword_score,
-                    "Education Analysis": ats_scores.get("Education Analysis", ""),
-                    "Experience Analysis": ats_scores.get("Experience Analysis", ""),
-                    "Skills Analysis": ats_scores.get("Skills Analysis", ""),
-                    "Language Analysis": language_analysis_full,
-                    "Keyword Analysis": ats_scores.get("Keyword Analysis", ""),
-                    "Final Thoughts": fit_summary,
-                    "Missing Keywords": missing_keywords,
-                    "Missing Skills": missing_skills,
-                    "Bias Score (0 = Fair, 1 = Biased)": bias_score,
-                    "Bias Status": bias_flag,
-                    "Masculine Words": masc_count,
-                    "Feminine Words": fem_count,
-                    "Detected Masculine Words": detected_masc,
-                    "Detected Feminine Words": detected_fem,
-                    "Text Preview": full_text[:300] + "...",
-                    "Highlighted Text": highlighted_text,
-                    "Rewritten Text": rewritten_text,
-                    "Domain": domain,
-                    "Cached Result": False
-                })
-
-                # ✅ Save summary to DB with full breakdown
-                db.insert_resume_data(
-                    resume_name, candidate_name, domain,
-                    ats_score, edu_score, exp_score,
-                    skills_score, lang_score, keyword_score,
+                    uploaded_file.name,
+                    candidate_name,
+                    ats_score,
+                    edu_score,
+                    exp_score,
+                    skills_score,
+                    lang_score,
+                    keyword_score,
                     bias_score
-                )
+                ),
+                job_title=job_title,
+                job_description=job_description
+            )
 
-            # ✅ Mark as processed
             st.session_state.processed_files.add(uploaded_file.name)
 
     st.success("✅ All resumes processed!")
+
 
 
 
@@ -2355,28 +2260,11 @@ if uploaded_files and job_description:
         st.session_state.vectorstore = setup_vectorstore(all_text)
         st.session_state.chain = create_chain(st.session_state.vectorstore)
 
-# 🔄 Developer Reset Button with cache clearing
+# 🔄 Developer Reset Button
 if st.button("🔄 Reset Resume Upload Memory"):
     st.session_state.processed_files.clear()
     st.session_state.resume_data.clear()
-    # ✅ CLEAR ALL CACHES
-    st.session_state.llm_cache.clear()
-    st.session_state.bias_cache.clear()
-    st.session_state.ats_cache.clear()
-    st.success("✅ Cleared uploaded resume history and all caches. You can re-upload now.")
-
-# ✅ ADD CACHE STATUS DISPLAY
-if st.sidebar.button("📊 Show Cache Status"):
-    st.sidebar.write(f"🧠 LLM Cache: {len(st.session_state.llm_cache)} items")
-    st.sidebar.write(f"🔍 Bias Cache: {len(st.session_state.bias_cache)} items")
-    st.sidebar.write(f"📈 ATS Cache: {len(st.session_state.ats_cache)} items")
-
-# ✅ ADD CACHE CLEAR BUTTON
-if st.sidebar.button("🧹 Clear All Caches"):
-    st.session_state.llm_cache.clear()
-    st.session_state.bias_cache.clear()
-    st.session_state.ats_cache.clear()
-    st.sidebar.success("✅ All caches cleared!")
+    st.success("✅ Cleared uploaded resume history. You can re-upload now.")
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", 
@@ -2537,6 +2425,9 @@ def generate_resume_report_html(resume):
     </html>
     """
 
+
+
+
 # === TAB 1: Dashboard ===
 with tab1:
     resume_data = st.session_state.get("resume_data", [])
@@ -2684,6 +2575,16 @@ with tab1:
 </div>
 """, unsafe_allow_html=True)
 
+
+                # ✅ Display Missing Skills and Keywords as badges
+                # ✅ Display Missing Skills as multiline bullet points
+                
+
+                # ✅ Show Missing Keywords and Missing Skills
+                     # Missing keywords
+                
+
+
                 st.divider()
 
                 detail_tab1, detail_tab2 = st.tabs(["🔎 Bias Analysis", "✅ Rewritten Resume"])
@@ -2730,6 +2631,9 @@ with tab1:
                         key=f"download_docx_{resume['Resume Name']}"
                     )
                     html_report = generate_resume_report_html(resume)
+                    
+
+                    
 
                     st.download_button(
                         label="📥 Download Full Analysis Report (.html)",
@@ -5874,3 +5778,4 @@ if user_input:
 
     # Save interaction to memory
     st.session_state.memory.save_context({"input": user_input}, {"output": answer})
+

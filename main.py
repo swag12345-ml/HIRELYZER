@@ -1,7 +1,3 @@
-from db_manager import DatabaseManager
-
-db = DatabaseManager()
-
 from xhtml2pdf import pisa
 from io import BytesIO
 
@@ -2162,6 +2158,7 @@ from datetime import datetime
 from db_manager import insert_candidate, detect_domain_from_title_and_description
 from llm_manager import call_llm  # ensure this calls your LLM
 
+# ✅ Initialize state
 if "resume_data" not in st.session_state:
     st.session_state.resume_data = []
 
@@ -2202,7 +2199,11 @@ if uploaded_files and job_description:
             existing = db.get_existing_analysis(username, resume_name)
 
             if existing:
-                ats_score, bias_score, ts = existing
+                (
+                    ats_score, edu_score, exp_score, skills_score, 
+                    lang_score, keyword_score, bias_score, ts
+                ) = existing
+
                 st.success(f"⚡ Loaded previous analysis for {uploaded_file.name} (from {ts})")
 
                 candidate_name = username
@@ -2214,11 +2215,11 @@ if uploaded_files and job_description:
                     "ATS Report": f"Previously processed resume ({ts})",
                     "ATS Match %": ats_score,
                     "Formatted Score": "N/A",
-                    "Education Score": 0,
-                    "Experience Score": 0,
-                    "Skills Score": 0,
-                    "Language Score": 0,
-                    "Keyword Score": 0,
+                    "Education Score": edu_score,
+                    "Experience Score": exp_score,
+                    "Skills Score": skills_score,
+                    "Language Score": lang_score,
+                    "Keyword Score": keyword_score,
                     "Education Analysis": "",
                     "Experience Analysis": "",
                     "Skills Analysis": "",
@@ -2331,16 +2332,19 @@ if uploaded_files and job_description:
                     "Cached Result": False
                 })
 
-                # ✅ Save summary to DB
+                # ✅ Save summary to DB with full breakdown
                 db.insert_resume_data(
                     resume_name, candidate_name, domain,
-                    ats_score, 0, bias_score
+                    ats_score, edu_score, exp_score,
+                    skills_score, lang_score, keyword_score,
+                    bias_score
                 )
 
             # ✅ Mark as processed
             st.session_state.processed_files.add(uploaded_file.name)
 
     st.success("✅ All resumes processed!")
+
 
 
     # ✅ Optional vectorstore setup

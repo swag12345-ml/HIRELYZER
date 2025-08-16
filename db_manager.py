@@ -1237,6 +1237,9 @@ if __name__ == "__main__":
     stats = get_database_stats()
     print(f"Database Statistics: {stats}")
 
+# Initialize a global instance of DatabaseManager
+db = DatabaseManager()
+
 
 
 

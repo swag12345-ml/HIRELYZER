@@ -35,6 +35,7 @@ class DatabaseManager:
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS candidates (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT NOT NULL,
                     resume_name TEXT NOT NULL,
                     candidate_name TEXT NOT NULL,
                     ats_score INTEGER NOT NULL CHECK(ats_score >= 0 AND ats_score <= 100),
@@ -51,6 +52,7 @@ class DatabaseManager:
             
             # Create optimized indexes for better query performance
             indexes = [
+                "CREATE INDEX IF NOT EXISTS idx_candidates_username ON candidates(username)",
                 "CREATE INDEX IF NOT EXISTS idx_candidates_domain ON candidates(domain)",
                 "CREATE INDEX IF NOT EXISTS idx_candidates_ats_score ON candidates(ats_score)",
                 "CREATE INDEX IF NOT EXISTS idx_candidates_timestamp ON candidates(timestamp)",
@@ -104,31 +106,32 @@ class DatabaseManager:
 
     # ------------------ New Resume Methods ------------------
 
-    def insert_resume_data(self, resume_name: str, candidate_name: str, domain: str,
+    def insert_resume_data(self, username: str, resume_name: str, candidate_name: str, domain: str,
                            ats_score: int, edu_score: int, exp_score: int,
                            skills_score: int, lang_score: int, keyword_score: int,
                            bias_score: float):
         """
         Insert a new resume analysis record with full ATS breakdown.
+        Always creates a new row (no overwrite).
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO candidates 
-                (resume_name, candidate_name, domain, ats_score, edu_score, exp_score,
+                (username, resume_name, candidate_name, domain, ats_score, edu_score, exp_score,
                  skills_score, lang_score, keyword_score, bias_score, timestamp)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             """, (
-                resume_name, candidate_name, domain,
+                username, resume_name, candidate_name, domain,
                 ats_score, edu_score, exp_score,
                 skills_score, lang_score, keyword_score,
                 bias_score
             ))
             conn.commit()
 
-    def get_existing_analysis(self, candidate_name: str, resume_name: str):
+    def get_existing_analysis(self, username: str, resume_name: str):
         """
-        Fetch the most recent analysis for a given candidate + resume name.
+        Fetch the most recent analysis for a given user + resume name.
         Returns (ats_score, edu_score, exp_score, skills_score, lang_score, keyword_score, bias_score, timestamp)
         if found, else None.
         """
@@ -137,27 +140,26 @@ class DatabaseManager:
             cursor.execute("""
                 SELECT ats_score, edu_score, exp_score, skills_score, lang_score, keyword_score, bias_score, timestamp
                 FROM candidates
-                WHERE candidate_name = ? AND resume_name = ?
+                WHERE username = ? AND resume_name = ?
                 ORDER BY timestamp DESC
                 LIMIT 1
-            """, (candidate_name, resume_name))
+            """, (username, resume_name))
             return cursor.fetchone()
 
-    def get_user_resume_history(self, candidate_name: str, limit: int = 10):
+    def get_user_resume_history(self, username: str, limit: int = 10):
         """
         Fetch the last N resumes analyzed for a user.
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT domain, ats_score, edu_score, exp_score, skills_score, lang_score, keyword_score, bias_score, timestamp
+                SELECT resume_name, domain, ats_score, edu_score, exp_score, skills_score, lang_score, keyword_score, bias_score, timestamp
                 FROM candidates
-                WHERE candidate_name = ?
+                WHERE username = ?
                 ORDER BY timestamp DESC
                 LIMIT ?
-            """, (candidate_name, limit))
+            """, (username, limit))
             return cursor.fetchall()
-
 
                         
 
@@ -1239,6 +1241,7 @@ if __name__ == "__main__":
 
 # Initialize a global instance of DatabaseManager
 db = DatabaseManager()
+
 
 
 

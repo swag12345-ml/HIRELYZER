@@ -2176,7 +2176,7 @@ if uploaded_files and job_description:
         for uploaded_file in uploaded_files:
             # ✅ Prevent duplicate in same session
             if uploaded_file.name in st.session_state.processed_files:
-                st.info(f"📄 {uploaded_file.name} already processed in this session. Removing.")
+                ##########st.info(f"📄 {uploaded_file.name} already processed in this session. Removing.")#####
                 continue
 
             # ✅ Save uploaded file

@@ -2201,11 +2201,12 @@ if uploaded_files and job_description:
 
             if existing:
                 (
-                    ats_score, edu_score, exp_score, skills_score, 
+                    ats_score, edu_score, exp_score, skills_score,
                     lang_score, keyword_score, bias_score, ts
                 ) = existing
 
                 st.success(f"⚡ Loaded previous analysis for {uploaded_file.name} (from {ts})")
+                st.warning("⏪ Using cached DB result — no new LLM calls made.")
 
                 candidate_name = username
                 domain = detect_domain_from_title_and_description(job_title, job_description)
@@ -2243,6 +2244,8 @@ if uploaded_files and job_description:
                 })
 
             else:
+                st.info("🆕 No cache found, running full LLM pipeline...")
+
                 # ✅ Fresh pipeline since resume not cached in DB
                 bias_score, masc_count, fem_count, detected_masc, detected_fem = detect_bias(full_text)
 
@@ -2282,7 +2285,6 @@ if uploaded_files and job_description:
                 domain = detect_domain_from_title_and_description(job_title, job_description)
 
                 bias_flag = "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair"
-                ats_flag = "⚠️ Low ATS" if ats_score < 50 else "✅ Good ATS"
 
                 # 📊 ATS Chart
                 ats_df = pd.DataFrame({
@@ -2345,6 +2347,7 @@ if uploaded_files and job_description:
             st.session_state.processed_files.add(uploaded_file.name)
 
     st.success("✅ All resumes processed!")
+
 
 
     # ✅ Optional vectorstore setup

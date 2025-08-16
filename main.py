@@ -2162,7 +2162,6 @@ from datetime import datetime
 from db_manager import insert_candidate, detect_domain_from_title_and_description
 from llm_manager import call_llm  # ensure this calls your LLM
 
-# ✅ Initialize state
 if "resume_data" not in st.session_state:
     st.session_state.resume_data = []
 
@@ -2171,15 +2170,15 @@ if "processed_files" not in st.session_state:
 
 resume_data = st.session_state.resume_data
 
-# ✏️ Resume Evaluation Logic - FIXED TO PREVENT MULTIPLE API CALLS
+# ✏️ Resume Evaluation Logic - DB Caching + Full Storage
 if uploaded_files and job_description:
     with st.spinner("✨ Creating magic for you... Hold on a minute!"):
         all_text = []
 
         for uploaded_file in uploaded_files:
-            # ✅ CRITICAL FIX: Check if file is already processed to prevent re-processing
+            # ✅ Prevent duplicate in same session
             if uploaded_file.name in st.session_state.processed_files:
-                st.info(f"📄 {uploaded_file.name} already processed. Skipping to avoid duplicate API calls.")
+                st.info(f"📄 {uploaded_file.name} already processed in this session. Skipping.")
                 continue
 
             # ✅ Save uploaded file
@@ -2196,117 +2195,153 @@ if uploaded_files and job_description:
             all_text.append(" ".join(text))
             full_text = " ".join(text)
 
-            # ✅ CACHED Bias detection - will use cache if same text processed before
-            bias_score, masc_count, fem_count, detected_masc, detected_fem = detect_bias(full_text)
+            username = st.session_state.get("username", "guest")
+            resume_name = uploaded_file.name  # use resume file name as key
 
-            # ✅ CACHED Rewrite and highlight gender-biased words
-            highlighted_text, rewritten_text, _, _, _, _ = rewrite_and_highlight(
-                full_text, replacement_mapping, user_location
-            )
+            # ✅ Check if resume already exists in DB
+            existing = db.get_existing_analysis(username, resume_name)
 
-            # ✅ CACHED LLM-based ATS Evaluation
-            ats_result, ats_scores = ats_percentage_score(
-                resume_text=full_text,
-                job_description=job_description,
-                job_title=job_title,
-                logic_profile_score=None,
-                edu_weight=edu_weight,
-                exp_weight=exp_weight,
-                skills_weight=skills_weight,
-                lang_weight=lang_weight,
-                keyword_weight=keyword_weight
-            )
+            if existing:
+                ats_score, bias_score, ts = existing
+                st.success(f"⚡ Loaded previous analysis for {uploaded_file.name} (from {ts})")
 
-            # ✅ Extract structured ATS values
-            candidate_name = ats_scores.get("Candidate Name", "Not Found")
-            ats_score = ats_scores.get("ATS Match %", 0)
-            edu_score = ats_scores.get("Education Score", 0)
-            exp_score = ats_scores.get("Experience Score", 0)
-            skills_score = ats_scores.get("Skills Score", 0)
-            lang_score = ats_scores.get("Language Score", 0)
-            keyword_score = ats_scores.get("Keyword Score", 0)
-            formatted_score = ats_scores.get("Formatted Score", "N/A")
-            fit_summary = ats_scores.get("Final Thoughts", "N/A")
-            language_analysis_full = ats_scores.get("Language Analysis", "N/A")
+                candidate_name = username
+                domain = detect_domain_from_title_and_description(job_title, job_description)
 
-            missing_keywords_raw = ats_scores.get("Missing Keywords", "N/A")
-            missing_skills_raw = ats_scores.get("Missing Skills", "N/A")
-            missing_keywords = [kw.strip() for kw in missing_keywords_raw.split(",") if kw.strip()] if missing_keywords_raw != "N/A" else []
-            missing_skills = [sk.strip() for sk in missing_skills_raw.split(",") if sk.strip()] if missing_skills_raw != "N/A" else []
+                st.session_state.resume_data.append({
+                    "Resume Name": uploaded_file.name,
+                    "Candidate Name": candidate_name,
+                    "ATS Report": f"Previously processed resume ({ts})",
+                    "ATS Match %": ats_score,
+                    "Formatted Score": "N/A",
+                    "Education Score": 0,
+                    "Experience Score": 0,
+                    "Skills Score": 0,
+                    "Language Score": 0,
+                    "Keyword Score": 0,
+                    "Education Analysis": "",
+                    "Experience Analysis": "",
+                    "Skills Analysis": "",
+                    "Language Analysis": "",
+                    "Keyword Analysis": "",
+                    "Final Thoughts": "",
+                    "Missing Keywords": [],
+                    "Missing Skills": [],
+                    "Bias Score (0 = Fair, 1 = Biased)": bias_score,
+                    "Bias Status": "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair",
+                    "Masculine Words": 0,
+                    "Feminine Words": 0,
+                    "Detected Masculine Words": [],
+                    "Detected Feminine Words": [],
+                    "Text Preview": full_text[:300] + "...",
+                    "Highlighted Text": "",
+                    "Rewritten Text": "",
+                    "Domain": domain,
+                    "Cached Result": True
+                })
 
-            domain = detect_domain_from_title_and_description(job_title, job_description)
+            else:
+                # ✅ Fresh pipeline since resume not cached in DB
+                bias_score, masc_count, fem_count, detected_masc, detected_fem = detect_bias(full_text)
 
-            bias_flag = "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair"
-            ats_flag = "⚠️ Low ATS" if ats_score < 50 else "✅ Good ATS"
+                highlighted_text, rewritten_text, _, _, _, _ = rewrite_and_highlight(
+                    full_text, replacement_mapping, user_location
+                )
 
-            # 📊 ATS Chart
-            ats_df = pd.DataFrame({
-                'Component': ['Education', 'Experience', 'Skills', 'Language', 'Keywords'],
-                'Score': [edu_score, exp_score, skills_score, lang_score, keyword_score]
-            })
-            ats_chart = alt.Chart(ats_df).mark_bar().encode(
-                x=alt.X('Component', sort=None),
-                y=alt.Y('Score', scale=alt.Scale(domain=[0, 50])),
-                color='Component',
-                tooltip=['Component', 'Score']
-            ).properties(
-                title="ATS Evaluation Breakdown",
-                width=600,
-                height=300
-            )
+                ats_result, ats_scores = ats_percentage_score(
+                    resume_text=full_text,
+                    job_description=job_description,
+                    job_title=job_title,
+                    logic_profile_score=None,
+                    edu_weight=edu_weight,
+                    exp_weight=exp_weight,
+                    skills_weight=skills_weight,
+                    lang_weight=lang_weight,
+                    keyword_weight=keyword_weight
+                )
 
-            # ✅ Store everything in session state
-            st.session_state.resume_data.append({
-                "Resume Name": uploaded_file.name,
-                "Candidate Name": candidate_name,
-                "ATS Report": ats_result,
-                "ATS Match %": ats_score,
-                "Formatted Score": formatted_score,
-                "Education Score": edu_score,
-                "Experience Score": exp_score,
-                "Skills Score": skills_score,
-                "Language Score": lang_score,
-                "Keyword Score": keyword_score,
-                "Education Analysis": ats_scores.get("Education Analysis", ""),
-                "Experience Analysis": ats_scores.get("Experience Analysis", ""),
-                "Skills Analysis": ats_scores.get("Skills Analysis", ""),
-                "Language Analysis": language_analysis_full,
-                "Keyword Analysis": ats_scores.get("Keyword Analysis", ""),
-                "Final Thoughts": fit_summary,
-                "Missing Keywords": missing_keywords,
-                "Missing Skills": missing_skills,
-                "Bias Score (0 = Fair, 1 = Biased)": bias_score,
-                "Bias Status": bias_flag,
-                "Masculine Words": masc_count,
-                "Feminine Words": fem_count,
-                "Detected Masculine Words": detected_masc,
-                "Detected Feminine Words": detected_fem,
-                "Text Preview": full_text[:300] + "...",
-                "Highlighted Text": highlighted_text,
-                "Rewritten Text": rewritten_text,
-                "Domain": domain
-            })
+                # ✅ Extract ATS fields
+                candidate_name = ats_scores.get("Candidate Name", "Not Found")
+                ats_score = ats_scores.get("ATS Match %", 0)
+                edu_score = ats_scores.get("Education Score", 0)
+                exp_score = ats_scores.get("Experience Score", 0)
+                skills_score = ats_scores.get("Skills Score", 0)
+                lang_score = ats_scores.get("Language Score", 0)
+                keyword_score = ats_scores.get("Keyword Score", 0)
+                formatted_score = ats_scores.get("Formatted Score", "N/A")
+                fit_summary = ats_scores.get("Final Thoughts", "N/A")
+                language_analysis_full = ats_scores.get("Language Analysis", "N/A")
 
-            insert_candidate(
-                (
-                    uploaded_file.name,
-                    candidate_name,
-                    ats_score,
-                    edu_score,
-                    exp_score,
-                    skills_score,
-                    lang_score,
-                    keyword_score,
-                    bias_score
-                ),
-                job_title=job_title,
-                job_description=job_description
-            )
+                missing_keywords_raw = ats_scores.get("Missing Keywords", "N/A")
+                missing_skills_raw = ats_scores.get("Missing Skills", "N/A")
+                missing_keywords = [kw.strip() for kw in missing_keywords_raw.split(",") if kw.strip()] if missing_keywords_raw != "N/A" else []
+                missing_skills = [sk.strip() for sk in missing_skills_raw.split(",") if sk.strip()] if missing_skills_raw != "N/A" else []
 
-            # ✅ CRITICAL: Mark file as processed to prevent re-processing
+                domain = detect_domain_from_title_and_description(job_title, job_description)
+
+                bias_flag = "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair"
+                ats_flag = "⚠️ Low ATS" if ats_score < 50 else "✅ Good ATS"
+
+                # 📊 ATS Chart
+                ats_df = pd.DataFrame({
+                    'Component': ['Education', 'Experience', 'Skills', 'Language', 'Keywords'],
+                    'Score': [edu_score, exp_score, skills_score, lang_score, keyword_score]
+                })
+                ats_chart = alt.Chart(ats_df).mark_bar().encode(
+                    x=alt.X('Component', sort=None),
+                    y=alt.Y('Score', scale=alt.Scale(domain=[0, 50])),
+                    color='Component',
+                    tooltip=['Component', 'Score']
+                ).properties(
+                    title="ATS Evaluation Breakdown",
+                    width=600,
+                    height=300
+                )
+
+                # ✅ Store everything in session state (full data)
+                st.session_state.resume_data.append({
+                    "Resume Name": uploaded_file.name,
+                    "Candidate Name": candidate_name,
+                    "ATS Report": ats_result,
+                    "ATS Match %": ats_score,
+                    "Formatted Score": formatted_score,
+                    "Education Score": edu_score,
+                    "Experience Score": exp_score,
+                    "Skills Score": skills_score,
+                    "Language Score": lang_score,
+                    "Keyword Score": keyword_score,
+                    "Education Analysis": ats_scores.get("Education Analysis", ""),
+                    "Experience Analysis": ats_scores.get("Experience Analysis", ""),
+                    "Skills Analysis": ats_scores.get("Skills Analysis", ""),
+                    "Language Analysis": language_analysis_full,
+                    "Keyword Analysis": ats_scores.get("Keyword Analysis", ""),
+                    "Final Thoughts": fit_summary,
+                    "Missing Keywords": missing_keywords,
+                    "Missing Skills": missing_skills,
+                    "Bias Score (0 = Fair, 1 = Biased)": bias_score,
+                    "Bias Status": bias_flag,
+                    "Masculine Words": masc_count,
+                    "Feminine Words": fem_count,
+                    "Detected Masculine Words": detected_masc,
+                    "Detected Feminine Words": detected_fem,
+                    "Text Preview": full_text[:300] + "...",
+                    "Highlighted Text": highlighted_text,
+                    "Rewritten Text": rewritten_text,
+                    "Domain": domain,
+                    "Cached Result": False
+                })
+
+                # ✅ Save summary to DB
+                db.insert_resume_data(
+                    resume_name, candidate_name, domain,
+                    ats_score, 0, bias_score
+                )
+
+            # ✅ Mark as processed
             st.session_state.processed_files.add(uploaded_file.name)
 
     st.success("✅ All resumes processed!")
+
 
     # ✅ Optional vectorstore setup
     if all_text:

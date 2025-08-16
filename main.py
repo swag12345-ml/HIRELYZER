@@ -90,13 +90,13 @@ def generate_cover_letter_from_resume_builder():
     if st.button("✉️ Generate Cover Letter", key="generate_cover_letter_btn"):
         # ✅ Validate input before generating
         if not all([name, job_title, summary, skills, company, linkedin, email, mobile]):
-            
+            st.warning("⚠️ Please fill in all fields including LinkedIn, email, and mobile.")
             return
 
         # ✅ CHECK IF ALREADY GENERATED TO PREVENT DUPLICATE CALLS
         cover_letter_key = f"cover_letter_{company}_{job_title}_{name}"
         if cover_letter_key in st.session_state:
-            
+            st.info("✅ Cover letter already generated! Using cached version.")
             cover_letter = st.session_state[cover_letter_key]
         else:
             prompt = f"""
@@ -2174,11 +2174,10 @@ if uploaded_files and job_description:
         all_text = []
 
         for uploaded_file in uploaded_files:
-            # ✅ Prevent duplicate in same session (silent skip)
+            # ✅ Prevent duplicate in same session
             if uploaded_file.name in st.session_state.processed_files:
-                # File already processed in this session, skip silently
+                st.info(f"📄 {uploaded_file.name} already processed in this session. Skipping.")
                 continue
-
 
             # ✅ Save uploaded file
             file_path = os.path.join(working_dir, uploaded_file.name)
@@ -2206,7 +2205,8 @@ if uploaded_files and job_description:
                     lang_score, keyword_score, bias_score, ts
                 ) = existing
 
-                
+                st.success(f"⚡ Loaded previous analysis for {uploaded_file.name} (from {ts})")
+                st.warning("⏪ Using cached DB result — no new LLM calls made.")
 
                 candidate_name = username
                 domain = detect_domain_from_title_and_description(job_title, job_description)
@@ -2243,7 +2243,8 @@ if uploaded_files and job_description:
                     "Cached Result": True
                 })
 
-            
+            else:
+                st.info("🆕 No cache found, running full LLM pipeline...")
 
                 # ✅ Fresh pipeline since resume not cached in DB
                 bias_score, masc_count, fem_count, detected_masc, detected_fem = detect_bias(full_text)
@@ -2365,7 +2366,17 @@ if st.button("🔄 Reset Resume Upload Memory"):
     st.success("✅ Cleared uploaded resume history and all caches. You can re-upload now.")
 
 # ✅ ADD CACHE STATUS DISPLAY
+if st.sidebar.button("📊 Show Cache Status"):
+    st.sidebar.write(f"🧠 LLM Cache: {len(st.session_state.llm_cache)} items")
+    st.sidebar.write(f"🔍 Bias Cache: {len(st.session_state.bias_cache)} items")
+    st.sidebar.write(f"📈 ATS Cache: {len(st.session_state.ats_cache)} items")
 
+# ✅ ADD CACHE CLEAR BUTTON
+if st.sidebar.button("🧹 Clear All Caches"):
+    st.session_state.llm_cache.clear()
+    st.session_state.bias_cache.clear()
+    st.session_state.ats_cache.clear()
+    st.sidebar.success("✅ All caches cleared!")
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", 

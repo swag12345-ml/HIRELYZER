@@ -107,6 +107,56 @@ class DatabaseManager:
                     else:
                         conn.close()
 
+    # ------------------ New Resume Methods ------------------
+
+    def insert_resume_data(self, resume_name: str, candidate_name: str, domain: str,
+                           ats_score: int, llm_score: int, bias_score: float):
+        """
+        Insert a new resume analysis record.
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO candidates 
+                (resume_name, candidate_name, domain, ats_score, edu_score, exp_score,
+                 skills_score, lang_score, keyword_score, bias_score, timestamp)
+                VALUES (?, ?, ?, ?, 0, 0, 0, 0, 0, ?, CURRENT_TIMESTAMP)
+            """, (resume_name, candidate_name, domain, ats_score, bias_score))
+            conn.commit()
+
+    def get_existing_analysis(self, candidate_name: str, resume_name: str):
+        """
+        Fetch the most recent analysis for a given candidate + resume name.
+        Returns (ats_score, bias_score, timestamp) if found, else None.
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT ats_score, bias_score, timestamp
+                FROM candidates
+                WHERE candidate_name = ? AND resume_name = ?
+                ORDER BY timestamp DESC
+                LIMIT 1
+            """, (candidate_name, resume_name))
+            return cursor.fetchone()
+
+    def get_user_resume_history(self, candidate_name: str, limit: int = 10):
+        """
+        Fetch the last N resumes analyzed for a user.
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT domain, ats_score, bias_score, timestamp
+                FROM candidates
+                WHERE candidate_name = ?
+                ORDER BY timestamp DESC
+                LIMIT ?
+            """, (candidate_name, limit))
+            return cursor.fetchall()
+
+                        
+
     def detect_domain_from_title_and_description(self, job_title: str, job_description: str) -> str:
         """
         Enhanced Domain Detection with 25+ Professional Domains
@@ -1182,5 +1232,6 @@ if __name__ == "__main__":
     print("Database Manager initialized successfully!")
     stats = get_database_stats()
     print(f"Database Statistics: {stats}")
+
 
 

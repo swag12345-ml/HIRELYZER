@@ -1,6 +1,3 @@
-from db_manager import DatabaseManager   # ✅ import
-
-db = DatabaseManager() 
 from xhtml2pdf import pisa
 from io import BytesIO
 
@@ -5864,4 +5861,3 @@ if user_input:
 
     # Save interaction to memory
     st.session_state.memory.save_context({"input": user_input}, {"output": answer})
-

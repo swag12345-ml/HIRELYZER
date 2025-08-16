@@ -1760,9 +1760,9 @@ def ats_percentage_score(
     
     grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(resume_text, max_score=lang_weight)
 
-    resume_domain = detect_domain_from_title_and_description("Unknown", resume_text)
-    job_domain = detect_domain_from_title_and_description(job_title, job_description)
-    similarity_score = get_domain_similarity(resume_domain, job_domain)
+    resume_domain = db.detect_domain_from_title_and_description("Unknown", resume_text)
+    job_domain = db.detect_domain_from_title_and_description(job_title, job_description)
+    similarity_score = db.get_domain_similarity(resume_domain, job_domain)
 
     # ✅ REDUCED domain penalty for more balanced scoring
     MAX_DOMAIN_PENALTY = 15  # Reduced from 15 to 8

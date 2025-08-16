@@ -1,3 +1,6 @@
+from db_manager import DatabaseManager   # ✅ import
+
+db = DatabaseManager() 
 from xhtml2pdf import pisa
 from io import BytesIO
 

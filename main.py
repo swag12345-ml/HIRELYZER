@@ -2285,14 +2285,14 @@ if uploaded_files and job_description:
 
             # ✅ Always insert into DB (preserve history)
             db.insert_resume_data(
-                resume_name, candidate_name, domain,
+                username, resume_name, candidate_name, domain,
                 ats_score, edu_score, exp_score,
                 skills_score, lang_score, keyword_score,
-                bias_score,username
+                bias_score
             )
 
             # ✅ Mark as processed for this session
-            st.session_state.processed_files.add(uploaded_file.name)
+            st.session_state.processed_files.add(uploaded_file.name) 
 
     st.success("✅ All resumes processed!")
 

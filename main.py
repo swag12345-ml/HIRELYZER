@@ -3364,13 +3364,13 @@ for exp in st.session_state.experience_entries:
 
         experience_html += f"""
         <div style='
-            margin-bottom: 28px;
-            padding: 24px;
+            margin-bottom: 24px;
+            padding: 20px;
             border-radius: 16px;
             background: linear-gradient(145deg, #f0f8ff 0%, #e6f3ff 100%);
             box-shadow: 
-                0 8px 32px rgba(0, 100, 200, 0.1),
-                0 2px 8px rgba(0, 0, 0, 0.05);
+                0 6px 24px rgba(0, 100, 200, 0.08),
+                0 2px 6px rgba(0, 0, 0, 0.04);
             font-family: "Inter", "Segoe UI", sans-serif;
             color: #1a365d;
             line-height: 1.6;
@@ -3384,18 +3384,18 @@ for exp in st.session_state.experience_entries:
                 top: 0;
                 left: 0;
                 right: 0;
-                height: 4px;
+                height: 3px;
                 background: linear-gradient(90deg, #4299e1, #63b3ed, #90cdf4);
             '></div>
             
             <!-- Header Card -->
             <div style='
-                background: rgba(255, 255, 255, 0.7);
+                background: rgba(255, 255, 255, 0.75);
                 border-radius: 12px;
-                padding: 16px 20px;
-                margin-bottom: 16px;
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255, 255, 255, 0.9);
+                padding: 14px 18px;
+                margin-bottom: 12px;
+                backdrop-filter: blur(8px);
+                border: 1px solid rgba(255, 255, 255, 0.85);
             '>
                 <div style='
                     display: flex;
@@ -3403,7 +3403,7 @@ for exp in st.session_state.experience_entries:
                     align-items: center;
                     font-weight: 700;
                     font-size: 18px;
-                    margin-bottom: 8px;
+                    margin-bottom: 6px;
                     color: #2d3748;
                     width: 100%;
                 '>
@@ -3414,20 +3414,26 @@ for exp in st.session_state.experience_entries:
                             background: linear-gradient(45deg, #4299e1, #63b3ed);
                             border-radius: 50%; 
                             margin-right: 12px;
-                            box-shadow: 0 0 8px rgba(66, 153, 225, 0.5);
+                            box-shadow: 0 0 6px rgba(66, 153, 225, 0.4);
                         '></div>
                         <span>{exp['company']}</span>
                     </div>
                     <div style='
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 6px;
                         background: linear-gradient(135deg, #e6fffa, #b2f5ea);
                         color: #234e52;
-                        padding: 6px 16px;
-                        border-radius: 20px;
+                        padding: 5px 14px;
+                        border-radius: 18px;
                         font-size: 14px;
                         font-weight: 600;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                        box-shadow: 0 1px 6px rgba(0,0,0,0.08);
                     '>
-                        📅 {exp['duration']}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+                        </svg>
+                        <span>{exp['duration']}</span>
                     </div>
                 </div>
 
@@ -3467,6 +3473,7 @@ for exp in st.session_state.experience_entries:
             </div>
         </div>
         """
+
 
 # Convert experience to list if multiple lines
 # Escape HTML and convert line breaks

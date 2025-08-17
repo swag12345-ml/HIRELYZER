@@ -5361,7 +5361,22 @@ with tab5:
                         st.error("❌ Export failed")
                 except Exception as e:
                     st.error(f"Export error: {e}")
+        import glob, os
+        st.markdown("### 📂 Export Archive")
+        export_files = sorted(glob.glob("full_export_*.csv"), reverse=True)
 
+        if export_files:
+          for file in export_files:
+           with open(file, "rb") as f:
+                st.download_button(
+                label=f"⬇️ Download {os.path.basename(file)}",
+                data=f,
+                file_name=os.path.basename(file),
+                mime="text/csv",
+                use_container_width=True
+            )
+        else:
+         st.info("📭 No export files found yet.")
         # Enhanced Delete Functionality
         with st.expander("🗑️ Delete Candidate", expanded=False):
             st.warning("⚠️ This action cannot be undone!")

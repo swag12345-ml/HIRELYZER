@@ -5180,7 +5180,6 @@ with tab5:
     import plotly.express as px
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
-    import pytz
 
     # Import enhanced database manager functions
     from db_manager import (
@@ -5202,22 +5201,6 @@ with tab5:
         cleanup_old_records,
         DatabaseManager
     )
-
-    # UTC to IST conversion function
-    def convert_utc_to_ist(df, datetime_columns):
-        """Convert UTC datetime columns to IST timezone"""
-        utc = pytz.UTC
-        ist = pytz.timezone('Asia/Kolkata')
-        
-        df_converted = df.copy()
-        for col in datetime_columns:
-            if col in df_converted.columns:
-                # Convert to datetime if not already
-                df_converted[col] = pd.to_datetime(df_converted[col])
-                # Localize to UTC and convert to IST
-                df_converted[col] = df_converted[col].dt.tz_localize(utc).dt.tz_convert(ist)
-        
-        return df_converted
 
     # Initialize enhanced database manager
     @st.cache_resource
@@ -5342,27 +5325,9 @@ with tab5:
                     
                     col5, col6 = st.columns(2)
                     with col5:
-                        earliest_date = stats.get('earliest_date', 'N/A')
-                        if earliest_date != 'N/A':
-                            # Convert UTC to IST for display
-                            try:
-                                utc_dt = pd.to_datetime(earliest_date).tz_localize(pytz.UTC)
-                                ist_dt = utc_dt.tz_convert(pytz.timezone('Asia/Kolkata'))
-                                earliest_date = ist_dt.strftime('%Y-%m-%d %H:%M:%S IST')
-                            except:
-                                pass
-                        st.metric("Earliest Record", earliest_date)
+                        st.metric("Earliest Record", stats.get('earliest_date', 'N/A'))
                     with col6:
-                        latest_date = stats.get('latest_date', 'N/A')
-                        if latest_date != 'N/A':
-                            # Convert UTC to IST for display
-                            try:
-                                utc_dt = pd.to_datetime(latest_date).tz_localize(pytz.UTC)
-                                ist_dt = utc_dt.tz_convert(pytz.timezone('Asia/Kolkata'))
-                                latest_date = ist_dt.strftime('%Y-%m-%d %H:%M:%S IST')
-                            except:
-                                pass
-                        st.metric("Latest Record", latest_date)
+                        st.metric("Latest Record", stats.get('latest_date', 'N/A'))
             except Exception as e:
                 st.error(f"Error loading database statistics: {e}")
 
@@ -5386,11 +5351,7 @@ with tab5:
     @st.cache_data(ttl=300)  # Cache for 5 minutes
     def load_all_candidates():
         try:
-            df = get_all_candidates()
-            # Convert UTC to IST for timestamp column
-            if not df.empty and 'timestamp' in df.columns:
-                df = convert_utc_to_ist(df, ['timestamp'])
-            return df
+            return get_all_candidates()
         except Exception as e:
             st.error(f"Error loading candidates: {e}")
             return pd.DataFrame()
@@ -5422,11 +5383,7 @@ with tab5:
     with col3:
         if st.button("🎯 Apply Filters", use_container_width=True):
             try:
-                df_filtered = filter_candidates_by_date(str(start_date), str(end_date))
-                # Convert UTC to IST for filtered data
-                if not df_filtered.empty and 'timestamp' in df_filtered.columns:
-                    df_filtered = convert_utc_to_ist(df_filtered, ['timestamp'])
-                df = df_filtered
+                df = filter_candidates_by_date(str(start_date), str(end_date))
                 if domain_filter != "All Domains":
                     df = df[df["domain"] == domain_filter]
                 if search:
@@ -5504,9 +5461,6 @@ with tab5:
             if delete_id in df["id"].values:
                 candidate_info = get_candidate_by_id(delete_id)
                 if not candidate_info.empty:
-                    # Convert UTC to IST for candidate info display
-                    if 'timestamp' in candidate_info.columns:
-                        candidate_info = convert_utc_to_ist(candidate_info, ['timestamp'])
                     st.info("📄 Candidate to be deleted:")
                     st.dataframe(candidate_info, use_container_width=True)
                     
@@ -5684,15 +5638,9 @@ with tab5:
         df_daily_ats = get_daily_ats_stats(days_limit=90)
         
         if not df_timeline.empty:
-            # Convert UTC to IST for timeline data
-            df_timeline = convert_utc_to_ist(df_timeline, ['day'])
             df_timeline = df_timeline.sort_values("day")
             df_timeline["7_day_avg"] = df_timeline["count"].rolling(window=7, min_periods=1).mean()
             df_timeline["30_day_avg"] = df_timeline["count"].rolling(window=30, min_periods=1).mean()
-            
-            # Convert daily ATS data to IST
-            if not df_daily_ats.empty:
-                df_daily_ats = convert_utc_to_ist(df_daily_ats, ['date'])
             
             # Create subplot with proper spacing and formatting
             fig = make_subplots(
@@ -5754,7 +5702,7 @@ with tab5:
             )
             
             # Update x-axes for proper date formatting and spacing
-            fig.update_xaxes(title_text="Date (IST)", row=2, col=1)
+            fig.update_xaxes(title_text="Date", row=2, col=1)
             fig.update_xaxes(
                 tickformat="%Y-%m-%d",
                 tickangle=30,
@@ -5822,10 +5770,6 @@ with tab5:
         else:  # Flagged Candidates
             flagged_df = get_flagged_candidates(threshold=bias_threshold_pie)
             if not flagged_df.empty:
-                # Convert UTC to IST for flagged candidates
-                if 'timestamp' in flagged_df.columns:
-                    flagged_df = convert_utc_to_ist(flagged_df, ['timestamp'])
-                
                 st.markdown(f"**🚩 {len(flagged_df)} candidates flagged with bias score > {bias_threshold_pie}**")
                 
                 # Enhanced flagged candidates display
@@ -5886,17 +5830,19 @@ with tab5:
 
     # Footer with system information
     st.markdown("<hr style='border-top: 1px solid #ddd; margin: 2rem 0;'>", unsafe_allow_html=True)
-    
-    # Convert current time to IST for footer
-    utc_now = datetime.now(pytz.UTC)
-    ist_now = utc_now.astimezone(pytz.timezone('Asia/Kolkata'))
-    
     st.markdown("""
     <div style='text-align: center; color: #666; font-size: 0.9em; padding: 1rem;'>
         <p>🛡️ Enhanced Admin Dashboard | Powered by Advanced Database Manager</p>
-        <p>Last updated: {} IST</p>
+        <p>Last updated: {}</p>
     </div>
-    """.format(ist_now.strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
+    """.format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
+
+
+if "memory" in st.session_state:
+    history = st.session_state.memory.load_memory_variables({}).get("chat_history", [])
+    for msg in history:
+        with st.chat_message("user" if msg.type == "human" else "assistant"):
+            st.markdown(msg.content)
 
 
 if "memory" in st.session_state:

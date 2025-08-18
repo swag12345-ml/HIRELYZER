@@ -2963,26 +2963,27 @@ with tab2:
             while len(normalized_project_entries) < 2:
                 normalized_project_entries.append("Placeholder Project")
 
-            # ---------------------- AI Resume Enhancement Prompt ----------------------
             enhance_prompt = f"""
-            You are a professional ATS-compliant resume builder AI.
+            You are a professional resume builder AI.
 
-            Enhance the following resume sections strictly for the role: **{st.session_state['job_title']}**.
-            Your enhancements must:
-            - Be accurate, role-specific, and realistic.
-            - Only include tools, certifications, and responsibilities relevant to the given job title.
-            - Fill missing details with professional, domain-correct defaults.
-            - Use structured, ATS-friendly formatting.
+            Enhance the following resume sections based on the user's job title: "{st.session_state['job_title']}". The enhancements must be aligned **strictly and specifically** with the responsibilities, tools, skills, and certifications relevant to that job title.
+            
+            Instructions:
+            1. Rewrite the summary to sound professional, achievement-driven, and role-specific using strong action verbs.
+            2. Expand experience and project descriptions into structured bullet points (• or A., B., C.). Highlight domain-specific responsibilities and achievements.
+            3. Maintain paragraph structure and meaningful line breaks.
+            4. Infer and recommend **only domain-accurate** items, even if not explicitly provided:
+               - 6–8 modern **technical Skills** (relevant to the job title; e.g., for Cyber Security: SIEM, Kali Linux, Wireshark, Burp Suite, Splunk, Nmap, Firewalls, OWASP Top 10, etc.)
+               - 6–8 strong **Soft Skills**
+               - 3–6 job-aligned **Interests** (e.g., bug bounty, ethical hacking, network defense)
+               - Only **spoken Languages**
+               - 3–6 globally recognized **Certificates** (e.g., CompTIA Security+, CEH, IBM Cybersecurity Analyst, Google Cybersecurity, Cisco CCNA Security)
 
-            ✅ Guidelines:
-            1. Rewrite the summary to sound professional, achievement-driven, and tailored to the job.
-            2. Expand Experience and Projects into **bullet points (• or A., B., C.)** highlighting measurable impacts, tools, and collaboration.
-            3. Recommend **6–8 relevant Technical Skills**, **6–8 Soft Skills**, **3–6 Interests**, **3–6 recognized Certifications** (from platforms like Google, IBM, Microsoft, Cisco, CompTIA, Coursera, Udemy, etc.).
-            4. Use only **spoken Languages**.
-            5. Avoid irrelevant technologies (e.g., don’t add frontend tools if the role is Cybersecurity).
-            6. Always produce output in this structured format:
+            Important:
+            - Do not include irrelevant frontend/backend tools if the job title is from a different domain like Cyber Security, DevOps, Data Science, etc.
+            - The certificate names must match real-world course titles from platforms like Coursera, Udemy, Google, IBM, Cisco, Microsoft, etc.
 
-            📌 Final Output Format:
+            📌 Format the output exactly like this:
 
             Summary:
             • ...
@@ -2998,28 +2999,30 @@ with tab2:
                • Tech Stack: <Job-relevant tools only>
                • Duration: <Start – End>
                • Description:
-                 - Feature/implementation aligned with the role
-                 - Tool/technology with context
-                 - Performance improvements/measurable outcomes
-                 - Collaboration or leadership point
-                 - (Optional) Extra point if useful
+                 - Clearly describe a specific feature, functionality, or implementation aligned with the job role.
+                 - Mention a tool or technology used and explain its context in the project.
+                 - Highlight performance improvements, solved challenges, or measurable impacts.
+                 - Include a technical or collaborative achievement that enhanced project success.
+                 - (Optional) Add an additional impactful point if it meaningfully supports the role.
 
             Skills:
-            ...
+            Kali Linux, Splunk, SIEM, ...
 
             SoftSkills:
-            ...
+            Problem Solving, Critical Thinking...
 
             Languages:
-            ...
+            English, Hindi...
 
             Interests:
-            ...
+            Capture The Flag (CTF), Ethical Hacking...
 
             Certificates:
-            <Certification Name> – <Provider/Platform> (<Duration/Type>)
+            Google Cybersecurity – Coursera (6 months)
+            IBM Cybersecurity Analyst – IBM (Professional Certificate)
+            CompTIA Security+ – CompTIA (5 months)
 
-            🔹 Use the user’s inputs below as the baseline, and improve them meaningfully.
+            Use ONLY the user's inputs below as a reference. Rewrite and improve them meaningfully and accurately.
 
             Summary:
             {st.session_state['summary']}
@@ -3046,10 +3049,11 @@ with tab2:
             {[cert['name'] for cert in st.session_state['certificate_links'] if cert['name']]}
             """
 
-
             with st.spinner("🧠 Thinking..."):
                 ai_output = call_llm(enhance_prompt, session=st.session_state)
                 st.session_state["ai_output"] = ai_output
+
+
 
     # ------------------------- PARSE + RENDER -------------------------
     if "ai_output" in st.session_state:

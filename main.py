@@ -4109,7 +4109,6 @@ html_content = f"""
 """
 
 
-
 from io import BytesIO
 
 # Convert HTML to bytes for download
@@ -4121,36 +4120,14 @@ pdf_resume_bytes = html_to_pdf_bytes(html_content)
 
 with tab2:
     # ==========================
-    # Enhanced Resume Download Header
+    # Resume Download Header (Clean & Professional)
     # ==========================
     st.markdown(
         """
-        <div style='
-            text-align: center; 
-            margin: 30px 0 40px 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
-        '>
-            <h2 style='
-                color: white; 
-                font-family: "Inter", sans-serif; 
-                font-size: 28px;
-                font-weight: 700;
-                margin: 0;
-                text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            '>
-                📥 Download Your Professional Resume
+        <div style='text-align: center; margin-top: 20px; margin-bottom: 30px;'>
+            <h2 style='color: #2f4f6f; font-family: Arial, sans-serif; font-size: 24px;'>
+                📥 Download Your Resume
             </h2>
-            <p style='
-                color: rgba(255,255,255,0.9);
-                font-size: 16px;
-                margin: 8px 0 0 0;
-                font-weight: 500;
-            '>
-                Choose your preferred format below
-            </p>
         </div>
         """,
         unsafe_allow_html=True
@@ -4158,72 +4135,47 @@ with tab2:
 
     col1, col2 = st.columns([1, 1])
 
-    # Enhanced HTML Resume Download Button
+    # HTML Resume Download Button
     with col1:
         st.download_button(
-            label="📄 Download as HTML",
+            label="⬇️ Download as HTML",
             data=html_file,
-            file_name=f"{st.session_state['name'].replace(' ', '_')}_Professional_Resume.html",
+            file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.html",
             mime="text/html",
             key="download_resume_html"
         )
 
-    # Enhanced PDF Resume Download Button
+    # PDF Resume Download Button
     with col2:
         st.download_button(
-            label="📑 Download as PDF",
+            label="⬇️ Download as PDF",
             data=pdf_resume_bytes,
-            file_name=f"{st.session_state['name'].replace(' ', '_')}_Professional_Resume.pdf",
+            file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.pdf",
             mime="application/pdf",
             key="download_resume_pdf"
         )
 
     # ==========================
-    # Enhanced Cover Letter Expander
+    # 📩 Cover Letter Expander
     # ==========================
-    with st.expander("📩 Generate Cover Letter from This Resume", expanded=False):
+    with st.expander("📩 Generate Cover Letter from This Resume"):
         generate_cover_letter_from_resume_builder()
 
     # ==========================
-    # Enhanced Generated Cover Letter Preview & Downloads
+    # ✉️ Generated Cover Letter Preview & Downloads
     # ==========================
     if "cover_letter" in st.session_state:
         st.markdown("""
-        <div style='
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            padding: 25px;
-            border-radius: 16px;
-            margin-top: 30px;
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            box-shadow: 0 8px 32px rgba(56, 189, 248, 0.1);
-        '>
-            <h3 style="
-                color: #0369a1; 
-                margin: 0 0 20px 0;
-                font-size: 24px;
-                font-weight: 700;
-                display: flex;
-                align-items: center;
-            ">
-                <div style='
-                    width: 8px; 
-                    height: 8px; 
-                    background: linear-gradient(45deg, #0369a1, #0284c7);
-                    border-radius: 50%; 
-                    margin-right: 12px;
-                '></div>
-                ✉️ Generated Cover Letter
-            </h3>
-        </div>
+        <h3 style="color: #003366; margin-top: 30px;">✉️ Generated Cover Letter</h3>
         """, unsafe_allow_html=True)
 
         styled_cover_letter = st.session_state.get("cover_letter_html", "")
         st.markdown(styled_cover_letter, unsafe_allow_html=True)
 
-        # Generate PDF from styled HTML
+        # ✅ Generate PDF from styled HTML
         pdf_file = html_to_pdf_bytes(styled_cover_letter)
 
-        # Create DOCX function
+        # ✅ Create DOCX function
         from io import BytesIO
         from docx import Document
 
@@ -4237,38 +4189,18 @@ with tab2:
             return bio
 
         # ==========================
-        # Enhanced Cover Letter Download Buttons
+        # 📥 Cover Letter Download Buttons
         # ==========================
         st.markdown("""
-        <div style="
-            background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
-            padding: 20px;
-            border-radius: 12px;
-            margin: 20px 0;
-            border: 1px solid rgba(245, 158, 11, 0.2);
-        ">
-            <strong style="
-                color: #92400e;
-                font-size: 18px;
-                display: flex;
-                align-items: center;
-            ">
-                <div style='
-                    width: 6px; 
-                    height: 6px; 
-                    background: #92400e;
-                    border-radius: 50%; 
-                    margin-right: 10px;
-                '></div>
-                ⬇️ Download Your Cover Letter
-            </strong>
+        <div style="margin-top: 20px; margin-bottom: 10px;">
+            <strong>⬇️ Download Your Cover Letter:</strong>
         </div>
         """, unsafe_allow_html=True)
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2 , col3= st.columns(3)
         with col1:
             st.download_button(
-                label="📝 Download (.docx)",
+                label="📥 Download Cover Letter (.docx)",
                 data=create_docx(st.session_state["cover_letter"]),
                 file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -4276,7 +4208,7 @@ with tab2:
             )
         with col2:
             st.download_button(
-                label="📑 Download (PDF)",
+                label="📥 Download Cover Letter (PDF)",
                 data=pdf_file,
                 file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.pdf",
                 mime="application/pdf",
@@ -4284,41 +4216,18 @@ with tab2:
             )
         with col3:
             st.download_button(
-                label="📄 Download (HTML)",
+                label="📥 Download Cover Letter (HTML)",
                 data=st.session_state["cover_letter_html"],
                 file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.html",
                 mime="text/html",
                 key="download_coverletter_html"
             )
 
-    # Enhanced conversion tip
     st.markdown("""
-    <div style='
-        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-        padding: 20px;
-        border-radius: 12px;
-        margin-top: 20px;
-        border-left: 4px solid #22c55e;
-        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.1);
-    '>
-        <p style='
-            color: #166534;
-            font-weight: 600;
-            margin: 0;
-            display: flex;
-            align-items: center;
-        '>
-            <div style='
-                width: 6px; 
-                height: 6px; 
-                background: #22c55e;
-                border-radius: 50%; 
-                margin-right: 10px;
-            '></div>
-            ✅ Need PDF conversion? <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color: #166534; text-decoration: underline;">Click here to convert HTML to PDF</a> using Sejda's free online tool.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    ✅ After downloading your HTML resume, you can [click here to convert it to PDF](https://www.sejda.com/html-to-pdf) using Sejda's free online tool.
+    """)
+
+# Convert HT
 
 
 

@@ -71,6 +71,7 @@ def generate_cover_letter_from_resume_builder():
     import re
     from llm_manager import call_llm  # Ensure you import this
 
+    # ✅ Get session info
     name = st.session_state.get("name", "")
     job_title = st.session_state.get("job_title", "")
     summary = st.session_state.get("summary", "")
@@ -78,19 +79,19 @@ def generate_cover_letter_from_resume_builder():
     location = st.session_state.get("location", "")
     today_date = datetime.today().strftime("%B %d, %Y")
 
-    # ✅ Input boxes for contact info
+    # ✅ Contact Inputs
     company = st.text_input("🏢 Target Company", placeholder="e.g., Google")
     linkedin = st.text_input("🔗 LinkedIn URL", placeholder="e.g., https://linkedin.com/in/username")
     email = st.text_input("📧 Email", placeholder="e.g., you@example.com")
     mobile = st.text_input("📞 Mobile Number", placeholder="e.g., +91 9876543210")
 
-    # ✅ Button to prevent relooping
+    # ✅ Generate Button
     if st.button("✉️ Generate Cover Letter"):
-        # ✅ Validate input before generating
         if not all([name, job_title, summary, skills, company, linkedin, email, mobile]):
             st.warning("⚠️ Please fill in all fields including LinkedIn, email, and mobile.")
             return
 
+        # LLM Prompt
         prompt = f"""
 You are a professional cover letter writer.
 
@@ -124,38 +125,46 @@ Hiring Manager, {company}, {location}
         # ✅ Call LLM
         cover_letter = call_llm(prompt, session=st.session_state)
 
-        # ✅ Clean leading line if needed
+        # ✅ Remove unwanted extra first line (if any)
         lines = cover_letter.strip().split("\n")
         if len(lines) > 0 and (re.match(r'^\w+ \d{1,2}, \d{4}$', lines[0].strip()) or lines[0].strip().startswith('<div')):
             lines = lines[1:]
         cover_letter = "\n".join(lines)
         st.session_state["cover_letter"] = cover_letter
 
-        # ✅ xhtml2pdf-compatible table layout
+        # ✅ Modern Clean HTML (no table, card style)
         cover_letter_html = f"""
-<table width="100%" style="font-family: Georgia, serif; font-size: 12pt; color: #000;">
-    <tr>
-        <td align="center" colspan="2" style="font-size: 16pt; font-weight: bold; color: #003366;">{name}</td>
-    </tr>
-    <tr>
-        <td align="center" colspan="2" style="font-size: 14pt; color: #555;">{job_title}</td>
-    </tr>
-    <tr>
-        <td align="center" colspan="2" style="font-size: 10pt; padding: 5px;">
-            <a href="{linkedin}" style="color: #003366;">{linkedin}</a><br/>
+<div style="
+    background-color: #ffffff;
+    color: #000000;
+    padding: 30px;
+    border-radius: 12px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    line-height: 1.6;
+    max-width: 800px;
+    margin: auto;
+    box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+">
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; color: #2f4f6f;">{name.upper()}</h2>
+        <h4 style="margin: 5px 0; color: #444;">{job_title}</h4>
+        <p style="margin: 5px 0; font-size: 14px;">
+            <a href="{linkedin}" style="color:#2f4f6f; text-decoration: none;">{linkedin}</a><br>
             📧 {email} | 📞 {mobile}
-        </td>
-    </tr>
-    <tr><td colspan="2" style="padding-top:10px;">{today_date}</td></tr>
-    <tr>
-        <td colspan="2">
-            <hr style="border: 0; border-top: 1px solid #000; margin: 10px 0;" />
-        </td>
-    </tr>
-    <tr>
-        <td colspan="2" style="white-space: pre-wrap; line-height: 1.6;">{cover_letter}</td>
-    </tr>
-</table>
+        </p>
+    </div>
+
+    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
+
+    <!-- Date -->
+    <p style="margin: 0 0 20px 0; font-size: 14px; color:#555;">{today_date}</p>
+
+    <!-- Body -->
+    <p style="text-align: left; font-size: 15px; white-space: pre-wrap;">
+        {cover_letter}
+    </p>
+</div>
 """
         st.session_state["cover_letter_html"] = cover_letter_html
 
@@ -4108,6 +4117,7 @@ html_content = f"""
 </html>
 """
 from io import BytesIO
+from docx import Document
 
 # Convert HTML to bytes for download
 html_bytes = html_content.encode("utf-8")
@@ -4118,7 +4128,7 @@ pdf_resume_bytes = html_to_pdf_bytes(html_content)
 
 with tab2:
     # ==========================
-    # Resume Download Header (Clean & Professional)
+    # 📥 Resume Download Header
     # ==========================
     st.markdown(
         """
@@ -4126,12 +4136,15 @@ with tab2:
             <h2 style='color: #2f4f6f; font-family: Arial, sans-serif; font-size: 24px;'>
                 📥 Download Your Resume
             </h2>
+            <p style="color:#555; font-size:14px;">
+                Choose your preferred format below
+            </p>
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    col1, col2 = st.columns([1, 1])
+    col1, col2 = st.columns(2)
 
     # HTML Resume Download Button
     with col1:
@@ -4153,6 +4166,13 @@ with tab2:
             key="download_resume_pdf"
         )
 
+    # ✅ Extra Help Note
+    st.markdown("""
+    ✅ After downloading your HTML resume, you can 
+    <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color:#2f4f6f; text-decoration:none;">
+    convert it to PDF using Sejda's free online tool</a>.
+    """, unsafe_allow_html=True)
+
     # ==========================
     # 📩 Cover Letter Expander
     # ==========================
@@ -4163,25 +4183,45 @@ with tab2:
     # ✉️ Generated Cover Letter Preview & Downloads
     # ==========================
     if "cover_letter" in st.session_state:
-        st.markdown("""
-        <h3 style="color: #003366; margin-top: 30px;">✉️ Generated Cover Letter</h3>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            """
+            <div style="margin-top: 30px; margin-bottom: 20px;">
+                <h3 style="color: #003366;">✉️ Generated Cover Letter</h3>
+                <p style="color:#555; font-size:14px;">
+                    Below is a preview of your generated cover letter. You can download it in multiple formats.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-        styled_cover_letter = st.session_state.get("cover_letter_html", "")
+        # ✅ Wrap the preview for readability (white card style)
+        styled_cover_letter = f"""
+        <div style="
+            background-color: #ffffff; 
+            color: #000000; 
+            padding: 25px; 
+            border-radius: 10px; 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6; 
+            box-shadow: 0px 2px 6px rgba(0,0,0,0.15); 
+            max-width: 800px; 
+            margin: auto;
+        ">
+            {st.session_state.get("cover_letter_html", "")}
+        </div>
+        """
         st.markdown(styled_cover_letter, unsafe_allow_html=True)
 
         # ✅ Generate PDF from styled HTML
         pdf_file = html_to_pdf_bytes(styled_cover_letter)
 
         # ✅ Create DOCX function
-        from io import BytesIO
-        from docx import Document
-
         def create_docx(text, filename="cover_letter.docx"):
+            bio = BytesIO()
             doc = Document()
             doc.add_heading("Cover Letter", 0)
             doc.add_paragraph(text)
-            bio = BytesIO()
             doc.save(bio)
             bio.seek(0)
             return bio
@@ -4190,12 +4230,12 @@ with tab2:
         # 📥 Cover Letter Download Buttons
         # ==========================
         st.markdown("""
-        <div style="margin-top: 20px; margin-bottom: 10px;">
+        <div style="margin-top: 25px; margin-bottom: 15px;">
             <strong>⬇️ Download Your Cover Letter:</strong>
         </div>
         """, unsafe_allow_html=True)
 
-        col1, col2 , col3= st.columns(3)
+        col1, col2, col3 = st.columns(3)
         with col1:
             st.download_button(
                 label="📥 Download Cover Letter (.docx)",
@@ -4221,9 +4261,12 @@ with tab2:
                 key="download_coverletter_html"
             )
 
-    st.markdown("""
-    ✅ After downloading your HTML resume, you can [click here to convert it to PDF](https://www.sejda.com/html-to-pdf) using Sejda's free online tool.
-    """)
+        # ✅ Helper note for Cover Letter too
+        st.markdown("""
+        ✅ If the HTML cover letter doesn’t display properly, you can 
+        <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color:#2f4f6f; text-decoration:none;">
+        convert it to PDF using Sejda's free online tool</a>.
+        """, unsafe_allow_html=True)
 
 
 

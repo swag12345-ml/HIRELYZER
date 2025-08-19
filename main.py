@@ -5142,7 +5142,7 @@ with tab5:
         with col2:
             password = st.text_input("🔑 Enter Admin Password", type="password", placeholder="Enter password...")
             if st.button("🚀 Login", use_container_width=True):
-                if password == "lexiadmin123":
+                if password == "Swagato@2002":
                     st.session_state.admin_logged_in = True
                     st.success("✅ Authentication successful! Redirecting to dashboard...")
                     st.rerun()

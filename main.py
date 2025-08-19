@@ -4170,7 +4170,7 @@ with tab2:
         generate_cover_letter_from_resume_builder()
 
     # ==========================
-    # ✉️ Generated Cover Letter Preview & Downloads
+    # ✉️ Generated Cover Letter Downloads (NO PREVIEW HERE)
     # ==========================
     if "cover_letter" in st.session_state:
         st.markdown(
@@ -4178,31 +4178,15 @@ with tab2:
             <div style="margin-top: 30px; margin-bottom: 20px;">
                 <h3 style="color: #003366;">✉️ Generated Cover Letter</h3>
                 <p style="color:#555; font-size:14px;">
-                    Below is a preview of your generated cover letter. You can download it in multiple formats.
+                    You can download your generated cover letter in multiple formats.
                 </p>
             </div>
             """,
             unsafe_allow_html=True
         )
 
-        # ✅ White card styled preview
-        styled_cover_letter = f"""
-        <div style="
-            background-color: #ffffff; 
-            color: #000000; 
-            padding: 25px; 
-            border-radius: 10px; 
-            font-family: Georgia, serif; 
-            font-size: 12pt;
-            line-height: 1.6; 
-            box-shadow: 0px 2px 6px rgba(0,0,0,0.15); 
-            max-width: 800px; 
-            margin: auto;
-        ">
-            {st.session_state.get("cover_letter_html", "")}
-        </div>
-        """
-        st.markdown(styled_cover_letter, unsafe_allow_html=True)
+        # ✅ Use already-rendered HTML from session (don’t show again)
+        styled_cover_letter = st.session_state.get("cover_letter_html", "")
 
         # ✅ Generate PDF from styled HTML
         pdf_file = html_to_pdf_bytes(styled_cover_letter)
@@ -4264,7 +4248,6 @@ with tab2:
         <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color:#2f4f6f; text-decoration:none;">
         convert it to PDF using Sejda's free online tool</a>.
         """, unsafe_allow_html=True)
-
 
 
 

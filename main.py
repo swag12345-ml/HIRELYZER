@@ -226,7 +226,7 @@ from langchain.chains import ConversationalRetrievalChain
 from llm_manager import call_llm
 
 from pydantic import BaseModel
-
+from db_manager import get_database_stats
 from user_login import (
     create_user_table,
     add_user,
@@ -389,7 +389,11 @@ if not st.session_state.authenticated:
     # Fetch counters
     total_users = get_total_registered_users()
     active_logins = get_logins_today()
-    resumes_uploaded = 15
+    stats = get_database_stats()
+
+# Replace static 15 with dynamic count
+    resumes_uploaded = stats.get("total_candidates", 0)
+
     states_accessed = 29
 
     neon_counter_style = """

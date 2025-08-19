@@ -125,14 +125,14 @@ Hiring Manager, {company}, {location}
         # ✅ Call LLM
         cover_letter = call_llm(prompt, session=st.session_state)
 
-        # ✅ Remove unwanted extra first line (if any)
+        # ✅ Clean up
         lines = cover_letter.strip().split("\n")
         if len(lines) > 0 and (re.match(r'^\w+ \d{1,2}, \d{4}$', lines[0].strip()) or lines[0].strip().startswith('<div')):
             lines = lines[1:]
         cover_letter = "\n".join(lines)
         st.session_state["cover_letter"] = cover_letter
 
-        # ✅ Modern Clean HTML (no table, card style)
+        # ✅ Modern Clean HTML (no raw tags shown)
         cover_letter_html = f"""
 <div style="
     background-color: #ffffff;
@@ -161,12 +161,16 @@ Hiring Manager, {company}, {location}
     <p style="margin: 0 0 20px 0; font-size: 14px; color:#555;">{today_date}</p>
 
     <!-- Body -->
-    <p style="text-align: left; font-size: 15px; white-space: pre-wrap;">
+    <div style="text-align: left; font-size: 15px; white-space: pre-wrap;">
         {cover_letter}
-    </p>
+    </div>
 </div>
 """
         st.session_state["cover_letter_html"] = cover_letter_html
+
+        # ✅ Show styled preview instead of raw HTML
+        st.subheader("📄 Generated Cover Letter Preview")
+        st.markdown(st.session_state["cover_letter_html"], unsafe_allow_html=True)
 
 
 
@@ -4123,11 +4127,11 @@ html_content = f"""
 from io import BytesIO
 from docx import Document
 
-# Convert HTML to bytes for download
+# Convert Resume HTML to Bytes
 html_bytes = html_content.encode("utf-8")
 html_file = BytesIO(html_bytes)
 
-# Convert HTML to PDF using XHTML2PDF-compatible function
+# Convert Resume HTML to PDF
 pdf_resume_bytes = html_to_pdf_bytes(html_content)
 
 with tab2:
@@ -4150,7 +4154,7 @@ with tab2:
 
     col1, col2 = st.columns(2)
 
-    # HTML Resume Download Button
+    # HTML Resume Download
     with col1:
         st.download_button(
             label="⬇️ Download as HTML",
@@ -4160,7 +4164,7 @@ with tab2:
             key="download_resume_html"
         )
 
-    # PDF Resume Download Button
+    # PDF Resume Download
     with col2:
         st.download_button(
             label="⬇️ Download as PDF",
@@ -4170,7 +4174,7 @@ with tab2:
             key="download_resume_pdf"
         )
 
-    # ✅ Extra Help Note
+    # ✅ Extra Note
     st.markdown("""
     ✅ After downloading your HTML resume, you can 
     <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color:#2f4f6f; text-decoration:none;">
@@ -4199,29 +4203,14 @@ with tab2:
             unsafe_allow_html=True
         )
 
-        # ✅ Wrap the preview for readability (white card style)
-        styled_cover_letter = f"""
-        <div style="
-            background-color: #ffffff; 
-            color: #000000; 
-            padding: 25px; 
-            border-radius: 10px; 
-            font-family: Arial, sans-serif; 
-            line-height: 1.6; 
-            box-shadow: 0px 2px 6px rgba(0,0,0,0.15); 
-            max-width: 800px; 
-            margin: auto;
-        ">
-            {st.session_state.get("cover_letter_html", "")}
-        </div>
-        """
-        st.markdown(styled_cover_letter, unsafe_allow_html=True)
+        # ✅ Render Styled HTML Preview
+        st.markdown(st.session_state["cover_letter_html"], unsafe_allow_html=True)
 
         # ✅ Generate PDF from styled HTML
-        pdf_file = html_to_pdf_bytes(styled_cover_letter)
+        pdf_file = html_to_pdf_bytes(st.session_state["cover_letter_html"])
 
-        # ✅ Create DOCX function
-        def create_docx(text, filename="cover_letter.docx"):
+        # ✅ Create DOCX (text only, no raw HTML)
+        def create_docx(text):
             bio = BytesIO()
             doc = Document()
             doc.add_heading("Cover Letter", 0)
@@ -4240,9 +4229,10 @@ with tab2:
         """, unsafe_allow_html=True)
 
         col1, col2, col3 = st.columns(3)
+
         with col1:
             st.download_button(
-                label="📥 Download Cover Letter (.docx)",
+                label="📥 Download (.docx)",
                 data=create_docx(st.session_state["cover_letter"]),
                 file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -4250,7 +4240,7 @@ with tab2:
             )
         with col2:
             st.download_button(
-                label="📥 Download Cover Letter (PDF)",
+                label="📥 Download (PDF)",
                 data=pdf_file,
                 file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.pdf",
                 mime="application/pdf",
@@ -4258,19 +4248,20 @@ with tab2:
             )
         with col3:
             st.download_button(
-                label="📥 Download Cover Letter (HTML)",
-                data=st.session_state["cover_letter_html"],
+                label="📥 Download (HTML)",
+                data=st.session_state["cover_letter_html"].encode("utf-8"),
                 file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.html",
                 mime="text/html",
                 key="download_coverletter_html"
             )
 
-        # ✅ Helper note for Cover Letter too
+        # ✅ Helper Note
         st.markdown("""
         ✅ If the HTML cover letter doesn’t display properly, you can 
         <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color:#2f4f6f; text-decoration:none;">
         convert it to PDF using Sejda's free online tool</a>.
         """, unsafe_allow_html=True)
+
 
 
 

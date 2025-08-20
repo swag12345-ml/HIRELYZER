@@ -3409,7 +3409,7 @@ for edu in st.session_state.education_entries:
                 display: flex; 
                 align-items: center; 
                 font-size: 15px; 
-                color: #4b5563; 
+                color: #374151; 
                 margin-bottom: 8px;
                 font-weight: 600;
             '>
@@ -3424,19 +3424,20 @@ for edu in st.session_state.education_entries:
             </div>
             """
 
+        # Education Card
         education_html += f"""
         <div style='
             margin-bottom: 26px;
             padding: 22px 26px;
             border-radius: 12px;
-            background: linear-gradient(145deg, #fffbeb 0%, #fef3c7 100%);
+            background: linear-gradient(145deg, #f9fafb 0%, #f3f4f6 100%);
             box-shadow: 
-                0 4px 12px rgba(217, 119, 6, 0.08),
-                0 1px 3px rgba(0, 0, 0, 0.1);
+                0 4px 12px rgba(0, 0, 0, 0.06),
+                0 1px 3px rgba(0, 0, 0, 0.08);
             font-family: "Inter", "Segoe UI", sans-serif;
-            color: #78350f;
+            color: #1f2937;
             line-height: 1.6;
-            border: 1px solid rgba(254, 215, 170, 0.5);
+            border: 1px solid #e5e7eb;
             position: relative;
             overflow: hidden;
         '>
@@ -3447,7 +3448,7 @@ for edu in st.session_state.education_entries:
                 left: 0;
                 right: 0;
                 height: 3px;
-                background: linear-gradient(90deg, #d97706, #f59e0b);
+                background: linear-gradient(90deg, #6b7280, #9ca3af);
             '></div>
 
             <div style='
@@ -3458,44 +3459,56 @@ for edu in st.session_state.education_entries:
                 font-weight: 700;
                 margin-bottom: 12px;
                 width: 100%;
-                color: #78350f;
+                color: #111827;
             '>
                 <div style='display: flex; align-items: center;'>
                     <div style='
                         width: 6px; 
                         height: 6px; 
-                        background: #d97706;
+                        background: #6b7280;
                         border-radius: 50%; 
                         margin-right: 12px;
                     '></div>
                     <span>{edu.get('institution', '')}</span>
                 </div>
                 <div style='
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
                     background: rgba(255, 255, 255, 0.7);
-                    color: #78350f;
+                    color: #374151;
                     padding: 6px 16px;
                     border-radius: 16px;
                     font-weight: 600;
                     font-size: 14px;
                     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                    border: 1px solid rgba(254, 215, 170, 0.6);
+                    border: 1px solid #d1d5db;
                 '>
-                    📅 {edu.get('year', '')}
+                    <!-- Inline SVG Calendar Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" 
+                        fill="none" viewBox="0 0 24 24" 
+                        stroke="currentColor" width="16" height="16">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 
+                            2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    {edu.get('year', '')}
                 </div>
             </div>
             {degree_text}
             <div style='
                 font-size: 14px; 
                 font-style: italic;
-                color: #92400e;
+                color: #374151;
                 line-height: 1.6;
                 padding-left: 18px;
-                border-left: 2px solid #f59e0b;
+                border-left: 2px solid #9ca3af;
             '>
                 {edu.get('details', '')}
             </div>
         </div>
         """
+
 
 # Enhanced PROJECTS with professional card design
 projects_html = ""

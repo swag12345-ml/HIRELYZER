@@ -3180,20 +3180,21 @@ with tab2:
                     st.markdown(f"[🔗 Project {i+1}]({link})", unsafe_allow_html=True)
 
 # Enhanced SKILLS with modern pill design
+# Enhanced SKILLS with professional, muted colors
 skills_html = "".join(
     f"""
     <div style='display:inline-block; 
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white; 
+                background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+                color: #334155; 
                 padding: 10px 18px; 
                 margin: 8px 8px 8px 0; 
                 border-radius: 25px; 
                 font-size: 14px; 
                 font-weight: 600;
-                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                box-shadow: 0 2px 8px rgba(148, 163, 184, 0.2);
                 transition: all 0.3s ease;
-                text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-                border: 1px solid rgba(255,255,255,0.2);'>
+                text-shadow: none;
+                border: 1px solid rgba(148, 163, 184, 0.3);'>
         {s.strip()}
     </div>
     """
@@ -3201,21 +3202,21 @@ skills_html = "".join(
     if s.strip()
 )
 
-# Enhanced LANGUAGES with gradient design
+# Enhanced LANGUAGES with soft, professional design
 languages_html = "".join(
     f"""
     <div style='display:inline-block; 
-                background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-                color: white; 
+                background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+                color: #475569; 
                 padding: 10px 18px; 
                 margin: 8px 8px 8px 0; 
                 border-radius: 25px; 
                 font-size: 14px; 
                 font-weight: 600;
-                box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+                box-shadow: 0 2px 8px rgba(100, 116, 139, 0.15);
                 transition: all 0.3s ease;
-                text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-                border: 1px solid rgba(255,255,255,0.2);'>
+                text-shadow: none;
+                border: 1px solid rgba(148, 163, 184, 0.3);'>
         {lang.strip()}
     </div>
     """
@@ -3223,21 +3224,21 @@ languages_html = "".join(
     if lang.strip()
 )
 
-# Enhanced INTERESTS with vibrant colors
+# Enhanced INTERESTS with subtle colors
 interests_html = "".join(
     f"""
     <div style='display:inline-block; 
-                background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
-                color: white; 
+                background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+                color: #0f172a; 
                 padding: 10px 18px; 
                 margin: 8px 8px 8px 0; 
                 border-radius: 25px; 
                 font-size: 14px; 
                 font-weight: 600;
-                box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+                box-shadow: 0 2px 8px rgba(14, 165, 233, 0.1);
                 transition: all 0.3s ease;
-                text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-                border: 1px solid rgba(255,255,255,0.2);'>
+                text-shadow: none;
+                border: 1px solid rgba(186, 230, 253, 0.5);'>
         {interest.strip()}
     </div>
     """
@@ -3245,21 +3246,21 @@ interests_html = "".join(
     if interest.strip()
 )
 
-# Enhanced SOFT SKILLS with premium styling
+# Enhanced SOFT SKILLS with warm but professional styling
 Softskills_html = "".join(
     f"""
     <div style='display:inline-block; 
-                background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-                color: #2c3e50; 
+                background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%);
+                color: #451a03; 
                 padding: 10px 20px; 
                 margin: 8px 8px 8px 0; 
                 border-radius: 25px; 
                 font-size: 14px; 
                 font-family: "Segoe UI", sans-serif; 
                 font-weight: 600;
-                box-shadow: 0 4px 15px rgba(252, 182, 159, 0.4);
+                box-shadow: 0 2px 8px rgba(217, 119, 6, 0.1);
                 transition: all 0.3s ease;
-                border: 2px solid rgba(255,255,255,0.8);'>
+                border: 1px solid rgba(254, 215, 170, 0.6);'>
         {skill.strip().title()}
     </div>
     """
@@ -3267,7 +3268,7 @@ Softskills_html = "".join(
     if skill.strip()
 )
 
-# Enhanced EXPERIENCE with modern card design
+# Enhanced EXPERIENCE with professional, subtle design
 experience_html = ""
 for exp in st.session_state.experience_entries:
     if exp["company"] or exp["title"]:
@@ -3282,36 +3283,35 @@ for exp in st.session_state.experience_entries:
         <div style='
             margin-bottom: 24px;
             padding: 20px;
-            border-radius: 16px;
-            background: linear-gradient(145deg, #f0f8ff 0%, #e6f3ff 100%);
+            border-radius: 12px;
+            background: linear-gradient(145deg, #fafafa 0%, #f4f4f5 100%);
             box-shadow: 
-                0 6px 24px rgba(0, 100, 200, 0.08),
-                0 2px 6px rgba(0, 0, 0, 0.04);
+                0 4px 12px rgba(0, 0, 0, 0.05),
+                0 1px 3px rgba(0, 0, 0, 0.1);
             font-family: "Inter", "Segoe UI", sans-serif;
-            color: #1a365d;
+            color: #374151;
             line-height: 1.6;
-            border: 1px solid rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(229, 231, 235, 0.8);
             position: relative;
             overflow: hidden;
         '>
-            <!-- Decorative gradient bar -->
+            <!-- Subtle accent bar -->
             <div style='
                 position: absolute;
                 top: 0;
                 left: 0;
                 right: 0;
                 height: 3px;
-                background: linear-gradient(90deg, #4299e1, #63b3ed, #90cdf4);
+                background: linear-gradient(90deg, #6b7280, #9ca3af);
             '></div>
             
             <!-- Header Card -->
             <div style='
-                background: rgba(255, 255, 255, 0.75);
-                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.8);
+                border-radius: 8px;
                 padding: 14px 18px;
                 margin-bottom: 12px;
-                backdrop-filter: blur(8px);
-                border: 1px solid rgba(255, 255, 255, 0.85);
+                border: 1px solid rgba(229, 231, 235, 0.6);
             '>
                 <div style='
                     display: flex;
@@ -3320,17 +3320,16 @@ for exp in st.session_state.experience_entries:
                     font-weight: 700;
                     font-size: 18px;
                     margin-bottom: 6px;
-                    color: #2d3748;
+                    color: #1f2937;
                     width: 100%;
                 '>
                     <div style='display: flex; align-items: center;'>
                         <div style='
-                            width: 8px; 
-                            height: 8px; 
-                            background: linear-gradient(45deg, #4299e1, #63b3ed);
+                            width: 6px; 
+                            height: 6px; 
+                            background: #6b7280;
                             border-radius: 50%; 
                             margin-right: 12px;
-                            box-shadow: 0 0 6px rgba(66, 153, 225, 0.4);
                         '></div>
                         <span>{exp['company']}</span>
                     </div>
@@ -3338,13 +3337,14 @@ for exp in st.session_state.experience_entries:
                         display: inline-flex;
                         align-items: center;
                         gap: 6px;
-                        background: linear-gradient(135deg, #e6fffa, #b2f5ea);
-                        color: #234e52;
+                        background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+                        color: #374151;
                         padding: 5px 14px;
-                        border-radius: 18px;
+                        border-radius: 16px;
                         font-size: 14px;
                         font-weight: 600;
-                        box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                        border: 1px solid rgba(209, 213, 219, 0.5);
                     '>
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                             <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
@@ -3358,12 +3358,12 @@ for exp in st.session_state.experience_entries:
                     align-items: center;
                     font-size: 16px;
                     font-weight: 600;
-                    color: #2b6cb0;
+                    color: #4b5563;
                 '>
                     <div style='
-                        width: 6px; 
-                        height: 6px; 
-                        background: #4299e1;
+                        width: 4px; 
+                        height: 4px; 
+                        background: #6b7280;
                         border-radius: 50%; 
                         margin-right: 10px;
                     '></div>
@@ -3375,12 +3375,12 @@ for exp in st.session_state.experience_entries:
             <div style='
                 font-size: 15px;
                 font-weight: 500;
-                color: #2d3748;
+                color: #374151;
                 line-height: 1.7;
                 padding-left: 8px;
             '>
                 <div style='
-                    border-left: 3px solid #4299e1;
+                    border-left: 2px solid #d1d5db;
                     padding-left: 16px;
                     margin-left: 8px;
                 '>
@@ -3390,12 +3390,11 @@ for exp in st.session_state.experience_entries:
         </div>
         """
 
-
 # Convert experience to list if multiple lines
 # Escape HTML and convert line breaks
 summary_html = st.session_state['summary'].replace('\n', '<br>')
 
-# Enhanced EDUCATION with modern styling
+# Enhanced EDUCATION with professional styling
 education_html = ""
 for edu in st.session_state.education_entries:
     if edu.get("institution") or edu.get("details"):
@@ -3409,14 +3408,14 @@ for edu in st.session_state.education_entries:
                 display: flex; 
                 align-items: center; 
                 font-size: 15px; 
-                color: #2b6cb0; 
+                color: #4b5563; 
                 margin-bottom: 8px;
                 font-weight: 600;
             '>
                 <div style='
-                    width: 6px; 
-                    height: 6px; 
-                    background: linear-gradient(45deg, #4299e1, #63b3ed);
+                    width: 4px; 
+                    height: 4px; 
+                    background: #6b7280;
                     border-radius: 50%; 
                     margin-right: 10px;
                 '></div>
@@ -3428,26 +3427,26 @@ for edu in st.session_state.education_entries:
         <div style='
             margin-bottom: 26px;
             padding: 22px 26px;
-            border-radius: 16px;
-            background: linear-gradient(145deg, #fef5e7 0%, #fed7aa 100%);
+            border-radius: 12px;
+            background: linear-gradient(145deg, #fffbeb 0%, #fef3c7 100%);
             box-shadow: 
-                0 8px 32px rgba(251, 146, 60, 0.15),
-                0 2px 8px rgba(0, 0, 0, 0.05);
+                0 4px 12px rgba(217, 119, 6, 0.08),
+                0 1px 3px rgba(0, 0, 0, 0.1);
             font-family: "Inter", "Segoe UI", sans-serif;
-            color: #92400e;
+            color: #78350f;
             line-height: 1.6;
-            border: 1px solid rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(254, 215, 170, 0.5);
             position: relative;
             overflow: hidden;
         '>
-            <!-- Decorative gradient bar -->
+            <!-- Subtle accent bar -->
             <div style='
                 position: absolute;
                 top: 0;
                 left: 0;
                 right: 0;
-                height: 4px;
-                background: linear-gradient(90deg, #f59e0b, #fbbf24, #fcd34d);
+                height: 3px;
+                background: linear-gradient(90deg, #d97706, #f59e0b);
             '></div>
 
             <div style='
@@ -3458,27 +3457,27 @@ for edu in st.session_state.education_entries:
                 font-weight: 700;
                 margin-bottom: 12px;
                 width: 100%;
-                color: #92400e;
+                color: #78350f;
             '>
                 <div style='display: flex; align-items: center;'>
                     <div style='
-                        width: 8px; 
-                        height: 8px; 
-                        background: linear-gradient(45deg, #f59e0b, #fbbf24);
+                        width: 6px; 
+                        height: 6px; 
+                        background: #d97706;
                         border-radius: 50%; 
                         margin-right: 12px;
-                        box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
                     '></div>
                     <span>{edu.get('institution', '')}</span>
                 </div>
                 <div style='
-                    background: rgba(255, 255, 255, 0.8);
-                    color: #92400e;
+                    background: rgba(255, 255, 255, 0.7);
+                    color: #78350f;
                     padding: 6px 16px;
-                    border-radius: 20px;
+                    border-radius: 16px;
                     font-weight: 600;
                     font-size: 14px;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    border: 1px solid rgba(254, 215, 170, 0.6);
                 '>
                     📅 {edu.get('year', '')}
                 </div>
@@ -3487,17 +3486,17 @@ for edu in st.session_state.education_entries:
             <div style='
                 font-size: 14px; 
                 font-style: italic;
-                color: #a16207;
+                color: #92400e;
                 line-height: 1.6;
                 padding-left: 18px;
-                border-left: 3px solid #f59e0b;
+                border-left: 2px solid #f59e0b;
             '>
                 {edu.get('details', '')}
             </div>
         </div>
         """
 
-# Enhanced PROJECTS with premium card design
+# Enhanced PROJECTS with professional card design
 projects_html = ""
 for proj in st.session_state.project_entries:
     if proj.get("title") or proj.get("description"):
@@ -3509,18 +3508,18 @@ for proj in st.session_state.project_entries:
             display: flex; 
             align-items: center; 
             font-size: 14px; 
-            color: #1e293b; 
+            color: #374151; 
             margin-bottom: 12px;
             font-weight: 600;
             background: rgba(255, 255, 255, 0.7);
             padding: 8px 16px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            border: 1px solid rgba(229, 231, 235, 0.6);
         '>
             <div style='
-                width: 6px; 
-                height: 6px; 
-                background: linear-gradient(45deg, #7c3aed, #a855f7);
+                width: 4px; 
+                height: 4px; 
+                background: #6b7280;
                 border-radius: 50%; 
                 margin-right: 10px;
             '></div>
@@ -3537,26 +3536,26 @@ for proj in st.session_state.project_entries:
         <div style='
             margin-bottom: 30px;
             padding: 26px;
-            border-radius: 18px;
-            background: linear-gradient(145deg, #f3e8ff 0%, #e9d5ff 100%);
+            border-radius: 12px;
+            background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
             box-shadow: 
-                0 10px 40px rgba(139, 92, 246, 0.15),
-                0 4px 12px rgba(0, 0, 0, 0.05);
+                0 4px 12px rgba(100, 116, 139, 0.1),
+                0 1px 3px rgba(0, 0, 0, 0.1);
             font-family: "Inter", "Segoe UI", sans-serif;
-            color: #581c87;
+            color: #334155;
             line-height: 1.7;
-            border: 1px solid rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(203, 213, 225, 0.5);
             position: relative;
             overflow: hidden;
         '>
-            <!-- Decorative gradient bar -->
+            <!-- Subtle accent bar -->
             <div style='
                 position: absolute;
                 top: 0;
                 left: 0;
                 right: 0;
-                height: 4px;
-                background: linear-gradient(90deg, #7c3aed, #a855f7, #c084fc);
+                height: 3px;
+                background: linear-gradient(90deg, #64748b, #94a3b8);
             '></div>
 
             <div style='
@@ -3566,28 +3565,28 @@ for proj in st.session_state.project_entries:
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                color: #581c87;
+                color: #1e293b;
                 width: 100%;
             '>
                 <div style='display: flex; align-items: center;'>
                     <div style='
-                        width: 10px; 
-                        height: 10px; 
-                        background: linear-gradient(45deg, #7c3aed, #a855f7);
+                        width: 6px; 
+                        height: 6px; 
+                        background: #64748b;
                         border-radius: 50%; 
                         margin-right: 12px;
-                        box-shadow: 0 0 10px rgba(124, 58, 237, 0.6);
                     '></div>
                     <span>{proj.get('title', '')}</span>
                 </div>
                 <div style='
-                    background: linear-gradient(135deg, #ddd6fe, #c4b5fd);
-                    color: #581c87;
+                    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+                    color: #334155;
                     padding: 8px 18px;
-                    border-radius: 20px;
+                    border-radius: 16px;
                     font-weight: 600;
                     font-size: 14px;
-                    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    border: 1px solid rgba(203, 213, 225, 0.6);
                 '>
                     ⏱️ {proj.get('duration', '')}
                 </div>
@@ -3595,23 +3594,23 @@ for proj in st.session_state.project_entries:
             {tech_text}
             <div style='
                 font-size: 15px; 
-                color: #581c87;
+                color: #334155;
                 background: rgba(255, 255, 255, 0.6);
                 padding: 18px;
-                border-radius: 12px;
-                border: 1px solid rgba(255, 255, 255, 0.9);
+                border-radius: 8px;
+                border: 1px solid rgba(229, 231, 235, 0.6);
             '>
                 <div style='
                     font-weight: 600; 
                     margin-bottom: 12px;
-                    color: #4c1d95;
+                    color: #1e293b;
                     display: flex;
                     align-items: center;
                 '>
                     <div style='
-                        width: 6px; 
-                        height: 6px; 
-                        background: #7c3aed;
+                        width: 4px; 
+                        height: 4px; 
+                        background: #64748b;
                         border-radius: 50%; 
                         margin-right: 10px;
                     '></div>
@@ -3620,7 +3619,7 @@ for proj in st.session_state.project_entries:
                 <ul style='
                     margin-top: 8px; 
                     padding-left: 24px; 
-                    color: #581c87;
+                    color: #334155;
                     list-style-type: none;
                 '>
                     {description_items}
@@ -3629,23 +3628,23 @@ for proj in st.session_state.project_entries:
         </div>
         """
 
-# Enhanced PROJECT LINKS
+# Enhanced PROJECT LINKS with professional styling
 project_links_html = ""
 if st.session_state.project_links:
     project_links_html = """
     <div style='margin-bottom: 20px;'>
         <h4 class='section-title' style='
-            color: #1e40af;
+            color: #374151;
             font-size: 20px;
-            margin-bottom: 8px; /* smaller gap */
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
             padding-bottom: 4px;
         '>
             <div style='
-                width: 8px; 
-                height: 8px; 
-                background: linear-gradient(45deg, #1e40af, #3b82f6);
+                width: 6px; 
+                height: 6px; 
+                background: #6b7280;
                 border-radius: 50%; 
                 margin-right: 12px;
             '></div>
@@ -3655,24 +3654,24 @@ if st.session_state.project_links:
     """ + "".join(
         f"""
         <div style='
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
             padding: 14px 20px;
-            border-radius: 12px;
+            border-radius: 8px;
             margin-bottom: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(209, 213, 219, 0.6);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         '>
             <div style='
-                width: 6px; 
-                height: 6px; 
-                background: #1e40af;
+                width: 4px; 
+                height: 4px; 
+                background: #6b7280;
                 border-radius: 50%; 
                 display: inline-block;
                 margin-right: 12px;
                 vertical-align: middle;
             '></div>
             <a href="{link}" style='
-                color: #1e40af; 
+                color: #374151; 
                 font-weight: 600; 
                 text-decoration: none;
                 font-size: 15px;
@@ -3682,28 +3681,27 @@ if st.session_state.project_links:
         for i, link in enumerate(st.session_state.project_links)
     )
 
-
-# Enhanced CERTIFICATES with luxury card design
+# Enhanced CERTIFICATES with professional design
 certificate_links_html = ""
 if st.session_state.certificate_links:
     certificate_links_html = """
     <h4 class='section-title' style='
-        color: #059669;
+        color: #374151;
         font-size: 20px;
         margin-bottom: 16px;
         display: flex;
         align-items: center;
     '>
         <div style='
-            width: 8px; 
-            height: 8px; 
-            background: linear-gradient(45deg, #059669, #10b981);
+            width: 6px; 
+            height: 6px; 
+            background: #6b7280;
             border-radius: 50%; 
             margin-right: 12px;
         '></div>
         Certificates
     </h4>
-    """  # Removed the <hr> line here
+    """
     for cert in st.session_state.certificate_links:
         if cert["name"] and cert["link"]:
             description = cert.get('description', '').replace('\n', '<br>')
@@ -3713,28 +3711,28 @@ if st.session_state.certificate_links:
 
             card_html = f"""
             <div style='
-                background: linear-gradient(145deg, #ecfdf5 0%, #d1fae5 100%);
+                background: linear-gradient(145deg, #f0fdf4 0%, #dcfce7 100%);
                 padding: 24px 28px;
-                border-radius: 18px;
+                border-radius: 12px;
                 margin-bottom: 26px;
                 box-shadow: 
-                    0 10px 40px rgba(16, 185, 129, 0.15),
-                    0 4px 12px rgba(0, 0, 0, 0.05);
+                    0 4px 12px rgba(34, 197, 94, 0.08),
+                    0 1px 3px rgba(0, 0, 0, 0.1);
                 font-family: "Inter", "Segoe UI", sans-serif;
-                color: #064e3b;
+                color: #166534;
                 position: relative;
                 line-height: 1.7;
-                border: 1px solid rgba(255, 255, 255, 0.8);
+                border: 1px solid rgba(187, 247, 208, 0.6);
                 overflow: hidden;
             '>
-                <!-- Decorative gradient bar -->
+                <!-- Subtle accent bar -->
                 <div style='
                     position: absolute;
                     top: 0;
                     left: 0;
                     right: 0;
-                    height: 4px;
-                    background: linear-gradient(90deg, #059669, #10b981, #34d399);
+                    height: 3px;
+                    background: linear-gradient(90deg, #16a34a, #22c55e);
                 '></div>
 
                 <!-- Duration Badge -->
@@ -3744,19 +3742,17 @@ if st.session_state.certificate_links:
                     right: 28px;
                     font-size: 13px;
                     font-weight: 700;
-                    color: #064e3b;
+                    color: #166534;
                     background: linear-gradient(135deg, #ffffff, #f0fdf4);
                     padding: 8px 16px;
-                    border-radius: 20px;
-                    box-shadow: 
-                        0 4px 12px rgba(16, 185, 129, 0.2),
-                        inset 0 1px 2px rgba(255, 255, 255, 0.8);
-                    border: 1px solid rgba(16, 185, 129, 0.2);
+                    border-radius: 16px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                    border: 1px solid rgba(187, 247, 208, 0.6);
                 '>
                     <div style='
-                        width: 6px; 
-                        height: 6px; 
-                        background: #10b981;
+                        width: 4px; 
+                        height: 4px; 
+                        background: #16a34a;
                         border-radius: 50%; 
                         display: inline-block;
                         margin-right: 8px;
@@ -3769,22 +3765,21 @@ if st.session_state.certificate_links:
                 <div style='
                     font-size: 18px;
                     font-weight: 700;
-                    color: #064e3b;
+                    color: #166534;
                     margin-bottom: 12px;
                     margin-right: 120px;
                     display: flex;
                     align-items: center;
                 '>
                     <div style='
-                        width: 10px; 
-                        height: 10px; 
-                        background: linear-gradient(45deg, #059669, #10b981);
+                        width: 6px; 
+                        height: 6px; 
+                        background: #16a34a;
                         border-radius: 50%; 
                         margin-right: 12px;
-                        box-shadow: 0 0 10px rgba(5, 150, 105, 0.6);
                     '></div>
                     <a href="{link}" target="_blank" style='
-                        color: #064e3b;
+                        color: #166534;
                         text-decoration: none;
                         transition: color 0.3s ease;
                     '>{name}</a>
@@ -3793,11 +3788,11 @@ if st.session_state.certificate_links:
                 <!-- Description -->
                 <div style='
                     font-size: 15px;
-                    color: #047857;
+                    color: #15803d;
                     background: rgba(255, 255, 255, 0.7);
                     padding: 16px;
-                    border-radius: 12px;
-                    border: 1px solid rgba(255, 255, 255, 0.9);
+                    border-radius: 8px;
+                    border: 1px solid rgba(187, 247, 208, 0.6);
                     line-height: 1.6;
                 '>
                     <div style='
@@ -3806,9 +3801,9 @@ if st.session_state.certificate_links:
                         margin-bottom: 8px;
                     '>
                         <div style='
-                            width: 6px; 
-                            height: 6px; 
-                            background: #10b981;
+                            width: 4px; 
+                            height: 4px; 
+                            background: #16a34a;
                             border-radius: 50%; 
                             margin-right: 12px;
                             margin-top: 8px;
@@ -3821,8 +3816,9 @@ if st.session_state.certificate_links:
             """
             certificate_links_html += card_html
 
+# The rest of your HTML content remains the same...
+# Just update the main header gradient to be more professional:
 
-# Enhanced HTML Content with modern CSS
 html_content = f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -3855,8 +3851,8 @@ html_content = f"""
         .resume-container::before {{
             content: '';
             display: block;
-            height: 6px;
-            background: #667eea;
+            height: 4px;
+            background: linear-gradient(90deg, #6b7280, #9ca3af);
         }}
         
         .header-section {{
@@ -3935,7 +3931,7 @@ html_content = f"""
         }}
         
         .contact-item a:hover {{
-            color: #667eea;
+            color: #6b7280;
             transition: color 0.3s ease;
         }}
         
@@ -3952,8 +3948,8 @@ html_content = f"""
         .section-title::after {{
             content: '';
             flex: 1;
-            height: 3px;
-            background: #667eea;
+            height: 2px;
+            background: #9ca3af;
             margin-left: 15px;
             border-radius: 2px;
         }}
@@ -3968,8 +3964,8 @@ html_content = f"""
             color: #4a5568;
             background: #f8fafc;
             padding: 25px;
-            border-radius: 12px;
-            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            border-left: 3px solid #9ca3af;
         }}
         
         @media (max-width: 768px) {{
@@ -5701,6 +5697,5 @@ with tab5:
         <p>Last updated: {}</p>
     </div>
     """.format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
-
 
 

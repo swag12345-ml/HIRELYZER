@@ -3737,28 +3737,28 @@ if st.session_state.certificate_links:
 
             card_html = f"""
             <div style='
-                background: linear-gradient(145deg, #f0fdf4 0%, #dcfce7 100%);
+                background: linear-gradient(145deg, #f9fafb 0%, #f3f4f6 100%);
                 padding: 24px 28px;
                 border-radius: 12px;
                 margin-bottom: 26px;
                 box-shadow: 
-                    0 4px 12px rgba(34, 197, 94, 0.08),
-                    0 1px 3px rgba(0, 0, 0, 0.1);
+                    0 4px 12px rgba(107, 114, 128, 0.08),
+                    0 1px 3px rgba(0, 0, 0, 0.08);
                 font-family: "Inter", "Segoe UI", sans-serif;
-                color: #166534;
+                color: #374151;
                 position: relative;
                 line-height: 1.7;
-                border: 1px solid rgba(187, 247, 208, 0.6);
+                border: 1px solid rgba(209, 213, 219, 0.6);
                 overflow: hidden;
             '>
-                <!-- Subtle accent bar -->
+                <!-- Accent bar -->
                 <div style='
                     position: absolute;
                     top: 0;
                     left: 0;
                     right: 0;
                     height: 3px;
-                    background: linear-gradient(90deg, #16a34a, #22c55e);
+                    background: linear-gradient(90deg, #6b7280, #9ca3af);
                 '></div>
 
                 <!-- Duration Badge -->
@@ -3767,23 +3767,24 @@ if st.session_state.certificate_links:
                     top: 20px;
                     right: 28px;
                     font-size: 13px;
-                    font-weight: 700;
-                    color: #166534;
-                    background: linear-gradient(135deg, #ffffff, #f0fdf4);
-                    padding: 8px 16px;
+                    font-weight: 600;
+                    color: #374151;
+                    background: linear-gradient(135deg, #ffffff, #f9fafb);
+                    padding: 8px 14px;
                     border-radius: 16px;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                    border: 1px solid rgba(187, 247, 208, 0.6);
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+                    border: 1px solid rgba(209, 213, 219, 0.6);
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
                 '>
-                    <div style='
-                        width: 4px; 
-                        height: 4px; 
-                        background: #16a34a;
-                        border-radius: 50%; 
-                        display: inline-block;
-                        margin-right: 8px;
-                        vertical-align: middle;
-                    '></div>
+                    <!-- Inline SVG clock icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" 
+                        fill="none" viewBox="0 0 24 24" 
+                        stroke="currentColor" width="14" height="14">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z"/>
+                    </svg>
                     {duration}
                 </div>
 
@@ -3791,7 +3792,7 @@ if st.session_state.certificate_links:
                 <div style='
                     font-size: 18px;
                     font-weight: 700;
-                    color: #166534;
+                    color: #111827;
                     margin-bottom: 12px;
                     margin-right: 120px;
                     display: flex;
@@ -3800,12 +3801,12 @@ if st.session_state.certificate_links:
                     <div style='
                         width: 6px; 
                         height: 6px; 
-                        background: #16a34a;
+                        background: #6b7280;
                         border-radius: 50%; 
                         margin-right: 12px;
                     '></div>
                     <a href="{link}" target="_blank" style='
-                        color: #166534;
+                        color: #111827;
                         text-decoration: none;
                         transition: color 0.3s ease;
                     '>{name}</a>
@@ -3814,11 +3815,11 @@ if st.session_state.certificate_links:
                 <!-- Description -->
                 <div style='
                     font-size: 15px;
-                    color: #15803d;
-                    background: rgba(255, 255, 255, 0.7);
+                    color: #374151;
+                    background: rgba(255, 255, 255, 0.8);
                     padding: 16px;
                     border-radius: 8px;
-                    border: 1px solid rgba(187, 247, 208, 0.6);
+                    border: 1px solid rgba(209, 213, 219, 0.6);
                     line-height: 1.6;
                 '>
                     <div style='
@@ -3829,7 +3830,7 @@ if st.session_state.certificate_links:
                         <div style='
                             width: 4px; 
                             height: 4px; 
-                            background: #16a34a;
+                            background: #6b7280;
                             border-radius: 50%; 
                             margin-right: 12px;
                             margin-top: 8px;
@@ -3841,6 +3842,7 @@ if st.session_state.certificate_links:
             </div>
             """
             certificate_links_html += card_html
+
 
 # The rest of your HTML content remains the same...
 # Just update the main header gradient to be more professional:

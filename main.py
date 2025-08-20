@@ -3593,6 +3593,9 @@ for proj in st.session_state.project_entries:
                     <span>{proj.get('title', '')}</span>
                 </div>
                 <div style='
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
                     background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
                     color: #334155;
                     padding: 8px 18px;
@@ -3602,7 +3605,15 @@ for proj in st.session_state.project_entries:
                     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
                     border: 1px solid rgba(203, 213, 225, 0.6);
                 '>
-                    ⏱️ {proj.get('duration', '')}
+                    <!-- Inline SVG Clock Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" 
+                        fill="none" viewBox="0 0 24 24" 
+                        stroke="currentColor" width="16" height="16">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 
+                               9 9 0 0118 0z" />
+                    </svg>
+                    {proj.get('duration', '')}
                 </div>
             </div>
             {tech_text}
@@ -3641,6 +3652,7 @@ for proj in st.session_state.project_entries:
             </div>
         </div>
         """
+
 
 # Enhanced PROJECT LINKS with professional styling
 project_links_html = ""
@@ -3953,19 +3965,7 @@ html_content = f"""
             font-size: 22px;
             font-weight: 700;
             color: #2d3748;
-            margin: 35px 0 20px 0;
-            display: flex;
-            align-items: center;
-            position: relative;
-        }}
-        
-        .section-title::after {{
-            content: '';
-            flex: 1;
-            height: 2px;
-            background: #9ca3af;
-            margin-left: 15px;
-            border-radius: 2px;
+            margin: 35px 0 15px 0;
         }}
         
         .section-content {{
@@ -4115,6 +4115,7 @@ html_content = f"""
 </body>
 </html>
 """
+
 
 from io import BytesIO
 from docx import Document

@@ -3181,6 +3181,7 @@ with tab2:
 
 # Enhanced SKILLS with modern pill design
 # Enhanced SKILLS with professional, muted colors
+# Enhanced SKILLS with professional, muted colors
 skills_html = "".join(
     f"""
     <div style='display:inline-block; 

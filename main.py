@@ -5710,7 +5710,7 @@ if "memory" in st.session_state:
             st.markdown(msg.content)
 
 # 2. Wait for user input
-####user_input = st.chat_input("Ask LEXIBOT anything...")####
+user_input = st.chat_input("Ask LEXIBOT anything...")
 
 # 3. Only call chain when user submits new input
 if user_input:

@@ -848,7 +848,7 @@ st.markdown(
     </div>
 
     <!-- Header -->
-    <div class="header">💼 LEXIBOT - AI ETHICAL RESUME ANALYZER</div>
+    <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
     """,
     unsafe_allow_html=True
 )
@@ -2062,7 +2062,7 @@ def create_chain(vectorstore):
     return chain
 
 # App Title
-st.title("🦙 Chat with LEXIBOT - LLAMA 3.3 (Bias Detection + QA + GPU)")
+st.title("🦙 HIRELYZER - LLAMA 3.3 (ANALYZER + BUILDER + JOB MARKET TRENDS)")
 
 # Chat history
 if "chat_history" not in st.session_state:

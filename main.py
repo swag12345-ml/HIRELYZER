@@ -518,7 +518,7 @@ if not st.session_state.get("authenticated", False):
 
     with center:
         st.markdown(
-            "<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>LEXIBOT</span></h2>",
+            "<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>HIRELYZER</span></h2>",
             unsafe_allow_html=True,
         )
 
@@ -581,7 +581,7 @@ from user_login import save_user_api_key, get_user_api_key  # Ensure both are im
 
 if st.session_state.get("authenticated"):
     st.markdown(
-        f"<h2 style='color:#00BFFF;'>Welcome to LEXIBOT, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>",
+        f"<h2 style='color:#00BFFF;'>Welcome to HIRELYZER, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>",
         unsafe_allow_html=True,
     )
 
@@ -2645,17 +2645,6 @@ with tab1:
                     )
                     html_report = generate_resume_report_html(resume)
                     
-
-                    
-
-                    st.download_button(
-                        label="📥 Download Full Analysis Report (.html)",
-                        data=html_report,
-                        file_name=f"{resume['Resume Name'].split('.')[0]}_report.html",
-                        mime="text/html",
-                        use_container_width=True,
-                        key=f"download_html_{resume['Resume Name']}"
-                    )
                     pdf_file = html_to_pdf_bytes(html_report)
                     st.download_button(
                     label="📄 Download Full Analysis Report (.pdf)",
@@ -4162,12 +4151,12 @@ with tab2:
         unsafe_allow_html=True
     )
 
-    col1, col2 = st.columns(2)
+    col1 = st.column(1)
 
     # HTML Resume Download Button
     with col1:
         st.download_button(
-            label="⬇️ Download as HTML",
+            label="⬇️ Download as Template",
             data=html_file,
             file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.html",
             mime="text/html",
@@ -4175,15 +4164,7 @@ with tab2:
         )
 
     # PDF Resume Download Button
-    with col2:
-        st.download_button(
-            label="⬇️ Download as PDF",
-            data=pdf_resume_bytes,
-            file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.pdf",
-            mime="application/pdf",
-            key="download_resume_pdf"
-        )
-
+    
     # ✅ Extra Help Note
     st.markdown("""
     ✅ After downloading your HTML resume, you can 
@@ -4244,7 +4225,7 @@ with tab2:
         </div>
         """, unsafe_allow_html=True)
 
-        col1, col2, col3 = st.columns(3)
+        col1,col2 = st.columns(2)
         with col1:
             st.download_button(
                 label="📥 Download Cover Letter (.docx)",
@@ -4253,17 +4234,10 @@ with tab2:
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 key="download_coverletter_docx"
             )
+        
         with col2:
             st.download_button(
-                label="📥 Download Cover Letter (PDF)",
-                data=pdf_file,
-                file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.pdf",
-                mime="application/pdf",
-                key="download_coverletter_pdf"
-            )
-        with col3:
-            st.download_button(
-                label="📥 Download Cover Letter (HTML)",
+                label="📥 Download Cover Letter (Template)",
                 data=styled_cover_letter.encode("utf-8"),
                 file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.html",
                 mime="text/html",

@@ -843,7 +843,7 @@ st.markdown(
     <div class="banner-container">
         <div class="pulse-bar">
             <div class="bar"></div>
-            <div>LEXIBOT - Elevate Your Resume Analysis</div>
+            <div>HIRELYZER - Elevate Your Resume Analysis</div>
         </div>
     </div>
 

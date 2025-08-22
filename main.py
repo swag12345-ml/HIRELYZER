@@ -2630,17 +2630,6 @@ with tab1:
                     )
                     html_report = generate_resume_report_html(resume)
                     
-
-                    
-
-                    st.download_button(
-                        label="📥 Download Full Analysis Report (.html)",
-                        data=html_report,
-                        file_name=f"{resume['Resume Name'].split('.')[0]}_report.html",
-                        mime="text/html",
-                        use_container_width=True,
-                        key=f"download_html_{resume['Resume Name']}"
-                    )
                     pdf_file = html_to_pdf_bytes(html_report)
                     st.download_button(
                     label="📄 Download Full Analysis Report (.pdf)",

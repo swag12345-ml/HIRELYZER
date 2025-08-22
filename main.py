@@ -4151,7 +4151,7 @@ with tab2:
         unsafe_allow_html=True
     )
 
-    col1 = st.column(1)
+    col1, = st.columns(1)
 
     # HTML Resume Download Button
     with col1:

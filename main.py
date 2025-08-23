@@ -2263,7 +2263,10 @@ if uploaded_files and job_description:
 
             st.session_state.processed_files.add(uploaded_file.name)
 
-    st.success("✅ All resumes processed!")
+    # Instead of st.success
+st.image("https://cdn-icons-png.flaticon.com/512/845/845646.png", width=60)
+st.markdown("### ✅ Resume Processed Successfully!")
+
 
 
 
@@ -2274,7 +2277,7 @@ if uploaded_files and job_description:
         st.session_state.chain = create_chain(st.session_state.vectorstore)
 
 # 🔄 Developer Reset Button
-if st.button("🔄 Reset Resume Upload Memory"):
+if st.button("🔄 Refresh view"):
     st.session_state.processed_files.clear()
     st.session_state.resume_data.clear()
     st.success("✅ Cleared uploaded resume history. You can re-upload now.")

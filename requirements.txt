@@ -19,9 +19,6 @@ easyocr
 bcrypt
 python-dotenv
 tabulate
-altair
-requests
-requests-oauthlib
 
 # LangChain ecosystem
 langchain

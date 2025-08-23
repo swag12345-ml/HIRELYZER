@@ -456,38 +456,49 @@ def get_logins_today():
 
 # ------------------ Get User Statistics ------------------
 def get_user_statistics():
-    """Get comprehensive user statistics"""
+    """Get comprehensive user statistics (safe version)"""
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
-    
-    # Total users
-    c.execute("SELECT COUNT(*) FROM users")
-    total_users = c.fetchone()[0]
-    
-    # Users by auth provider
-    c.execute("SELECT auth_provider, COUNT(*) FROM users GROUP BY auth_provider")
-    auth_stats = dict(c.fetchall())
-    
-    # Today's activity
-    today = get_ist_time().strftime('%Y-%m-%d')
-    c.execute("""
-        SELECT action, COUNT(*) FROM user_logs
-        WHERE DATE(timestamp) = ?
-        GROUP BY action
-    """, (today,))
-    today_activity = dict(c.fetchall())
-    
-    # Recent registrations (last 7 days)
-    week_ago = (get_ist_time() - timedelta(days=7)).strftime('%Y-%m-%d')
 
-    c.execute("""
-        SELECT COUNT(*) FROM users
-        WHERE DATE(created_at) >= ?
-    """, (week_ago,))
-    recent_registrations = c.fetchone()[0]
-    
+    # --- Total users ---
+    try:
+        c.execute("SELECT COUNT(*) FROM users")
+        total_users = c.fetchone()[0] or 0
+    except Exception:
+        total_users = 0
+
+    # --- Users by auth provider ---
+    try:
+        c.execute("SELECT auth_provider, COUNT(*) FROM users GROUP BY auth_provider")
+        auth_stats = dict(c.fetchall())
+    except Exception:
+        auth_stats = {}
+
+    # --- Today's activity ---
+    today = get_ist_time().strftime('%Y-%m-%d')
+    try:
+        c.execute("""
+            SELECT action, COUNT(*) FROM user_logs
+            WHERE timestamp IS NOT NULL AND DATE(timestamp) = ?
+            GROUP BY action
+        """, (today,))
+        today_activity = dict(c.fetchall())
+    except Exception:
+        today_activity = {}
+
+    # --- Recent registrations (last 7 days) ---
+    try:
+        week_ago = (get_ist_time() - timedelta(days=7)).strftime('%Y-%m-%d')
+        c.execute("""
+            SELECT COUNT(*) FROM users
+            WHERE created_at IS NOT NULL AND DATE(created_at) >= ?
+        """, (week_ago,))
+        recent_registrations = c.fetchone()[0] or 0
+    except Exception:
+        recent_registrations = 0
+
     conn.close()
-    
+
     return {
         'total_users': total_users,
         'auth_providers': auth_stats,
@@ -524,6 +535,7 @@ def get_user_activity_history(username, limit=50):
     logs = c.fetchall()
     conn.close()
     return logs
+
 
 
 

@@ -478,7 +478,8 @@ def get_user_statistics():
     today_activity = dict(c.fetchall())
     
     # Recent registrations (last 7 days)
-    week_ago = (get_ist_time() - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
+    week_ago = (get_ist_time() - timedelta(days=7)).strftime('%Y-%m-%d')
+
     c.execute("""
         SELECT COUNT(*) FROM users
         WHERE DATE(created_at) >= ?
@@ -523,5 +524,6 @@ def get_user_activity_history(username, limit=50):
     logs = c.fetchall()
     conn.close()
     return logs
+
 
 

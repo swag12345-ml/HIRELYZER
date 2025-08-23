@@ -19,12 +19,6 @@ easyocr
 bcrypt
 python-dotenv
 tabulate
-requests
-
-# Google OAuth (added)
-google-auth>=2.29.0
-google-auth-oauthlib>=1.2.0
-google-auth-httplib2>=0.2.0
 
 # LangChain ecosystem
 langchain

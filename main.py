@@ -211,6 +211,9 @@ from langchain.chains import ConversationalRetrievalChain
 from llm_manager import call_llm
 
 from pydantic import BaseModel
+import streamlit as st
+import requests
+from base64 import b64encode
 from db_manager import get_database_stats
 from user_login import (
     create_user_table,
@@ -219,9 +222,17 @@ from user_login import (
     get_logins_today,
     get_total_registered_users,
     log_user_action,
-    username_exists  # 👈 add this line
+    username_exists,
+    # Google OAuth imports
+    get_google_auth_url,
+    handle_google_login,
+    logout_user,
+    get_user_statistics,
+    get_user_profile,
+    get_user_activity_history,
+    save_user_api_key,
+    get_user_api_key
 )
-
 
 # ------------------- Initialize -------------------
 create_user_table()
@@ -233,6 +244,13 @@ if "username" not in st.session_state:
     st.session_state.username = None
 if "processed_files" not in st.session_state:
     st.session_state.processed_files = set()
+
+# ------------------- Handle Google OAuth Callback -------------------
+# Check for Google OAuth callback first, before any UI rendering
+if handle_google_login():
+    st.session_state.authenticated = True
+    # The handle_google_login function already sets the username
+    st.rerun()
 
 # ------------------- CSS Styling -------------------
 st.markdown("""
@@ -279,6 +297,21 @@ body, .main {
     box-shadow: 0 0 10px rgba(46,160,67,0.4);
     transform: scale(1.02);
 }
+.google-btn {
+    background-color: #4285f4 !important;
+    color: white !important;
+    border-radius: 10px !important;
+    padding: 0.6em 1.5em !important;
+    border: none !important;
+    font-weight: bold !important;
+    width: 100% !important;
+    margin-top: 10px !important;
+}
+.google-btn:hover {
+    background-color: #3367d6 !important;
+    box-shadow: 0 0 10px rgba(66,133,244,0.4) !important;
+    transform: scale(1.02) !important;
+}
 .feature-card {
     background: radial-gradient(circle at top left, #1f2937, #111827);
     padding: 20px;
@@ -299,12 +332,22 @@ body, .main {
 .feature-card p {
     color: #c9d1d9;
 }
+.user-profile-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+    border-radius: 15px;
+    color: white;
+    margin-bottom: 20px;
+}
+.activity-item {
+    background: #1f2937;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border-left: 4px solid #00BFFF;
+}
 </style>
 """, unsafe_allow_html=True)
-# 🔹 VIDEO BACKGROUND & GLOW TEXT
-
-
-
 
 # ------------------- BEFORE LOGIN -------------------
 if not st.session_state.authenticated:
@@ -330,6 +373,22 @@ if not st.session_state.authenticated:
                 <p>{desc}</p>
             </div>
             """, unsafe_allow_html=True)
+
+        # -------- User Statistics in Sidebar --------
+        st.markdown("---")
+        st.markdown("### 📊 Platform Statistics")
+        stats = get_user_statistics()
+        
+        st.metric("👥 Total Users", stats['total_users'])
+        st.metric("📅 Today's Logins", stats['today_activity'].get('login', 0))
+        st.metric("🆕 New This Week", stats['recent_registrations'])
+        
+        # Auth provider breakdown
+        if stats['auth_providers']:
+            st.markdown("**Authentication Methods:**")
+            for provider, count in stats['auth_providers'].items():
+                provider_name = "🔐 Local" if provider == 'local' else "🌐 Google"
+                st.write(f"{provider_name}: {count}")
 
     # -------- Animated Cards --------
     image_url = "https://cdn-icons-png.flaticon.com/512/3135/3135768.png"
@@ -369,16 +428,12 @@ if not st.session_state.authenticated:
     </div>
     """, unsafe_allow_html=True)
 
-    # -------- Counter Section (Updated Layout & Style with tighter spacing) --------
-
+    # -------- Counter Section --------
     # Fetch counters
     total_users = get_total_registered_users()
     active_logins = get_logins_today()
     stats = get_database_stats()
-
-# Replace static 15 with dynamic count
     resumes_uploaded = stats.get("total_candidates", 0)
-
     states_accessed = 29
 
     neon_counter_style = """
@@ -451,68 +506,6 @@ if not st.session_state.authenticated:
     </div>
     """, unsafe_allow_html=True)
 
-
-
-
-
-if not st.session_state.get("authenticated", False):
-    
-
-    # ✅ Use an online image of a female employee
-    image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
-    response = requests.get(image_url)
-    img_base64 = b64encode(response.content).decode()
-
-    # ✅ Inject animated shuffle CSS + HTML
-    st.markdown(f"""
-    <style>
-    .animated-cards {{
-      margin-top: 40px;
-      display: flex;
-      justify-content: center;
-      position: relative;
-      height: 260px;
-    }}
-    .animated-cards img {{
-      position: absolute;
-      width: 220px;
-      animation: splitCards 2.5s ease-in-out infinite alternate;
-      z-index: 1;
-    }}
-    .animated-cards img:nth-child(1) {{
-      animation-delay: 0s;
-      z-index: 3;
-    }}
-    .animated-cards img:nth-child(2) {{
-      animation-delay: 0.3s;
-      z-index: 2;
-    }}
-    .animated-cards img:nth-child(3) {{
-      animation-delay: 0.6s;
-      z-index: 1;
-    }}
-    @keyframes splitCards {{
-      0% {{
-        transform: scale(1) translateX(0) rotate(0deg);
-        opacity: 1;
-      }}
-      100% {{
-        transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot));
-        opacity: 1;
-      }}
-    }}
-    .card-left {{ --x-offset: -80px; --rot: -4deg; }}
-    .card-center {{ --x-offset: 0px; --rot: 0deg; }}
-    .card-right {{ --x-offset: 80px; --rot: 4deg; }}
-    </style>
-
-    <div class="animated-cards">
-        <img class="card-left" src="data:image/png;base64,{img_base64}" />
-        <img class="card-center" src="data:image/png;base64,{img_base64}" />
-        <img class="card-right" src="data:image/png;base64,{img_base64}" />
-    </div>
-    """, unsafe_allow_html=True)
-
     # -------- Login/Register Layout --------
     left, center, right = st.columns([1, 2, 1])
 
@@ -526,6 +519,19 @@ if not st.session_state.get("authenticated", False):
 
         # ---------------- LOGIN TAB ----------------
         with login_tab:
+            # Google Login Button
+            google_auth_url = get_google_auth_url()
+            st.markdown(f"""
+            <a href="{google_auth_url}" target="_self">
+                <button class="google-btn">
+                    🌐 Continue with Google
+                </button>
+            </a>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("<div style='text-align: center; margin: 20px 0; color: #666;'>── OR ──</div>", unsafe_allow_html=True)
+            
+            # Traditional Login
             user = st.text_input("Username", key="login_user")
             pwd = st.text_input("Password", type="password", key="login_pass")
 
@@ -535,11 +541,11 @@ if not st.session_state.get("authenticated", False):
                     st.session_state.authenticated = True
                     st.session_state.username = user.strip()
 
-                    # ✅ Load saved Groq key into session
+                    # Load saved Groq key into session
                     if saved_key:
                         st.session_state["user_groq_key"] = saved_key
 
-                    log_user_action(user.strip(), "login")
+                    log_user_action(user.strip(), "login", auth_provider='local')
                     st.success("✅ Login successful!")
                     st.rerun()
                 else:
@@ -547,11 +553,24 @@ if not st.session_state.get("authenticated", False):
 
         # ---------------- REGISTER TAB ----------------
         with register_tab:
+            # Google Registration Button
+            st.markdown(f"""
+            <a href="{google_auth_url}" target="_self">
+                <button class="google-btn">
+                    🌐 Sign up with Google
+                </button>
+            </a>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("<div style='text-align: center; margin: 20px 0; color: #666;'>── OR ──</div>", unsafe_allow_html=True)
+            
+            # Traditional Registration
             new_user = st.text_input("Choose a Username", key="reg_user")
+            new_email = st.text_input("Email Address (Optional)", key="reg_email")
             new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
             st.caption("🔒 Password must be at least 8 characters and include uppercase, lowercase, number, and special character.")
 
-            # ✅ Live Username Availability Check
+            # Live Username Availability Check
             if new_user.strip():
                 if username_exists(new_user.strip()):
                     st.error("🚫 Username already exists.")
@@ -560,46 +579,82 @@ if not st.session_state.get("authenticated", False):
 
             if st.button("Register", key="register_btn"):
                 if new_user.strip() and new_pass.strip():
-                    success, message = add_user(new_user.strip(), new_pass.strip())
+                    success, message = add_user(new_user.strip(), new_pass.strip(), new_email.strip() if new_email.strip() else None)
                     if success:
                         st.success(message)
-                        log_user_action(new_user.strip(), "register")
+                        log_user_action(new_user.strip(), "register", auth_provider='local')
                     else:
                         st.error(message)
                 else:
-                    st.warning("⚠️ Please fill in both fields.")
+                    st.warning("⚠️ Please fill in both username and password fields.")
 
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()
 
-
-
-
 # ------------------- AFTER LOGIN -------------------
-from user_login import save_user_api_key, get_user_api_key  # Ensure both are imported
-
 if st.session_state.get("authenticated"):
-    st.markdown(
-        f"<h2 style='color:#00BFFF;'>Welcome to HIRELYZER, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>",
-        unsafe_allow_html=True,
-    )
+    # Get user profile information
+    user_profile = get_user_profile(st.session_state.username)
+    
+    # Enhanced welcome message with profile info
+    col1, col2 = st.columns([3, 1])
+    
+    with col1:
+        if user_profile and user_profile.get('profile_picture'):
+            st.markdown(f"""
+            <div class="user-profile-card">
+                <div style="display: flex; align-items: center;">
+                    <img src="{user_profile['profile_picture']}" style="width: 60px; height: 60px; border-radius: 50%; margin-right: 15px;">
+                    <div>
+                        <h2 style="margin: 0; color: white;">Welcome back, {st.session_state.username}! 👋</h2>
+                        <p style="margin: 5px 0 0 0; opacity: 0.8;">
+                            {user_profile.get('email', '')} • 
+                            Joined via {user_profile.get('auth_provider', 'local').title()}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown(
+                f"<h2 style='color:#00BFFF;'>Welcome to HIRELYZER, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>",
+                unsafe_allow_html=True,
+            )
+    
+    with col2:
+        # Enhanced logout button
+        if st.button("🚪 Logout", key="logout_btn"):
+            logout_user()
 
-    # 🔓 LOGOUT BUTTON
-    if st.button("🚪 Logout"):
-        log_user_action(st.session_state.get("username", "unknown"), "logout")
-
-        # ✅ Clear all session keys safely
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
-
-        st.success("✅ Logged out successfully.")
-        st.rerun()  # Force rerun to prevent stale UI
+    # User Activity Sidebar
+    with st.sidebar:
+        st.markdown("---")
+        st.markdown("### 👤 Your Activity")
+        
+        if user_profile:
+            st.write(f"**Joined:** {user_profile.get('created_at', 'Unknown')}")
+            st.write(f"**Last Login:** {user_profile.get('last_login', 'Unknown')}")
+            st.write(f"**Auth Method:** {user_profile.get('auth_provider', 'local').title()}")
+        
+        # Recent activity
+        user_activity = get_user_activity_history(st.session_state.username, limit=5)
+        if user_activity:
+            st.markdown("**Recent Activity:**")
+            for action, timestamp, auth_provider in user_activity:
+                action_emoji = {"login": "🔓", "logout": "🔒", "register": "🆕"}.get(action, "📝")
+                st.markdown(f"""
+                <div class="activity-item">
+                    {action_emoji} {action.title()}<br>
+                    <small>{timestamp}</small>
+                </div>
+                """, unsafe_allow_html=True)
 
     # 🔑 GROQ API KEY SECTION (SIDEBAR)
+    st.sidebar.markdown("---")
     st.sidebar.markdown("### 🔑 Groq API Key")
 
-    # ✅ Load saved key from DB
+    # Load saved key from DB
     saved_key = get_user_api_key(st.session_state.username)
     masked_preview = f"****{saved_key[-6:]}" if saved_key else ""
 
@@ -609,7 +664,7 @@ if st.session_state.get("authenticated"):
         type="password"
     )
 
-    # ✅ Save or reuse key
+    # Save or reuse key
     if user_api_key_input:
         st.session_state["user_groq_key"] = user_api_key_input
         save_user_api_key(st.session_state.username, user_api_key_input)
@@ -620,49 +675,89 @@ if st.session_state.get("authenticated"):
     else:
         st.sidebar.warning("⚠ Using shared admin key with possible usage limits")
 
-    # 🧹 Clear saved key
+    # Clear saved key
     if st.sidebar.button("🗑️ Clear My API Key"):
         st.session_state["user_groq_key"] = None
         save_user_api_key(st.session_state.username, None)
         st.sidebar.success("✅ Cleared saved Groq API key. Now using shared admin key.")
 
+    # Enhanced Admin Dashboard
+    if st.session_state.username == "admin":
+        st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown("<h2 style='color:#00BFFF;'>📊 Enhanced Admin Dashboard</h2>", unsafe_allow_html=True)
 
+        # Enhanced metrics with more details
+        stats = get_user_statistics()
+        
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("👤 Total Users", stats['total_users'])
+        with col2:
+            st.metric("📅 Today's Logins", stats['today_activity'].get('login', 0))
+        with col3:
+            st.metric("🆕 New This Week", stats['recent_registrations'])
+        with col4:
+            st.metric("🚪 Today's Logouts", stats['today_activity'].get('logout', 0))
 
+        # Authentication provider breakdown
+        if stats['auth_providers']:
+            st.markdown("### 🔐 Authentication Methods")
+            auth_col1, auth_col2 = st.columns(2)
+            
+            with auth_col1:
+                local_users = stats['auth_providers'].get('local', 0)
+                st.metric("🔐 Local Authentication", local_users)
+            
+            with auth_col2:
+                google_users = stats['auth_providers'].get('google', 0)
+                st.metric("🌐 Google Authentication", google_users)
 
+        # Enhanced activity log with filtering
+        st.markdown("<h3 style='color:#00BFFF;'>📋 Enhanced Activity Log</h3>", unsafe_allow_html=True)
+        
+        # Import the enhanced log function
+        from user_login import get_all_user_logs
+        
+        # Activity filter
+        filter_action = st.selectbox("Filter by Action:", ["All", "login", "logout", "register"])
+        log_limit = st.slider("Number of logs to show:", 10, 200, 50)
+        
+        logs = get_all_user_logs(limit=log_limit)
+        
+        if logs:
+            # Filter logs if needed
+            if filter_action != "All":
+                logs = [log for log in logs if log[1] == filter_action]
+            
+            if logs:
+                # Create a more detailed dataframe
+                log_data = {
+                    "Username": [log[0] for log in logs],
+                    "Action": [log[1] for log in logs],
+                    "Timestamp": [log[2] for log in logs],
+                    "Auth Provider": [log[3] if len(log) > 3 else 'local' for log in logs]
+                }
+                
+                st.dataframe(log_data, use_container_width=True)
+                
+                # Activity summary
+                st.markdown("### 📈 Activity Summary")
+                action_counts = {}
+                for log in logs:
+                    action = log[1]
+                    action_counts[action] = action_counts.get(action, 0) + 1
+                
+                summary_cols = st.columns(len(action_counts))
+                for i, (action, count) in enumerate(action_counts.items()):
+                    with summary_cols[i]:
+                        action_emoji = {"login": "🔓", "logout": "🔒", "register": "🆕"}.get(action, "📝")
+                        st.metric(f"{action_emoji} {action.title()}", count)
+            else:
+                st.info(f"No {filter_action} activities found.")
+        else:
+            st.info("No logs found yet.")
 
-
-from user_login import get_all_user_logs, get_total_registered_users, get_logins_today
-import streamlit as st
-
-if st.session_state.username == "admin":
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown("<h2 style='color:#00BFFF;'>📊 Admin Dashboard</h2>", unsafe_allow_html=True)
-
-    # Metrics row
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("👤 Total Registered Users", get_total_registered_users())
-    with col2:
-        st.metric("📅 Logins Today (IST)", get_logins_today())
-
-    # Removed API key usage section (no longer tracked)
-    # Activity log
-    st.markdown("<h3 style='color:#00BFFF;'>📋 Admin Activity Log</h3>", unsafe_allow_html=True)
-    logs = get_all_user_logs()
-    if logs:
-        st.dataframe(
-            {
-                "Username": [log[0] for log in logs],
-                "Action": [log[1] for log in logs],
-                "Timestamp": [log[2] for log in logs]
-            },
-            use_container_width=True
-        )
-    else:
-        st.info("No logs found yet.")
-
-
-# CSS Customization
+# CSS Customization (keeping your existing styles)
 st.markdown(
     """
     <style>
@@ -852,9 +947,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
-# Load environment variables
-# ------------------- Core Setup -------------------
 
 
 # Load environment variables

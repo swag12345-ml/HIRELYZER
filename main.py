@@ -212,16 +212,24 @@ from llm_manager import call_llm
 
 from pydantic import BaseModel
 from db_manager import get_database_stats
-from user_login import (
+from userlogin import (
     create_user_table,
     add_user,
     verify_user,
     get_logins_today,
     get_total_registered_users,
     log_user_action,
-    username_exists  # 👈 add this line
+    username_exists,
+    generate_google_oauth_url,
+    handle_google_callback,
+    get_auth_stats,
+    save_user_api_key,
+    get_user_api_key,
+    get_all_user_logs
 )
-
+import streamlit as st
+import requests
+from base64 import b64encode
 
 # ------------------- Initialize -------------------
 create_user_table()
@@ -233,6 +241,8 @@ if "username" not in st.session_state:
     st.session_state.username = None
 if "processed_files" not in st.session_state:
     st.session_state.processed_files = set()
+if "auth_method" not in st.session_state:
+    st.session_state.auth_method = None
 
 # ------------------- CSS Styling -------------------
 st.markdown("""
@@ -279,6 +289,42 @@ body, .main {
     box-shadow: 0 0 10px rgba(46,160,67,0.4);
     transform: scale(1.02);
 }
+.google-btn {
+    background-color: #4285f4 !important;
+    color: white !important;
+    border-radius: 10px !important;
+    padding: 0.6em 1.5em !important;
+    border: none !important;
+    font-weight: bold !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+}
+.google-btn:hover {
+    background-color: #3367d6 !important;
+    box-shadow: 0 0 10px rgba(66,133,244,0.4) !important;
+    transform: scale(1.02) !important;
+}
+.divider {
+    text-align: center;
+    margin: 20px 0;
+    position: relative;
+}
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #30363d;
+}
+.divider span {
+    background: #161b22;
+    padding: 0 15px;
+    color: #c9d1d9;
+}
 .feature-card {
     background: radial-gradient(circle at top left, #1f2937, #111827);
     padding: 20px;
@@ -301,13 +347,33 @@ body, .main {
 }
 </style>
 """, unsafe_allow_html=True)
-# 🔹 VIDEO BACKGROUND & GLOW TEXT
 
-
-
+# Add missing function for database stats
+def get_database_stats():
+    """Placeholder function - implement based on your database structure"""
+    return {"total_candidates": 0}
 
 # ------------------- BEFORE LOGIN -------------------
 if not st.session_state.authenticated:
+    
+    # Handle Google OAuth callback
+    query_params = st.query_params
+    if "code" in query_params and "state" in query_params:
+        code = query_params["code"]
+        state = query_params["state"]
+        
+        success, message = handle_google_callback(code, state)
+        if success:
+            st.session_state.authenticated = True
+            auth_method = st.session_state.get('auth_method', 'google')
+            log_user_action(st.session_state.username, "login", auth_method)
+            st.success(message)
+            # Clear query parameters
+            st.query_params.clear()
+            st.rerun()
+        else:
+            st.error(f"❌ Google login failed: {message}")
+            st.query_params.clear()
 
     # -------- Sidebar --------
     with st.sidebar:
@@ -376,7 +442,7 @@ if not st.session_state.authenticated:
     active_logins = get_logins_today()
     stats = get_database_stats()
 
-# Replace static 15 with dynamic count
+    # Replace static 15 with dynamic count
     resumes_uploaded = stats.get("total_candidates", 0)
 
     states_accessed = 29
@@ -451,143 +517,164 @@ if not st.session_state.authenticated:
     </div>
     """, unsafe_allow_html=True)
 
+    if not st.session_state.get("authenticated", False):
+        
+        # ✅ Use an online image of a female employee
+        image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
+        response = requests.get(image_url)
+        img_base64 = b64encode(response.content).decode()
 
+        # ✅ Inject animated shuffle CSS + HTML
+        st.markdown(f"""
+        <style>
+        .animated-cards {{
+          margin-top: 40px;
+          display: flex;
+          justify-content: center;
+          position: relative;
+          height: 260px;
+        }}
+        .animated-cards img {{
+          position: absolute;
+          width: 220px;
+          animation: splitCards 2.5s ease-in-out infinite alternate;
+          z-index: 1;
+        }}
+        .animated-cards img:nth-child(1) {{
+          animation-delay: 0s;
+          z-index: 3;
+        }}
+        .animated-cards img:nth-child(2) {{
+          animation-delay: 0.3s;
+          z-index: 2;
+        }}
+        .animated-cards img:nth-child(3) {{
+          animation-delay: 0.6s;
+          z-index: 1;
+        }}
+        @keyframes splitCards {{
+          0% {{
+            transform: scale(1) translateX(0) rotate(0deg);
+            opacity: 1;
+          }}
+          100% {{
+            transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot));
+            opacity: 1;
+          }}
+        }}
+        .card-left {{ --x-offset: -80px; --rot: -4deg; }}
+        .card-center {{ --x-offset: 0px; --rot: 0deg; }}
+        .card-right {{ --x-offset: 80px; --rot: 4deg; }}
+        </style>
 
+        <div class="animated-cards">
+            <img class="card-left" src="data:image/png;base64,{img_base64}" />
+            <img class="card-center" src="data:image/png;base64,{img_base64}" />
+            <img class="card-right" src="data:image/png;base64,{img_base64}" />
+        </div>
+        """, unsafe_allow_html=True)
 
+        # -------- Login/Register Layout --------
+        left, center, right = st.columns([1, 2, 1])
 
-if not st.session_state.get("authenticated", False):
-    
+        with center:
+            st.markdown(
+                "<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>HIRELYZER</span></h2>",
+                unsafe_allow_html=True,
+            )
 
-    # ✅ Use an online image of a female employee
-    image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
-    response = requests.get(image_url)
-    img_base64 = b64encode(response.content).decode()
+            login_tab, register_tab = st.tabs(["🔑 Login", "🆕 Register"])
 
-    # ✅ Inject animated shuffle CSS + HTML
-    st.markdown(f"""
-    <style>
-    .animated-cards {{
-      margin-top: 40px;
-      display: flex;
-      justify-content: center;
-      position: relative;
-      height: 260px;
-    }}
-    .animated-cards img {{
-      position: absolute;
-      width: 220px;
-      animation: splitCards 2.5s ease-in-out infinite alternate;
-      z-index: 1;
-    }}
-    .animated-cards img:nth-child(1) {{
-      animation-delay: 0s;
-      z-index: 3;
-    }}
-    .animated-cards img:nth-child(2) {{
-      animation-delay: 0.3s;
-      z-index: 2;
-    }}
-    .animated-cards img:nth-child(3) {{
-      animation-delay: 0.6s;
-      z-index: 1;
-    }}
-    @keyframes splitCards {{
-      0% {{
-        transform: scale(1) translateX(0) rotate(0deg);
-        opacity: 1;
-      }}
-      100% {{
-        transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot));
-        opacity: 1;
-      }}
-    }}
-    .card-left {{ --x-offset: -80px; --rot: -4deg; }}
-    .card-center {{ --x-offset: 0px; --rot: 0deg; }}
-    .card-right {{ --x-offset: 80px; --rot: 4deg; }}
-    </style>
+            # ---------------- LOGIN TAB ----------------
+            with login_tab:
+                # Google Login Button
+                google_oauth_url = generate_google_oauth_url()
+                st.markdown(f"""
+                <a href="{google_oauth_url}" target="_self">
+                    <button class="google-btn" style="width: 100%; margin-bottom: 15px;">
+                        <img src="https://developers.google.com/identity/images/g-logo.png" width="20" height="20">
+                        Continue with Google
+                    </button>
+                </a>
+                """, unsafe_allow_html=True)
+                
+                # Divider
+                st.markdown('<div class="divider"><span>or</span></div>', unsafe_allow_html=True)
+                
+                # Traditional Login
+                user = st.text_input("Username", key="login_user")
+                pwd = st.text_input("Password", type="password", key="login_pass")
 
-    <div class="animated-cards">
-        <img class="card-left" src="data:image/png;base64,{img_base64}" />
-        <img class="card-center" src="data:image/png;base64,{img_base64}" />
-        <img class="card-right" src="data:image/png;base64,{img_base64}" />
-    </div>
-    """, unsafe_allow_html=True)
-
-    # -------- Login/Register Layout --------
-    left, center, right = st.columns([1, 2, 1])
-
-    with center:
-        st.markdown(
-            "<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>HIRELYZER</span></h2>",
-            unsafe_allow_html=True,
-        )
-
-        login_tab, register_tab = st.tabs(["🔑 Login", "🆕 Register"])
-
-        # ---------------- LOGIN TAB ----------------
-        with login_tab:
-            user = st.text_input("Username", key="login_user")
-            pwd = st.text_input("Password", type="password", key="login_pass")
-
-            if st.button("Login", key="login_btn"):
-                success, saved_key = verify_user(user.strip(), pwd.strip())
-                if success:
-                    st.session_state.authenticated = True
-                    st.session_state.username = user.strip()
-
-                    # ✅ Load saved Groq key into session
-                    if saved_key:
-                        st.session_state["user_groq_key"] = saved_key
-
-                    log_user_action(user.strip(), "login")
-                    st.success("✅ Login successful!")
-                    st.rerun()
-                else:
-                    st.error("❌ Invalid credentials.")
-
-        # ---------------- REGISTER TAB ----------------
-        with register_tab:
-            new_user = st.text_input("Choose a Username", key="reg_user")
-            new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
-            st.caption("🔒 Password must be at least 8 characters and include uppercase, lowercase, number, and special character.")
-
-            # ✅ Live Username Availability Check
-            if new_user.strip():
-                if username_exists(new_user.strip()):
-                    st.error("🚫 Username already exists.")
-                else:
-                    st.info("✅ Username is available.")
-
-            if st.button("Register", key="register_btn"):
-                if new_user.strip() and new_pass.strip():
-                    success, message = add_user(new_user.strip(), new_pass.strip())
+                if st.button("Login", key="login_btn"):
+                    success, saved_key = verify_user(user.strip(), pwd.strip())
                     if success:
-                        st.success(message)
-                        log_user_action(new_user.strip(), "register")
-                    else:
-                        st.error(message)
-                else:
-                    st.warning("⚠️ Please fill in both fields.")
+                        st.session_state.authenticated = True
+                        st.session_state.username = user.strip()
 
-        st.markdown("</div>", unsafe_allow_html=True)
+                        # ✅ Load saved Groq key into session
+                        if saved_key:
+                            st.session_state["user_groq_key"] = saved_key
+
+                        log_user_action(user.strip(), "login", "password")
+                        st.success("✅ Login successful!")
+                        st.rerun()
+                    else:
+                        st.error("❌ Invalid credentials.")
+
+            # ---------------- REGISTER TAB ----------------
+            with register_tab:
+                st.info("💡 You can also register/login instantly using Google above!")
+                
+                new_user = st.text_input("Choose a Username", key="reg_user")
+                new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
+                st.caption("🔒 Password must be at least 8 characters and include uppercase, lowercase, number, and special character.")
+
+                # ✅ Live Username Availability Check
+                if new_user.strip():
+                    if username_exists(new_user.strip()):
+                        st.error("🚫 Username already exists.")
+                    else:
+                        st.info("✅ Username is available.")
+
+                if st.button("Register", key="register_btn"):
+                    if new_user.strip() and new_pass.strip():
+                        success, message = add_user(new_user.strip(), new_pass.strip())
+                        if success:
+                            st.success(message)
+                            log_user_action(new_user.strip(), "register", "password")
+                        else:
+                            st.error(message)
+                    else:
+                        st.warning("⚠️ Please fill in both fields.")
+
+            st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()
 
-
-
-
 # ------------------- AFTER LOGIN -------------------
-from user_login import save_user_api_key, get_user_api_key  # Ensure both are imported
-
 if st.session_state.get("authenticated"):
-    st.markdown(
-        f"<h2 style='color:#00BFFF;'>Welcome to HIRELYZER, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>",
-        unsafe_allow_html=True,
-    )
+    # Display welcome message with profile picture for Google users
+    if st.session_state.get('auth_method') == 'google' and st.session_state.get('profile_picture'):
+        col1, col2 = st.columns([1, 10])
+        with col1:
+            st.image(st.session_state.profile_picture, width=60)
+        with col2:
+            st.markdown(
+                f"<h2 style='color:#00BFFF;'>Welcome to HIRELYZER, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>",
+                unsafe_allow_html=True,
+            )
+            if st.session_state.get('user_email'):
+                st.caption(f"📧 {st.session_state.user_email}")
+    else:
+        st.markdown(
+            f"<h2 style='color:#00BFFF;'>Welcome to HIRELYZER, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>",
+            unsafe_allow_html=True,
+        )
 
     # 🔓 LOGOUT BUTTON
     if st.button("🚪 Logout"):
-        log_user_action(st.session_state.get("username", "unknown"), "logout")
+        auth_method = st.session_state.get("auth_method", "password")
+        log_user_action(st.session_state.get("username", "unknown"), "logout", auth_method)
 
         # ✅ Clear all session keys safely
         for key in list(st.session_state.keys()):
@@ -626,41 +713,51 @@ if st.session_state.get("authenticated"):
         save_user_api_key(st.session_state.username, None)
         st.sidebar.success("✅ Cleared saved Groq API key. Now using shared admin key.")
 
+    # Admin Dashboard
+    if st.session_state.username == "admin":
+        st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown("<h2 style='color:#00BFFF;'>📊 Admin Dashboard</h2>", unsafe_allow_html=True)
 
+        # Enhanced metrics with auth method breakdown
+        auth_counts, login_counts = get_auth_stats()
+        
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("👤 Total Registered Users", get_total_registered_users())
+        with col2:
+            st.metric("📅 Logins Today (IST)", get_logins_today())
+        with col3:
+            google_users = auth_counts.get('google', 0)
+            st.metric("🔍 Google Users", google_users)
+        with col4:
+            password_users = auth_counts.get('password', 0)
+            st.metric("🔐 Password Users", password_users)
+        
+        # Login method breakdown for today
+        st.markdown("<h4 style='color:#00BFFF;'>📈 Today's Login Methods</h4>", unsafe_allow_html=True)
+        col1, col2 = st.columns(2)
+        with col1:
+            google_logins = login_counts.get('google', 0)
+            st.metric("Google Logins Today", google_logins)
+        with col2:
+            password_logins = login_counts.get('password', 0)
+            st.metric("Password Logins Today", password_logins)
 
-
-
-
-from user_login import get_all_user_logs, get_total_registered_users, get_logins_today
-import streamlit as st
-
-if st.session_state.username == "admin":
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown("<h2 style='color:#00BFFF;'>📊 Admin Dashboard</h2>", unsafe_allow_html=True)
-
-    # Metrics row
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("👤 Total Registered Users", get_total_registered_users())
-    with col2:
-        st.metric("📅 Logins Today (IST)", get_logins_today())
-
-    # Removed API key usage section (no longer tracked)
-    # Activity log
-    st.markdown("<h3 style='color:#00BFFF;'>📋 Admin Activity Log</h3>", unsafe_allow_html=True)
-    logs = get_all_user_logs()
-    if logs:
-        st.dataframe(
-            {
-                "Username": [log[0] for log in logs],
-                "Action": [log[1] for log in logs],
-                "Timestamp": [log[2] for log in logs]
-            },
-            use_container_width=True
-        )
-    else:
-        st.info("No logs found yet.")
-
+        # Activity log
+        st.markdown("<h3 style='color:#00BFFF;'>📋 Admin Activity Log</h3>", unsafe_allow_html=True)
+        logs = get_all_user_logs()
+        if logs:
+            st.dataframe(
+                {
+                    "Username": [log[0] for log in logs],
+                    "Action": [log[1] for log in logs],
+                    "Timestamp": [log[2] for log in logs],
+                    "Auth Method": [log[3] if len(log) > 3 else 'password' for log in logs]
+                },
+                use_container_width=True
+            )
+        else:
+            st.info("No logs found yet.")
 
 # CSS Customization
 st.markdown(

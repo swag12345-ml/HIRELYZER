@@ -2,7 +2,8 @@ import sqlite3
 import bcrypt
 import streamlit as st
 import datetime
-from datetime import datetime
+from datetime import datetime, timedelta
+
 
 import pytz
 import re
@@ -535,6 +536,7 @@ def get_user_activity_history(username, limit=50):
     logs = c.fetchall()
     conn.close()
     return logs
+
 
 
 

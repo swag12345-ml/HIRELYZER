@@ -141,16 +141,19 @@ def create_user_table():
 def generate_oauth_state():
     """Generate a secure random state for OAuth"""
     state = secrets.token_urlsafe(32)
-    expires_at = (datetime.now() + datetime.timedelta(minutes=10)).isoformat()
+    expires_at = (datetime.now() + timedelta(minutes=10)).isoformat()
     
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
-    c.execute('INSERT INTO oauth_states (state, created_at, expires_at) VALUES (?, ?, ?)',
-              (state, datetime.now().isoformat(), expires_at))
+    c.execute(
+        'INSERT INTO oauth_states (state, created_at, expires_at) VALUES (?, ?, ?)',
+        (state, datetime.now().isoformat(), expires_at)
+    )
     conn.commit()
     conn.close()
     
     return state
+
 
 def verify_oauth_state(state):
     """Verify OAuth state and clean up expired states"""
@@ -174,9 +177,13 @@ def verify_oauth_state(state):
 
 def get_google_auth_url():
     """Generate Google OAuth authorization URL"""
-    state = generate_oauth_state()
-    st.session_state.oauth_state = state
-    
+    try:
+        state = generate_oauth_state()
+        st.session_state.oauth_state = state
+    except Exception as e:
+        st.error(f"⚠️ Failed to generate OAuth state: {e}")
+        return None
+
     params = {
         'client_id': GOOGLE_CLIENT_ID,
         'redirect_uri': GOOGLE_REDIRECT_URI,
@@ -186,8 +193,9 @@ def get_google_auth_url():
         'access_type': 'offline',
         'prompt': 'consent'
     }
-    
+
     return f"{GOOGLE_AUTH_URL}?{urlencode(params)}"
+
 
 def exchange_code_for_token(code, state):
     """Exchange authorization code for access token"""
@@ -536,6 +544,7 @@ def get_user_activity_history(username, limit=50):
     logs = c.fetchall()
     conn.close()
     return logs
+
 
 
 

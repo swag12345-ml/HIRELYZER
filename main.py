@@ -2264,8 +2264,8 @@ if uploaded_files and job_description:
             st.session_state.processed_files.add(uploaded_file.name)
 
     # Instead of st.success
-st.image("https://cdn-icons-png.flaticon.com/512/845/845646.png", width=60)
-st.markdown("### ✅ Resume Processed Successfully!")
+    st.image("https://cdn-icons-png.flaticon.com/512/845/845646.png", width=60)
+    st.markdown("### ✅ Resume Processed Successfully!")
 
 
 

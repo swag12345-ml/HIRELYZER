@@ -455,15 +455,52 @@ if not st.session_state.authenticated:
 
 
 
-if not st.session_state.get("authenticated", False):
-    
+import streamlit as st
+import requests
+from base64 import b64encode
+from user_login import save_user_api_key, get_user_api_key, verify_user, add_user, username_exists, log_user_action
 
-    # ✅ Use an online image of a female employee
+# Utility functions for styled alerts
+def show_success(msg):
+    st.markdown(f"""
+    <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#e6f7e6;border-radius:8px;">
+        <img src="https://cdn-icons-png.flaticon.com/512/845/845646.png" width="28"/>
+        <span style="font-size:16px;color:#155724;font-weight:bold;">{msg}</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+def show_error(msg):
+    st.markdown(f"""
+    <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#f8d7da;border-radius:8px;">
+        <img src="https://cdn-icons-png.flaticon.com/512/463/463612.png" width="28"/>
+        <span style="font-size:16px;color:#721c24;font-weight:bold;">{msg}</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+def show_warning(msg):
+    st.markdown(f"""
+    <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff3cd;border-radius:8px;">
+        <img src="https://cdn-icons-png.flaticon.com/512/595/595067.png" width="28"/>
+        <span style="font-size:16px;color:#856404;font-weight:bold;">{msg}</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+def show_info(msg):
+    st.markdown(f"""
+    <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#d1ecf1;border-radius:8px;">
+        <img src="https://cdn-icons-png.flaticon.com/512/1828/1828640.png" width="28"/>
+        <span style="font-size:16px;color:#0c5460;font-weight:bold;">{msg}</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+# ------------------- LOGIN PAGE -------------------
+if not st.session_state.get("authenticated", False):
+    # ✅ Animated cards with an image
     image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
     response = requests.get(image_url)
     img_base64 = b64encode(response.content).decode()
 
-    # ✅ Inject animated shuffle CSS + HTML
     st.markdown(f"""
     <style>
     .animated-cards {{
@@ -517,12 +554,19 @@ if not st.session_state.get("authenticated", False):
     left, center, right = st.columns([1, 2, 1])
 
     with center:
-        st.markdown(
-            "<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>HIRELYZER</span></h2>",
-            unsafe_allow_html=True,
-        )
+        st.markdown("""
+        <div class='login-card' style="text-align:center;">
+            <h2>
+                <img src="https://cdn-icons-png.flaticon.com/512/61/61456.png" width="28" style="vertical-align:middle;"/> 
+                Login to <span style='color:#00BFFF;'>HIRELYZER</span>
+            </h2>
+        </div>
+        """, unsafe_allow_html=True)
 
-        login_tab, register_tab = st.tabs(["🔑 Login", "🆕 Register"])
+        login_tab, register_tab = st.tabs([
+            "<img src='https://cdn-icons-png.flaticon.com/512/1828/1828395.png' width='18' style='vertical-align:middle;'/> Login",
+            "<img src='https://cdn-icons-png.flaticon.com/512/1828/1828399.png' width='18' style='vertical-align:middle;'/> Register"
+        ])
 
         # ---------------- LOGIN TAB ----------------
         with login_tab:
@@ -535,96 +579,85 @@ if not st.session_state.get("authenticated", False):
                     st.session_state.authenticated = True
                     st.session_state.username = user.strip()
 
-                    # ✅ Load saved Groq key into session
                     if saved_key:
                         st.session_state["user_groq_key"] = saved_key
 
                     log_user_action(user.strip(), "login")
-                    st.success("✅ Login successful!")
+                    show_success("Login successful!")
                     st.rerun()
                 else:
-                    st.error("❌ Invalid credentials.")
+                    show_error("Invalid credentials.")
 
         # ---------------- REGISTER TAB ----------------
         with register_tab:
             new_user = st.text_input("Choose a Username", key="reg_user")
             new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
-            st.caption("🔒 Password must be at least 8 characters and include uppercase, lowercase, number, and special character.")
+            st.caption("Password must be at least 8 characters and include uppercase, lowercase, number, and special character.")
 
-            # ✅ Live Username Availability Check
             if new_user.strip():
                 if username_exists(new_user.strip()):
-                    st.error("🚫 Username already exists.")
+                    show_error("Username already exists.")
                 else:
-                    st.info("✅ Username is available.")
+                    show_info("Username is available.")
 
             if st.button("Register", key="register_btn"):
                 if new_user.strip() and new_pass.strip():
                     success, message = add_user(new_user.strip(), new_pass.strip())
                     if success:
-                        st.success(message)
+                        show_success(message)
                         log_user_action(new_user.strip(), "register")
                     else:
-                        st.error(message)
+                        show_error(message)
                 else:
-                    st.warning("⚠️ Please fill in both fields.")
-
-        st.markdown("</div>", unsafe_allow_html=True)
+                    show_warning("Please fill in both fields.")
 
     st.stop()
 
 
-
-
 # ------------------- AFTER LOGIN -------------------
-from user_login import save_user_api_key, get_user_api_key  # Ensure both are imported
-
 if st.session_state.get("authenticated"):
-    st.markdown(
-        f"<h2 style='color:#00BFFF;'>Welcome to HIRELYZER, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>",
-        unsafe_allow_html=True,
-    )
+    st.markdown(f"""
+        <h2 style='color:#00BFFF;'>
+            Welcome to HIRELYZER, <span style='color:white;'>{st.session_state.username}</span>
+            <img src="https://cdn-icons-png.flaticon.com/512/929/929493.png" width="28" style="vertical-align:middle;"/>
+        </h2>
+    """, unsafe_allow_html=True)
 
-    # 🔓 LOGOUT BUTTON
-    if st.button("🚪 Logout"):
+    # LOGOUT BUTTON
+    if st.button("Logout", key="logout_btn"):
         log_user_action(st.session_state.get("username", "unknown"), "logout")
-
-        # ✅ Clear all session keys safely
         for key in list(st.session_state.keys()):
             del st.session_state[key]
+        show_success("Logged out successfully.")
+        st.rerun()
 
-        st.success("✅ Logged out successfully.")
-        st.rerun()  # Force rerun to prevent stale UI
+    # GROQ API KEY SECTION (SIDEBAR)
+    st.sidebar.markdown("""
+    <h3 style="display:flex;align-items:center;gap:10px;">
+        <img src="https://cdn-icons-png.flaticon.com/512/61/61456.png" width="22"/> Groq API Key
+    </h3>
+    """, unsafe_allow_html=True)
 
-    # 🔑 GROQ API KEY SECTION (SIDEBAR)
-    st.sidebar.markdown("### 🔑 Groq API Key")
-
-    # ✅ Load saved key from DB
     saved_key = get_user_api_key(st.session_state.username)
     masked_preview = f"****{saved_key[-6:]}" if saved_key else ""
 
-    user_api_key_input = st.sidebar.text_input(
-        "Your Groq API Key (Optional)",
-        placeholder=masked_preview,
-        type="password"
-    )
+    user_api_key_input = st.sidebar.text_input("Your Groq API Key (Optional)", placeholder=masked_preview, type="password")
 
-    # ✅ Save or reuse key
     if user_api_key_input:
         st.session_state["user_groq_key"] = user_api_key_input
         save_user_api_key(st.session_state.username, user_api_key_input)
-        st.sidebar.success("✅ New key saved and in use.")
+        st.sidebar.markdown('<p style="color:green;">✔️ New key saved and in use.</p>', unsafe_allow_html=True)
     elif saved_key:
         st.session_state["user_groq_key"] = saved_key
-        st.sidebar.info(f"ℹ️ Using your previously saved API key ({masked_preview})")
+        st.sidebar.markdown(f'<p style="color:blue;">ℹ️ Using your previously saved API key ({masked_preview})</p>', unsafe_allow_html=True)
     else:
-        st.sidebar.warning("⚠ Using shared admin key with possible usage limits")
+        st.sidebar.markdown('<p style="color:orange;">⚠ Using shared admin key with possible usage limits</p>', unsafe_allow_html=True)
 
-    # 🧹 Clear saved key
-    if st.sidebar.button("🗑️ Clear My API Key"):
+    if st.sidebar.button("Clear My API Key"):
         st.session_state["user_groq_key"] = None
         save_user_api_key(st.session_state.username, None)
-        st.sidebar.success("✅ Cleared saved Groq API key. Now using shared admin key.")
+        st.sidebar.markdown('<p style="color:green;">✔️ Cleared saved Groq API key. Now using shared admin key.</p>', unsafe_allow_html=True)
+
 
 
 
@@ -2264,8 +2297,16 @@ if uploaded_files and job_description:
             st.session_state.processed_files.add(uploaded_file.name)
 
     # Instead of st.success
-    st.image("https://cdn-icons-png.flaticon.com/512/845/845646.png", width=60)
-    st.markdown("### ✅ Resume Processed Successfully!")
+    st.markdown(
+    """
+    <div style="background-color:#f0fff4; padding:15px; border-radius:10px; display:flex; align-items:center;">
+        <span style="font-size:30px; margin-right:10px;">📑</span>
+        <span style="font-size:18px; color:#2f855a;">Resume Processed Successfully!</span>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 
 
 

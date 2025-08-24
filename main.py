@@ -1469,71 +1469,55 @@ replacement_mapping = {
 
 def rewrite_text_with_llm(text, replacement_mapping, user_location):
     """
-    Uses LLM to rewrite a resume with bias-free language while preserving
-    the original content length. Enhances grammar, structure, and readability.
-    Produces a structured resume format and suggests job titles strictly
-    based on the candidate's skills and experience mentioned in the resume.
+    Uses LLM to rewrite a resume with bias-free language, while preserving
+    the original content length. Enhances grammar, structure, and clarity.
+    Ensures structured formatting and includes relevant links and job suggestions.
     """
 
-    # Prepare replacement mapping in a clear bullet format for better LLM interpretation
+    # Create a clear mapping in bullet format
     formatted_mapping = "\n".join(
-        [f'- Replace "{key}" with "{value}"' for key, value in replacement_mapping.items()]
+        [f'- "{key}" → "{value}"' for key, value in replacement_mapping.items()]
     )
 
-    # Construct the LLM prompt
+    # Prompt for LLM
     prompt = f"""
 You are an expert resume editor and career advisor.
 
----
+Your tasks:
 
-### ✅ Task 1: Rewrite the Resume
-- Replace biased or gender-coded language using the exact mapping provided.
-- Preserve the original **content length** (keep the same number of words per section).
-- Improve grammar, clarity, and sentence structure without removing any details.
-- Do NOT alter or delete:
-  - Candidate name
-  - Technologies, tools, and certifications
-  - Project details
-- Do NOT fabricate any missing details beyond placeholders.
+1. ✨ Rewrite the resume text below with these rules:
+   - Replace any biased or gender-coded language using the exact matches from the replacement mapping.
+   - Do NOT reduce the length of any section — preserve the original **number of words per section**.
+   - Improve grammar, tone, sentence clarity, and flow without shortening or removing any content.
+   - Do NOT change or remove names, tools, technologies, certifications, or project details.
 
-**Replacement Mapping:**
+2. 🧾 Structure the resume using these sections **if present** in the original, keeping the original text size:
+   - 🏷️ **Name**
+   - 📞 **Contact Information**
+   - 📧 **Email**
+   - 🔗 **LinkedIn** → If missing, insert: 🔗 Please paste your LinkedIn URL here.
+   - 🌐 **Portfolio** → If missing, insert: 🌐 Please paste your GitHub or portfolio link here.
+   - ✍️ **Professional Summary**
+   - 💼 **Work Experience**
+   - 🧑‍💼 **Internships**
+   - 🛠️ **Skills**
+   - 🤝 **Soft Skills**
+   - 🎓 **Certifications**
+   - 🏫 **Education**
+   - 📂 **Projects**
+   - 🌟 **Interests**
+
+   - Use bullet points (•) inside each section for clarity.
+   - Maintain new lines after each points properly.
+   - Keep all hyperlinks intact and show them in full where applicable (e.g., LinkedIn, GitHub, project links).
+   - Do not invent or assume any information not present in the original.
+
+3. 📌 Strictly apply this **replacement mapping** (match exact phrases only — avoid altering keywords or terminology):
 {formatted_mapping}
 
----
-
-### ✅ Task 2: Structure the Resume
-Organize the rewritten text using these sections (only if present in the original):
-- 🏷️ **Name**
-- 📞 **Contact Information**
-- 📧 **Email**
-- 🔗 **LinkedIn** (If missing, insert: 🔗 Please paste your LinkedIn URL here)
-- 🌐 **Portfolio** (If missing, insert: 🌐 Please paste your GitHub or portfolio link here)
-- ✍️ **Professional Summary**
-- 💼 **Work Experience**
-- 🧑‍💼 **Internships**
-- 🛠️ **Skills**
-- 🤝 **Soft Skills**
-- 🎓 **Certifications**
-- 🏫 **Education**
-- 📂 **Projects**
-- 🌟 **Interests**
-
-**Formatting Rules:**
-- Use bullet points (•) for items in each section.
-- Maintain proper spacing and line breaks.
-- Keep all hyperlinks intact and show them in full.
-- Do NOT invent information.
-
----
-
-### ✅ Task 3: Suggest Relevant Job Titles
-- Suggest **exactly 5 job titles** that are directly related to the candidate's **skills and experience mentioned in the resume**.
-- For each job title:
-    - Provide a short reason why this role fits the candidate.
-    - Include a LinkedIn job search link in this format:
-      `https://www.linkedin.com/jobs/search/?keywords=<Job%20Title>&location={user_location}`
-- DO NOT include roles unrelated to the resume.
-- DO NOT invent new skills or qualifications.
+4. 💼 Suggest **5 relevant job titles** suited for this candidate based in **{user_location}**. For each:
+   - Provide a detailed  reason for relevance.
+   - Attach a direct LinkedIn job search URL.
 
 ---
 
@@ -1542,28 +1526,29 @@ Organize the rewritten text using these sections (only if present in the origina
 
 ---
 
-### ✅ Bias-Free Rewritten Resume (Structured & Preserving Original Length)
+### ✅ Bias-Free Rewritten Resume (Fully Structured, Same Length)
 
 ---
 
-### 🎯 Suggested Job Titles (Strictly Based on Resume Content)
-1. **[Job Title 1]** — Reason for relevance  
+### 🎯 Suggested Job Titles with Reasoning and LinkedIn Search Links
+
+1. **[Job Title 1]** — Brief reason  
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%201&location={user_location})
 
-2. **[Job Title 2]** — Reason for relevance  
+2. **[Job Title 2]** — Brief reason  
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%202&location={user_location})
 
-3. **[Job Title 3]** — Reason for relevance  
+3. **[Job Title 3]** — Brief reason  
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%203&location={user_location})
 
-4. **[Job Title 4]** — Reason for relevance  
+4. **[Job Title 4]** — Brief reason  
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%204&location={user_location})
 
-5. **[Job Title 5]** — Reason for relevance  
+5. **[Job Title 5]** — Brief reason  
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%205&location={user_location})
 """
 
-    # Call the LLM for processing
+    # Call the LLM of your choice
     response = call_llm(prompt, session=st.session_state)
     return response
 

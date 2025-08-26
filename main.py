@@ -5025,117 +5025,291 @@ with tab4:
                 with cols[idx % 2]:
                     st.markdown(f"**{title}**")
                     st.video(url)
-with tab5:
-    import sqlite3
-    import pandas as pd
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import streamlit as st
-    from datetime import datetime, timedelta
-    import plotly.express as px
-    import plotly.graph_objects as go
-    from plotly.subplots import make_subplots
+import sqlite3
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+import streamlit as st
+from datetime import datetime, timedelta
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import io
+import pickle
+from PIL import Image
 
-    # Import enhanced database manager functions
-    from db_manager import (
-        get_top_domains_by_score,
-        get_resume_count_by_day,
-        get_average_ats_by_domain,
-        get_domain_distribution,
-        get_bias_distribution,
-        filter_candidates_by_date,
-        delete_candidate_by_id,
-        get_all_candidates,
-        get_candidate_by_id,
-        get_domain_performance_stats,
-        get_daily_ats_stats,
-        get_flagged_candidates,
-        get_database_stats,
-        analyze_domain_transitions,
-        export_to_csv,
-        cleanup_old_records,
-        DatabaseManager
+# Optional: face_recognition (recommended). If not available we will show instructions.
+try:
+    import face_recognition
+    FACE_LIB_AVAILABLE = True
+except Exception:
+    FACE_LIB_AVAILABLE = False
+
+# Import enhanced database manager functions
+from db_manager import (
+    get_top_domains_by_score,
+    get_resume_count_by_day,
+    get_average_ats_by_domain,
+    get_domain_distribution,
+    get_bias_distribution,
+    filter_candidates_by_date,
+    delete_candidate_by_id,
+    get_all_candidates,
+    get_candidate_by_id,
+    get_domain_performance_stats,
+    get_daily_ats_stats,
+    get_flagged_candidates,
+    get_database_stats,
+    analyze_domain_transitions,
+    export_to_csv,
+    cleanup_old_records,
+    DatabaseManager
+)
+
+# ----------------------- Face Auth DB Helpers -----------------------
+FACE_DB = "face_auth.db"
+
+
+def init_face_db():
+    conn = sqlite3.connect(FACE_DB)
+    c = conn.cursor()
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS admin_faces (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            encoding BLOB,
+            created_at TEXT
+        )
+        """
     )
+    conn.commit()
+    conn.close()
 
-    # Initialize enhanced database manager
-    @st.cache_resource
-    def get_db_manager():
-        return DatabaseManager()
 
-    db_manager = get_db_manager()
-
-    def create_enhanced_pie_chart(df, values_col, labels_col, title):
-        """Create an enhanced pie chart with better styling"""
-        fig = px.pie(
-            df, 
-            values=values_col, 
-            names=labels_col,
-            title=title,
-            color_discrete_sequence=px.colors.qualitative.Set3
+def save_face_encoding(username: str, encoding: np.ndarray) -> bool:
+    try:
+        conn = sqlite3.connect(FACE_DB)
+        c = conn.cursor()
+        enc_blob = pickle.dumps(encoding)
+        c.execute(
+            "REPLACE INTO admin_faces (username, encoding, created_at) VALUES (?, ?, ?)",
+            (username, enc_blob, datetime.now().isoformat()),
         )
-        fig.update_traces(
-            textposition='inside', 
-            textinfo='percent+label',
-            hovertemplate='<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>'
-        )
-        fig.update_layout(
-            showlegend=True,
-            legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.01),
-            margin=dict(t=50, b=50, l=50, r=150)
-        )
-        return fig
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        st.error(f"Error saving face encoding: {e}")
+        return False
 
-    def create_enhanced_bar_chart(df, x_col, y_col, title, orientation='v'):
-        """Create enhanced bar chart with better interactivity"""
-        if orientation == 'v':
-            fig = px.bar(df, x=x_col, y=y_col, title=title, 
-                        color=y_col, color_continuous_scale='viridis')
-            fig.update_xaxes(tickangle=45)
-        else:
-            fig = px.bar(df, x=y_col, y=x_col, title=title, orientation='h',
-                        color=y_col, color_continuous_scale='viridis')
-        
-        fig.update_traces(
-            hovertemplate='<b>%{y if orientation == "v" else x}</b><br>Value: %{x if orientation == "v" else y}<extra></extra>'
-        )
-        fig.update_layout(showlegend=False, margin=dict(t=50, b=50, l=50, r=50))
-        return fig
 
-    def load_domain_distribution():
-        """Enhanced domain distribution loading with error handling"""
+def get_all_face_records():
+    conn = sqlite3.connect(FACE_DB)
+    c = conn.cursor()
+    c.execute("SELECT id, username, encoding, created_at FROM admin_faces")
+    rows = c.fetchall()
+    conn.close()
+    results = []
+    for r in rows:
         try:
-            df = get_domain_distribution()
-            if not df.empty:
-                df = df.sort_values(by="count", ascending=False).reset_index(drop=True)
-                return df
-        except Exception as e:
-            st.error(f"Error loading domain distribution: {e}")
-        return pd.DataFrame()
+            enc = pickle.loads(r[2])
+        except Exception:
+            enc = None
+        results.append({"id": r[0], "username": r[1], "encoding": enc, "created_at": r[3]})
+    return results
 
-    # Enhanced Authentication System
-    if "admin_logged_in" not in st.session_state:
-        st.session_state.admin_logged_in = False
 
-    if not st.session_state.admin_logged_in:
-        st.markdown("""
-        <div style='text-align: center; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; margin-bottom: 2rem;'>
-            <h2 style='color: white; margin-bottom: 1rem;'>🔐 Admin Authentication Required</h2>
-            <p style='color: #f0f0f0;'>Please enter your credentials to access the admin dashboard</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            password = st.text_input("🔑 Enter Admin Password", type="password", placeholder="Enter password...")
-            if st.button("🚀 Login", use_container_width=True):
-                if password == "Swagato@2002":
-                    st.session_state.admin_logged_in = True
-                    st.success("✅ Authentication successful! Redirecting to dashboard...")
-                    st.rerun()
+def delete_face_record(username: str) -> bool:
+    try:
+        conn = sqlite3.connect(FACE_DB)
+        c = conn.cursor()
+        c.execute("DELETE FROM admin_faces WHERE username = ?", (username,))
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        st.error(f"Error deleting face record: {e}")
+        return False
+
+
+def find_matching_face(encoding: np.ndarray, threshold: float = 0.5):
+    records = get_all_face_records()
+    best_match = None
+    best_distance = 1.0
+    for rec in records:
+        if rec['encoding'] is None:
+            continue
+        dist = np.linalg.norm(rec['encoding'] - encoding)
+        if dist < best_distance:
+            best_distance = dist
+            best_match = rec
+    if best_match and best_distance <= threshold:
+        return best_match, best_distance
+    return None, None
+
+# ----------------------- Initialize -----------------------
+init_face_db()
+
+@st.cache_resource
+def get_db_manager():
+    return DatabaseManager()
+
+db_manager = get_db_manager()
+
+# Utility charts
+
+def create_enhanced_pie_chart(df, values_col, labels_col, title):
+    fig = px.pie(
+        df,
+        values=values_col,
+        names=labels_col,
+        title=title,
+        color_discrete_sequence=px.colors.qualitative.Set3
+    )
+    fig.update_traces(
+        textposition='inside',
+        textinfo='percent+label',
+        hovertemplate='<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>'
+    )
+    fig.update_layout(
+        showlegend=True,
+        legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.01),
+        margin=dict(t=50, b=50, l=50, r=150)
+    )
+    return fig
+
+
+def create_enhanced_bar_chart(df, x_col, y_col, title, orientation='v'):
+    if orientation == 'v':
+        fig = px.bar(df, x=x_col, y=y_col, title=title,
+                    color=y_col, color_continuous_scale='viridis')
+        fig.update_xaxes(tickangle=45)
+    else:
+        fig = px.bar(df, x=y_col, y=x_col, title=title, orientation='h',
+                    color=y_col, color_continuous_scale='viridis')
+
+    fig.update_traces(
+        hovertemplate='<b>%{y if orientation == "v" else x}</b><br>Value: %{x if orientation == "v" else y}<extra></extra>'
+    )
+    fig.update_layout(showlegend=False, margin=dict(t=50, b=50, l=50, r=50))
+    return fig
+
+
+def load_domain_distribution():
+    try:
+        df = get_domain_distribution()
+        if not df.empty:
+            df = df.sort_values(by="count", ascending=False).reset_index(drop=True)
+            return df
+    except Exception as e:
+        st.error(f"Error loading domain distribution: {e}")
+    return pd.DataFrame()
+
+# ----------------------- Session State and Tabs -----------------------
+if "admin_logged_in" not in st.session_state:
+    st.session_state.admin_logged_in = False
+
+# Create tabs (keep Tab 5 as Admin Face Auth)
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["Dashboard", "Candidates", "Analytics", "Settings", "Admin Face Auth"])
+
+# ----------------------- Tab 5: Admin Face Registration & Login -----------------------
+with tab5:
+    st.markdown("## 🔐 Admin Face Authentication")
+
+    if not FACE_LIB_AVAILABLE:
+        st.warning(
+            "face_recognition library not installed. Face features will not work.
+"
+            "To enable face auth please install: `pip install face_recognition dlib opencv-python`"
+        )
+        st.info("You can still use the password login on the main app to access the dashboard.")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("### Register / Update Admin Face")
+        username = st.text_input("Admin Username", value="admin")
+        uploaded_file = st.file_uploader("Upload a clear face photo (jpg/png)", type=["jpg", "jpeg", "png"], key="register_file")
+        if st.button("📁 Register Face"):
+            if not FACE_LIB_AVAILABLE:
+                st.error("face_recognition not available. Cannot register face.")
+            elif not uploaded_file:
+                st.error("Please upload a face image file.")
+            else:
+                try:
+                    img = face_recognition.load_image_file(uploaded_file)
+                    encs = face_recognition.face_encodings(img)
+                    if not encs:
+                        st.error("No face detected in the uploaded image. Please upload a clear frontal face photo.")
+                    else:
+                        enc = encs[0]
+                        if save_face_encoding(username, enc):
+                            st.success(f"✅ Face registered for '{username}'. You can now use face login.")
+                except Exception as e:
+                    st.error(f"Error processing image: {e}")
+
+    with col2:
+        st.markdown("### Login with Face")
+        cam_img = st.camera_input("Use your webcam to take a photo for login")
+        threshold = st.slider("Match Threshold (lower = stricter)", 0.25, 0.8, 0.5, 0.05)
+        if st.button("🔓 Login with Face"):
+            if not FACE_LIB_AVAILABLE:
+                st.error("face_recognition not available. Cannot perform face login.")
+            elif not cam_img:
+                st.error("Please capture an image with your camera.")
+            else:
+                try:
+                    image = face_recognition.load_image_file(cam_img)
+                    encs = face_recognition.face_encodings(image)
+                    if not encs:
+                        st.error("No face detected in the camera image. Try again with better lighting.")
+                    else:
+                        enc = encs[0]
+                        match, distance = find_matching_face(enc, threshold)
+                        if match:
+                            st.session_state.admin_logged_in = True
+                            st.success(f"✅ Face recognized. Logged in as {match['username']} (dist={distance:.3f})")
+                            st.experimental_rerun()
+                        else:
+                            st.error("❌ No matching admin face found. Try registering first or increase threshold.")
+                except Exception as e:
+                    st.error(f"Face login error: {e}")
+
+    st.markdown("---")
+    st.markdown("### Manage Registered Admin Faces")
+    recs = get_all_face_records()
+    if recs:
+        df_display = pd.DataFrame([{"username": r['username'], "created_at": r['created_at']} for r in recs])
+        st.dataframe(df_display, use_container_width=True)
+        del_user = st.text_input("Enter username to delete", value="", key="del_face")
+        if st.button("🗑️ Delete Face Record"):
+            if del_user:
+                if delete_face_record(del_user):
+                    st.success(f"Deleted face record for {del_user}")
+                    st.experimental_rerun()
                 else:
-                    st.error("❌ Invalid credentials. Please try again.")
-        st.stop()
+                    st.error("Delete failed.")
+            else:
+                st.error("Enter a username to delete.")
+    else:
+        st.info("No admin face records found. Register one to enable face login.")
 
+    st.markdown("---")
+    st.markdown("### Password Login (fallback)")
+    pwd = st.text_input("Enter Admin Password", type="password", placeholder="Password...", key="pwd_tab5")
+    if st.button("🔑 Password Login"):
+        if pwd == "Swagato@2002":
+            st.session_state.admin_logged_in = True
+            st.success("✅ Password auth successful. You are logged in.")
+            st.experimental_rerun()
+        else:
+            st.error("❌ Invalid password.")
+
+# ----------------------- Other Tabs: show notice or full app when authenticated -----------------------
+# When not authenticated the other tabs will prompt to login via Tab 5
+
+# Helper to render the main admin UI (wrapped so we can call it in tabs when logged in)
+def render_admin_ui():
     # Enhanced Header with Database Stats
     st.markdown("""
     <div style='text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; margin-bottom: 2rem;'>
@@ -5149,7 +5323,7 @@ with tab5:
     with col1:
         if st.button("🔄 Refresh All Data", use_container_width=True):
             st.cache_data.clear()
-            st.rerun()
+            st.experimental_rerun()
     with col2:
         if st.button("📊 Database Stats", use_container_width=True):
             st.session_state.show_db_stats = True
@@ -5160,7 +5334,7 @@ with tab5:
         if st.button("🚪 Secure Logout", use_container_width=True):
             st.session_state.admin_logged_in = False
             st.success("👋 Logged out successfully.")
-            st.rerun()
+            st.experimental_rerun()
 
     # Database Statistics Panel
     if st.session_state.get('show_db_stats', False):
@@ -5219,7 +5393,7 @@ with tab5:
     col1, col2 = st.columns(2)
     with col1:
         search = st.text_input("🔍 Search by Candidate Name", placeholder="Enter candidate name...")
-        if search:
+        if search and not df.empty:
             df = df[df["candidate_name"].str.contains(search, case=False, na=False)]
     
     with col2:
@@ -5339,7 +5513,7 @@ with tab5:
                             if delete_candidate_by_id(delete_id):
                                 st.success(f"✅ Candidate with ID {delete_id} deleted successfully.")
                                 st.cache_data.clear()
-                                st.rerun()
+                                st.experimental_rerun()
                             else:
                                 st.error("❌ Failed to delete candidate.")
                         except Exception as e:
@@ -5368,7 +5542,7 @@ with tab5:
             df_sorted = df_top.sort_values(by="avg_ats", ascending=ascending).head(limit)
             
             # Interactive chart
-            fig = create_enhanced_bar_chart(df_sorted, "domain", "avg_ats", 
+            fig = create_enhanced_bar_chart(df_sorted, "domain", "avg_ats",
                                           "Average ATS Score by Domain", orientation='h')
             st.plotly_chart(fig, use_container_width=True)
             
@@ -5429,11 +5603,11 @@ with tab5:
             df_top_domains = df_domain_dist.head(show_top_n)
 
             if chart_type == "📈 Interactive Bar Chart":
-                fig = create_enhanced_bar_chart(df_top_domains, "domain", "count", 
+                fig = create_enhanced_bar_chart(df_top_domains, "domain", "count",
                                                 "Resume Count by Domain")
                 st.plotly_chart(fig, use_container_width=True)
             else:
-                fig = create_enhanced_pie_chart(df_top_domains, "count", "domain", 
+                fig = create_enhanced_pie_chart(df_top_domains, "count", "domain",
                                                 "Domain Distribution")
                 st.plotly_chart(fig, use_container_width=True)
 
@@ -5621,7 +5795,7 @@ with tab5:
         if analysis_type == "Distribution":
             df_bias = get_bias_distribution(threshold=bias_threshold_pie)
             if not df_bias.empty and "bias_category" in df_bias.columns:
-                fig = create_enhanced_pie_chart(df_bias, "count", "bias_category", 
+                fig = create_enhanced_pie_chart(df_bias, "count", "bias_category",
                                               f"Bias Distribution (Threshold: {bias_threshold_pie})")
                 st.plotly_chart(fig, use_container_width=True)
                 
@@ -5705,4 +5879,14 @@ with tab5:
         <p>🛡️ Enhanced Admin Dashboard | Powered by Advanced Database Manager</p>
         <p>Last updated: {}</p>
     </div>
-    """.format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
+    """ .format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
+
+# Render other tabs: show limited notice if not logged in, otherwise render_admin_ui
+for t in [tab1, tab2, tab3, tab4]:
+    with t:
+        if not st.session_state.admin_logged_in:
+            st.info("🔒 Admin not authenticated. Go to the 'Admin Face Auth' tab (Tab 5) to login with face or password.")
+        else:
+            st.markdown("<div style='padding:8px; background:#e9f7ef; border-radius:8px;'>✅ Admin authenticated — full controls enabled.</div>", unsafe_allow_html=True)
+            render_admin_ui()
+

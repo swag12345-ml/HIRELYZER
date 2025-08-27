@@ -662,6 +662,8 @@ if st.session_state.username == "admin":
         st.info("No logs found yet.")
 
 
+import streamlit as st
+
 st.markdown(
     """
     <style>
@@ -673,10 +675,11 @@ st.markdown(
         color: #c5c6c7;
     }
 
-    /* ---------- MAIN CARD ---------- */
+    /* Main Card */
     .main-card {
         width: 100%;
-        height: 280px;
+        max-width: 600px;
+        margin: 20px auto;
         border-radius: 18px;
         padding: 24px;
         background: radial-gradient(circle at top right, rgba(0, 128, 255, 0.12), rgba(128, 0, 255, 0.08) 60%);
@@ -684,12 +687,8 @@ st.markdown(
         box-shadow: 0px 0px 18px rgba(0,255,255,0.15);
         position: relative;
         overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
     }
 
-    /* ---------- TOP NAV ---------- */
     .nav {
         display: flex;
         justify-content: space-between;
@@ -701,6 +700,7 @@ st.markdown(
         backdrop-filter: blur(6px);
         font-size: 14px;
         color: #d1d5db;
+        margin-bottom: 12px;
     }
     .nav button {
         background: linear-gradient(90deg, #4facfe, #00f2fe);
@@ -718,30 +718,39 @@ st.markdown(
         box-shadow: 0 0 18px rgba(0, 255, 255, 0.9);
     }
 
-    /* ---------- CENTER HERO ---------- */
     .center {
         display: flex;
         justify-content: center;
         align-items: center;
         gap: 18px;
-        margin-top: 12px;
+        margin-bottom: 12px;
     }
     .bag {
-      width: 74px; height: 58px; border-radius: 14px 14px 8px 8px;
-      background: linear-gradient(180deg, #a78bfa, #7c3aed);
-      box-shadow: inset 0 2px 5px rgba(255,255,255,.25), 0 10px 20px rgba(124,58,237,.35);
-      position: relative;
+        width: 74px; height: 58px; border-radius: 14px 14px 8px 8px;
+        background: linear-gradient(180deg, #a78bfa, #7c3aed);
+        box-shadow: inset 0 2px 5px rgba(255,255,255,.25), 0 10px 20px rgba(124,58,237,.35);
+        position: relative;
     }
-    .bag:before {
-      content: ""; position: absolute; left: 12px; right: 12px; top: -12px; height: 14px;
-      background: linear-gradient(180deg, #c4b5fd, #8b5cf6);
-      border-radius: 6px;
+    .bag::before {
+        content: "";
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        top: -12px;
+        height: 14px;
+        background: linear-gradient(180deg, #c4b5fd, #8b5cf6);
+        border-radius: 6px;
     }
     .lock {
-      position: absolute; left: 50%; top: 28px; transform: translateX(-50%);
-      width: 14px; height: 14px; border-radius: 5px;
-      background: linear-gradient(180deg, #fde68a, #f59e0b);
-      box-shadow: 0 4px 8px rgba(245,158,11,.35);
+        position: absolute;
+        left: 50%;
+        top: 28px;
+        transform: translateX(-50%);
+        width: 14px;
+        height: 14px;
+        border-radius: 5px;
+        background: linear-gradient(180deg, #fde68a, #f59e0b);
+        box-shadow: 0 4px 8px rgba(245,158,11,.35);
     }
     .brand {
         font-size: 38px; font-weight: 900;
@@ -749,7 +758,6 @@ st.markdown(
         text-shadow: 0 0 12px rgba(255,255,255,0.8), 0 0 18px rgba(0,0,0,0.6);
     }
 
-    /* ---------- ATS READINESS ---------- */
     .ats-card {
         width: 280px;
         padding: 14px;
@@ -760,9 +768,8 @@ st.markdown(
         font-size: 14px;
         color: #e5e7eb;
         box-shadow: 0 0 18px rgba(0,255,255,0.15);
-        position: absolute;
-        bottom: 14px;
-        right: 14px;
+        position: relative;
+        margin: 0 auto;
     }
     .ats-title {
         font-weight: 600;
@@ -788,21 +795,17 @@ st.markdown(
     }
     </style>
 
-    <!-- MAIN CARD -->
     <div class="main-card">
-        <!-- Nav -->
         <div class="nav">
             <div>Hirelyzer · Resume Intelligence</div>
             <button>Analyze your resume</button>
         </div>
 
-        <!-- Centered Bag + Brand -->
         <div class="center">
             <div class="bag"><div class="lock"></div></div>
             <div class="brand">Hirelyzer</div>
         </div>
 
-        <!-- ATS Readiness -->
         <div class="ats-card">
             <div class="ats-title">ATS Readiness</div>
             <div class="ats-bar"><div class="ats-bar-fill"></div></div>
@@ -812,6 +815,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 

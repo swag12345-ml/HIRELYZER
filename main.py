@@ -662,6 +662,7 @@ if st.session_state.username == "admin":
         st.info("No logs found yet.")
 
 
+# CSS Customization
 st.markdown(
     """
     <style>
@@ -851,10 +852,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
-
-
-
 
 # Load environment variables
 # ------------------- Core Setup -------------------
@@ -2080,7 +2077,7 @@ def create_chain(vectorstore):
     return chain
 
 # App Title
-####st.title("🦙 HIRELYZER - LLAMA 3.3 (ANALYZER + BUILDER + JOB MARKET TRENDS)")###
+st.title("🦙 HIRELYZER - LLAMA 3.3 (ANALYZER + BUILDER + JOB MARKET TRENDS)")
 
 # Chat history
 if "chat_history" not in st.session_state:

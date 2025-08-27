@@ -665,227 +665,154 @@ if st.session_state.username == "admin":
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap');
 
     html, body, [class*="css"] {
         font-family: 'Orbitron', sans-serif;
         background-color: #0b0c10;
         color: #c5c6c7;
-        scroll-behavior: smooth;
     }
 
-    /* ---------- SCROLLBAR ---------- */
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: #1f2833; }
-    ::-webkit-scrollbar-thumb {
-        background: #00ffff;
-        border-radius: 4px;
-    }
-
-    /* ---------- BANNER ---------- */
-    .banner-container {
+    /* ---------- MAIN CARD ---------- */
+    .main-card {
         width: 100%;
-        height: 100px;
-        background: linear-gradient(90deg, #000428, #004e92);
-        border-bottom: 2px solid cyan;
+        height: 280px;
+        border-radius: 18px;
+        padding: 24px;
+        background: radial-gradient(circle at top right, rgba(0, 128, 255, 0.12), rgba(128, 0, 255, 0.08) 60%);
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0px 0px 18px rgba(0,255,255,0.15);
+        position: relative;
         overflow: hidden;
         display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        margin-bottom: 20px;
+        flex-direction: column;
+        justify-content: space-between;
     }
 
-    .pulse-bar {
-        position: absolute;
+    /* ---------- TOP NAV ---------- */
+    .nav {
         display: flex;
+        justify-content: space-between;
         align-items: center;
-        font-size: 22px;
-        font-weight: bold;
-        color: #00ffff;
-        white-space: nowrap;
-        animation: glideIn 12s linear infinite;
-        text-shadow: 0 0 10px #00ffff;
+        padding: 6px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(0,0,0,0.2);
+        backdrop-filter: blur(6px);
+        font-size: 14px;
+        color: #d1d5db;
     }
-    .pulse-bar .bar {
-        width: 10px;
-        height: 30px;
-        margin-right: 10px;
-        background: #00ffff;
-        box-shadow: 0 0 8px cyan;
-        animation: pulse 1s ease-in-out infinite;
-    }
-
-    @keyframes glideIn {
-        0% { left: -50%; opacity: 0; }
-        10% { opacity: 1; }
-        90% { opacity: 1; }
-        100% { left: 110%; opacity: 0; }
-    }
-    @keyframes pulse {
-        0%, 100% { height: 20px; background-color: #00ffff; }
-        50% { height: 40px; background-color: #ff00ff; }
-    }
-
-    /* ---------- HEADER ---------- */
-    .header {
-        font-size: 28px;
-        font-weight: bold;
-        text-align: center;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        padding: 12px 0;
-        animation: glowPulse 3s ease-in-out infinite;
-        text-shadow: 0px 0px 10px #00ffff;
-    }
-    @keyframes glowPulse {
-        0%, 100% { color: #00ffff; text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff; }
-        50% { color: #ff00ff; text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff; }
-    }
-
-    /* ---------- NEW ANIMATED BAG + BRAND ---------- */
-    .hero-cluster { margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 14px; }
-    .bag {
-      width: 92px; height: 72px; border-radius: 18px 18px 8px 8px;
-      background: linear-gradient(180deg, #a78bfa, #7c3aed);
-      box-shadow: inset 0 2px 6px rgba(255,255,255,.35), 0 14px 30px rgba(124,58,237,.35);
-      position: relative; transform-origin: 50% 50%;
-      animation: bag-enter 1.2s cubic-bezier(.2,.8,.2,1) 0s both,
-                 bag-slide 1.2s cubic-bezier(.2,.8,.2,1) 1.1s both;
-    }
-    .bag:before {
-      content: ""; position: absolute; left: 14px; right: 14px; top: -16px; height: 18px;
-      background: linear-gradient(180deg, #c4b5fd, #8b5cf6);
-      border-radius: 8px; box-shadow: 0 6px 14px rgba(59,130,246,.35);
-    }
-    .bag:after {
-      content: ""; position: absolute; left: 0; right: 0; top: 28px; height: 6px;
-      background: rgba(255,255,255,.35);
-    }
-    .lock {
-      position: absolute; left: 50%; top: 36px; transform: translateX(-50%);
-      width: 18px; height: 18px; border-radius: 6px;
-      background: linear-gradient(180deg, #fde68a, #f59e0b);
-      box-shadow: 0 6px 12px rgba(245,158,11,.35);
-    }
-    .brand {
-      font-size: 40px; font-weight: 900;
-      color: #fff; font-family: 'Orbitron', sans-serif;
-      text-shadow: 0 0 8px rgba(255, 255, 255, 0.6), 0 0 16px rgba(255, 255, 255, 0.4);
-      opacity: 0; animation: brand-reveal 1s ease-out 1.75s both;
-    }
-    .brand span {
-      display: inline-block;
-      transform: translateY(18px);
-      opacity: 0;
-      animation: letter 0.8s ease-out forwards;
-    }
-    .brand span:nth-child(1){ animation-delay:1.8s; }
-    .brand span:nth-child(2){ animation-delay:1.85s; }
-    .brand span:nth-child(3){ animation-delay:1.9s; }
-    .brand span:nth-child(4){ animation-delay:1.95s; }
-    .brand span:nth-child(5){ animation-delay:2s; }
-    .brand span:nth-child(6){ animation-delay:2.05s; }
-    .brand span:nth-child(7){ animation-delay:2.1s; }
-    .brand span:nth-child(8){ animation-delay:2.15s; }
-    .brand span:nth-child(9){ animation-delay:2.2s; }
-
-    /* KEYFRAMES for bag + text */
-    @keyframes bag-enter {
-      0% { transform: translateY(-40px) scale(.6) rotate(-8deg); opacity: 0; }
-      60% { transform: translateY(4px) scale(1.04) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(0) scale(1) rotate(0deg); }
-    }
-    @keyframes bag-slide {
-      0% { transform: translate(0,0) scale(1); }
-      100% { transform: translate(-60px,0) scale(.7); }
-    }
-    @keyframes brand-reveal { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes letter { 0% { transform: translateY(18px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
-
-    /* ---------- FILE UPLOADER ---------- */
-    .stFileUploader > div > div {
-        border: 2px solid #00ffff;
-        border-radius: 10px;
-        background-color: rgba(0, 255, 255, 0.05);
-        padding: 12px;
-        box-shadow: 0 0 15px rgba(0,255,255,0.4);
-        transition: box-shadow 0.3s ease-in-out;
-    }
-    .stFileUploader > div > div:hover { box-shadow: 0 0 25px rgba(0,255,255,0.8); }
-
-    /* ---------- BUTTONS ---------- */
-    .stButton > button {
-        background: linear-gradient(45deg, #ff0080, #00bfff);
-        color: white; font-size: 16px; font-weight: bold;
-        border: none; border-radius: 8px;
-        padding: 10px 20px; text-transform: uppercase;
-        box-shadow: 0px 0px 12px #00ffff;
+    .nav button {
+        background: linear-gradient(90deg, #4facfe, #00f2fe);
+        border: none;
+        border-radius: 12px;
+        padding: 6px 14px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 0 12px rgba(0, 255, 255, 0.5);
         transition: all 0.3s ease-in-out;
     }
-    .stButton > button:hover {
+    .nav button:hover {
         transform: scale(1.05);
-        box-shadow: 0px 0px 24px #ff00ff;
-        background: linear-gradient(45deg, #ff00aa, #00ffff);
+        box-shadow: 0 0 18px rgba(0, 255, 255, 0.9);
     }
 
-    /* ---------- CHAT MESSAGES ---------- */
-    .stChatMessage {
-        font-size: 18px;
-        background: #1e293b;
-        padding: 14px; border-radius: 10px;
-        border: 2px solid #00ffff; color: #ccffff;
-        text-shadow: 0px 0px 6px #00ffff;
-        animation: glow 1.5s ease-in-out infinite alternate;
+    /* ---------- CENTER HERO ---------- */
+    .center {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 18px;
+        margin-top: 12px;
+    }
+    .bag {
+      width: 74px; height: 58px; border-radius: 14px 14px 8px 8px;
+      background: linear-gradient(180deg, #a78bfa, #7c3aed);
+      box-shadow: inset 0 2px 5px rgba(255,255,255,.25), 0 10px 20px rgba(124,58,237,.35);
+      position: relative;
+    }
+    .bag:before {
+      content: ""; position: absolute; left: 12px; right: 12px; top: -12px; height: 14px;
+      background: linear-gradient(180deg, #c4b5fd, #8b5cf6);
+      border-radius: 6px;
+    }
+    .lock {
+      position: absolute; left: 50%; top: 28px; transform: translateX(-50%);
+      width: 14px; height: 14px; border-radius: 5px;
+      background: linear-gradient(180deg, #fde68a, #f59e0b);
+      box-shadow: 0 4px 8px rgba(245,158,11,.35);
+    }
+    .brand {
+        font-size: 38px; font-weight: 900;
+        color: white;
+        text-shadow: 0 0 12px rgba(255,255,255,0.8), 0 0 18px rgba(0,0,0,0.6);
     }
 
-    /* ---------- INPUTS ---------- */
-    .stTextInput > div > input,
-    .stTextArea > div > textarea {
-        background-color: #1f2833;
-        color: #00ffff; border: 1px solid #00ffff;
-        border-radius: 6px; padding: 10px;
-        box-shadow: 0 0 10px rgba(0,255,255,0.3);
+    /* ---------- ATS READINESS ---------- */
+    .ats-card {
+        width: 280px;
+        padding: 14px;
+        border-radius: 12px;
+        background: rgba(0,0,0,0.35);
+        border: 1px solid rgba(255,255,255,0.1);
+        backdrop-filter: blur(8px);
+        font-size: 14px;
+        color: #e5e7eb;
+        box-shadow: 0 0 18px rgba(0,255,255,0.15);
+        position: absolute;
+        bottom: 14px;
+        right: 14px;
     }
-
-    /* ---------- METRICS ---------- */
-    .stMetric {
-        background-color: #0f172a;
-        border: 1px solid #00ffff;
-        border-radius: 10px;
-        padding: 15px;
-        box-shadow: 0 0 10px rgba(0,255,255,0.5);
-        text-align: center;
+    .ats-title {
+        font-weight: 600;
+        margin-bottom: 6px;
     }
-
-    /* ---------- MOBILE ---------- */
-    @media (max-width: 768px) {
-        .pulse-bar { font-size: 16px; }
-        .header { font-size: 20px; }
+    .ats-bar {
+        height: 8px;
+        border-radius: 6px;
+        background: #374151;
+        overflow: hidden;
+        margin-bottom: 6px;
+    }
+    .ats-bar-fill {
+        width: 70%;
+        height: 100%;
+        background: linear-gradient(90deg, #06b6d4, #6366f1);
+        border-radius: 6px;
+        animation: load 2s ease-out forwards;
+    }
+    @keyframes load {
+        from { width: 0; }
+        to { width: 70%; }
     }
     </style>
 
-    <!-- Banner -->
-    <div class="banner-container">
-        <div class="pulse-bar">
-            <div class="bar"></div>
-            <div>HIRELYZER - Elevate Your Resume Analysis</div>
+    <!-- MAIN CARD -->
+    <div class="main-card">
+        <!-- Nav -->
+        <div class="nav">
+            <div>Hirelyzer · Resume Intelligence</div>
+            <button>Analyze your resume</button>
         </div>
-    </div>
 
-    <!-- Header -->
-    <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
+        <!-- Centered Bag + Brand -->
+        <div class="center">
+            <div class="bag"><div class="lock"></div></div>
+            <div class="brand">Hirelyzer</div>
+        </div>
 
-    <!-- Hero Bag + Animated Brand -->
-    <div class="hero-cluster">
-        <div class="bag"><div class="lock"></div></div>
-        <div class="brand" aria-label="Hirelyzer brand reveal">
-            <span>H</span><span>i</span><span>r</span><span>e</span><span>l</span><span>y</span><span>z</span><span>e</span><span>r</span>
+        <!-- ATS Readiness -->
+        <div class="ats-card">
+            <div class="ats-title">ATS Readiness</div>
+            <div class="ats-bar"><div class="ats-bar-fill"></div></div>
+            <div>Live preview of your score</div>
         </div>
     </div>
     """,
     unsafe_allow_html=True
 )
+
 
 
 

@@ -850,6 +850,7 @@ st.markdown(
     <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
     """,
     unsafe_allow_html=True
+)
 
 
 

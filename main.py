@@ -2711,17 +2711,7 @@ with tab2:
     st.session_state.setdefault("project_links", [])
     st.session_state.setdefault("certificate_links", [{"name": "", "link": "", "duration": "", "description": ""}])
     
-    # Sidebar controls
-    with st.sidebar:
-        st.markdown("### ➕ Add More Sections")
-        if st.button("➕ Add Experience"):
-            st.session_state.experience_entries.append({"title": "", "company": "", "duration": "", "description": ""})
-        if st.button("➕ Add Education"):
-            st.session_state.education_entries.append({"degree": "", "institution": "", "year": "", "details": ""})
-        if st.button("➕ Add Project"):
-            st.session_state.project_entries.append({"title": "", "tech": "", "duration": "", "description": ""})
-        if st.button("➕ Add Certificate"):
-           st.session_state.certificate_links.append({"name": "", "link": "", "duration": "", "description": ""})
+    # ✅ Removed sidebar completely
 
     with st.form("resume_form"):
         st.markdown("### 👤 <u>Personal Information</u>", unsafe_allow_html=True)
@@ -2766,13 +2756,11 @@ with tab2:
 
         for idx, proj in enumerate(st.session_state.project_entries):
             with st.expander(f"Project #{idx+1}", expanded=True):
-                # Keys for each project field
                 title_key = f"proj_title_{idx}"
                 tech_key = f"proj_tech_{idx}"
                 duration_key = f"proj_duration_{idx}"
                 desc_key = f"proj_desc_{idx}"
 
-                # Initialize only once if key doesn't exist
                 if title_key not in st.session_state:
                     st.session_state[title_key] = proj["title"]
                 if tech_key not in st.session_state:
@@ -2782,13 +2770,11 @@ with tab2:
                 if desc_key not in st.session_state:
                     st.session_state[desc_key] = proj["description"]
 
-                # Inputs (no value=..., only key)
                 st.text_input("Project Title", key=title_key)
                 st.text_input("Tech Stack", key=tech_key)
                 st.text_input("Duration", key=duration_key)
                 st.text_area("Description", key=desc_key)
 
-                # Sync back to project_entries
                 proj["title"] = st.session_state[title_key]
                 proj["tech"] = st.session_state[tech_key]
                 proj["duration"] = st.session_state[duration_key]
@@ -2807,10 +2793,31 @@ with tab2:
                 cert["duration"] = st.text_input(f"Duration", value=cert["duration"], key=f"cert_duration_{idx}")
                 cert["description"] = st.text_area(f"Description", value=cert["description"], key=f"cert_description_{idx}")
 
+        # ✅ NEW: Add Buttons inside main form
+        st.markdown("### ➕ Add More Sections")
+        col_add1, col_add2, col_add3, col_add4 = st.columns(4)
+
+        with col_add1:
+            if st.form_submit_button("➕ Add Experience"):
+                st.session_state.experience_entries.append({"title": "", "company": "", "duration": "", "description": ""})
+
+        with col_add2:
+            if st.form_submit_button("➕ Add Education"):
+                st.session_state.education_entries.append({"degree": "", "institution": "", "year": "", "details": ""})
+
+        with col_add3:
+            if st.form_submit_button("➕ Add Project"):
+                st.session_state.project_entries.append({"title": "", "tech": "", "duration": "", "description": ""})
+
+        with col_add4:
+            if st.form_submit_button("➕ Add Certificate"):
+                st.session_state.certificate_links.append({"name": "", "link": "", "duration": "", "description": ""})
+
         submitted = st.form_submit_button("📑 Generate Resume")
 
         if submitted:
             st.success("✅ Resume Generated Successfully! Scroll down to preview or download.")
+
 
         st.markdown("""
         <style>

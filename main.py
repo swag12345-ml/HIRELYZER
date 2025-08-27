@@ -2702,7 +2702,7 @@ with tab2:
         st.info("📸 Please upload a clear, front-facing profile photo (square or vertical preferred).")
 
     # Initialize session state
-    fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary", "skills", "languages", "interests","Softskills","job_title"]
+    fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary", "skills", "languages", "interests","Softskills"]
     for f in fields:
         st.session_state.setdefault(f, "")
     st.session_state.setdefault("experience_entries", [{"title": "", "company": "", "duration": "", "description": ""}])

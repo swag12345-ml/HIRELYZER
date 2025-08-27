@@ -695,6 +695,7 @@ st.markdown(
         overflow: hidden;
         display: flex;
         align-items: center;
+        justify-content: flex-start;
         position: relative;
         margin-bottom: 20px;
     }
@@ -707,8 +708,8 @@ st.markdown(
         font-weight: bold;
         color: #00ffff;
         white-space: nowrap;
-        animation: glideIn 15s linear infinite;
-        text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+        animation: glideIn 12s linear infinite;
+        text-shadow: 0 0 10px #00ffff;
     }
 
     .pulse-bar .bar {
@@ -717,40 +718,47 @@ st.markdown(
         margin-right: 10px;
         background: #00ffff;
         box-shadow: 0 0 8px cyan;
-        animation: pulse 1.2s ease-in-out infinite;
+        animation: pulse 1s ease-in-out infinite;
     }
 
     @keyframes glideIn {
-        0%   { left: -60%; opacity: 0; }
-        10%  { opacity: 1; }
-        90%  { opacity: 1; }
+        0% { left: -50%; opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
         100% { left: 110%; opacity: 0; }
     }
 
     @keyframes pulse {
-        0%, 100% { height: 20px; background-color: #00ffff; }
-        50%      { height: 40px; background-color: #ff00ff; }
+        0%, 100% {
+            height: 20px;
+            background-color: #00ffff;
+        }
+        50% {
+            height: 40px;
+            background-color: #ff00ff;
+        }
     }
 
     /* ---------- HEADER ---------- */
     .header {
-        font-size: 30px;
+        font-size: 28px;
         font-weight: bold;
         text-align: center;
         text-transform: uppercase;
         letter-spacing: 2px;
-        padding: 14px 0;
+        padding: 12px 0;
         animation: glowPulse 3s ease-in-out infinite;
+        text-shadow: 0px 0px 10px #00ffff;
     }
 
     @keyframes glowPulse {
         0%, 100% {
             color: #00ffff;
-            text-shadow: 0 0 15px #00ffff, 0 0 30px #00ffff;
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
         }
         50% {
             color: #ff00ff;
-            text-shadow: 0 0 25px #ff00ff, 0 0 40px #ff00ff;
+            text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff;
         }
     }
 
@@ -781,7 +789,7 @@ st.markdown(
         transition: all 0.3s ease-in-out;
     }
     .stButton > button:hover {
-        transform: scale(1.08);
+        transform: scale(1.05);
         box-shadow: 0px 0px 24px #ff00ff;
         background: linear-gradient(45deg, #ff00aa, #00ffff);
     }
@@ -821,8 +829,12 @@ st.markdown(
 
     /* ---------- MOBILE ---------- */
     @media (max-width: 768px) {
-        .pulse-bar { font-size: 16px; }
-        .header { font-size: 22px; }
+        .pulse-bar {
+            font-size: 16px;
+        }
+        .header {
+            font-size: 20px;
+        }
     }
     </style>
 
@@ -830,15 +842,15 @@ st.markdown(
     <div class="banner-container">
         <div class="pulse-bar">
             <div class="bar"></div>
-            <div>🚀 HIRELYZER - Elevate Your Resume Analysis</div>
+            <div>HIRELYZER - Elevate Your Resume Analysis</div>
         </div>
     </div>
 
     <!-- Header -->
-    <div class="header">💼 HIRELYZER - AI Based Ethical Resume Analyzer</div>
+    <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
     """,
     unsafe_allow_html=True
-)
+
 
 
 

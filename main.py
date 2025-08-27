@@ -676,12 +676,8 @@ st.markdown(
     }
 
     /* ---------- SCROLLBAR ---------- */
-    ::-webkit-scrollbar {
-        width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-        background: #1f2833;
-    }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #1f2833; }
     ::-webkit-scrollbar-thumb {
         background: #00ffff;
         border-radius: 4px;
@@ -690,13 +686,13 @@ st.markdown(
     /* ---------- BANNER ---------- */
     .banner-container {
         width: 100%;
-        height: 80px;
+        height: 100px;
         background: linear-gradient(90deg, #000428, #004e92);
         border-bottom: 2px solid cyan;
         overflow: hidden;
         display: flex;
         align-items: center;
-        justify-content: flex-start;
+        justify-content: center;
         position: relative;
         margin-bottom: 20px;
     }
@@ -712,7 +708,6 @@ st.markdown(
         animation: glideIn 12s linear infinite;
         text-shadow: 0 0 10px #00ffff;
     }
-
     .pulse-bar .bar {
         width: 10px;
         height: 30px;
@@ -728,16 +723,9 @@ st.markdown(
         90% { opacity: 1; }
         100% { left: 110%; opacity: 0; }
     }
-
     @keyframes pulse {
-        0%, 100% {
-            height: 20px;
-            background-color: #00ffff;
-        }
-        50% {
-            height: 40px;
-            background-color: #ff00ff;
-        }
+        0%, 100% { height: 20px; background-color: #00ffff; }
+        50% { height: 40px; background-color: #ff00ff; }
     }
 
     /* ---------- HEADER ---------- */
@@ -751,17 +739,70 @@ st.markdown(
         animation: glowPulse 3s ease-in-out infinite;
         text-shadow: 0px 0px 10px #00ffff;
     }
-
     @keyframes glowPulse {
-        0%, 100% {
-            color: #00ffff;
-            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
-        }
-        50% {
-            color: #ff00ff;
-            text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff;
-        }
+        0%, 100% { color: #00ffff; text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff; }
+        50% { color: #ff00ff; text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff; }
     }
+
+    /* ---------- NEW ANIMATED BAG + BRAND ---------- */
+    .hero-cluster { margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 14px; }
+    .bag {
+      width: 92px; height: 72px; border-radius: 18px 18px 8px 8px;
+      background: linear-gradient(180deg, #a78bfa, #7c3aed);
+      box-shadow: inset 0 2px 6px rgba(255,255,255,.35), 0 14px 30px rgba(124,58,237,.35);
+      position: relative; transform-origin: 50% 50%;
+      animation: bag-enter 1.2s cubic-bezier(.2,.8,.2,1) 0s both,
+                 bag-slide 1.2s cubic-bezier(.2,.8,.2,1) 1.1s both;
+    }
+    .bag:before {
+      content: ""; position: absolute; left: 14px; right: 14px; top: -16px; height: 18px;
+      background: linear-gradient(180deg, #c4b5fd, #8b5cf6);
+      border-radius: 8px; box-shadow: 0 6px 14px rgba(59,130,246,.35);
+    }
+    .bag:after {
+      content: ""; position: absolute; left: 0; right: 0; top: 28px; height: 6px;
+      background: rgba(255,255,255,.35);
+    }
+    .lock {
+      position: absolute; left: 50%; top: 36px; transform: translateX(-50%);
+      width: 18px; height: 18px; border-radius: 6px;
+      background: linear-gradient(180deg, #fde68a, #f59e0b);
+      box-shadow: 0 6px 12px rgba(245,158,11,.35);
+    }
+    .brand {
+      font-size: 40px; font-weight: 900;
+      color: #fff; font-family: 'Orbitron', sans-serif;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.6), 0 0 16px rgba(255, 255, 255, 0.4);
+      opacity: 0; animation: brand-reveal 1s ease-out 1.75s both;
+    }
+    .brand span {
+      display: inline-block;
+      transform: translateY(18px);
+      opacity: 0;
+      animation: letter 0.8s ease-out forwards;
+    }
+    .brand span:nth-child(1){ animation-delay:1.8s; }
+    .brand span:nth-child(2){ animation-delay:1.85s; }
+    .brand span:nth-child(3){ animation-delay:1.9s; }
+    .brand span:nth-child(4){ animation-delay:1.95s; }
+    .brand span:nth-child(5){ animation-delay:2s; }
+    .brand span:nth-child(6){ animation-delay:2.05s; }
+    .brand span:nth-child(7){ animation-delay:2.1s; }
+    .brand span:nth-child(8){ animation-delay:2.15s; }
+    .brand span:nth-child(9){ animation-delay:2.2s; }
+
+    /* KEYFRAMES for bag + text */
+    @keyframes bag-enter {
+      0% { transform: translateY(-40px) scale(.6) rotate(-8deg); opacity: 0; }
+      60% { transform: translateY(4px) scale(1.04) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(0) scale(1) rotate(0deg); }
+    }
+    @keyframes bag-slide {
+      0% { transform: translate(0,0) scale(1); }
+      100% { transform: translate(-60px,0) scale(.7); }
+    }
+    @keyframes brand-reveal { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes letter { 0% { transform: translateY(18px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
 
     /* ---------- FILE UPLOADER ---------- */
     .stFileUploader > div > div {
@@ -772,20 +813,14 @@ st.markdown(
         box-shadow: 0 0 15px rgba(0,255,255,0.4);
         transition: box-shadow 0.3s ease-in-out;
     }
-    .stFileUploader > div > div:hover {
-        box-shadow: 0 0 25px rgba(0,255,255,0.8);
-    }
+    .stFileUploader > div > div:hover { box-shadow: 0 0 25px rgba(0,255,255,0.8); }
 
     /* ---------- BUTTONS ---------- */
     .stButton > button {
         background: linear-gradient(45deg, #ff0080, #00bfff);
-        color: white;
-        font-size: 16px;
-        font-weight: bold;
-        border: none;
-        border-radius: 8px;
-        padding: 10px 20px;
-        text-transform: uppercase;
+        color: white; font-size: 16px; font-weight: bold;
+        border: none; border-radius: 8px;
+        padding: 10px 20px; text-transform: uppercase;
         box-shadow: 0px 0px 12px #00ffff;
         transition: all 0.3s ease-in-out;
     }
@@ -799,10 +834,8 @@ st.markdown(
     .stChatMessage {
         font-size: 18px;
         background: #1e293b;
-        padding: 14px;
-        border-radius: 10px;
-        border: 2px solid #00ffff;
-        color: #ccffff;
+        padding: 14px; border-radius: 10px;
+        border: 2px solid #00ffff; color: #ccffff;
         text-shadow: 0px 0px 6px #00ffff;
         animation: glow 1.5s ease-in-out infinite alternate;
     }
@@ -811,10 +844,8 @@ st.markdown(
     .stTextInput > div > input,
     .stTextArea > div > textarea {
         background-color: #1f2833;
-        color: #00ffff;
-        border: 1px solid #00ffff;
-        border-radius: 6px;
-        padding: 10px;
+        color: #00ffff; border: 1px solid #00ffff;
+        border-radius: 6px; padding: 10px;
         box-shadow: 0 0 10px rgba(0,255,255,0.3);
     }
 
@@ -830,12 +861,8 @@ st.markdown(
 
     /* ---------- MOBILE ---------- */
     @media (max-width: 768px) {
-        .pulse-bar {
-            font-size: 16px;
-        }
-        .header {
-            font-size: 20px;
-        }
+        .pulse-bar { font-size: 16px; }
+        .header { font-size: 20px; }
     }
     </style>
 
@@ -849,6 +876,14 @@ st.markdown(
 
     <!-- Header -->
     <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
+
+    <!-- Hero Bag + Animated Brand -->
+    <div class="hero-cluster">
+        <div class="bag"><div class="lock"></div></div>
+        <div class="brand" aria-label="Hirelyzer brand reveal">
+            <span>H</span><span>i</span><span>r</span><span>e</span><span>l</span><span>y</span><span>z</span><span>e</span><span>r</span>
+        </div>
+    </div>
     """,
     unsafe_allow_html=True
 )

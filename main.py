@@ -2660,10 +2660,7 @@ with tab1:
 
     else:           
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
-import streamlit as st
-import base64
 
-tab2 = st.container()
 with tab2:
     st.session_state.active_tab = "Resume Builder"
 

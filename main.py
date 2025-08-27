@@ -667,155 +667,192 @@ import streamlit as st
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 
     html, body, [class*="css"] {
         font-family: 'Orbitron', sans-serif;
         background-color: #0b0c10;
         color: #c5c6c7;
+        scroll-behavior: smooth;
     }
 
-    /* Main Card */
-    .main-card {
+    /* ---------- SCROLLBAR ---------- */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #1f2833;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #00ffff;
+        border-radius: 4px;
+    }
+
+    /* ---------- BANNER ---------- */
+    .banner-container {
         width: 100%;
-        max-width: 600px;
-        margin: 20px auto;
-        border-radius: 18px;
-        padding: 24px;
-        background: radial-gradient(circle at top right, rgba(0, 128, 255, 0.12), rgba(128, 0, 255, 0.08) 60%);
-        border: 1px solid rgba(255,255,255,0.08);
-        box-shadow: 0px 0px 18px rgba(0,255,255,0.15);
-        position: relative;
+        height: 80px;
+        background: linear-gradient(90deg, #000428, #004e92);
+        border-bottom: 2px solid cyan;
         overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        position: relative;
+        margin-bottom: 20px;
     }
 
-    .nav {
+    .pulse-bar {
+        position: absolute;
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        padding: 6px 12px;
-        border-radius: 12px;
-        border: 1px solid rgba(255,255,255,0.1);
-        background: rgba(0,0,0,0.2);
-        backdrop-filter: blur(6px);
-        font-size: 14px;
-        color: #d1d5db;
-        margin-bottom: 12px;
+        font-size: 22px;
+        font-weight: bold;
+        color: #00ffff;
+        white-space: nowrap;
+        animation: glideIn 12s linear infinite;
+        text-shadow: 0 0 10px #00ffff;
     }
-    .nav button {
-        background: linear-gradient(90deg, #4facfe, #00f2fe);
-        border: none;
-        border-radius: 12px;
-        padding: 6px 14px;
+
+    .pulse-bar .bar {
+        width: 10px;
+        height: 30px;
+        margin-right: 10px;
+        background: #00ffff;
+        box-shadow: 0 0 8px cyan;
+        animation: pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes glideIn {
+        0% { left: -50%; opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% { left: 110%; opacity: 0; }
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            height: 20px;
+            background-color: #00ffff;
+        }
+        50% {
+            height: 40px;
+            background-color: #ff00ff;
+        }
+    }
+
+    /* ---------- HEADER ---------- */
+    .header {
+        font-size: 28px;
+        font-weight: bold;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        padding: 12px 0;
+        animation: glowPulse 3s ease-in-out infinite;
+        text-shadow: 0px 0px 10px #00ffff;
+    }
+
+    @keyframes glowPulse {
+        0%, 100% {
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+        }
+        50% {
+            color: #ff00ff;
+            text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff;
+        }
+    }
+
+    /* ---------- FILE UPLOADER ---------- */
+    .stFileUploader > div > div {
+        border: 2px solid #00ffff;
+        border-radius: 10px;
+        background-color: rgba(0, 255, 255, 0.05);
+        padding: 12px;
+        box-shadow: 0 0 15px rgba(0,255,255,0.4);
+        transition: box-shadow 0.3s ease-in-out;
+    }
+    .stFileUploader > div > div:hover {
+        box-shadow: 0 0 25px rgba(0,255,255,0.8);
+    }
+
+    /* ---------- BUTTONS ---------- */
+    .stButton > button {
+        background: linear-gradient(45deg, #ff0080, #00bfff);
         color: white;
-        font-weight: 600;
-        cursor: pointer;
-        box-shadow: 0 0 12px rgba(0, 255, 255, 0.5);
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        text-transform: uppercase;
+        box-shadow: 0px 0px 12px #00ffff;
         transition: all 0.3s ease-in-out;
     }
-    .nav button:hover {
+    .stButton > button:hover {
         transform: scale(1.05);
-        box-shadow: 0 0 18px rgba(0, 255, 255, 0.9);
+        box-shadow: 0px 0px 24px #ff00ff;
+        background: linear-gradient(45deg, #ff00aa, #00ffff);
     }
 
-    .center {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 18px;
-        margin-bottom: 12px;
-    }
-    .bag {
-        width: 74px; height: 58px; border-radius: 14px 14px 8px 8px;
-        background: linear-gradient(180deg, #a78bfa, #7c3aed);
-        box-shadow: inset 0 2px 5px rgba(255,255,255,.25), 0 10px 20px rgba(124,58,237,.35);
-        position: relative;
-    }
-    .bag::before {
-        content: "";
-        position: absolute;
-        left: 12px;
-        right: 12px;
-        top: -12px;
-        height: 14px;
-        background: linear-gradient(180deg, #c4b5fd, #8b5cf6);
-        border-radius: 6px;
-    }
-    .lock {
-        position: absolute;
-        left: 50%;
-        top: 28px;
-        transform: translateX(-50%);
-        width: 14px;
-        height: 14px;
-        border-radius: 5px;
-        background: linear-gradient(180deg, #fde68a, #f59e0b);
-        box-shadow: 0 4px 8px rgba(245,158,11,.35);
-    }
-    .brand {
-        font-size: 38px; font-weight: 900;
-        color: white;
-        text-shadow: 0 0 12px rgba(255,255,255,0.8), 0 0 18px rgba(0,0,0,0.6);
-    }
-
-    .ats-card {
-        width: 280px;
+    /* ---------- CHAT MESSAGES ---------- */
+    .stChatMessage {
+        font-size: 18px;
+        background: #1e293b;
         padding: 14px;
-        border-radius: 12px;
-        background: rgba(0,0,0,0.35);
-        border: 1px solid rgba(255,255,255,0.1);
-        backdrop-filter: blur(8px);
-        font-size: 14px;
-        color: #e5e7eb;
-        box-shadow: 0 0 18px rgba(0,255,255,0.15);
-        position: relative;
-        margin: 0 auto;
+        border-radius: 10px;
+        border: 2px solid #00ffff;
+        color: #ccffff;
+        text-shadow: 0px 0px 6px #00ffff;
+        animation: glow 1.5s ease-in-out infinite alternate;
     }
-    .ats-title {
-        font-weight: 600;
-        margin-bottom: 6px;
-    }
-    .ats-bar {
-        height: 8px;
+
+    /* ---------- INPUTS ---------- */
+    .stTextInput > div > input,
+    .stTextArea > div > textarea {
+        background-color: #1f2833;
+        color: #00ffff;
+        border: 1px solid #00ffff;
         border-radius: 6px;
-        background: #374151;
-        overflow: hidden;
-        margin-bottom: 6px;
+        padding: 10px;
+        box-shadow: 0 0 10px rgba(0,255,255,0.3);
     }
-    .ats-bar-fill {
-        width: 70%;
-        height: 100%;
-        background: linear-gradient(90deg, #06b6d4, #6366f1);
-        border-radius: 6px;
-        animation: load 2s ease-out forwards;
+
+    /* ---------- METRICS ---------- */
+    .stMetric {
+        background-color: #0f172a;
+        border: 1px solid #00ffff;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 0 10px rgba(0,255,255,0.5);
+        text-align: center;
     }
-    @keyframes load {
-        from { width: 0; }
-        to { width: 70%; }
+
+    /* ---------- MOBILE ---------- */
+    @media (max-width: 768px) {
+        .pulse-bar {
+            font-size: 16px;
+        }
+        .header {
+            font-size: 20px;
+        }
     }
     </style>
 
-    <div class="main-card">
-        <div class="nav">
-            <div>Hirelyzer · Resume Intelligence</div>
-            <button>Analyze your resume</button>
-        </div>
-
-        <div class="center">
-            <div class="bag"><div class="lock"></div></div>
-            <div class="brand">Hirelyzer</div>
-        </div>
-
-        <div class="ats-card">
-            <div class="ats-title">ATS Readiness</div>
-            <div class="ats-bar"><div class="ats-bar-fill"></div></div>
-            <div>Live preview of your score</div>
+    <!-- Banner -->
+    <div class="banner-container">
+        <div class="pulse-bar">
+            <div class="bar"></div>
+            <div>HIRELYZER - Elevate Your Resume Analysis</div>
         </div>
     </div>
+
+    <!-- Header -->
+    <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
     """,
     unsafe_allow_html=True
 )
-
 
 
 

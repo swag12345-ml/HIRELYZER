@@ -662,149 +662,179 @@ if st.session_state.username == "admin":
         st.info("No logs found yet.")
 
 
-st.markdown(
-    """
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+import streamlit as st
 
-    html, body, [class*="css"] {
-        font-family: 'Orbitron', sans-serif;
-        background-color: #0b0c10;
-        color: #c5c6c7;
-        scroll-behavior: smooth;
-    }
-
-    /* ---------- SCROLLBAR ---------- */
-    ::-webkit-scrollbar {
-        width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-        background: #1f2833;
-    }
-    ::-webkit-scrollbar-thumb {
-        background: #00ffff;
-        border-radius: 4px;
-    }
-
-    /* ---------- BANNER ---------- */
-    .banner-container {
-        width: 100%;
-        height: 80px;
-        background: linear-gradient(90deg, #000428, #004e92);
-        border-bottom: 2px solid cyan;
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        padding-left: 15px;
-        margin-bottom: 20px;
-    }
-
-    .pulse-bar {
-        font-size: 22px;
-        font-weight: bold;
-        color: #00ffff;
-    }
-
-    .pulse-bar .bar {
-        width: 10px;
-        height: 30px;
-        margin-right: 10px;
-        background: #00ffff;
-    }
-
-    /* ---------- HEADER ---------- */
-    .header {
-        font-size: 28px;
-        font-weight: bold;
-        text-align: center;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        padding: 12px 0;
-        color: #00ffff;
-    }
-
-    /* ---------- FILE UPLOADER ---------- */
-    .stFileUploader > div > div {
-        border: 2px solid #00ffff;
-        border-radius: 10px;
-        background-color: rgba(0, 255, 255, 0.05);
-        padding: 12px;
-        transition: box-shadow 0.3s ease-in-out;
-    }
-    .stFileUploader > div > div:hover {
-        box-shadow: 0 0 12px rgba(0,255,255,0.6);
-    }
-
-    /* ---------- BUTTONS ---------- */
-    .stButton > button {
-        background: linear-gradient(45deg, #ff0080, #00bfff);
-        color: white;
-        font-size: 16px;
-        font-weight: bold;
-        border: none;
-        border-radius: 8px;
-        padding: 10px 20px;
-        text-transform: uppercase;
-        transition: all 0.3s ease-in-out;
-    }
-    .stButton > button:hover {
-        transform: scale(1.05);
-        background: linear-gradient(45deg, #ff00aa, #00ffff);
-    }
-
-    /* ---------- CHAT MESSAGES ---------- */
-    .stChatMessage {
-        font-size: 18px;
-        background: #1e293b;
-        padding: 14px;
-        border-radius: 10px;
-        border: 2px solid #00ffff;
-        color: #ccffff;
-    }
-
-    /* ---------- INPUTS ---------- */
-    .stTextInput > div > input,
-    .stTextArea > div > textarea {
-        background-color: #1f2833;
-        color: #00ffff;
-        border: 1px solid #00ffff;
-        border-radius: 6px;
-        padding: 10px;
-    }
-
-    /* ---------- METRICS ---------- */
-    .stMetric {
-        background-color: #0f172a;
-        border: 1px solid #00ffff;
-        border-radius: 10px;
-        padding: 15px;
-        text-align: center;
-    }
-
-    /* ---------- MOBILE ---------- */
-    @media (max-width: 768px) {
-        .pulse-bar {
-            font-size: 16px;
-        }
-        .header {
-            font-size: 20px;
-        }
-    }
-    </style>
-
-    <!-- Banner -->
-    <div class="banner-container">
-        <div class="pulse-bar">
-            <div class="bar"></div>
-            <div>HIRELYZER - Elevate Your Resume Analysis</div>
-        </div>
-    </div>
-
-    <!-- Header -->
-    <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
-    """,
-    unsafe_allow_html=True
+st.set_page_config(
+    page_title="Hirelyzer • Resume Analyzer",
+    page_icon="💼",
+    layout="wide",
 )
+
+HERO_HTML = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+/* RESET STREAMLIT DEFAULT */
+.block-container { padding-top: 1rem; }
+header[tabindex="-1"], footer { visibility: hidden; height: 0; margin: 0; padding: 0; }
+
+/* ---------- THEME COLORS ---------- */
+:root {
+  --bg: linear-gradient(135deg, #0e0f14 0%, #0b0c10 100%);
+  --glass: rgba(255,255,255,0.08);
+  --glass-border: rgba(255,255,255,0.15);
+}
+
+html, body, [class*="css"] {
+    font-family: 'Orbitron', sans-serif;
+    background: var(--bg) fixed;
+    color: #e5e7eb;
+    scroll-behavior: smooth;
+}
+
+/* ---------- SCROLLBAR ---------- */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #1f2833; }
+::-webkit-scrollbar-thumb { background: #00bcd4; border-radius: 4px; }
+
+/* ---------- HERO ---------- */
+.hero {
+  position: relative; width: 100%; height: 420px;
+  border-radius: 28px; overflow: hidden;
+  background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0));
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 10px 40px rgba(0,0,0,.45);
+  backdrop-filter: blur(10px);
+}
+.grid {
+  position: absolute; inset: 0;
+  background-size: 60px 60px;
+  background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+  mask-image: radial-gradient(500px 250px at 40% 40%, black, transparent 65%);
+}
+.nav {
+  position: absolute; top: 18px; left: 18px; right: 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 14px; background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(6px);
+}
+.pill {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.25);
+  font-size: 12px; color: #f1f5f9;
+}
+.cta {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.25);
+  color: white; font-weight: 600;
+  background: linear-gradient(90deg, #6366f1, #38bdf8);
+  text-decoration: none;
+  transition: 0.25s;
+}
+.cta:hover { background: linear-gradient(90deg, #4f46e5, #0ea5e9); }
+
+.stage { position: absolute; inset: 0; display: grid; place-items: center; }
+.cluster { display: flex; align-items: center; gap: 14px; transform: translateY(10px); }
+
+/* Bag icon */
+.bag {
+  width: 92px; height: 72px; border-radius: 18px 18px 8px 8px;
+  background: linear-gradient(180deg, #a78bfa, #7c3aed);
+  box-shadow: inset 0 2px 6px rgba(255,255,255,.25);
+  position: relative; transform-origin: 50% 50%;
+  animation: bag-enter 1.2s ease-out, bag-slide 1.2s ease-out 1.1s forwards;
+}
+.bag:before {
+  content: ""; position: absolute; left: 14px; right: 14px; top: -16px; height: 18px;
+  background: linear-gradient(180deg, #c4b5fd, #8b5cf6);
+  border-radius: 8px;
+}
+.bag:after {
+  content: ""; position: absolute; left: 0; right: 0; top: 28px; height: 6px;
+  background: rgba(255,255,255,.25);
+}
+.lock {
+  position: absolute; left: 50%; top: 36px; transform: translateX(-50%);
+  width: 18px; height: 18px; border-radius: 6px;
+  background: linear-gradient(180deg, #fde68a, #f59e0b);
+}
+
+/* Brand text */
+.brand {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900; font-size: 56px; letter-spacing: 2px;
+  color: #ffffff;
+  opacity: 0; animation: brand-reveal 1.0s ease-out 1.75s both;
+}
+.brand span {
+  display: inline-block; transform: translateY(18px);
+  opacity: 0; animation: letter 0.8s ease-out forwards;
+}
+.brand span:nth-child(1) { animation-delay: 1.8s; }
+.brand span:nth-child(2) { animation-delay: 1.85s; }
+.brand span:nth-child(3) { animation-delay: 1.9s; }
+.brand span:nth-child(4) { animation-delay: 1.95s; }
+.brand span:nth-child(5) { animation-delay: 2s; }
+.brand span:nth-child(6) { animation-delay: 2.05s; }
+.brand span:nth-child(7) { animation-delay: 2.1s; }
+.brand span:nth-child(8) { animation-delay: 2.15s; }
+.brand span:nth-child(9) { animation-delay: 2.2s; }
+
+/* Statcard */
+.statcard {
+  position: absolute; right: 20px; bottom: 20px;
+  padding: 14px; border-radius: 14px;
+  background: var(--glass); border: 1px solid var(--glass-border);
+  color: #e5e7eb; backdrop-filter: blur(6px);
+  min-width: 220px;
+}
+.bar { height: 6px; background: rgba(255,255,255,.15); border-radius: 999px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0;
+  background: linear-gradient(90deg, #22d3ee, #818cf8);
+  animation: fill 1.2s ease-out 2.0s forwards;
+}
+
+/* Animations */
+@keyframes bag-enter {
+  0% { transform: translateY(-40px) scale(.6) rotate(-8deg); opacity: 0; }
+  60% { transform: translateY(4px) scale(1.04); opacity: 1; }
+  100% { transform: translateY(0) scale(1); }
+}
+@keyframes bag-slide { to { transform: translate(-220px,0) scale(.7);} }
+@keyframes brand-reveal { from { opacity: 0; } to { opacity: 1; } }
+@keyframes letter { from { transform: translateY(18px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes fill { to { width: 84%; } }
+</style>
+
+<div class="hero">
+  <div class="grid"></div>
+  <div class="nav">
+    <div class="pill">Hirelyzer • Resume Intelligence</div>
+    <a class="cta" href="#analyze">Analyze your resume</a>
+  </div>
+  <div class="stage">
+    <div class="cluster">
+      <div class="bag"><div class="lock"></div></div>
+      <div class="brand" aria-label="Hirelyzer brand reveal">
+        <span>H</span><span>i</span><span>r</span><span>e</span><span>l</span><span>y</span><span>z</span><span>e</span><span>r</span>
+      </div>
+    </div>
+  </div>
+  <div class="statcard">
+    <div style="font-weight:700; margin-bottom:6px;">ATS Readiness</div>
+    <div class="bar"><i></i></div>
+    <div style="font-size:12px; opacity:.8; margin-top:8px;">Live preview of your score</div>
+  </div>
+</div>
+"""
+
+st.components.v1.html(HERO_HTML, height=460)
+st.markdown('<div id="analyze"></div>', unsafe_allow_html=True)
 
 
 

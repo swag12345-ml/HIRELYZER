@@ -2666,14 +2666,19 @@ with tab2:
     st.markdown("## 🧾 <span style='color:#336699;'>Advanced Resume Builder</span>", unsafe_allow_html=True)
     st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
-    # -------------------- Profile Image Upload --------------------
+    # 📸 Upload profile photo with enhanced styling
     uploaded_image = st.file_uploader("Upload a Profile Image", type=["png", "jpg", "jpeg"])
+
     profile_img_html = ""
 
     if uploaded_image:
         import base64
         encoded_image = base64.b64encode(uploaded_image.read()).decode()
+
+        # 🔄 Save to session state for reuse in preview/export
         st.session_state["encoded_profile_image"] = encoded_image
+
+        # 🖼️ Enhanced image preview with modern styling
         profile_img_html = f"""
         <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
             <img src="data:image/png;base64,{encoded_image}" alt="Profile Photo"
@@ -2688,6 +2693,7 @@ with tab2:
                         0 0 0 3px #4da6ff,
                         0 8px 25px rgba(77, 166, 255, 0.3),
                         0 4px 15px rgba(0, 0, 0, 0.1);
+                    transition: all 0.3s ease;
                 " />
         </div>
         """
@@ -2695,95 +2701,230 @@ with tab2:
     else:
         st.info("📸 Please upload a clear, front-facing profile photo (square or vertical preferred).")
 
-    # -------------------- Initialize Session State --------------------
-    fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary", "skills", "languages", "interests", "Softskills", "job_title"]
+    # Initialize session state
+    fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary", "skills", "languages", "interests","Softskills"]
     for f in fields:
         st.session_state.setdefault(f, "")
     st.session_state.setdefault("experience_entries", [{"title": "", "company": "", "duration": "", "description": ""}])
     st.session_state.setdefault("education_entries", [{"degree": "", "institution": "", "year": "", "details": ""}])
     st.session_state.setdefault("project_entries", [{"title": "", "tech": "", "duration": "", "description": ""}])
-    st.session_state.setdefault("certificate_links", [{"name": "", "link": "", "duration": "", "description": ""}])
     st.session_state.setdefault("project_links", [])
+    st.session_state.setdefault("certificate_links", [{"name": "", "link": "", "duration": "", "description": ""}])
+    
+    # Sidebar controls
+    with st.sidebar:
+        st.markdown("### ➕ Add More Sections")
+        if st.button("➕ Add Experience"):
+            st.session_state.experience_entries.append({"title": "", "company": "", "duration": "", "description": ""})
+        if st.button("➕ Add Education"):
+            st.session_state.education_entries.append({"degree": "", "institution": "", "year": "", "details": ""})
+        if st.button("➕ Add Project"):
+            st.session_state.project_entries.append({"title": "", "tech": "", "duration": "", "description": ""})
+        if st.button("➕ Add Certificate"):
+           st.session_state.certificate_links.append({"name": "", "link": "", "duration": "", "description": ""})
 
-    # -------------------- Resume Form --------------------
     with st.form("resume_form"):
-        # ----------- Personal Information -----------
         st.markdown("### 👤 <u>Personal Information</u>", unsafe_allow_html=True)
-        col1, col2 = st.columns(2)
-        with col1:
-            st.text_input("👤 Full Name", key="name")
-            st.text_input("📞 Phone Number", key="phone")
-            st.text_input("📍 Location", key="location")
-        with col2:
-            st.text_input("📧 Email", key="email")
-            st.text_input("🔗 LinkedIn", key="linkedin")
-            st.text_input("🌐 Portfolio", key="portfolio")
-            st.text_input("💼 Job Title", key="job_title")
+        with st.container():
+            col1, col2 = st.columns(2)
+            with col1:
+                st.text_input("👤 Full Name ", key="name")
+                st.text_input("📞 Phone Number", key="phone")
+                st.text_input("📍 Location", key="location")
+            with col2:
+                st.text_input("📧 Email", key="email")
+                st.text_input("🔗 LinkedIn", key="linkedin")
+                st.text_input("🌐 Portfolio", key="portfolio")
+                st.text_input("💼 Job Title", key="job_title")
 
-        # ----------- Summary -----------
         st.markdown("### 📝 <u>Professional Summary</u>", unsafe_allow_html=True)
         st.text_area("Summary", key="summary")
 
-        # ----------- Skills -----------
         st.markdown("### 💼 <u>Skills, Languages, Interests & Soft Skills</u>", unsafe_allow_html=True)
         st.text_area("Skills (comma-separated)", key="skills")
         st.text_area("Languages (comma-separated)", key="languages")
         st.text_area("Interests (comma-separated)", key="interests")
         st.text_area("Softskills (comma-separated)", key="Softskills")
 
-        # ----------- Work Experience -----------
         st.markdown("### 🧱 <u>Work Experience</u>", unsafe_allow_html=True)
-        if st.form_submit_button("➕ Add Experience", help="Add another work experience entry"):
-            st.session_state.experience_entries.append({"title": "", "company": "", "duration": "", "description": ""})
         for idx, exp in enumerate(st.session_state.experience_entries):
             with st.expander(f"Experience #{idx+1}", expanded=True):
-                exp["title"] = st.text_input("Job Title", value=exp["title"], key=f"title_{idx}")
-                exp["company"] = st.text_input("Company", value=exp["company"], key=f"company_{idx}")
-                exp["duration"] = st.text_input("Duration", value=exp["duration"], key=f"duration_{idx}")
-                exp["description"] = st.text_area("Description", value=exp["description"], key=f"description_{idx}")
+                exp["title"] = st.text_input(f"Job Title", value=exp["title"], key=f"title_{idx}")
+                exp["company"] = st.text_input(f"Company", value=exp["company"], key=f"company_{idx}")
+                exp["duration"] = st.text_input(f"Duration", value=exp["duration"], key=f"duration_{idx}")
+                exp["description"] = st.text_area(f"Description", value=exp["description"], key=f"description_{idx}")
 
-        # ----------- Education -----------
         st.markdown("### 🎓 <u>Education</u>", unsafe_allow_html=True)
-        if st.form_submit_button("➕ Add Education"):
-            st.session_state.education_entries.append({"degree": "", "institution": "", "year": "", "details": ""})
         for idx, edu in enumerate(st.session_state.education_entries):
             with st.expander(f"Education #{idx+1}", expanded=True):
-                edu["degree"] = st.text_input("Degree", value=edu["degree"], key=f"degree_{idx}")
-                edu["institution"] = st.text_input("Institution", value=edu["institution"], key=f"institution_{idx}")
-                edu["year"] = st.text_input("Year", value=edu["year"], key=f"edu_year_{idx}")
-                edu["details"] = st.text_area("Details", value=edu["details"], key=f"edu_details_{idx}")
+                edu["degree"] = st.text_input(f"Degree", value=edu["degree"], key=f"degree_{idx}")
+                edu["institution"] = st.text_input(f"Institution", value=edu["institution"], key=f"institution_{idx}")
+                edu["year"] = st.text_input(f"Year", value=edu["year"], key=f"edu_year_{idx}")
+                edu["details"] = st.text_area(f"Details", value=edu["details"], key=f"edu_details_{idx}")
 
-        # ----------- Projects -----------
         st.markdown("### 🛠 <u>Projects</u>", unsafe_allow_html=True)
-        if st.form_submit_button("➕ Add Project"):
-            st.session_state.project_entries.append({"title": "", "tech": "", "duration": "", "description": ""})
+
         for idx, proj in enumerate(st.session_state.project_entries):
             with st.expander(f"Project #{idx+1}", expanded=True):
-                proj["title"] = st.text_input("Project Title", value=proj["title"], key=f"proj_title_{idx}")
-                proj["tech"] = st.text_input("Tech Stack", value=proj["tech"], key=f"proj_tech_{idx}")
-                proj["duration"] = st.text_input("Duration", value=proj["duration"], key=f"proj_duration_{idx}")
-                proj["description"] = st.text_area("Description", value=proj["description"], key=f"proj_desc_{idx}")
+                # Keys for each project field
+                title_key = f"proj_title_{idx}"
+                tech_key = f"proj_tech_{idx}"
+                duration_key = f"proj_duration_{idx}"
+                desc_key = f"proj_desc_{idx}"
+
+                # Initialize only once if key doesn't exist
+                if title_key not in st.session_state:
+                    st.session_state[title_key] = proj["title"]
+                if tech_key not in st.session_state:
+                    st.session_state[tech_key] = proj["tech"]
+                if duration_key not in st.session_state:
+                    st.session_state[duration_key] = proj["duration"]
+                if desc_key not in st.session_state:
+                    st.session_state[desc_key] = proj["description"]
+
+                # Inputs (no value=..., only key)
+                st.text_input("Project Title", key=title_key)
+                st.text_input("Tech Stack", key=tech_key)
+                st.text_input("Duration", key=duration_key)
+                st.text_area("Description", key=desc_key)
+
+                # Sync back to project_entries
+                proj["title"] = st.session_state[title_key]
+                proj["tech"] = st.session_state[tech_key]
+                proj["duration"] = st.session_state[duration_key]
+                proj["description"] = st.session_state[desc_key]
 
         st.markdown("### 🔗 Project Links")
         project_links_input = st.text_area("Enter one project link per line:")
         if project_links_input:
             st.session_state.project_links = [link.strip() for link in project_links_input.splitlines() if link.strip()]
 
-        # ----------- Certificates -----------
         st.markdown("### 🧾 <u>Certificates</u>", unsafe_allow_html=True)
-        if st.form_submit_button("➕ Add Certificate"):
-            st.session_state.certificate_links.append({"name": "", "link": "", "duration": "", "description": ""})
         for idx, cert in enumerate(st.session_state.certificate_links):
             with st.expander(f"Certificate #{idx+1}", expanded=True):
-                cert["name"] = st.text_input("Certificate Name", value=cert["name"], key=f"cert_name_{idx}")
-                cert["link"] = st.text_input("Certificate Link", value=cert["link"], key=f"cert_link_{idx}")
-                cert["duration"] = st.text_input("Duration", value=cert["duration"], key=f"cert_duration_{idx}")
-                cert["description"] = st.text_area("Description", value=cert["description"], key=f"cert_description_{idx}")
+                cert["name"] = st.text_input(f"Certificate Name", value=cert["name"], key=f"cert_name_{idx}")
+                cert["link"] = st.text_input(f"Certificate Link", value=cert["link"], key=f"cert_link_{idx}")
+                cert["duration"] = st.text_input(f"Duration", value=cert["duration"], key=f"cert_duration_{idx}")
+                cert["description"] = st.text_area(f"Description", value=cert["description"], key=f"cert_description_{idx}")
 
-        # ----------- Submit -----------
         submitted = st.form_submit_button("📑 Generate Resume")
+
         if submitted:
             st.success("✅ Resume Generated Successfully! Scroll down to preview or download.")
+
+        st.markdown("""
+        <style>
+            .heading-large {
+                font-size: 36px;
+                font-weight: bold;
+                color: #336699;
+            }
+            .subheading-large {
+                font-size: 30px;
+                font-weight: bold;
+                color: #336699;
+            }
+            .tab-section {
+                margin-top: 20px;
+            }
+        </style>
+        """, unsafe_allow_html=True)
+
+        # --- Visual Resume Preview Section ---
+        st.markdown("## 🧾 <span style='color:#336699;'>Resume Preview</span>", unsafe_allow_html=True)
+        st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
+
+        left, right = st.columns([1, 2])
+
+        with left:
+            st.markdown(f"""
+                <h2 style='color:#2f2f2f;margin-bottom:0;'>{st.session_state['name']}</h2>
+                <h4 style='margin-top:5px;color:#444;'>{st.session_state['job_title']}</h4>
+
+                <p style='font-size:14px;'>
+                📍 {st.session_state['location']}<br>
+                📞 {st.session_state['phone']}<br>
+                📧 <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a><br>
+                🔗 <a href="{st.session_state['linkedin']}" target="_blank">LinkedIn</a><br>
+                🌐 <a href="{st.session_state['portfolio']}" target="_blank">Portfolio</a>
+                </p>
+            """, unsafe_allow_html=True)
+
+            st.markdown("<h4 style='color:#336699;'>Skills</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            for skill in [s.strip() for s in st.session_state["skills"].split(",") if s.strip()]:
+                st.markdown(f"<div style='margin-left:10px;'>• {skill}</div>", unsafe_allow_html=True)
+
+            st.markdown("<h4 style='color:#336699;'>Languages</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            for lang in [l.strip() for l in st.session_state["languages"].split(",") if l.strip()]:
+               st.markdown(f"<div style='margin-left:10px;'>• {lang}</div>", unsafe_allow_html=True)
+
+            st.markdown("<h4 style='color:#336699;'>Interests</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            for interest in [i.strip() for i in st.session_state["interests"].split(",") if i.strip()]:
+               st.markdown(f"<div style='margin-left:10px;'>• {interest}</div>", unsafe_allow_html=True)
+
+            st.markdown("<h4 style='color:#336699;'>Softskills</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            for Softskills  in [i.strip() for i in st.session_state["Softskills"].split(",") if i.strip()]:
+               st.markdown(f"<div style='margin-left:10px;'>• {Softskills}</div>", unsafe_allow_html=True)   
+
+        with right:
+            st.markdown("<h4 style='color:#336699;'>Summary</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            summary_text = st.session_state['summary'].replace('\n', '<br>')
+            st.markdown(f"<p style='font-size:17px;'>{summary_text}</p>", unsafe_allow_html=True)
+
+            st.markdown("<h4 style='color:#336699;'>Experience</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            for exp in st.session_state.experience_entries:
+                if exp["company"] or exp["title"]:
+                    st.markdown(f"""
+                    <div style='margin-bottom:15px; padding:10px; border-radius:8px;'>
+                        <div style='display:flex; justify-content:space-between;'>
+                            <b>🏢 {exp['company']}</b><span style='color:gray;'>📆  {exp['duration']}</span>
+                        </div>
+                        <div style='font-size:14px;'>💼 <i>{exp['title']}</i></div>
+                        <div style='font-size:17px;'>📝 {exp['description']}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            st.markdown("<h4 style='color:#336699;'>🎓 Education</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            for edu in st.session_state.education_entries:
+                if edu["institution"] or edu["degree"]:
+                    st.markdown(f"""
+                    <div style='margin-bottom: 15px; padding: 10px 15px;color: white; border-radius: 8px;'>
+                        <div style='display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;'>
+                            <span>🏫 {edu['institution']}</span>
+                            <span style='color: gray;'>📅 {edu['year']}</span>
+                        </div>
+                        <div style='font-size: 14px; margin-top: 5px;'>🎓 <i>{edu['degree']}</i></div>
+                        <div style='font-size: 14px;'>📄 {edu['details']}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            st.markdown("<h4 style='color:#336699;'>Projects</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+            for proj in st.session_state.project_entries:
+                st.markdown(f"""
+                <div style='margin-bottom:15px; padding: 10px;'>
+                <strong style='font-size:16px;'>{proj['title']}</strong><br>
+                <span style='font-size:14px;'>🛠️ <strong>Tech Stack:</strong> {proj['tech']}</span><br>
+                <span style='font-size:14px;'>⏳ <strong>Duration:</strong> {proj['duration']}</span><br>
+                <span style='font-size:17px;'>📝 <strong>Description:</strong> {proj['description']}</span>
+                </div>
+                """, unsafe_allow_html=True)
+
+            if st.session_state.project_links:
+                st.markdown("<h4 style='color:#336699;'>Project Links</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+                for i, link in enumerate(st.session_state.project_links):
+                    st.markdown(f"[🔗 Project {i+1}]({link})", unsafe_allow_html=True)
+
+            if st.session_state.certificate_links:
+                st.markdown("<h4 style='color:#336699;'>Certificates</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+                
+                for cert in st.session_state.certificate_links:
+                    if cert["name"] and cert["link"]:
+                        st.markdown(f"""
+                        <div style='display:flex; justify-content:space-between;'>
+                            <a href="{cert['link']}" target="_blank"><b>📄 {cert['name']}</b></a><span style='color:gray;'>{cert['duration']}</span>
+                        </div>
+                        <div style='margin-bottom:10px; font-size:14px;'>{cert['description']}</div>
+                        """, unsafe_allow_html=True)
 
 import re
 

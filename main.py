@@ -458,140 +458,124 @@ if not st.session_state.get("authenticated", False):
     response = requests.get(image_url)
     img_base64 = b64encode(response.content).decode()
 
-    # ✅ Cinematic styles + sliding messages
+    # ✅ Cinematic subtle styles
     st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap');
 
+    /* Animated cards - toned down */
     .animated-cards {{
-      margin-top: 40px;
+      margin-top: 25px;
       display: flex;
       justify-content: center;
       position: relative;
-      height: 260px;
+      height: 200px;
     }}
     .animated-cards img {{
       position: absolute;
-      width: 220px;
-      animation: splitCards 3s ease-in-out infinite alternate;
-      filter: drop-shadow(0 0 8px #00BFFF);
+      width: 160px;
+      animation: floatCards 6s ease-in-out infinite;
+      opacity: 0.9;
+      filter: drop-shadow(0 0 5px rgba(0,191,255,0.4));
     }}
-    .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
-    .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
-    .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
+    .animated-cards img:nth-child(1) {{ animation-delay: 0s; }}
+    .animated-cards img:nth-child(2) {{ animation-delay: 2s; }}
+    .animated-cards img:nth-child(3) {{ animation-delay: 4s; }}
 
-    @keyframes splitCards {{
-      0% {{ transform: scale(1) translateX(0) rotate(0deg); }}
-      100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); }}
+    @keyframes floatCards {{
+      0%, 100% {{ transform: translateY(0) scale(1); }}
+      50%      {{ transform: translateY(-12px) scale(1.02); }}
     }}
-    .card-left {{ --x-offset: -80px; --rot: -6deg; }}
-    .card-center {{ --x-offset: 0px; --rot: 0deg; }}
-    .card-right {{ --x-offset: 80px; --rot: 6deg; }}
 
-    /* Futuristic login card */
+    /* Futuristic login card - less neon, more cinematic */
     .login-card {{
       margin-top: 40px;
-      padding: 25px;
-      border-radius: 18px;
-      background: rgba(5, 20, 40, 0.95);
-      border: 2px solid #00BFFF;
-      box-shadow: 0 0 30px #00BFFF, inset 0 0 20px rgba(0,191,255,0.5);
-      backdrop-filter: blur(12px);
+      padding: 28px;
+      border-radius: 14px;
+      background: rgba(12, 18, 28, 0.85);
+      border: 1px solid rgba(0,191,255,0.4);
+      box-shadow: 0 0 25px rgba(0,191,255,0.15);
+      backdrop-filter: blur(10px);
       text-align: center;
-      animation: glowCard 3s infinite alternate;
+      transition: all 0.4s ease;
     }}
-    @keyframes glowCard {{
-      from {{ box-shadow: 0 0 20px #00BFFF, inset 0 0 10px rgba(0,191,255,0.4); }}
-      to   {{ box-shadow: 0 0 40px #00BFFF, inset 0 0 25px rgba(0,191,255,0.8); }}
+    .login-card:hover {{
+      box-shadow: 0 0 35px rgba(0,191,255,0.25);
     }}
+
     .login-title {{
       font-family: 'Orbitron', sans-serif;
-      font-size: 28px;
+      font-size: 26px;
       font-weight: bold;
       color: #00BFFF;
-      text-shadow: 0 0 15px #00BFFF, 0 0 35px #00BFFF;
+      text-shadow: 0 0 10px rgba(0,191,255,0.4);
       margin-bottom: 20px;
-      letter-spacing: 2px;
+      letter-spacing: 1.5px;
     }}
 
-    /* Futuristic tabs */
+    /* Tabs - cinematic minimal */
     .stTabs [role="tablist"] button {{
         font-family: 'Orbitron', sans-serif;
-        font-size: 16px !important;
+        font-size: 15px !important;
         font-weight: bold;
         color: #00BFFF !important;
-        border: 1px solid #00BFFF !important;
-        border-radius: 10px !important;
-        margin: 5px;
-        background: rgba(0,0,0,0.6);
+        border-radius: 8px !important;
+        margin: 4px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(0,191,255,0.3);
         transition: all 0.3s ease;
     }}
-    .stTabs [role="tablist"] button:hover {{
-        background: #00BFFF !important;
-        color: black !important;
-        box-shadow: 0 0 25px #00BFFF;
-    }}
     .stTabs [role="tablist"] button[aria-selected="true"] {{
-        background: #00BFFF !important;
-        color: black !important;
-        box-shadow: 0 0 35px #00BFFF;
+        background: rgba(0,191,255,0.2) !important;
+        color: #00EFFF !important;
+        box-shadow: 0 0 12px rgba(0,191,255,0.3);
     }}
 
-    /* Cinematic messages */
+    /* Sliding messages - cinematic tone */
     .slide-message {{
       font-family: 'Orbitron', sans-serif;
-      font-size: 16px;
-      padding: 12px 18px;
-      margin-top: 15px;
-      border-radius: 10px;
+      font-size: 15px;
+      padding: 10px 16px;
+      margin-top: 12px;
+      border-radius: 8px;
       color: white;
       animation: slideIn 0.6s ease forwards;
       opacity: 0;
     }}
-    .success-msg {{ background: rgba(0,191,255,0.2); border: 1px solid #00BFFF; color: #00E5FF; }}
-    .error-msg   {{ background: rgba(255,0,60,0.2);  border: 1px solid #FF003C; color: #FF4C6D; }}
-    .info-msg    {{ background: rgba(0,255,170,0.2); border: 1px solid #00FFAA; color: #00FFCC; }}
-    .warn-msg    {{ background: rgba(255,165,0,0.2); border: 1px solid #FFA500; color: #FFC766; }}
+    .success-msg {{ background: rgba(0,191,255,0.12); border: 1px solid #00BFFF; color: #00E5FF; }}
+    .error-msg   {{ background: rgba(255,0,60,0.15);  border: 1px solid #FF003C; color: #FF4C6D; }}
+    .info-msg    {{ background: rgba(0,255,170,0.15); border: 1px solid #00FFAA; color: #00FFCC; }}
+    .warn-msg    {{ background: rgba(255,165,0,0.15); border: 1px solid #FFA500; color: #FFC766; }}
 
     @keyframes slideIn {{
-      0% {{ transform: translateX(-40px); opacity: 0; }}
-      100% {{ transform: translateX(0); opacity: 1; }}
+      0% {{ transform: translateY(-15px); opacity: 0; }}
+      100% {{ transform: translateY(0); opacity: 1; }}
     }}
 
-    /* Animated buttons */
+    /* Cinematic buttons */
     .stButton>button {{
         font-family: 'Orbitron', sans-serif;
-        font-size: 16px !important;
+        font-size: 15px !important;
         font-weight: bold;
         padding: 10px 20px;
-        border-radius: 10px;
-        border: 2px solid #00BFFF;
+        border-radius: 8px;
+        border: 1px solid rgba(0,191,255,0.6);
         color: #00BFFF;
-        background: black;
+        background: rgba(0,0,0,0.7);
         position: relative;
-        overflow: hidden;
         transition: all 0.3s ease;
     }}
-    .stButton>button::before {{
-        content: '';
-        position: absolute;
-        top: 0; left: -100%;
-        width: 100%; height: 100%;
-        background: linear-gradient(120deg, transparent, rgba(0,191,255,0.7), transparent);
-        transition: all 0.5s;
-    }}
-    .stButton>button:hover::before {{ left: 100%; }}
     .stButton>button:hover {{
         background: #00BFFF;
         color: black;
-        box-shadow: 0 0 20px #00BFFF;
+        box-shadow: 0 0 18px rgba(0,191,255,0.5);
     }}
     </style>
 
     <div class="animated-cards">
-        <img class="card-left" src="data:image/png;base64,{img_base64}" />
-        <img class="card-center" src="data:image/png;base64,{img_base64}" />
-        <img class="card-right" src="data:image/png;base64,{img_base64}" />
+        <img src="data:image/png;base64,{img_base64}" />
+        <img src="data:image/png;base64,{img_base64}" />
+        <img src="data:image/png;base64,{img_base64}" />
     </div>
     """, unsafe_allow_html=True)
 
@@ -649,6 +633,7 @@ if not st.session_state.get("authenticated", False):
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()
+
 
 
 

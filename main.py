@@ -2133,66 +2133,80 @@ if "processed_files" not in st.session_state:
 resume_data = st.session_state.resume_data
 
 # ✏️ Resume Evaluation Logic
-if uploaded_files and job_description:
-    # ✅ Placeholder for cinematic scanning animation
-    scanner_placeholder = st.empty()
-    
-    HERO_HTML_SCANNER = """
-    <style>
-    /* Cinematic scanning animation */
-    .scanner-container { 
-        display: flex; 
-        justify-content: center; 
-        align-items: center; 
-        height: 450px; 
-        flex-direction: column; 
-    }
-    .doc { 
-        width: 220px; 
-        height: 300px; 
-        background: linear-gradient(180deg, #e0e0e0, #c0c0c0); 
-        border-radius: 16px; 
-        position: relative; 
-        overflow: hidden; 
-        box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 25px rgba(56,189,248,0.35);
-    }
-    .scanner-line { 
-        position: absolute; 
-        top: 0; 
-        left: 0; 
-        width: 100%; 
-        height: 8px; 
-        background: rgba(56,189,248,0.7); 
-        animation: scan 2s linear infinite; 
-        box-shadow: 0 0 12px rgba(56,189,248,0.7), 0 0 20px rgba(56,189,248,0.5);
-    }
-    @keyframes scan { 
-        0% { top: 0; } 
-        100% { top: 292px; } 
-    }
-    .scan-text { 
-        margin-top: 30px; 
-        font-family: 'Orbitron', sans-serif; 
-        font-weight: 800; 
-        font-size: 28px; 
-        color: #38bdf8; 
-        text-shadow: 0 0 8px rgba(56,189,248,0.8), 0 0 20px rgba(56,189,248,0.5);
-    }
-    </style>
-    <div class="scanner-container">
-        <div class="doc">
-            <div class="scanner-line"></div>
-        </div>
-        <div class="scan-text">Scanning Resumes...</div>
-    </div>
-    """
-    
-    scanner_placeholder.markdown(HERO_HTML_SCANNER, unsafe_allow_html=True)
+import os
+import time
+import streamlit as st
+import pandas as pd
+import altair as alt
 
-    all_text = []
+# Initialize session state
+if "resume_data" not in st.session_state:
+    st.session_state.resume_data = []
+
+if "processed_files" not in st.session_state:
+    st.session_state.processed_files = set()
+
+resume_data = st.session_state.resume_data
+
+# ✏️ Resume Evaluation Logic
+if uploaded_files and job_description:
     for uploaded_file in uploaded_files:
         if uploaded_file.name in st.session_state.processed_files:
             continue
+
+        # ✅ Placeholder for cinematic scanning animation
+        scanner_placeholder = st.empty()
+
+        HERO_HTML_SCANNER = f"""
+        <style>
+        .scanner-container {{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 450px;
+            flex-direction: column;
+        }}
+        .doc {{
+            width: 240px;
+            height: 320px;
+            background: linear-gradient(180deg, #e0e0e0, #c0c0c0);
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 25px rgba(56,189,248,0.35);
+        }}
+        .scanner-line {{
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: rgba(56,189,248,0.8);
+            animation: scan 2s linear infinite;
+            box-shadow: 0 0 14px rgba(56,189,248,0.8), 0 0 22px rgba(56,189,248,0.5);
+        }}
+        @keyframes scan {{ 0% {{ top: 0; }} 100% {{ top: 310px; }} }}
+        .scan-text {{
+            margin-top: 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 800;
+            font-size: 32px;
+            color: #38bdf8;
+            text-shadow: 0 0 8px rgba(56,189,248,0.8), 0 0 20px rgba(56,189,248,0.5);
+        }}
+        </style>
+        <div class="scanner-container">
+            <div class="doc">
+                <div class="scanner-line"></div>
+            </div>
+            <div class="scan-text">Scanning {uploaded_file.name}...</div>
+        </div>
+        """
+
+        scanner_placeholder.markdown(HERO_HTML_SCANNER, unsafe_allow_html=True)
+
+        # ✅ Simulate scanning duration
+        time.sleep(2.5)
 
         # ✅ Save uploaded file
         file_path = os.path.join(working_dir, uploaded_file.name)
@@ -2203,9 +2217,9 @@ if uploaded_files and job_description:
         text = extract_text_from_pdf(file_path)
         if not text:
             st.warning(f"⚠️ Could not extract text from {uploaded_file.name}. Skipping.")
+            scanner_placeholder.empty()
             continue
 
-        all_text.append(" ".join(text))
         full_text = " ".join(text)
 
         # ✅ Bias detection
@@ -2300,10 +2314,47 @@ if uploaded_files and job_description:
 
         st.session_state.processed_files.add(uploaded_file.name)
 
-    # ✅ Remove scanner animation and show success
-    scanner_placeholder.empty()
-    st.image("https://cdn-icons-png.flaticon.com/512/845/845646.png", width=60)
-    st.markdown("### ✅ Resume Processed Successfully!")
+        # ✅ Remove scanner animation and show cinematic success message
+        scanner_placeholder.empty()
+
+        SUCCESS_HTML = f"""
+        <style>
+        .success-container {{
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 300px;
+            animation: fadeIn 1s ease-out forwards;
+        }}
+        .success-text {{
+            font-family: 'Orbitron', sans-serif;
+            font-size: 36px;
+            font-weight: 900;
+            color: #22c55e;
+            text-shadow: 0 0 12px #22c55e, 0 0 25px #84cc16, 0 0 35px #84cc16;
+            transform: translateY(20px);
+            animation: slideUp 1s ease-out forwards 0.3s;
+        }}
+        .success-subtext {{
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            color: #a3f7bf;
+            margin-top: 12px;
+            opacity: 0;
+            animation: fadeIn 1s ease-out forwards 1.3s;
+        }}
+        @keyframes slideUp {{ from {{ transform: translateY(20px); opacity:0; }} to {{ transform: translateY(0); opacity:1; }} }}
+        @keyframes fadeIn {{ from {{ opacity:0; }} to {{ opacity:1; }} }}
+        </style>
+        <div class="success-container">
+            <div class="success-text">{uploaded_file.name} Processed!</div>
+            <div class="success-subtext">✅ Resume analyzed and ready.</div>
+        </div>
+        """
+        st.markdown(SUCCESS_HTML, unsafe_allow_html=True)
+        time.sleep(1.5)  # allow users to see the success message
+
 
 
 

@@ -307,6 +307,154 @@ body, .main {
 
 
 # ------------------- BEFORE LOGIN -------------------
+if not st.session_state.authenticated:
+
+    # -------- Sidebar --------
+    with st.sidebar:
+        st.markdown("<h1 style='color:#00BFFF;'>Smart Resume AI</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#c9d1d9;'>Transform your career with AI-powered resume analysis, job matching, and smart insights.</p>", unsafe_allow_html=True)
+
+        features = [
+            ("https://img.icons8.com/fluency/48/resume.png", "Resume Analyzer", "Get feedback, scores, and tips powered by AI along with the biased words detection and rewriting the resume in an inclusive way."),
+            ("https://img.icons8.com/fluency/48/resume-website.png", "Resume Builder", "Build modern, eye-catching resumes easily."),
+            ("https://img.icons8.com/fluency/48/job.png", "Job Search", "Find tailored job matches."),
+            ("https://img.icons8.com/fluency/48/classroom.png", "Course Suggestions", "Get upskilling recommendations based on your goals."),
+            ("https://img.icons8.com/fluency/48/combo-chart.png", "Interactive Dashboard", "Visualize trends, scores, and analytics."),
+        ]
+
+        for icon, title, desc in features:
+            st.markdown(f"""
+            <div class="feature-card">
+                <img src="{icon}" width="40"/>
+                <h3>{title}</h3>
+                <p>{desc}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # -------- Animated Cards --------
+    image_url = "https://cdn-icons-png.flaticon.com/512/3135/3135768.png"
+    response = requests.get(image_url)
+    img_base64 = b64encode(response.content).decode()
+
+    st.markdown(f"""
+    <style>
+    .animated-cards {{
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+      position: relative;
+      height: 300px;
+    }}
+    .animated-cards img {{
+      position: absolute;
+      width: 240px;
+      animation: splitCards 2.5s ease-in-out infinite alternate;
+      z-index: 1;
+    }}
+    .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
+    .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
+    .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
+    @keyframes splitCards {{
+      0% {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
+      100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
+    }}
+    .card-left {{ --x-offset: -80px; --rot: -5deg; }}
+    .card-center {{ --x-offset: 0px; --rot: 0deg; }}
+    .card-right {{ --x-offset: 80px; --rot: 5deg; }}
+    </style>
+    <div class="animated-cards">
+        <img class="card-left" src="data:image/png;base64,{img_base64}" />
+        <img class="card-center" src="data:image/png;base64,{img_base64}" />
+        <img class="card-right" src="data:image/png;base64,{img_base64}" />
+    </div>
+    """, unsafe_allow_html=True)
+
+    # -------- Counter Section (Updated Layout & Style with tighter spacing) --------
+
+    # Fetch counters
+    total_users = get_total_registered_users()
+    active_logins = get_logins_today()
+    stats = get_database_stats()
+
+# Replace static 15 with dynamic count
+    resumes_uploaded = stats.get("total_candidates", 0)
+
+    states_accessed = 29
+
+    neon_counter_style = """
+    <style>
+    .counter-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 250px);
+        column-gap: 40px;
+        row-gap: 25px;
+        justify-content: center;
+        padding: 30px 10px;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .counter-box {
+        background-color: #0d1117;
+        border: 2px solid #00FFFF;
+        border-radius: 10px;
+        width: 100%;
+        height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 0 12px rgba(0, 255, 255, 0.4);
+        transition: transform 0.2s ease;
+    }
+
+    .counter-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0 18px rgba(0, 255, 255, 0.7);
+    }
+
+    .counter-number {
+        font-size: 2.2em;
+        font-weight: bold;
+        color: #00BFFF;
+        margin: 0;
+    }
+
+    .counter-label {
+        margin-top: 8px;
+        font-size: 1em;
+        color: #c9d1d9;
+    }
+    </style>
+    """
+
+    st.markdown(neon_counter_style, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div class="counter-grid">
+        <div class="counter-box">
+            <div class="counter-number">{total_users}</div>
+            <div class="counter-label">Total Users</div>
+        </div>
+        <div class="counter-box">
+            <div class="counter-number">{states_accessed}</div>
+            <div class="counter-label">States Accessed</div>
+        </div>
+        <div class="counter-box">
+            <div class="counter-number">{resumes_uploaded}</div>
+            <div class="counter-label">Resumes Uploaded</div>
+        </div>
+        <div class="counter-box">
+            <div class="counter-number">{active_logins}</div>
+            <div class="counter-label">Active Sessions</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+
+
+
 if not st.session_state.get("authenticated", False):
     
 

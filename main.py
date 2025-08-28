@@ -500,22 +500,46 @@ if not st.session_state.get("authenticated", False):
       font-family: 'Orbitron', sans-serif;
       color: white;
       margin-top: 20px;
-      opacity: 0;
-      transform: translateX(-120%);
-      animation: slideInLeft 1.2s ease-out forwards;
-    }}
-    @keyframes slideInLeft {{
-      0%   {{ transform: translateX(-120%); opacity: 0; }}
-      100% {{ transform: translateX(0); opacity: 1; }}
     }}
 
+    /* ===== Bag Reveal Title ===== */
     .login-card h2 {{
+      position: relative;
       text-align: center;
       font-size: 1.6rem;
       text-shadow: 0 0 12px #00BFFF;
       margin-bottom: 15px;
+      color: white;
+      overflow: hidden;
+      display: inline-block;
+      animation: fadeInText 2s ease forwards;
+      opacity: 0;
     }}
     .login-card h2 span {{ color: #00BFFF; }}
+
+    /* Bag effect: sliding block */
+    .login-card h2::before {{
+      content: "";
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #00BFFF;
+      transform: translateX(-100%);
+      animation: bagSlide 1.5s ease forwards;
+      z-index: 2;
+    }}
+
+    /* Bag slides → text fades */
+    @keyframes bagSlide {{
+      0%   {{ transform: translateX(-100%); }}
+      50%  {{ transform: translateX(0); }}
+      100% {{ transform: translateX(120%); }}
+    }}
+    @keyframes fadeInText {{
+      0%   {{ opacity: 0; }}
+      60%  {{ opacity: 0; }}
+      100% {{ opacity: 1; }}
+    }}
 
     /* ===== Sliding Messages ===== */
     .slide-message {{

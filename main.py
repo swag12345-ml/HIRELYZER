@@ -451,10 +451,6 @@ if not st.session_state.authenticated:
     </div>
     """, unsafe_allow_html=True)
 
-
-
-
-
 if not st.session_state.get("authenticated", False):
 
     # ✅ Futuristic silhouette
@@ -496,20 +492,30 @@ if not st.session_state.get("authenticated", False):
 
     /* ===== Cinematic Login Card ===== */
     .login-card {{
-      background: rgba(10, 20, 40, 0.85);
+      background: linear-gradient(145deg, rgba(10,20,40,0.92), rgba(0,191,255,0.1));
       border: 1px solid #00BFFF;
       border-radius: 18px;
       padding: 25px;
-      box-shadow: 0px 0px 25px rgba(0,191,255,0.6);
+      box-shadow: 0px 0px 30px rgba(0,191,255,0.7);
       font-family: 'Orbitron', sans-serif;
       color: white;
       margin-top: 20px;
-      animation: fadeInUp 1.5s ease;
+      opacity: 0;
+      transform: translateX(-120%);
+      animation: slideInLeft 1.2s ease-out forwards;
     }}
-    @keyframes fadeInUp {{
-      0%   {{ opacity: 0; transform: translateY(40px); }}
-      100% {{ opacity: 1; transform: translateY(0); }}
+    @keyframes slideInLeft {{
+      0%   {{ transform: translateX(-120%); opacity: 0; }}
+      100% {{ transform: translateX(0); opacity: 1; }}
     }}
+
+    .login-card h2 {{
+      text-align: center;
+      font-size: 1.6rem;
+      text-shadow: 0 0 12px #00BFFF;
+      margin-bottom: 15px;
+    }}
+    .login-card h2 span {{ color: #00BFFF; }}
 
     /* ===== Sliding Messages ===== */
     .slide-message {{
@@ -529,14 +535,31 @@ if not st.session_state.get("authenticated", False):
       height: 18px;
       flex-shrink: 0;
     }}
-    .success-msg {{ background: rgba(0,255,127,0.15); border-left: 5px solid #00FF7F; color:#00FF7F; }}
-    .error-msg   {{ background: rgba(255,99,71,0.15); border-left: 5px solid #FF6347; color:#FF6347; }}
-    .info-msg    {{ background: rgba(30,144,255,0.15); border-left: 5px solid #1E90FF; color:#1E90FF; }}
-    .warn-msg    {{ background: rgba(255,215,0,0.15); border-left: 5px solid #FFD700; color:#FFD700; }}
+    .success-msg {{ background: rgba(0,255,127,0.12); border-left: 5px solid #00FF7F; color:#00FF7F; }}
+    .error-msg   {{ background: rgba(255,99,71,0.12);  border-left: 5px solid #FF6347; color:#FF6347; }}
+    .info-msg    {{ background: rgba(30,144,255,0.12); border-left: 5px solid #1E90FF; color:#1E90FF; }}
+    .warn-msg    {{ background: rgba(255,215,0,0.12);  border-left: 5px solid #FFD700; color:#FFD700; }}
 
     @keyframes slideIn {{
       0%   {{ transform: translateX(100%); opacity: 0; }}
       100% {{ transform: translateX(0); opacity: 1; }}
+    }}
+
+    /* ===== Futuristic Buttons ===== */
+    .stButton>button {{
+      background: linear-gradient(90deg, #00BFFF, #1E90FF);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: bold;
+      padding: 8px 20px;
+      box-shadow: 0px 0px 15px rgba(0,191,255,0.6);
+      transition: all 0.3s ease;
+    }}
+    .stButton>button:hover {{
+      transform: scale(1.05);
+      box-shadow: 0px 0px 25px rgba(0,191,255,0.9);
     }}
     </style>
 
@@ -553,7 +576,7 @@ if not st.session_state.get("authenticated", False):
 
     with center:
         st.markdown(
-            "<div class='login-card'><h2 style='text-align:center;'>Login to <span style='color:#00BFFF;'>HIRELYZER</span></h2>",
+            "<div class='login-card'><h2>Login to <span>HIRELYZER</span></h2>",
             unsafe_allow_html=True,
         )
 
@@ -573,20 +596,18 @@ if not st.session_state.get("authenticated", False):
                         st.session_state["user_groq_key"] = saved_key
                     log_user_action(user.strip(), "login")
 
-                    st.markdown("""
-                        <div class='slide-message success-msg'>
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                          Login successful!
-                        </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown("""<div class='slide-message success-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                        Login successful!
+                    </div>""", unsafe_allow_html=True)
                     st.rerun()
                 else:
-                    st.markdown("""
-                        <div class='slide-message error-msg'>
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                          Invalid credentials.
-                        </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown("""<div class='slide-message error-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                        Invalid credentials.
+                    </div>""", unsafe_allow_html=True)
 
         # ---------------- REGISTER TAB ----------------
         with register_tab:
@@ -596,52 +617,47 @@ if not st.session_state.get("authenticated", False):
 
             if new_user.strip():
                 if username_exists(new_user.strip()):
-                    st.markdown("""
-                        <div class='slide-message error-msg'>
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                          Username already exists.
-                        </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown("""<div class='slide-message error-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                        Username already exists.
+                    </div>""", unsafe_allow_html=True)
                 else:
-                    st.markdown("""
-                        <div class='slide-message info-msg'>
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8h.01M12 12v4"/></svg>
-                          Username is available.
-                        </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown("""<div class='slide-message info-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
+                          <path d="M12 8h.01M12 12v4"/></svg>
+                        Username is available.
+                    </div>""", unsafe_allow_html=True)
 
             if st.button("Register", key="register_btn"):
                 if new_user.strip() and new_pass.strip():
                     success, message = add_user(new_user.strip(), new_pass.strip())
                     if success:
-                        st.markdown(f"""
-                            <div class='slide-message success-msg'>
-                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                              {message}
-                            </div>
-                        """, unsafe_allow_html=True)
+                        st.markdown(f"""<div class='slide-message success-msg'>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                            {message}
+                        </div>""", unsafe_allow_html=True)
                         log_user_action(new_user.strip(), "register")
                     else:
-                        st.markdown(f"""
-                            <div class='slide-message error-msg'>
-                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                              {message}
-                            </div>
-                        """, unsafe_allow_html=True)
+                        st.markdown(f"""<div class='slide-message error-msg'>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                              stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                            {message}
+                        </div>""", unsafe_allow_html=True)
                 else:
-                    st.markdown("""
-                        <div class='slide-message warn-msg'>
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01M12 5h.01M5.64 5.64a9 9 0 1112.72 12.72A9 9 0 015.64 5.64z"/></svg>
-                          Please fill in both fields.
-                        </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown("""<div class='slide-message warn-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
+                        </svg>
+                        Please fill in both fields.
+                    </div>""", unsafe_allow_html=True)
 
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()
-
-
-
 
 
 

@@ -1613,6 +1613,7 @@ You are an expert resume editor and career advisor.
 Organize the rewritten text using these sections (only if present in the original):
 - 🏷️ **Name**
 - 📞 **Contact Information**
+- 📍 **Location**
 - 📧 **Email**
 - 🔗 **LinkedIn** (If missing, insert: 🔗 Please paste your LinkedIn URL here)
 - 🌐 **Portfolio** (If missing, insert: 🌐 Please paste your GitHub or portfolio link here)

@@ -2342,41 +2342,41 @@ if uploaded_files and job_description:
 
         st.session_state.processed_files.add(uploaded_file.name)
 
-        # ✅ Remove scanner and show cinematic success message
+        # ✅ Remove scanner and show compact glowing success scope
         SUCCESS_HTML = """
         <style>
         .scope-container {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 300px;
+            height: 200px;
             flex-direction: column;
         }
         .scope {
-            width: 180px;
-            height: 180px;
-            border: 3px solid #38bdf8;
+            width: 150px;
+            height: 150px;
+            border: 2px solid #38bdf8;
             border-radius: 50%;
             position: relative;
-            background: radial-gradient(circle, rgba(56,189,248,0.15) 30%, rgba(0,0,0,0.8) 100%);
-            box-shadow: 0 0 20px rgba(56,189,248,0.6), inset 0 0 20px rgba(56,189,248,0.6);
+            background: radial-gradient(circle, rgba(56,189,248,0.1) 30%, rgba(0,0,0,0.85) 100%);
+            box-shadow: 0 0 12px rgba(56,189,248,0.5), inset 0 0 12px rgba(56,189,248,0.5);
             overflow: hidden;
-            animation: pulseScope 2.5s infinite;
+            animation: pulseScope 2s infinite;
         }
         @keyframes pulseScope {
-            0%, 100% { box-shadow: 0 0 15px rgba(56,189,248,0.5), inset 0 0 15px rgba(56,189,248,0.5); }
-            50% { box-shadow: 0 0 30px rgba(56,189,248,0.9), inset 0 0 25px rgba(56,189,248,0.9); }
+            0%, 100% { box-shadow: 0 0 10px rgba(56,189,248,0.5), inset 0 0 10px rgba(56,189,248,0.5); }
+            50% { box-shadow: 0 0 20px rgba(56,189,248,0.9), inset 0 0 18px rgba(56,189,248,0.9); }
         }
         .scope-line {
             position: absolute;
             top: 0;
             left: 50%;
-            width: 2px;
+            width: 1px;
             height: 100%;
-            background: rgba(56,189,248,0.8);
+            background: rgba(56,189,248,0.7);
             transform-origin: bottom center;
-            animation: rotateLine 2s linear infinite;
-            box-shadow: 0 0 12px rgba(56,189,248,0.9);
+            animation: rotateLine 1.5s linear infinite;
+            box-shadow: 0 0 6px rgba(56,189,248,0.9);
         }
         @keyframes rotateLine {
             0% { transform: rotate(0deg); }
@@ -2388,16 +2388,16 @@ if uploaded_files and job_description:
             left: 50%;
             transform: translate(-50%, -50%);
             font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            font-size: 18px;
+            font-weight: 700;
+            font-size: 14px;
             color: #38bdf8;
-            text-shadow: 0 0 10px #38bdf8, 0 0 25px #38bdf8;
+            text-shadow: 0 0 6px #38bdf8, 0 0 12px #38bdf8;
             animation: blinkText 1.5s infinite;
             text-align: center;
         }
         @keyframes blinkText {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
+            50% { opacity: 0.5; }
         }
         </style>
 

@@ -2127,9 +2127,6 @@ from llm_manager import call_llm  # ensure this calls your LLM
 
 import time
 import os
-import streamlit as st
-import pandas as pd
-import altair as alt
 
 # Initialize session state
 if "resume_data" not in st.session_state:
@@ -2151,50 +2148,84 @@ if uploaded_files and job_description:
         # ✅ Placeholder for cinematic scanning animation
         scanner_placeholder = st.empty()
 
-        HERO_HTML_SCANNER = """
+        HERO_HTML_SCANNER = f"""
         <style>
-        .scanner-container { 
+        .scanner-container {{ 
             display: flex; 
             justify-content: center; 
             align-items: center; 
-            height: 350px; 
+            height: 420px; 
             flex-direction: column; 
-        }
-        .doc { 
-            width: 220px; 
-            height: 300px; 
-            background: linear-gradient(180deg, #e0e0e0, #c0c0c0); 
+        }}
+        .resume-doc {{ 
+            width: 260px; 
+            height: 340px; 
+            background: linear-gradient(180deg, #f9f9f9, #e3e3e3); 
             border-radius: 16px; 
             position: relative; 
             overflow: hidden; 
             box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 25px rgba(56,189,248,0.35);
-        }
-        .scanner-line { 
+            padding-top: 60px;
+            text-align: center;
+        }}
+        .resume-doc::before {{
+            content: "👤";
+            font-size: 40px;
+            display: block;
+            margin-bottom: 10px;
+        }}
+        .job-title {{
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            font-family: 'Orbitron', sans-serif;
+            animation: pulseTitle 1.8s ease-in-out infinite;
+        }}
+        @keyframes pulseTitle {{
+            0%, 100% {{ color: #333; text-shadow: none; }}
+            50% {{ color: #38bdf8; text-shadow: 0 0 10px #38bdf8; }}
+        }}
+        .resume-body {{
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4em;
+            text-align: left;
+            padding: 0 15px;
+        }}
+        .scanner-line {{ 
             position: absolute; 
             top: 0; 
             left: 0; 
             width: 100%; 
-            height: 8px; 
+            height: 16px; 
             background: rgba(56,189,248,0.7); 
-            animation: scan 2s linear infinite; 
-            box-shadow: 0 0 12px rgba(56,189,248,0.7), 0 0 20px rgba(56,189,248,0.5);
-        }
-        @keyframes scan { 
-            0% { top: 0; } 
-            100% { top: 292px; } 
-        }
-        .scan-text { 
-            margin-top: 20px; 
+            animation: scan 2.5s linear infinite; 
+            box-shadow: 0 0 16px rgba(56,189,248,0.9), 0 0 25px rgba(56,189,248,0.7);
+        }}
+        @keyframes scan {{ 
+            0% {{ top: 0; }} 
+            100% {{ top: 340px; }} 
+        }}
+        .scan-text {{ 
+            margin-top: 25px; 
             font-family: 'Orbitron', sans-serif; 
             font-weight: 800; 
-            font-size: 24px; 
+            font-size: 22px; 
             color: #38bdf8; 
             text-shadow: 0 0 8px rgba(56,189,248,0.8), 0 0 20px rgba(56,189,248,0.5);
-        }
+        }}
         </style>
         <div class="scanner-container">
-            <div class="doc">
+            <div class="resume-doc">
                 <div class="scanner-line"></div>
+                <div class="job-title">{job_title}</div>
+                <div class="resume-body">
+                    • Scanning candidate information...<br>
+                    • Extracting skills and experience...<br>
+                    • Matching keywords with JD...<br>
+                    • Evaluating ATS score...
+                </div>
             </div>
             <div class="scan-text">Scanning Resume...</div>
         </div>
@@ -2313,18 +2344,73 @@ if uploaded_files and job_description:
 
         # ✅ Remove scanner and show cinematic success message
         SUCCESS_HTML = """
-        <div style="text-align:center; margin-top:20px;">
-            <img src="https://cdn-icons-png.flaticon.com/512/845/845646.png" width="80"/>
-            <h3 style="color:#38bdf8; font-family: 'Orbitron', sans-serif; text-shadow: 0 0 12px #38bdf8;">
-                ✅ Resume Processed Successfully!
-            </h3>
+        <style>
+        .scope-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 300px;
+            flex-direction: column;
+        }
+        .scope {
+            width: 180px;
+            height: 180px;
+            border: 3px solid #38bdf8;
+            border-radius: 50%;
+            position: relative;
+            background: radial-gradient(circle, rgba(56,189,248,0.15) 30%, rgba(0,0,0,0.8) 100%);
+            box-shadow: 0 0 20px rgba(56,189,248,0.6), inset 0 0 20px rgba(56,189,248,0.6);
+            overflow: hidden;
+            animation: pulseScope 2.5s infinite;
+        }
+        @keyframes pulseScope {
+            0%, 100% { box-shadow: 0 0 15px rgba(56,189,248,0.5), inset 0 0 15px rgba(56,189,248,0.5); }
+            50% { box-shadow: 0 0 30px rgba(56,189,248,0.9), inset 0 0 25px rgba(56,189,248,0.9); }
+        }
+        .scope-line {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 2px;
+            height: 100%;
+            background: rgba(56,189,248,0.8);
+            transform-origin: bottom center;
+            animation: rotateLine 2s linear infinite;
+            box-shadow: 0 0 12px rgba(56,189,248,0.9);
+        }
+        @keyframes rotateLine {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .scope-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 18px;
+            color: #38bdf8;
+            text-shadow: 0 0 10px #38bdf8, 0 0 25px #38bdf8;
+            animation: blinkText 1.5s infinite;
+            text-align: center;
+        }
+        @keyframes blinkText {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        </style>
+
+        <div class="scope-container">
+            <div class="scope">
+                <div class="scope-line"></div>
+                <div class="scope-text">Scanned<br>Successfully</div>
+            </div>
         </div>
         """
         scanner_placeholder.empty()
         st.markdown(SUCCESS_HTML, unsafe_allow_html=True)
         time.sleep(1.5)  # short pause to show success
-
-
 
 
 

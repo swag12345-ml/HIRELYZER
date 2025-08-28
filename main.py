@@ -453,7 +453,7 @@ if not st.session_state.authenticated:
 
 if not st.session_state.get("authenticated", False):
 
-    # ✅ Use futuristic silhouette
+    # ✅ Futuristic silhouette
     image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
     response = requests.get(image_url)
     img_base64 = b64encode(response.content).decode()
@@ -463,7 +463,7 @@ if not st.session_state.get("authenticated", False):
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap');
 
-    /* Animated cards - toned down */
+    /* Floating cards (preserved hover style) */
     .animated-cards {{
       margin-top: 25px;
       display: flex;
@@ -487,7 +487,7 @@ if not st.session_state.get("authenticated", False):
       50%      {{ transform: translateY(-12px) scale(1.02); }}
     }}
 
-    /* Futuristic login card - less neon, more cinematic */
+    /* Futuristic login container */
     .login-card {{
       margin-top: 40px;
       padding: 28px;
@@ -508,12 +508,12 @@ if not st.session_state.get("authenticated", False):
       font-size: 26px;
       font-weight: bold;
       color: #00BFFF;
-      text-shadow: 0 0 10px rgba(0,191,255,0.4);
-      margin-bottom: 20px;
-      letter-spacing: 1.5px;
+      text-shadow: 0 0 12px rgba(0,191,255,0.6);
+      margin-bottom: 22px;
+      letter-spacing: 2px;
     }}
 
-    /* Tabs - cinematic minimal */
+    /* Tabs */
     .stTabs [role="tablist"] button {{
         font-family: 'Orbitron', sans-serif;
         font-size: 15px !important;
@@ -531,15 +531,15 @@ if not st.session_state.get("authenticated", False):
         box-shadow: 0 0 12px rgba(0,191,255,0.3);
     }}
 
-    /* Sliding messages - cinematic tone */
+    /* Sliding stacked messages */
     .slide-message {{
       font-family: 'Orbitron', sans-serif;
       font-size: 15px;
       padding: 10px 16px;
-      margin-top: 12px;
+      margin: 8px auto;
+      width: fit-content;
       border-radius: 8px;
-      color: white;
-      animation: slideIn 0.6s ease forwards;
+      animation: slideIn 0.6s ease forwards, fadeOut 0.6s ease forwards 5s;
       opacity: 0;
     }}
     .success-msg {{ background: rgba(0,191,255,0.12); border: 1px solid #00BFFF; color: #00E5FF; }}
@@ -548,11 +548,15 @@ if not st.session_state.get("authenticated", False):
     .warn-msg    {{ background: rgba(255,165,0,0.15); border: 1px solid #FFA500; color: #FFC766; }}
 
     @keyframes slideIn {{
-      0% {{ transform: translateY(-15px); opacity: 0; }}
+      0%   {{ transform: translateY(-15px); opacity: 0; }}
       100% {{ transform: translateY(0); opacity: 1; }}
     }}
+    @keyframes fadeOut {{
+      0%   {{ opacity: 1; }}
+      100% {{ opacity: 0; }}
+    }}
 
-    /* Cinematic buttons */
+    /* Buttons */
     .stButton>button {{
         font-family: 'Orbitron', sans-serif;
         font-size: 15px !important;
@@ -562,7 +566,6 @@ if not st.session_state.get("authenticated", False):
         border: 1px solid rgba(0,191,255,0.6);
         color: #00BFFF;
         background: rgba(0,0,0,0.7);
-        position: relative;
         transition: all 0.3s ease;
     }}
     .stButton>button:hover {{
@@ -583,7 +586,7 @@ if not st.session_state.get("authenticated", False):
     left, center, right = st.columns([1, 2, 1])
 
     with center:
-        st.markdown("<div class='login-card'><div class='login-title'>ACCESS PORTAL: HIRELYZER</div>", unsafe_allow_html=True)
+        st.markdown("<div class='login-card'><div class='login-title'>ACCESS PORTAL : HIRELYZER</div>", unsafe_allow_html=True)
 
         login_tab, register_tab = st.tabs(["Login", "Register"])
 
@@ -597,10 +600,8 @@ if not st.session_state.get("authenticated", False):
                 if success:
                     st.session_state.authenticated = True
                     st.session_state.username = user.strip()
-
                     if saved_key:
                         st.session_state["user_groq_key"] = saved_key
-
                     log_user_action(user.strip(), "login")
                     st.markdown("<div class='slide-message success-msg'>✔ Access Granted. Welcome back, Operative.</div>", unsafe_allow_html=True)
                     st.rerun()
@@ -633,9 +634,6 @@ if not st.session_state.get("authenticated", False):
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()
-
-
-
 
 
 

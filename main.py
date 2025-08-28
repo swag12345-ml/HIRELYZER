@@ -463,123 +463,133 @@ if not st.session_state.get("authenticated", False):
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
 
-    /* ===== Card Shuffle Animation ===== */
-    .animated-cards {{
-      margin-top: 40px;
-      display: flex;
-      justify-content: center;
-      position: relative;
-      height: 260px;
+    body {{
+      background: black;
+      font-family: 'Orbitron', sans-serif;
     }}
-    .animated-cards img {{
-      position: absolute;
-      width: 220px;
-      animation: splitCards 2.5s ease-in-out infinite alternate;
-      z-index: 1;
-      filter: drop-shadow(0 0 10px rgba(0,191,255,0.6));
-    }}
-    .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
-    .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
-    .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
 
-    @keyframes splitCards {{
-      0%   {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
-      100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
+    /* ===== Sliding Background ===== */
+    .cinematic-bg {{
+      position: fixed;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(120deg, #0d0d1a, #1a1a2e, #000);
+      animation: bgSlide 1.8s ease-out forwards;
+      z-index: -1;
     }}
-    .card-left   {{ --x-offset: -80px; --rot: -4deg; }}
-    .card-center {{ --x-offset: 0px;  --rot: 0deg;  }}
-    .card-right  {{ --x-offset: 80px;  --rot: 4deg;  }}
+    @keyframes bgSlide {{
+      to {{ left: 0; }}
+    }}
 
-    /* ===== Cinematic Login Card ===== */
-    .login-card {{
-      background: linear-gradient(145deg, rgba(10,20,40,0.92), rgba(0,191,255,0.1));
+    /* ===== Cinematic Card ===== */
+    .cinematic-card {{
+      background: rgba(15,25,45,0.9);
       border: 1px solid #00BFFF;
       border-radius: 18px;
-      padding: 25px;
-      box-shadow: 0px 0px 30px rgba(0,191,255,0.7);
-      font-family: 'Orbitron', sans-serif;
+      padding: 30px;
+      box-shadow: 0 0 25px rgba(0,191,255,0.7);
       color: white;
-      margin-top: 20px;
+      max-width: 420px;
+      margin: 60px auto;
       opacity: 0;
-      transform: translateX(-120%);
-      animation: slideInLeft 1.2s ease-out forwards;
+      transform: translateY(40px);
+      animation: cardFade 1.2s ease forwards;
+      animation-delay: 0.6s;
     }}
-    @keyframes slideInLeft {{
-      0%   {{ transform: translateX(-120%); opacity: 0; }}
-      100% {{ transform: translateX(0); opacity: 1; }}
+    @keyframes cardFade {{
+      to {{ opacity: 1; transform: translateY(0); }}
     }}
 
-    .login-card h2 {{
+    /* ===== Title ===== */
+    .cinematic-title {{
       text-align: center;
       font-size: 1.6rem;
-      text-shadow: 0 0 12px #00BFFF;
-      margin-bottom: 15px;
+      color: #fff;
+      text-shadow: 0 0 15px #00BFFF;
+      opacity: 0;
+      animation: fadeInText 1.5s ease forwards;
+      animation-delay: 1.2s;
     }}
-    .login-card h2 span {{ color: #00BFFF; }}
-
-    /* ===== Sliding Messages ===== */
-    .slide-message {{
-      position: relative;
-      overflow: hidden;
-      margin: 10px 0;
-      padding: 10px 15px;
-      border-radius: 10px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      animation: slideIn 0.8s ease forwards;
+    .cinematic-title span {{
+      color: #00BFFF;
     }}
-    .slide-message svg {{
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-    }}
-    .success-msg {{ background: rgba(0,255,127,0.12); border-left: 5px solid #00FF7F; color:#00FF7F; }}
-    .error-msg   {{ background: rgba(255,99,71,0.12);  border-left: 5px solid #FF6347; color:#FF6347; }}
-    .info-msg    {{ background: rgba(30,144,255,0.12); border-left: 5px solid #1E90FF; color:#1E90FF; }}
-    .warn-msg    {{ background: rgba(255,215,0,0.12);  border-left: 5px solid #FFD700; color:#FFD700; }}
-
-    @keyframes slideIn {{
-      0%   {{ transform: translateX(100%); opacity: 0; }}
-      100% {{ transform: translateX(0); opacity: 1; }}
+    @keyframes fadeInText {{
+      from {{ opacity: 0; transform: translateY(-20px); }}
+      to {{ opacity: 1; transform: translateY(0); }}
     }}
 
-    /* ===== Futuristic Buttons ===== */
-    .stButton>button {{
-      background: linear-gradient(90deg, #00BFFF, #1E90FF);
-      color: white;
+    /* ===== Tabs ===== */
+    .stTabs [role="tablist"] button {{
+      font-family: 'Orbitron', sans-serif;
+      color: #ccc !important;
+      opacity: 0;
+      animation: fadeInTabs 1s ease forwards;
+      animation-delay: 1.8s;
+    }}
+    @keyframes fadeInTabs {{
+      from {{ opacity: 0; transform: translateY(10px); }}
+      to {{ opacity: 1; transform: translateY(0); }}
+    }}
+
+    /* ===== Inputs Cinematic Slide ===== */
+    .stTextInput input {{
+      background: #0f0f1a;
       border: none;
       border-radius: 10px;
+      color: #00f2ff !important;
+      box-shadow: 0 0 8px #00BFFF;
       font-family: 'Orbitron', sans-serif;
+      animation: inputSlide 0.8s ease forwards;
+      opacity: 0;
+    }}
+    .stTextInput:nth-child(1) input {{ animation-delay: 2s; }}
+    .stTextInput:nth-child(2) input {{ animation-delay: 2.3s; }}
+    .stTextInput:nth-child(3) input {{ animation-delay: 2.6s; }}
+    @keyframes inputSlide {{
+      from {{ transform: translateX(-60px); opacity: 0; }}
+      to {{ transform: translateX(0); opacity: 1; }}
+    }}
+
+    /* ===== Buttons ===== */
+    .stButton>button {{
+      background: linear-gradient(90deg, #00f2ff, #007bff);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 20px;
       font-weight: bold;
-      padding: 8px 20px;
-      box-shadow: 0px 0px 15px rgba(0,191,255,0.6);
-      transition: all 0.3s ease;
+      font-family: 'Orbitron', sans-serif;
+      box-shadow: 0 0 12px #00f2ff;
+      transition: 0.3s;
     }}
     .stButton>button:hover {{
       transform: scale(1.05);
-      box-shadow: 0px 0px 25px rgba(0,191,255,0.9);
+      box-shadow: 0 0 30px #00f2ff;
+    }}
+
+    /* ===== Cinematic Messages ===== */
+    .stAlert {{
+      border-radius: 12px;
+      font-family: 'Orbitron', sans-serif;
+      animation: msgSlide 6s ease forwards;
+    }}
+    @keyframes msgSlide {{
+      0% {{ transform: translateX(100%); opacity: 0; }}
+      15% {{ transform: translateX(0); opacity: 1; }}
+      85% {{ transform: translateX(0); opacity: 1; }}
+      100% {{ transform: translateX(100%); opacity: 0; }}
     }}
     </style>
 
-    <!-- Animated Cards -->
-    <div class="animated-cards">
-        <img class="card-left" src="data:image/png;base64,{img_base64}" />
-        <img class="card-center" src="data:image/png;base64,{img_base64}" />
-        <img class="card-right" src="data:image/png;base64,{img_base64}" />
+    <div class="cinematic-bg"></div>
+    <div class="cinematic-card">
+      <h2 class="cinematic-title">Login to <span>HIRELYZER</span></h2>
     </div>
     """, unsafe_allow_html=True)
 
     # -------- Login/Register Layout --------
     left, center, right = st.columns([1, 2, 1])
-
     with center:
-        st.markdown(
-            "<div class='login-card'><h2>Login to <span>HIRELYZER</span></h2>",
-            unsafe_allow_html=True,
-        )
-
         login_tab, register_tab = st.tabs(["Login", "Register"])
 
         # ---------------- LOGIN TAB ----------------
@@ -595,69 +605,30 @@ if not st.session_state.get("authenticated", False):
                     if saved_key:
                         st.session_state["user_groq_key"] = saved_key
                     log_user_action(user.strip(), "login")
-
-                    st.markdown("""<div class='slide-message success-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                        Login successful!
-                    </div>""", unsafe_allow_html=True)
+                    st.success("✅ Login successful!")
                     st.rerun()
                 else:
-                    st.markdown("""<div class='slide-message error-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                        Invalid credentials.
-                    </div>""", unsafe_allow_html=True)
+                    st.error("❌ Invalid credentials.")
 
         # ---------------- REGISTER TAB ----------------
         with register_tab:
             new_user = st.text_input("Choose a Username", key="reg_user")
             new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
-            st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
-
-            if new_user.strip():
-                if username_exists(new_user.strip()):
-                    st.markdown("""<div class='slide-message error-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                        Username already exists.
-                    </div>""", unsafe_allow_html=True)
-                else:
-                    st.markdown("""<div class='slide-message info-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
-                          <path d="M12 8h.01M12 12v4"/></svg>
-                        Username is available.
-                    </div>""", unsafe_allow_html=True)
+            st.caption("🔒 Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
 
             if st.button("Register", key="register_btn"):
                 if new_user.strip() and new_pass.strip():
                     success, message = add_user(new_user.strip(), new_pass.strip())
                     if success:
-                        st.markdown(f"""<div class='slide-message success-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                            {message}
-                        </div>""", unsafe_allow_html=True)
                         log_user_action(new_user.strip(), "register")
+                        st.success(message)
                     else:
-                        st.markdown(f"""<div class='slide-message error-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                            {message}
-                        </div>""", unsafe_allow_html=True)
+                        st.error(message)
                 else:
-                    st.markdown("""<div class='slide-message warn-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24">
-                          <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
-                        </svg>
-                        Please fill in both fields.
-                    </div>""", unsafe_allow_html=True)
-
-        st.markdown("</div>", unsafe_allow_html=True)
+                    st.warning("⚠️ Please fill in both fields.")
 
     st.stop()
+
 
 
 

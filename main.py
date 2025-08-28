@@ -456,16 +456,18 @@ if not st.session_state.authenticated:
 
 
 if not st.session_state.get("authenticated", False):
-    
 
-    # ✅ Use an online image of a female employee
+    # ✅ Futuristic silhouette
     image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
     response = requests.get(image_url)
     img_base64 = b64encode(response.content).decode()
 
-    # ✅ Inject animated shuffle CSS + HTML
+    # ✅ Inject cinematic CSS
     st.markdown(f"""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+
+    /* ===== Card Shuffle Animation ===== */
     .animated-cards {{
       margin-top: 40px;
       display: flex;
@@ -478,34 +480,58 @@ if not st.session_state.get("authenticated", False):
       width: 220px;
       animation: splitCards 2.5s ease-in-out infinite alternate;
       z-index: 1;
+      filter: drop-shadow(0 0 10px rgba(0,191,255,0.6));
     }}
-    .animated-cards img:nth-child(1) {{
-      animation-delay: 0s;
-      z-index: 3;
-    }}
-    .animated-cards img:nth-child(2) {{
-      animation-delay: 0.3s;
-      z-index: 2;
-    }}
-    .animated-cards img:nth-child(3) {{
-      animation-delay: 0.6s;
-      z-index: 1;
-    }}
+    .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
+    .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
+    .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
     @keyframes splitCards {{
-      0% {{
-        transform: scale(1) translateX(0) rotate(0deg);
-        opacity: 1;
-      }}
-      100% {{
-        transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot));
-        opacity: 1;
-      }}
+      0% {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
+      100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
     }}
     .card-left {{ --x-offset: -80px; --rot: -4deg; }}
     .card-center {{ --x-offset: 0px; --rot: 0deg; }}
     .card-right {{ --x-offset: 80px; --rot: 4deg; }}
+
+    /* ===== Cinematic Login Card ===== */
+    .login-card {{
+      background: rgba(10, 20, 40, 0.85);
+      border: 1px solid #00BFFF;
+      border-radius: 18px;
+      padding: 25px;
+      box-shadow: 0px 0px 25px rgba(0,191,255,0.6);
+      font-family: 'Orbitron', sans-serif;
+      color: white;
+      margin-top: 20px;
+      animation: fadeInUp 1.5s ease;
+    }}
+    @keyframes fadeInUp {{
+      0% {{ opacity: 0; transform: translateY(40px); }}
+      100% {{ opacity: 1; transform: translateY(0); }}
+    }}
+
+    /* ===== Sliding Messages ===== */
+    .slide-message {{
+      position: relative;
+      overflow: hidden;
+      margin: 10px 0;
+      padding: 10px 15px;
+      border-radius: 10px;
+      font-weight: bold;
+      animation: slideIn 0.8s ease forwards;
+    }}
+    .success-msg {{ background: rgba(0,255,127,0.15); border-left: 5px solid #00FF7F; color:#00FF7F; }}
+    .error-msg   {{ background: rgba(255,99,71,0.15); border-left: 5px solid #FF6347; color:#FF6347; }}
+    .info-msg    {{ background: rgba(30,144,255,0.15); border-left: 5px solid #1E90FF; color:#1E90FF; }}
+    .warn-msg    {{ background: rgba(255,215,0,0.15); border-left: 5px solid #FFD700; color:#FFD700; }}
+
+    @keyframes slideIn {{
+      0% {{ transform: translateX(100%); opacity: 0; }}
+      100% {{ transform: translateX(0); opacity: 1; }}
+    }}
     </style>
 
+    <!-- Animated Cards -->
     <div class="animated-cards">
         <img class="card-left" src="data:image/png;base64,{img_base64}" />
         <img class="card-center" src="data:image/png;base64,{img_base64}" />
@@ -518,11 +544,11 @@ if not st.session_state.get("authenticated", False):
 
     with center:
         st.markdown(
-            "<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>HIRELYZER</span></h2>",
+            "<div class='login-card'><h2 style='text-align:center;'>Login to <span style='color:#00BFFF;'>HIRELYZER</span></h2>",
             unsafe_allow_html=True,
         )
 
-        login_tab, register_tab = st.tabs(["🔑 Login", "🆕 Register"])
+        login_tab, register_tab = st.tabs(["Login", "Register"])
 
         # ---------------- LOGIN TAB ----------------
         with login_tab:
@@ -534,40 +560,37 @@ if not st.session_state.get("authenticated", False):
                 if success:
                     st.session_state.authenticated = True
                     st.session_state.username = user.strip()
-
-                    # ✅ Load saved Groq key into session
                     if saved_key:
                         st.session_state["user_groq_key"] = saved_key
-
                     log_user_action(user.strip(), "login")
-                    st.success("✅ Login successful!")
+
+                    st.markdown("<div class='slide-message success-msg'>✅ Login successful!</div>", unsafe_allow_html=True)
                     st.rerun()
                 else:
-                    st.error("❌ Invalid credentials.")
+                    st.markdown("<div class='slide-message error-msg'>❌ Invalid credentials.</div>", unsafe_allow_html=True)
 
         # ---------------- REGISTER TAB ----------------
         with register_tab:
             new_user = st.text_input("Choose a Username", key="reg_user")
             new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
-            st.caption("🔒 Password must be at least 8 characters and include uppercase, lowercase, number, and special character.")
+            st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
 
-            # ✅ Live Username Availability Check
             if new_user.strip():
                 if username_exists(new_user.strip()):
-                    st.error("🚫 Username already exists.")
+                    st.markdown("<div class='slide-message error-msg'>🚫 Username already exists.</div>", unsafe_allow_html=True)
                 else:
-                    st.info("✅ Username is available.")
+                    st.markdown("<div class='slide-message info-msg'>✅ Username is available.</div>", unsafe_allow_html=True)
 
             if st.button("Register", key="register_btn"):
                 if new_user.strip() and new_pass.strip():
                     success, message = add_user(new_user.strip(), new_pass.strip())
                     if success:
-                        st.success(message)
+                        st.markdown(f"<div class='slide-message success-msg'>{message}</div>", unsafe_allow_html=True)
                         log_user_action(new_user.strip(), "register")
                     else:
-                        st.error(message)
+                        st.markdown(f"<div class='slide-message error-msg'>{message}</div>", unsafe_allow_html=True)
                 else:
-                    st.warning("⚠️ Please fill in both fields.")
+                    st.markdown("<div class='slide-message warn-msg'>⚠️ Please fill in both fields.</div>", unsafe_allow_html=True)
 
         st.markdown("</div>", unsafe_allow_html=True)
 

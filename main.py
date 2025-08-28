@@ -456,14 +456,13 @@ if not st.session_state.authenticated:
 
 
 if not st.session_state.get("authenticated", False):
-    
 
-    # ✅ Use an online image of a female employee
+    # ✅ Use an online image of a futuristic silhouette
     image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
     response = requests.get(image_url)
     img_base64 = b64encode(response.content).decode()
 
-    # ✅ Inject animated shuffle CSS + HTML
+    # ✅ Inject animated shuffle CSS + HTML (cinematic card split effect)
     st.markdown(f"""
     <style>
     .animated-cards {{
@@ -476,34 +475,68 @@ if not st.session_state.get("authenticated", False):
     .animated-cards img {{
       position: absolute;
       width: 220px;
-      animation: splitCards 2.5s ease-in-out infinite alternate;
-      z-index: 1;
+      animation: splitCards 3s ease-in-out infinite alternate;
+      filter: drop-shadow(0 0 8px #38bdf8);
     }}
-    .animated-cards img:nth-child(1) {{
-      animation-delay: 0s;
-      z-index: 3;
-    }}
-    .animated-cards img:nth-child(2) {{
-      animation-delay: 0.3s;
-      z-index: 2;
-    }}
-    .animated-cards img:nth-child(3) {{
-      animation-delay: 0.6s;
-      z-index: 1;
-    }}
+    .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
+    .animated-cards img:nth-child(2) {{ animation-delay: 0.4s; z-index: 2; }}
+    .animated-cards img:nth-child(3) {{ animation-delay: 0.8s; z-index: 1; }}
+
     @keyframes splitCards {{
-      0% {{
-        transform: scale(1) translateX(0) rotate(0deg);
-        opacity: 1;
-      }}
-      100% {{
-        transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot));
-        opacity: 1;
-      }}
+      0% {{ transform: scale(1) translateX(0) rotate(0deg); }}
+      100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); }}
     }}
-    .card-left {{ --x-offset: -80px; --rot: -4deg; }}
+    .card-left {{ --x-offset: -90px; --rot: -6deg; }}
     .card-center {{ --x-offset: 0px; --rot: 0deg; }}
-    .card-right {{ --x-offset: 80px; --rot: 4deg; }}
+    .card-right {{ --x-offset: 90px; --rot: 6deg; }}
+
+    /* Futuristic Login Card */
+    .login-card {{
+      margin-top: 40px;
+      padding: 25px;
+      border-radius: 18px;
+      background: rgba(10, 25, 47, 0.95);
+      border: 2px solid #38bdf8;
+      box-shadow: 0 0 25px #38bdf8, inset 0 0 15px rgba(56,189,248,0.6);
+      backdrop-filter: blur(10px);
+      text-align: center;
+      animation: glowCard 3s infinite alternate;
+    }}
+    @keyframes glowCard {{
+      from {{ box-shadow: 0 0 15px #38bdf8, inset 0 0 10px rgba(56,189,248,0.5); }}
+      to {{ box-shadow: 0 0 35px #38bdf8, inset 0 0 20px rgba(56,189,248,0.9); }}
+    }}
+    .login-title {{
+      font-family: 'Orbitron', sans-serif;
+      font-size: 26px;
+      font-weight: bold;
+      color: #38bdf8;
+      text-shadow: 0 0 12px #38bdf8, 0 0 25px #38bdf8;
+      margin-bottom: 20px;
+    }}
+
+    /* Futuristic Tabs */
+    .stTabs [role="tablist"] button {{
+        font-family: 'Orbitron', sans-serif;
+        font-size: 16px !important;
+        font-weight: bold;
+        color: #38bdf8 !important;
+        border: 1px solid #38bdf8 !important;
+        border-radius: 10px !important;
+        margin: 5px;
+        background: rgba(0,0,0,0.6);
+        transition: all 0.3s ease;
+    }}
+    .stTabs [role="tablist"] button:hover {{
+        background: #38bdf8 !important;
+        color: black !important;
+        box-shadow: 0 0 20px #38bdf8;
+    }}
+    .stTabs [role="tablist"] button[aria-selected="true"] {{
+        background: #38bdf8 !important;
+        color: black !important;
+        box-shadow: 0 0 25px #38bdf8;
+    }}
     </style>
 
     <div class="animated-cards">
@@ -517,12 +550,9 @@ if not st.session_state.get("authenticated", False):
     left, center, right = st.columns([1, 2, 1])
 
     with center:
-        st.markdown(
-            "<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>HIRELYZER</span></h2>",
-            unsafe_allow_html=True,
-        )
+        st.markdown("<div class='login-card'><div class='login-title'>LOGIN TO <span style='color:#fff;'>HIRELYZER</span></div>", unsafe_allow_html=True)
 
-        login_tab, register_tab = st.tabs(["🔑 Login", "🆕 Register"])
+        login_tab, register_tab = st.tabs(["Login", "Register"])
 
         # ---------------- LOGIN TAB ----------------
         with login_tab:
@@ -535,28 +565,26 @@ if not st.session_state.get("authenticated", False):
                     st.session_state.authenticated = True
                     st.session_state.username = user.strip()
 
-                    # ✅ Load saved Groq key into session
                     if saved_key:
                         st.session_state["user_groq_key"] = saved_key
 
                     log_user_action(user.strip(), "login")
-                    st.success("✅ Login successful!")
+                    st.success("Login successful!")
                     st.rerun()
                 else:
-                    st.error("❌ Invalid credentials.")
+                    st.error("Invalid credentials.")
 
         # ---------------- REGISTER TAB ----------------
         with register_tab:
             new_user = st.text_input("Choose a Username", key="reg_user")
             new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
-            st.caption("🔒 Password must be at least 8 characters and include uppercase, lowercase, number, and special character.")
+            st.caption("Password must be at least 8 characters and include uppercase, lowercase, number, and special character.")
 
-            # ✅ Live Username Availability Check
             if new_user.strip():
                 if username_exists(new_user.strip()):
-                    st.error("🚫 Username already exists.")
+                    st.error("Username already exists.")
                 else:
-                    st.info("✅ Username is available.")
+                    st.info("Username is available.")
 
             if st.button("Register", key="register_btn"):
                 if new_user.strip() and new_pass.strip():
@@ -567,11 +595,12 @@ if not st.session_state.get("authenticated", False):
                     else:
                         st.error(message)
                 else:
-                    st.warning("⚠️ Please fill in both fields.")
+                    st.warning("Please fill in both fields.")
 
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()
+
 
 
 

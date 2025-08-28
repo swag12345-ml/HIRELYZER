@@ -458,12 +458,12 @@ if not st.session_state.get("authenticated", False):
     response = requests.get(image_url)
     img_base64 = b64encode(response.content).decode()
 
-    # ✅ Cinematic subtle styles
+    # ✅ Futuristic cinematic styles + split card animation
     st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap');
 
-    /* Floating cards (preserved hover style) */
+    /* Split-card shuffle animation */
     .animated-cards {{
       margin-top: 25px;
       display: flex;
@@ -474,18 +474,36 @@ if not st.session_state.get("authenticated", False):
     .animated-cards img {{
       position: absolute;
       width: 160px;
-      animation: floatCards 6s ease-in-out infinite;
-      opacity: 0.9;
+      animation: splitCards 2.5s ease-in-out infinite alternate;
+      z-index: 1;
       filter: drop-shadow(0 0 5px rgba(0,191,255,0.4));
     }}
-    .animated-cards img:nth-child(1) {{ animation-delay: 0s; }}
-    .animated-cards img:nth-child(2) {{ animation-delay: 2s; }}
-    .animated-cards img:nth-child(3) {{ animation-delay: 4s; }}
-
-    @keyframes floatCards {{
-      0%, 100% {{ transform: translateY(0) scale(1); }}
-      50%      {{ transform: translateY(-12px) scale(1.02); }}
+    .animated-cards img:nth-child(1) {{
+      animation-delay: 0s;
+      z-index: 3;
     }}
+    .animated-cards img:nth-child(2) {{
+      animation-delay: 0.3s;
+      z-index: 2;
+    }}
+    .animated-cards img:nth-child(3) {{
+      animation-delay: 0.6s;
+      z-index: 1;
+    }}
+
+    @keyframes splitCards {{
+      0% {{
+        transform: scale(1) translateX(0) rotate(0deg);
+        opacity: 1;
+      }}
+      100% {{
+        transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot));
+        opacity: 1;
+      }}
+    }}
+    .card-left {{ --x-offset: -60px; --rot: -4deg; }}
+    .card-center {{ --x-offset: 0px; --rot: 0deg; }}
+    .card-right {{ --x-offset: 60px; --rot: 4deg; }}
 
     /* Futuristic login container */
     .login-card {{
@@ -576,9 +594,9 @@ if not st.session_state.get("authenticated", False):
     </style>
 
     <div class="animated-cards">
-        <img src="data:image/png;base64,{img_base64}" />
-        <img src="data:image/png;base64,{img_base64}" />
-        <img src="data:image/png;base64,{img_base64}" />
+        <img class="card-left" src="data:image/png;base64,{img_base64}" />
+        <img class="card-center" src="data:image/png;base64,{img_base64}" />
+        <img class="card-right" src="data:image/png;base64,{img_base64}" />
     </div>
     """, unsafe_allow_html=True)
 
@@ -634,8 +652,6 @@ if not st.session_state.get("authenticated", False):
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()
-
-
 
 
 

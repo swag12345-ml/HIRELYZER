@@ -2139,12 +2139,45 @@ if uploaded_files and job_description:
     
     HERO_HTML_SCANNER = """
     <style>
-    /* Simple scanning animation over a document icon */
-    .scanner-container { display: flex; justify-content: center; align-items: center; height: 250px; flex-direction: column; }
-    .doc { width: 120px; height: 160px; background: linear-gradient(180deg, #e0e0e0, #c0c0c0); border-radius: 8px; position: relative; overflow: hidden; }
-    .scanner-line { position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: rgba(56,189,248,0.6); animation: scan 2s linear infinite; }
-    @keyframes scan { 0% { top: 0; } 100% { top: 156px; } }
-    .scan-text { margin-top: 20px; font-family: 'Orbitron', sans-serif; font-weight: 600; color: #38bdf8; }
+    /* Cinematic scanning animation */
+    .scanner-container { 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        height: 450px; 
+        flex-direction: column; 
+    }
+    .doc { 
+        width: 220px; 
+        height: 300px; 
+        background: linear-gradient(180deg, #e0e0e0, #c0c0c0); 
+        border-radius: 16px; 
+        position: relative; 
+        overflow: hidden; 
+        box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 25px rgba(56,189,248,0.35);
+    }
+    .scanner-line { 
+        position: absolute; 
+        top: 0; 
+        left: 0; 
+        width: 100%; 
+        height: 8px; 
+        background: rgba(56,189,248,0.7); 
+        animation: scan 2s linear infinite; 
+        box-shadow: 0 0 12px rgba(56,189,248,0.7), 0 0 20px rgba(56,189,248,0.5);
+    }
+    @keyframes scan { 
+        0% { top: 0; } 
+        100% { top: 292px; } 
+    }
+    .scan-text { 
+        margin-top: 30px; 
+        font-family: 'Orbitron', sans-serif; 
+        font-weight: 800; 
+        font-size: 28px; 
+        color: #38bdf8; 
+        text-shadow: 0 0 8px rgba(56,189,248,0.8), 0 0 20px rgba(56,189,248,0.5);
+    }
     </style>
     <div class="scanner-container">
         <div class="doc">

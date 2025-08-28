@@ -453,6 +453,19 @@ if not st.session_state.authenticated:
 
 if not st.session_state.get("authenticated", False):
 
+    # ✅ Message handler functions
+    def show_message(text, msg_type="info"):
+        st.session_state["last_message"] = (text, msg_type)
+
+    def render_message():
+        if "last_message" in st.session_state and st.session_state["last_message"]:
+            text, msg_type = st.session_state["last_message"]
+            st.markdown(
+                f"<div class='slide-message {msg_type}-msg'>{text}</div>",
+                unsafe_allow_html=True,
+            )
+            st.session_state["last_message"] = None  # clear after render
+
     # ✅ Futuristic silhouette
     image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
     response = requests.get(image_url)
@@ -621,10 +634,11 @@ if not st.session_state.get("authenticated", False):
                     if saved_key:
                         st.session_state["user_groq_key"] = saved_key
                     log_user_action(user.strip(), "login")
-                    st.markdown("<div class='slide-message success-msg'>✔ Access Granted. Welcome back, Operative.</div>", unsafe_allow_html=True)
+                    show_message("✔ Access Granted. Welcome back, Operative.", "success")
                     st.rerun()
                 else:
-                    st.markdown("<div class='slide-message error-msg'>✖ Access Denied. Invalid Credentials.</div>", unsafe_allow_html=True)
+                    show_message("✖ Access Denied. Invalid Credentials.", "error")
+                    st.rerun()
 
         # ---------------- REGISTER TAB ----------------
         with register_tab:
@@ -634,24 +648,29 @@ if not st.session_state.get("authenticated", False):
 
             if new_user.strip():
                 if username_exists(new_user.strip()):
-                    st.markdown("<div class='slide-message error-msg'>Username already exists. Try another.</div>", unsafe_allow_html=True)
+                    show_message("Username already exists. Try another.", "error")
                 else:
-                    st.markdown("<div class='slide-message info-msg'>Username available. Proceed.</div>", unsafe_allow_html=True)
+                    show_message("Username available. Proceed.", "info")
 
             if st.button("Register", key="register_btn"):
                 if new_user.strip() and new_pass.strip():
                     success, message = add_user(new_user.strip(), new_pass.strip())
                     if success:
-                        st.markdown(f"<div class='slide-message success-msg'>{message}</div>", unsafe_allow_html=True)
                         log_user_action(new_user.strip(), "register")
+                        show_message(message, "success")
                     else:
-                        st.markdown(f"<div class='slide-message error-msg'>{message}</div>", unsafe_allow_html=True)
+                        show_message(message, "error")
                 else:
-                    st.markdown("<div class='slide-message warn-msg'>⚠ Please fill in both fields.</div>", unsafe_allow_html=True)
+                    show_message("⚠ Please fill in both fields.", "warn")
+                st.rerun()
+
+        # 🔹 Render any pending message after tabs
+        render_message()
 
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()
+
 
 
 

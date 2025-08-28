@@ -561,6 +561,29 @@ if not st.session_state.get("authenticated", False):
       transform: scale(1.05);
       box-shadow: 0px 0px 25px rgba(0,191,255,0.9);
     }}
+
+    /* ===== Futuristic Input Fields ===== */
+    .stTextInput input {{
+      background: rgba(10,25,45,0.85);
+      border: 1px solid #00BFFF;
+      border-radius: 8px;
+      padding: 10px;
+      color: #E0F7FF;
+      font-family: 'Orbitron', sans-serif;
+      box-shadow: 0px 0px 15px rgba(0,191,255,0.3);
+      transition: all 0.3s ease-in-out;
+    }}
+    .stTextInput input:focus {{
+      outline: none !important;
+      border: 1px solid #1E90FF;
+      box-shadow: 0px 0px 25px rgba(0,191,255,0.9), inset 0px 0px 10px rgba(0,191,255,0.6);
+      transform: scale(1.02);
+    }}
+    .stTextInput label {{
+      font-family: 'Orbitron', sans-serif;
+      color: #00BFFF !important;
+      text-shadow: 0 0 8px rgba(0,191,255,0.8);
+    }}
     </style>
 
     <!-- Animated Cards -->
@@ -658,7 +681,6 @@ if not st.session_state.get("authenticated", False):
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()
-
 
 
 

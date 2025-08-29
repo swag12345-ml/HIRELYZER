@@ -2263,12 +2263,12 @@ if uploaded_files and job_description:
             display: flex; 
             justify-content: center; 
             align-items: center; 
-            height: 420px; 
+            height: 300px; 
             flex-direction: column; 
         }}
         .resume-doc {{ 
-            width: 260px; 
-            height: 340px; 
+            width: 220px; 
+            height: 260px; 
             background: linear-gradient(180deg, #f9f9f9, #e3e3e3); 
             border-radius: 16px; 
             position: relative; 
@@ -2279,12 +2279,12 @@ if uploaded_files and job_description:
         }}
         .resume-doc::before {{
             content: "👤";
-            font-size: 40px;
+            font-size: 32px;
             display: block;
             margin-bottom: 10px;
         }}
         .job-title {{
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             color: #333;
             font-family: 'Orbitron', sans-serif;
@@ -2296,7 +2296,7 @@ if uploaded_files and job_description:
         }}
         .resume-body {{
             margin-top: 20px;
-            font-size: 12px;
+            font-size: 11px;
             color: #666;
             line-height: 1.4em;
             text-align: left;
@@ -2314,13 +2314,13 @@ if uploaded_files and job_description:
         }}
         @keyframes scan {{ 
             0% {{ top: 0; }} 
-            100% {{ top: 340px; }} 
+            100% {{ top: 260px; }} 
         }}
         .scan-text {{ 
             margin-top: 25px; 
             font-family: 'Orbitron', sans-serif; 
             font-weight: 800; 
-            font-size: 22px; 
+            font-size: 18px; 
             color: #38bdf8; 
             text-shadow: 0 0 8px rgba(56,189,248,0.8), 0 0 20px rgba(56,189,248,0.5);
         }}

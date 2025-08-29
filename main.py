@@ -2272,24 +2272,25 @@ if uploaded_files and job_description:
             z-index: 9999;
         }}
         .resume-doc {{ 
-            width: 220px; 
-            height: 260px; 
+            width: 400px;   /* bigger size */
+            height: 480px;  /* bigger size */
             background: linear-gradient(180deg, #f9f9f9, #e3e3e3); 
-            border-radius: 16px; 
+            border-radius: 24px; 
             position: relative; 
             overflow: hidden; 
-            box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 25px rgba(56,189,248,0.35);
-            padding-top: 60px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.45), 0 0 35px rgba(56,189,248,0.45);
+            padding-top: 100px;
             text-align: center;
+            transform: scale(1.05);
         }}
         .resume-doc::before {{
             content: "👤";
-            font-size: 32px;
+            font-size: 48px;
             display: block;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }}
         .job-title {{
-            font-size: 16px;
+            font-size: 24px;
             font-weight: bold;
             color: #333;
             font-family: 'Orbitron', sans-serif;
@@ -2297,37 +2298,37 @@ if uploaded_files and job_description:
         }}
         @keyframes pulseTitle {{
             0%, 100% {{ color: #333; text-shadow: none; }}
-            50% {{ color: #38bdf8; text-shadow: 0 0 10px #38bdf8; }}
+            50% {{ color: #38bdf8; text-shadow: 0 0 12px #38bdf8; }}
         }}
         .resume-body {{
-            margin-top: 20px;
-            font-size: 11px;
-            color: #666;
-            line-height: 1.4em;
+            margin-top: 30px;
+            font-size: 14px;
+            color: #444;
+            line-height: 1.6em;
             text-align: left;
-            padding: 0 15px;
+            padding: 0 25px;
         }}
         .scanner-line {{ 
             position: absolute; 
             top: 0; 
             left: 0; 
             width: 100%; 
-            height: 16px; 
+            height: 24px; 
             background: rgba(56,189,248,0.7); 
-            animation: scan 2.5s linear infinite; 
-            box-shadow: 0 0 16px rgba(56,189,248,0.9), 0 0 25px rgba(56,189,248,0.7);
+            animation: scan 3s linear infinite; 
+            box-shadow: 0 0 24px rgba(56,189,248,0.9), 0 0 35px rgba(56,189,248,0.7);
         }}
         @keyframes scan {{ 
             0% {{ top: 0; }} 
-            100% {{ top: 260px; }} 
+            100% {{ top: 480px; }} 
         }}
         .scan-text {{ 
-            margin-top: 25px; 
+            margin-top: 40px; 
             font-family: 'Orbitron', sans-serif; 
             font-weight: 800; 
-            font-size: 18px; 
+            font-size: 24px; 
             color: #38bdf8; 
-            text-shadow: 0 0 8px rgba(56,189,248,0.8), 0 0 20px rgba(56,189,248,0.5);
+            text-shadow: 0 0 12px rgba(56,189,248,0.8), 0 0 25px rgba(56,189,248,0.5);
         }}
         </style>
         <div class="scanner-container">
@@ -2523,7 +2524,7 @@ if uploaded_files and job_description:
         st.markdown(SUCCESS_HTML, unsafe_allow_html=True)
 
         # ⏳ Short pause, then auto rerun
-        time.sleep(4)
+        time.sleep(2)
         st.rerun()
 
 

@@ -860,16 +860,16 @@ st.markdown(
         overflow: hidden;
         white-space: nowrap;
         border-right: 3px solid #00ffff;
-        width: 0;
+        width: 0ch;   /* start typing from 0 characters */
         margin: auto;
-        animation: typing 4s steps(40, end) forwards,
+        animation: typing 6s steps(55, end) forwards,
                    blink-caret .8s step-end infinite,
                    glitch 6s infinite;
     }
 
     @keyframes typing {
-        from { width: 0 }
-        to { width: 100% }
+        from { width: 0ch }
+        to { width: 55ch } /* match character length of text */
     }
     @keyframes blink-caret {
         from, to { border-color: transparent }
@@ -972,6 +972,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 # Load environment variables

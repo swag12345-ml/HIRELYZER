@@ -2914,16 +2914,16 @@ with tab1:
 
     else:           
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
-with tab2: 
+with tab2:
     st.session_state.active_tab = "Resume Builder"
 
     st.markdown("## 🧾 <span style='color:#336699;'>Advanced Resume Builder</span>", unsafe_allow_html=True)
     st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
-    # 📸 Upload profile photo
+    # 📸 Upload profile photo with enhanced styling
     uploaded_image = st.file_uploader("Upload a Profile Image", type=["png", "jpg", "jpeg"])
-    profile_img_html = ""
 
+    profile_img_html = ""
     if uploaded_image:
         import base64
         encoded_image = base64.b64encode(uploaded_image.read()).decode()
@@ -2931,29 +2931,27 @@ with tab2:
         profile_img_html = f"""
         <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
             <img src="data:image/png;base64,{encoded_image}" alt="Profile Photo"
-                 style="width: 140px;height: 140px;border-radius: 50%;object-fit: cover;border: 4px solid #ffffff;
-                        box-shadow:0 0 0 3px #4da6ff,0 8px 25px rgba(77, 166, 255, 0.3),0 4px 15px rgba(0, 0, 0, 0.1);" />
+                 style="width: 140px; height: 140px; border-radius: 50%; object-fit: cover;
+                        border: 4px solid #ffffff; box-shadow: 0 0 0 3px #4da6ff,
+                        0 8px 25px rgba(77, 166, 255, 0.3), 0 4px 15px rgba(0, 0, 0, 0.1);" />
         </div>
         """
         st.markdown(profile_img_html, unsafe_allow_html=True)
     else:
-        st.info("📸 Please upload a clear profile photo.")
+        st.info("📸 Please upload a clear, front-facing profile photo (square or vertical preferred).")
 
     # Initialize session state
-    fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary", 
+    fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary",
               "skills", "languages", "interests", "Softskills", "job_title"]
     for f in fields:
         st.session_state.setdefault(f, "")
-
     st.session_state.setdefault("experience_entries", [{"title": "", "company": "", "duration": "", "description": ""}])
     st.session_state.setdefault("education_entries", [{"degree": "", "institution": "", "year": "", "details": ""}])
     st.session_state.setdefault("project_entries", [{"title": "", "tech": "", "duration": "", "description": ""}])
-    st.session_state.setdefault("certificate_links", [{"name": "", "link": "", "duration": "", "description": ""}])
     st.session_state.setdefault("project_links", [])
+    st.session_state.setdefault("certificate_links", [{"name": "", "link": "", "duration": "", "description": ""}])
 
     with st.form("resume_form"):
-
-        # Personal Info
         st.markdown("### 👤 <u>Personal Information</u>", unsafe_allow_html=True)
         col1, col2 = st.columns(2)
         with col1:
@@ -2966,18 +2964,16 @@ with tab2:
             st.text_input("🌐 Portfolio", key="portfolio")
             st.text_input("💼 Job Title", key="job_title")
 
-        # Summary
         st.markdown("### 📝 <u>Professional Summary</u>", unsafe_allow_html=True)
         st.text_area("Summary", key="summary")
 
-        # Skills Section
         st.markdown("### 💼 <u>Skills, Languages, Interests & Soft Skills</u>", unsafe_allow_html=True)
         st.text_area("Skills (comma-separated)", key="skills")
         st.text_area("Languages (comma-separated)", key="languages")
         st.text_area("Interests (comma-separated)", key="interests")
         st.text_area("Softskills (comma-separated)", key="Softskills")
 
-        # Work Experience
+        # ---------------- EXPERIENCE ----------------
         st.markdown("### 🧱 <u>Work Experience</u>", unsafe_allow_html=True)
         for idx, exp in enumerate(st.session_state.experience_entries):
             with st.expander(f"Experience #{idx+1}", expanded=True):
@@ -2985,14 +2981,14 @@ with tab2:
                 exp["company"] = st.text_input("Company", value=exp["company"], key=f"company_{idx}")
                 exp["duration"] = st.text_input("Duration", value=exp["duration"], key=f"duration_{idx}")
                 exp["description"] = st.text_area("Description", value=exp["description"], key=f"description_{idx}")
-                if st.button(f"🗑 Remove Experience #{idx+1}", key=f"remove_exp_{idx}"):
+                if st.button(f"❌ Remove Experience #{idx+1}", key=f"remove_exp_{idx}"):
                     st.session_state.experience_entries.pop(idx)
                     st.experimental_rerun()
-        st.button("➕ Add Experience", on_click=lambda: st.session_state.experience_entries.append(
-            {"title": "", "company": "", "duration": "", "description": ""}
-        ))
+        if st.button("➕ Add Experience"):
+            st.session_state.experience_entries.append({"title": "", "company": "", "duration": "", "description": ""})
+            st.experimental_rerun()
 
-        # Education
+        # ---------------- EDUCATION ----------------
         st.markdown("### 🎓 <u>Education</u>", unsafe_allow_html=True)
         for idx, edu in enumerate(st.session_state.education_entries):
             with st.expander(f"Education #{idx+1}", expanded=True):
@@ -3000,14 +2996,14 @@ with tab2:
                 edu["institution"] = st.text_input("Institution", value=edu["institution"], key=f"institution_{idx}")
                 edu["year"] = st.text_input("Year", value=edu["year"], key=f"edu_year_{idx}")
                 edu["details"] = st.text_area("Details", value=edu["details"], key=f"edu_details_{idx}")
-                if st.button(f"🗑 Remove Education #{idx+1}", key=f"remove_edu_{idx}"):
+                if st.button(f"❌ Remove Education #{idx+1}", key=f"remove_edu_{idx}"):
                     st.session_state.education_entries.pop(idx)
                     st.experimental_rerun()
-        st.button("➕ Add Education", on_click=lambda: st.session_state.education_entries.append(
-            {"degree": "", "institution": "", "year": "", "details": ""}
-        ))
+        if st.button("➕ Add Education"):
+            st.session_state.education_entries.append({"degree": "", "institution": "", "year": "", "details": ""})
+            st.experimental_rerun()
 
-        # Projects
+        # ---------------- PROJECTS ----------------
         st.markdown("### 🛠 <u>Projects</u>", unsafe_allow_html=True)
         for idx, proj in enumerate(st.session_state.project_entries):
             with st.expander(f"Project #{idx+1}", expanded=True):
@@ -3015,14 +3011,14 @@ with tab2:
                 proj["tech"] = st.text_input("Tech Stack", value=proj["tech"], key=f"proj_tech_{idx}")
                 proj["duration"] = st.text_input("Duration", value=proj["duration"], key=f"proj_duration_{idx}")
                 proj["description"] = st.text_area("Description", value=proj["description"], key=f"proj_desc_{idx}")
-                if st.button(f"🗑 Remove Project #{idx+1}", key=f"remove_proj_{idx}"):
+                if st.button(f"❌ Remove Project #{idx+1}", key=f"remove_proj_{idx}"):
                     st.session_state.project_entries.pop(idx)
                     st.experimental_rerun()
-        st.button("➕ Add Project", on_click=lambda: st.session_state.project_entries.append(
-            {"title": "", "tech": "", "duration": "", "description": ""}
-        ))
+        if st.button("➕ Add Project"):
+            st.session_state.project_entries.append({"title": "", "tech": "", "duration": "", "description": ""})
+            st.experimental_rerun()
 
-        # Certificates
+        # ---------------- CERTIFICATES ----------------
         st.markdown("### 🧾 <u>Certificates</u>", unsafe_allow_html=True)
         for idx, cert in enumerate(st.session_state.certificate_links):
             with st.expander(f"Certificate #{idx+1}", expanded=True):
@@ -3030,20 +3026,13 @@ with tab2:
                 cert["link"] = st.text_input("Certificate Link", value=cert["link"], key=f"cert_link_{idx}")
                 cert["duration"] = st.text_input("Duration", value=cert["duration"], key=f"cert_duration_{idx}")
                 cert["description"] = st.text_area("Description", value=cert["description"], key=f"cert_description_{idx}")
-                if st.button(f"🗑 Remove Certificate #{idx+1}", key=f"remove_cert_{idx}"):
+                if st.button(f"❌ Remove Certificate #{idx+1}", key=f"remove_cert_{idx}"):
                     st.session_state.certificate_links.pop(idx)
                     st.experimental_rerun()
-        st.button("➕ Add Certificate", on_click=lambda: st.session_state.certificate_links.append(
-            {"name": "", "link": "", "duration": "", "description": ""}
-        ))
+        if st.button("➕ Add Certificate"):
+            st.session_state.certificate_links.append({"name": "", "link": "", "duration": "", "description": ""})
+            st.experimental_rerun()
 
-        # Project Links
-        st.markdown("### 🔗 Project Links")
-        project_links_input = st.text_area("Enter one project link per line:")
-        if project_links_input:
-            st.session_state.project_links = [link.strip() for link in project_links_input.splitlines() if link.strip()]
-
-        # Submit
         submitted = st.form_submit_button("📑 Generate Resume")
         if submitted:
             st.success("✅ Resume Generated Successfully! Scroll down to preview or download.")

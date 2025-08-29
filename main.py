@@ -2265,25 +2265,28 @@ if uploaded_files and job_description:
             display: flex; 
             justify-content: center; 
             align-items: center; 
-            height: 100vh; 
+            height: 80vh;              /* reduced from 100vh for better fit */
             flex-direction: column; 
             background: #0b0c10;
-            position: fixed;
-            top: 0; left: 0;
+            position: relative;         /* changed from fixed */
             width: 100%; 
             z-index: 9999;
+            padding-top: 20px;          /* small top padding */
+            padding-bottom: 20px;       /* small bottom padding */
+            box-sizing: border-box;
         }}
         .resume-doc {{ 
-            width: 400px;   /* bigger size */
-            height: 480px;  /* bigger size */
+            width: 90%;                  /* responsive width */
+            max-width: 400px;            /* keep max size */
+            height: min(480px, 70vh);    /* responsive height */
             background: linear-gradient(180deg, #f9f9f9, #e3e3e3); 
             border-radius: 24px; 
             position: relative; 
             overflow: hidden; 
             box-shadow: 0 20px 60px rgba(0,0,0,0.45), 0 0 35px rgba(56,189,248,0.45);
-            padding-top: 100px;
             text-align: center;
             transform: scale(1.05);
+            margin: auto;               /* center vertically and horizontally */
         }}
         .resume-doc::before {{
             content: "👤";
@@ -2322,13 +2325,13 @@ if uploaded_files and job_description:
         }}
         @keyframes scan {{ 
             0% {{ top: 0; }} 
-            100% {{ top: 480px; }} 
+            100% {{ top: calc(100% - 24px); }}  /* scan within container height */
         }}
         .scan-text {{ 
-            margin-top: 40px; 
+            margin-top: 20px;       /* reduced spacing for smaller screens */
             font-family: 'Orbitron', sans-serif; 
             font-weight: 800; 
-            font-size: 24px; 
+            font-size: 20px;        /* slightly smaller */
             color: #38bdf8; 
             text-shadow: 0 0 12px rgba(56,189,248,0.8), 0 0 25px rgba(56,189,248,0.5);
         }}
@@ -2355,7 +2358,7 @@ if uploaded_files and job_description:
             f.write(uploaded_file.getbuffer())
 
         # ✅ Simulate scanning delay
-        time.sleep(2.5)
+        time.sleep(4)
 
         # ✅ Extract text from PDF
         text = extract_text_from_pdf(file_path)
@@ -2511,8 +2514,8 @@ if uploaded_files and job_description:
             font-weight: 700;
             font-size: 16px;
             color: #38bdf8;
-            text-shadow: 0 0 8px #38bdf8;
             text-align:center;
+            text-shadow: 0 0 8px #38bdf8;
         }
         </style>
         <div class="success-fullpage">
@@ -2528,6 +2531,7 @@ if uploaded_files and job_description:
         # ⏳ Short pause, then auto rerun
         time.sleep(4)
         st.rerun()
+
 
 
 

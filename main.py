@@ -848,7 +848,7 @@ st.markdown(
         }
     }
 
-    /* ---------- HEADER WITH TYPING EFFECT ---------- */
+    /* ---------- HEADER ---------- */
     .header {
         font-size: 28px;
         font-weight: bold;
@@ -856,31 +856,19 @@ st.markdown(
         text-transform: uppercase;
         letter-spacing: 2px;
         padding: 12px 0;
-        color: #00ffff;
-        overflow: hidden;
-        white-space: nowrap;
-        border-right: 3px solid #00ffff;
-        width: 0ch;   /* start typing from 0 characters */
-        margin: auto;
-        animation: typing 6s steps(55, end) forwards,
-                   blink-caret .8s step-end infinite,
-                   glitch 6s infinite;
+        animation: glowPulse 3s ease-in-out infinite;
+        text-shadow: 0px 0px 10px #00ffff;
     }
 
-    @keyframes typing {
-        from { width: 0ch }
-        to { width: 55ch } /* match character length of text */
-    }
-    @keyframes blink-caret {
-        from, to { border-color: transparent }
-        50% { border-color: #00ffff; }
-    }
-    @keyframes glitch {
-        0%, 100% { text-shadow: 0 0 3px #00ffff; }
-        20% { text-shadow: -2px 0 magenta; }
-        40% { text-shadow: 2px 0 cyan; }
-        60% { text-shadow: -1px 1px magenta; }
-        80% { text-shadow: 1px -1px cyan; }
+    @keyframes glowPulse {
+        0%, 100% {
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+        }
+        50% {
+            color: #ff00ff;
+            text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff;
+        }
     }
 
     /* ---------- FILE UPLOADER ---------- */
@@ -967,7 +955,7 @@ st.markdown(
         </div>
     </div>
 
-    <!-- Header with typing effect -->
+    <!-- Header -->
     <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
     """,
     unsafe_allow_html=True

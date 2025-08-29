@@ -2263,23 +2263,23 @@ if uploaded_files and job_description:
             display: flex; 
             justify-content: center; 
             align-items: center; 
-            height: 100vh; 
+            height: 420px; 
             flex-direction: column; 
         }}
         .resume-doc {{ 
-            width: 280px; 
-            height: 360px; 
+            width: 260px; 
+            height: 340px; 
             background: linear-gradient(180deg, #f9f9f9, #e3e3e3); 
             border-radius: 16px; 
             position: relative; 
             overflow: hidden; 
             box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 25px rgba(56,189,248,0.35);
-            padding-top: 50px;
+            padding-top: 60px;
             text-align: center;
         }}
         .resume-doc::before {{
             content: "👤";
-            font-size: 38px;
+            font-size: 40px;
             display: block;
             margin-bottom: 10px;
         }}
@@ -2307,27 +2307,22 @@ if uploaded_files and job_description:
             top: 0; 
             left: 0; 
             width: 100%; 
-            height: 14px; 
+            height: 16px; 
             background: rgba(56,189,248,0.7); 
             animation: scan 2.5s linear infinite; 
-            box-shadow: 0 0 12px rgba(56,189,248,0.9), 0 0 20px rgba(56,189,248,0.7);
+            box-shadow: 0 0 16px rgba(56,189,248,0.9), 0 0 25px rgba(56,189,248,0.7);
         }}
         @keyframes scan {{ 
             0% {{ top: 0; }} 
-            100% {{ top: 346px; }} 
+            100% {{ top: 340px; }} 
         }}
         .scan-text {{ 
-            margin-top: 18px; 
+            margin-top: 25px; 
             font-family: 'Orbitron', sans-serif; 
             font-weight: 800; 
-            font-size: 20px; 
+            font-size: 22px; 
             color: #38bdf8; 
             text-shadow: 0 0 8px rgba(56,189,248,0.8), 0 0 20px rgba(56,189,248,0.5);
-            animation: blinkText 1.8s infinite;
-        }}
-        @keyframes blinkText {{
-            0%, 100% {{ opacity: 1; }}
-            50% {{ opacity: 0.5; }}
         }}
         </style>
         <div class="scanner-container">
@@ -2341,7 +2336,7 @@ if uploaded_files and job_description:
                     • Evaluating ATS score...
                 </div>
             </div>
-            <div class="scan-text">🔍 Scanning Resume...</div>
+            <div class="scan-text">Scanning Resume...</div>
         </div>
         """
         scanner_placeholder.markdown(HERO_HTML_SCANNER, unsafe_allow_html=True)
@@ -2463,7 +2458,7 @@ if uploaded_files and job_description:
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 240px;
+            height: 200px;
             flex-direction: column;
         }
         .scope {
@@ -2472,7 +2467,7 @@ if uploaded_files and job_description:
             border: 2px solid #38bdf8;
             border-radius: 50%;
             position: relative;
-            background: radial-gradient(circle, rgba(56,189,248,0.1) 30%, rgba(0,0,0,0.9) 100%);
+            background: radial-gradient(circle, rgba(56,189,248,0.1) 30%, rgba(0,0,0,0.85) 100%);
             box-shadow: 0 0 12px rgba(56,189,248,0.5), inset 0 0 12px rgba(56,189,248,0.5);
             overflow: hidden;
             animation: pulseScope 2s infinite;
@@ -2509,18 +2504,22 @@ if uploaded_files and job_description:
             animation: blinkText 1.5s infinite;
             text-align: center;
         }
+        @keyframes blinkText {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
         </style>
 
         <div class="scope-container">
             <div class="scope">
                 <div class="scope-line"></div>
-                <div class="scope-text">✅ Scanned<br>Successfully</div>
+                <div class="scope-text">Scanned<br>Successfully</div>
             </div>
         </div>
         """
         scanner_placeholder.empty()
         st.markdown(SUCCESS_HTML, unsafe_allow_html=True)
-        time.sleep(1.5)
+        time.sleep(1.5)  # short pause to show success
 
 
 

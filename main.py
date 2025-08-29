@@ -2238,7 +2238,6 @@ import time
 import os
 
 # Initialize session state
-# ✅ Initialize Session State
 if "resume_data" not in st.session_state:
     st.session_state.resume_data = []
 
@@ -2253,28 +2252,78 @@ if uploaded_files and job_description:
 
     for uploaded_file in uploaded_files:
         if uploaded_file.name in st.session_state.processed_files:
-            continue  # Skip already processed files
+            continue
 
-        # ==============================
-        # 1️⃣ Cinematic Scanning Animation
-        # ==============================
+        # ✅ Placeholder for cinematic scanning animation
         scanner_placeholder = st.empty()
 
         HERO_HTML_SCANNER = f"""
         <style>
-        .scanner-container {{ display:flex; justify-content:center; align-items:center; height:420px; flex-direction:column; }}
-        .resume-doc {{ width:260px; height:340px; background:linear-gradient(180deg,#f9f9f9,#e3e3e3); border-radius:16px;
-                        position:relative; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,0.35),0 0 25px rgba(56,189,248,0.35);
-                        padding-top:60px; text-align:center; }}
-        .resume-doc::before {{ content:"👤"; font-size:40px; display:block; margin-bottom:10px; }}
-        .job-title {{ font-size:18px; font-weight:bold; color:#333; font-family:'Orbitron',sans-serif; animation:pulseTitle 1.8s ease-in-out infinite; }}
-        @keyframes pulseTitle {{ 0%,100%{{color:#333;text-shadow:none;}} 50%{{color:#38bdf8;text-shadow:0 0 10px #38bdf8;}} }}
-        .resume-body {{ margin-top:20px; font-size:12px; color:#666; line-height:1.4em; text-align:left; padding:0 15px; }}
-        .scanner-line {{ position:absolute; top:0; left:0; width:100%; height:16px; background:rgba(56,189,248,0.7);
-                         animation:scan 2.5s linear infinite; box-shadow:0 0 16px rgba(56,189,248,0.9),0 0 25px rgba(56,189,248,0.7); }}
-        @keyframes scan {{ 0%{{top:0;}} 100%{{top:340px;}} }}
-        .scan-text {{ margin-top:25px; font-family:'Orbitron',sans-serif; font-weight:800; font-size:22px; color:#38bdf8;
-                      text-shadow:0 0 8px rgba(56,189,248,0.8),0 0 20px rgba(56,189,248,0.5); }}
+        .scanner-container {{ 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 420px; 
+            flex-direction: column; 
+        }}
+        .resume-doc {{ 
+            width: 260px; 
+            height: 340px; 
+            background: linear-gradient(180deg, #f9f9f9, #e3e3e3); 
+            border-radius: 16px; 
+            position: relative; 
+            overflow: hidden; 
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 25px rgba(56,189,248,0.35);
+            padding-top: 60px;
+            text-align: center;
+        }}
+        .resume-doc::before {{
+            content: "👤";
+            font-size: 40px;
+            display: block;
+            margin-bottom: 10px;
+        }}
+        .job-title {{
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            font-family: 'Orbitron', sans-serif;
+            animation: pulseTitle 1.8s ease-in-out infinite;
+        }}
+        @keyframes pulseTitle {{
+            0%, 100% {{ color: #333; text-shadow: none; }}
+            50% {{ color: #38bdf8; text-shadow: 0 0 10px #38bdf8; }}
+        }}
+        .resume-body {{
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4em;
+            text-align: left;
+            padding: 0 15px;
+        }}
+        .scanner-line {{ 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 16px; 
+            background: rgba(56,189,248,0.7); 
+            animation: scan 2.5s linear infinite; 
+            box-shadow: 0 0 16px rgba(56,189,248,0.9), 0 0 25px rgba(56,189,248,0.7);
+        }}
+        @keyframes scan {{ 
+            0% {{ top: 0; }} 
+            100% {{ top: 340px; }} 
+        }}
+        .scan-text {{ 
+            margin-top: 25px; 
+            font-family: 'Orbitron', sans-serif; 
+            font-weight: 800; 
+            font-size: 22px; 
+            color: #38bdf8; 
+            text-shadow: 0 0 8px rgba(56,189,248,0.8), 0 0 20px rgba(56,189,248,0.5);
+        }}
         </style>
         <div class="scanner-container">
             <div class="resume-doc">
@@ -2292,39 +2341,33 @@ if uploaded_files and job_description:
         """
         scanner_placeholder.markdown(HERO_HTML_SCANNER, unsafe_allow_html=True)
 
-        # ==============================
-        # 2️⃣ Save Uploaded File
-        # ==============================
+        # ✅ Save uploaded file
         file_path = os.path.join(working_dir, uploaded_file.name)
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
-        time.sleep(2.5)  # 🎬 Cinematic delay
+        # ✅ Simulate scanning delay
+        time.sleep(2.5)  # Adjust this for cinematic effect
 
-        # ==============================
-        # 3️⃣ Extract Text from Resume
-        # ==============================
+        # ✅ Extract text from PDF
         text = extract_text_from_pdf(file_path)
         if not text:
             st.warning(f"⚠️ Could not extract text from {uploaded_file.name}. Skipping.")
             scanner_placeholder.empty()
             continue
 
+        all_text.append(" ".join(text))
         full_text = " ".join(text)
-        all_text.append(full_text)
 
-        # ==============================
-        # 4️⃣ Bias Detection + Rewrite
-        # ==============================
+        # ✅ Bias detection
         bias_score, masc_count, fem_count, detected_masc, detected_fem = detect_bias(full_text)
 
-        highlighted_text, rewritten_text, *_ = rewrite_and_highlight(
+        # ✅ Rewrite and highlight gender-biased words
+        highlighted_text, rewritten_text, _, _, _, _ = rewrite_and_highlight(
             full_text, replacement_mapping, user_location
         )
 
-        # ==============================
-        # 5️⃣ ATS Evaluation (LLM-powered)
-        # ==============================
+        # ✅ LLM-based ATS Evaluation
         ats_result, ats_scores = ats_percentage_score(
             resume_text=full_text,
             job_description=job_description,
@@ -2336,7 +2379,7 @@ if uploaded_files and job_description:
             keyword_weight=keyword_weight
         )
 
-        # Safely extract structured ATS values
+        # ✅ Extract structured ATS values
         candidate_name = ats_scores.get("Candidate Name", "Not Found")
         ats_score = ats_scores.get("ATS Match %", 0)
         edu_score = ats_scores.get("Education Score", 0)
@@ -2348,21 +2391,17 @@ if uploaded_files and job_description:
         fit_summary = ats_scores.get("Final Thoughts", "N/A")
         language_analysis_full = ats_scores.get("Language Analysis", "N/A")
 
-        # Handle missing keywords/skills gracefully
-        missing_keywords = ats_scores.get("Missing Keywords", "")
-        missing_skills = ats_scores.get("Missing Skills", "")
-        missing_keywords = [kw.strip() for kw in missing_keywords.split(",") if kw.strip()] if isinstance(missing_keywords, str) else []
-        missing_skills = [sk.strip() for sk in missing_skills.split(",") if sk.strip()] if isinstance(missing_skills, str) else []
+        missing_keywords_raw = ats_scores.get("Missing Keywords", "N/A")
+        missing_skills_raw = ats_scores.get("Missing Skills", "N/A")
+        missing_keywords = [kw.strip() for kw in missing_keywords_raw.split(",") if kw.strip()] if missing_keywords_raw != "N/A" else []
+        missing_skills = [sk.strip() for sk in missing_skills_raw.split(",") if sk.strip()] if missing_skills_raw != "N/A" else []
 
-        # Detect domain from JD
         domain = detect_domain_from_title_and_description(job_title, job_description)
 
         bias_flag = "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair"
         ats_flag = "⚠️ Low ATS" if ats_score < 50 else "✅ Good ATS"
 
-        # ==============================
-        # 6️⃣ Save Results in Session State
-        # ==============================
+        # ✅ Store everything in session state
         st.session_state.resume_data.append({
             "Resume Name": uploaded_file.name,
             "Candidate Name": candidate_name,
@@ -2394,11 +2433,17 @@ if uploaded_files and job_description:
             "Domain": domain
         })
 
-        # Save candidate in DB
         insert_candidate(
             (
-                uploaded_file.name, candidate_name, ats_score, edu_score,
-                exp_score, skills_score, lang_score, keyword_score, bias_score
+                uploaded_file.name,
+                candidate_name,
+                ats_score,
+                edu_score,
+                exp_score,
+                skills_score,
+                lang_score,
+                keyword_score,
+                bias_score
             ),
             job_title=job_title,
             job_description=job_description
@@ -2406,25 +2451,65 @@ if uploaded_files and job_description:
 
         st.session_state.processed_files.add(uploaded_file.name)
 
-        # ==============================
-        # 7️⃣ Success Animation
-        # ==============================
+        # ✅ Remove scanner and show compact glowing success scope
         SUCCESS_HTML = """
         <style>
-        .scope-container { display:flex; justify-content:center; align-items:center; height:200px; flex-direction:column; }
-        .scope { width:150px; height:150px; border:2px solid #38bdf8; border-radius:50%; position:relative;
-                 background:radial-gradient(circle,rgba(56,189,248,0.1)30%,rgba(0,0,0,0.85)100%);
-                 box-shadow:0 0 12px rgba(56,189,248,0.5),inset 0 0 12px rgba(56,189,248,0.5); overflow:hidden; animation:pulseScope 2s infinite; }
-        @keyframes pulseScope { 0%,100%{box-shadow:0 0 10px rgba(56,189,248,0.5),inset 0 0 10px rgba(56,189,248,0.5);} 
-                                50%{box-shadow:0 0 20px rgba(56,189,248,0.9),inset 0 0 18px rgba(56,189,248,0.9);} }
-        .scope-line { position:absolute; top:0; left:50%; width:1px; height:100%; background:rgba(56,189,248,0.7);
-                      transform-origin:bottom center; animation:rotateLine 1.5s linear infinite; box-shadow:0 0 6px rgba(56,189,248,0.9); }
-        @keyframes rotateLine { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
-        .scope-text { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-family:'Orbitron',sans-serif;
-                      font-weight:700; font-size:14px; color:#38bdf8; text-shadow:0 0 6px #38bdf8,0 0 12px #38bdf8;
-                      animation:blinkText 1.5s infinite; text-align:center; }
-        @keyframes blinkText { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+        .scope-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            flex-direction: column;
+        }
+        .scope {
+            width: 150px;
+            height: 150px;
+            border: 2px solid #38bdf8;
+            border-radius: 50%;
+            position: relative;
+            background: radial-gradient(circle, rgba(56,189,248,0.1) 30%, rgba(0,0,0,0.85) 100%);
+            box-shadow: 0 0 12px rgba(56,189,248,0.5), inset 0 0 12px rgba(56,189,248,0.5);
+            overflow: hidden;
+            animation: pulseScope 2s infinite;
+        }
+        @keyframes pulseScope {
+            0%, 100% { box-shadow: 0 0 10px rgba(56,189,248,0.5), inset 0 0 10px rgba(56,189,248,0.5); }
+            50% { box-shadow: 0 0 20px rgba(56,189,248,0.9), inset 0 0 18px rgba(56,189,248,0.9); }
+        }
+        .scope-line {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 1px;
+            height: 100%;
+            background: rgba(56,189,248,0.7);
+            transform-origin: bottom center;
+            animation: rotateLine 1.5s linear infinite;
+            box-shadow: 0 0 6px rgba(56,189,248,0.9);
+        }
+        @keyframes rotateLine {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .scope-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            color: #38bdf8;
+            text-shadow: 0 0 6px #38bdf8, 0 0 12px #38bdf8;
+            animation: blinkText 1.5s infinite;
+            text-align: center;
+        }
+        @keyframes blinkText {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
         </style>
+
         <div class="scope-container">
             <div class="scope">
                 <div class="scope-line"></div>
@@ -2434,8 +2519,7 @@ if uploaded_files and job_description:
         """
         scanner_placeholder.empty()
         st.markdown(SUCCESS_HTML, unsafe_allow_html=True)
-        time.sleep(1.5)
-
+        time.sleep(1.5)  # short pause to show success
 
 
 

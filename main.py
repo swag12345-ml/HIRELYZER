@@ -2263,7 +2263,8 @@ if uploaded_files and job_description:
             display: flex; 
             justify-content: center; 
             align-items: center; 
-            height: 100vh; 
+            min-height: 100%;   /* instead of 100vh */
+            padding: 20px;
             flex-direction: column; 
             background: #0b0c10;
             position: fixed;
@@ -2272,25 +2273,25 @@ if uploaded_files and job_description:
             z-index: 9999;
         }}
         .resume-doc {{ 
-            width: 400px;   /* bigger size */
-            height: 480px;  /* bigger size */
+            width: 300px;   /* reduced size */
+            height: 360px;  /* reduced size */
             background: linear-gradient(180deg, #f9f9f9, #e3e3e3); 
-            border-radius: 24px; 
+            border-radius: 18px; 
             position: relative; 
             overflow: hidden; 
-            box-shadow: 0 20px 60px rgba(0,0,0,0.45), 0 0 35px rgba(56,189,248,0.45);
-            padding-top: 100px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 25px rgba(56,189,248,0.35);
+            padding-top: 60px;
             text-align: center;
-            transform: scale(1.05);
+            transform: scale(1);
         }}
         .resume-doc::before {{
             content: "👤";
-            font-size: 48px;
+            font-size: 40px;
             display: block;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }}
         .job-title {{
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
             color: #333;
             font-family: 'Orbitron', sans-serif;
@@ -2298,37 +2299,46 @@ if uploaded_files and job_description:
         }}
         @keyframes pulseTitle {{
             0%, 100% {{ color: #333; text-shadow: none; }}
-            50% {{ color: #38bdf8; text-shadow: 0 0 12px #38bdf8; }}
+            50% {{ color: #38bdf8; text-shadow: 0 0 10px #38bdf8; }}
         }}
         .resume-body {{
-            margin-top: 30px;
-            font-size: 14px;
+            margin-top: 20px;
+            font-size: 13px;
             color: #444;
-            line-height: 1.6em;
+            line-height: 1.4em;
             text-align: left;
-            padding: 0 25px;
+            padding: 0 15px;
         }}
         .scanner-line {{ 
             position: absolute; 
             top: 0; 
             left: 0; 
             width: 100%; 
-            height: 24px; 
+            height: 18px; 
             background: rgba(56,189,248,0.7); 
             animation: scan 3s linear infinite; 
-            box-shadow: 0 0 24px rgba(56,189,248,0.9), 0 0 35px rgba(56,189,248,0.7);
+            box-shadow: 0 0 18px rgba(56,189,248,0.8), 0 0 25px rgba(56,189,248,0.6);
         }}
         @keyframes scan {{ 
             0% {{ top: 0; }} 
-            100% {{ top: 480px; }} 
+            100% {{ top: 360px; }}  /* match new doc height */
         }}
         .scan-text {{ 
-            margin-top: 40px; 
+            margin-top: 25px; 
             font-family: 'Orbitron', sans-serif; 
-            font-weight: 800; 
-            font-size: 24px; 
+            font-weight: 700; 
+            font-size: 20px; 
             color: #38bdf8; 
-            text-shadow: 0 0 12px rgba(56,189,248,0.8), 0 0 25px rgba(56,189,248,0.5);
+            text-shadow: 0 0 10px rgba(56,189,248,0.7), 0 0 20px rgba(56,189,248,0.4);
+        }}
+        /* ✅ Responsive for small screens */
+        @media (max-width: 480px) {{
+            .resume-doc {{
+                width: 240px;
+                height: 300px;
+            }}
+            .job-title {{ font-size: 16px; }}
+            .scan-text {{ font-size: 16px; }}
         }}
         </style>
         <div class="scanner-container">
@@ -2353,7 +2363,7 @@ if uploaded_files and job_description:
             f.write(uploaded_file.getbuffer())
 
         # ✅ Simulate scanning delay
-        time.sleep(2.5)
+        time.sleep(4)
 
         # ✅ Extract text from PDF
         text = extract_text_from_pdf(file_path)
@@ -2524,8 +2534,9 @@ if uploaded_files and job_description:
         st.markdown(SUCCESS_HTML, unsafe_allow_html=True)
 
         # ⏳ Short pause, then auto rerun
-        time.sleep(2)
+        time.sleep(4)
         st.rerun()
+
 
 
 

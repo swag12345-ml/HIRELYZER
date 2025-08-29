@@ -848,7 +848,7 @@ st.markdown(
         }
     }
 
-    /* ---------- HEADER ---------- */
+    /* ---------- HEADER WITH TYPING EFFECT ---------- */
     .header {
         font-size: 28px;
         font-weight: bold;
@@ -856,19 +856,31 @@ st.markdown(
         text-transform: uppercase;
         letter-spacing: 2px;
         padding: 12px 0;
-        animation: glowPulse 3s ease-in-out infinite;
-        text-shadow: 0px 0px 10px #00ffff;
+        color: #00ffff;
+        overflow: hidden;
+        white-space: nowrap;
+        border-right: 3px solid #00ffff;
+        width: 0;
+        margin: auto;
+        animation: typing 4s steps(40, end) forwards,
+                   blink-caret .8s step-end infinite,
+                   glitch 6s infinite;
     }
 
-    @keyframes glowPulse {
-        0%, 100% {
-            color: #00ffff;
-            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
-        }
-        50% {
-            color: #ff00ff;
-            text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff;
-        }
+    @keyframes typing {
+        from { width: 0 }
+        to { width: 100% }
+    }
+    @keyframes blink-caret {
+        from, to { border-color: transparent }
+        50% { border-color: #00ffff; }
+    }
+    @keyframes glitch {
+        0%, 100% { text-shadow: 0 0 3px #00ffff; }
+        20% { text-shadow: -2px 0 magenta; }
+        40% { text-shadow: 2px 0 cyan; }
+        60% { text-shadow: -1px 1px magenta; }
+        80% { text-shadow: 1px -1px cyan; }
     }
 
     /* ---------- FILE UPLOADER ---------- */
@@ -955,11 +967,12 @@ st.markdown(
         </div>
     </div>
 
-    <!-- Header -->
+    <!-- Header with typing effect -->
     <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
     """,
     unsafe_allow_html=True
 )
+
 
 # Load environment variables
 # ------------------- Core Setup -------------------

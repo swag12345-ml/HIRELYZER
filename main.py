@@ -2254,82 +2254,83 @@ if uploaded_files and job_description:
         if uploaded_file.name in st.session_state.processed_files:
             continue
 
-        # ✅ Fullscreen scanning placeholder
-        scanner_fullpage = st.empty()
+        # ✅ Placeholder for cinematic scanning animation
+        scanner_placeholder = st.empty()
 
         HERO_HTML_SCANNER = f"""
         <style>
-        .fullpage {{
+        .scanner-container {{ 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            flex-direction: column; 
+            background: #0b0c10;
             position: fixed;
             top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: #0b0c10;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
+            width: 100%; 
             z-index: 9999;
         }}
         .resume-doc {{ 
-            width: 240px; 
-            height: 280px; 
+            width: 220px; 
+            height: 260px; 
             background: linear-gradient(180deg, #f9f9f9, #e3e3e3); 
             border-radius: 16px; 
             position: relative; 
             overflow: hidden; 
             box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 25px rgba(56,189,248,0.35);
-            padding-top: 40px;
+            padding-top: 60px;
             text-align: center;
         }}
         .resume-doc::before {{
             content: "👤";
-            font-size: 36px;
+            font-size: 32px;
             display: block;
             margin-bottom: 10px;
         }}
         .job-title {{
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
-            font-family: 'Orbitron', sans-serif;
             color: #333;
+            font-family: 'Orbitron', sans-serif;
             animation: pulseTitle 1.8s ease-in-out infinite;
         }}
         @keyframes pulseTitle {{
-            0%,100% {{ color:#333; text-shadow:none; }}
-            50% {{ color:#38bdf8; text-shadow:0 0 10px #38bdf8; }}
+            0%, 100% {{ color: #333; text-shadow: none; }}
+            50% {{ color: #38bdf8; text-shadow: 0 0 10px #38bdf8; }}
         }}
         .resume-body {{
-            margin-top: 16px;
-            font-size: 12px;
-            color: #555;
+            margin-top: 20px;
+            font-size: 11px;
+            color: #666;
             line-height: 1.4em;
             text-align: left;
-            padding: 0 12px;
+            padding: 0 15px;
         }}
         .scanner-line {{ 
             position: absolute; 
             top: 0; 
             left: 0; 
             width: 100%; 
-            height: 14px; 
+            height: 16px; 
             background: rgba(56,189,248,0.7); 
-            animation: scan 2.8s linear infinite; 
-            box-shadow: 0 0 14px rgba(56,189,248,0.9), 0 0 20px rgba(56,189,248,0.7);
+            animation: scan 2.5s linear infinite; 
+            box-shadow: 0 0 16px rgba(56,189,248,0.9), 0 0 25px rgba(56,189,248,0.7);
         }}
-        @keyframes scan {{
+        @keyframes scan {{ 
             0% {{ top: 0; }} 
-            100% {{ top: 280px; }} 
+            100% {{ top: 260px; }} 
         }}
-        .scan-text {{
-            margin-top: 24px; 
+        .scan-text {{ 
+            margin-top: 25px; 
             font-family: 'Orbitron', sans-serif; 
             font-weight: 800; 
-            font-size: 22px; 
+            font-size: 18px; 
             color: #38bdf8; 
-            text-shadow: 0 0 10px rgba(56,189,248,0.8);
+            text-shadow: 0 0 8px rgba(56,189,248,0.8), 0 0 20px rgba(56,189,248,0.5);
         }}
         </style>
-        <div class="fullpage">
+        <div class="scanner-container">
             <div class="resume-doc">
                 <div class="scanner-line"></div>
                 <div class="job-title">{job_title}</div>
@@ -2343,7 +2344,7 @@ if uploaded_files and job_description:
             <div class="scan-text">Scanning Resume...</div>
         </div>
         """
-        scanner_fullpage.markdown(HERO_HTML_SCANNER, unsafe_allow_html=True)
+        scanner_placeholder.markdown(HERO_HTML_SCANNER, unsafe_allow_html=True)
 
         # ✅ Save uploaded file
         file_path = os.path.join(working_dir, uploaded_file.name)
@@ -2351,13 +2352,13 @@ if uploaded_files and job_description:
             f.write(uploaded_file.getbuffer())
 
         # ✅ Simulate scanning delay
-        time.sleep(3.5)  # cinematic effect
+        time.sleep(2.5)
 
         # ✅ Extract text from PDF
         text = extract_text_from_pdf(file_path)
         if not text:
             st.warning(f"⚠️ Could not extract text from {uploaded_file.name}. Skipping.")
-            scanner_fullpage.empty()
+            scanner_placeholder.empty()
             continue
 
         all_text.append(" ".join(text))
@@ -2455,7 +2456,7 @@ if uploaded_files and job_description:
 
         st.session_state.processed_files.add(uploaded_file.name)
 
-        # ✅ Replace scanner with success scope
+        # ✅ Show full-screen success overlay
         SUCCESS_HTML = """
         <style>
         .success-fullpage {
@@ -2518,12 +2519,12 @@ if uploaded_files and job_description:
             </div>
         </div>
         """
-        scanner_fullpage.empty()
+        scanner_placeholder.empty()
         st.markdown(SUCCESS_HTML, unsafe_allow_html=True)
-        time.sleep(2)
 
-        # ✅ Clear success overlay so main page shows
-        st.empty()
+        # ⏳ Short pause, then auto rerun
+        time.sleep(2)
+        st.rerun()
 
 
 

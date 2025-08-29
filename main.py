@@ -2262,8 +2262,8 @@ if uploaded_files and job_description:
         .scanner-container {{ 
             display: flex; 
             justify-content: center; 
-            align-items: flex-start;   /* 👈 move upwards */
-            padding-top: 40px;         /* 👈 adjust height */
+            align-items: center; 
+            height: 420px; 
             flex-direction: column; 
         }}
         .resume-doc {{ 
@@ -2274,14 +2274,14 @@ if uploaded_files and job_description:
             position: relative; 
             overflow: hidden; 
             box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 25px rgba(56,189,248,0.35);
-            padding-top: 40px;
+            padding-top: 60px;
             text-align: center;
         }}
         .resume-doc::before {{
             content: "👤";
-            font-size: 36px;
+            font-size: 40px;
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }}
         .job-title {{
             font-size: 18px;
@@ -2295,7 +2295,7 @@ if uploaded_files and job_description:
             50% {{ color: #38bdf8; text-shadow: 0 0 10px #38bdf8; }}
         }}
         .resume-body {{
-            margin-top: 16px;
+            margin-top: 20px;
             font-size: 12px;
             color: #666;
             line-height: 1.4em;
@@ -2307,27 +2307,22 @@ if uploaded_files and job_description:
             top: 0; 
             left: 0; 
             width: 100%; 
-            height: 14px; 
+            height: 16px; 
             background: rgba(56,189,248,0.7); 
             animation: scan 2.5s linear infinite; 
-            box-shadow: 0 0 14px rgba(56,189,248,0.9), 0 0 22px rgba(56,189,248,0.7);
+            box-shadow: 0 0 16px rgba(56,189,248,0.9), 0 0 25px rgba(56,189,248,0.7);
         }}
         @keyframes scan {{ 
             0% {{ top: 0; }} 
-            100% {{ top: 326px; }} 
+            100% {{ top: 340px; }} 
         }}
         .scan-text {{ 
-            margin-top: 15px; 
+            margin-top: 25px; 
             font-family: 'Orbitron', sans-serif; 
             font-weight: 800; 
-            font-size: 20px; 
+            font-size: 22px; 
             color: #38bdf8; 
             text-shadow: 0 0 8px rgba(56,189,248,0.8), 0 0 20px rgba(56,189,248,0.5);
-            animation: blinkText 1.8s infinite;
-        }}
-        @keyframes blinkText {{
-            0%, 100% {{ opacity: 1; }}
-            50% {{ opacity: 0.5; }}
         }}
         </style>
         <div class="scanner-container">
@@ -2341,7 +2336,7 @@ if uploaded_files and job_description:
                     • Evaluating ATS score...
                 </div>
             </div>
-            <div class="scan-text">🔍 Scanning Resume...</div>
+            <div class="scan-text">Scanning Resume...</div>
         </div>
         """
         scanner_placeholder.markdown(HERO_HTML_SCANNER, unsafe_allow_html=True)
@@ -2352,7 +2347,7 @@ if uploaded_files and job_description:
             f.write(uploaded_file.getbuffer())
 
         # ✅ Simulate scanning delay
-        time.sleep(2.5)
+        time.sleep(2.5)  # Adjust this for cinematic effect
 
         # ✅ Extract text from PDF
         text = extract_text_from_pdf(file_path)
@@ -2456,19 +2451,19 @@ if uploaded_files and job_description:
 
         st.session_state.processed_files.add(uploaded_file.name)
 
-        # ✅ Remove scanner and show compact glowing success scope (shifted upwards)
+        # ✅ Remove scanner and show compact glowing success scope
         SUCCESS_HTML = """
         <style>
         .scope-container {
             display: flex;
             justify-content: center;
-            align-items: flex-start;   /* 👈 shift upwards */
-            padding-top: 60px;         /* 👈 adjust distance */
+            align-items: center;
+            height: 200px;
             flex-direction: column;
         }
         .scope {
-            width: 140px;
-            height: 140px;
+            width: 150px;
+            height: 150px;
             border: 2px solid #38bdf8;
             border-radius: 50%;
             position: relative;
@@ -2518,13 +2513,13 @@ if uploaded_files and job_description:
         <div class="scope-container">
             <div class="scope">
                 <div class="scope-line"></div>
-                <div class="scope-text">✅ Scanned<br>Successfully</div>
+                <div class="scope-text">Scanned<br>Successfully</div>
             </div>
         </div>
         """
         scanner_placeholder.empty()
         st.markdown(SUCCESS_HTML, unsafe_allow_html=True)
-        time.sleep(1.5)
+        time.sleep(1.5)  # short pause to show success
 
 
 
@@ -5965,3 +5960,4 @@ with tab5:
         <p>Last updated: {}</p>
     </div>
     """.format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
+

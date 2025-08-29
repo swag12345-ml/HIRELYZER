@@ -955,7 +955,9 @@ st.markdown(
         </div>
     </div>
 
-   
+    <!-- Header -->
+    <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
+    """,
     unsafe_allow_html=True
 )
 
@@ -5958,4 +5960,3 @@ with tab5:
         <p>Last updated: {}</p>
     </div>
     """.format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
-

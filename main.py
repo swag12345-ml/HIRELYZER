@@ -2254,78 +2254,82 @@ if uploaded_files and job_description:
         if uploaded_file.name in st.session_state.processed_files:
             continue
 
-        # ✅ Placeholder for cinematic scanning animation
-        scanner_placeholder = st.empty()
+        # ✅ Fullscreen scanning placeholder
+        scanner_fullpage = st.empty()
 
         HERO_HTML_SCANNER = f"""
         <style>
-        .scanner-container {{ 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 300px; 
-            flex-direction: column; 
+        .fullpage {{
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #0b0c10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 9999;
         }}
         .resume-doc {{ 
-            width: 220px; 
-            height: 260px; 
+            width: 240px; 
+            height: 280px; 
             background: linear-gradient(180deg, #f9f9f9, #e3e3e3); 
             border-radius: 16px; 
             position: relative; 
             overflow: hidden; 
             box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 25px rgba(56,189,248,0.35);
-            padding-top: 60px;
+            padding-top: 40px;
             text-align: center;
         }}
         .resume-doc::before {{
             content: "👤";
-            font-size: 32px;
+            font-size: 36px;
             display: block;
             margin-bottom: 10px;
         }}
         .job-title {{
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
-            color: #333;
             font-family: 'Orbitron', sans-serif;
+            color: #333;
             animation: pulseTitle 1.8s ease-in-out infinite;
         }}
         @keyframes pulseTitle {{
-            0%, 100% {{ color: #333; text-shadow: none; }}
-            50% {{ color: #38bdf8; text-shadow: 0 0 10px #38bdf8; }}
+            0%,100% {{ color:#333; text-shadow:none; }}
+            50% {{ color:#38bdf8; text-shadow:0 0 10px #38bdf8; }}
         }}
         .resume-body {{
-            margin-top: 20px;
-            font-size: 11px;
-            color: #666;
+            margin-top: 16px;
+            font-size: 12px;
+            color: #555;
             line-height: 1.4em;
             text-align: left;
-            padding: 0 15px;
+            padding: 0 12px;
         }}
         .scanner-line {{ 
             position: absolute; 
             top: 0; 
             left: 0; 
             width: 100%; 
-            height: 16px; 
+            height: 14px; 
             background: rgba(56,189,248,0.7); 
-            animation: scan 2.5s linear infinite; 
-            box-shadow: 0 0 16px rgba(56,189,248,0.9), 0 0 25px rgba(56,189,248,0.7);
+            animation: scan 2.8s linear infinite; 
+            box-shadow: 0 0 14px rgba(56,189,248,0.9), 0 0 20px rgba(56,189,248,0.7);
         }}
-        @keyframes scan {{ 
+        @keyframes scan {{
             0% {{ top: 0; }} 
-            100% {{ top: 260px; }} 
+            100% {{ top: 280px; }} 
         }}
-        .scan-text {{ 
-            margin-top: 25px; 
+        .scan-text {{
+            margin-top: 24px; 
             font-family: 'Orbitron', sans-serif; 
             font-weight: 800; 
-            font-size: 18px; 
+            font-size: 22px; 
             color: #38bdf8; 
-            text-shadow: 0 0 8px rgba(56,189,248,0.8), 0 0 20px rgba(56,189,248,0.5);
+            text-shadow: 0 0 10px rgba(56,189,248,0.8);
         }}
         </style>
-        <div class="scanner-container">
+        <div class="fullpage">
             <div class="resume-doc">
                 <div class="scanner-line"></div>
                 <div class="job-title">{job_title}</div>
@@ -2339,7 +2343,7 @@ if uploaded_files and job_description:
             <div class="scan-text">Scanning Resume...</div>
         </div>
         """
-        scanner_placeholder.markdown(HERO_HTML_SCANNER, unsafe_allow_html=True)
+        scanner_fullpage.markdown(HERO_HTML_SCANNER, unsafe_allow_html=True)
 
         # ✅ Save uploaded file
         file_path = os.path.join(working_dir, uploaded_file.name)
@@ -2347,13 +2351,13 @@ if uploaded_files and job_description:
             f.write(uploaded_file.getbuffer())
 
         # ✅ Simulate scanning delay
-        time.sleep(2.5)  # Adjust this for cinematic effect
+        time.sleep(3.5)  # cinematic effect
 
         # ✅ Extract text from PDF
         text = extract_text_from_pdf(file_path)
         if not text:
             st.warning(f"⚠️ Could not extract text from {uploaded_file.name}. Skipping.")
-            scanner_placeholder.empty()
+            scanner_fullpage.empty()
             continue
 
         all_text.append(" ".join(text))
@@ -2451,19 +2455,23 @@ if uploaded_files and job_description:
 
         st.session_state.processed_files.add(uploaded_file.name)
 
-        # ✅ Remove scanner and show compact glowing success scope
+        # ✅ Replace scanner with success scope
         SUCCESS_HTML = """
         <style>
-        .scope-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 200px;
-            flex-direction: column;
+        .success-fullpage {
+            position: fixed;
+            top:0; left:0;
+            width:100%; height:100%;
+            background:#0b0c10;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            flex-direction:column;
+            z-index:9999;
         }
         .scope {
-            width: 150px;
-            height: 150px;
+            width: 160px;
+            height: 160px;
             border: 2px solid #38bdf8;
             border-radius: 50%;
             position: relative;
@@ -2473,8 +2481,8 @@ if uploaded_files and job_description:
             animation: pulseScope 2s infinite;
         }
         @keyframes pulseScope {
-            0%, 100% { box-shadow: 0 0 10px rgba(56,189,248,0.5), inset 0 0 10px rgba(56,189,248,0.5); }
-            50% { box-shadow: 0 0 20px rgba(56,189,248,0.9), inset 0 0 18px rgba(56,189,248,0.9); }
+            0%,100% { box-shadow: 0 0 12px rgba(56,189,248,0.5), inset 0 0 12px rgba(56,189,248,0.5); }
+            50% { box-shadow: 0 0 22px rgba(56,189,248,0.9), inset 0 0 18px rgba(56,189,248,0.9); }
         }
         .scope-line {
             position: absolute;
@@ -2485,7 +2493,6 @@ if uploaded_files and job_description:
             background: rgba(56,189,248,0.7);
             transform-origin: bottom center;
             animation: rotateLine 1.5s linear infinite;
-            box-shadow: 0 0 6px rgba(56,189,248,0.9);
         }
         @keyframes rotateLine {
             0% { transform: rotate(0deg); }
@@ -2498,28 +2505,25 @@ if uploaded_files and job_description:
             transform: translate(-50%, -50%);
             font-family: 'Orbitron', sans-serif;
             font-weight: 700;
-            font-size: 14px;
+            font-size: 16px;
             color: #38bdf8;
-            text-shadow: 0 0 6px #38bdf8, 0 0 12px #38bdf8;
-            animation: blinkText 1.5s infinite;
-            text-align: center;
-        }
-        @keyframes blinkText {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            text-shadow: 0 0 8px #38bdf8;
+            text-align:center;
         }
         </style>
-
-        <div class="scope-container">
+        <div class="success-fullpage">
             <div class="scope">
                 <div class="scope-line"></div>
                 <div class="scope-text">Scanned<br>Successfully</div>
             </div>
         </div>
         """
-        scanner_placeholder.empty()
+        scanner_fullpage.empty()
         st.markdown(SUCCESS_HTML, unsafe_allow_html=True)
-        time.sleep(1.5)  # short pause to show success
+        time.sleep(2)
+
+        # ✅ Clear success overlay so main page shows
+        st.empty()
 
 
 

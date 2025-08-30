@@ -1,24 +1,18 @@
-import os
+import base64
 import streamlit as st
 
-# Ensure static folder exists
-STATIC_DIR = "static"
-if not os.path.exists(STATIC_DIR):
-    os.makedirs(STATIC_DIR)
-
 def show_pdf_with_toolbar(uploaded_file):
-    # Save file into static folder
-    file_path = os.path.join(STATIC_DIR, uploaded_file.name)
-    with open(file_path, "wb") as f:
-        f.write(uploaded_file.getbuffer())
+    # Read file as bytes
+    file_bytes = uploaded_file.read()
+    uploaded_file.seek(0)  # reset for later use
+    
+    # Encode to base64 so we can embed it
+    base64_pdf = base64.b64encode(file_bytes).decode("utf-8")
 
-    # ✅ Use relative path → works locally & on Streamlit Cloud
-    pdf_url = f"/static/{uploaded_file.name}"
-
-    # ✅ Embed PDF.js with full toolbar
+    # Embed with Mozilla’s PDF.js full viewer
     pdf_display = f"""
         <iframe
-            src="https://mozilla.github.io/pdf.js/web/viewer.html?file={pdf_url}"
+            src="https://mozilla.github.io/pdf.js/web/viewer.html?file=data:application/pdf;base64,{base64_pdf}"
             width="100%"
             height="800"
             style="border:none;"
@@ -2252,9 +2246,6 @@ if uploaded_files:
     for uploaded_file in uploaded_files:
         st.subheader(f"📄 Original Resume Preview: {uploaded_file.name}")
         show_pdf_with_toolbar(uploaded_file)
-
-        # Reset pointer so later text extraction still works
-        uploaded_file.seek(0)
 
 
 import os

@@ -1,25 +1,3 @@
-import base64
-import streamlit as st
-
-def show_pdf_with_toolbar(uploaded_file):
-    # Read the file bytes ONCE
-    file_bytes = uploaded_file.getvalue()  
-
-    # Encode to base64
-    base64_pdf = base64.b64encode(file_bytes).decode("utf-8")
-
-    # Embed in Mozilla PDF.js viewer
-    pdf_display = f"""
-        <iframe
-            src="https://mozilla.github.io/pdf.js/web/viewer.html?file=data:application/pdf;base64,{base64_pdf}"
-            width="100%"
-            height="800"
-            style="border:none;"
-        ></iframe>
-    """
-    st.markdown(pdf_display, unsafe_allow_html=True)
-
-
 from xhtml2pdf import pisa
 from io import BytesIO
 
@@ -2241,12 +2219,28 @@ if total_weight != 100:
 else:
     st.sidebar.success("✅ Total weight = 100")
 
-uploaded_files = st.file_uploader("📄 Upload PDF Resumes", type=["pdf"], accept_multiple_files=True)
+from streamlit_pdf_viewer import pdf_viewer
+
+uploaded_files = st.file_uploader(
+    "📄 Upload PDF Resumes",
+    type=["pdf"],
+    accept_multiple_files=True
+)
 
 if uploaded_files:
     for uploaded_file in uploaded_files:
         st.subheader(f"📄 Original Resume Preview: {uploaded_file.name}")
-        show_pdf_with_toolbar(uploaded_file)
+
+        # ✅ Single-page viewer with navigation
+        pdf_viewer(
+            uploaded_file.read(),
+            key=f"pdf_viewer_{uploaded_file.name}",
+            width=800,          # set viewer width
+            height=1000,        # set viewer height
+            scrolling=False     # disables continuous scrolling
+        )
+
+        uploaded_file.seek(0)
 
 
 import os

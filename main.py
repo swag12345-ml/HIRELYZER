@@ -1,3 +1,30 @@
+import os
+import streamlit as st
+
+# Ensure static folder exists
+STATIC_DIR = "static"
+if not os.path.exists(STATIC_DIR):
+    os.makedirs(STATIC_DIR)
+
+def show_pdf_with_toolbar(uploaded_file):
+    # Save file into static folder
+    file_path = os.path.join(STATIC_DIR, uploaded_file.name)
+    with open(file_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+
+    # ✅ Use relative path → works locally & on Streamlit Cloud
+    pdf_url = f"/static/{uploaded_file.name}"
+
+    # ✅ Embed PDF.js with full toolbar
+    pdf_display = f"""
+        <iframe
+            src="https://mozilla.github.io/pdf.js/web/viewer.html?file={pdf_url}"
+            width="100%"
+            height="800"
+            style="border:none;"
+        ></iframe>
+    """
+    st.markdown(pdf_display, unsafe_allow_html=True)
 from xhtml2pdf import pisa
 from io import BytesIO
 
@@ -2219,29 +2246,15 @@ if total_weight != 100:
 else:
     st.sidebar.success("✅ Total weight = 100")
 
-from streamlit_pdf_viewer import pdf_viewer
-
-uploaded_files = st.file_uploader(
-    "📄 Upload PDF Resumes",
-    type=["pdf"],
-    accept_multiple_files=True
-)
+uploaded_files = st.file_uploader("📄 Upload PDF Resumes", type=["pdf"], accept_multiple_files=True)
 
 if uploaded_files:
     for uploaded_file in uploaded_files:
         st.subheader(f"📄 Original Resume Preview: {uploaded_file.name}")
+        show_pdf_with_toolbar(uploaded_file)
 
-        # ✅ Single-page viewer with navigation
-        pdf_viewer(
-            uploaded_file.read(),
-            key=f"pdf_viewer_{uploaded_file.name}",
-            width=800,          # set viewer width
-            height=1000,        # set viewer height
-            scrolling=False     # disables continuous scrolling
-        )
-
+        # Reset pointer so later text extraction still works
         uploaded_file.seek(0)
-
 
 
 import os

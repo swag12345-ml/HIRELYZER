@@ -1,3 +1,14 @@
+import base64
+
+def show_pdf(file):
+    """Display PDF in Streamlit by embedding it."""
+    base64_pdf = base64.b64encode(file.read()).decode("utf-8")
+    pdf_display = f"""
+        <iframe src="data:application/pdf;base64,{base64_pdf}"
+        width="100%" height="600" type="application/pdf"></iframe>
+    """
+    return pdf_display
+
 from xhtml2pdf import pisa
 from io import BytesIO
 
@@ -2221,6 +2232,15 @@ else:
 
 
 uploaded_files = st.file_uploader("Upload PDF Resumes", type=["pdf"], accept_multiple_files=True)
+
+if uploaded_files:
+    for uploaded_file in uploaded_files:
+        st.subheader(f"📄 Original Resume Preview: {uploaded_file.name}")
+        st.markdown(show_pdf(uploaded_file), unsafe_allow_html=True)
+        uploaded_file.seek(0)  # reset pointer so later processing still works
+
+    # ✅ continue with your existing resume processing logic below...
+
 
 
 import os

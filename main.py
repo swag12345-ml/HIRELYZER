@@ -2,14 +2,13 @@ import base64
 import streamlit as st
 
 def show_pdf_with_toolbar(uploaded_file):
-    # Read file as bytes
-    file_bytes = uploaded_file.read()
-    uploaded_file.seek(0)  # reset for later use
-    
-    # Encode to base64 so we can embed it
+    # Read the file bytes ONCE
+    file_bytes = uploaded_file.getvalue()  
+
+    # Encode to base64
     base64_pdf = base64.b64encode(file_bytes).decode("utf-8")
 
-    # Embed with Mozilla’s PDF.js full viewer
+    # Embed in Mozilla PDF.js viewer
     pdf_display = f"""
         <iframe
             src="https://mozilla.github.io/pdf.js/web/viewer.html?file=data:application/pdf;base64,{base64_pdf}"
@@ -19,6 +18,8 @@ def show_pdf_with_toolbar(uploaded_file):
         ></iframe>
     """
     st.markdown(pdf_display, unsafe_allow_html=True)
+
+
 from xhtml2pdf import pisa
 from io import BytesIO
 

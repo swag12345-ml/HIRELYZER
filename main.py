@@ -2224,23 +2224,23 @@ from streamlit_pdf_viewer import pdf_viewer
 uploaded_files = st.file_uploader(
     "📄 Upload PDF Resumes",
     type=["pdf"],
-    accept_multiple_files=True
+    accept_multiple_files=True,
+    help="Upload one or more resumes in PDF format (max 200MB each)."
 )
 
 if uploaded_files:
     for uploaded_file in uploaded_files:
-        st.subheader(f"📄 Original Resume Preview: {uploaded_file.name}")
+        with st.container():
+            st.subheader(f"📄 Original Resume Preview: {uploaded_file.name}")
 
-        # ✅ Single-page viewer with navigation
-        pdf_viewer(
-            uploaded_file.read(),
-            key=f"pdf_viewer_{uploaded_file.name}",
-            width=800,          # set viewer width
-            height=1000,        # set viewer height
-            scrolling=False     # disables continuous scrolling
-        )
+            # ✅ Shows resume in proper PDF viewer (like your screenshot)
+            pdf_viewer(
+                uploaded_file.read(),
+                key=f"pdf_viewer_{uploaded_file.name}"
+            )
 
-        uploaded_file.seek(0)
+            uploaded_file.seek(0)  # reset pointer for ATS analysis
+
 
 
 import os

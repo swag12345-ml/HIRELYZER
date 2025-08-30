@@ -2223,21 +2223,26 @@ from streamlit_pdf_viewer import pdf_viewer
 
 # 📂 Upload PDF resumes (multiple allowed)
 uploaded_files = st.file_uploader(
-    "📄 Upload PDF Resumes", 
-    type=["pdf"], 
-    accept_multiple_files=True
+    "📄 Upload PDF Resumes",
+    type=["pdf"],
+    accept_multiple_files=True,
+    help="Upload one or more resumes in PDF format (max 200MB each)."
 )
 
 # 🔍 Show original resume previews
 if uploaded_files:
     for uploaded_file in uploaded_files:
-        st.subheader(f"📄 Original Resume Preview: {uploaded_file.name}")
+        with st.container():
+            st.subheader(f"📄 Original Resume Preview: {uploaded_file.name}")
 
-        # ✅ Interactive PDF viewer (scroll, zoom, page navigation, print, download)
-        pdf_viewer(uploaded_file.read(), key=uploaded_file.name)
+            # ✅ Interactive PDF viewer (scroll, zoom, page navigation, print, download)
+            pdf_viewer(
+                uploaded_file.read(),
+                key=f"pdf_viewer_{uploaded_file.name}"
+            )
 
-        # Reset file pointer so later analysis (text extraction, ATS scoring, etc.) still works
-        uploaded_file.seek(0)
+            # Reset file pointer so ATS analysis can still read the file
+            uploaded_file.seek(0)
 
 
 

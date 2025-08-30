@@ -1,15 +1,3 @@
-from pdf2image import convert_from_bytes
-import streamlit as st
-
-def show_pdf(file):
-    """Display PDF pages as images inside Streamlit (works in Chrome)."""
-    images = convert_from_bytes(file.read(), dpi=150)
-    file.seek(0)  # reset pointer for later use
-
-    for i, img in enumerate(images):
-        st.image(img, caption=f"📄 Page {i+1}", use_column_width=True)
-
-
 from xhtml2pdf import pisa
 from io import BytesIO
 
@@ -2231,17 +2219,25 @@ if total_weight != 100:
 else:
     st.sidebar.success("✅ Total weight = 100")
 
+from streamlit_pdf_viewer import pdf_viewer
 
-uploaded_files = st.file_uploader("Upload PDF Resumes", type=["pdf"], accept_multiple_files=True)
+# 📂 Upload PDF resumes (multiple allowed)
+uploaded_files = st.file_uploader(
+    "📄 Upload PDF Resumes", 
+    type=["pdf"], 
+    accept_multiple_files=True
+)
 
+# 🔍 Show original resume previews
 if uploaded_files:
     for uploaded_file in uploaded_files:
         st.subheader(f"📄 Original Resume Preview: {uploaded_file.name}")
-        show_pdf(uploaded_file)   # directly call the function
-        uploaded_file.seek(0)     # reset so analysis still works
-  # reset pointer so later processing still works
 
-    # ✅ continue with your existing resume processing logic below...
+        # ✅ Interactive PDF viewer (scroll, zoom, page navigation, print, download)
+        pdf_viewer(uploaded_file.read(), key=uploaded_file.name)
+
+        # Reset file pointer so later analysis (text extraction, ATS scoring, etc.) still works
+        uploaded_file.seek(0)
 
 
 

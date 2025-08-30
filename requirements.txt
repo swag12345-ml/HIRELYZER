@@ -1,5 +1,6 @@
 streamlit
 streamlit-autorefresh
+streamlit-pdf-viewer
 torch
 numpy
 pillow

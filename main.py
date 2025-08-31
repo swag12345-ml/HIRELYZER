@@ -1821,91 +1821,6 @@ Suggestions:
 
 
 # ✅ Main ATS Evaluation Function
-import datetime
-import re
-
-def parse_year(text, current_year=None):
-    """
-    Extracts a graduation/work year from text.
-    Handles 'Present', 'Pursuing', and avoids defaulting to 1990.
-    """
-    if not current_year:
-        current_year = datetime.datetime.now().year
-
-    text = text.strip().lower()
-    if "present" in text or "pursuing" in text or "current" in text:
-        return current_year
-    match = re.search(r"(19|20)\d{2}", text)
-    if match:
-        year = int(match.group())
-        # sanity check: must be within reasonable bounds
-        if 1950 <= year <= current_year + 1:
-            return year
-    return None  # don't default to 1990!
-
-
-def calculate_months_between(start_date, end_date):
-    """
-    Calculate total months between two dates.
-    If end_date is None or 'Present', uses today's date.
-    """
-    if end_date is None:
-        end_date = datetime.datetime.now()
-    months = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month)
-    return max(0, months)
-
-
-def extract_experience_durations(resume_text):
-    """
-    Extract job durations from resume text.
-    Returns list of (start_date, end_date, months, flagged).
-    """
-    experience_data = []
-    current_year = datetime.datetime.now().year
-
-    # Example regex for date ranges like "Jan 2020 - Mar 2022" or "2021 - Present"
-    date_ranges = re.findall(r'([A-Za-z]{3,9}\s?\d{4}|\d{4})\s*[-–]\s*([A-Za-z]{3,9}\s?\d{4}|Present|present|Current|current)', resume_text)
-
-    for start_str, end_str in date_ranges:
-        flagged = False
-
-        # Parse start
-        try:
-            if re.match(r"\d{4}", start_str):
-                start_date = datetime.datetime(int(start_str), 1, 1)
-            else:
-                start_date = datetime.datetime.strptime(start_str, "%b %Y")
-        except:
-            start_date = None
-            flagged = True
-
-        # Parse end
-        try:
-            if "present" in end_str.lower() or "current" in end_str.lower():
-                end_date = datetime.datetime.now()
-            elif re.match(r"\d{4}", end_str):
-                end_date = datetime.datetime(int(end_str), 12, 31)
-            else:
-                end_date = datetime.datetime.strptime(end_str, "%b %Y")
-        except:
-            end_date = None
-            flagged = True
-
-        # Calculate months
-        months = 0
-        if start_date:
-            if end_date and end_date >= start_date:
-                months = calculate_months_between(start_date, end_date)
-            elif not end_date:  # treat as Present
-                months = calculate_months_between(start_date, datetime.datetime.now())
-            else:
-                flagged = True  # end before start → invalid
-
-        experience_data.append((start_date, end_date, months, flagged))
-
-    return experience_data
-
-
 def ats_percentage_score(
     resume_text,
     job_description,
@@ -1917,49 +1832,33 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    current_year = datetime.datetime.now().year
-
+    # ✅ Grammar Check
     grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(
         resume_text, max_score=lang_weight
     )
 
+    # ✅ Domain Detection
     resume_domain = detect_domain_from_title_and_description("Unknown", resume_text)
     job_domain = detect_domain_from_title_and_description(job_title, job_description)
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
-    # ✅ Domain Penalty
+    # ✅ Balanced domain penalty
     MAX_DOMAIN_PENALTY = 15
     domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
 
-    # 🆕 Extract real experience durations
-    experience_data = extract_experience_durations(resume_text)
-    total_experience_months = sum(m for _, _, m, fake in experience_data if not fake)
-    flagged_experience = [d for d in experience_data if d[3]]
-
+    # ✅ Optional logic score note
     logic_score_note = (
-        f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 "
-        f"based on resume length, experience, and skills."
+        f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
         if logic_profile_score else ""
     )
 
-    # 🆕 Updated scoring prompt with year-aware education + real experience months
+    # ✅ ATS Evaluation Prompt
     prompt = f"""
-You are a professional ATS evaluator with expertise in talent assessment.
-The current year is **{current_year}**. Use graduation years and work dates carefully.
+You are a professional ATS evaluator with expertise in talent assessment. Your role is to provide **balanced, objective scoring** that reflects industry standards and recognizes candidate potential while maintaining professional standards.
 
-📌 **Education Rule**:
-- Grad year = {current_year} or {current_year+1} → currently pursuing/final year (Outstanding if relevant).
-- Grad year = {current_year-1} → just graduated (Outstanding).
-- Grad year > {current_year+1} → still pursuing (Excellent/Very Good).
-- Grad year << {current_year} → graduated earlier (score based on relevance + recency).
+🎯 **BALANCED SCORING GUIDELINES - Focus on Potential & Growth:**
 
-📌 **Experience Rule**:
-- Internship and job durations are calculated from actual extracted dates.
-- ✅ Total verified experience: **{total_experience_months} months**.
-- ⚠️ Flagged/suspicious entries: **{len(flagged_experience)}**.
-- If dates don’t make sense (future beyond {current_year+1}, end before start, unrealistic), reduce score.
-
-🎯 **Education Scoring Framework ({edu_weight} points max)**:
+**Education Scoring Framework ({edu_weight} points max):**
 - 18-{edu_weight}: Outstanding (perfect alignment + top credentials + recent + certifications)
 - 15-17: Excellent (relevant degree + strong institution OR excellent certifications)
 - 12-14: Very Good (related field + decent institution OR good training/certifications)
@@ -1968,15 +1867,15 @@ The current year is **{current_year}**. Use graduation years and work dates care
 - 3-5: Basic (unrelated but shows learning ability OR entry-level potential)
 - 0-2: Insufficient (no relevant education and no evidence of learning)
 
-🎯 **Experience Scoring Framework ({exp_weight} points max)**:
-- 32-{exp_weight}: Exceptional (10+ years, leadership, strong domain)
-- 28-31: Excellent (5–10 years solid, leadership/evidence of results)
-- 24-27: Very Good (2–5 years relevant)
-- 20-23: Good (1–2 years relevant OR strong internships)
-- 15-19: Fair (6–12 months, shows learning)
-- 10-14: Basic (3–6 months internship/project, potential shown)
-- 5-9: Entry Level (limited but some effort, <3 months)
-- 0-4: Insufficient (no valid or fake experience)
+**Experience Scoring Framework ({exp_weight} points max):**
+- 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
+- 28-31: Excellent (meets/exceeds years + strong domain fit + leadership + clear results)
+- 24-27: Very Good (adequate years + good domain fit + solid responsibilities + some results)
+- 20-23: Good (reasonable years + relevant experience + decent responsibilities)
+- 15-19: Fair (some gaps in years OR domain but shows potential)
+- 10-14: Basic (limited experience but relevant skills/potential shown)
+- 5-9: Entry Level (minimal experience but shows promise)
+- 0-4: Insufficient (major gaps with no transferable skills)
 
 **Skills Scoring Framework ({skills_weight} points max):**
 - 28-{skills_weight}: Outstanding (90%+ required skills + expert proficiency + recent usage)
@@ -2085,6 +1984,7 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - Cultural/team fit indicators and soft skills
 - Clear recommendation with constructive reasoning
 
+
 **Development Areas:** <Frame gaps as growth opportunities, not failures>
 **Key Strengths:** <Highlight what makes this candidate valuable>
 **Recommendation:** <Be specific about interview potential and role fit>
@@ -2124,7 +2024,6 @@ Context for Evaluation:
 
 {logic_score_note}
 """
-
 
 
     ats_result = call_llm(prompt, session=st.session_state).strip()

@@ -1774,6 +1774,8 @@ import re
 import pandas as pd
 import altair as alt
 import streamlit as st
+import re
+import streamlit as st
 from llm_manager import call_llm
 from db_manager import detect_domain_from_title_and_description, get_domain_similarity
 
@@ -1807,13 +1809,13 @@ Suggestions:
 {text}
 ---
 """
-
     response = call_llm(grammar_prompt, session=st.session_state).strip()
+
     score_match = re.search(r"Score:\s*(\d+)", response)
     feedback_match = re.search(r"Feedback:\s*(.+)", response)
     suggestions = re.findall(r"- (.+)", response)
 
-    score = int(score_match.group(1)) if score_match else max(3, max_score-2)  # More generous default
+    score = int(score_match.group(1)) if score_match else max(3, max_score - 2)  # Generous fallback
     feedback = feedback_match.group(1).strip() if feedback_match else "Grammar appears adequate for professional communication."
     return score, feedback, suggestions
 
@@ -1830,21 +1832,27 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(resume_text, max_score=lang_weight)
+    # ✅ Grammar Check
+    grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(
+        resume_text, max_score=lang_weight
+    )
 
+    # ✅ Domain Detection
     resume_domain = detect_domain_from_title_and_description("Unknown", resume_text)
     job_domain = detect_domain_from_title_and_description(job_title, job_description)
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
-    # ✅ REDUCED domain penalty for more balanced scoring
-    MAX_DOMAIN_PENALTY = 15  # Reduced from 15 to 8
+    # ✅ Balanced domain penalty
+    MAX_DOMAIN_PENALTY = 15
     domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
 
+    # ✅ Optional logic score note
     logic_score_note = (
         f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
         if logic_profile_score else ""
     )
 
+    # ✅ ATS Evaluation Prompt
     prompt = f"""
 You are a professional ATS evaluator with expertise in talent assessment. Your role is to provide **balanced, objective scoring** that reflects industry standards and recognizes candidate potential while maintaining professional standards.
 
@@ -1998,13 +2006,6 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - **PRIORITY RANKING**: Focus on must-have vs nice-to-have requirements from job description
 - **EXPERIENCE MATCHING**: Look for similar roles, projects, or responsibilities even if not exact title matches
 
-Context for Evaluation:
-- Grammar Score: {grammar_score} / {lang_weight}
-- Grammar Feedback: {grammar_feedback}  
-- Resume Domain: {resume_domain}
-- Job Domain: {job_domain}
-- Domain Mismatch Penalty: {domain_penalty} points (similarity: {similarity_score:.2f})
-
 ---
 
 📄 **Job Description:**
@@ -2013,8 +2014,16 @@ Context for Evaluation:
 📄 **Resume Text:**
 {resume_text}
 
+Context for Evaluation:
+- Grammar Score: {grammar_score} / {lang_weight}
+- Grammar Feedback: {grammar_feedback}  
+- Resume Domain: {resume_domain}
+- Job Domain: {job_domain}
+- Domain Mismatch Penalty: {domain_penalty} points (similarity: {similarity_score:.2f})
+
 {logic_score_note}
 """
+
 
     ats_result = call_llm(prompt, session=st.session_state).strip()
 

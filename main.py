@@ -1774,8 +1774,6 @@ import re
 import pandas as pd
 import altair as alt
 import streamlit as st
-import re
-import streamlit as st
 from llm_manager import call_llm
 from db_manager import detect_domain_from_title_and_description, get_domain_similarity
 
@@ -1809,13 +1807,13 @@ Suggestions:
 {text}
 ---
 """
-    response = call_llm(grammar_prompt, session=st.session_state).strip()
 
+    response = call_llm(grammar_prompt, session=st.session_state).strip()
     score_match = re.search(r"Score:\s*(\d+)", response)
     feedback_match = re.search(r"Feedback:\s*(.+)", response)
     suggestions = re.findall(r"- (.+)", response)
 
-    score = int(score_match.group(1)) if score_match else max(3, max_score - 2)  # Generous fallback
+    score = int(score_match.group(1)) if score_match else max(3, max_score-2)  # More generous default
     feedback = feedback_match.group(1).strip() if feedback_match else "Grammar appears adequate for professional communication."
     return score, feedback, suggestions
 
@@ -1832,40 +1830,47 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    # ✅ Grammar Check
+    # ✅ Grammar evaluation (already handled gracefully with fallback defaults)
     grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(
         resume_text, max_score=lang_weight
     )
 
-    # ✅ Domain Detection
+    # ✅ Domain similarity detection
     resume_domain = detect_domain_from_title_and_description("Unknown", resume_text)
     job_domain = detect_domain_from_title_and_description(job_title, job_description)
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
-    # ✅ Balanced domain penalty
-    MAX_DOMAIN_PENALTY = 15
+    # ✅ Balanced domain penalty (never too harsh)
+    MAX_DOMAIN_PENALTY = 8
     domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
 
-    # ✅ Optional logic score note
+    # ✅ Optional note about profile score
     logic_score_note = (
-        f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
+        f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 "
+        f"based on resume length, experience, and skills."
         if logic_profile_score else ""
     )
 
-    # ✅ ATS Evaluation Prompt
+    # ✅ Prompt with refined EDUCATION scoring (time-aware + fair)
     prompt = f"""
 You are a professional ATS evaluator with expertise in talent assessment. Your role is to provide **balanced, objective scoring** that reflects industry standards and recognizes candidate potential while maintaining professional standards.
 
 🎯 **BALANCED SCORING GUIDELINES - Focus on Potential & Growth:**
 
 **Education Scoring Framework ({edu_weight} points max):**
-- 18-{edu_weight}: Outstanding (perfect alignment + top credentials + recent + certifications)
-- 15-17: Excellent (relevant degree + strong institution OR excellent certifications)
-- 12-14: Very Good (related field + decent institution OR good training/certifications)
-- 9-11: Good (somewhat related education OR strong self-learning/bootcamps)
-- 6-8: Fair (transferable education OR some relevant coursework)
-- 3-5: Basic (unrelated but shows learning ability OR entry-level potential)
-- 0-2: Insufficient (no relevant education and no evidence of learning)
+- 18-{edu_weight}: Outstanding (completed OR currently pursuing a highly relevant degree in CS/AI/ML/Data Science/Stats/Engineering + certifications/projects; institution quality only boosts, never penalizes)
+- 15-17: Excellent (relevant technical degree completed OR currently pursuing; strong certifications/bootcamps; recency aligned with job role)
+- 12-14: Very Good (related technical/quantitative degree [EE/Math/Physics/IT] OR strong online courses/certifications in AI/ML/Data; projects add credit)
+- 9-11: Good (somewhat related education with transferable knowledge; currently pursuing counts if relevant)
+- 6-8: Fair (different degree but evidence of transition—coursework, MOOCs, projects)
+- 3-5: Basic (unrelated degree but clear evidence of learning potential or entry-level pursuit)
+- 0-2: Insufficient (no relevant education, no certifications, no evidence of learning)
+
+⏳ **Recency & Pursuing Rules:**
+- Graduation year ≤ current year → treat as **completed**.
+- Graduation year > current year → treat as **currently pursuing** (give credit, not penalty).
+- “Currently pursuing” in relevant field → always **≥12 points**.
+- Certifications, bootcamps, MOOCs → boost score even without formal degree.
 
 **Experience Scoring Framework ({exp_weight} points max):**
 - 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
@@ -1984,7 +1989,6 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - Cultural/team fit indicators and soft skills
 - Clear recommendation with constructive reasoning
 
-
 **Development Areas:** <Frame gaps as growth opportunities, not failures>
 **Key Strengths:** <Highlight what makes this candidate valuable>
 **Recommendation:** <Be specific about interview potential and role fit>
@@ -2007,6 +2011,13 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - **PRIORITY RANKING**: Focus on must-have vs nice-to-have requirements from job description
 - **EXPERIENCE MATCHING**: Look for similar roles, projects, or responsibilities even if not exact title matches
 
+Context for Evaluation:
+- Grammar Score: {grammar_score} / {lang_weight}
+- Grammar Feedback: {grammar_feedback}  
+- Resume Domain: {resume_domain}
+- Job Domain: {job_domain}
+- Domain Mismatch Penalty: {domain_penalty} points (similarity: {similarity_score:.2f})
+
 ---
 
 📄 **Job Description:**
@@ -2015,15 +2026,9 @@ Follow this exact structure and be **specific with evidence while highlighting s
 📄 **Resume Text:**
 {resume_text}
 
-Context for Evaluation:
-- Grammar Score: {grammar_score} / {lang_weight}
-- Grammar Feedback: {grammar_feedback}  
-- Resume Domain: {resume_domain}
-- Job Domain: {job_domain}
-- Domain Mismatch Penalty: {domain_penalty} points (similarity: {similarity_score:.2f})
-
 {logic_score_note}
 """
+    
 
 
     ats_result = call_llm(prompt, session=st.session_state).strip()

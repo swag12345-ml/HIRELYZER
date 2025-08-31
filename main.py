@@ -1355,6 +1355,32 @@ def extract_text_from_images(pdf_path):
         st.error(f"⚠ Error extracting from image: {e}")
         return []
 
+def safe_extract_text(uploaded_file):
+    """
+    Safely extracts text from uploaded file.
+    Prevents app crash if file is not a resume or unreadable.
+    """
+    try:
+        # Save uploaded file to a temp location
+        temp_path = f"/tmp/{uploaded_file.name}"
+        with open(temp_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+
+        # Try PDF text extraction
+        text_list = extract_text_from_pdf(temp_path)
+
+        # If nothing readable found
+        if not text_list or all(len(t.strip()) == 0 for t in text_list):
+            st.warning("⚠️ This file doesn’t look like a resume or contains no readable text.")
+            return None
+
+        return "\n".join(text_list)
+
+    except Exception as e:
+        st.error(f"⚠️ Could not process this file: {e}")
+        return None
+
+
 # Detect bias in resume
 
 import re
@@ -2252,13 +2278,28 @@ if uploaded_files:
         with st.container():
             st.subheader(f"📄 Original Resume Preview: {uploaded_file.name}")
 
-            # ✅ Shows resume in proper PDF viewer (like your screenshot)
-            pdf_viewer(
-                uploaded_file.read(),
-                key=f"pdf_viewer_{uploaded_file.name}"
-            )
+            try:
+                # ✅ Show PDF preview safely
+                pdf_viewer(
+                    uploaded_file.read(),
+                    key=f"pdf_viewer_{uploaded_file.name}"
+                )
 
-            uploaded_file.seek(0)  # reset pointer for ATS analysis
+                # Reset pointer so file can be read again later
+                uploaded_file.seek(0)
+
+                # ✅ Extract text safely
+                resume_text = safe_extract_text(uploaded_file)
+
+                if resume_text:
+                    st.success(f"✅ Successfully processed {uploaded_file.name}")
+                    # 🔹 Continue with ATS scoring, bias detection, etc. here
+                else:
+                    st.warning(f"⚠️ {uploaded_file.name} does not contain valid resume text.")
+
+            except Exception as e:
+                st.error(f"⚠️ Could not display or process {uploaded_file.name}: {e}")
+
 
 
 

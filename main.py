@@ -2266,6 +2266,38 @@ else:
 
 from streamlit_pdf_viewer import pdf_viewer
 
+# 🎨 CSS for sliding success message
+st.markdown("""
+<style>
+.slide-message {
+  position: relative;
+  overflow: hidden;
+  margin: 10px 0;
+  padding: 10px 15px;
+  border-radius: 10px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: slideIn 0.8s ease forwards;
+}
+.slide-message svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.success-msg { background: rgba(0,255,127,0.12); border-left: 5px solid #00FF7F; color:#00FF7F; }
+.error-msg   { background: rgba(255,99,71,0.12);  border-left: 5px solid #FF6347; color:#FF6347; }
+.warn-msg    { background: rgba(255,215,0,0.12); border-left: 5px solid #FFD700; color:#FFD700; }
+
+@keyframes slideIn {
+  0%   { transform: translateX(100%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 uploaded_files = st.file_uploader(
     "📄 Upload PDF Resumes",
     type=["pdf"],
@@ -2292,13 +2324,28 @@ if uploaded_files:
                 resume_text = safe_extract_text(uploaded_file)
 
                 if resume_text:
-                    st.success(f"✅ Successfully processed {uploaded_file.name}")
+                    st.markdown(f"""
+                    <div class='slide-message success-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                        ✅ Successfully processed <b>{uploaded_file.name}</b>
+                    </div>
+                    """, unsafe_allow_html=True)
                     # 🔹 Continue with ATS scoring, bias detection, etc. here
                 else:
-                    st.warning(f"⚠️ {uploaded_file.name} does not contain valid resume text.")
+                    st.markdown(f"""
+                    <div class='slide-message warn-msg'>
+                        ⚠️ <b>{uploaded_file.name}</b> does not contain valid resume text.
+                    </div>
+                    """, unsafe_allow_html=True)
 
             except Exception as e:
-                st.error(f"⚠️ Could not display or process {uploaded_file.name}: {e}")
+                st.markdown(f"""
+                <div class='slide-message error-msg'>
+                    ❌ Could not display or process <b>{uploaded_file.name}</b>: {e}
+                </div>
+                """, unsafe_allow_html=True)
+
 
 
 

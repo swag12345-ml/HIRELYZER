@@ -1867,7 +1867,7 @@ def ats_percentage_score(
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
     # ✅ Balanced domain penalty (never too harsh)
-    MAX_DOMAIN_PENALTY = 8
+    MAX_DOMAIN_PENALTY = 15
     domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
 
     # ✅ Optional note about profile score

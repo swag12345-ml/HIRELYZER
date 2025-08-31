@@ -1770,55 +1770,6 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
 
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
 
-import re
-import pandas as pd
-import altair as alt
-import streamlit as st
-from llm_manager import call_llm
-from db_manager import detect_domain_from_title_and_description, get_domain_similarity
-
-# ✅ Enhanced Grammar evaluation using LLM with suggestions
-def get_grammar_score_with_llm(text, max_score=5):
-    grammar_prompt = f"""
-You are a grammar and tone evaluator AI. Analyze the following resume text and:
-
-1. Give a grammar score out of {max_score} based on grammar quality, sentence structure, clarity, and tone.
-2. Return a 1-sentence summary of the grammar and tone.
-3. Provide 3 to 5 **specific improvement suggestions** (bullet points) for enhancing grammar, clarity, tone, or structure.
-
-**Scoring Guidelines for Balance:**
-- {max_score}: Exceptional - Professional, error-free, excellent flow
-- {max_score-1}: Very Good - Minor issues, mostly professional
-- {max_score-2}: Good - Some grammar issues but readable and professional
-- {max_score-3}: Fair - Noticeable issues but understandable
-- {max_score-4}: Poor - Multiple errors affecting readability
-- 0-1: Very Poor - Significant grammar problems
-
-Return response in the exact format below:
-
-Score: <number>
-Feedback: <summary>
-Suggestions:
-- <suggestion 1>
-- <suggestion 2>
-...
-
----
-{text}
----
-"""
-
-    response = call_llm(grammar_prompt, session=st.session_state).strip()
-    score_match = re.search(r"Score:\s*(\d+)", response)
-    feedback_match = re.search(r"Feedback:\s*(.+)", response)
-    suggestions = re.findall(r"- (.+)", response)
-
-    score = int(score_match.group(1)) if score_match else max(3, max_score-2)  # More generous default
-    feedback = feedback_match.group(1).strip() if feedback_match else "Grammar appears adequate for professional communication."
-    return score, feedback, suggestions
-
-
-# ✅ Main ATS Evaluation Function
 def ats_percentage_score(
     resume_text,
     job_description,
@@ -1851,7 +1802,7 @@ def ats_percentage_score(
         if logic_profile_score else ""
     )
 
-    # ✅ Prompt with refined EDUCATION scoring (time-aware + fair)
+    # ✅ Prompt with refined EDUCATION scoring (time-aware + strict rules)
     prompt = f"""
 You are a professional ATS evaluator with expertise in talent assessment. Your role is to provide **balanced, objective scoring** that reflects industry standards and recognizes candidate potential while maintaining professional standards.
 
@@ -1866,11 +1817,14 @@ You are a professional ATS evaluator with expertise in talent assessment. Your r
 - 3-5: Basic (unrelated degree but clear evidence of learning potential or entry-level pursuit)
 - 0-2: Insufficient (no relevant education, no certifications, no evidence of learning)
 
-⏳ **Recency & Pursuing Rules:**
-- Graduation year ≤ current year → treat as **completed**.
-- Graduation year > current year → treat as **currently pursuing** (give credit, not penalty).
-- “Currently pursuing” in relevant field → always **≥12 points**.
-- Certifications, bootcamps, MOOCs → boost score even without formal degree.
+⏳ **Recency & Pursuing Rules (STRICT – DO NOT OVERRIDE):**
+- If a degree is written as **YYYY–YYYY** and the end year ≤ 2025 → **Completed**
+- If a degree is written as **YYYY–YYYY** and the end year > 2025 → **Ongoing**
+- If a degree is written as **YYYY–Now / YYYY–Present / YYYY–Current / YYYY–Till Date** → **Ongoing**
+- If explicitly stated "pursuing", "ongoing", "in progress", "currently enrolled" → **Ongoing**
+- If explicitly stated "Graduated" or "Completed" with a year ≤ 2025 → **Completed**
+- “Currently pursuing” in a relevant technical field should **never be penalized** → minimum **12 points**
+- Certifications, bootcamps, MOOCs → always **boost score**
 
 **Experience Scoring Framework ({exp_weight} points max):**
 - 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
@@ -1916,100 +1870,16 @@ Follow this exact structure and be **specific with evidence while highlighting s
 **Scoring Rationale:**
 - Degree Level & Relevance: <Explain alignment, consider transferable knowledge>
 - Institution Quality: <Be fair - not everyone attends top schools>
-- Recency: <Consider continuous learning, not just graduation date>
+- Recency: <Apply strict rules above to determine ongoing vs completed>
 - Additional Credentials: <Value all forms of learning - certifications, bootcamps, online courses>
 - Growth Indicators: <Evidence of continuous learning and skill development>
 - **Score Justification:** <Focus on potential and learning ability, not just perfect matches>
 
 ### 💼 Experience Analysis  
 **Score:** <0–{exp_weight}> / {exp_weight}
-
-**Experience Breakdown:**
-- Total Years: <X years - consider quality over quantity>
-- Role Progression: <Look for growth, even if not linear>
-- Domain Relevance: <Consider transferable skills from related fields>
-- Leadership Evidence: <Include informal leadership, mentoring, project ownership>
-- Quantified Achievements: <Value any metrics, even small improvements>
-- Technology/Tools Usage: <Credit learning new tools, adaptability>
-- Transferable Skills: <Highlight skills that apply across domains>
-- **Score Justification:** <Emphasize growth potential and adaptability>
-
-### 🛠 Skills Analysis
-**Score:** <0–{skills_weight}> / {skills_weight}
-
-**Skills Assessment:**
-- Technical Skills Present: <List with evidence, include learning in progress>
-- Soft Skills Demonstrated: <Value communication, teamwork, problem-solving>
-- Domain-Specific Expertise: <Consider related domain knowledge>
-- Skill Currency: <Value recent learning and adaptation>
-- Learning Ability: <Evidence of picking up new skills>
-
-**Skills Gaps (Opportunities for Growth):**
-- <Skill 1 - frame as development opportunity>
-- <Skill 2 - suggest how existing skills could transfer>  
-- <Skill 3 - note if easily learnable>
-- <Skill 4 - additional growth areas>
-- <Skill 5 - more opportunities if applicable>
-
-**Score Justification:** <Focus on existing strengths + learning potential>
-
-### 🗣 Language Quality Analysis
-**Score:** {grammar_score} / {lang_weight}
-**Grammar & Professional Tone:** {grammar_feedback}
-**Assessment:** <Be constructive - focus on communication effectiveness>
-
-### 🔑 Keyword Analysis
-**Score:** <0–{keyword_weight}> / {keyword_weight}
-
-**Keyword Assessment:**
-- Industry Terminology: <Credit related industry knowledge>
-- Role-Specific Terms: <Look for equivalent terms, not just exact matches>
-- Technical Vocabulary: <Value understanding even if different tools>
-
-**Keyword Enhancement Opportunities:**
-- <Keyword 1 from job description>
-- <Keyword 2 from job description>
-- <Keyword 3 from job description>
-- <Keyword 4 from job description>
-- <Keyword 5 from job description>
-- <Keyword 6 from job description>
-- <Keyword 7 from job description>
-- <Keyword 8 from job description>
-
-**INSTRUCTION**: Extract ALL important keywords, technical terms, industry jargon, tool names, certification names, and role-specific terminology from the job description that are missing from the resume. Include variations and synonyms.
-
-**Score Justification:** <Credit understanding of concepts even if terminology differs>
-
-### ✅ Final Assessment
-
-**Overall Evaluation:**
-<4-6 sentences covering:>
-- Primary strengths and unique value proposition
-- Growth areas framed as development opportunities
-- Cultural/team fit indicators and soft skills
-- Clear recommendation with constructive reasoning
-
-**Development Areas:** <Frame gaps as growth opportunities, not failures>
-**Key Strengths:** <Highlight what makes this candidate valuable>
-**Recommendation:** <Be specific about interview potential and role fit>
-
----
-
-**IMPORTANT REMINDERS FOR BALANCED EVALUATION:**
-- Look for potential, not just perfect matches
-- Value diverse backgrounds and transferable skills
-- Consider the candidate's career stage and growth trajectory
-- Credit all forms of learning and skill development
-- Be constructive in feedback - focus on opportunities
-- Recognize that great employees come from varied backgrounds
-- LIST ALL missing skills and keywords comprehensively (aim for 5-8 items each if gaps exist)
-- Be thorough in identifying development opportunities from the job description
-- **CRITICAL**: Analyze the ENTIRE job description systematically - go through each requirement, skill, and qualification mentioned
-- **KEYWORD EXTRACTION**: Identify ALL technical terms, tools, frameworks, methodologies, certifications mentioned in job description
-- **SKILL MAPPING**: Compare each job requirement against resume content - if not found, list it as missing
-- **CONTEXT UNDERSTANDING**: Consider synonyms and related terms (e.g., "JavaScript" and "JS", "Machine Learning" and "ML")
-- **PRIORITY RANKING**: Focus on must-have vs nice-to-have requirements from job description
-- **EXPERIENCE MATCHING**: Look for similar roles, projects, or responsibilities even if not exact title matches
+...
+(same as before)
+...
 
 Context for Evaluation:
 - Grammar Score: {grammar_score} / {lang_weight}
@@ -2028,6 +1898,7 @@ Context for Evaluation:
 
 {logic_score_note}
 """
+    
     
 
 

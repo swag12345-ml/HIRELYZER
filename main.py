@@ -1903,35 +1903,34 @@ Your role is to provide **balanced, objective scoring** that reflects industry s
 - Certifications, hackathons, bootcamps, MOOCs → always **boost score** ✅ (AWS, GCP, Azure, TensorFlow, PyTorch, Solidity, Ethereum, Hyperledger, etc.)
 
 **Experience Scoring Framework ({exp_weight} points max):**
-- 32-{exp_weight}: Exceptional (meets/exceeds years + perfect tech domain fit + leadership + major results, e.g., deployed AI models, built blockchain apps, scaled cloud systems)
-- 28-31: Excellent (strong years + good tech fit + project leadership + clear results)
-- 24-27: Very Good (adequate years + relevant domain projects + measurable outcomes)
-- 20-23: Good (reasonable years + some relevant projects + adaptability)
-- 15-19: Fair (some gaps but shows potential + side projects/hackathons count ✅)
-- 10-14: Basic (limited industry experience but projects/certs show learning curve)
-- 5-9: Entry Level (internships, academic projects, GitHub repos in tech areas)
-- 0-4: Insufficient (no relevant experience, no projects, no transferable skills)
+- 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
+- 28-31: Excellent (meets/exceeds years + strong domain fit + leadership + clear results)
+- 24-27: Very Good (adequate years + good domain fit + solid responsibilities + some results)
+- 20-23: Good (reasonable years + relevant experience + decent responsibilities)
+- 15-19: Fair (some gaps in years OR domain but shows potential)
+- 10-14: Basic (limited experience but relevant skills/potential shown)
+- 5-9: Entry Level (minimal experience but shows promise)
+- 0-4: Insufficient (major gaps with no transferable skills)
 
 **Skills Scoring Framework ({skills_weight} points max):**
-- 28-{skills_weight}: Outstanding (90%+ required tech stack mastered + recent usage; e.g., ML, Blockchain, DevOps, Cloud, AI frameworks)
-- 24-27: Excellent (80%+ required stack + advanced proficiency in tools/frameworks)
-- 20-23: Very Good (70%+ skills with hands-on usage + GitHub/projects)
-- 16-19: Good (60%+ skills + strong fundamentals in relevant stack)
-- 12-15: Fair (50%+ skills or beginner in core stack but evidence of learning)
-- 8-11: Basic (40%+ skills or strong related fundamentals with growth potential)
-- 4-7: Limited (30%+ skills but shows willingness via projects/certs)
-- 0-3: Insufficient (<30% of required stack, no projects/certs)
+- 28-{skills_weight}: Outstanding (90%+ required skills + expert proficiency + recent usage)
+- 24-27: Excellent (80%+ required skills + advanced proficiency)
+- 20-23: Very Good (70%+ required skills + good proficiency)
+- 16-19: Good (60%+ required skills + adequate proficiency)
+- 12-15: Fair (50%+ required skills + basic proficiency OR strong learning ability)
+- 8-11: Basic (40%+ skills OR strong foundational skills with growth potential)
+- 4-7: Limited (30%+ skills but shows willingness to learn)
+- 0-3: Insufficient (<30% skills with no evidence of learning ability)
 
 **Keyword Scoring Framework ({keyword_weight} points max):**
-- 9-{keyword_weight}: Excellent optimization (85%+ technical keywords, frameworks, cloud/AI tools, blockchain terms used correctly)
-- 8: Very Good (75%+ keywords + clear role alignment)
-- 6-7: Good (65%+ keywords, some synonyms/variations)
-- 4-5: Fair (50%+ keywords, missing some key stack elements)
-- 2-3: Basic (35%+ keywords, vague technical language)
-- 1: Limited (20%+ keywords only)
-- 0: Poor (<20% of required stack keywords)
+- 9-{keyword_weight}: Excellent optimization (85%+ critical terms + industry language)
+- 8: Very Good (75%+ critical terms + good industry awareness)
+- 6-7: Good (65%+ critical terms + adequate industry knowledge)
+- 4-5: Fair (50%+ critical terms + some industry understanding)
+- 2-3: Basic (35%+ critical terms + basic awareness)
+- 1: Limited (20%+ critical terms)
+- 0: Poor (<20% critical terms)
 
----
 
 **EVALUATION INSTRUCTIONS (Tech-Focused):**
 - Always credit **projects, GitHub repos, hackathons, Kaggle competitions, blockchain DApps, cloud deployments, AI model training, open-source contributions**.

@@ -1856,34 +1856,50 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(resume_text, max_score=lang_weight)
+    # ✅ Grammar evaluation (already handled gracefully with fallback defaults)
+    grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(
+        resume_text, max_score=lang_weight
+    )
 
+    # ✅ Domain similarity detection
     resume_domain = detect_domain_from_title_and_description("Unknown", resume_text)
     job_domain = detect_domain_from_title_and_description(job_title, job_description)
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
-    # ✅ REDUCED domain penalty for more balanced scoring
-    MAX_DOMAIN_PENALTY = 15  # Reduced from 15 to 8
+    # ✅ Balanced domain penalty (never too harsh)
+    MAX_DOMAIN_PENALTY = 15
     domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
 
+    # ✅ Optional note about profile score
     logic_score_note = (
-        f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
+        f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 "
+        f"based on resume length, experience, and skills."
         if logic_profile_score else ""
     )
 
+    # ✅ Prompt with refined EDUCATION scoring (time-aware + strict rules)
     prompt = f"""
 You are a professional ATS evaluator with expertise in talent assessment. Your role is to provide **balanced, objective scoring** that reflects industry standards and recognizes candidate potential while maintaining professional standards.
 
 🎯 **BALANCED SCORING GUIDELINES - Focus on Potential & Growth:**
 
 **Education Scoring Framework ({edu_weight} points max):**
-- 18-{edu_weight}: Outstanding (perfect alignment + top credentials + recent + certifications)
-- 15-17: Excellent (relevant degree + strong institution OR excellent certifications)
-- 12-14: Very Good (related field + decent institution OR good training/certifications)
-- 9-11: Good (somewhat related education OR strong self-learning/bootcamps)
-- 6-8: Fair (transferable education OR some relevant coursework)
-- 3-5: Basic (unrelated but shows learning ability OR entry-level potential)
-- 0-2: Insufficient (no relevant education and no evidence of learning)
+- 18-{edu_weight}: Outstanding (completed OR currently pursuing a highly relevant degree in CS/AI/ML/Data Science/Stats/Engineering + certifications/projects; institution quality only boosts, never penalizes)
+- 15-17: Excellent (relevant technical degree completed OR currently pursuing; strong certifications/bootcamps; recency aligned with job role)
+- 12-14: Very Good (related technical/quantitative degree [EE/Math/Physics/IT] OR strong online courses/certifications in AI/ML/Data; projects add credit)
+- 9-11: Good (somewhat related education with transferable knowledge; currently pursuing counts if relevant)
+- 6-8: Fair (different degree but evidence of transition—coursework, MOOCs, projects)
+- 3-5: Basic (unrelated degree but clear evidence of learning potential or entry-level pursuit)
+- 0-2: Insufficient (no relevant education, no certifications, no evidence of learning)
+
+⏳ **Recency & Pursuing Rules (STRICT – DO NOT OVERRIDE):**
+- If a degree is written as **YYYY–YYYY** and the end year ≤ 2025 → **Completed**
+- If a degree is written as **YYYY–YYYY** and the end year > 2025 → **Ongoing**
+- If a degree is written as **YYYY–Now / YYYY–Present / YYYY–Current / YYYY–Till Date** → **Ongoing**
+- If explicitly stated "pursuing", "ongoing", "in progress", "currently enrolled" → **Ongoing**
+- If explicitly stated "Graduated" or "Completed" with a year ≤ 2025 → **Completed**
+- “Currently pursuing” in a relevant technical field should **never be penalized** → minimum **12 points**
+- Certifications, bootcamps, MOOCs → always **boost score**
 
 **Experience Scoring Framework ({exp_weight} points max):**
 - 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
@@ -1929,7 +1945,7 @@ Follow this exact structure and be **specific with evidence while highlighting s
 **Scoring Rationale:**
 - Degree Level & Relevance: <Explain alignment, consider transferable knowledge>
 - Institution Quality: <Be fair - not everyone attends top schools>
-- Recency: <Consider continuous learning, not just graduation date>
+- Recency: <Apply strict rules above to determine ongoing vs completed>
 - Additional Credentials: <Value all forms of learning - certifications, bootcamps, online courses>
 - Growth Indicators: <Evidence of continuous learning and skill development>
 - **Score Justification:** <Focus on potential and learning ability, not just perfect matches>

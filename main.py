@@ -1857,7 +1857,7 @@ def ats_percentage_score(
     keyword_weight=10
 ):
     import datetime
-    
+
     # ✅ Grammar evaluation
     grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(
         resume_text, max_score=lang_weight
@@ -1879,7 +1879,7 @@ def ats_percentage_score(
         if logic_profile_score else ""
     )
 
-    # ✅ Refined education scoring prompt
+    # ✅ Refined education scoring prompt (STANDARDIZED)
     prompt = f"""
 You are a professional ATS evaluator specializing in **technical roles** (AI/ML, Blockchain, Cloud, Data, Software, Cybersecurity). 
 Your role is to provide **balanced, objective scoring** that reflects industry standards and recognizes candidate potential while maintaining professional standards.
@@ -1895,14 +1895,15 @@ Your role is to provide **balanced, objective scoring** that reflects industry s
 - 3-5: Basic (unrelated degree but evidence of self-learning and interest in tech)
 - 0-2: Insufficient (no relevant education, no certifications, no evidence of learning)
 
-⏳ **Recency & Pursuing Rules (STRICT – FOLLOW EXACTLY):**
+⏳ **Recency & Pursuing Rules (STRICT – STANDARDIZED, NO INTERPRETATION):**
 - If ONLY years are listed (e.g., "2021-2024"):
-  - If end year < {datetime.datetime.now().year} → **Completed**
-  - If end year == {datetime.datetime.now().year} → assume **Completed**, unless keywords like "pursuing"/"ongoing"/"in progress"/"currently enrolled" are explicitly present
+  - If end year < {datetime.datetime.now().year} → **Completed (always, no exceptions)**
+  - If end year == {datetime.datetime.now().year} → **Completed by default**, unless explicit keywords indicate otherwise
   - If end year > {datetime.datetime.now().year} → **Ongoing**
 - If explicitly written "Now", "Present", "Current", "Till Date" → **Ongoing**
 - If text contains "pursuing", "ongoing", "in progress", "currently enrolled" → **Ongoing**
 - If explicitly written "Graduated" or "Completed" with year ≤ {datetime.datetime.now().year} → **Completed**
+- RULE OVERRIDE: **When end year < current year → always Completed, even if text says 'pursuing'**
 - Relevant ongoing education in technical fields → minimum **12 points**
 - Certifications, hackathons, bootcamps, MOOCs → always **boost score** ✅ (AWS, GCP, Azure, TensorFlow, PyTorch, Solidity, Ethereum, Hyperledger, etc.)
 

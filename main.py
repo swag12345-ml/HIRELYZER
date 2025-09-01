@@ -1856,7 +1856,9 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    # ✅ Grammar evaluation (already handled gracefully with fallback defaults)
+    import datetime
+    
+    # ✅ Grammar evaluation
     grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(
         resume_text, max_score=lang_weight
     )
@@ -1866,18 +1868,18 @@ def ats_percentage_score(
     job_domain = detect_domain_from_title_and_description(job_title, job_description)
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
-    # ✅ Balanced domain penalty (never too harsh)
+    # ✅ Balanced domain penalty
     MAX_DOMAIN_PENALTY = 15
     domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
 
-    # ✅ Optional note about profile score
+    # ✅ Optional profile score note
     logic_score_note = (
         f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 "
         f"based on resume length, experience, and skills."
         if logic_profile_score else ""
     )
 
-    # ✅ Prompt with refined EDUCATION scoring (time-aware + strict rules, tech-focused)
+    # ✅ Refined education scoring prompt
     prompt = f"""
 You are a professional ATS evaluator specializing in **technical roles** (AI/ML, Blockchain, Cloud, Data, Software, Cybersecurity). 
 Your role is to provide **balanced, objective scoring** that reflects industry standards and recognizes candidate potential while maintaining professional standards.
@@ -1894,11 +1896,13 @@ Your role is to provide **balanced, objective scoring** that reflects industry s
 - 0-2: Insufficient (no relevant education, no certifications, no evidence of learning)
 
 ⏳ **Recency & Pursuing Rules (STRICT – FOLLOW EXACTLY):**
-- If end year ≤ 2025 → **Completed**
-- If end year > 2025 → **Ongoing**
+- If ONLY years are listed (e.g., "2021-2024"):
+  - If end year < {datetime.datetime.now().year} → **Completed**
+  - If end year == {datetime.datetime.now().year} → assume **Completed**, unless keywords like "pursuing"/"ongoing"/"in progress"/"currently enrolled" are explicitly present
+  - If end year > {datetime.datetime.now().year} → **Ongoing**
 - If explicitly written "Now", "Present", "Current", "Till Date" → **Ongoing**
 - If text contains "pursuing", "ongoing", "in progress", "currently enrolled" → **Ongoing**
-- If explicitly written "Graduated" or "Completed" with year ≤ 2025 → **Completed**
+- If explicitly written "Graduated" or "Completed" with year ≤ {datetime.datetime.now().year} → **Completed**
 - Relevant ongoing education in technical fields → minimum **12 points**
 - Certifications, hackathons, bootcamps, MOOCs → always **boost score** ✅ (AWS, GCP, Azure, TensorFlow, PyTorch, Solidity, Ethereum, Hyperledger, etc.)
 

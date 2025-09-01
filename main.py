@@ -1856,57 +1856,33 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    import datetime
+    grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(resume_text, max_score=lang_weight)
 
-    # ✅ Grammar evaluation
-    grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(
-        resume_text, max_score=lang_weight
-    )
-
-    # ✅ Domain similarity detection
     resume_domain = detect_domain_from_title_and_description("Unknown", resume_text)
     job_domain = detect_domain_from_title_and_description(job_title, job_description)
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
-    # ✅ Balanced domain penalty
     MAX_DOMAIN_PENALTY = 15
     domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
 
-    # ✅ Optional profile score note
     logic_score_note = (
-        f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 "
-        f"based on resume length, experience, and skills."
+        f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
         if logic_profile_score else ""
     )
 
-    # ✅ Refined education scoring prompt (STANDARDIZED)
     prompt = f"""
-You are a professional ATS evaluator specializing in **technical roles** (AI/ML, Blockchain, Cloud, Data, Software, Cybersecurity). 
-Your role is to provide **balanced, objective scoring** that reflects industry standards and recognizes candidate potential while maintaining professional standards.
+You are an AI-powered ATS evaluator. Assess the candidate's resume against the job description. Return a detailed, **section-by-section analysis**, with **scoring for each area**. Follow the format precisely below.
 
-🎯 **BALANCED SCORING GUIDELINES - Tech-Focused (AI/ML/Blockchain/Software/Data):**
+🎯 Section Breakdown:
 
-**Education Scoring Framework ({edu_weight} points max):**
-- 18-{edu_weight}: Outstanding (completed OR ongoing highly relevant degree in CS/AI/ML/Data Science/Stats/Engineering/Blockchain + strong certifications/projects; institution quality only boosts, never penalizes)
-- 15-17: Excellent (completed OR ongoing technical degree in a related domain [IT, Software, ECE, Math, Physics] + solid certifications/bootcamps/hackathons; recency aligned with tech role)
-- 12-14: Very Good (related technical/quantitative degree OR strong online certifications/projects in AI/ML/Blockchain/Data/Cloud; GitHub repos add credit)
-- 9-11: Good (somewhat related education with transferable knowledge; currently pursuing counts positively)
-- 6-8: Fair (different degree but clear transition via MOOCs, projects, hackathons, or certs)
-- 3-5: Basic (unrelated degree but evidence of self-learning and interest in tech)
-- 0-2: Insufficient (no relevant education, no certifications, no evidence of learning)
+ **Candidate Name** — Extract the full name clearly from the resume header or first few lines.
 
-⏳ **Recency & Pursuing Rules (STRICT – STANDARDIZED, NO INTERPRETATION):**
-- If ONLY years are listed (e.g., "2021-2024"):
-  - If end year < {datetime.datetime.now().year} → **Completed (always, no exceptions)**
-  - If end year == {datetime.datetime.now().year} → **Completed by default**, unless explicit keywords indicate otherwise
-  - If end year > {datetime.datetime.now().year} → **Ongoing**
-- If explicitly written "Now", "Present", "Current", "Till Date" → **Ongoing**
-- If text contains "pursuing", "ongoing", "in progress", "currently enrolled" → **Ongoing**
-- If explicitly written "Graduated" or "Completed" with year ≤ {datetime.datetime.now().year} → **Completed**
-- RULE OVERRIDE: **When end year < current year → always Completed, even if text says 'pursuing'**
-- Relevant ongoing education in technical fields → minimum **12 points**
-- Certifications, hackathons, bootcamps, MOOCs → always **boost score** ✅ (AWS, GCP, Azure, TensorFlow, PyTorch, Solidity, Ethereum, Hyperledger, etc.)
-
+ **Education Analysis** — Evaluate:
+   - Degree level (e.g., Bachelor’s, Master’s, PhD)
+   - Field of study alignment with job requirements
+   - Institution reputation (if mentioned)
+   - Graduation year (recency)
+   - Any certifications or training programs relevant to the role
 **Experience Scoring Framework ({exp_weight} points max):**
 - 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
 - 28-31: Excellent (meets/exceeds years + strong domain fit + leadership + clear results)

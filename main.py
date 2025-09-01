@@ -1928,12 +1928,13 @@ Follow this exact structure and be **specific with evidence while highlighting s
 **Score:** <0–{edu_weight}> / {edu_weight}
 
 **Scoring Rationale:**
-- Degree Level & Relevance: <Explain alignment, consider transferable knowledge>
-- Institution Quality: <Be fair - not everyone attends top schools>
-- Recency: <Apply strict rules above to determine ongoing vs completed>
-- Additional Credentials: <Value all forms of learning - certifications, bootcamps, online courses>
-- Growth Indicators: <Evidence of continuous learning and skill development>
-- **Score Justification:** <Focus on potential and learning ability, not just perfect matches>
+- **Degree Level & Relevance:** Evaluate whether the degree (Bachelor’s, Master’s, PhD, diploma, etc.) is directly aligned, partially aligned, or transferable to the job role.  
+- **Institution Quality:** Consider the institution if mentioned, but remain fair — do not penalize if a top-tier school is not listed. Focus on demonstrated skills and achievements.  
+- **Recency:** Assess the graduation year or ongoing status. Value both recent/ongoing education and older degrees that still contribute relevant knowledge.  
+- **Additional Credentials:** Give weight to certifications, bootcamps, online courses, or specialized training that add to the candidate’s profile.  
+- **Growth Indicators:** Look for signs of continuous learning, professional development, or upskilling efforts.  
+- **Score Justification:** Assign a balanced score by recognizing potential and learning ability, not just perfect academic matches. Avoid harsh penalties unless there is truly no relevant education or evidence of learning.  
+
 
 ### 💼 Experience Analysis  
 **Score:** <0–{exp_weight}> / {exp_weight}

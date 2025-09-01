@@ -1870,13 +1870,13 @@ You are a professional ATS evaluator with expertise in talent assessment. Your r
 
 **Education Analysis ({edu_weight} points max):**
 Evaluate the candidate’s educational background based on:
-- Degree level (e.g., Bachelor’s, Master’s, PhD, diplomas, or specialized programs)
+- Degree level (e.g., Bachelor’s, Master’s, PhD)
 - Field of study alignment with job requirements
-- Institution reputation (if mentioned, otherwise focus on skills/training)
-- Graduation year & recency (consider whether it is recent, ongoing, or older but still valuable)
-- Certifications, online courses, or training programs relevant to the role
-
+- Institution reputation (if mentioned)
+- Graduation year (recency)
+- Any certifications or training programs relevant to the role
 Provide a fair score (0–{edu_weight}) with reasoning, highlighting both strengths and areas for improvement. Avoid being overly harsh; give credit for transferable education, ongoing studies, and continuous learning.
+
 
 **Experience Scoring Framework ({exp_weight} points max):**
 - 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
@@ -1925,15 +1925,8 @@ Follow this exact structure and be **specific with evidence while highlighting s
 <Extract full name clearly - check resume header, contact section, or first few lines>
 
 ### 🏫 Education Analysis
-**Score:** <0–{edu_weight}> / {edu_weight}
-
-**Scoring Rationale:**
-- **Degree Level & Relevance:** Evaluate whether the degree (Bachelor’s, Master’s, PhD, diploma, etc.) is directly aligned, partially aligned, or transferable to the job role.  
-- **Institution Quality:** Consider the institution if mentioned, but remain fair — do not penalize if a top-tier school is not listed. Focus on demonstrated skills and achievements.  
-- **Recency:** Assess the graduation year or ongoing status. Value both recent/ongoing education and older degrees that still contribute relevant knowledge.  
-- **Additional Credentials:** Give weight to certifications, bootcamps, online courses, or specialized training that add to the candidate’s profile.  
-- **Growth Indicators:** Look for signs of continuous learning, professional development, or upskilling efforts.  
-- **Score Justification:** Assign a balanced score by recognizing potential and learning ability, not just perfect academic matches. Avoid harsh penalties unless there is truly no relevant education or evidence of learning.  
+**Score:** <0–{edu_weight}> / {edu_weight}  
+**Degree Match:** <Discuss degree level, specialization, and how it matches the job.>
 
 
 ### 💼 Experience Analysis  

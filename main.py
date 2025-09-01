@@ -65,9 +65,6 @@ def html_to_pdf_bytes(html_string):
     pdf_io.seek(0)
     return pdf_io
 
-
-
-
 def generate_cover_letter_from_resume_builder():
     import streamlit as st
     from datetime import datetime
@@ -97,14 +94,16 @@ def generate_cover_letter_from_resume_builder():
         prompt = f"""
 You are a professional cover letter writer.
 
-Write a formal and compelling cover letter using the information below. Format it as a real letter with:
+Write a formal and compelling cover letter using the information below. 
+Format it as a real letter with:
 1. Date
 2. Recipient heading
 3. Proper salutation
 4. Three short paragraphs
 5. Professional closing
 
-Ensure you **only include the company name once** in the header or salutation, and avoid repeating it redundantly in the body.
+Ensure you **only include the company name once** in the header or salutation, 
+and avoid repeating it redundantly in the body.
 
 ### Heading Info:
 {today_date}
@@ -118,49 +117,44 @@ Hiring Manager, {company}, {location}
 - Location: {location}
 
 ### Instructions:
-- Do not repeat the company name twice.
-- Focus on skills and impact.
-- Make it personalized and enthusiastic.
-- Return only the final formatted cover letter without any HTML tags.
+- Do not use HTML tags. 
+- Return plain text only.
 """
 
         # ✅ Call LLM
-        cover_letter = call_llm(prompt, session=st.session_state)
+        cover_letter = call_llm(prompt, session=st.session_state).strip()
 
-        # ✅ Clean leading line if needed
-        lines = cover_letter.strip().split("\n")
-        if len(lines) > 0 and (re.match(r'^\w+ \d{1,2}, \d{4}$', lines[0].strip()) or lines[0].strip().startswith('<div')):
-            lines = lines[1:]
-        cover_letter = "\n".join(lines)
+        # ✅ Store plain text
         st.session_state["cover_letter"] = cover_letter
 
-        # ✅ xhtml2pdf-compatible table layout
+        # ✅ Build HTML wrapper for preview (safe)
         cover_letter_html = f"""
-<table width="100%" style="font-family: Georgia, serif; font-size: 12pt; color: #000;">
-    <tr>
-        <td align="center" colspan="2" style="font-size: 16pt; font-weight: bold; color: #003366;">{name}</td>
-    </tr>
-    <tr>
-        <td align="center" colspan="2" style="font-size: 14pt; color: #555;">{job_title}</td>
-    </tr>
-    <tr>
-        <td align="center" colspan="2" style="font-size: 10pt; padding: 5px;">
-            <a href="{linkedin}" style="color: #003366;">{linkedin}</a><br/>
-            📧 {email} | 📞 {mobile}
-        </td>
-    </tr>
-    <tr><td colspan="2" style="padding-top:10px;">{today_date}</td></tr>
-    <tr>
-        <td colspan="2">
-            <hr style="border: 0; border-top: 1px solid #000; margin: 10px 0;" />
-        </td>
-    </tr>
-    <tr>
-        <td colspan="2" style="white-space: pre-wrap; line-height: 1.6;">{cover_letter}</td>
-    </tr>
-</table>
-"""
+        <div style="font-family: Georgia, serif; font-size: 13pt; line-height: 1.6; 
+                    color: #000; background: #fff; padding: 25px; 
+                    border-radius: 8px; box-shadow: 0px 2px 6px rgba(0,0,0,0.1); 
+                    max-width: 800px; margin: auto;">
+            <div style="text-align:center; margin-bottom:15px;">
+                <div style="font-size:18pt; font-weight:bold; color:#003366;">{name}</div>
+                <div style="font-size:14pt; color:#555;">{job_title}</div>
+                <div style="font-size:10pt; margin-top:5px;">
+                    <a href="{linkedin}" style="color:#003366;">{linkedin}</a><br/>
+                    📧 {email} | 📞 {mobile}
+                </div>
+            </div>
+            <hr/>
+            <pre style="white-space: pre-wrap; font-family: Georgia, serif; font-size: 12pt; color:#000;">
+{cover_letter}
+            </pre>
+        </div>
+        """
+
         st.session_state["cover_letter_html"] = cover_letter_html
+
+        # ✅ Show nicely in Streamlit
+        st.markdown(cover_letter_html, unsafe_allow_html=True)
+
+
+
 
 
 
@@ -217,7 +211,7 @@ from langchain.chains import ConversationalRetrievalChain
 from llm_manager import call_llm
 
 from pydantic import BaseModel
-
+from db_manager import get_database_stats
 from user_login import (
     create_user_table,
     add_user,
@@ -380,7 +374,11 @@ if not st.session_state.authenticated:
     # Fetch counters
     total_users = get_total_registered_users()
     active_logins = get_logins_today()
-    resumes_uploaded = 15
+    stats = get_database_stats()
+
+# Replace static 15 with dynamic count
+    resumes_uploaded = stats.get("total_candidates", 0)
+
     states_accessed = 29
 
     neon_counter_style = """
@@ -453,21 +451,19 @@ if not st.session_state.authenticated:
     </div>
     """, unsafe_allow_html=True)
 
-
-
-
-
 if not st.session_state.get("authenticated", False):
-    
 
-    # ✅ Use an online image of a female employee
+    # ✅ Futuristic silhouette
     image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
     response = requests.get(image_url)
     img_base64 = b64encode(response.content).decode()
 
-    # ✅ Inject animated shuffle CSS + HTML
+    # ✅ Inject cinematic CSS
     st.markdown(f"""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+
+    /* ===== Card Shuffle Animation ===== */
     .animated-cards {{
       margin-top: 40px;
       display: flex;
@@ -480,34 +476,117 @@ if not st.session_state.get("authenticated", False):
       width: 220px;
       animation: splitCards 2.5s ease-in-out infinite alternate;
       z-index: 1;
+      filter: drop-shadow(0 0 10px rgba(0,191,255,0.6));
     }}
-    .animated-cards img:nth-child(1) {{
-      animation-delay: 0s;
-      z-index: 3;
-    }}
-    .animated-cards img:nth-child(2) {{
-      animation-delay: 0.3s;
-      z-index: 2;
-    }}
-    .animated-cards img:nth-child(3) {{
-      animation-delay: 0.6s;
-      z-index: 1;
-    }}
+    .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
+    .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
+    .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
+
     @keyframes splitCards {{
-      0% {{
-        transform: scale(1) translateX(0) rotate(0deg);
-        opacity: 1;
-      }}
-      100% {{
-        transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot));
-        opacity: 1;
-      }}
+      0%   {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
+      100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
     }}
-    .card-left {{ --x-offset: -80px; --rot: -4deg; }}
-    .card-center {{ --x-offset: 0px; --rot: 0deg; }}
-    .card-right {{ --x-offset: 80px; --rot: 4deg; }}
+    .card-left   {{ --x-offset: -80px; --rot: -4deg; }}
+    .card-center {{ --x-offset: 0px;  --rot: 0deg;  }}
+    .card-right  {{ --x-offset: 80px;  --rot: 4deg;  }}
+
+    /* ===== Cinematic Login Card ===== */
+    .login-card {{
+      background: linear-gradient(145deg, rgba(10,20,40,0.92), rgba(0,191,255,0.1));
+      border: 1px solid #00BFFF;
+      border-radius: 18px;
+      padding: 25px;
+      box-shadow: 0px 0px 30px rgba(0,191,255,0.7);
+      font-family: 'Orbitron', sans-serif;
+      color: white;
+      margin-top: 20px;
+      opacity: 0;
+      transform: translateX(-120%);
+      animation: slideInLeft 1.2s ease-out forwards;
+    }}
+    @keyframes slideInLeft {{
+      0%   {{ transform: translateX(-120%); opacity: 0; }}
+      100% {{ transform: translateX(0); opacity: 1; }}
+    }}
+
+    .login-card h2 {{
+      text-align: center;
+      font-size: 1.6rem;
+      text-shadow: 0 0 12px #00BFFF;
+      margin-bottom: 15px;
+    }}
+    .login-card h2 span {{ color: #00BFFF; }}
+
+    /* ===== Sliding Messages ===== */
+    .slide-message {{
+      position: relative;
+      overflow: hidden;
+      margin: 10px 0;
+      padding: 10px 15px;
+      border-radius: 10px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: slideIn 0.8s ease forwards;
+    }}
+    .slide-message svg {{
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }}
+    .success-msg {{ background: rgba(0,255,127,0.12); border-left: 5px solid #00FF7F; color:#00FF7F; }}
+    .error-msg   {{ background: rgba(255,99,71,0.12);  border-left: 5px solid #FF6347; color:#FF6347; }}
+    .info-msg    {{ background: rgba(30,144,255,0.12); border-left: 5px solid #1E90FF; color:#1E90FF; }}
+    .warn-msg    {{ background: rgba(255,215,0,0.12);  border-left: 5px solid #FFD700; color:#FFD700; }}
+
+    @keyframes slideIn {{
+      0%   {{ transform: translateX(100%); opacity: 0; }}
+      100% {{ transform: translateX(0); opacity: 1; }}
+    }}
+
+    /* ===== Futuristic Buttons ===== */
+    .stButton>button {{
+      background: linear-gradient(90deg, #00BFFF, #1E90FF);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: bold;
+      padding: 8px 20px;
+      box-shadow: 0px 0px 15px rgba(0,191,255,0.6);
+      transition: all 0.3s ease;
+    }}
+    .stButton>button:hover {{
+      transform: scale(1.05);
+      box-shadow: 0px 0px 25px rgba(0,191,255,0.9);
+    }}
+
+    /* ===== Futuristic Input Fields ===== */
+    .stTextInput input {{
+      background: rgba(10,25,45,0.85);
+      border: 1px solid #00BFFF;
+      border-radius: 8px;
+      padding: 10px;
+      color: #E0F7FF;
+      font-family: 'Orbitron', sans-serif;
+      box-shadow: 0px 0px 15px rgba(0,191,255,0.3);
+      transition: all 0.3s ease-in-out;
+    }}
+    .stTextInput input:focus {{
+      outline: none !important;
+      border: 1px solid #1E90FF;
+      box-shadow: 0px 0px 25px rgba(0,191,255,0.9), inset 0px 0px 10px rgba(0,191,255,0.6);
+      transform: scale(1.02);
+    }}
+    .stTextInput label {{
+      font-family: 'Orbitron', sans-serif;
+      color: #00BFFF !important;
+      text-shadow: 0 0 8px rgba(0,191,255,0.8);
+    }}
     </style>
 
+    <!-- Animated Cards -->
     <div class="animated-cards">
         <img class="card-left" src="data:image/png;base64,{img_base64}" />
         <img class="card-center" src="data:image/png;base64,{img_base64}" />
@@ -520,11 +599,11 @@ if not st.session_state.get("authenticated", False):
 
     with center:
         st.markdown(
-            "<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>LEXIBOT</span></h2>",
+            "<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>HIRELYZER</span></h2>",
             unsafe_allow_html=True,
         )
 
-        login_tab, register_tab = st.tabs(["🔑 Login", "🆕 Register"])
+        login_tab, register_tab = st.tabs(["Login", "Register"])
 
         # ---------------- LOGIN TAB ----------------
         with login_tab:
@@ -536,45 +615,72 @@ if not st.session_state.get("authenticated", False):
                 if success:
                     st.session_state.authenticated = True
                     st.session_state.username = user.strip()
-
-                    # ✅ Load saved Groq key into session
                     if saved_key:
                         st.session_state["user_groq_key"] = saved_key
-
                     log_user_action(user.strip(), "login")
-                    st.success("✅ Login successful!")
+
+                    st.markdown("""<div class='slide-message success-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                        Login successful!
+                    </div>""", unsafe_allow_html=True)
                     st.rerun()
                 else:
-                    st.error("❌ Invalid credentials.")
+                    st.markdown("""<div class='slide-message error-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                        Invalid credentials.
+                    </div>""", unsafe_allow_html=True)
 
         # ---------------- REGISTER TAB ----------------
         with register_tab:
             new_user = st.text_input("Choose a Username", key="reg_user")
             new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
-            st.caption("🔒 Password must be at least 8 characters and include uppercase, lowercase, number, and special character.")
+            st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
 
-            # ✅ Live Username Availability Check
             if new_user.strip():
                 if username_exists(new_user.strip()):
-                    st.error("🚫 Username already exists.")
+                    st.markdown("""<div class='slide-message error-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                        Username already exists.
+                    </div>""", unsafe_allow_html=True)
                 else:
-                    st.info("✅ Username is available.")
+                    st.markdown("""<div class='slide-message info-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
+                          <path d="M12 8h.01M12 12v4"/></svg>
+                        Username is available.
+                    </div>""", unsafe_allow_html=True)
 
             if st.button("Register", key="register_btn"):
                 if new_user.strip() and new_pass.strip():
                     success, message = add_user(new_user.strip(), new_pass.strip())
                     if success:
-                        st.success(message)
+                        st.markdown(f"""<div class='slide-message success-msg'>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                            {message}
+                        </div>""", unsafe_allow_html=True)
                         log_user_action(new_user.strip(), "register")
                     else:
-                        st.error(message)
+                        st.markdown(f"""<div class='slide-message error-msg'>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                              stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                            {message}
+                        </div>""", unsafe_allow_html=True)
                 else:
-                    st.warning("⚠️ Please fill in both fields.")
+                    st.markdown("""<div class='slide-message warn-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
+                        </svg>
+                        Please fill in both fields.
+                    </div>""", unsafe_allow_html=True)
 
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()
-
 
 
 
@@ -583,7 +689,7 @@ from user_login import save_user_api_key, get_user_api_key  # Ensure both are im
 
 if st.session_state.get("authenticated"):
     st.markdown(
-        f"<h2 style='color:#00BFFF;'>Welcome to LEXIBOT, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>",
+        f"<h2 style='color:#00BFFF;'>Welcome to HIRELYZER, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>",
         unsafe_allow_html=True,
     )
 
@@ -845,12 +951,12 @@ st.markdown(
     <div class="banner-container">
         <div class="pulse-bar">
             <div class="bar"></div>
-            <div>LEXIBOT - Elevate Your Resume Analysis</div>
+            <div>HIRELYZER - Elevate Your Resume Analysis</div>
         </div>
     </div>
 
     <!-- Header -->
-    <div class="header">💼 LEXIBOT - AI ETHICAL RESUME ANALYZER</div>
+    <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
     """,
     unsafe_allow_html=True
 )
@@ -1249,6 +1355,32 @@ def extract_text_from_images(pdf_path):
         st.error(f"⚠ Error extracting from image: {e}")
         return []
 
+def safe_extract_text(uploaded_file):
+    """
+    Safely extracts text from uploaded file.
+    Prevents app crash if file is not a resume or unreadable.
+    """
+    try:
+        # Save uploaded file to a temp location
+        temp_path = f"/tmp/{uploaded_file.name}"
+        with open(temp_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+
+        # Try PDF text extraction
+        text_list = extract_text_from_pdf(temp_path)
+
+        # If nothing readable found
+        if not text_list or all(len(t.strip()) == 0 for t in text_list):
+            st.warning("⚠️ This file doesn’t look like a resume or contains no readable text.")
+            return None
+
+        return "\n".join(text_list)
+
+    except Exception as e:
+        st.error(f"⚠️ Could not process this file: {e}")
+        return None
+
+
 # Detect bias in resume
 
 import re
@@ -1496,6 +1628,7 @@ Your tasks:
 2. 🧾 Structure the resume using these sections **if present** in the original, keeping the original text size:
    - 🏷️ **Name**
    - 📞 **Contact Information**
+   - 📍 **Location**
    - 📧 **Email**
    - 🔗 **LinkedIn** → If missing, insert: 🔗 Please paste your LinkedIn URL here.
    - 🌐 **Portfolio** → If missing, insert: 🌐 Please paste your GitHub or portfolio link here.
@@ -1553,6 +1686,7 @@ Your tasks:
     # Call the LLM of your choice
     response = call_llm(prompt, session=st.session_state)
     return response
+
 
 
 import re
@@ -1664,6 +1798,14 @@ You are a grammar and tone evaluator AI. Analyze the following resume text and:
 2. Return a 1-sentence summary of the grammar and tone.
 3. Provide 3 to 5 **specific improvement suggestions** (bullet points) for enhancing grammar, clarity, tone, or structure.
 
+**Scoring Guidelines for Balance:**
+- {max_score}: Exceptional - Professional, error-free, excellent flow
+- {max_score-1}: Very Good - Minor issues, mostly professional
+- {max_score-2}: Good - Some grammar issues but readable and professional
+- {max_score-3}: Fair - Noticeable issues but understandable
+- {max_score-4}: Poor - Multiple errors affecting readability
+- 0-1: Very Poor - Significant grammar problems
+
 Return response in the exact format below:
 
 Score: <number>
@@ -1683,8 +1825,8 @@ Suggestions:
     feedback_match = re.search(r"Feedback:\s*(.+)", response)
     suggestions = re.findall(r"- (.+)", response)
 
-    score = int(score_match.group(1)) if score_match else 3
-    feedback = feedback_match.group(1).strip() if feedback_match else "No grammar feedback provided."
+    score = int(score_match.group(1)) if score_match else max(3, max_score-2)  # More generous default
+    feedback = feedback_match.group(1).strip() if feedback_match else "Grammar appears adequate for professional communication."
     return score, feedback, suggestions
 
 
@@ -1700,151 +1842,208 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(resume_text, max_score=lang_weight)
+    # ✅ Grammar Check
+    grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(
+        resume_text, max_score=lang_weight
+    )
 
+    # ✅ Domain Detection
     resume_domain = detect_domain_from_title_and_description("Unknown", resume_text)
     job_domain = detect_domain_from_title_and_description(job_title, job_description)
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
+    # ✅ Balanced domain penalty
     MAX_DOMAIN_PENALTY = 15
     domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
 
+    # ✅ Optional logic score note
     logic_score_note = (
         f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 based on resume length, experience, and skills."
         if logic_profile_score else ""
     )
 
+    # ✅ ATS Evaluation Prompt
     prompt = f"""
-You are an AI-powered ATS evaluator. Assess the candidate's resume against the job description. Return a detailed, **section-by-section analysis**, with **scoring for each area**. Follow the format precisely below.
+You are a professional ATS evaluator with expertise in talent assessment. Your role is to provide **balanced, objective scoring** that reflects industry standards and recognizes candidate potential while maintaining professional standards.
 
-🎯 Section Breakdown:
+🎯 **BALANCED SCORING GUIDELINES - Focus on Potential & Growth:**
 
-1. **Candidate Name** — Extract the full name clearly from the resume header or first few lines.
+**Education Analysis ({edu_weight} points max):**
+Evaluate the candidate’s educational background based on:
+- Degree level (e.g., Bachelor’s, Master’s, PhD, diplomas, or specialized programs)
+- Field of study alignment with job requirements
+- Institution reputation (if mentioned, otherwise focus on skills/training)
+- Graduation year & recency (consider whether it is recent, ongoing, or older but still valuable)
+- Certifications, online courses, or training programs relevant to the role
 
-2. **Education Analysis** — Evaluate:
-   - Degree level (e.g., Bachelor’s, Master’s, PhD)
-   - Field of study alignment with job requirements
-   - Institution reputation (if mentioned)
-   - Graduation year (recency)
-   - Any certifications or training programs relevant to the role
+Provide a fair score (0–{edu_weight}) with reasoning, highlighting both strengths and areas for improvement. Avoid being overly harsh; give credit for transferable education, ongoing studies, and continuous learning.
 
-3. **Experience Analysis** — Evaluate:
-   - Total years of experience vs job expectations
-   - Role titles and their seniority levels (e.g., intern vs manager)
-   - Domain/industry relevance to the job
-   - Specific projects handled — explain **how they impacted the company, product, or client**
-   - Use of tools, technologies, or methodologies aligned with JD
-   - Evidence of leadership, teamwork, or initiative (e.g., “led a 5-person team”, “handled $100K budget”)
+**Experience Scoring Framework ({exp_weight} points max):**
+- 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
+- 28-31: Excellent (meets/exceeds years + strong domain fit + leadership + clear results)
+- 24-27: Very Good (adequate years + good domain fit + solid responsibilities + some results)
+- 20-23: Good (reasonable years + relevant experience + decent responsibilities)
+- 15-19: Fair (some gaps in years OR domain but shows potential)
+- 10-14: Basic (limited experience but relevant skills/potential shown)
+- 5-9: Entry Level (minimal experience but shows promise)
+- 0-4: Insufficient (major gaps with no transferable skills)
 
-4. **Skills Analysis** — Check for:
-   - Technical tools (e.g., Python, SQL, Figma)
-   - Domain-specific skills (e.g., CRM for Sales, ML models for AI jobs)
-   - Soft skills (e.g., communication, adaptability)
+**Skills Scoring Framework ({skills_weight} points max):**
+- 28-{skills_weight}: Outstanding (90%+ required skills + expert proficiency + recent usage)
+- 24-27: Excellent (80%+ required skills + advanced proficiency)
+- 20-23: Very Good (70%+ required skills + good proficiency)
+- 16-19: Good (60%+ required skills + adequate proficiency)
+- 12-15: Fair (50%+ required skills + basic proficiency OR strong learning ability)
+- 8-11: Basic (40%+ skills OR strong foundational skills with growth potential)
+- 4-7: Limited (30%+ skills but shows willingness to learn)
+- 0-3: Insufficient (<30% skills with no evidence of learning ability)
 
-✅ **Important: Provide missing skills in bullet points. Identify skills from the job description that are NOT found in the resume. Be specific and list at least 3 if applicable.**
+**Keyword Scoring Framework ({keyword_weight} points max):**
+- 9-{keyword_weight}: Excellent optimization (85%+ critical terms + industry language)
+- 8: Very Good (75%+ critical terms + good industry awareness)
+- 6-7: Good (65%+ critical terms + adequate industry knowledge)
+- 4-5: Fair (50%+ critical terms + some industry understanding)
+- 2-3: Basic (35%+ critical terms + basic awareness)
+- 1: Limited (20%+ critical terms)
+- 0: Poor (<20% critical terms)
 
-Also evaluate:
-   - Depth of proficiency (basic, intermediate, expert)
-   - Recency of usage if mentioned
-   - Whether the skill is supported by projects or experience
 
-5. **Language Quality** — Use grammar score provided. Evaluate:
-   - Grammar and spelling quality
-   - Tone (professional, casual, inconsistent)
-   - Sentence clarity and structure
-   - Use of active voice and action verbs
-   - Formatting professionalism (bullet alignment, clean structure)
+**EVALUATION INSTRUCTIONS (Tech-Focused):**
+- Always credit **projects, GitHub repos, hackathons, Kaggle competitions, blockchain DApps, cloud deployments, AI model training, open-source contributions**.
+- Emphasize **cutting-edge skills**: LLMs, Generative AI, Web3, Smart Contracts, DeFi, Cloud-Native tools, MLOps, Vector DBs.
+- Highlight both **industry experience** and **hands-on learning** (projects, MOOCs, certifications).
+- Be encouraging but factual: focus on **growth potential + adaptability**.
 
-6. **Keyword Analysis** — Identify and evaluate:
-   - Job-critical keywords from the JD (e.g., “data visualization”, “cloud computing”)
-   - Domain-specific jargon
-   - Tool names, role-specific terms
+...
 
-✅ **Important: Provide missing keywords from the job description as a bullet list. Only include words/phrases present in the JD but absent in the resume. Give at least 3 if applicable.**
 
-7. **Final Thoughts** — Provide a 4–6 sentence holistic evaluation:
-   - Resume's overall alignment with the job
-   - Highlight major strengths (e.g., “strong domain fit”, “excellent language tone”)
-   - Point out red flags (e.g., “missing core tools”, “unclear experience timelines”)
-   - Mention if the resume deserves shortlisting or further screening
+**EVALUATION INSTRUCTIONS - BE ENCOURAGING BUT HONEST:**
 
-Use this context:
-
-- Grammar Score: {grammar_score} / {lang_weight}
-- Grammar Feedback: {grammar_feedback}
-- Resume Domain: {resume_domain}
-- Job Domain: {job_domain}
-- Penalty if domains don't match: {domain_penalty} (Based on domain similarity score {similarity_score:.2f}, max penalty is {MAX_DOMAIN_PENALTY})
-
----
+Follow this exact structure and be **specific with evidence while highlighting strengths**:
 
 ### 🏷️ Candidate Name
-<Full name or "Not Found">
+<Extract full name clearly - check resume header, contact section, or first few lines>
 
 ### 🏫 Education Analysis
-**Score:** <0–{edu_weight}> / {edu_weight}  
-**Degree Match:** <Discuss degree level, specialization, and how it matches the job.>
+**Score:** <0–{edu_weight}> / {edu_weight}
 
-### 💼 Experience Analysis
-**Score:** <0–{exp_weight}> / {exp_weight}  
-**Experience Details:**  
-<Cover roles, total years, leadership, domain relevance, and **project outcomes**. Be specific: e.g., “developed a dashboard that reduced manual reporting by 60%” or “led migration saving 25% infra cost.”>
+**Scoring Rationale:**
+- Degree Level & Relevance: <Explain alignment, consider transferable knowledge>
+- Institution Quality: <Be fair - not everyone attends top schools>
+- Recency: <Apply strict rules above to determine ongoing vs completed>
+- Additional Credentials: <Value all forms of learning - certifications, bootcamps, online courses>
+- Growth Indicators: <Evidence of continuous learning and skill development>
+- **Score Justification:** <Focus on potential and learning ability, not just perfect matches>
+
+### 💼 Experience Analysis  
+**Score:** <0–{exp_weight}> / {exp_weight}
+
+**Experience Breakdown:**
+- Total Years: <X years - consider quality over quantity>
+- Role Progression: <Look for growth, even if not linear>
+- Domain Relevance: <Consider transferable skills from related fields>
+- Leadership Evidence: <Include informal leadership, mentoring, project ownership>
+- Quantified Achievements: <Value any metrics, even small improvements>
+- Technology/Tools Usage: <Credit learning new tools, adaptability>
+- Transferable Skills: <Highlight skills that apply across domains>
+- **Score Justification:** <Emphasize growth potential and adaptability>
 
 ### 🛠 Skills Analysis
-**Score:** <0–{skills_weight}> / {skills_weight}  
-**Current Skills:**
-- Technical: <list>
-- Soft Skills: <list>
-- Domain-Specific: <list>
+**Score:** <0–{skills_weight}> / {skills_weight}
 
-**Skill Proficiency:**  
-<Evaluate depth of knowledge. Mention if skills are supported by projects or real work.>
+**Skills Assessment:**
+- Technical Skills Present: <List with evidence, include learning in progress>
+- Soft Skills Demonstrated: <Value communication, teamwork, problem-solving>
+- Domain-Specific Expertise: <Consider related domain knowledge>
+- Skill Currency: <Value recent learning and adaptation>
+- Learning Ability: <Evidence of picking up new skills>
 
-**Missing Skills:**  
-- Skill 1  
-- Skill 2  
-- Skill 3  
-*(List based only on skills in job description but absent in resume)*
+**Skills Gaps (Opportunities for Growth):**
+- <Skill 1 - frame as development opportunity>
+- <Skill 2 - suggest how existing skills could transfer>  
+- <Skill 3 - note if easily learnable>
+- <Skill 4 - additional growth areas>
+- <Skill 5 - more opportunities if applicable>
+
+**Score Justification:** <Focus on existing strengths + learning potential>
 
 ### 🗣 Language Quality Analysis
-**Score:** {grammar_score} / {lang_weight}  
-**Grammar & Tone:** <LLM-based comment on clarity, fluency, tone>  
-**Feedback Summary:** **{grammar_feedback}**
+**Score:** {grammar_score} / {lang_weight}
+**Grammar & Professional Tone:** {grammar_feedback}
+**Assessment:** <Be constructive - focus on communication effectiveness>
 
 ### 🔑 Keyword Analysis
-**Score:** <0–{keyword_weight}> / {keyword_weight}  
-**Missing Keywords:**  
-- Keyword1  
-- Keyword2  
-- Keyword3  
-*(Extract keywords from JD not found in resume. Include role-related, domain-specific, and tool-based terms.)*
+**Score:** <0–{keyword_weight}> / {keyword_weight}
 
-**Keyword Analysis:**  
-<Discuss importance of missing/present keywords and how they affect job match.>
+**Keyword Assessment:**
+- Industry Terminology: <Credit related industry knowledge>
+- Role-Specific Terms: <Look for equivalent terms, not just exact matches>
+- Technical Vocabulary: <Value understanding even if different tools>
 
-### ✅ Final Thoughts
-<Summarize domain fit, core strengths, red flags, and whether this resume deserves further review.>
+**Keyword Enhancement Opportunities:**
+- <Keyword 1 from job description>
+- <Keyword 2 from job description>
+- <Keyword 3 from job description>
+- <Keyword 4 from job description>
+- <Keyword 5 from job description>
+- <Keyword 6 from job description>
+- <Keyword 7 from job description>
+- <Keyword 8 from job description>
+
+**INSTRUCTION**: Extract ALL important keywords, technical terms, industry jargon, tool names, certification names, and role-specific terminology from the job description that are missing from the resume. Include variations and synonyms.
+
+**Score Justification:** <Credit understanding of concepts even if terminology differs>
+
+### ✅ Final Assessment
+
+**Overall Evaluation:**
+<4-6 sentences covering:>
+- Primary strengths and unique value proposition
+- Growth areas framed as development opportunities
+- Cultural/team fit indicators and soft skills
+- Clear recommendation with constructive reasoning
+
+**Development Areas:** <Frame gaps as growth opportunities, not failures>
+**Key Strengths:** <Highlight what makes this candidate valuable>
+**Recommendation:** <Be specific about interview potential and role fit>
 
 ---
 
-**Instructions:**
-- Use markdown formatting.
-- Follow the section titles and bold formatting strictly.
-- Keep tone professional and ATS-focused.
-- Use the provided grammar score and domain info as context.
-- Force output of missing skills and keywords using bullet lists.
-- Avoid generalizations — rely only on specific terms from JD and resume.
+**IMPORTANT REMINDERS FOR BALANCED EVALUATION:**
+- Look for potential, not just perfect matches
+- Value diverse backgrounds and transferable skills
+- Consider the candidate's career stage and growth trajectory
+- Credit all forms of learning and skill development
+- Be constructive in feedback - focus on opportunities
+- Recognize that great employees come from varied backgrounds
+- LIST ALL missing skills and keywords comprehensively (aim for 5-8 items each if gaps exist)
+- Be thorough in identifying development opportunities from the job description
+- **CRITICAL**: Analyze the ENTIRE job description systematically - go through each requirement, skill, and qualification mentioned
+- **KEYWORD EXTRACTION**: Identify ALL technical terms, tools, frameworks, methodologies, certifications mentioned in job description
+- **SKILL MAPPING**: Compare each job requirement against resume content - if not found, list it as missing
+- **CONTEXT UNDERSTANDING**: Consider synonyms and related terms (e.g., "JavaScript" and "JS", "Machine Learning" and "ML")
+- **PRIORITY RANKING**: Focus on must-have vs nice-to-have requirements from job description
+- **EXPERIENCE MATCHING**: Look for similar roles, projects, or responsibilities even if not exact title matches
+
+Context for Evaluation:
+- Grammar Score: {grammar_score} / {lang_weight}
+- Grammar Feedback: {grammar_feedback}  
+- Resume Domain: {resume_domain}
+- Job Domain: {job_domain}
+- Domain Mismatch Penalty: {domain_penalty} points (similarity: {similarity_score:.2f})
 
 ---
 
-📄 Job Description:
-\"\"\"{job_description}\"\"\"  
+📄 **Job Description:**
+{job_description}
 
-📄 Resume:
-\"\"\"{resume_text}\"\"\"  
+📄 **Resume Text:**
+{resume_text}
 
 {logic_score_note}
 """
+    
+    
 
 
     ats_result = call_llm(prompt, session=st.session_state).strip()
@@ -1864,26 +2063,78 @@ Use this context:
     skills_analysis = extract_section(r"### 🛠 Skills Analysis(.*?)###", ats_result)
     lang_analysis = extract_section(r"### 🗣 Language Quality Analysis(.*?)###", ats_result)
     keyword_analysis = extract_section(r"### 🔑 Keyword Analysis(.*?)###", ats_result)
-    final_thoughts = extract_section(r"### ✅ Final Thoughts(.*)", ats_result)
+    final_thoughts = extract_section(r"### ✅ Final Assessment(.*)", ats_result)
 
-    # Extract scores
+    # Extract scores with improved patterns
     edu_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis)
-    exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)
+    exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)  
     skills_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
     keyword_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis)
 
-    missing_keywords = extract_section(r"\*\*Missing Keywords:\*\*(.*?)(?:###|\Z)", keyword_analysis).replace("-", "").strip().replace("\n", ", ")
-    missing_skills = extract_section(r"\*\*Missing Skills:\*\*(.*?)(?:###|\Z)", skills_analysis).replace("-", "").strip().replace("\n", ", ")
+    # ✅ IMPROVED: More generous minimum scores to avoid harsh penalties
+    edu_score = max(edu_score, int(edu_weight * 0.15))  # Minimum 15% of weight
+    exp_score = max(exp_score, int(exp_weight * 0.15))  # Minimum 15% of weight  
+    skills_score = max(skills_score, int(skills_weight * 0.15))  # Minimum 15% of weight
+    keyword_score = max(keyword_score, int(keyword_weight * 0.10))  # Minimum 10% of weight
 
+    # Extract missing items with better parsing - now called "opportunities"
+    missing_keywords_section = extract_section(r"\*\*Keyword Enhancement Opportunities:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)
+    missing_skills_section = extract_section(r"\*\*Skills Gaps \(Opportunities for Growth\):\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
+    
+    # Fallback to old patterns if new ones don't match
+    if not missing_keywords_section.strip():
+        missing_keywords_section = extract_section(r"\*\*Missing Critical Keywords:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)
+    if not missing_skills_section.strip():
+        missing_skills_section = extract_section(r"\*\*Missing Critical Skills:\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
+    
+    # Improved extraction - handle multiple formats and get all items
+    def extract_list_items(text):
+        if not text.strip():
+            return "None identified"
+        
+        # Find all bullet points with various formats
+        items = []
+        lines = text.strip().split('\n')
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Remove various bullet point formats
+            cleaned_line = re.sub(r'^[-•*]\s*', '', line)  # Remove -, •, * bullets
+            cleaned_line = re.sub(r'^\d+\.\s*', '', cleaned_line)  # Remove numbered lists
+            cleaned_line = cleaned_line.strip()
+            
+            if cleaned_line and len(cleaned_line) > 2:  # Avoid empty or very short items
+                items.append(cleaned_line)
+        
+        return ', '.join(items) if items else "None identified"
+    
+    missing_keywords = extract_list_items(missing_keywords_section)
+    missing_skills = extract_list_items(missing_skills_section)
+
+    # ✅ IMPROVED: More balanced total score calculation
     total_score = edu_score + exp_score + skills_score + grammar_score + keyword_score
-    total_score = max(total_score - domain_penalty, 0)
+    
+    # Apply domain penalty more gently
+    total_score = max(total_score - domain_penalty, int(total_score * 0.7))  # Never go below 70% of pre-penalty score
+    
+    # ✅ IMPROVED: More generous score caps and bonus for well-rounded candidates
+    #####if all(score >= weight * 0.6 for score, weight in [(edu_score, edu_weight), (exp_score, exp_weight), (skills_score, skills_weight)]):#####
+        ########total_score += 3  # Bonus for well-rounded candidates##########
+    
     total_score = min(total_score, 100)
+    total_score = max(total_score, 15)  # Minimum score of 15 to avoid completely crushing candidates
 
+    # ✅ IMPROVED: More encouraging score formatting with better thresholds
     formatted_score = (
-        "🌟 Excellent" if total_score >= 85 else
-        "✅ Good" if total_score >= 70 else
-        "⚠️ Average" if total_score >= 50 else
-        "❌ Poor"
+        "🌟 Exceptional Match" if total_score >= 85 else  # Lowered from 90
+        "✅ Strong Match" if total_score >= 70 else       # Lowered from 75
+        "🟡 Good Potential" if total_score >= 55 else    # Lowered from 60
+        "⚠️ Fair Match" if total_score >= 40 else        # Lowered from 45
+        "🔄 Needs Development" if total_score >= 25 else # New category
+        "❌ Poor Match"
     )
 
     # ✅ Format suggestions nicely
@@ -1894,10 +2145,23 @@ Use this context:
     updated_lang_analysis = f"""
 {lang_analysis}
 <br><b>LLM Feedback Summary:</b> {grammar_feedback}
-<br><b>Suggestions to Improve:</b> {suggestions_html}
+<br><b>Improvement Suggestions:</b> {suggestions_html}
 """
 
-    final_thoughts += f"\n\n📉 Domain Similarity Score: {similarity_score:.2f}\n🔻 Domain Penalty Applied: {domain_penalty} / {MAX_DOMAIN_PENALTY}"
+    # Enhanced final thoughts with domain analysis
+    final_thoughts += f"""
+
+**📊 Technical Assessment Details:**
+- Domain Similarity Score: {similarity_score:.2f}/1.0  
+- Domain Penalty Applied: {domain_penalty}/{MAX_DOMAIN_PENALTY} points
+- Resume Domain: {resume_domain}
+- Target Job Domain: {job_domain}
+
+**💡 Balanced Scoring Notes:**
+- Minimum score thresholds applied to prevent overly harsh penalties
+- Transferable skills and learning potential considered
+- Growth opportunities highlighted rather than just gaps identified
+"""
 
     return ats_result, {
         "Candidate Name": candidate_name,
@@ -1952,7 +2216,7 @@ def create_chain(vectorstore):
     return chain
 
 # App Title
-st.title("🦙 Chat with LEXIBOT - LLAMA 3.3 (Bias Detection + QA + GPU)")
+#####st.title("🦙 HIRELYZER - LLAMA 3.3 (ANALYZER + BUILDER + JOB MARKET TRENDS)")#######
 
 # Chat history
 if "chat_history" not in st.session_state:
@@ -1985,8 +2249,90 @@ if total_weight != 100:
 else:
     st.sidebar.success("✅ Total weight = 100")
 
+from streamlit_pdf_viewer import pdf_viewer
 
-uploaded_files = st.file_uploader("Upload PDF Resumes", type=["pdf"], accept_multiple_files=True)
+# 🎨 CSS for sliding success message
+st.markdown("""
+<style>
+.slide-message {
+  position: relative;
+  overflow: hidden;
+  margin: 10px 0;
+  padding: 10px 15px;
+  border-radius: 10px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: slideIn 0.8s ease forwards;
+}
+.slide-message svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.success-msg { background: rgba(0,255,127,0.12); border-left: 5px solid #00FF7F; color:#00FF7F; }
+.error-msg   { background: rgba(255,99,71,0.12);  border-left: 5px solid #FF6347; color:#FF6347; }
+.warn-msg    { background: rgba(255,215,0,0.12); border-left: 5px solid #FFD700; color:#FFD700; }
+
+@keyframes slideIn {
+  0%   { transform: translateX(100%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+uploaded_files = st.file_uploader(
+    "📄 Upload PDF Resumes",
+    type=["pdf"],
+    accept_multiple_files=True,
+    help="Upload one or more resumes in PDF format (max 200MB each)."
+)
+
+if uploaded_files:
+    for uploaded_file in uploaded_files:
+        with st.container():
+            st.subheader(f"📄 Original Resume Preview: {uploaded_file.name}")
+
+            try:
+                # ✅ Show PDF preview safely
+                pdf_viewer(
+                    uploaded_file.read(),
+                    key=f"pdf_viewer_{uploaded_file.name}"
+                )
+
+                # Reset pointer so file can be read again later
+                uploaded_file.seek(0)
+
+                # ✅ Extract text safely
+                resume_text = safe_extract_text(uploaded_file)
+
+                if resume_text:
+                    st.markdown(f"""
+                    <div class='slide-message success-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                        ✅ Successfully processed <b>{uploaded_file.name}</b>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    # 🔹 Continue with ATS scoring, bias detection, etc. here
+                else:
+                    st.markdown(f"""
+                    <div class='slide-message warn-msg'>
+                        ⚠️ <b>{uploaded_file.name}</b> does not contain valid resume text.
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            except Exception as e:
+                st.markdown(f"""
+                <div class='slide-message error-msg'>
+                    ❌ Could not display or process <b>{uploaded_file.name}</b>: {e}
+                </div>
+                """, unsafe_allow_html=True)
+
+
+
 
 
 import os
@@ -1999,6 +2345,11 @@ from db_manager import insert_candidate, detect_domain_from_title_and_descriptio
 from llm_manager import call_llm  # ensure this calls your LLM
 
 # ✅ Initialize state
+
+import time
+import os
+
+# Initialize session state
 if "resume_data" not in st.session_state:
     st.session_state.resume_data = []
 
@@ -2009,136 +2360,296 @@ resume_data = st.session_state.resume_data
 
 # ✏️ Resume Evaluation Logic
 if uploaded_files and job_description:
-    with st.spinner("✨ Creating magic for you... Hold on a minute!"):
-        all_text = []
+    all_text = []
 
-        for uploaded_file in uploaded_files:
-            if uploaded_file.name in st.session_state.processed_files:
-                continue
+    for uploaded_file in uploaded_files:
+        if uploaded_file.name in st.session_state.processed_files:
+            continue
 
-            # ✅ Save uploaded file
-            file_path = os.path.join(working_dir, uploaded_file.name)
-            with open(file_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())
+        # ✅ Placeholder for cinematic scanning animation
+        scanner_placeholder = st.empty()
 
-            # ✅ Extract text from PDF
-            text = extract_text_from_pdf(file_path)
-            if not text:
-                st.warning(f"⚠️ Could not extract text from {uploaded_file.name}. Skipping.")
-                continue
+        HERO_HTML_SCANNER = f"""
+        <style>
+        .scanner-container {{ 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100%;   /* instead of 100vh */
+            padding: 20px;
+            flex-direction: column; 
+            background: #0b0c10;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; 
+            z-index: 9999;
+        }}
+        .resume-doc {{ 
+            width: 300px;   /* reduced size */
+            height: 360px;  /* reduced size */
+            background: linear-gradient(180deg, #f9f9f9, #e3e3e3); 
+            border-radius: 18px; 
+            position: relative; 
+            overflow: hidden; 
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 25px rgba(56,189,248,0.35);
+            padding-top: 60px;
+            text-align: center;
+            transform: scale(1);
+        }}
+        .resume-doc::before {{
+            content: "👤";
+            font-size: 40px;
+            display: block;
+            margin-bottom: 10px;
+        }}
+        .job-title {{
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            font-family: 'Orbitron', sans-serif;
+            animation: pulseTitle 1.8s ease-in-out infinite;
+        }}
+        @keyframes pulseTitle {{
+            0%, 100% {{ color: #333; text-shadow: none; }}
+            50% {{ color: #38bdf8; text-shadow: 0 0 10px #38bdf8; }}
+        }}
+        .resume-body {{
+            margin-top: 20px;
+            font-size: 13px;
+            color: #444;
+            line-height: 1.4em;
+            text-align: left;
+            padding: 0 15px;
+        }}
+        .scanner-line {{ 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 18px; 
+            background: rgba(56,189,248,0.7); 
+            animation: scan 3s linear infinite; 
+            box-shadow: 0 0 18px rgba(56,189,248,0.8), 0 0 25px rgba(56,189,248,0.6);
+        }}
+        @keyframes scan {{ 
+            0% {{ top: 0; }} 
+            100% {{ top: 360px; }}  /* match new doc height */
+        }}
+        .scan-text {{ 
+            margin-top: 25px; 
+            font-family: 'Orbitron', sans-serif; 
+            font-weight: 700; 
+            font-size: 20px; 
+            color: #38bdf8; 
+            text-shadow: 0 0 10px rgba(56,189,248,0.7), 0 0 20px rgba(56,189,248,0.4);
+        }}
+        /* ✅ Responsive for small screens */
+        @media (max-width: 480px) {{
+            .resume-doc {{
+                width: 240px;
+                height: 300px;
+            }}
+            .job-title {{ font-size: 16px; }}
+            .scan-text {{ font-size: 16px; }}
+        }}
+        </style>
+        <div class="scanner-container">
+            <div class="resume-doc">
+                <div class="scanner-line"></div>
+                <div class="job-title">{job_title}</div>
+                <div class="resume-body">
+                    • Scanning candidate information...<br>
+                    • Extracting skills and experience...<br>
+                    • Matching keywords with JD...<br>
+                    • Evaluating ATS score...
+                </div>
+            </div>
+            <div class="scan-text">Scanning Resume...</div>
+        </div>
+        """
+        scanner_placeholder.markdown(HERO_HTML_SCANNER, unsafe_allow_html=True)
 
-            all_text.append(" ".join(text))
-            full_text = " ".join(text)
+        # ✅ Save uploaded file
+        file_path = os.path.join(working_dir, uploaded_file.name)
+        with open(file_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
 
-            # ✅ Bias detection
-            bias_score, masc_count, fem_count, detected_masc, detected_fem = detect_bias(full_text)
+        # ✅ Simulate scanning delay
+        time.sleep(4)
 
-            # ✅ Rewrite and highlight gender-biased words
-            highlighted_text, rewritten_text, _, _, _, _ = rewrite_and_highlight(
-                full_text, replacement_mapping, user_location
-            )
+        # ✅ Extract text from PDF
+        text = extract_text_from_pdf(file_path)
+        if not text:
+            st.warning(f"⚠️ Could not extract text from {uploaded_file.name}. Skipping.")
+            scanner_placeholder.empty()
+            continue
 
-            # ✅ LLM-based ATS Evaluation
-            ats_result, ats_scores = ats_percentage_score(
-                resume_text=full_text,
-                job_description=job_description,
-                logic_profile_score=None,
-                edu_weight=edu_weight,
-                exp_weight=exp_weight,
-                skills_weight=skills_weight,
-                lang_weight=lang_weight,
-                keyword_weight=keyword_weight
-            )
+        all_text.append(" ".join(text))
+        full_text = " ".join(text)
 
-            # ✅ Extract structured ATS values
-            candidate_name = ats_scores.get("Candidate Name", "Not Found")
-            ats_score = ats_scores.get("ATS Match %", 0)
-            edu_score = ats_scores.get("Education Score", 0)
-            exp_score = ats_scores.get("Experience Score", 0)
-            skills_score = ats_scores.get("Skills Score", 0)
-            lang_score = ats_scores.get("Language Score", 0)
-            keyword_score = ats_scores.get("Keyword Score", 0)
-            formatted_score = ats_scores.get("Formatted Score", "N/A")
-            fit_summary = ats_scores.get("Final Thoughts", "N/A")
-            language_analysis_full = ats_scores.get("Language Analysis", "N/A")
+        # ✅ Bias detection
+        bias_score, masc_count, fem_count, detected_masc, detected_fem = detect_bias(full_text)
 
-            missing_keywords_raw = ats_scores.get("Missing Keywords", "N/A")
-            missing_skills_raw = ats_scores.get("Missing Skills", "N/A")
-            missing_keywords = [kw.strip() for kw in missing_keywords_raw.split(",") if kw.strip()] if missing_keywords_raw != "N/A" else []
-            missing_skills = [sk.strip() for sk in missing_skills_raw.split(",") if sk.strip()] if missing_skills_raw != "N/A" else []
+        # ✅ Rewrite and highlight gender-biased words
+        highlighted_text, rewritten_text, _, _, _, _ = rewrite_and_highlight(
+            full_text, replacement_mapping, user_location
+        )
 
-            domain = detect_domain_from_title_and_description(job_title, job_description)
+        # ✅ LLM-based ATS Evaluation
+        ats_result, ats_scores = ats_percentage_score(
+            resume_text=full_text,
+            job_description=job_description,
+            logic_profile_score=None,
+            edu_weight=edu_weight,
+            exp_weight=exp_weight,
+            skills_weight=skills_weight,
+            lang_weight=lang_weight,
+            keyword_weight=keyword_weight
+        )
 
-            bias_flag = "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair"
-            ats_flag = "⚠️ Low ATS" if ats_score < 50 else "✅ Good ATS"
+        # ✅ Extract structured ATS values
+        candidate_name = ats_scores.get("Candidate Name", "Not Found")
+        ats_score = ats_scores.get("ATS Match %", 0)
+        edu_score = ats_scores.get("Education Score", 0)
+        exp_score = ats_scores.get("Experience Score", 0)
+        skills_score = ats_scores.get("Skills Score", 0)
+        lang_score = ats_scores.get("Language Score", 0)
+        keyword_score = ats_scores.get("Keyword Score", 0)
+        formatted_score = ats_scores.get("Formatted Score", "N/A")
+        fit_summary = ats_scores.get("Final Thoughts", "N/A")
+        language_analysis_full = ats_scores.get("Language Analysis", "N/A")
 
-            # 📊 ATS Chart
-            ats_df = pd.DataFrame({
-                'Component': ['Education', 'Experience', 'Skills', 'Language', 'Keywords'],
-                'Score': [edu_score, exp_score, skills_score, lang_score, keyword_score]
-            })
-            ats_chart = alt.Chart(ats_df).mark_bar().encode(
-                x=alt.X('Component', sort=None),
-                y=alt.Y('Score', scale=alt.Scale(domain=[0, 50])),
-                color='Component',
-                tooltip=['Component', 'Score']
-            ).properties(
-                title="ATS Evaluation Breakdown",
-                width=600,
-                height=300
-            )
+        missing_keywords_raw = ats_scores.get("Missing Keywords", "N/A")
+        missing_skills_raw = ats_scores.get("Missing Skills", "N/A")
+        missing_keywords = [kw.strip() for kw in missing_keywords_raw.split(",") if kw.strip()] if missing_keywords_raw != "N/A" else []
+        missing_skills = [sk.strip() for sk in missing_skills_raw.split(",") if sk.strip()] if missing_skills_raw != "N/A" else []
 
-            # ✅ Store everything in session state
-            st.session_state.resume_data.append({
-                "Resume Name": uploaded_file.name,
-                "Candidate Name": candidate_name,
-                "ATS Report": ats_result,
-                "ATS Match %": ats_score,
-                "Formatted Score": formatted_score,
-                "Education Score": edu_score,
-                "Experience Score": exp_score,
-                "Skills Score": skills_score,
-                "Language Score": lang_score,
-                "Keyword Score": keyword_score,
-                "Education Analysis": ats_scores.get("Education Analysis", ""),
-                "Experience Analysis": ats_scores.get("Experience Analysis", ""),
-                "Skills Analysis": ats_scores.get("Skills Analysis", ""),
-                "Language Analysis": language_analysis_full,
-                "Keyword Analysis": ats_scores.get("Keyword Analysis", ""),
-                "Final Thoughts": fit_summary,
-                "Missing Keywords": missing_keywords,
-                "Missing Skills": missing_skills,
-                "Bias Score (0 = Fair, 1 = Biased)": bias_score,
-                "Bias Status": bias_flag,
-                "Masculine Words": masc_count,
-                "Feminine Words": fem_count,
-                "Detected Masculine Words": detected_masc,
-                "Detected Feminine Words": detected_fem,
-                "Text Preview": full_text[:300] + "...",
-                "Highlighted Text": highlighted_text,
-                "Rewritten Text": rewritten_text,
-                "Domain": domain
-            })
+        domain = detect_domain_from_title_and_description(job_title, job_description)
 
-            insert_candidate(
-                (
-                    uploaded_file.name,
-                    candidate_name,
-                    ats_score,
-                    edu_score,
-                    exp_score,
-                    skills_score,
-                    lang_score,
-                    keyword_score,
-                    bias_score
-                ),
-                job_title=job_title,
-                job_description=job_description
-            )
+        bias_flag = "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair"
+        ats_flag = "⚠️ Low ATS" if ats_score < 50 else "✅ Good ATS"
 
-            st.session_state.processed_files.add(uploaded_file.name)
+        # ✅ Store everything in session state
+        st.session_state.resume_data.append({
+            "Resume Name": uploaded_file.name,
+            "Candidate Name": candidate_name,
+            "ATS Report": ats_result,
+            "ATS Match %": ats_score,
+            "Formatted Score": formatted_score,
+            "Education Score": edu_score,
+            "Experience Score": exp_score,
+            "Skills Score": skills_score,
+            "Language Score": lang_score,
+            "Keyword Score": keyword_score,
+            "Education Analysis": ats_scores.get("Education Analysis", ""),
+            "Experience Analysis": ats_scores.get("Experience Analysis", ""),
+            "Skills Analysis": ats_scores.get("Skills Analysis", ""),
+            "Language Analysis": language_analysis_full,
+            "Keyword Analysis": ats_scores.get("Keyword Analysis", ""),
+            "Final Thoughts": fit_summary,
+            "Missing Keywords": missing_keywords,
+            "Missing Skills": missing_skills,
+            "Bias Score (0 = Fair, 1 = Biased)": bias_score,
+            "Bias Status": bias_flag,
+            "Masculine Words": masc_count,
+            "Feminine Words": fem_count,
+            "Detected Masculine Words": detected_masc,
+            "Detected Feminine Words": detected_fem,
+            "Text Preview": full_text[:300] + "...",
+            "Highlighted Text": highlighted_text,
+            "Rewritten Text": rewritten_text,
+            "Domain": domain
+        })
 
-    st.success("✅ All resumes processed!")
+        insert_candidate(
+            (
+                uploaded_file.name,
+                candidate_name,
+                ats_score,
+                edu_score,
+                exp_score,
+                skills_score,
+                lang_score,
+                keyword_score,
+                bias_score
+            ),
+            job_title=job_title,
+            job_description=job_description
+        )
+
+        st.session_state.processed_files.add(uploaded_file.name)
+
+        # ✅ Show full-screen success overlay
+        SUCCESS_HTML = """
+        <style>
+        .success-fullpage {
+            position: fixed;
+            top:0; left:0;
+            width:100%; height:100%;
+            background:#0b0c10;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            flex-direction:column;
+            z-index:9999;
+        }
+        .scope {
+            width: 160px;
+            height: 160px;
+            border: 2px solid #38bdf8;
+            border-radius: 50%;
+            position: relative;
+            background: radial-gradient(circle, rgba(56,189,248,0.1) 30%, rgba(0,0,0,0.85) 100%);
+            box-shadow: 0 0 12px rgba(56,189,248,0.5), inset 0 0 12px rgba(56,189,248,0.5);
+            overflow: hidden;
+            animation: pulseScope 2s infinite;
+        }
+        @keyframes pulseScope {
+            0%,100% { box-shadow: 0 0 12px rgba(56,189,248,0.5), inset 0 0 12px rgba(56,189,248,0.5); }
+            50% { box-shadow: 0 0 22px rgba(56,189,248,0.9), inset 0 0 18px rgba(56,189,248,0.9); }
+        }
+        .scope-line {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 1px;
+            height: 100%;
+            background: rgba(56,189,248,0.7);
+            transform-origin: bottom center;
+            animation: rotateLine 1.5s linear infinite;
+        }
+        @keyframes rotateLine {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .scope-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            color: #38bdf8;
+            text-shadow: 0 0 8px #38bdf8;
+            text-align:center;
+        }
+        </style>
+        <div class="success-fullpage">
+            <div class="scope">
+                <div class="scope-line"></div>
+                <div class="scope-text">Scanned<br>Successfully</div>
+            </div>
+        </div>
+        """
+        scanner_placeholder.empty()
+        st.markdown(SUCCESS_HTML, unsafe_allow_html=True)
+
+        # ⏳ Short pause, then auto rerun
+        time.sleep(4)
+        st.rerun()
+
+
 
 
 
@@ -2149,7 +2660,7 @@ if uploaded_files and job_description:
         st.session_state.chain = create_chain(st.session_state.vectorstore)
 
 # 🔄 Developer Reset Button
-if st.button("🔄 Reset Resume Upload Memory"):
+if st.button("🔄 Refresh view"):
     st.session_state.processed_files.clear()
     st.session_state.resume_data.clear()
     st.success("✅ Cleared uploaded resume history. You can re-upload now.")
@@ -2520,17 +3031,6 @@ with tab1:
                     )
                     html_report = generate_resume_report_html(resume)
                     
-
-                    
-
-                    st.download_button(
-                        label="📥 Download Full Analysis Report (.html)",
-                        data=html_report,
-                        file_name=f"{resume['Resume Name'].split('.')[0]}_report.html",
-                        mime="text/html",
-                        use_container_width=True,
-                        key=f"download_html_{resume['Resume Name']}"
-                    )
                     pdf_file = html_to_pdf_bytes(html_report)
                     st.download_button(
                     label="📄 Download Full Analysis Report (.pdf)",
@@ -2543,15 +3043,13 @@ with tab1:
 
     else:           
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
-
-
 with tab2:
     st.session_state.active_tab = "Resume Builder"
 
     st.markdown("## 🧾 <span style='color:#336699;'>Advanced Resume Builder</span>", unsafe_allow_html=True)
     st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
-    # 📸 Upload profile photo
+    # 📸 Upload profile photo with enhanced styling
     uploaded_image = st.file_uploader("Upload a Profile Image", type=["png", "jpg", "jpeg"])
 
     profile_img_html = ""
@@ -2563,21 +3061,22 @@ with tab2:
         # 🔄 Save to session state for reuse in preview/export
         st.session_state["encoded_profile_image"] = encoded_image
 
-        # 🖼️ Show image preview
+        # 🖼️ Enhanced image preview with modern styling
         profile_img_html = f"""
         <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
             <img src="data:image/png;base64,{encoded_image}" alt="Profile Photo"
                  style="
-                    width: 120px;
-                    height: 120px;
+                    width: 140px;
+                    height: 140px;
                     border-radius: 50%;
                     object-fit: cover;
-                    object-position: top center;
-                    border: 3px solid #4da6ff;
+                    object-position: center;
+                    border: 4px solid #ffffff;
                     box-shadow:
-                        0 0 8px #4da6ff,
-                        0 0 16px #4da6ff,
-                        0 0 24px #4da6ff;
+                        0 0 0 3px #4da6ff,
+                        0 8px 25px rgba(77, 166, 255, 0.3),
+                        0 4px 15px rgba(0, 0, 0, 0.1);
+                    transition: all 0.3s ease;
                 " />
         </div>
         """
@@ -2585,12 +3084,8 @@ with tab2:
     else:
         st.info("📸 Please upload a clear, front-facing profile photo (square or vertical preferred).")
 
-
-    # 🔽 Your form fields continue below this...
-
-
     # Initialize session state
-    fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary", "skills", "languages", "interests","Softskills"]
+    fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary", "skills", "languages", "interests","Softskills","job_title"]
     for f in fields:
         st.session_state.setdefault(f, "")
     st.session_state.setdefault("experience_entries", [{"title": "", "company": "", "duration": "", "description": ""}])
@@ -2611,7 +3106,6 @@ with tab2:
         if st.button("➕ Add Certificate"):
            st.session_state.certificate_links.append({"name": "", "link": "", "duration": "", "description": ""})
 
-
     with st.form("resume_form"):
         st.markdown("### 👤 <u>Personal Information</u>", unsafe_allow_html=True)
         with st.container():
@@ -2626,7 +3120,6 @@ with tab2:
                 st.text_input("🌐 Portfolio", key="portfolio")
                 st.text_input("💼 Job Title", key="job_title")
 
-
         st.markdown("### 📝 <u>Professional Summary</u>", unsafe_allow_html=True)
         st.text_area("Summary", key="summary")
 
@@ -2635,7 +3128,6 @@ with tab2:
         st.text_area("Languages (comma-separated)", key="languages")
         st.text_area("Interests (comma-separated)", key="interests")
         st.text_area("Softskills (comma-separated)", key="Softskills")
-
 
         st.markdown("### 🧱 <u>Work Experience</u>", unsafe_allow_html=True)
         for idx, exp in enumerate(st.session_state.experience_entries):
@@ -2657,35 +3149,33 @@ with tab2:
 
         for idx, proj in enumerate(st.session_state.project_entries):
             with st.expander(f"Project #{idx+1}", expanded=True):
-        # Keys for each project field
-             title_key = f"proj_title_{idx}"
-             tech_key = f"proj_tech_{idx}"
-             duration_key = f"proj_duration_{idx}"
-             desc_key = f"proj_desc_{idx}"
+                # Keys for each project field
+                title_key = f"proj_title_{idx}"
+                tech_key = f"proj_tech_{idx}"
+                duration_key = f"proj_duration_{idx}"
+                desc_key = f"proj_desc_{idx}"
 
-        # Initialize only once if key doesn't exist
-        if title_key not in st.session_state:
-            st.session_state[title_key] = proj["title"]
-        if tech_key not in st.session_state:
-            st.session_state[tech_key] = proj["tech"]
-        if duration_key not in st.session_state:
-            st.session_state[duration_key] = proj["duration"]
-        if desc_key not in st.session_state:
-            st.session_state[desc_key] = proj["description"]
+                # Initialize only once if key doesn't exist
+                if title_key not in st.session_state:
+                    st.session_state[title_key] = proj["title"]
+                if tech_key not in st.session_state:
+                    st.session_state[tech_key] = proj["tech"]
+                if duration_key not in st.session_state:
+                    st.session_state[duration_key] = proj["duration"]
+                if desc_key not in st.session_state:
+                    st.session_state[desc_key] = proj["description"]
 
-        # Inputs (no value=..., only key)
-        st.text_input("Project Title", key=title_key)
-        st.text_input("Tech Stack", key=tech_key)
-        st.text_input("Duration", key=duration_key)
-        st.text_area("Description", key=desc_key)
+                # Inputs (no value=..., only key)
+                st.text_input("Project Title", key=title_key)
+                st.text_input("Tech Stack", key=tech_key)
+                st.text_input("Duration", key=duration_key)
+                st.text_area("Description", key=desc_key)
 
-        # Sync back to project_entries
-        proj["title"] = st.session_state[title_key]
-        proj["tech"] = st.session_state[tech_key]
-        proj["duration"] = st.session_state[duration_key]
-        proj["description"] = st.session_state[desc_key]
-
-
+                # Sync back to project_entries
+                proj["title"] = st.session_state[title_key]
+                proj["tech"] = st.session_state[tech_key]
+                proj["duration"] = st.session_state[duration_key]
+                proj["description"] = st.session_state[desc_key]
 
         st.markdown("### 🔗 Project Links")
         project_links_input = st.text_area("Enter one project link per line:")
@@ -2700,34 +3190,30 @@ with tab2:
                 cert["duration"] = st.text_input(f"Duration", value=cert["duration"], key=f"cert_duration_{idx}")
                 cert["description"] = st.text_area(f"Description", value=cert["description"], key=f"cert_description_{idx}")
 
-
         submitted = st.form_submit_button("📑 Generate Resume")
 
-    
         if submitted:
-         st.success("✅ Resume Generated Successfully! Scroll down to preview or download.")
+            st.success("✅ Resume Generated Successfully! Scroll down to preview or download.")
 
         st.markdown("""
-    <style>
-        .heading-large {
-            font-size: 36px;
-            font-weight: bold;
-            color: #336699;
-        }
-        .subheading-large {
-            font-size: 30px;
-            font-weight: bold;
-            color: #336699;
-        }
-        .tab-section {
-            margin-top: 20px;
-        }
-    </style>
-""", unsafe_allow_html=True)
- 
+        <style>
+            .heading-large {
+                font-size: 36px;
+                font-weight: bold;
+                color: #336699;
+            }
+            .subheading-large {
+                font-size: 30px;
+                font-weight: bold;
+                color: #336699;
+            }
+            .tab-section {
+                margin-top: 20px;
+            }
+        </style>
+        """, unsafe_allow_html=True)
 
-
-    # --- Visual Resume Preview Section ---
+        # --- Visual Resume Preview Section ---
         st.markdown("## 🧾 <span style='color:#336699;'>Resume Preview</span>", unsafe_allow_html=True)
         st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
@@ -2763,71 +3249,66 @@ with tab2:
             for Softskills  in [i.strip() for i in st.session_state["Softskills"].split(",") if i.strip()]:
                st.markdown(f"<div style='margin-left:10px;'>• {Softskills}</div>", unsafe_allow_html=True)   
 
-
         with right:
             st.markdown("<h4 style='color:#336699;'>Summary</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
             summary_text = st.session_state['summary'].replace('\n', '<br>')
             st.markdown(f"<p style='font-size:17px;'>{summary_text}</p>", unsafe_allow_html=True)
 
-
             st.markdown("<h4 style='color:#336699;'>Experience</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
             for exp in st.session_state.experience_entries:
-             if exp["company"] or exp["title"]:
-              st.markdown(f"""
-            <div style='margin-bottom:15px; padding:10px; border-radius:8px;'>
-                <div style='display:flex; justify-content:space-between;'>
-                    <b>🏢 {exp['company']}</b><span style='color:gray;'>📆  {exp['duration']}</span>
-                </div>
-                <div style='font-size:14px;'>💼 <i>{exp['title']}</i></div>
-                <div style='font-size:17px;'>📝 {exp['description']}</div>
-            </div>
-        """, unsafe_allow_html=True)
-
+                if exp["company"] or exp["title"]:
+                    st.markdown(f"""
+                    <div style='margin-bottom:15px; padding:10px; border-radius:8px;'>
+                        <div style='display:flex; justify-content:space-between;'>
+                            <b>🏢 {exp['company']}</b><span style='color:gray;'>📆  {exp['duration']}</span>
+                        </div>
+                        <div style='font-size:14px;'>💼 <i>{exp['title']}</i></div>
+                        <div style='font-size:17px;'>📝 {exp['description']}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
             st.markdown("<h4 style='color:#336699;'>🎓 Education</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
             for edu in st.session_state.education_entries:
-             if edu["institution"] or edu["degree"]:
-              st.markdown(f"""
-            <div style='margin-bottom: 15px; padding: 10px 15px;color: white; border-radius: 8px;'>
-                <div style='display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;'>
-                    <span>🏫 {edu['institution']}</span>
-                    <span style='color: gray;'>📅 {edu['year']}</span>
-                </div>
-                <div style='font-size: 14px; margin-top: 5px;'>🎓 <i>{edu['degree']}</i></div>
-                <div style='font-size: 14px;'>📄 {edu['details']}</div>
-            </div>
-        """, unsafe_allow_html=True)
-
+                if edu["institution"] or edu["degree"]:
+                    st.markdown(f"""
+                    <div style='margin-bottom: 15px; padding: 10px 15px;color: white; border-radius: 8px;'>
+                        <div style='display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;'>
+                            <span>🏫 {edu['institution']}</span>
+                            <span style='color: gray;'>📅 {edu['year']}</span>
+                        </div>
+                        <div style='font-size: 14px; margin-top: 5px;'>🎓 <i>{edu['degree']}</i></div>
+                        <div style='font-size: 14px;'>📄 {edu['details']}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
             st.markdown("<h4 style='color:#336699;'>Projects</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
             for proj in st.session_state.project_entries:
-             st.markdown(f"""
-        <div style='margin-bottom:15px; padding: 10px;'>
-        <strong style='font-size:16px;'>{proj['title']}</strong><br>
-        <span style='font-size:14px;'>🛠️ <strong>Tech Stack:</strong> {proj['tech']}</span><br>
-        <span style='font-size:14px;'>⏳ <strong>Duration:</strong> {proj['duration']}</span><br>
-        <span style='font-size:17px;'>📝 <strong>Description:</strong> {proj['description']}</span>
-    </div>
-    """, unsafe_allow_html=True)
+                st.markdown(f"""
+                <div style='margin-bottom:15px; padding: 10px;'>
+                <strong style='font-size:16px;'>{proj['title']}</strong><br>
+                <span style='font-size:14px;'>🛠️ <strong>Tech Stack:</strong> {proj['tech']}</span><br>
+                <span style='font-size:14px;'>⏳ <strong>Duration:</strong> {proj['duration']}</span><br>
+                <span style='font-size:17px;'>📝 <strong>Description:</strong> {proj['description']}</span>
+                </div>
+                """, unsafe_allow_html=True)
 
-
-
-        if st.session_state.project_links:
+            if st.session_state.project_links:
                 st.markdown("<h4 style='color:#336699;'>Project Links</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
                 for i, link in enumerate(st.session_state.project_links):
                     st.markdown(f"[🔗 Project {i+1}]({link})", unsafe_allow_html=True)
 
-        if st.session_state.certificate_links:
+            if st.session_state.certificate_links:
                 st.markdown("<h4 style='color:#336699;'>Certificates</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
                 
                 for cert in st.session_state.certificate_links:
                     if cert["name"] and cert["link"]:
-                      st.markdown(f"""
-            <div style='display:flex; justify-content:space-between;'>
-                <a href="{cert['link']}" target="_blank"><b>📄 {cert['name']}</b></a><span style='color:gray;'>{cert['duration']}</span>
-            </div>
-            <div style='margin-bottom:10px; font-size:14px;'>{cert['description']}</div>
-        """, unsafe_allow_html=True)
+                        st.markdown(f"""
+                        <div style='display:flex; justify-content:space-between;'>
+                            <a href="{cert['link']}" target="_blank"><b>📄 {cert['name']}</b></a><span style='color:gray;'>{cert['duration']}</span>
+                        </div>
+                        <div style='margin-bottom:10px; font-size:14px;'>{cert['description']}</div>
+                        """, unsafe_allow_html=True)
+
 import re
 
 with tab2:
@@ -3088,15 +3569,23 @@ with tab2:
                 for i, link in enumerate(st.session_state.project_links):
                     st.markdown(f"[🔗 Project {i+1}]({link})", unsafe_allow_html=True)
 
-
-                  
-        
-# SKILLS
+# Enhanced SKILLS with modern pill design
+# Enhanced SKILLS with professional, muted colors
+# Enhanced SKILLS with professional, muted colors
 skills_html = "".join(
     f"""
-    <div style='display:inline-block; background-color:#e6f0fa; color:#333; 
-                padding:8px 16px; margin:6px 6px 6px 0; 
-                border-radius:20px; font-size:15px; font-weight:500;'>
+    <div style='display:inline-block; 
+                background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+                color: #334155; 
+                padding: 10px 18px; 
+                margin: 8px 8px 8px 0; 
+                border-radius: 25px; 
+                font-size: 14px; 
+                font-weight: 600;
+                box-shadow: 0 2px 8px rgba(148, 163, 184, 0.2);
+                transition: all 0.3s ease;
+                text-shadow: none;
+                border: 1px solid rgba(148, 163, 184, 0.3);'>
         {s.strip()}
     </div>
     """
@@ -3104,14 +3593,21 @@ skills_html = "".join(
     if s.strip()
 )
 
-
-
-
+# Enhanced LANGUAGES with soft, professional design
 languages_html = "".join(
     f"""
-    <div style='display:inline-block; background-color:#e6f0fa; color:#333; 
-                padding:8px 16px; margin:6px 6px 6px 0; 
-                border-radius:20px; font-size:15px; font-weight:500;'>
+    <div style='display:inline-block; 
+                background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+                color: #475569; 
+                padding: 10px 18px; 
+                margin: 8px 8px 8px 0; 
+                border-radius: 25px; 
+                font-size: 14px; 
+                font-weight: 600;
+                box-shadow: 0 2px 8px rgba(100, 116, 139, 0.15);
+                transition: all 0.3s ease;
+                text-shadow: none;
+                border: 1px solid rgba(148, 163, 184, 0.3);'>
         {lang.strip()}
     </div>
     """
@@ -3119,13 +3615,21 @@ languages_html = "".join(
     if lang.strip()
 )
 
-
-# INTERESTS
+# Enhanced INTERESTS with subtle colors
 interests_html = "".join(
     f"""
-    <div style='display:inline-block; background-color:#e6f0fa; color:#333; 
-                padding:8px 16px; margin:6px 6px 6px 0; 
-                border-radius:20px; font-size:15px; font-weight:500;'>
+    <div style='display:inline-block; 
+                background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+                color: #0f172a; 
+                padding: 10px 18px; 
+                margin: 8px 8px 8px 0; 
+                border-radius: 25px; 
+                font-size: 14px; 
+                font-weight: 600;
+                box-shadow: 0 2px 8px rgba(14, 165, 233, 0.1);
+                transition: all 0.3s ease;
+                text-shadow: none;
+                border: 1px solid rgba(186, 230, 253, 0.5);'>
         {interest.strip()}
     </div>
     """
@@ -3133,107 +3637,155 @@ interests_html = "".join(
     if interest.strip()
 )
 
-
+# Enhanced SOFT SKILLS with warm but professional styling
 Softskills_html = "".join(
     f"""
-    <div style='display:inline-block; background-color:#eef3f8; color:#1a1a1a; 
-                padding:8px 18px; margin:6px 6px 6px 0; 
-                border-radius:25px; font-size:14.5px; font-family:"Segoe UI", sans-serif; 
-                font-weight:500; box-shadow: 1px 1px 3px rgba(0,0,0,0.05);'>
-        {skill.strip().capitalize()}
+    <div style='display:inline-block; 
+                background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%);
+                color: #451a03; 
+                padding: 10px 20px; 
+                margin: 8px 8px 8px 0; 
+                border-radius: 25px; 
+                font-size: 14px; 
+                font-family: "Segoe UI", sans-serif; 
+                font-weight: 600;
+                box-shadow: 0 2px 8px rgba(217, 119, 6, 0.1);
+                transition: all 0.3s ease;
+                border: 1px solid rgba(254, 215, 170, 0.6);'>
+        {skill.strip().title()}
     </div>
     """
     for skill in st.session_state['Softskills'].split(',')
     if skill.strip()
 )
 
-
-
+# Enhanced EXPERIENCE with professional, subtle design
 experience_html = ""
 for exp in st.session_state.experience_entries:
     if exp["company"] or exp["title"]:
         # Handle paragraphs and single line breaks
         description_lines = [line.strip() for line in exp["description"].strip().split("\n\n")]
         description_html = "".join(
-            f"<div style='margin-bottom: 8px;'>{line.replace(chr(10), '<br>')}</div>"
+            f"<div style='margin-bottom: 10px; line-height: 1.6;'>{line.replace(chr(10), '<br>')}</div>"
             for line in description_lines if line
         )
 
         experience_html += f"""
-<div style='
-    margin-bottom: 20px;
-    padding: 16px 20px;
-    border-radius: 12px;
-    background-color: #dbeaff;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    color: #0a1a33;
-    line-height: 1.35;
-'>
-    <!-- Header Shadow Card -->
-    <div style='
-        background-color: #e6f0ff;
-        border-radius: 8px;
-        padding: 10px 14px;
-        margin-bottom: 12px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    '>
         <div style='
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 600;
-            font-size: 16.5px;
-            margin-bottom: 6px;
-            color: #08244c;
-            width: 100%;
+            margin-bottom: 24px;
+            padding: 20px;
+            border-radius: 12px;
+            background: linear-gradient(145deg, #fafafa 0%, #f4f4f5 100%);
+            box-shadow: 
+                0 4px 12px rgba(0, 0, 0, 0.05),
+                0 1px 3px rgba(0, 0, 0, 0.1);
+            font-family: "Inter", "Segoe UI", sans-serif;
+            color: #374151;
+            line-height: 1.6;
+            border: 1px solid rgba(229, 231, 235, 0.8);
+            position: relative;
+            overflow: hidden;
         '>
-            <div style='display: inline-flex; align-items: center;'>
-                <img src="https://img.icons8.com/ios-filled/50/000000/company.png" style="width:16px; height:16px; margin-right:5px;"/>
-                <span>{exp['company']}</span>
+            <!-- Subtle accent bar -->
+            <div style='
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(90deg, #6b7280, #9ca3af);
+            '></div>
+            
+            <!-- Header Card -->
+            <div style='
+                background: rgba(255, 255, 255, 0.8);
+                border-radius: 8px;
+                padding: 14px 18px;
+                margin-bottom: 12px;
+                border: 1px solid rgba(229, 231, 235, 0.6);
+            '>
+                <div style='
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    font-weight: 700;
+                    font-size: 18px;
+                    margin-bottom: 6px;
+                    color: #1f2937;
+                    width: 100%;
+                '>
+                    <div style='display: flex; align-items: center;'>
+                        <div style='
+                            width: 6px; 
+                            height: 6px; 
+                            background: #6b7280;
+                            border-radius: 50%; 
+                            margin-right: 12px;
+                        '></div>
+                        <span>{exp['company']}</span>
+                    </div>
+                    <div style='
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 6px;
+                        background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+                        color: #374151;
+                        padding: 5px 14px;
+                        border-radius: 16px;
+                        font-size: 14px;
+                        font-weight: 600;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                        border: 1px solid rgba(209, 213, 219, 0.5);
+                    '>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+                        </svg>
+                        <span>{exp['duration']}</span>
+                    </div>
+                </div>
+
+                <div style='
+                    display: flex;
+                    align-items: center;
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #4b5563;
+                '>
+                    <div style='
+                        width: 4px; 
+                        height: 4px; 
+                        background: #6b7280;
+                        border-radius: 50%; 
+                        margin-right: 10px;
+                    '></div>
+                    <span>{exp['title']}</span>
+                </div>
             </div>
-            <div style='display: inline-flex; align-items: center; font-size: 14px;'>
-                <img src="https://img.icons8.com/ios-filled/50/000000/calendar.png" style="width:16px; height:16px; margin-right:5px;"/>
-                <span>{exp['duration']}</span>
+
+            <!-- Description -->
+            <div style='
+                font-size: 15px;
+                font-weight: 500;
+                color: #374151;
+                line-height: 1.7;
+                padding-left: 8px;
+            '>
+                <div style='
+                    border-left: 2px solid #d1d5db;
+                    padding-left: 16px;
+                    margin-left: 8px;
+                '>
+                    {description_html}
+                </div>
             </div>
         </div>
-
-        <div style='
-            display: inline-flex;
-            align-items: center;
-            font-size: 16px;
-            font-weight: 700;
-            color: #0b2545;
-        '>
-            <img src="https://img.icons8.com/ios-filled/50/000000/briefcase.png" style="width:16px; height:16px; margin-right:5px;"/>
-            <span>{exp['title']}</span>
-        </div>
-    </div>
-
-    <!-- Description -->
-    <div style='
-        display: inline-flex;
-        align-items: flex-start;
-        font-size: 15px;
-        font-weight: 500;
-        color: #102a43;
-        line-height: 1.35;
-    '>
-        <img src="https://img.icons8.com/ios-filled/50/000000/task.png" style="width:16px; height:16px; margin-right:5px; margin-top:2px;"/>
-        <div>{description_html}</div>
-    </div>
-</div>
-"""
-
-
+        """
 
 # Convert experience to list if multiple lines
-
 # Escape HTML and convert line breaks
 summary_html = st.session_state['summary'].replace('\n', '<br>')
 
-
-# EDUCATION
+# Enhanced EDUCATION with professional styling
 education_html = ""
 for edu in st.session_state.education_entries:
     if edu.get("institution") or edu.get("details"):
@@ -3243,56 +3795,112 @@ for edu in st.session_state.education_entries:
             if isinstance(degree_val, list):
                 degree_val = ", ".join(degree_val)
             degree_text = f"""
-            <div style='display: inline-flex; align-items: center; font-size: 14px; color: #273c75; margin-bottom: 6px;'>
-                <img src="https://img.icons8.com/ios-filled/50/000000/graduation-cap.png" style="width:16px; height:16px; margin-right:5px;"/>
+            <div style='
+                display: flex; 
+                align-items: center; 
+                font-size: 15px; 
+                color: #374151; 
+                margin-bottom: 8px;
+                font-weight: 600;
+            '>
+                <div style='
+                    width: 4px; 
+                    height: 4px; 
+                    background: #6b7280;
+                    border-radius: 50%; 
+                    margin-right: 10px;
+                '></div>
                 <b>{degree_val}</b>
             </div>
             """
 
+        # Education Card
         education_html += f"""
         <div style='
-            margin-bottom: 20px;
-            padding: 16px 20px;
+            margin-bottom: 26px;
+            padding: 22px 26px;
             border-radius: 12px;
-            background-color: #e3ebf8;  /* Light Gray Blue */
-            box-shadow: 0 3px 8px rgba(39, 60, 117, 0.15);
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            color: #273c75;  /* Dark Blue */
-            line-height: 1.4;
+            background: linear-gradient(145deg, #f9fafb 0%, #f3f4f6 100%);
+            box-shadow: 
+                0 4px 12px rgba(0, 0, 0, 0.06),
+                0 1px 3px rgba(0, 0, 0, 0.08);
+            font-family: "Inter", "Segoe UI", sans-serif;
+            color: #1f2937;
+            line-height: 1.6;
+            border: 1px solid #e5e7eb;
+            position: relative;
+            overflow: hidden;
         '>
+            <!-- Subtle accent bar -->
+            <div style='
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(90deg, #6b7280, #9ca3af);
+            '></div>
+
             <div style='
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                font-size: 16px;
+                font-size: 18px;
                 font-weight: 700;
-                margin-bottom: 8px;
+                margin-bottom: 12px;
                 width: 100%;
+                color: #111827;
             '>
-                <div style='display: inline-flex; align-items: center;'>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/school.png" style="width:16px; height:16px; margin-right:5px;"/>
+                <div style='display: flex; align-items: center;'>
+                    <div style='
+                        width: 6px; 
+                        height: 6px; 
+                        background: #6b7280;
+                        border-radius: 50%; 
+                        margin-right: 12px;
+                    '></div>
                     <span>{edu.get('institution', '')}</span>
                 </div>
-                <div style='display: inline-flex; align-items: center; font-weight: 500;'>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/calendar.png" style="width:16px; height:16px; margin-right:5px;"/>
-                    <span>{edu.get('year', '')}</span>
+                <div style='
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    background: rgba(255, 255, 255, 0.7);
+                    color: #374151;
+                    padding: 6px 16px;
+                    border-radius: 16px;
+                    font-weight: 600;
+                    font-size: 14px;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    border: 1px solid #d1d5db;
+                '>
+                    <!-- Inline SVG Calendar Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" 
+                        fill="none" viewBox="0 0 24 24" 
+                        stroke="currentColor" width="16" height="16">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 
+                            2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    {edu.get('year', '')}
                 </div>
             </div>
             {degree_text}
-            <div style='display: inline-flex; align-items: flex-start; font-size: 14px; font-style: italic;'>
-                <img src="https://img.icons8.com/ios-filled/50/000000/task.png" style="width:16px; height:16px; margin-right:5px; margin-top:2px;"/>
-                <div>{edu.get('details', '')}</div>
+            <div style='
+                font-size: 14px; 
+                font-style: italic;
+                color: #374151;
+                line-height: 1.6;
+                padding-left: 18px;
+                border-left: 2px solid #9ca3af;
+            '>
+                {edu.get('details', '')}
             </div>
         </div>
         """
 
 
-
-
-
-
-# PROJECTS
-# PROJECTS
+# Enhanced PROJECTS with professional card design
 projects_html = ""
 for proj in st.session_state.project_entries:
     if proj.get("title") or proj.get("description"):
@@ -3300,84 +3908,216 @@ for proj in st.session_state.project_entries:
         if isinstance(tech_val, list):
             tech_val = ", ".join(tech_val)
         tech_text = f"""
-        <div style='display: inline-flex; align-items: center; font-size: 14px; color: #1b2330; margin-bottom: 8px; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);'>
-            <img src="https://img.icons8.com/ios-filled/50/000000/maintenance.png" style="width:16px; height:16px; margin-right:5px;"/>
-            <b>Technologies:</b> {tech_val if tech_val else ''}
+        <div style='
+            display: flex; 
+            align-items: center; 
+            font-size: 14px; 
+            color: #374151; 
+            margin-bottom: 12px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(229, 231, 235, 0.6);
+        '>
+            <div style='
+                width: 4px; 
+                height: 4px; 
+                background: #6b7280;
+                border-radius: 50%; 
+                margin-right: 10px;
+            '></div>
+            <b>Technologies:</b>&nbsp;&nbsp;{tech_val if tech_val else ''}
         </div>
         """ if tech_val else ""
 
         description_items = ""
         if proj.get("description"):
             description_lines = [line.strip() for line in proj["description"].splitlines() if line.strip()]
-            description_items = "".join(f"<li>{line}</li>" for line in description_lines)
+            description_items = "".join(f"<li style='margin-bottom: 6px; line-height: 1.6;'>{line}</li>" for line in description_lines)
 
         projects_html += f"""
         <div style='
-            margin-bottom: 22px;
-            padding: 18px 24px;
-            border-radius: 14px;
-            background-color: #d7e1ec;  /* Deep Blue Slate */
-            box-shadow: 0 4px 10px rgba(27, 35, 48, 0.15);
-            font-family: "Roboto", "Helvetica Neue", Arial, sans-serif;
-            color: #1b2330;  /* Deep Slate Blue */
-            line-height: 1.5;
+            margin-bottom: 30px;
+            padding: 26px;
+            border-radius: 12px;
+            background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+            box-shadow: 
+                0 4px 12px rgba(100, 116, 139, 0.1),
+                0 1px 3px rgba(0, 0, 0, 0.1);
+            font-family: "Inter", "Segoe UI", sans-serif;
+            color: #334155;
+            line-height: 1.7;
+            border: 1px solid rgba(203, 213, 225, 0.5);
+            position: relative;
+            overflow: hidden;
         '>
+            <!-- Subtle accent bar -->
             <div style='
-                font-size: 17px;
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(90deg, #64748b, #94a3b8);
+            '></div>
+
+            <div style='
+                font-size: 19px;
                 font-weight: 700;
-                margin-bottom: 10px;
+                margin-bottom: 16px;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                color: #141a22;
-                text-shadow: 1px 1px 2px rgba(0,0,0,0.15);
+                color: #1e293b;
                 width: 100%;
             '>
-                <div style='display: inline-flex; align-items: center;'>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/laptop.png" style="width:16px; height:16px; margin-right:5px;"/>
+                <div style='display: flex; align-items: center;'>
+                    <div style='
+                        width: 6px; 
+                        height: 6px; 
+                        background: #64748b;
+                        border-radius: 50%; 
+                        margin-right: 12px;
+                    '></div>
                     <span>{proj.get('title', '')}</span>
                 </div>
-                <div style='display: inline-flex; align-items: center; font-weight: 600; font-size: 14.5px;'>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/time.png" style="width:16px; height:16px; margin-right:5px;"/>
-                    <span>{proj.get('duration', '')}</span>
+                <div style='
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+                    color: #334155;
+                    padding: 8px 18px;
+                    border-radius: 16px;
+                    font-weight: 600;
+                    font-size: 14px;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    border: 1px solid rgba(203, 213, 225, 0.6);
+                '>
+                    <!-- Inline SVG Clock Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" 
+                        fill="none" viewBox="0 0 24 24" 
+                        stroke="currentColor" width="16" height="16">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 
+                               9 9 0 0118 0z" />
+                    </svg>
+                    {proj.get('duration', '')}
                 </div>
             </div>
             {tech_text}
-            <div style='display: inline-flex; align-items: flex-start; font-size: 15px; color: #1b2330; text-shadow: 1px 1px 2px rgba(0,0,0,0.15);'>
-                <img src="https://img.icons8.com/ios-filled/50/000000/task.png" style="width:16px; height:16px; margin-right:5px; margin-top:2px;"/>
-                <div>
-                    <b>Description:</b>
-                    <ul style='margin-top: 6px; padding-left: 22px; color: #1b2330;'>
-                        {description_items}
-                    </ul>
+            <div style='
+                font-size: 15px; 
+                color: #334155;
+                background: rgba(255, 255, 255, 0.6);
+                padding: 18px;
+                border-radius: 8px;
+                border: 1px solid rgba(229, 231, 235, 0.6);
+            '>
+                <div style='
+                    font-weight: 600; 
+                    margin-bottom: 12px;
+                    color: #1e293b;
+                    display: flex;
+                    align-items: center;
+                '>
+                    <div style='
+                        width: 4px; 
+                        height: 4px; 
+                        background: #64748b;
+                        border-radius: 50%; 
+                        margin-right: 10px;
+                    '></div>
+                    Description:
                 </div>
+                <ul style='
+                    margin-top: 8px; 
+                    padding-left: 24px; 
+                    color: #334155;
+                    list-style-type: none;
+                '>
+                    {description_items}
+                </ul>
             </div>
         </div>
         """
 
 
-
-
-
-# PROJECT LINKS
+# Enhanced PROJECT LINKS with professional styling
 project_links_html = ""
 if st.session_state.project_links:
-    project_links_html = "<h4 class='section-title'>Project Links</h4><hr>" + "".join(
-        f'''
-        <p>
-            <img src="https://img.icons8.com/ios-filled/50/000000/link.png" style="width:16px; height:16px; vertical-align:middle; margin-right:5px;"/>
-            <a href="{link}">Project {i+1}</a>
-        </p>
-        '''
+    project_links_html = """
+    <div style='margin-bottom: 20px;'>
+        <h4 class='section-title' style='
+            color: #374151;
+            font-size: 20px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            padding-bottom: 4px;
+        '>
+            <div style='
+                width: 6px; 
+                height: 6px; 
+                background: #6b7280;
+                border-radius: 50%; 
+                margin-right: 12px;
+            '></div>
+            Project Links
+        </h4>
+    </div>
+    """ + "".join(
+        f"""
+        <div style='
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            padding: 14px 20px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(209, 213, 219, 0.6);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        '>
+            <div style='
+                width: 4px; 
+                height: 4px; 
+                background: #6b7280;
+                border-radius: 50%; 
+                display: inline-block;
+                margin-right: 12px;
+                vertical-align: middle;
+            '></div>
+            <a href="{link}" style='
+                color: #374151; 
+                font-weight: 600; 
+                text-decoration: none;
+                font-size: 15px;
+            '>🔗 Project {i+1}</a>
+        </div>
+        """
         for i, link in enumerate(st.session_state.project_links)
     )
 
-
-
-
+# Enhanced CERTIFICATES with professional design
 certificate_links_html = ""
 if st.session_state.certificate_links:
-    certificate_links_html = "<h4 class='section-title'>Certificates</h4><hr>"
+    certificate_links_html = """
+    <h4 class='section-title' style='
+        color: #374151;
+        font-size: 20px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+    '>
+        <div style='
+            width: 6px; 
+            height: 6px; 
+            background: #6b7280;
+            border-radius: 50%; 
+            margin-right: 12px;
+        '></div>
+        Certificates
+    </h4>
+    """
     for cert in st.session_state.certificate_links:
         if cert["name"] and cert["link"]:
             description = cert.get('description', '').replace('\n', '<br>')
@@ -3387,65 +4127,115 @@ if st.session_state.certificate_links:
 
             card_html = f"""
             <div style='
-                background-color: #f9fbe7;  /* Green-Yellow pastel */
-                padding: 20px 24px;
-                border-radius: 16px;
-                margin-bottom: 22px;
-                box-shadow: 0 4px 14px rgba(34, 60, 80, 0.15);
-                font-family: "Poppins", "Segoe UI", sans-serif;
-                color: #1a1a1a;
+                background: linear-gradient(145deg, #f9fafb 0%, #f3f4f6 100%);
+                padding: 24px 28px;
+                border-radius: 12px;
+                margin-bottom: 26px;
+                box-shadow: 
+                    0 4px 12px rgba(107, 114, 128, 0.08),
+                    0 1px 3px rgba(0, 0, 0, 0.08);
+                font-family: "Inter", "Segoe UI", sans-serif;
+                color: #374151;
                 position: relative;
-                line-height: 1.6;
+                line-height: 1.7;
+                border: 1px solid rgba(209, 213, 219, 0.6);
+                overflow: hidden;
             '>
-                <!-- Duration Top Right -->
+                <!-- Accent bar -->
                 <div style='
                     position: absolute;
-                    top: 18px;
-                    right: 24px;
-                    font-size: 13.5px;
-                    font-weight: 600;
-                    color: #37474f;
-                    text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.15);
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 3px;
+                    background: linear-gradient(90deg, #6b7280, #9ca3af);
+                '></div>
 
-                    background-color: #fffde7;  /* pastel yellow */
-                    padding: 4px 12px;
-                    border-radius: 14px;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+                <!-- Duration Badge -->
+                <div style='
+                    position: absolute;
+                    top: 20px;
+                    right: 28px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: #374151;
+                    background: linear-gradient(135deg, #ffffff, #f9fafb);
+                    padding: 8px 14px;
+                    border-radius: 16px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+                    border: 1px solid rgba(209, 213, 219, 0.6);
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
                 '>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/time.png" style="width:14px; height:14px; vertical-align:middle; margin-right:4px;"/>
+                    <!-- Inline SVG clock icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" 
+                        fill="none" viewBox="0 0 24 24" 
+                        stroke="currentColor" width="14" height="14">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z"/>
+                    </svg>
                     {duration}
                 </div>
 
                 <!-- Certificate Title -->
                 <div style='
-                    font-size: 17px;
+                    font-size: 18px;
                     font-weight: 700;
-                    color: #263238;
-                    margin-bottom: 8px;
-                    text-shadow: 0.5px 0.5px 1.5px rgba(0, 0, 0, 0.1);
+                    color: #111827;
+                    margin-bottom: 12px;
+                    margin-right: 120px;
+                    display: flex;
+                    align-items: center;
                 '>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/certificate.png" style="width:16px; height:16px; vertical-align:middle; margin-right:5px;"/>
+                    <div style='
+                        width: 6px; 
+                        height: 6px; 
+                        background: #6b7280;
+                        border-radius: 50%; 
+                        margin-right: 12px;
+                    '></div>
                     <a href="{link}" target="_blank" style='
-                        color: #263238;
+                        color: #111827;
                         text-decoration: none;
+                        transition: color 0.3s ease;
                     '>{name}</a>
                 </div>
 
                 <!-- Description -->
                 <div style='
                     font-size: 15px;
-                    color: #37474f;
-                    margin-top: 6px;
-                    text-shadow: 0 0 1px rgba(0, 0, 0, 0.08);
+                    color: #374151;
+                    background: rgba(255, 255, 255, 0.8);
+                    padding: 16px;
+                    border-radius: 8px;
+                    border: 1px solid rgba(209, 213, 219, 0.6);
+                    line-height: 1.6;
                 '>
-                    <img src="https://img.icons8.com/ios-filled/50/000000/task.png" style="width:16px; height:16px; vertical-align:middle; margin-right:5px;"/>
-                    {description}
+                    <div style='
+                        display: flex;
+                        align-items: flex-start;
+                        margin-bottom: 8px;
+                    '>
+                        <div style='
+                            width: 4px; 
+                            height: 4px; 
+                            background: #6b7280;
+                            border-radius: 50%; 
+                            margin-right: 12px;
+                            margin-top: 8px;
+                            flex-shrink: 0;
+                        '></div>
+                        <div>{description}</div>
+                    </div>
                 </div>
             </div>
             """
             certificate_links_html += card_html
 
 
+# The rest of your HTML content remains the same...
+# Just update the main header gradient to be more professional:
 
 html_content = f"""
 <!DOCTYPE html>
@@ -3453,159 +4243,285 @@ html_content = f"""
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{st.session_state['name']} - Resume</title>
+    <title>{st.session_state['name']} - Professional Resume</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        * {{
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }}
+        
         body {{
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            color: #2f2f2f;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: #1a202c;
+            background: #ffffff;
+            min-height: 100vh;
         }}
-        h2 {{
-            font-size: 32px;
-            margin: 0;
-            color: #336699;
-        }}
-        h4 {{
-            font-size: 24px;
-            margin: 0;
-            color: #336699;
-        }}
-        a {{
-            color: #007acc;
-            text-decoration: none;
-        }}
-        a:hover {{
-            text-decoration: underline;
-        }}
-        hr {{
-            border: none;
-            border-top: 2px solid #bbb;
-            margin: 20px 0;
-        }}
-        .container {{
-            display: table;
+        
+        .resume-container {{
             width: 100%;
+            min-height: 100vh;
+            background: #ffffff;
         }}
-        .left, .right {{
-            display: table-cell;
-            vertical-align: top;
+        
+        .resume-container::before {{
+            content: '';
+            display: block;
+            height: 4px;
+            background: linear-gradient(90deg, #6b7280, #9ca3af);
         }}
-        .left {{
-            width: 30%;
-            border-right: 2px solid #ccc;
-            padding-right: 20px;
+        
+        .header-section {{
+            background: #f8fafc;
+            padding: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
         }}
-        .right {{
-            width: 70%;
-            padding-left: 20px;
+        
+        .name-title {{
+            flex: 1;
         }}
-        .icon {{
-            width: 16px;
-            height: 16px;
-            margin-right: 6px;
+        
+        .name-title h1 {{
+            font-size: 42px;
+            font-weight: 800;
+            color: #1a202c;
+            margin-bottom: 8px;
         }}
-        .contact-row {{
+        
+        .name-title h2 {{
+            font-size: 24px;
+            font-weight: 600;
+            color: #4a5568;
+            margin: 0;
+        }}
+        
+        .profile-image {{
+            flex-shrink: 0;
+            margin-left: 40px;
+        }}
+        
+        .main-content {{
+            display: flex;
+            min-height: 800px;
+        }}
+        
+        .sidebar {{
+            width: 350px;
+            background: #f7fafc;
+            padding: 40px 30px;
+            border-right: 1px solid #e2e8f0;
+        }}
+        
+        .main-section {{
+            flex: 1;
+            padding: 40px;
+            background: #ffffff;
+        }}
+        
+        .contact-info {{
+            margin-bottom: 40px;
+        }}
+        
+        .contact-item {{
             display: flex;
             align-items: center;
-            margin-bottom: 5px;
+            margin-bottom: 12px;
+            padding: 8px 0;
         }}
+        
+        .contact-icon {{
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            opacity: 0.8;
+        }}
+        
+        .contact-item span, .contact-item a {{
+            font-size: 14px;
+            color: #4a5568;
+            text-decoration: none;
+            font-weight: 500;
+        }}
+        
+        .contact-item a:hover {{
+            color: #6b7280;
+            transition: color 0.3s ease;
+        }}
+        
         .section-title {{
-            color: #336699;
-            margin-top: 30px;
-            margin-bottom: 5px;
+            font-size: 22px;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 35px 0 15px 0;
+        }}
+        
+        .section-content {{
+            margin-bottom: 30px;
+        }}
+        
+        .summary-text {{
+            font-size: 16px;
+            line-height: 1.8;
+            color: #4a5568;
+            background: #f8fafc;
+            padding: 25px;
+            border-radius: 8px;
+            border-left: 3px solid #9ca3af;
+        }}
+        
+        @media (max-width: 768px) {{
+            .main-content {{
+                flex-direction: column;
+            }}
+            
+            .sidebar {{
+                width: 100%;
+            }}
+            
+            .header-section {{
+                flex-direction: column;
+                text-align: center;
+            }}
+            
+            .profile-image {{
+                margin: 20px 0 0 0;
+            }}
+            
+            .name-title h1 {{
+                font-size: 32px;
+            }}
+        }}
+        
+        @media (max-width: 480px) {{
+            .header-section, .sidebar, .main-section {{
+                padding: 20px;
+            }}
         }}
     </style>
 </head>
 <body>
-
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <div>
-            <h2>{st.session_state['name']}</h2>
-            <h4>{st.session_state['job_title']}</h4>
-        </div>
-        <div>
-            {profile_img_html}
-        </div>
-    </div>
-    <hr>
-
-    <div class="container">
-        <div class="left">
-            <div class="contact-row">
-                <img src="https://img.icons8.com/ios-filled/50/000000/marker.png" class="icon"/>
-                <span>{st.session_state['location']}</span>
+    <div class="resume-container">
+        <div class="header-section">
+            <div class="name-title">
+                <h1>{st.session_state['name']}</h1>
+                <h2>{st.session_state['job_title']}</h2>
             </div>
-            <div class="contact-row">
-                <img src="https://img.icons8.com/ios-filled/50/000000/phone.png" class="icon"/>
-                <span>{st.session_state['phone']}</span>
+            <div class="profile-image">
+                {profile_img_html}
             </div>
-            <div class="contact-row">
-                <img src="https://img.icons8.com/ios-filled/50/000000/email.png" class="icon"/>
-                <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a>
-            </div>
-            <div class="contact-row">
-                <img src="https://img.icons8.com/ios-filled/50/000000/linkedin.png" class="icon"/>
-                <a href="{st.session_state['linkedin']}">LinkedIn</a>
-            </div>
-            <div class="contact-row">
-                <img src="https://img.icons8.com/ios-filled/50/000000/domain.png" class="icon"/>
-                <a href="{st.session_state['portfolio']}">Portfolio</a>
-            </div>
-
-            <h4 class="section-title">Skills</h4>
-            <hr>
-            {skills_html}
-
-            <h4 class="section-title">Languages</h4>
-            <hr>
-            {languages_html}
-
-            <h4 class="section-title">Interests</h4>
-            <hr>
-            {interests_html}
-
-            <h4 class="section-title">Softskills</h4>
-            <hr>
-            {Softskills_html}
         </div>
 
-        <div class="right">
-            <h4 class="section-title">Summary</h4>
-            <hr>
-            <p>{summary_html}</p>
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span>{st.session_state['location']}</span>
+                    </div>
+                    <div class="contact-item">
+                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path>
+                        </svg>
+                        <span>{st.session_state['phone']}</span>
+                    </div>
+                    <div class="contact-item">
+                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                        </svg>
+                        <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a>
+                    </div>
+                    <div class="contact-item">
+                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                        </svg>
+                        <a href="{st.session_state['linkedin']}" target="_blank">LinkedIn</a>
+                    </div>
+                    <div class="contact-item">
+                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.498-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z" clip-rule="evenodd"></path>
+                        </svg>
+                        <a href="{st.session_state['portfolio']}" target="_blank">Portfolio</a>
+                    </div>
+                </div>
 
-            <h4 class="section-title">Experience</h4>
-            <hr>
-            {experience_html}
+                <div class="section-content">
+                    <h3 class="section-title">Skills</h3>
+                    <div>{skills_html}</div>
+                </div>
 
-            <h4 class="section-title">Education</h4>
-            <hr>
-            {education_html}
+                <div class="section-content">
+                    <h3 class="section-title">Languages</h3>
+                    <div>{languages_html}</div>
+                </div>
 
-            <h4 class="section-title">Projects</h4>
-            <hr>
-            {projects_html}
+                <div class="section-content">
+                    <h3 class="section-title">Interests</h3>
+                    <div>{interests_html}</div>
+                </div>
 
-            {project_links_html}
-            {certificate_links_html}
+                <div class="section-content">
+                    <h3 class="section-title">Soft Skills</h3>
+                    <div>{Softskills_html}</div>
+                </div>
+            </div>
+
+            <div class="main-section">
+                <div class="section-content">
+                    <h3 class="section-title">Professional Summary</h3>
+                    <div class="summary-text">{summary_html}</div>
+                </div>
+
+                <div class="section-content">
+                    <h3 class="section-title">Work Experience</h3>
+                    {experience_html}
+                </div>
+
+                <div class="section-content">
+                    <h3 class="section-title">Education</h3>
+                    {education_html}
+                </div>
+
+                <div class="section-content">
+                    <h3 class="section-title">Projects</h3>
+                    {projects_html}
+                </div>
+
+                <div class="section-content">
+                    {project_links_html}
+                </div>
+
+                <div class="section-content">
+                    {certificate_links_html}
+                </div>
+            </div>
         </div>
     </div>
 </body>
 </html>
 """
 
-from io import BytesIO
 
-# Convert HTML to bytes for download
+from io import BytesIO
+from docx import Document
+
+# Convert Resume HTML to bytes for download
 html_bytes = html_content.encode("utf-8")
 html_file = BytesIO(html_bytes)
 
-# Convert HTML to PDF using XHTML2PDF-compatible function
+# Convert Resume HTML to PDF
 pdf_resume_bytes = html_to_pdf_bytes(html_content)
 
 with tab2:
     # ==========================
-    # Resume Download Header (Clean & Professional)
+    # 📥 Resume Download Header
     # ==========================
     st.markdown(
         """
@@ -3613,17 +4529,20 @@ with tab2:
             <h2 style='color: #2f4f6f; font-family: Arial, sans-serif; font-size: 24px;'>
                 📥 Download Your Resume
             </h2>
+            <p style="color:#555; font-size:14px;">
+                Choose your preferred format below
+            </p>
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    col1, col2 = st.columns([1, 1])
+    col1, = st.columns(1)
 
     # HTML Resume Download Button
     with col1:
         st.download_button(
-            label="⬇️ Download as HTML",
+            label="⬇️ Download as Template",
             data=html_file,
             file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.html",
             mime="text/html",
@@ -3631,14 +4550,13 @@ with tab2:
         )
 
     # PDF Resume Download Button
-    with col2:
-        st.download_button(
-            label="⬇️ Download as PDF",
-            data=pdf_resume_bytes,
-            file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.pdf",
-            mime="application/pdf",
-            key="download_resume_pdf"
-        )
+    
+    # ✅ Extra Help Note
+    st.markdown("""
+    ✅ After downloading your HTML resume, you can 
+    <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color:#2f4f6f; text-decoration:none;">
+    convert it to PDF using Sejda's free online tool</a>.
+    """, unsafe_allow_html=True)
 
     # ==========================
     # 📩 Cover Letter Expander
@@ -3647,28 +4565,39 @@ with tab2:
         generate_cover_letter_from_resume_builder()
 
     # ==========================
-    # ✉️ Generated Cover Letter Preview & Downloads
+    # ✉️ Generated Cover Letter Downloads (NO PREVIEW HERE)
     # ==========================
     if "cover_letter" in st.session_state:
-        st.markdown("""
-        <h3 style="color: #003366; margin-top: 30px;">✉️ Generated Cover Letter</h3>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            """
+            <div style="margin-top: 30px; margin-bottom: 20px;">
+                <h3 style="color: #003366;">✉️ Generated Cover Letter</h3>
+                <p style="color:#555; font-size:14px;">
+                    You can download your generated cover letter in multiple formats.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
+        # ✅ Use already-rendered HTML from session (don’t show again)
         styled_cover_letter = st.session_state.get("cover_letter_html", "")
-        st.markdown(styled_cover_letter, unsafe_allow_html=True)
 
         # ✅ Generate PDF from styled HTML
         pdf_file = html_to_pdf_bytes(styled_cover_letter)
 
-        # ✅ Create DOCX function
-        from io import BytesIO
-        from docx import Document
-
-        def create_docx(text, filename="cover_letter.docx"):
+        # ✅ DOCX Generator (preserves line breaks)
+        def create_docx_from_text(text, filename="cover_letter.docx"):
+            bio = BytesIO()
             doc = Document()
             doc.add_heading("Cover Letter", 0)
-            doc.add_paragraph(text)
-            bio = BytesIO()
+
+            for line in text.split("\n"):
+                if line.strip():
+                    doc.add_paragraph(line)
+                else:
+                    doc.add_paragraph("")  # preserve empty lines
+
             doc.save(bio)
             bio.seek(0)
             return bio
@@ -3677,45 +4606,45 @@ with tab2:
         # 📥 Cover Letter Download Buttons
         # ==========================
         st.markdown("""
-        <div style="margin-top: 20px; margin-bottom: 10px;">
+        <div style="margin-top: 25px; margin-bottom: 15px;">
             <strong>⬇️ Download Your Cover Letter:</strong>
         </div>
         """, unsafe_allow_html=True)
 
-        col1, col2 , col3= st.columns(3)
+        col1,col2 = st.columns(2)
         with col1:
             st.download_button(
                 label="📥 Download Cover Letter (.docx)",
-                data=create_docx(st.session_state["cover_letter"]),
+                data=create_docx_from_text(st.session_state["cover_letter"]),
                 file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 key="download_coverletter_docx"
             )
+        
         with col2:
             st.download_button(
-                label="📥 Download Cover Letter (PDF)",
-                data=pdf_file,
-                file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.pdf",
-                mime="application/pdf",
-                key="download_coverletter_pdf"
-            )
-        with col3:
-            st.download_button(
-                label="📥 Download Cover Letter (HTML)",
-                data=st.session_state["cover_letter_html"],
+                label="📥 Download Cover Letter (Template)",
+                data=styled_cover_letter.encode("utf-8"),
                 file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.html",
                 mime="text/html",
                 key="download_coverletter_html"
             )
 
-    st.markdown("""
-    ✅ After downloading your HTML resume, you can [click here to convert it to PDF](https://www.sejda.com/html-to-pdf) using Sejda's free online tool.
-    """)
+        # ✅ Helper note
+        st.markdown("""
+        ✅ If the HTML cover letter doesn’t display properly, you can 
+        <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color:#2f4f6f; text-decoration:none;">
+        convert it to PDF using Sejda's free online tool</a>.
+        """, unsafe_allow_html=True)
 
-# Convert HTML resume to PDF bytes
 
 
 
+
+
+import streamlit as st
+
+# Your existing tab3 code with enhanced CSS styling
 with tab3:
     st.header("🔍 Job Search Across LinkedIn, Naukri, and FoundIt")
 
@@ -3749,43 +4678,55 @@ with tab3:
                 platform = job["title"].split(":")[0].strip().lower()
 
                 if platform == "linkedin":
-                    icon = "🔵 <b style='color:#0e76a8;'>in LinkedIn</b>"
+                    icon = "🔵 <b style='color:#0e76a8;'>LinkedIn</b>"
                     btn_color = "#0e76a8"
+                    platform_gradient = "linear-gradient(135deg, #0e76a8 0%, #1a8cc8 100%)"
                 elif platform == "naukri":
                     icon = "🏢 <b style='color:#ff5722;'>Naukri</b>"
                     btn_color = "#ff5722"
+                    platform_gradient = "linear-gradient(135deg, #ff5722 0%, #ff7043 100%)"
                 elif "foundit" in platform:
                     icon = "🌐 <b style='color:#7c4dff;'>Foundit (Monster)</b>"
                     btn_color = "#7c4dff"
+                    platform_gradient = "linear-gradient(135deg, #7c4dff 0%, #9c64ff 100%)"
                 else:
                     icon = f"📄 <b>{platform.title()}</b>"
                     btn_color = "#00c4cc"
+                    platform_gradient = "linear-gradient(135deg, #00c4cc 0%, #26d0ce 100%)"
 
                 st.markdown(f"""
-<div style="
-    background-color:#1e1e1e;
-    padding:20px;
-    border-radius:15px;
-    margin-bottom:20px;
-    border-left: 5px solid {btn_color};
-    box-shadow: 0 0 15px {btn_color};
+<div class="job-result-card" style="
+    background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+    padding: 25px;
+    border-radius: 20px;
+    margin-bottom: 25px;
+    border-left: 6px solid {btn_color};
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px {btn_color}40;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 ">
-    <div style="font-size:20px; margin-bottom:8px;">{icon}</div>
-    <div style="color:#ffffff; font-size:17px; margin-bottom:15px;">
+    <div class="shimmer-overlay"></div>
+    <div style="font-size: 22px; margin-bottom: 12px; z-index: 2; position: relative;">{icon}</div>
+    <div style="color: #ffffff; font-size: 18px; margin-bottom: 20px; font-weight: 500; z-index: 2; position: relative; line-height: 1.4;">
         {job['title'].split(':')[1].strip()}
     </div>
-    <a href="{job['link']}" target="_blank" style="text-decoration:none;">
-        <button style="
-            background-color:{btn_color};
-            color:white;
-            padding:10px 15px;
-            border:none;
-            border-radius:8px;
-            font-size:15px;
-            cursor:pointer;
-            box-shadow: 0 0 10px {btn_color};
+    <a href="{job['link']}" target="_blank" style="text-decoration: none; z-index: 2; position: relative;">
+        <button class="job-button" style="
+            background: {platform_gradient};
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px {btn_color}50;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         ">
-            🚀 View Jobs on {platform.title()} &rarr;
+            <span style="position: relative; z-index: 2;">🚀 View Jobs on {platform.title()} →</span>
         </button>
     </a>
 </div>
@@ -3793,71 +4734,257 @@ with tab3:
         else:
             st.warning("⚠️ Please enter both the Job Role and Location to perform the search.")
 
-
-    # Inject Glowing CSS for Cards
+    # Enhanced CSS with advanced animations and effects
     st.markdown("""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    /* Global Enhancements */
+    .stApp {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    /* Advanced Glow Animation */
     @keyframes glow {
         0% {
-            box-shadow: 0 0 5px rgba(255,255,255,0.2);
+            box-shadow: 0 0 5px rgba(255,255,255,0.1), 0 0 10px rgba(0,255,255,0.1), 0 0 15px rgba(0,255,255,0.1);
         }
         50% {
-            box-shadow: 0 0 20px rgba(0,255,255,0.6);
+            box-shadow: 0 0 10px rgba(255,255,255,0.2), 0 0 20px rgba(0,255,255,0.4), 0 0 30px rgba(0,255,255,0.3);
         }
         100% {
-            box-shadow: 0 0 5px rgba(255,255,255,0.2);
+            box-shadow: 0 0 5px rgba(255,255,255,0.1), 0 0 10px rgba(0,255,255,0.1), 0 0 15px rgba(0,255,255,0.1);
         }
     }
-
+    
+    /* Shimmer Effect */
+    @keyframes shimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(100%);
+        }
+    }
+    
+    .shimmer-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+        transform: translateX(-100%);
+        animation: shimmer 3s infinite;
+        z-index: 1;
+    }
+    
+    /* Floating Animation */
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-5px);
+        }
+    }
+    
+    /* Pulse Animation */
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.02);
+        }
+    }
+    
+    /* Enhanced Company Cards */
     .company-card {
-        background-color: #1e1e1e;
+        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
         color: #ffffff;
-        border-radius: 15px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        border-radius: 20px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         cursor: pointer;
         text-decoration: none;
         display: block;
-        animation: glow 3s infinite alternate;
+        animation: glow 4s infinite alternate, float 6s ease-in-out infinite;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.1);
     }
-
+    
+    .company-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(0,255,255,0.1) 0%, rgba(255,0,255,0.1) 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 1;
+    }
+    
+    .company-card:hover::before {
+        opacity: 1;
+    }
+    
     .company-card:hover {
-        transform: scale(1.03);
-        box-shadow: 0 0 25px rgba(0, 255, 255, 0.7), 0 0 10px rgba(0, 255, 255, 0.5);
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 30px rgba(0, 255, 255, 0.3);
+        border-color: rgba(0,255,255,0.5);
     }
-
+    
+    /* Job Result Cards */
+    .job-result-card:hover {
+        transform: translateY(-5px) scale(1.01);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.4) !important;
+    }
+    
+    /* Enhanced Buttons */
+    .job-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+        z-index: 1;
+    }
+    
+    .job-button:hover::before {
+        left: 100%;
+    }
+    
+    .job-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+    
+    /* Enhanced Pills */
     .pill {
         display: inline-block;
-        background-color: #333;
-        padding: 6px 12px;
-        border-radius: 999px;
-        margin: 4px 6px 0 0;
+        background: linear-gradient(135deg, #333 0%, #444 100%);
+        padding: 8px 16px;
+        border-radius: 25px;
+        margin: 6px 8px 0 0;
         font-size: 13px;
+        font-weight: 500;
+        border: 1px solid rgba(255,255,255,0.1);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
     }
-
+    
+    .pill::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(0,255,255,0.2) 0%, rgba(255,0,255,0.2) 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .pill:hover::before {
+        opacity: 1;
+    }
+    
+    .pill:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,255,255,0.3);
+    }
+    
+    /* Enhanced Title Headers */
     .title-header {
-        color: white;
-        font-size: 26px;
-        margin-top: 40px;
-        font-weight: bold;
+        color: #ffffff;
+        font-size: 28px;
+        margin-top: 50px;
+        margin-bottom: 30px;
+        font-weight: 700;
+        text-align: center;
+        background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        position: relative;
+        animation: pulse 3s infinite;
     }
-
+    
+    .title-header::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 3px;
+        background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
+        border-radius: 2px;
+    }
+    
+    /* Company Logo Enhancement */
     .company-logo {
-        font-size: 26px;
-        margin-right: 8px;
+        font-size: 28px;
+        margin-right: 12px;
+        filter: drop-shadow(0 0 8px rgba(255,255,255,0.3));
+        animation: float 4s ease-in-out infinite;
     }
-
+    
     .company-header {
-        font-size: 22px;
-        font-weight: bold;
+        font-size: 24px;
+        font-weight: 700;
         display: flex;
         align-items: center;
+        margin-bottom: 15px;
+        position: relative;
+        z-index: 2;
+    }
+    
+    /* Responsive Enhancements */
+    @media (max-width: 768px) {
+        .company-card, .job-result-card {
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .title-header {
+            font-size: 24px;
+        }
+        
+        .company-header {
+            font-size: 20px;
+        }
+    }
+    
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #1e1e1e;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #26d0ce 0%, #9c64ff 100%);
     }
     </style>
     """, unsafe_allow_html=True)
-
 
     # ---------- Featured Companies ----------
     st.markdown("### <div class='title-header'>🏢 Featured Companies</div>", unsafe_allow_html=True)
@@ -3873,8 +5000,8 @@ with tab3:
                 <span class="company-logo">{company.get('emoji', '🏢')}</span>
                 {company['name']}
             </div>
-            <p>{company['description']}</p>
-            {category_tags}
+            <p style="margin-bottom: 15px; line-height: 1.6; position: relative; z-index: 2;">{company['description']}</p>
+            <div style="position: relative; z-index: 2;">{category_tags}</div>
         </a>
         """, unsafe_allow_html=True)
 
@@ -3883,22 +5010,22 @@ with tab3:
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("#### 🚀 Trending Skills")
+        st.markdown("#### <div style='color: #00c4cc; font-size: 20px; font-weight: 600; margin-bottom: 20px;'>🚀 Trending Skills</div>", unsafe_allow_html=True)
         for skill in JOB_MARKET_INSIGHTS["trending_skills"]:
             st.markdown(f"""
             <div class="company-card">
-                <h4>🔧 {skill['name']}</h4>
-                <p>📈 Growth Rate: {skill['growth']}</p>
+                <h4 style="color: #00c4cc; margin-bottom: 10px; position: relative; z-index: 2;">🔧 {skill['name']}</h4>
+                <p style="position: relative; z-index: 2;">📈 Growth Rate: <span style="color: #4ade80; font-weight: 600;">{skill['growth']}</span></p>
             </div>
             """, unsafe_allow_html=True)
 
     with col2:
-        st.markdown("#### 🌍 Top Job Locations")
+        st.markdown("#### <div style='color: #7c4dff; font-size: 20px; font-weight: 600; margin-bottom: 20px;'>🌍 Top Job Locations</div>", unsafe_allow_html=True)
         for loc in JOB_MARKET_INSIGHTS["top_locations"]:
             st.markdown(f"""
             <div class="company-card">
-                <h4>📍 {loc['name']}</h4>
-                <p>💼 Openings: {loc['jobs']}</p>
+                <h4 style="color: #7c4dff; margin-bottom: 10px; position: relative; z-index: 2;">📍 {loc['name']}</h4>
+                <p style="position: relative; z-index: 2;">💼 Openings: <span style="color: #fbbf24; font-weight: 600;">{loc['jobs']}</span></p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -3907,97 +5034,277 @@ with tab3:
     for role in JOB_MARKET_INSIGHTS["salary_insights"]:
         st.markdown(f"""
         <div class="company-card">
-            <h4>💼 {role['role']}</h4>
-            <p>📅 Experience: {role['experience']}</p>
-            <p>💵 Salary Range: {role['range']}</p>
+            <h4 style="color: #10b981; margin-bottom: 10px; position: relative; z-index: 2;">💼 {role['role']}</h4>
+            <p style="margin-bottom: 8px; position: relative; z-index: 2;">📅 Experience: <span style="color: #60a5fa; font-weight: 500;">{role['experience']}</span></p>
+            <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
 with tab4:
     # Inject CSS styles
     st.markdown("""
         <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
         .header-box {
-            background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-            border: 2px solid #00c3ff;
-            padding: 20px;
-            border-radius: 15px;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 25%, #2d3561 50%, #3f4787 75%, #5158ae 100%);
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            position: relative;
+            padding: 25px;
+            border-radius: 20px;
             text-align: center;
-            margin-bottom: 30px;
-            box-shadow: 0 0 15px #00c3ff88;
+            margin-bottom: 35px;
+            box-shadow: 
+                0 8px 32px rgba(0, 195, 255, 0.15),
+                0 4px 16px rgba(0, 195, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .header-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, #00c3ff, #0066cc, #00c3ff, #0066cc);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
+            z-index: -1;
+            border-radius: 20px;
+            padding: 2px;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
 
         .header-box h2 {
-            font-size: 30px;
-            color: #fff;
+            font-size: 32px;
+            color: #ffffff;
             margin: 0;
-            font-weight: bold;
+            font-weight: 700;
+            text-shadow: 
+                0 0 20px rgba(0, 195, 255, 0.5),
+                0 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: -0.5px;
         }
 
         .glow-header {
-            font-size: 22px;
+            font-size: 24px;
             text-align: center;
             color: #00c3ff;
-            text-shadow: 0 0 10px #00c3ff;
-            margin-top: 10px;
-            margin-bottom: 5px;
+            text-shadow: 
+                0 0 20px rgba(0, 195, 255, 0.8),
+                0 0 40px rgba(0, 195, 255, 0.4);
+            margin: 20px 0 15px 0;
             font-weight: 600;
+            letter-spacing: -0.3px;
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.02); }
         }
 
         .stRadio > div {
             flex-direction: row !important;
             justify-content: center !important;
-            gap: 12px;
+            gap: 16px;
+            flex-wrap: wrap;
         }
 
         .stRadio label {
-            background: #1a1a1a;
-            border: 1px solid #00c3ff;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 2px solid #00c3ff;
             color: #00c3ff;
-            padding: 10px 20px;
-            margin: 4px;
-            border-radius: 10px;
+            padding: 14px 24px;
+            margin: 6px;
+            border-radius: 12px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             font-weight: 500;
-            min-width: 180px;
+            min-width: 190px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 4px 15px rgba(0, 195, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .stRadio label::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 195, 255, 0.2), transparent);
+            transition: left 0.5s;
         }
 
         .stRadio label:hover {
-            background-color: #00c3ff33;
+            background: linear-gradient(135deg, #00c3ff15 0%, #00c3ff25 100%);
+            transform: translateY(-2px);
+            box-shadow: 
+                0 8px 25px rgba(0, 195, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .stRadio label:hover::before {
+            left: 100%;
         }
 
         .stRadio input:checked + div > label {
-            background-color: #00c3ff;
-            color: #000;
-            font-weight: bold;
+            background: linear-gradient(135deg, #00c3ff 0%, #0099cc 100%);
+            color: #000000;
+            font-weight: 600;
+            transform: scale(1.05);
+            box-shadow: 
+                0 8px 30px rgba(0, 195, 255, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
 
         .card {
-            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-            border: 2px solid #00c3ff;
-            border-radius: 15px;
-            padding: 15px 20px;
-            margin: 10px 0;
-            box-shadow: 0 0 15px #00c3ff88;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: linear-gradient(135deg, #0f1419 0%, #1a2332 25%, #253447 50%, #30455c 75%, #3b5671 100%);
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin: 12px 0;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 4px 20px rgba(0, 195, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, #00c3ff, #0066cc);
+            z-index: -1;
+            border-radius: 16px;
+            padding: 2px;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            opacity: 0.8;
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s;
         }
 
         .card:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0 25px #00c3ffcc;
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 
+                0 12px 40px rgba(0, 195, 255, 0.25),
+                0 8px 20px rgba(0, 195, 255, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .card:hover::after {
+            left: 100%;
         }
 
         .card a {
             color: #00c3ff;
-            font-weight: bold;
+            font-weight: 600;
             font-size: 16px;
             text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 10px rgba(0, 195, 255, 0.3);
         }
 
         .card a:hover {
             color: #ffffff;
-            text-decoration: underline;
+            text-decoration: none;
+            text-shadow: 
+                0 0 15px rgba(255, 255, 255, 0.5),
+                0 0 30px rgba(0, 195, 255, 0.3);
+            transform: translateX(4px);
+        }
+
+        /* Enhanced selectbox styling */
+        .stSelectbox > div > div {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 2px solid #00c3ff;
+            border-radius: 10px;
+            color: #00c3ff;
+        }
+
+        .stSelectbox > div > div:hover {
+            box-shadow: 0 0 15px rgba(0, 195, 255, 0.3);
+        }
+
+        /* Enhanced subheader styling */
+        .stApp h3 {
+            color: #00c3ff;
+            text-shadow: 0 0 10px rgba(0, 195, 255, 0.5);
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        /* Learning path container */
+        .learning-path-container {
+            text-align: center;
+            margin: 30px 0 20px 0;
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(0, 195, 255, 0.05) 0%, rgba(0, 195, 255, 0.1) 100%);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 195, 255, 0.2);
+        }
+
+        .learning-path-text {
+            color: #00c3ff;
+            font-weight: 600;
+            font-size: 20px;
+            text-shadow: 0 0 15px rgba(0, 195, 255, 0.6);
+            letter-spacing: -0.3px;
+        }
+
+        /* Video container enhancements */
+        .stVideo {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .stVideo:hover {
+            transform: scale(1.02);
+        }
+
+        /* Info message styling */
+        .stAlert {
+            background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%);
+            border: 1px solid rgba(0, 195, 255, 0.3);
+            border-radius: 10px;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -4011,12 +5318,12 @@ with tab4:
 
     # Subheader
     st.markdown('<div class="glow-header">🎓 Explore Career Resources</div>', unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:#ccc;'>Curated courses and videos for your career growth, resume tips, and interview success.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#ccc; font-size: 16px; margin-bottom: 25px;'>Curated courses and videos for your career growth, resume tips, and interview success.</p>", unsafe_allow_html=True)
 
     # Learning path label
     st.markdown("""
-        <div style="text-align:center; margin-top: 25px; margin-bottom: 10px;">
-            <span style="color: #00c3ff; font-weight: bold; font-size: 20px; text-shadow: 0 0 10px #00c3ff;">
+        <div class="learning-path-container">
+            <span class="learning-path-text">
                 🧭 Choose Your Learning Path
             </span>
         </div>
@@ -4107,7 +5414,12 @@ with tab5:
     import matplotlib.pyplot as plt
     import numpy as np
     import streamlit as st
+    from datetime import datetime, timedelta
+    import plotly.express as px
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
 
+    # Import enhanced database manager functions
     from db_manager import (
         get_top_domains_by_score,
         get_resume_count_by_day,
@@ -4118,328 +5430,662 @@ with tab5:
         delete_candidate_by_id,
         get_all_candidates,
         get_candidate_by_id,
+        get_domain_performance_stats,
+        get_daily_ats_stats,
+        get_flagged_candidates,
+        get_database_stats,
+        analyze_domain_transitions,
+        export_to_csv,
+        cleanup_old_records,
+        DatabaseManager
     )
 
-    def draw_clear_pie_chart(df):
-        fig, ax = plt.subplots()
-        wedges, texts, autotexts = ax.pie(
-            df["count"],
-            labels=df["domain"],
-            autopct="%1.1f%%",
-            startangle=90,
-            textprops=dict(color="black", fontsize=8),
-            pctdistance=0.8,
-            labeldistance=1.1
+    # Initialize enhanced database manager
+    @st.cache_resource
+    def get_db_manager():
+        return DatabaseManager()
+
+    db_manager = get_db_manager()
+
+    def create_enhanced_pie_chart(df, values_col, labels_col, title):
+        """Create an enhanced pie chart with better styling"""
+        fig = px.pie(
+            df, 
+            values=values_col, 
+            names=labels_col,
+            title=title,
+            color_discrete_sequence=px.colors.qualitative.Set3
         )
-        ax.axis("equal")
-        for t in autotexts:
-            t.set_fontsize(7)
-            t.set_color("white")
-            t.set_weight("bold")
-        st.pyplot(fig)
+        fig.update_traces(
+            textposition='inside', 
+            textinfo='percent+label',
+            hovertemplate='<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>'
+        )
+        fig.update_layout(
+            showlegend=True,
+            legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.01),
+            margin=dict(t=50, b=50, l=50, r=150)
+        )
+        return fig
+
+    def create_enhanced_bar_chart(df, x_col, y_col, title, orientation='v'):
+        """Create enhanced bar chart with better interactivity"""
+        if orientation == 'v':
+            fig = px.bar(df, x=x_col, y=y_col, title=title, 
+                        color=y_col, color_continuous_scale='viridis')
+            fig.update_xaxes(tickangle=45)
+        else:
+            fig = px.bar(df, x=y_col, y=x_col, title=title, orientation='h',
+                        color=y_col, color_continuous_scale='viridis')
+        
+        fig.update_traces(
+            hovertemplate='<b>%{y if orientation == "v" else x}</b><br>Value: %{x if orientation == "v" else y}<extra></extra>'
+        )
+        fig.update_layout(showlegend=False, margin=dict(t=50, b=50, l=50, r=50))
+        return fig
 
     def load_domain_distribution():
-        df = get_domain_distribution()
-        if not df.empty:
-            total = df["count"].sum()
-            df["percent"] = (df["count"] / total) * 100
-            df = df.sort_values(by="count", ascending=True).reset_index(drop=True)
-        return df
+        """Enhanced domain distribution loading with error handling"""
+        try:
+            df = get_domain_distribution()
+            if not df.empty:
+                df = df.sort_values(by="count", ascending=False).reset_index(drop=True)
+                return df
+        except Exception as e:
+            st.error(f"Error loading domain distribution: {e}")
+        return pd.DataFrame()
 
+    # Enhanced Authentication System
     if "admin_logged_in" not in st.session_state:
         st.session_state.admin_logged_in = False
 
     if not st.session_state.admin_logged_in:
-        st.markdown("## 🔐 Admin Login Required")
-        password = st.text_input("Enter Admin Password", type="password")
-        if st.button("Login"):
-            if password == "lexiadmin123":
-                st.session_state.admin_logged_in = True
-                st.success("✅ Login successful! You now have access to the Admin Dashboard.")
-                st.rerun()
-            else:
-                st.error("❌ Incorrect password.")
+        st.markdown("""
+        <div style='text-align: center; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; margin-bottom: 2rem;'>
+            <h2 style='color: white; margin-bottom: 1rem;'>🔐 Admin Authentication Required</h2>
+            <p style='color: #f0f0f0;'>Please enter your credentials to access the admin dashboard</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            password = st.text_input("🔑 Enter Admin Password", type="password", placeholder="Enter password...")
+            if st.button("🚀 Login", use_container_width=True):
+                if password == "Swagato@2002":
+                    st.session_state.admin_logged_in = True
+                    st.success("✅ Authentication successful! Redirecting to dashboard...")
+                    st.rerun()
+                else:
+                    st.error("❌ Invalid credentials. Please try again.")
         st.stop()
 
-    st.markdown("## 🛡️ <span style='color:#336699;'>Admin Database Panel</span>", unsafe_allow_html=True)
-    col1, col2 = st.columns([1, 1])
+    # Enhanced Header with Database Stats
+    st.markdown("""
+    <div style='text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; margin-bottom: 2rem;'>
+        <h1 style='color: white; margin: 0;'>🛡️ Enhanced Admin Database Panel</h1>
+        <p style='color: #f0f0f0; margin: 0.5rem 0 0 0;'>Advanced Resume Analysis System Dashboard</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Enhanced Control Panel
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
-        if st.button("🔄 Refresh Dashboard"):
+        if st.button("🔄 Refresh All Data", use_container_width=True):
+            st.cache_data.clear()
             st.rerun()
     with col2:
-        if st.button("🚪 Logout now"):
+        if st.button("📊 Database Stats", use_container_width=True):
+            st.session_state.show_db_stats = True
+    with col3:
+        if st.button("🧹 Cleanup Old Records", use_container_width=True):
+            st.session_state.show_cleanup = True
+    with col4:
+        if st.button("🚪 Secure Logout", use_container_width=True):
             st.session_state.admin_logged_in = False
             st.success("👋 Logged out successfully.")
             st.rerun()
 
-    st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
+    # Database Statistics Panel
+    if st.session_state.get('show_db_stats', False):
+        with st.expander("📈 Database Statistics", expanded=True):
+            try:
+                stats = get_database_stats()
+                if stats:
+                    col1, col2, col3, col4 = st.columns(4)
+                    with col1:
+                        st.metric("Total Candidates", stats.get('total_candidates', 0))
+                    with col2:
+                        st.metric("Average ATS Score", f"{stats.get('avg_ats_score', 0):.2f}")
+                    with col3:
+                        st.metric("Unique Domains", stats.get('unique_domains', 0))
+                    with col4:
+                        st.metric("Database Size", f"{stats.get('database_size_mb', 0):.2f} MB")
+                    
+                    col5, col6 = st.columns(2)
+                    with col5:
+                        st.metric("Earliest Record", stats.get('earliest_date', 'N/A'))
+                    with col6:
+                        st.metric("Latest Record", stats.get('latest_date', 'N/A'))
+            except Exception as e:
+                st.error(f"Error loading database statistics: {e}")
 
-    conn = sqlite3.connect("resume_data.db")
-    df = pd.read_sql_query("SELECT * FROM candidates ORDER BY timestamp DESC", conn)
+    # Cleanup Panel
+    if st.session_state.get('show_cleanup', False):
+        with st.expander("🧹 Database Cleanup", expanded=True):
+            days_to_keep = st.slider("Days to Keep", 30, 730, 365)
+            if st.button("⚠️ Cleanup Old Records"):
+                try:
+                    deleted_count = cleanup_old_records(days_to_keep)
+                    if deleted_count > 0:
+                        st.success(f"✅ Cleaned up {deleted_count} old records")
+                    else:
+                        st.info("ℹ️ No old records found to cleanup")
+                except Exception as e:
+                    st.error(f"Error during cleanup: {e}")
 
-    search = st.text_input("🔍 Search Candidate by Name")
-    if search:
-        df = df[df["candidate_name"].str.contains(search, case=False, na=False)]
+    st.markdown("<hr style='border-top: 2px solid #bbb; margin: 2rem 0;'>", unsafe_allow_html=True)
 
-    st.markdown("### 📅 Filter by Date")
+    # Enhanced Data Loading with Caching
+    @st.cache_data(ttl=300)  # Cache for 5 minutes
+    def load_all_candidates():
+        try:
+            return get_all_candidates()
+        except Exception as e:
+            st.error(f"Error loading candidates: {e}")
+            return pd.DataFrame()
+
+    df = load_all_candidates()
+
+    # Enhanced Search and Filter Section
+    st.markdown("### 🔍 Advanced Search & Filters")
+    
     col1, col2 = st.columns(2)
     with col1:
-        start_date = st.date_input("Start Date")
+        search = st.text_input("🔍 Search by Candidate Name", placeholder="Enter candidate name...")
+        if search:
+            df = df[df["candidate_name"].str.contains(search, case=False, na=False)]
+    
     with col2:
-        end_date = st.date_input("End Date")
-    if st.button("Apply Date Filter"):
-        df = filter_candidates_by_date(str(start_date), str(end_date))
+        domain_filter = st.selectbox("🏢 Filter by Domain", 
+                                   options=["All Domains"] + list(df["domain"].unique()) if not df.empty else ["All Domains"])
+        if domain_filter != "All Domains":
+            df = df[df["domain"] == domain_filter]
 
+    # Enhanced Date Filter
+    st.markdown("#### 📅 Date Range Filter")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        start_date = st.date_input("📅 Start Date", value=datetime.now() - timedelta(days=30))
+    with col2:
+        end_date = st.date_input("📅 End Date", value=datetime.now())
+    with col3:
+        if st.button("🎯 Apply Filters", use_container_width=True):
+            try:
+                df = filter_candidates_by_date(str(start_date), str(end_date))
+                if domain_filter != "All Domains":
+                    df = df[df["domain"] == domain_filter]
+                if search:
+                    df = df[df["candidate_name"].str.contains(search, case=False, na=False)]
+                st.success(f"✅ Filters applied. Found {len(df)} candidates.")
+            except Exception as e:
+                st.error(f"Error applying filters: {e}")
+
+    # Enhanced Candidates Display
     if df.empty:
-        st.info("ℹ️ No candidate data available.")
+        st.info("ℹ️ No candidate data available with current filters.")
     else:
-        st.markdown("### 📋 All Candidates")
-        st.dataframe(df, use_container_width=True)
-
-        st.download_button(
-            label="📥 Download Full CSV",
-            data=df.to_csv(index=False),
-            file_name="all_candidates.csv",
-            mime="text/csv"
-        )
-
-        st.markdown("### 🗑️ Delete Candidate by ID")
-        delete_id = st.number_input("Enter Candidate ID", min_value=1, step=1)
-        if st.button("❌ Delete Candidate"):
-            if delete_id in df["id"].values:
-                st.warning(get_candidate_by_id(delete_id).to_markdown(index=False), icon="📄")
-                delete_candidate_by_id(delete_id)
-                st.success(f"✅ Candidate with ID {delete_id} deleted.")
-                st.rerun()
-            else:
-                st.error("ID not found.")
-
-    st.markdown("### 📊 <span style='color:#336699;'>Top Domains by ATS Score</span>", unsafe_allow_html=True)
-
-    top_domains = get_top_domains_by_score()
-
-    if top_domains:
-        df_top = pd.DataFrame(top_domains, columns=["domain", "avg_ats", "count"])
-
-        col1, col2 = st.columns([1, 2])
+        st.markdown(f"### 📋 Candidates Overview ({len(df)} records)")
+        
+        # Enhanced metrics
+        col1, col2, col3, col4 = st.columns(4)
         with col1:
-            sort_order = st.radio("Sort by ATS", ["⬆️ High to Low", "⬇️ Low to High"], horizontal=True)
+            st.metric("Total Candidates", len(df))
         with col2:
-            limit = st.slider("Show Top N Domains", 1, len(df_top), value=min(5, len(df_top)))
+            st.metric("Avg ATS Score", f"{df['ats_score'].mean():.2f}")
+        with col3:
+            st.metric("Avg Bias Score", f"{df['bias_score'].mean():.3f}")
+        with col4:
+            st.metric("Unique Domains", df['domain'].nunique())
 
-        ascending = sort_order == "⬇️ Low to High"
-        df_sorted = df_top.sort_values(by="avg_ats", ascending=ascending).head(limit).reset_index(drop=True)
-
-        for i, row in df_sorted.iterrows():
-            st.markdown(f"""
-            <div style="border: 1px solid #ccc; border-radius: 10px; padding: 10px; margin-bottom: 10px;">
-                <h5 style="margin: 0; color: #336699;">📁 {row['domain']}</h5>
-                <p style="margin: 5px 0;"><b>🧠 Average ATS:</b> <span style="color:#007acc;">{row['avg_ats']:.2f}</span></p>
-                <p style="margin: 5px 0;"><b>📄 Total Resumes:</b> {row['count']}</p>
-            </div>
-            """, unsafe_allow_html=True)
-    else:
-        st.info("ℹ️ No domain data available.")
-
-    st.markdown("### 📊 <span style='color:#336699;'>Domain Distribution by Count</span>", unsafe_allow_html=True)
-
-    df_domain_dist = load_domain_distribution()
-
-    if not df_domain_dist.empty:
-        chart_type = st.radio("📊 Select View Type:", ["📈 Percentage View", "📉 Count View"], horizontal=True)
-        orientation = st.radio("📐 Chart Orientation:", ["Horizontal", "Vertical"], horizontal=True)
-        bar_color = st.color_picker("🎨 Pick Bar Color", "#66c2a5")
-
-        if chart_type == "📈 Percentage View":
-            fig, ax = plt.subplots(figsize=(8, 5))
-            if orientation == "Horizontal":
-                bars = ax.barh(df_domain_dist["domain"], df_domain_dist["percent"], color=bar_color)
-                for bar in bars:
-                    width = bar.get_width()
-                    ax.text(width + 1, bar.get_y() + bar.get_height() / 2,
-                            f"{width:.1f}%", va='center', fontsize=9, fontweight='bold')
-                ax.set_xlabel("Percentage (%)", fontsize=11)
-                ax.set_xlim(0, df_domain_dist["percent"].max() * 1.25)
-                ax.grid(axis='x', linestyle='--', alpha=0.3)
-            else:
-                bars = ax.bar(df_domain_dist["domain"], df_domain_dist["percent"], color=bar_color)
-                for bar in bars:
-                    height = bar.get_height()
-                    ax.text(bar.get_x() + bar.get_width() / 2, height + 1,
-                            f"{height:.1f}%", ha='center', va='bottom', fontsize=9, fontweight='bold')
-                ax.set_ylabel("Percentage (%)", fontsize=11)
-                ax.set_ylim(0, df_domain_dist["percent"].max() * 1.25)
-                ax.set_xticklabels(df_domain_dist["domain"], rotation=45, ha="right", fontsize=9)
-                ax.grid(axis='y', linestyle='--', alpha=0.3)
-
-            ax.set_title("Resume Distribution by Domain (%)", fontsize=13, fontweight='bold')
-            fig.tight_layout()
-            st.pyplot(fig)
-
-        elif chart_type == "📉 Count View":
-            fig, ax = plt.subplots(figsize=(8, 5))
-            if orientation == "Horizontal":
-                bars = ax.barh(df_domain_dist["domain"], df_domain_dist["count"], color=bar_color)
-                for bar in bars:
-                    width = bar.get_width()
-                    ax.text(width + 0.5, bar.get_y() + bar.get_height() / 2,
-                            f"{int(width)}", va='center', fontsize=9, fontweight='bold')
-                ax.set_xlabel("Resume Count", fontsize=11)
-                ax.set_xlim(0, df_domain_dist["count"].max() * 1.25)
-                ax.grid(axis='x', linestyle='--', alpha=0.3)
-            else:
-                bars = ax.bar(df_domain_dist["domain"], df_domain_dist["count"], color=bar_color)
-                for bar in bars:
-                    height = bar.get_height()
-                    ax.text(bar.get_x() + bar.get_width() / 2, height + 1,
-                            f"{int(height)}", ha='center', va='bottom', fontsize=9, fontweight='bold')
-                ax.set_ylabel("Resume Count", fontsize=11)
-                ax.set_ylim(0, df_domain_dist["count"].max() * 1.25)
-                ax.set_xticklabels(df_domain_dist["domain"], rotation=45, ha="right", fontsize=9)
-                ax.grid(axis='y', linestyle='--', alpha=0.3)
-
-            ax.set_title("Resume Count by Domain", fontsize=13, fontweight='bold')
-            fig.tight_layout()
-            st.pyplot(fig)
-
-    else:
-        st.info("ℹ️ No domain data found.")
-
-    st.markdown("### 📊 <span style='color:#336699;'>Average ATS Score by Domain</span>", unsafe_allow_html=True)
-    df_bar = get_average_ats_by_domain()
-    if not df_bar.empty:
-        chart_style = st.radio("Select Chart Style", ["Vertical Bar", "Horizontal Bar"], horizontal=True)
-        bar_color = st.color_picker("Pick Bar Color", "#3399ff")
-        fig, ax = plt.subplots(figsize=(8, 5))
-
-        if chart_style == "Vertical Bar":
-            bars = ax.bar(df_bar["domain"], df_bar["avg_ats_score"], color=bar_color)
-            ax.set_ylabel("Avg ATS Score")
-            ax.set_title("ATS by Domain", fontsize=13, fontweight="bold")
-            ax.set_xticks(np.arange(len(df_bar["domain"])))
-            ax.set_xticklabels(df_bar["domain"], rotation=45, ha="right", fontsize=9)
-            ax.set_ylim(0, df_bar["avg_ats_score"].max() * 1.25)
-            for bar in bars:
-                height = bar.get_height()
-                ax.text(bar.get_x() + bar.get_width() / 2, height + 0.5, f"{height:.1f}",
-                        ha='center', va='bottom', fontsize=8)
-
-        elif chart_style == "Horizontal Bar":
-            bars = ax.barh(df_bar["domain"], df_bar["avg_ats_score"], color=bar_color)
-            ax.set_xlabel("Avg ATS Score")
-            ax.set_title("ATS by Domain", fontsize=13, fontweight="bold")
-            ax.set_yticks(np.arange(len(df_bar["domain"])))
-            ax.set_yticklabels(df_bar["domain"], fontsize=9)
-            ax.set_xlim(0, df_bar["avg_ats_score"].max() * 1.25)
-            for bar in bars:
-                width = bar.get_width()
-                ax.text(width + 0.5, bar.get_y() + bar.get_height() / 2,
-                        f"{width:.1f}", ha="left", va="center", fontsize=8)
-
-        ax.grid(axis='y' if chart_style == "Vertical Bar" else 'x', linestyle='--', alpha=0.4)
-        fig.tight_layout()
-        st.pyplot(fig)
-    else:
-        st.info("ℹ️ No ATS domain data to display.")
-
-    st.markdown("### 📈 Resume Upload Timeline (Daily + 7-Day Trend)")
-    df_timeline = get_resume_count_by_day()
-
-    if not df_timeline.empty:
-        df_timeline = df_timeline.sort_values("day")
-        df_timeline["7_day_avg"] = df_timeline["count"].rolling(window=7, min_periods=1).mean()
-        fig, ax = plt.subplots(figsize=(10, 5))
-        ax.plot(df_timeline["day"], df_timeline["count"], label="Daily Uploads", color="green", marker='o', linewidth=1)
-        for x, y in zip(df_timeline["day"], df_timeline["count"]):
-            ax.text(x, y + 0.5, str(int(y)), ha="center", va="bottom", fontsize=8)
-        ax.plot(df_timeline["day"], df_timeline["7_day_avg"], label="7-Day Avg", color="red", linestyle='--', linewidth=2)
-        ax.set_title("📈 Resume Upload Timeline (Daily + 7-Day Trend)", fontsize=13, weight='bold')
-        ax.set_xlabel("Date")
-        ax.set_ylabel("Upload Count")
-        ax.legend()
-        ax.grid(axis='y', linestyle='--', alpha=0.5)
-        plt.xticks(rotation=45, ha='right')
-        fig.tight_layout()
-        st.pyplot(fig)
-    else:
-        st.info("ℹ️ No upload trend data to display.")
-
-    st.markdown("### 🧠 <span style='color:#336699;'>Fair vs Biased Resumes</span>", unsafe_allow_html=True)
-
-    bias_threshold_pie = st.slider("Select Bias Threshold", min_value=0.0, max_value=1.0, value=0.6, step=0.05)
-
-    df_bias = get_bias_distribution(threshold=bias_threshold_pie)
-
-    if not df_bias.empty and "bias_category" in df_bias.columns:
-        fig4, ax4 = plt.subplots()
-        ax4.pie(
-            df_bias["count"],
-            labels=df_bias["bias_category"],
-            autopct="%1.1f%%",
-            startangle=90,
-            colors=["#ff6666", "#00cc66"],
-            wedgeprops={"edgecolor": "black"}
-        )
-        ax4.axis("equal")
-        st.pyplot(fig4)
-
-        with st.expander("📋 View Bias Distribution Table"):
-            st.dataframe(df_bias, use_container_width=True)
-    else:
-        st.info("📭 No bias data available for the selected threshold.")
-
-    st.markdown("### 🚩 Flagged Candidates (Bias Score > Threshold)")
-
-    bias_threshold = st.slider(
-        "Set Bias Score Threshold",
-        min_value=0.0,
-        max_value=1.0,
-        value=0.6,
-        step=0.05,
-        help="Only candidates with bias score above this value will be shown."
-    )
-
-    flagged_df = get_all_candidates(bias_threshold=bias_threshold)
-
-    if not flagged_df.empty:
-        st.markdown(f"Showing candidates with bias score > **{bias_threshold}**")
+        # Enhanced data display with sorting
+        sort_column = st.selectbox("📊 Sort by", 
+                                 options=['timestamp', 'ats_score', 'bias_score', 'candidate_name', 'domain'])
+        sort_order = st.radio("Sort Order", ["Descending", "Ascending"], horizontal=True)
+        
+        df_sorted = df.sort_values(by=sort_column, ascending=(sort_order == "Ascending"))
+        
+        # Display with enhanced formatting
         st.dataframe(
-            flagged_df[["id", "resume_name", "candidate_name", "bias_score", "ats_score", "domain", "timestamp"]]
-            .sort_values(by="bias_score", key=lambda x: pd.to_numeric(x, errors="coerce"), ascending=False),
-            use_container_width=True
+            df_sorted.style.format({
+                'ats_score': '{:.0f}',
+                'edu_score': '{:.0f}',
+                'exp_score': '{:.0f}',
+                'skills_score': '{:.0f}',
+                'lang_score': '{:.0f}',
+                'keyword_score': '{:.0f}',
+                'bias_score': '{:.3f}'
+            }),
+            use_container_width=True,
+            height=400
         )
-    else:
-        st.success("✅ No flagged candidates found above the selected threshold.")
 
+        # Enhanced Export Options
+        col1, col2 = st.columns(2)
+        with col1:
+            csv_data = df_sorted.to_csv(index=False)
+            st.download_button(
+                label="📥 Download Filtered Data (CSV)",
+                data=csv_data,
+                file_name=f"candidates_filtered_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv",
+                use_container_width=True
+            )
+        with col2:
+            if st.button("📤 Export All Data", use_container_width=True):
+                try:
+                    filename = f"full_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+                    if export_to_csv(filename):
+                        st.success(f"✅ Data exported to {filename}")
+                    else:
+                        st.error("❌ Export failed")
+                except Exception as e:
+                    st.error(f"Export error: {e}")
+        import glob, os
+        st.markdown("### 📂 Export Archive")
+        export_files = sorted(glob.glob("full_export_*.csv"), reverse=True)
 
-if "memory" in st.session_state:
-    history = st.session_state.memory.load_memory_variables({}).get("chat_history", [])
-    for msg in history:
-        with st.chat_message("user" if msg.type == "human" else "assistant"):
-            st.markdown(msg.content)
+        if export_files:
+          for file in export_files:
+           with open(file, "rb") as f:
+                st.download_button(
+                label=f"⬇️ Download {os.path.basename(file)}",
+                data=f,
+                file_name=os.path.basename(file),
+                mime="text/csv",
+                use_container_width=True
+            )
+        else:
+         st.info("📭 No export files found yet.")
+        # Enhanced Delete Functionality
+        with st.expander("🗑️ Delete Candidate", expanded=False):
+            st.warning("⚠️ This action cannot be undone!")
+            delete_id = st.number_input("Enter Candidate ID", min_value=1, step=1, key="delete_id")
+            
+            if delete_id in df["id"].values:
+                candidate_info = get_candidate_by_id(delete_id)
+                if not candidate_info.empty:
+                    st.info("📄 Candidate to be deleted:")
+                    st.dataframe(candidate_info, use_container_width=True)
+                    
+                    if st.button("❌ Confirm Delete", type="primary"):
+                        try:
+                            if delete_candidate_by_id(delete_id):
+                                st.success(f"✅ Candidate with ID {delete_id} deleted successfully.")
+                                st.cache_data.clear()
+                                st.rerun()
+                            else:
+                                st.error("❌ Failed to delete candidate.")
+                        except Exception as e:
+                            st.error(f"Delete error: {e}")
+            elif delete_id > 0:
+                st.error("❌ Candidate ID not found.")
 
-# 2. Wait for user input
-user_input = st.chat_input("Ask LEXIBOT anything...")
+    # Enhanced Analytics Section
+    st.markdown("<hr style='border-top: 2px solid #bbb; margin: 2rem 0;'>", unsafe_allow_html=True)
+    st.markdown("## 📊 Advanced Analytics Dashboard")
 
-# 3. Only call chain when user submits new input
-if user_input:
-    # Show user message
-    with st.chat_message("user"):
-        st.markdown(user_input)
+    # Enhanced Top Domains Analysis
+    st.markdown("### 🏆 Top Performing Domains")
+    
+    try:
+        top_domains = get_top_domains_by_score(limit=10)
+        if top_domains:
+            df_top = pd.DataFrame(top_domains, columns=["domain", "avg_ats", "count"])
+            
+            col1, col2 = st.columns([1, 2])
+            with col1:
+                sort_order = st.radio("📊 Sort by ATS", ["⬆️ High to Low", "⬇️ Low to High"], horizontal=True)
+                limit = st.slider("Show Top N Domains", 1, len(df_top), value=min(8, len(df_top)))
+            
+            ascending = sort_order == "⬇️ Low to High"
+            df_sorted = df_top.sort_values(by="avg_ats", ascending=ascending).head(limit)
+            
+            # Interactive chart
+            fig = create_enhanced_bar_chart(df_sorted, "domain", "avg_ats", 
+                                          "Average ATS Score by Domain", orientation='h')
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Enhanced domain cards
+            for i, row in df_sorted.iterrows():
+                progress_value = row['avg_ats'] / 100
+                st.markdown(f"""
+                <div style="border: 2px solid #e1e5e9; border-radius: 15px; padding: 15px; margin-bottom: 15px; 
+                           background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h4 style="margin: 0; color: #495057;">📁 {row['domain']}</h4>
+                        <span style="background: #007bff; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px;">
+                            Rank #{i+1}
+                        </span>
+                    </div>
+                    <div style="margin: 10px 0;">
+                        <div style="background: #e9ecef; border-radius: 10px; height: 8px; overflow: hidden;">
+                            <div style="background: linear-gradient(90deg, #28a745, #20c997); height: 100%; 
+                                       width: {progress_value*100}%; transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                        <span><b>🧠 Avg ATS:</b> <span style="color:#007acc; font-weight: bold;">{row['avg_ats']:.2f}</span></span>
+                        <span><b>📄 Resumes:</b> {row['count']}</span>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.info("ℹ️ No domain performance data available.")
+    except Exception as e:
+        st.error(f"Error loading top domains: {e}")
+
+    # Enhanced Domain Distribution
+    st.markdown("### 📊 Domain Distribution Analysis")
 
     try:
-        # 🧠 Only call chain ONCE
-        response = st.session_state.chain.invoke({
-            "question": user_input,
-            "chat_history": st.session_state.memory.chat_memory.messages
-        })
-        answer = response.get("answer", "❌ No answer found.")
+        df_domain_dist = load_domain_distribution()
+        if not df_domain_dist.empty:
+            col1, col2 = st.columns(2)
+            with col1:
+                chart_type = st.radio(
+                    "📊 Visualization Type:",
+                    ["📈 Interactive Bar Chart", "🥧 Interactive Pie Chart"],
+                    horizontal=True
+                )
+            with col2:
+                max_val = len(df_domain_dist)
+                if max_val <= 5:
+                    show_top_n = max_val  # No slider, just show all available domains
+                else:
+                    show_top_n = st.slider(
+                        "Show Top N Domains",
+                        min_value=5,
+                        max_value=max_val,
+                        value=min(10, max_val)
+                    )
+
+            df_top_domains = df_domain_dist.head(show_top_n)
+
+            if chart_type == "📈 Interactive Bar Chart":
+                fig = create_enhanced_bar_chart(df_top_domains, "domain", "count", 
+                                                "Resume Count by Domain")
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                fig = create_enhanced_pie_chart(df_top_domains, "count", "domain", 
+                                                "Domain Distribution")
+                st.plotly_chart(fig, use_container_width=True)
+
+            # Summary statistics
+            with st.expander("📋 Domain Statistics Summary"):
+                st.dataframe(
+                    df_domain_dist.style.format({'percentage': '{:.2f}%'}),
+                    use_container_width=True
+                )
+        else:
+            st.info("ℹ️ No domain distribution data available.")
     except Exception as e:
-        answer = f"⚠️ Error: {str(e)}"
+        st.error(f"Error loading domain distribution: {e}")
 
-    # Show assistant reply
-    with st.chat_message("assistant"):
-        st.markdown(answer)
+    # Enhanced ATS Performance Analysis
+    st.markdown("### 📈 ATS Performance Analysis")
+    
+    try:
+        df_ats = get_average_ats_by_domain()
+        if not df_ats.empty:
+            col1, col2 = st.columns(2)
+            with col1:
+                chart_orientation = st.radio("Chart Style", ["Vertical", "Horizontal"], horizontal=True)
+            with col2:
+                color_scheme = st.selectbox("Color Scheme", 
+                                          ["plasma", "viridis", "inferno", "magma", "turbo"])
+            
+            orientation = 'v' if chart_orientation == "Vertical" else 'h'
+            fig = px.bar(df_ats, 
+                        x="domain" if orientation == 'v' else "avg_ats_score",
+                        y="avg_ats_score" if orientation == 'v' else "domain",
+                        title="Average ATS Score by Domain",
+                        orientation=orientation,
+                        color="avg_ats_score",
+                        color_continuous_scale=color_scheme,
+                        text="avg_ats_score",
+                        template="plotly_dark")  # Use dark theme for better readability
+            
+            fig.update_traces(texttemplate='%{text:.1f}', textposition='outside')
+            if orientation == 'v':
+                fig.update_xaxes(tickangle=45)
+            
+            # Enhanced layout for better readability
+            fig.update_layout(
+                showlegend=False,
+                plot_bgcolor='rgba(0,0,0,0.1)',
+                paper_bgcolor='rgba(0,0,0,0.05)',
+                font=dict(color='white', size=12),
+                title=dict(font=dict(size=16, color='white')),
+                xaxis=dict(
+                    gridcolor='rgba(255,255,255,0.2)',
+                    tickfont=dict(color='white')
+                ),
+                yaxis=dict(
+                    gridcolor='rgba(255,255,255,0.2)',
+                    tickfont=dict(color='white')
+                ),
+                margin=dict(t=60, b=80, l=80, r=50)
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("ℹ️ No ATS performance data available.")
+    except Exception as e:
+        st.error(f"Error loading ATS performance data: {e}")
 
-    # Save interaction to memory
-    st.session_state.memory.save_context({"input": user_input}, {"output": answer})
+    # Enhanced Timeline Analysis
+    st.markdown("### 📈 Resume Upload Timeline & Trends")
+    
+    try:
+        df_timeline = get_resume_count_by_day()
+        df_daily_ats = get_daily_ats_stats(days_limit=90)
+        
+        if not df_timeline.empty:
+            df_timeline = df_timeline.sort_values("day")
+            df_timeline["7_day_avg"] = df_timeline["count"].rolling(window=7, min_periods=1).mean()
+            df_timeline["30_day_avg"] = df_timeline["count"].rolling(window=30, min_periods=1).mean()
+            
+            # Create subplot with proper spacing and formatting
+            fig = make_subplots(
+                rows=2, cols=1,
+                subplot_titles=('Daily Upload Count with Moving Averages', 'Daily Average ATS Score Trend'),
+                vertical_spacing=0.25,
+                specs=[[{"secondary_y": False}], [{"secondary_y": False}]]
+            )
+            
+            # Convert day column to datetime for proper spacing
+            df_timeline['day'] = pd.to_datetime(df_timeline['day'])
+            
+            # Upload count plot
+            fig.add_trace(
+                go.Scatter(x=df_timeline["day"], y=df_timeline["count"], 
+                          mode='lines+markers', name='Daily Uploads',
+                          line=dict(color='#1f77b4', width=2),
+                          marker=dict(size=6)),
+                row=1, col=1
+            )
+            
+            fig.add_trace(
+                go.Scatter(x=df_timeline["day"], y=df_timeline["7_day_avg"], 
+                          mode='lines', name='7-Day Average',
+                          line=dict(color='#ff7f0e', width=2, dash='dash')),
+                row=1, col=1
+            )
+            
+            fig.add_trace(
+                go.Scatter(x=df_timeline["day"], y=df_timeline["30_day_avg"], 
+                          mode='lines', name='30-Day Average',
+                          line=dict(color='#2ca02c', width=2, dash='dot')),
+                row=1, col=1
+            )
+            
+            # ATS trend plot
+            if not df_daily_ats.empty:
+                df_daily_ats['date'] = pd.to_datetime(df_daily_ats['date'])
+                fig.add_trace(
+                    go.Scatter(x=df_daily_ats["date"], y=df_daily_ats["avg_ats"], 
+                              mode='lines+markers', name='Daily Avg ATS',
+                              line=dict(color='#d62728', width=2),
+                              marker=dict(size=6)),
+                    row=2, col=1
+                )
+            
+            # Update layout for better spacing and readability
+            fig.update_layout(
+                height=700, 
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                ),
+                margin=dict(t=80, b=70, l=50, r=50)
+            )
+            
+            # Update x-axes for proper date formatting and spacing
+            fig.update_xaxes(title_text="Date", row=2, col=1)
+            fig.update_xaxes(
+                tickformat="%Y-%m-%d",
+                tickangle=30,
+                dtick="D1" if len(df_timeline) <= 30 else "D7",
+                row=1, col=1
+            )
+            fig.update_xaxes(
+                tickformat="%Y-%m-%d",
+                tickangle=30,
+                dtick="D1" if len(df_daily_ats) <= 30 else "D7",
+                row=2, col=1
+            )
+            
+            fig.update_yaxes(title_text="Upload Count", row=1, col=1)
+            fig.update_yaxes(title_text="Average ATS Score", row=2, col=1)
+            
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Timeline statistics
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Total Days", len(df_timeline))
+            with col2:
+                st.metric("Peak Daily Uploads", df_timeline["count"].max())
+            with col3:
+                st.metric("Avg Daily Uploads", f"{df_timeline['count'].mean():.1f}")
+            with col4:
+                if not df_daily_ats.empty:
+                    st.metric("Avg ATS Trend", f"{df_daily_ats['avg_ats'].mean():.2f}")
+        else:
+            st.info("ℹ️ No timeline data available.")
+    except Exception as e:
+        st.error(f"Error loading timeline data: {e}")
+
+    # Enhanced Bias Analysis
+    st.markdown("### 🧠 Advanced Bias Analysis")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        bias_threshold_pie = st.slider("Bias Detection Threshold", 
+                                     min_value=0.0, max_value=1.0, value=0.6, step=0.05)
+    with col2:
+        analysis_type = st.radio("Analysis Type", ["Distribution", "Flagged Candidates"], horizontal=True)
+    
+    try:
+        if analysis_type == "Distribution":
+            df_bias = get_bias_distribution(threshold=bias_threshold_pie)
+            if not df_bias.empty and "bias_category" in df_bias.columns:
+                fig = create_enhanced_pie_chart(df_bias, "count", "bias_category", 
+                                              f"Bias Distribution (Threshold: {bias_threshold_pie})")
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Bias statistics
+                col1, col2 = st.columns(2)
+                with col1:
+                    total_candidates = df_bias["count"].sum()
+                    biased_count = df_bias[df_bias["bias_category"] == "Biased"]["count"].iloc[0] if len(df_bias[df_bias["bias_category"] == "Biased"]) > 0 else 0
+                    st.metric("Total Analyzed", total_candidates)
+                with col2:
+                    bias_percentage = (biased_count / total_candidates * 100) if total_candidates > 0 else 0
+                    st.metric("Bias Percentage", f"{bias_percentage:.1f}%")
+            else:
+                st.info("📭 No bias distribution data available.")
+        
+        else:  # Flagged Candidates
+            flagged_df = get_flagged_candidates(threshold=bias_threshold_pie)
+            if not flagged_df.empty:
+                st.markdown(f"**🚩 {len(flagged_df)} candidates flagged with bias score > {bias_threshold_pie}**")
+                
+                # Enhanced flagged candidates display
+                display_df = flagged_df.copy()
+                display_df = display_df.sort_values('bias_score', ascending=False)
+                
+                st.dataframe(
+                    display_df.style.format({'bias_score': '{:.3f}', 'ats_score': '{:.0f}'}),
+                    use_container_width=True,
+                    height=300
+                )
+                
+                # Flagged candidates statistics
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Flagged Count", len(flagged_df))
+                with col2:
+                    st.metric("Avg Bias Score", f"{flagged_df['bias_score'].mean():.3f}")
+                with col3:
+                    st.metric("Avg ATS Score", f"{flagged_df['ats_score'].mean():.1f}")
+            else:
+                st.success("✅ No candidates flagged above the selected threshold.")
+    except Exception as e:
+        st.error(f"Error in bias analysis: {e}")
+
+    # Enhanced Domain Performance Deep Dive
+    with st.expander("🔍 Domain Performance Deep Dive", expanded=False):
+        try:
+            df_performance = get_domain_performance_stats()
+            if not df_performance.empty:
+                st.markdown("#### Comprehensive Domain Performance Metrics")
+                
+                # Performance heatmap
+                performance_cols = ['avg_ats_score', 'avg_edu_score', 'avg_exp_score', 
+                                  'avg_skills_score', 'avg_lang_score', 'avg_keyword_score']
+                
+                if all(col in df_performance.columns for col in performance_cols):
+                    heatmap_data = df_performance[['domain'] + performance_cols].set_index('domain')
+                    
+                    fig = px.imshow(heatmap_data.T, 
+                                  title="Domain Performance Heatmap",
+                                  color_continuous_scale="RdYlGn",
+                                  aspect="auto")
+                    fig.update_layout(height=400)
+                    st.plotly_chart(fig, use_container_width=True)
+                
+                # Detailed performance table
+                st.dataframe(
+                    df_performance.style.format({
+                        col: '{:.2f}' for col in performance_cols + ['avg_bias_score']
+                    }),
+                    use_container_width=True
+                )
+            else:
+                st.info("ℹ️ No detailed performance data available.")
+        except Exception as e:
+            st.error(f"Error loading performance deep dive: {e}")
+
+    # Footer with system information
+    st.markdown("<hr style='border-top: 1px solid #ddd; margin: 2rem 0;'>", unsafe_allow_html=True)
+    st.markdown("""
+    <div style='text-align: center; color: #666; font-size: 0.9em; padding: 1rem;'>
+        <p>🛡️ Enhanced Admin Dashboard | Powered by Advanced Database Manager</p>
+        <p>Last updated: {}</p>
+    </div>
+    """.format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)

@@ -2495,7 +2495,7 @@ if uploaded_files and job_description:
             f.write(uploaded_file.getbuffer())
 
         # ✅ Simulate scanning delay
-        time.sleep(4)
+        time.sleep(2.5)
 
         # ✅ Extract text from PDF
         text = extract_text_from_pdf(file_path)
@@ -2666,7 +2666,7 @@ if uploaded_files and job_description:
         st.markdown(SUCCESS_HTML, unsafe_allow_html=True)
 
         # ⏳ Short pause, then auto rerun
-        time.sleep(4)
+        time.sleep(2.5)
         st.rerun()
 
 

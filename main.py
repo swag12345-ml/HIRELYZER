@@ -816,7 +816,16 @@ st.markdown(
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
         animation: fadeSlide 6s ease-in-out infinite alternate;
+    }
+
+    .banner-text svg {
+        width: 26px;
+        height: 26px;
+        fill: url(#grad1);
     }
 
     @keyframes fadeSlide {
@@ -835,6 +844,16 @@ st.markdown(
         background: linear-gradient(90deg, #06b6d4, #3b82f6);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .header svg {
+        width: 28px;
+        height: 28px;
+        fill: url(#grad1);
     }
 
     /* ---------- FILE UPLOADER ---------- */
@@ -904,13 +923,33 @@ st.markdown(
     }
     </style>
 
+    <!-- SVG Gradient Defs -->
+    <svg width="0" height="0">
+        <defs>
+            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+            </linearGradient>
+        </defs>
+    </svg>
+
     <!-- Banner -->
     <div class="banner-container">
-        <div class="banner-text">🚀 HIRELYZER - Elevate Your Resume Analysis</div>
+        <div class="banner-text">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M12 2L15 8H9L12 2ZM2 22H22L12 13L2 22Z"/>
+            </svg>
+            HIRELYZER - Elevate Your Resume Analysis
+        </div>
     </div>
 
     <!-- Header -->
-    <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
+    <div class="header">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M4 4H20V20H4V4ZM6 6V18H18V6H6Z"/>
+        </svg>
+        HIRELYZER - AI BASED ETHICAL RESUME ANALYZER
+    </div>
     """,
     unsafe_allow_html=True
 )
@@ -1844,7 +1883,7 @@ Your role is to provide **balanced, objective scoring** that reflects industry s
 
 **CRITICAL DATE PARSING RULES:**
 - **Year-only ranges (e.g., "2021-2024", "2020-2023"):**
-  - If end year < {current_year} → **ALWAYS Completed** (e.g., "2021-2023" = Completed)
+  - If end year < {current_year} → **ALWAYS Completed** (e.g., "2020-2023" = Completed)
   - If end year == {current_year} AND we're past June → **LIKELY Completed** (e.g., "2021-2024" in late 2024 = Completed)
   - If end year == {current_year} AND we're before June → **Could be Ongoing** (check for other indicators)
   - If end year > {current_year} → **Ongoing** (e.g., "2023-2025" = Ongoing)

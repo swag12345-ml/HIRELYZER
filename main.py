@@ -774,12 +774,12 @@ if st.session_state.username == "admin":
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
 
     html, body, [class*="css"] {
-        font-family: 'Orbitron', sans-serif;
+        font-family: 'Inter', sans-serif;
         background-color: #0b0c10;
-        color: #c5c6c7;
+        color: #e5e7eb;
         scroll-behavior: smooth;
     }
 
@@ -791,168 +791,122 @@ st.markdown(
         background: #1f2833;
     }
     ::-webkit-scrollbar-thumb {
-        background: #00ffff;
+        background: linear-gradient(180deg, #3b82f6, #06b6d4);
         border-radius: 4px;
     }
 
-    /* ---------- BANNER ---------- */
+    /* ---------- BANNER (Glassmorphism) ---------- */
     .banner-container {
         width: 100%;
         height: 80px;
-        background: linear-gradient(90deg, #000428, #004e92);
-        border-bottom: 2px solid cyan;
-        overflow: hidden;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(12px);
+        border-bottom: 2px solid #3b82f6;
         display: flex;
         align-items: center;
-        justify-content: flex-start;
-        position: relative;
+        justify-content: center;
         margin-bottom: 20px;
+        border-radius: 0 0 16px 16px;
     }
 
-    .pulse-bar {
-        position: absolute;
-        display: flex;
-        align-items: center;
+    .banner-text {
         font-size: 22px;
-        font-weight: bold;
-        color: #00ffff;
-        white-space: nowrap;
-        animation: glideIn 12s linear infinite;
-        text-shadow: 0 0 10px #00ffff;
+        font-weight: 700;
+        background: linear-gradient(90deg, #06b6d4, #3b82f6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: 1px;
+        animation: fadeSlide 6s ease-in-out infinite alternate;
     }
 
-    .pulse-bar .bar {
-        width: 10px;
-        height: 30px;
-        margin-right: 10px;
-        background: #00ffff;
-        box-shadow: 0 0 8px cyan;
-        animation: pulse 1s ease-in-out infinite;
-    }
-
-    @keyframes glideIn {
-        0% { left: -50%; opacity: 0; }
-        10% { opacity: 1; }
-        90% { opacity: 1; }
-        100% { left: 110%; opacity: 0; }
-    }
-
-    @keyframes pulse {
-        0%, 100% {
-            height: 20px;
-            background-color: #00ffff;
-        }
-        50% {
-            height: 40px;
-            background-color: #ff00ff;
-        }
+    @keyframes fadeSlide {
+        0% { opacity: 0.7; transform: translateY(5px); }
+        100% { opacity: 1; transform: translateY(-5px); }
     }
 
     /* ---------- HEADER ---------- */
     .header {
         font-size: 28px;
-        font-weight: bold;
+        font-weight: 800;
         text-align: center;
         text-transform: uppercase;
         letter-spacing: 2px;
-        padding: 12px 0;
-        animation: glowPulse 3s ease-in-out infinite;
-        text-shadow: 0px 0px 10px #00ffff;
-    }
-
-    @keyframes glowPulse {
-        0%, 100% {
-            color: #00ffff;
-            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
-        }
-        50% {
-            color: #ff00ff;
-            text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff;
-        }
+        padding: 16px 0;
+        background: linear-gradient(90deg, #06b6d4, #3b82f6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
 
     /* ---------- FILE UPLOADER ---------- */
     .stFileUploader > div > div {
-        border: 2px solid #00ffff;
-        border-radius: 10px;
-        background-color: rgba(0, 255, 255, 0.05);
-        padding: 12px;
-        box-shadow: 0 0 15px rgba(0,255,255,0.4);
+        border: 2px solid #3b82f6;
+        border-radius: 12px;
+        background: rgba(30, 41, 59, 0.5);
+        backdrop-filter: blur(10px);
+        padding: 14px;
         transition: box-shadow 0.3s ease-in-out;
     }
     .stFileUploader > div > div:hover {
-        box-shadow: 0 0 25px rgba(0,255,255,0.8);
+        box-shadow: 0 0 25px rgba(59,130,246,0.6);
     }
 
     /* ---------- BUTTONS ---------- */
     .stButton > button {
-        background: linear-gradient(45deg, #ff0080, #00bfff);
+        background: linear-gradient(90deg, #06b6d4, #3b82f6);
         color: white;
         font-size: 16px;
         font-weight: bold;
         border: none;
-        border-radius: 8px;
-        padding: 10px 20px;
+        border-radius: 10px;
+        padding: 10px 22px;
         text-transform: uppercase;
-        box-shadow: 0px 0px 12px #00ffff;
         transition: all 0.3s ease-in-out;
     }
     .stButton > button:hover {
-        transform: scale(1.05);
-        box-shadow: 0px 0px 24px #ff00ff;
-        background: linear-gradient(45deg, #ff00aa, #00ffff);
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0px 6px 18px rgba(59,130,246,0.6);
     }
 
     /* ---------- CHAT MESSAGES ---------- */
     .stChatMessage {
-        font-size: 18px;
-        background: #1e293b;
+        font-size: 17px;
+        background: rgba(30, 41, 59, 0.6);
         padding: 14px;
-        border-radius: 10px;
-        border: 2px solid #00ffff;
-        color: #ccffff;
-        text-shadow: 0px 0px 6px #00ffff;
-        animation: glow 1.5s ease-in-out infinite alternate;
+        border-radius: 12px;
+        border: 1px solid #3b82f6;
+        color: #e0f2fe;
     }
 
     /* ---------- INPUTS ---------- */
     .stTextInput > div > input,
     .stTextArea > div > textarea {
-        background-color: #1f2833;
-        color: #00ffff;
-        border: 1px solid #00ffff;
-        border-radius: 6px;
+        background: rgba(31, 41, 51, 0.6);
+        color: #e0f2fe;
+        border: 1px solid #3b82f6;
+        border-radius: 8px;
         padding: 10px;
-        box-shadow: 0 0 10px rgba(0,255,255,0.3);
     }
 
     /* ---------- METRICS ---------- */
     .stMetric {
-        background-color: #0f172a;
-        border: 1px solid #00ffff;
-        border-radius: 10px;
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid #3b82f6;
+        border-radius: 12px;
         padding: 15px;
-        box-shadow: 0 0 10px rgba(0,255,255,0.5);
         text-align: center;
+        box-shadow: 0 4px 12px rgba(59,130,246,0.2);
     }
 
     /* ---------- MOBILE ---------- */
     @media (max-width: 768px) {
-        .pulse-bar {
-            font-size: 16px;
-        }
-        .header {
-            font-size: 20px;
-        }
+        .banner-text { font-size: 18px; }
+        .header { font-size: 20px; }
     }
     </style>
 
     <!-- Banner -->
     <div class="banner-container">
-        <div class="pulse-bar">
-            <div class="bar"></div>
-            <div>HIRELYZER - Elevate Your Resume Analysis</div>
-        </div>
+        <div class="banner-text">🚀 HIRELYZER - Elevate Your Resume Analysis</div>
     </div>
 
     <!-- Header -->
@@ -960,6 +914,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 # Load environment variables
 # ------------------- Core Setup -------------------
@@ -1889,7 +1844,7 @@ Your role is to provide **balanced, objective scoring** that reflects industry s
 
 **CRITICAL DATE PARSING RULES:**
 - **Year-only ranges (e.g., "2021-2024", "2020-2023"):**
-  - If end year < {current_year} → **ALWAYS Completed** (e.g., "2020-2023" = Completed)
+  - If end year < {current_year} → **ALWAYS Completed** (e.g., "2021-2023" = Completed)
   - If end year == {current_year} AND we're past June → **LIKELY Completed** (e.g., "2021-2024" in late 2024 = Completed)
   - If end year == {current_year} AND we're before June → **Could be Ongoing** (check for other indicators)
   - If end year > {current_year} → **Ongoing** (e.g., "2023-2025" = Ongoing)

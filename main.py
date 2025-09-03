@@ -780,26 +780,38 @@ st.markdown(
         font-family: 'Inter', sans-serif;
         background-color: #0b0c10;
         color: #e5e7eb;
+        scroll-behavior: smooth;
+    }
+
+    /* ---------- SCROLLBAR ---------- */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #1f2833;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #3b82f6, #06b6d4);
+        border-radius: 4px;
     }
 
     /* ---------- BANNER (Glassmorphism with Click Glow) ---------- */
     .banner-container {
         width: 100%;
         height: 80px;
-        background: rgba(15, 23, 42, 0.4);
-        backdrop-filter: blur(14px) saturate(150%);
-        border: 1px solid rgba(59, 130, 246, 0.3);
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(12px);
+        border-bottom: 2px solid #3b82f6;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 0 0 18px 18px;
         margin-bottom: 20px;
-        transition: box-shadow 0.3s ease-in-out, border 0.3s ease-in-out;
+        border-radius: 0 0 16px 16px;
+        transition: box-shadow 0.4s ease-in-out, border 0.4s ease-in-out;
     }
-
     .banner-container:active {
-        box-shadow: 0 0 35px rgba(59, 130, 246, 0.8);
-        border: 1px solid rgba(59, 130, 246, 0.9);
+        box-shadow: 0 0 35px rgba(59, 130, 246, 0.9);
+        border-bottom: 2px solid rgba(6, 182, 212, 0.9);
     }
 
     .banner-text {
@@ -808,12 +820,26 @@ st.markdown(
         background: linear-gradient(90deg, #06b6d4, #3b82f6);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        letter-spacing: 1px;
         display: flex;
         align-items: center;
         gap: 10px;
+        animation: fadeSlide 6s ease-in-out infinite alternate;
     }
 
-    /* ---------- HEADER ---------- */
+    .banner-text svg {
+        width: 26px;
+        height: 26px;
+        fill: url(#grad1);
+        flex-shrink: 0;
+    }
+
+    @keyframes fadeSlide {
+        0% { opacity: 0.7; transform: translateY(5px); }
+        100% { opacity: 1; transform: translateY(-5px); }
+    }
+
+    /* ---------- HEADER (Glass Glow on Click) ---------- */
     .header {
         font-size: 28px;
         font-weight: 800;
@@ -827,39 +853,95 @@ st.markdown(
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
+        gap: 12px;
         cursor: pointer;
-        transition: all 0.3s ease-in-out;
+        transition: text-shadow 0.4s ease-in-out;
     }
-
     .header:active {
-        text-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 40px rgba(6, 182, 212, 0.7);
+        text-shadow: 0 0 20px rgba(59,130,246,0.8), 
+                     0 0 40px rgba(6,182,212,0.7);
     }
 
-    /* ---------- ICONS (Better inline SVG) ---------- */
-    .icon {
-        width: 26px;
-        height: 26px;
+    .header svg {
+        width: 28px;
+        height: 28px;
         fill: url(#grad1);
         flex-shrink: 0;
     }
 
-    /* Gradient for icons */
-    svg defs linearGradient stop:first-child {
-        stop-color: #06b6d4;
+    /* ---------- FILE UPLOADER ---------- */
+    .stFileUploader > div > div {
+        border: 2px solid #3b82f6;
+        border-radius: 12px;
+        background: rgba(30, 41, 59, 0.5);
+        backdrop-filter: blur(10px);
+        padding: 14px;
+        transition: box-shadow 0.3s ease-in-out;
     }
-    svg defs linearGradient stop:last-child {
-        stop-color: #3b82f6;
+    .stFileUploader > div > div:hover {
+        box-shadow: 0 0 25px rgba(59,130,246,0.6);
     }
 
+    /* ---------- BUTTONS ---------- */
+    .stButton > button {
+        background: linear-gradient(90deg, #06b6d4, #3b82f6);
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 22px;
+        text-transform: uppercase;
+        transition: all 0.3s ease-in-out;
+    }
+    .stButton > button:hover {
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0px 6px 18px rgba(59,130,246,0.6);
+    }
+
+    /* ---------- CHAT MESSAGES ---------- */
+    .stChatMessage {
+        font-size: 17px;
+        background: rgba(30, 41, 59, 0.6);
+        padding: 14px;
+        border-radius: 12px;
+        border: 1px solid #3b82f6;
+        color: #e0f2fe;
+    }
+
+    /* ---------- INPUTS ---------- */
+    .stTextInput > div > input,
+    .stTextArea > div > textarea {
+        background: rgba(31, 41, 51, 0.6);
+        color: #e0f2fe;
+        border: 1px solid #3b82f6;
+        border-radius: 8px;
+        padding: 10px;
+    }
+
+    /* ---------- METRICS ---------- */
+    .stMetric {
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid #3b82f6;
+        border-radius: 12px;
+        padding: 15px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(59,130,246,0.2);
+    }
+
+    /* ---------- MOBILE ---------- */
+    @media (max-width: 768px) {
+        .banner-text { font-size: 18px; }
+        .header { font-size: 20px; }
+    }
     </style>
 
-    <!-- Gradient Defs -->
+    <!-- SVG Gradient Defs -->
     <svg width="0" height="0">
         <defs>
             <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#06b6d4"/>
-                <stop offset="100%" stop-color="#3b82f6"/>
+                <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
             </linearGradient>
         </defs>
     </svg>
@@ -867,8 +949,8 @@ st.markdown(
     <!-- Banner -->
     <div class="banner-container">
         <div class="banner-text">
-            <!-- Rocket Icon -->
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24">
+            <!-- Rocket SVG -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <path d="M12 2C13.66 2 15 3.34 15 5V9H18C18 6.24 20 4 22 2C19 2 16 2 12 2Z"/>
                 <path d="M2 22L10 14L14 18L6 22H2Z"/>
             </svg>
@@ -878,10 +960,11 @@ st.markdown(
 
     <!-- Header -->
     <div class="header">
-        <!-- Briefcase Icon -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24">
-            <path d="M10 2H14C15.1 2 16 2.9 16 4V6H20C21.1 6 22 6.9 22 8V20C22 21.1 
-                     21.1 22 20 22H4C2.9 22 2 21.1 2 20V8C2 6.9 2.9 6 4 6H8V4C8 2.9 
+        <!-- Briefcase SVG -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M10 2H14C15.1 2 16 2.9 16 4V6H20C21.1 6 22 6.9 
+                     22 8V20C22 21.1 21.1 22 20 22H4C2.9 22 2 21.1 
+                     2 20V8C2 6.9 2.9 6 4 6H8V4C8 2.9 
                      8.9 2 10 2ZM10 6H14V4H10V6Z"/>
         </svg>
         HIRELYZER - AI BASED ETHICAL RESUME ANALYZER

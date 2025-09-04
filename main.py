@@ -778,175 +778,176 @@ st.markdown(
 
     html, body, [class*="css"] {
         font-family: 'Orbitron', sans-serif;
-        background: linear-gradient(135deg, #0b0c10, #1a1f25);
-        color: #e0f7fa;
+        background: radial-gradient(circle at top left, #0a0f1f, #0b0c10 60%);
+        color: #d9f8ff;
         scroll-behavior: smooth;
     }
 
     /* ---------- SCROLLBAR ---------- */
     ::-webkit-scrollbar {
-        width: 8px;
+        width: 9px;
     }
     ::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(0, 40, 60, 0.25);
         border-radius: 10px;
     }
     ::-webkit-scrollbar-thumb {
-        background: rgba(0, 255, 255, 0.4);
+        background: linear-gradient(180deg, #00eaff, #0077ff);
         border-radius: 10px;
-        backdrop-filter: blur(6px);
+        box-shadow: inset 0 0 6px rgba(255,255,255,0.3);
     }
 
     /* ---------- BANNER ---------- */
     .banner-container {
         width: 100%;
-        height: 80px;
-        background: rgba(255, 255, 255, 0.08);
-        border-bottom: 1px solid rgba(0,255,255,0.3);
-        backdrop-filter: blur(12px) saturate(180%);
-        -webkit-backdrop-filter: blur(12px) saturate(180%);
+        height: 90px;
+        background: linear-gradient(135deg, rgba(0, 128, 255, 0.25), rgba(0, 255, 255, 0.12));
+        border-bottom: 2px solid rgba(0, 200, 255, 0.4);
+        border-radius: 0 0 20px 20px;
+        backdrop-filter: blur(18px) saturate(200%);
+        -webkit-backdrop-filter: blur(18px) saturate(200%);
         display: flex;
         align-items: center;
         justify-content: flex-start;
         position: relative;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        margin-bottom: 25px;
+        box-shadow: 0 8px 25px rgba(0, 150, 255, 0.35);
+        overflow: hidden;
     }
 
     .pulse-bar {
         position: absolute;
         display: flex;
         align-items: center;
-        font-size: 20px;
+        font-size: 22px;
         font-weight: bold;
-        color: #00ffff;
+        color: #00d9ff;
         white-space: nowrap;
         animation: glideIn 14s linear infinite;
-        text-shadow: 0 0 6px rgba(0,255,255,0.7);
+        text-shadow: 0 0 12px rgba(0,220,255,0.9), 0 0 25px rgba(0,180,255,0.6);
     }
 
     .pulse-bar .bar {
-        width: 10px;
-        height: 28px;
-        margin-right: 10px;
-        border-radius: 5px;
-        background: rgba(0,255,255,0.7);
-        animation: pulse 1.5s ease-in-out infinite;
+        width: 14px;
+        height: 32px;
+        margin-right: 12px;
+        border-radius: 6px;
+        background: linear-gradient(180deg, #00eaff, #0077ff);
+        box-shadow: 0 0 14px rgba(0,200,255,0.9);
+        animation: pulse 1.2s ease-in-out infinite;
     }
 
     @keyframes glideIn {
-        0% { left: -50%; opacity: 0; }
+        0% { left: -60%; opacity: 0; }
         10% { opacity: 1; }
         90% { opacity: 1; }
-        100% { left: 110%; opacity: 0; }
+        100% { left: 120%; opacity: 0; }
     }
 
     @keyframes pulse {
-        0%, 100% {
-            height: 20px;
-            background-color: rgba(0,255,255,0.7);
-        }
-        50% {
-            height: 40px;
-            background-color: rgba(255,0,255,0.6);
-        }
+        0%, 100% { height: 26px; background: linear-gradient(180deg, #00eaff, #0077ff); }
+        50% { height: 44px; background: linear-gradient(180deg, #ff00ff, #0077ff); }
     }
 
     /* ---------- HEADER ---------- */
     .header {
-        font-size: 26px;
+        font-size: 28px;
         font-weight: bold;
         text-align: center;
         text-transform: uppercase;
-        letter-spacing: 2px;
-        padding: 14px 0;
-        background: rgba(255, 255, 255, 0.08);
-        border-radius: 14px;
-        backdrop-filter: blur(10px) saturate(160%);
-        -webkit-backdrop-filter: blur(10px) saturate(160%);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-        margin-bottom: 15px;
+        letter-spacing: 3px;
+        padding: 16px 0;
+        margin: 0 auto 20px auto;
+        width: fit-content;
+        background: linear-gradient(135deg, rgba(0, 255, 255, 0.15), rgba(0, 100, 255, 0.1));
+        border-radius: 18px;
+        backdrop-filter: blur(14px) saturate(180%);
+        box-shadow: 0 8px 30px rgba(0, 200, 255, 0.35);
+        border: 1px solid rgba(0,255,255,0.25);
         animation: glowPulse 6s ease-in-out infinite;
     }
 
     @keyframes glowPulse {
         0%, 100% {
-            color: #00ffff;
-            text-shadow: 0 0 8px #00ffff, 0 0 15px rgba(0,255,255,0.6);
+            color: #00eaff;
+            text-shadow: 0 0 12px #00eaff, 0 0 25px rgba(0,255,255,0.7);
         }
         50% {
             color: #ff00ff;
-            text-shadow: 0 0 12px #ff00ff, 0 0 20px rgba(255,0,255,0.6);
+            text-shadow: 0 0 15px #ff00ff, 0 0 30px rgba(255,0,255,0.7);
         }
     }
 
     /* ---------- FILE UPLOADER ---------- */
     .stFileUploader > div > div {
-        border: 1px solid rgba(0,255,255,0.3);
-        border-radius: 12px;
-        background: rgba(255, 255, 255, 0.07);
-        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0,255,255,0.35);
+        border-radius: 14px;
+        background: linear-gradient(135deg, rgba(0,255,255,0.08), rgba(0,100,255,0.05));
+        backdrop-filter: blur(14px) saturate(160%);
         padding: 14px;
-        box-shadow: 0 6px 20px rgba(0,255,255,0.25);
-        transition: box-shadow 0.3s ease-in-out;
+        box-shadow: 0 6px 20px rgba(0,180,255,0.3);
+        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
     }
     .stFileUploader > div > div:hover {
-        box-shadow: 0 8px 28px rgba(0,255,255,0.5);
+        transform: scale(1.03);
+        box-shadow: 0 10px 30px rgba(0,200,255,0.5);
     }
 
     /* ---------- BUTTONS ---------- */
     .stButton > button {
-        background: rgba(255, 255, 255, 0.12);
-        border: 1px solid rgba(0,255,255,0.4);
-        border-radius: 12px;
-        color: #e0f7fa;
+        background: linear-gradient(135deg, rgba(0,255,255,0.18), rgba(0,120,255,0.15));
+        border: 1px solid rgba(0,200,255,0.4);
+        border-radius: 14px;
+        color: #e6faff;
         font-size: 15px;
         font-weight: bold;
         text-transform: uppercase;
-        padding: 10px 22px;
-        backdrop-filter: blur(8px);
+        padding: 10px 24px;
+        backdrop-filter: blur(10px);
         transition: all 0.3s ease-in-out;
+        box-shadow: 0 6px 18px rgba(0,200,255,0.3);
     }
     .stButton > button:hover {
-        background: rgba(0,255,255,0.2);
+        background: linear-gradient(135deg, rgba(0,200,255,0.25), rgba(0,120,255,0.22));
         border-color: rgba(255,0,255,0.5);
-        transform: scale(1.05);
-        box-shadow: 0 6px 18px rgba(255,0,255,0.4);
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 8px 24px rgba(255,0,255,0.4);
     }
 
     /* ---------- CHAT MESSAGES ---------- */
     .stChatMessage {
         font-size: 17px;
-        background: rgba(255, 255, 255, 0.07);
-        backdrop-filter: blur(8px);
-        border-radius: 12px;
-        border: 1px solid rgba(0,255,255,0.3);
+        background: linear-gradient(135deg, rgba(0,255,255,0.08), rgba(0,120,255,0.06));
+        backdrop-filter: blur(10px);
+        border-radius: 14px;
+        border: 1px solid rgba(0,200,255,0.35);
         padding: 14px;
-        color: #e0f7fa;
-        box-shadow: 0 4px 16px rgba(0,255,255,0.2);
+        color: #d9f8ff;
+        box-shadow: 0 6px 20px rgba(0,200,255,0.2);
+        margin-bottom: 12px;
     }
 
     /* ---------- INPUTS ---------- */
     .stTextInput > div > input,
     .stTextArea > div > textarea {
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(0,255,255,0.3);
-        border-radius: 8px;
-        color: #e0f7fa;
+        background: linear-gradient(135deg, rgba(0,255,255,0.07), rgba(0,120,255,0.05));
+        border: 1px solid rgba(0,200,255,0.4);
+        border-radius: 10px;
+        color: #d9f8ff;
         padding: 10px;
-        backdrop-filter: blur(6px);
-        box-shadow: inset 0 0 6px rgba(0,255,255,0.25);
+        backdrop-filter: blur(8px);
+        box-shadow: inset 0 0 6px rgba(0,200,255,0.25);
     }
 
     /* ---------- METRICS ---------- */
     .stMetric {
-        background: rgba(255, 255, 255, 0.07);
-        border: 1px solid rgba(0,255,255,0.3);
-        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(0,255,255,0.07), rgba(0,120,255,0.05));
+        border: 1px solid rgba(0,200,255,0.3);
+        border-radius: 14px;
         padding: 16px;
-        backdrop-filter: blur(8px);
+        backdrop-filter: blur(12px);
         text-align: center;
-        box-shadow: 0 4px 18px rgba(0,255,255,0.25);
+        box-shadow: 0 8px 25px rgba(0,200,255,0.25);
     }
 
     /* ---------- MOBILE ---------- */

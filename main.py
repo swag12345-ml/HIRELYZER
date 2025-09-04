@@ -3116,33 +3116,54 @@ with tab2:
     with st.sidebar:
         st.markdown("### ✨ Manage Sections")
 
+        # 🔀 Global toggle for mode (Add/Delete)
+        if "edit_mode" not in st.session_state:
+            st.session_state.edit_mode = "Add"
+
+        mode = st.radio("Mode", ["Add", "Delete"], index=0, horizontal=True, key="mode_toggle")
+        st.session_state.edit_mode = mode
+
+        st.markdown("---")
+
         # Experience
         st.markdown("**💼 Experience**")
-        if st.button("➕ Add Experience"):
-            st.session_state.experience_entries.append({"title": "", "company": "", "duration": "", "description": ""})
-        if st.button("❌ Delete Experience") and len(st.session_state.experience_entries) > 1:
-            st.session_state.experience_entries.pop()
+        if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Experience"):
+            if mode == "Add":
+                st.session_state.experience_entries.append(
+                    {"title": "", "company": "", "duration": "", "description": ""}
+                )
+            elif mode == "Delete" and len(st.session_state.experience_entries) > 1:
+                st.session_state.experience_entries.pop()
 
         # Education
         st.markdown("**🎓 Education**")
-        if st.button("➕ Add Education"):
-            st.session_state.education_entries.append({"degree": "", "institution": "", "year": "", "details": ""})
-        if st.button("❌ Delete Education") and len(st.session_state.education_entries) > 1:
-            st.session_state.education_entries.pop()
+        if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Education"):
+            if mode == "Add":
+                st.session_state.education_entries.append(
+                    {"degree": "", "institution": "", "year": "", "details": ""}
+                )
+            elif mode == "Delete" and len(st.session_state.education_entries) > 1:
+                st.session_state.education_entries.pop()
 
         # Projects
         st.markdown("**🛠 Projects**")
-        if st.button("➕ Add Project"):
-            st.session_state.project_entries.append({"title": "", "tech": "", "duration": "", "description": ""})
-        if st.button("❌ Delete Project") and len(st.session_state.project_entries) > 1:
-            st.session_state.project_entries.pop()
+        if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Project"):
+            if mode == "Add":
+                st.session_state.project_entries.append(
+                    {"title": "", "tech": "", "duration": "", "description": ""}
+                )
+            elif mode == "Delete" and len(st.session_state.project_entries) > 1:
+                st.session_state.project_entries.pop()
 
         # Certificates
         st.markdown("**📜 Certificates**")
-        if st.button("➕ Add Certificate"):
-            st.session_state.certificate_links.append({"name": "", "link": "", "duration": "", "description": ""})
-        if st.button("❌ Delete Certificate") and len(st.session_state.certificate_links) > 1:
-            st.session_state.certificate_links.pop()
+        if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Certificate"):
+            if mode == "Add":
+                st.session_state.certificate_links.append(
+                    {"name": "", "link": "", "duration": "", "description": ""}
+                )
+            elif mode == "Delete" and len(st.session_state.certificate_links) > 1:
+                st.session_state.certificate_links.pop()
 
     # ---------------- Resume Form ----------------
     with st.form("resume_form"):
@@ -3225,6 +3246,7 @@ with tab2:
                 cert["description"] = st.text_area("Description", value=cert["description"], key=f"cert_description_{idx}")
 
         submitted = st.form_submit_button("📑 Generate Resume")
+
 
         if submitted:
             st.success("✅ Resume Generated Successfully! Scroll down to preview or download.")

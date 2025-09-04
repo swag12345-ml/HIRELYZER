@@ -793,18 +793,20 @@ st.markdown(
         border-radius: 4px;
     }
     ::-webkit-scrollbar-thumb {
-        background: rgba(0, 153, 255, 0.6);
-        border-radius: 4px;
-        backdrop-filter: blur(6px);
+        background: rgba(0, 153, 255, 0.35);
+        border-radius: 6px;
+        backdrop-filter: blur(10px);
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
     }
 
     /* ---------- BANNER ---------- */
     .banner-container {
         width: 100%;
         height: 80px;
-        background: rgba(0, 102, 204, 0.25);
-        backdrop-filter: blur(12px);
-        border-bottom: 1px solid rgba(0, 153, 255, 0.4);
+        background: rgba(15, 25, 40, 0.35);
+        backdrop-filter: blur(16px) saturate(160%);
+        -webkit-backdrop-filter: blur(16px) saturate(160%);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 0 0 20px 20px;
         overflow: hidden;
         display: flex;
@@ -812,7 +814,7 @@ st.markdown(
         justify-content: flex-start;
         position: relative;
         margin-bottom: 20px;
-        box-shadow: 0 8px 32px rgba(0, 0, 50, 0.4);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
     }
 
     .pulse-bar {
@@ -821,13 +823,10 @@ st.markdown(
         align-items: center;
         font-size: 22px;
         font-weight: bold;
-        color: #b3e5fc;
+        color: #e0f7fa;
         white-space: nowrap;
         animation: glideIn 12s linear infinite;
-        backdrop-filter: blur(6px);
-        padding: 4px 12px;
-        border-radius: 8px;
-        background: rgba(0, 102, 204, 0.15);
+        text-shadow: 0 2px 6px rgba(0,0,0,0.6);
     }
 
     .pulse-bar .bar {
@@ -838,6 +837,7 @@ st.markdown(
         border-radius: 6px;
         backdrop-filter: blur(8px);
         animation: pulse 1.5s ease-in-out infinite;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     }
 
     @keyframes glideIn {
@@ -848,14 +848,8 @@ st.markdown(
     }
 
     @keyframes pulse {
-        0%, 100% {
-            height: 20px;
-            background-color: rgba(0, 153, 255, 0.6);
-        }
-        50% {
-            height: 40px;
-            background-color: rgba(0, 204, 255, 0.8);
-        }
+        0%, 100% { height: 20px; background-color: rgba(0,153,255,0.5); }
+        50% { height: 40px; background-color: rgba(0,204,255,0.8); }
     }
 
     /* ---------- HEADER ---------- */
@@ -867,96 +861,91 @@ st.markdown(
         letter-spacing: 2px;
         padding: 12px 0;
         color: #e1f5fe;
-        text-shadow: 0px 0px 6px rgba(0,153,255,0.6);
-        backdrop-filter: blur(6px);
-        background: rgba(0, 102, 204, 0.15);
-        border-radius: 12px;
-        margin: 0 auto 20px auto;
-        width: fit-content;
-        padding: 12px 20px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        text-shadow: 0px 0px 10px rgba(0,153,255,0.4);
+        backdrop-filter: blur(8px);
     }
 
     /* ---------- FILE UPLOADER ---------- */
     .stFileUploader > div > div {
-        border: 1px solid rgba(0,153,255,0.5);
-        border-radius: 12px;
-        background: rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(10px);
-        padding: 12px;
+        border: 1px solid rgba(255,255,255,0.25);
+        border-radius: 14px;
+        background: rgba(20, 30, 50, 0.3);
+        backdrop-filter: blur(14px) saturate(140%);
+        -webkit-backdrop-filter: blur(14px) saturate(140%);
+        padding: 14px;
         transition: all 0.3s ease-in-out;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        box-shadow: 0 4px 24px rgba(0,0,0,0.35);
     }
     .stFileUploader > div > div:hover {
-        border-color: rgba(0,204,255,0.8);
-        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        border-color: rgba(0,204,255,0.6);
+        box-shadow: 0 8px 36px rgba(0,0,0,0.55);
     }
 
     /* ---------- BUTTONS ---------- */
     .stButton > button {
-        background: rgba(0,153,255,0.25);
+        background: rgba(20, 30, 50, 0.35);
         color: #e1f5fe;
         font-size: 16px;
         font-weight: bold;
-        border: 1px solid rgba(0,153,255,0.4);
-        border-radius: 12px;
-        padding: 10px 20px;
+        border: 1px solid rgba(255,255,255,0.25);
+        border-radius: 14px;
+        padding: 10px 22px;
         text-transform: uppercase;
-        backdrop-filter: blur(8px);
+        backdrop-filter: blur(10px) saturate(140%);
+        -webkit-backdrop-filter: blur(10px) saturate(140%);
         transition: all 0.3s ease-in-out;
         box-shadow: 0 4px 20px rgba(0,0,0,0.4);
     }
     .stButton > button:hover {
         transform: scale(1.05);
-        background: rgba(0,204,255,0.35);
+        background: rgba(0,204,255,0.25);
         box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-        border-color: rgba(0,204,255,0.8);
+        border-color: rgba(0,204,255,0.7);
     }
 
     /* ---------- CHAT MESSAGES ---------- */
     .stChatMessage {
         font-size: 18px;
-        background: rgba(255, 255, 255, 0.08);
+        background: rgba(20, 30, 50, 0.3);
         padding: 14px;
-        border-radius: 12px;
-        border: 1px solid rgba(0,153,255,0.4);
+        border-radius: 14px;
+        border: 1px solid rgba(255,255,255,0.25);
         color: #e1f5fe;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        backdrop-filter: blur(12px) saturate(160%);
+        -webkit-backdrop-filter: blur(12px) saturate(160%);
+        box-shadow: 0 4px 22px rgba(0,0,0,0.35);
     }
 
     /* ---------- INPUTS ---------- */
     .stTextInput > div > input,
     .stTextArea > div > textarea {
-        background: rgba(255,255,255,0.08);
+        background: rgba(20, 30, 50, 0.25);
         color: #e1f5fe;
-        border: 1px solid rgba(0,153,255,0.4);
-        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.25);
+        border-radius: 12px;
         padding: 10px;
-        backdrop-filter: blur(8px);
-        box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
+        backdrop-filter: blur(10px) saturate(150%);
+        -webkit-backdrop-filter: blur(10px) saturate(150%);
+        box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
     }
 
     /* ---------- METRICS ---------- */
     .stMetric {
-        background: rgba(0, 102, 204, 0.15);
-        border: 1px solid rgba(0,153,255,0.4);
-        border-radius: 12px;
+        background: rgba(20, 30, 50, 0.25);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 14px;
         padding: 15px;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        backdrop-filter: blur(12px) saturate(150%);
+        -webkit-backdrop-filter: blur(12px) saturate(150%);
+        box-shadow: 0 4px 22px rgba(0,0,0,0.35);
         text-align: center;
         color: #b3e5fc;
     }
 
     /* ---------- MOBILE ---------- */
     @media (max-width: 768px) {
-        .pulse-bar {
-            font-size: 16px;
-        }
-        .header {
-            font-size: 20px;
-        }
+        .pulse-bar { font-size: 16px; }
+        .header { font-size: 20px; }
     }
     </style>
 
@@ -973,6 +962,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 # Load environment variables

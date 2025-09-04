@@ -3127,9 +3127,7 @@ with tab2:
         st.markdown("**💼 Experience**")
         if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Experience", key="exp_btn"):
             if mode == "Add":
-                st.session_state.experience_entries.append(
-                    {"title": "", "company": "", "duration": "", "description": ""}
-                )
+                st.session_state.experience_entries.append({"title": "", "company": "", "duration": "", "description": ""})
             elif mode == "Delete" and len(st.session_state.experience_entries) > 1:
                 st.session_state.experience_entries.pop()
 
@@ -3137,9 +3135,7 @@ with tab2:
         st.markdown("**🎓 Education**")
         if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Education", key="edu_btn"):
             if mode == "Add":
-                st.session_state.education_entries.append(
-                    {"degree": "", "institution": "", "year": "", "details": ""}
-                )
+                st.session_state.education_entries.append({"degree": "", "institution": "", "year": "", "details": ""})
             elif mode == "Delete" and len(st.session_state.education_entries) > 1:
                 st.session_state.education_entries.pop()
 
@@ -3147,9 +3143,7 @@ with tab2:
         st.markdown("**🛠 Projects**")
         if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Project", key="proj_btn"):
             if mode == "Add":
-                st.session_state.project_entries.append(
-                    {"title": "", "tech": "", "duration": "", "description": ""}
-                )
+                st.session_state.project_entries.append({"title": "", "tech": "", "duration": "", "description": ""})
             elif mode == "Delete" and len(st.session_state.project_entries) > 1:
                 st.session_state.project_entries.pop()
 
@@ -3157,9 +3151,7 @@ with tab2:
         st.markdown("**📜 Certificates**")
         if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Certificate", key="cert_btn"):
             if mode == "Add":
-                st.session_state.certificate_links.append(
-                    {"name": "", "link": "", "duration": "", "description": ""}
-                )
+                st.session_state.certificate_links.append({"name": "", "link": "", "duration": "", "description": ""})
             elif mode == "Delete" and len(st.session_state.certificate_links) > 1:
                 st.session_state.certificate_links.pop()
 
@@ -3189,26 +3181,26 @@ with tab2:
         st.markdown("### 🧱 <u>Work Experience</u>", unsafe_allow_html=True)
         for idx, exp in enumerate(st.session_state.experience_entries):
             with st.expander(f"Experience #{idx+1}", expanded=True):
-                exp["title"] = st.text_input("Job Title", value=exp.get("title", ""), key=f"title_{idx}")
-                exp["company"] = st.text_input("Company", value=exp.get("company", ""), key=f"company_{idx}")
-                exp["duration"] = st.text_input("Duration", value=exp.get("duration", ""), key=f"duration_{idx}")
-                exp["description"] = st.text_area("Description", value=exp.get("description", ""), key=f"description_{idx}")
+                exp["title"] = st.text_input("Job Title", value=exp.get("title", ""), key=f"title_{idx}_{len(st.session_state.experience_entries)}")
+                exp["company"] = st.text_input("Company", value=exp.get("company", ""), key=f"company_{idx}_{len(st.session_state.experience_entries)}")
+                exp["duration"] = st.text_input("Duration", value=exp.get("duration", ""), key=f"duration_{idx}_{len(st.session_state.experience_entries)}")
+                exp["description"] = st.text_area("Description", value=exp.get("description", ""), key=f"description_{idx}_{len(st.session_state.experience_entries)}")
 
         st.markdown("### 🎓 <u>Education</u>", unsafe_allow_html=True)
         for idx, edu in enumerate(st.session_state.education_entries):
             with st.expander(f"Education #{idx+1}", expanded=True):
-                edu["degree"] = st.text_input("Degree", value=edu.get("degree", ""), key=f"degree_{idx}")
-                edu["institution"] = st.text_input("Institution", value=edu.get("institution", ""), key=f"institution_{idx}")
-                edu["year"] = st.text_input("Year", value=edu.get("year", ""), key=f"edu_year_{idx}")
-                edu["details"] = st.text_area("Details", value=edu.get("details", ""), key=f"edu_details_{idx}")
+                edu["degree"] = st.text_input("Degree", value=edu.get("degree", ""), key=f"degree_{idx}_{len(st.session_state.education_entries)}")
+                edu["institution"] = st.text_input("Institution", value=edu.get("institution", ""), key=f"institution_{idx}_{len(st.session_state.education_entries)}")
+                edu["year"] = st.text_input("Year", value=edu.get("year", ""), key=f"edu_year_{idx}_{len(st.session_state.education_entries)}")
+                edu["details"] = st.text_area("Details", value=edu.get("details", ""), key=f"edu_details_{idx}_{len(st.session_state.education_entries)}")
 
         st.markdown("### 🛠 <u>Projects</u>", unsafe_allow_html=True)
         for idx, proj in enumerate(st.session_state.project_entries):
             with st.expander(f"Project #{idx+1}", expanded=True):
-                proj["title"] = st.text_input("Project Title", value=proj.get("title", ""), key=f"proj_title_{idx}")
-                proj["tech"] = st.text_input("Tech Stack", value=proj.get("tech", ""), key=f"proj_tech_{idx}")
-                proj["duration"] = st.text_input("Duration", value=proj.get("duration", ""), key=f"proj_duration_{idx}")
-                proj["description"] = st.text_area("Description", value=proj.get("description", ""), key=f"proj_desc_{idx}")
+                proj["title"] = st.text_input("Project Title", value=proj.get("title", ""), key=f"proj_title_{idx}_{len(st.session_state.project_entries)}")
+                proj["tech"] = st.text_input("Tech Stack", value=proj.get("tech", ""), key=f"proj_tech_{idx}_{len(st.session_state.project_entries)}")
+                proj["duration"] = st.text_input("Duration", value=proj.get("duration", ""), key=f"proj_duration_{idx}_{len(st.session_state.project_entries)}")
+                proj["description"] = st.text_area("Description", value=proj.get("description", ""), key=f"proj_desc_{idx}_{len(st.session_state.project_entries)}")
 
         st.markdown("### 🔗 Project Links")
         project_links_input = st.text_area("Enter one project link per line:", value="\n".join(st.session_state.project_links), key="proj_links_input")
@@ -3218,10 +3210,10 @@ with tab2:
         st.markdown("### 🧾 <u>Certificates</u>", unsafe_allow_html=True)
         for idx, cert in enumerate(st.session_state.certificate_links):
             with st.expander(f"Certificate #{idx+1}", expanded=True):
-                cert["name"] = st.text_input("Certificate Name", value=cert.get("name", ""), key=f"cert_name_{idx}")
-                cert["link"] = st.text_input("Certificate Link", value=cert.get("link", ""), key=f"cert_link_{idx}")
-                cert["duration"] = st.text_input("Duration", value=cert.get("duration", ""), key=f"cert_duration_{idx}")
-                cert["description"] = st.text_area("Description", value=cert.get("description", ""), key=f"cert_description_{idx}")
+                cert["name"] = st.text_input("Certificate Name", value=cert.get("name", ""), key=f"cert_name_{idx}_{len(st.session_state.certificate_links)}")
+                cert["link"] = st.text_input("Certificate Link", value=cert.get("link", ""), key=f"cert_link_{idx}_{len(st.session_state.certificate_links)}")
+                cert["duration"] = st.text_input("Duration", value=cert.get("duration", ""), key=f"cert_duration_{idx}_{len(st.session_state.certificate_links)}")
+                cert["description"] = st.text_area("Description", value=cert.get("description", ""), key=f"cert_description_{idx}_{len(st.session_state.certificate_links)}")
 
         submitted = st.form_submit_button("📑 Generate Resume")
 

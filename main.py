@@ -778,7 +778,7 @@ st.markdown(
 
     html, body, [class*="css"] {
         font-family: 'Orbitron', sans-serif;
-        background-color: #0b0c10;
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
         color: #c5c6c7;
         scroll-behavior: smooth;
     }
@@ -788,178 +788,130 @@ st.markdown(
         width: 8px;
     }
     ::-webkit-scrollbar-track {
-        background: #1f2833;
+        background: rgba(255,255,255,0.05);
     }
     ::-webkit-scrollbar-thumb {
-        background: #00ffff;
+        background: rgba(255,255,255,0.3);
         border-radius: 4px;
     }
 
-    /* ---------- BANNER ---------- */
+    /* ---------- BANNER (Glassmorphism) ---------- */
     .banner-container {
         width: 100%;
         height: 80px;
-        background: linear-gradient(90deg, #000428, #004e92);
-        border-bottom: 2px solid cyan;
-        overflow: hidden;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        backdrop-filter: blur(12px) saturate(150%);
+        -webkit-backdrop-filter: blur(12px) saturate(150%);
+        border: 1px solid rgba(255, 255, 255, 0.25);
         display: flex;
         align-items: center;
-        justify-content: flex-start;
-        position: relative;
-        margin-bottom: 20px;
-    }
-
-    .pulse-bar {
-        position: absolute;
-        display: flex;
-        align-items: center;
+        justify-content: center;
         font-size: 22px;
         font-weight: bold;
-        color: #00ffff;
-        white-space: nowrap;
-        animation: glideIn 12s linear infinite;
-        text-shadow: 0 0 10px #00ffff;
-    }
-
-    .pulse-bar .bar {
-        width: 10px;
-        height: 30px;
-        margin-right: 10px;
-        background: #00ffff;
-        box-shadow: 0 0 8px cyan;
-        animation: pulse 1s ease-in-out infinite;
-    }
-
-    @keyframes glideIn {
-        0% { left: -50%; opacity: 0; }
-        10% { opacity: 1; }
-        90% { opacity: 1; }
-        100% { left: 110%; opacity: 0; }
-    }
-
-    @keyframes pulse {
-        0%, 100% {
-            height: 20px;
-            background-color: #00ffff;
-        }
-        50% {
-            height: 40px;
-            background-color: #ff00ff;
-        }
+        color: #ffffff;
+        margin-bottom: 20px;
+        letter-spacing: 1px;
     }
 
     /* ---------- HEADER ---------- */
     .header {
-        font-size: 28px;
+        font-size: 26px;
         font-weight: bold;
         text-align: center;
         text-transform: uppercase;
         letter-spacing: 2px;
-        padding: 12px 0;
-        animation: glowPulse 3s ease-in-out infinite;
-        text-shadow: 0px 0px 10px #00ffff;
-    }
-
-    @keyframes glowPulse {
-        0%, 100% {
-            color: #00ffff;
-            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
-        }
-        50% {
-            color: #ff00ff;
-            text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff;
-        }
+        padding: 16px 20px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(10px) saturate(120%);
+        -webkit-backdrop-filter: blur(10px) saturate(120%);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #e0e0e0;
+        margin-bottom: 25px;
     }
 
     /* ---------- FILE UPLOADER ---------- */
     .stFileUploader > div > div {
-        border: 2px solid #00ffff;
-        border-radius: 10px;
-        background-color: rgba(0, 255, 255, 0.05);
+        border: 1px solid rgba(255,255,255,0.25);
+        border-radius: 12px;
+        background: rgba(255,255,255,0.08);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
         padding: 12px;
-        box-shadow: 0 0 15px rgba(0,255,255,0.4);
-        transition: box-shadow 0.3s ease-in-out;
+        transition: all 0.3s ease-in-out;
     }
     .stFileUploader > div > div:hover {
-        box-shadow: 0 0 25px rgba(0,255,255,0.8);
+        border: 1px solid rgba(255,255,255,0.5);
     }
 
     /* ---------- BUTTONS ---------- */
     .stButton > button {
-        background: linear-gradient(45deg, #ff0080, #00bfff);
-        color: white;
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 12px;
+        color: #fff;
         font-size: 16px;
         font-weight: bold;
-        border: none;
-        border-radius: 8px;
         padding: 10px 20px;
-        text-transform: uppercase;
-        box-shadow: 0px 0px 12px #00ffff;
         transition: all 0.3s ease-in-out;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
     }
     .stButton > button:hover {
+        background: rgba(255, 255, 255, 0.25);
         transform: scale(1.05);
-        box-shadow: 0px 0px 24px #ff00ff;
-        background: linear-gradient(45deg, #ff00aa, #00ffff);
     }
 
     /* ---------- CHAT MESSAGES ---------- */
     .stChatMessage {
         font-size: 18px;
-        background: #1e293b;
+        background: rgba(255, 255, 255, 0.08);
         padding: 14px;
-        border-radius: 10px;
-        border: 2px solid #00ffff;
-        color: #ccffff;
-        text-shadow: 0px 0px 6px #00ffff;
-        animation: glow 1.5s ease-in-out infinite alternate;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.25);
+        color: #e0e0e0;
+        backdrop-filter: blur(8px);
     }
 
     /* ---------- INPUTS ---------- */
     .stTextInput > div > input,
     .stTextArea > div > textarea {
-        background-color: #1f2833;
-        color: #00ffff;
-        border: 1px solid #00ffff;
-        border-radius: 6px;
+        background: rgba(255,255,255,0.1);
+        color: #fff;
+        border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 8px;
         padding: 10px;
-        box-shadow: 0 0 10px rgba(0,255,255,0.3);
+        backdrop-filter: blur(6px);
     }
 
     /* ---------- METRICS ---------- */
     .stMetric {
-        background-color: #0f172a;
-        border: 1px solid #00ffff;
-        border-radius: 10px;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.25);
+        border-radius: 12px;
         padding: 15px;
-        box-shadow: 0 0 10px rgba(0,255,255,0.5);
         text-align: center;
+        backdrop-filter: blur(10px);
+        color: #fff;
     }
 
     /* ---------- MOBILE ---------- */
     @media (max-width: 768px) {
-        .pulse-bar {
-            font-size: 16px;
-        }
-        .header {
-            font-size: 20px;
-        }
+        .banner-container { font-size: 18px; }
+        .header { font-size: 20px; }
     }
     </style>
 
     <!-- Banner -->
-    <div class="banner-container">
-        <div class="pulse-bar">
-            <div class="bar"></div>
-            <div>HIRELYZER - Elevate Your Resume Analysis</div>
-        </div>
-    </div>
+    <div class="banner-container">🚀 HIRELYZER - Elevate Your Resume Analysis</div>
 
     <!-- Header -->
     <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
     """,
     unsafe_allow_html=True
 )
+
 
 # Load environment variables
 # ------------------- Core Setup -------------------

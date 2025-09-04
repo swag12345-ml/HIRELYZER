@@ -237,103 +237,70 @@ if "processed_files" not in st.session_state:
 # ------------------- CSS Styling -------------------
 st.markdown("""
 <style>
-/* Global */
 body, .main {
-    background: linear-gradient(135deg, #0d1117, #0b0f14);
+    background-color: #0d1117;
     color: white;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-
-/* Login Card */
 .login-card {
-    background: rgba(22, 27, 34, 0.85);
-    backdrop-filter: blur(12px);
-    padding: 35px;
+    background: #161b22;
+    padding: 30px;
     border-radius: 20px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+    box-shadow: 0 0 25px rgba(0,0,0,0.3);
     transition: all 0.4s ease;
 }
 .login-card:hover {
-    transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 8px 28px rgba(0,0,0,0.75);
+    transform: translateY(-6px) scale(1.01);
+    box-shadow: 0 0 45px rgba(0,255,255,0.25);
 }
-
-/* Inputs */
 .stTextInput > div > input {
-    background: rgba(13,17,23,0.9);
-    color: #f0f6fc;
+    background-color: #0d1117;
+    color: white;
     border: 1px solid #30363d;
     border-radius: 10px;
-    padding: 0.7em;
-    transition: all 0.3s ease;
+    padding: 0.6em;
 }
-.stTextInput > div > input:focus {
+.stTextInput > div > input:hover {
     border: 1px solid #00BFFF;
-    outline: none;
+    box-shadow: 0 0 8px rgba(0,191,255,0.2);
 }
 .stTextInput > label {
     color: #c9d1d9;
-    font-weight: 500;
 }
-
-/* Buttons */
 .stButton > button {
-    background: linear-gradient(135deg, #238636, #2ea043);
+    background-color: #238636;
     color: white;
-    border-radius: 12px;
-    padding: 0.7em 1.8em;
+    border-radius: 10px;
+    padding: 0.6em 1.5em;
     border: none;
     font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-.stButton > button::after {
-    content: "";
-    position: absolute;
-    top: 0; left: -100%;
-    width: 100%; height: 100%;
-    background: rgba(255,255,255,0.15);
-    transform: skewX(-20deg);
-    transition: 0.5s;
-}
-.stButton > button:hover::after {
-    left: 100%;
 }
 .stButton > button:hover {
-    background: linear-gradient(135deg, #2ea043, #3fb950);
-    transform: scale(1.05);
+    background-color: #2ea043;
+    box-shadow: 0 0 10px rgba(46,160,67,0.4);
+    transform: scale(1.02);
 }
-
-/* Feature Cards */
 .feature-card {
-    background: linear-gradient(145deg, #1f2937, #111827);
-    padding: 22px;
-    border-radius: 18px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+    background: radial-gradient(circle at top left, #1f2937, #111827);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0,255,255,0.1);
     text-align: center;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     color: #fff;
-    margin-bottom: 22px;
+    margin-bottom: 20px;
 }
 .feature-card:hover {
-    transform: translateY(-10px) scale(1.02);
-    box-shadow: 0 8px 22px rgba(0,0,0,0.6);
+    transform: translateY(-10px);
+    box-shadow: 0 0 30px rgba(0,255,255,0.4);
 }
 .feature-card h3 {
     color: #00BFFF;
-    font-weight: 600;
-    margin-bottom: 10px;
 }
 .feature-card p {
     color: #c9d1d9;
-    font-size: 0.95em;
 }
 </style>
 """, unsafe_allow_html=True)
-
-
 # 🔹 VIDEO BACKGROUND & GLOW TEXT
 
 
@@ -364,13 +331,6 @@ if not st.session_state.authenticated:
             </div>
             """, unsafe_allow_html=True)
 
-    # -------- Welcome Button --------
-    st.markdown("<div style='text-align:center; margin:30px;'>", unsafe_allow_html=True)
-    if st.button("🚀 Welcome to Hirelyzer"):
-        st.markdown("<a id='login-section'></a>", unsafe_allow_html=True)
-        st.session_state.show_login = True
-    st.markdown("</div>", unsafe_allow_html=True)
-
     # -------- Animated Cards --------
     image_url = "https://cdn-icons-png.flaticon.com/512/3135/3135768.png"
     response = requests.get(image_url)
@@ -390,7 +350,6 @@ if not st.session_state.authenticated:
       width: 240px;
       animation: splitCards 2.5s ease-in-out infinite alternate;
       z-index: 1;
-      filter: drop-shadow(0 0 6px rgba(0,191,255,0.5)); /* softer glow */
     }}
     .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
     .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
@@ -410,14 +369,19 @@ if not st.session_state.authenticated:
     </div>
     """, unsafe_allow_html=True)
 
-    # -------- Counter Section --------
+    # -------- Counter Section (Updated Layout & Style with tighter spacing) --------
+
+    # Fetch counters
     total_users = get_total_registered_users()
     active_logins = get_logins_today()
     stats = get_database_stats()
+
+# Replace static 15 with dynamic count
     resumes_uploaded = stats.get("total_candidates", 0)
+
     states_accessed = 29
 
-    counter_style = """
+    neon_counter_style = """
     <style>
     .counter-grid {
         display: grid;
@@ -429,6 +393,7 @@ if not st.session_state.authenticated:
         max-width: 600px;
         margin: 0 auto;
     }
+
     .counter-box {
         background-color: #0d1117;
         border: 2px solid #00FFFF;
@@ -439,19 +404,22 @@ if not st.session_state.authenticated:
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        box-shadow: 0 0 8px rgba(0, 255, 255, 0.3); /* softer glow */
+        box-shadow: 0 0 12px rgba(0, 255, 255, 0.4);
         transition: transform 0.2s ease;
     }
+
     .counter-box:hover {
         transform: translateY(-5px);
-        box-shadow: 0 0 14px rgba(0, 255, 255, 0.5); /* reduced glow */
+        box-shadow: 0 0 18px rgba(0, 255, 255, 0.7);
     }
+
     .counter-number {
         font-size: 2.2em;
         font-weight: bold;
         color: #00BFFF;
         margin: 0;
     }
+
     .counter-label {
         margin-top: 8px;
         font-size: 1em;
@@ -459,7 +427,8 @@ if not st.session_state.authenticated:
     }
     </style>
     """
-    st.markdown(counter_style, unsafe_allow_html=True)
+
+    st.markdown(neon_counter_style, unsafe_allow_html=True)
 
     st.markdown(f"""
     <div class="counter-grid">
@@ -482,6 +451,236 @@ if not st.session_state.authenticated:
     </div>
     """, unsafe_allow_html=True)
 
+if not st.session_state.get("authenticated", False):
+
+    # ✅ Futuristic silhouette
+    image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
+    response = requests.get(image_url)
+    img_base64 = b64encode(response.content).decode()
+
+    # ✅ Inject cinematic CSS
+    st.markdown(f"""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+
+    /* ===== Card Shuffle Animation ===== */
+    .animated-cards {{
+      margin-top: 40px;
+      display: flex;
+      justify-content: center;
+      position: relative;
+      height: 260px;
+    }}
+    .animated-cards img {{
+      position: absolute;
+      width: 220px;
+      animation: splitCards 2.5s ease-in-out infinite alternate;
+      z-index: 1;
+      filter: drop-shadow(0 0 10px rgba(0,191,255,0.6));
+    }}
+    .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
+    .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
+    .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
+
+    @keyframes splitCards {{
+      0%   {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
+      100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
+    }}
+    .card-left   {{ --x-offset: -80px; --rot: -4deg; }}
+    .card-center {{ --x-offset: 0px;  --rot: 0deg;  }}
+    .card-right  {{ --x-offset: 80px;  --rot: 4deg;  }}
+
+    /* ===== Cinematic Login Card ===== */
+    .login-card {{
+      background: linear-gradient(145deg, rgba(10,20,40,0.92), rgba(0,191,255,0.1));
+      border: 1px solid #00BFFF;
+      border-radius: 18px;
+      padding: 25px;
+      box-shadow: 0px 0px 30px rgba(0,191,255,0.7);
+      font-family: 'Orbitron', sans-serif;
+      color: white;
+      margin-top: 20px;
+      opacity: 0;
+      transform: translateX(-120%);
+      animation: slideInLeft 1.2s ease-out forwards;
+    }}
+    @keyframes slideInLeft {{
+      0%   {{ transform: translateX(-120%); opacity: 0; }}
+      100% {{ transform: translateX(0); opacity: 1; }}
+    }}
+
+    .login-card h2 {{
+      text-align: center;
+      font-size: 1.6rem;
+      text-shadow: 0 0 12px #00BFFF;
+      margin-bottom: 15px;
+    }}
+    .login-card h2 span {{ color: #00BFFF; }}
+
+    /* ===== Sliding Messages ===== */
+    .slide-message {{
+      position: relative;
+      overflow: hidden;
+      margin: 10px 0;
+      padding: 10px 15px;
+      border-radius: 10px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: slideIn 0.8s ease forwards;
+    }}
+    .slide-message svg {{
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }}
+    .success-msg {{ background: rgba(0,255,127,0.12); border-left: 5px solid #00FF7F; color:#00FF7F; }}
+    .error-msg   {{ background: rgba(255,99,71,0.12);  border-left: 5px solid #FF6347; color:#FF6347; }}
+    .info-msg    {{ background: rgba(30,144,255,0.12); border-left: 5px solid #1E90FF; color:#1E90FF; }}
+    .warn-msg    {{ background: rgba(255,215,0,0.12);  border-left: 5px solid #FFD700; color:#FFD700; }}
+
+    @keyframes slideIn {{
+      0%   {{ transform: translateX(100%); opacity: 0; }}
+      100% {{ transform: translateX(0); opacity: 1; }}
+    }}
+
+    /* ===== Futuristic Buttons ===== */
+    .stButton>button {{
+      background: linear-gradient(90deg, #00BFFF, #1E90FF);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: bold;
+      padding: 8px 20px;
+      box-shadow: 0px 0px 15px rgba(0,191,255,0.6);
+      transition: all 0.3s ease;
+    }}
+    .stButton>button:hover {{
+      transform: scale(1.05);
+      box-shadow: 0px 0px 25px rgba(0,191,255,0.9);
+    }}
+
+    /* ===== Futuristic Input Fields ===== */
+    .stTextInput input {{
+      background: rgba(10,25,45,0.85);
+      border: 1px solid #00BFFF;
+      border-radius: 8px;
+      padding: 10px;
+      color: #E0F7FF;
+      font-family: 'Orbitron', sans-serif;
+      box-shadow: 0px 0px 15px rgba(0,191,255,0.3);
+      transition: all 0.3s ease-in-out;
+    }}
+    .stTextInput input:focus {{
+      outline: none !important;
+      border: 1px solid #1E90FF;
+      box-shadow: 0px 0px 25px rgba(0,191,255,0.9), inset 0px 0px 10px rgba(0,191,255,0.6);
+      transform: scale(1.02);
+    }}
+    .stTextInput label {{
+      font-family: 'Orbitron', sans-serif;
+      color: #00BFFF !important;
+      text-shadow: 0 0 8px rgba(0,191,255,0.8);
+    }}
+    </style>
+
+    <!-- Animated Cards -->
+    <div class="animated-cards">
+        <img class="card-left" src="data:image/png;base64,{img_base64}" />
+        <img class="card-center" src="data:image/png;base64,{img_base64}" />
+        <img class="card-right" src="data:image/png;base64,{img_base64}" />
+    </div>
+    """, unsafe_allow_html=True)
+
+    # -------- Login/Register Layout --------
+    left, center, right = st.columns([1, 2, 1])
+
+    with center:
+        st.markdown(
+            "<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>HIRELYZER</span></h2>",
+            unsafe_allow_html=True,
+        )
+
+        login_tab, register_tab = st.tabs(["Login", "Register"])
+
+        # ---------------- LOGIN TAB ----------------
+        with login_tab:
+            user = st.text_input("Username", key="login_user")
+            pwd = st.text_input("Password", type="password", key="login_pass")
+
+            if st.button("Login", key="login_btn"):
+                success, saved_key = verify_user(user.strip(), pwd.strip())
+                if success:
+                    st.session_state.authenticated = True
+                    st.session_state.username = user.strip()
+                    if saved_key:
+                        st.session_state["user_groq_key"] = saved_key
+                    log_user_action(user.strip(), "login")
+
+                    st.markdown("""<div class='slide-message success-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                        Login successful!
+                    </div>""", unsafe_allow_html=True)
+                    st.rerun()
+                else:
+                    st.markdown("""<div class='slide-message error-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                        Invalid credentials.
+                    </div>""", unsafe_allow_html=True)
+
+        # ---------------- REGISTER TAB ----------------
+        with register_tab:
+            new_user = st.text_input("Choose a Username", key="reg_user")
+            new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
+            st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
+
+            if new_user.strip():
+                if username_exists(new_user.strip()):
+                    st.markdown("""<div class='slide-message error-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                        Username already exists.
+                    </div>""", unsafe_allow_html=True)
+                else:
+                    st.markdown("""<div class='slide-message info-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
+                          <path d="M12 8h.01M12 12v4"/></svg>
+                        Username is available.
+                    </div>""", unsafe_allow_html=True)
+
+            if st.button("Register", key="register_btn"):
+                if new_user.strip() and new_pass.strip():
+                    success, message = add_user(new_user.strip(), new_pass.strip())
+                    if success:
+                        st.markdown(f"""<div class='slide-message success-msg'>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                            {message}
+                        </div>""", unsafe_allow_html=True)
+                        log_user_action(new_user.strip(), "register")
+                    else:
+                        st.markdown(f"""<div class='slide-message error-msg'>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                              stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                            {message}
+                        </div>""", unsafe_allow_html=True)
+                else:
+                    st.markdown("""<div class='slide-message warn-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
+                        </svg>
+                        Please fill in both fields.
+                    </div>""", unsafe_allow_html=True)
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.stop()
 
 
 
@@ -596,7 +795,7 @@ st.markdown(
         border-radius: 4px;
     }
 
-    /* ---------- BANNER (Glassmorphism with Click Glow) ---------- */
+    /* ---------- BANNER (Glassmorphism) ---------- */
     .banner-container {
         width: 100%;
         height: 80px;
@@ -608,11 +807,6 @@ st.markdown(
         justify-content: center;
         margin-bottom: 20px;
         border-radius: 0 0 16px 16px;
-        transition: box-shadow 0.4s ease-in-out, border 0.4s ease-in-out;
-    }
-    .banner-container:active {
-        box-shadow: 0 0 35px rgba(59, 130, 246, 0.9);
-        border-bottom: 2px solid rgba(6, 182, 212, 0.9);
     }
 
     .banner-text {
@@ -632,7 +826,6 @@ st.markdown(
         width: 26px;
         height: 26px;
         fill: url(#grad1);
-        flex-shrink: 0;
     }
 
     @keyframes fadeSlide {
@@ -640,7 +833,7 @@ st.markdown(
         100% { opacity: 1; transform: translateY(-5px); }
     }
 
-    /* ---------- HEADER (Glass Glow on Click) ---------- */
+    /* ---------- HEADER ---------- */
     .header {
         font-size: 28px;
         font-weight: 800;
@@ -655,19 +848,12 @@ st.markdown(
         align-items: center;
         justify-content: center;
         gap: 12px;
-        cursor: pointer;
-        transition: text-shadow 0.4s ease-in-out;
-    }
-    .header:active {
-        text-shadow: 0 0 20px rgba(59,130,246,0.8), 
-                     0 0 40px rgba(6,182,212,0.7);
     }
 
     .header svg {
         width: 28px;
         height: 28px;
         fill: url(#grad1);
-        flex-shrink: 0;
     }
 
     /* ---------- FILE UPLOADER ---------- */
@@ -750,10 +936,8 @@ st.markdown(
     <!-- Banner -->
     <div class="banner-container">
         <div class="banner-text">
-            <!-- Rocket SVG -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M12 2C13.66 2 15 3.34 15 5V9H18C18 6.24 20 4 22 2C19 2 16 2 12 2Z"/>
-                <path d="M2 22L10 14L14 18L6 22H2Z"/>
+                <path d="M12 2L15 8H9L12 2ZM2 22H22L12 13L2 22Z"/>
             </svg>
             HIRELYZER - Elevate Your Resume Analysis
         </div>
@@ -761,19 +945,14 @@ st.markdown(
 
     <!-- Header -->
     <div class="header">
-        <!-- Briefcase SVG -->
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M10 2H14C15.1 2 16 2.9 16 4V6H20C21.1 6 22 6.9 
-                     22 8V20C22 21.1 21.1 22 20 22H4C2.9 22 2 21.1 
-                     2 20V8C2 6.9 2.9 6 4 6H8V4C8 2.9 
-                     8.9 2 10 2ZM10 6H14V4H10V6Z"/>
+            <path d="M4 4H20V20H4V4ZM6 6V18H18V6H6Z"/>
         </svg>
         HIRELYZER - AI BASED ETHICAL RESUME ANALYZER
     </div>
     """,
     unsafe_allow_html=True
 )
-
 
 
 # Load environment variables

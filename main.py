@@ -778,8 +778,8 @@ st.markdown(
 
     html, body, [class*="css"] {
         font-family: 'Orbitron', sans-serif;
-        background-color: #0b0c10;
-        color: #c5c6c7;
+        background: linear-gradient(135deg, #0b0c10, #1a1f25);
+        color: #e0f7fa;
         scroll-behavior: smooth;
     }
 
@@ -788,46 +788,50 @@ st.markdown(
         width: 8px;
     }
     ::-webkit-scrollbar-track {
-        background: #1f2833;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
     }
     ::-webkit-scrollbar-thumb {
-        background: #00ffff;
-        border-radius: 4px;
+        background: rgba(0, 255, 255, 0.4);
+        border-radius: 10px;
+        backdrop-filter: blur(6px);
     }
 
     /* ---------- BANNER ---------- */
     .banner-container {
         width: 100%;
         height: 80px;
-        background: linear-gradient(90deg, #000428, #004e92);
-        border-bottom: 2px solid cyan;
-        overflow: hidden;
+        background: rgba(255, 255, 255, 0.08);
+        border-bottom: 1px solid rgba(0,255,255,0.3);
+        backdrop-filter: blur(12px) saturate(180%);
+        -webkit-backdrop-filter: blur(12px) saturate(180%);
         display: flex;
         align-items: center;
         justify-content: flex-start;
         position: relative;
         margin-bottom: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     }
 
     .pulse-bar {
         position: absolute;
         display: flex;
         align-items: center;
-        font-size: 22px;
+        font-size: 20px;
         font-weight: bold;
         color: #00ffff;
         white-space: nowrap;
-        animation: glideIn 12s linear infinite;
-        text-shadow: 0 0 10px #00ffff;
+        animation: glideIn 14s linear infinite;
+        text-shadow: 0 0 6px rgba(0,255,255,0.7);
     }
 
     .pulse-bar .bar {
         width: 10px;
-        height: 30px;
+        height: 28px;
         margin-right: 10px;
-        background: #00ffff;
-        box-shadow: 0 0 8px cyan;
-        animation: pulse 1s ease-in-out infinite;
+        border-radius: 5px;
+        background: rgba(0,255,255,0.7);
+        animation: pulse 1.5s ease-in-out infinite;
     }
 
     @keyframes glideIn {
@@ -840,110 +844,115 @@ st.markdown(
     @keyframes pulse {
         0%, 100% {
             height: 20px;
-            background-color: #00ffff;
+            background-color: rgba(0,255,255,0.7);
         }
         50% {
             height: 40px;
-            background-color: #ff00ff;
+            background-color: rgba(255,0,255,0.6);
         }
     }
 
     /* ---------- HEADER ---------- */
     .header {
-        font-size: 28px;
+        font-size: 26px;
         font-weight: bold;
         text-align: center;
         text-transform: uppercase;
         letter-spacing: 2px;
-        padding: 12px 0;
-        animation: glowPulse 3s ease-in-out infinite;
-        text-shadow: 0px 0px 10px #00ffff;
+        padding: 14px 0;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        backdrop-filter: blur(10px) saturate(160%);
+        -webkit-backdrop-filter: blur(10px) saturate(160%);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        margin-bottom: 15px;
+        animation: glowPulse 6s ease-in-out infinite;
     }
 
     @keyframes glowPulse {
         0%, 100% {
             color: #00ffff;
-            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+            text-shadow: 0 0 8px #00ffff, 0 0 15px rgba(0,255,255,0.6);
         }
         50% {
             color: #ff00ff;
-            text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff;
+            text-shadow: 0 0 12px #ff00ff, 0 0 20px rgba(255,0,255,0.6);
         }
     }
 
     /* ---------- FILE UPLOADER ---------- */
     .stFileUploader > div > div {
-        border: 2px solid #00ffff;
-        border-radius: 10px;
-        background-color: rgba(0, 255, 255, 0.05);
-        padding: 12px;
-        box-shadow: 0 0 15px rgba(0,255,255,0.4);
+        border: 1px solid rgba(0,255,255,0.3);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(10px);
+        padding: 14px;
+        box-shadow: 0 6px 20px rgba(0,255,255,0.25);
         transition: box-shadow 0.3s ease-in-out;
     }
     .stFileUploader > div > div:hover {
-        box-shadow: 0 0 25px rgba(0,255,255,0.8);
+        box-shadow: 0 8px 28px rgba(0,255,255,0.5);
     }
 
     /* ---------- BUTTONS ---------- */
     .stButton > button {
-        background: linear-gradient(45deg, #ff0080, #00bfff);
-        color: white;
-        font-size: 16px;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(0,255,255,0.4);
+        border-radius: 12px;
+        color: #e0f7fa;
+        font-size: 15px;
         font-weight: bold;
-        border: none;
-        border-radius: 8px;
-        padding: 10px 20px;
         text-transform: uppercase;
-        box-shadow: 0px 0px 12px #00ffff;
+        padding: 10px 22px;
+        backdrop-filter: blur(8px);
         transition: all 0.3s ease-in-out;
     }
     .stButton > button:hover {
+        background: rgba(0,255,255,0.2);
+        border-color: rgba(255,0,255,0.5);
         transform: scale(1.05);
-        box-shadow: 0px 0px 24px #ff00ff;
-        background: linear-gradient(45deg, #ff00aa, #00ffff);
+        box-shadow: 0 6px 18px rgba(255,0,255,0.4);
     }
 
     /* ---------- CHAT MESSAGES ---------- */
     .stChatMessage {
-        font-size: 18px;
-        background: #1e293b;
+        font-size: 17px;
+        background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(8px);
+        border-radius: 12px;
+        border: 1px solid rgba(0,255,255,0.3);
         padding: 14px;
-        border-radius: 10px;
-        border: 2px solid #00ffff;
-        color: #ccffff;
-        text-shadow: 0px 0px 6px #00ffff;
-        animation: glow 1.5s ease-in-out infinite alternate;
+        color: #e0f7fa;
+        box-shadow: 0 4px 16px rgba(0,255,255,0.2);
     }
 
     /* ---------- INPUTS ---------- */
     .stTextInput > div > input,
     .stTextArea > div > textarea {
-        background-color: #1f2833;
-        color: #00ffff;
-        border: 1px solid #00ffff;
-        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(0,255,255,0.3);
+        border-radius: 8px;
+        color: #e0f7fa;
         padding: 10px;
-        box-shadow: 0 0 10px rgba(0,255,255,0.3);
+        backdrop-filter: blur(6px);
+        box-shadow: inset 0 0 6px rgba(0,255,255,0.25);
     }
 
     /* ---------- METRICS ---------- */
     .stMetric {
-        background-color: #0f172a;
-        border: 1px solid #00ffff;
-        border-radius: 10px;
-        padding: 15px;
-        box-shadow: 0 0 10px rgba(0,255,255,0.5);
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(0,255,255,0.3);
+        border-radius: 12px;
+        padding: 16px;
+        backdrop-filter: blur(8px);
         text-align: center;
+        box-shadow: 0 4px 18px rgba(0,255,255,0.25);
     }
 
     /* ---------- MOBILE ---------- */
     @media (max-width: 768px) {
-        .pulse-bar {
-            font-size: 16px;
-        }
-        .header {
-            font-size: 20px;
-        }
+        .pulse-bar { font-size: 16px; }
+        .header { font-size: 20px; padding: 10px; }
     }
     </style>
 

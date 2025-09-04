@@ -3077,11 +3077,8 @@ with tab2:
     if uploaded_image:
         import base64
         encoded_image = base64.b64encode(uploaded_image.read()).decode()
-
-        # 🔄 Save to session state for reuse in preview/export
         st.session_state["encoded_profile_image"] = encoded_image
 
-        # 🖼️ Enhanced image preview with modern styling
         profile_img_html = f"""
         <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
             <img src="data:image/png;base64,{encoded_image}" alt="Profile Photo"
@@ -3090,12 +3087,10 @@ with tab2:
                     height: 140px;
                     border-radius: 50%;
                     object-fit: cover;
-                    object-position: center;
                     border: 4px solid #ffffff;
-                    box-shadow:
-                        0 0 0 3px #4da6ff,
-                        0 8px 25px rgba(77, 166, 255, 0.3),
-                        0 4px 15px rgba(0, 0, 0, 0.1);
+                    box-shadow: 0 0 0 3px #4da6ff,
+                                0 8px 25px rgba(77, 166, 255, 0.3),
+                                0 4px 15px rgba(0, 0, 0, 0.1);
                     transition: all 0.3s ease;
                 " />
         </div>
@@ -3116,16 +3111,45 @@ with tab2:
     
     # Sidebar controls
     with st.sidebar:
-        st.markdown("### ➕ Add More Sections")
-        if st.button("➕ Add Experience"):
-            st.session_state.experience_entries.append({"title": "", "company": "", "duration": "", "description": ""})
-        if st.button("➕ Add Education"):
-            st.session_state.education_entries.append({"degree": "", "institution": "", "year": "", "details": ""})
-        if st.button("➕ Add Project"):
-            st.session_state.project_entries.append({"title": "", "tech": "", "duration": "", "description": ""})
-        if st.button("➕ Add Certificate"):
-           st.session_state.certificate_links.append({"name": "", "link": "", "duration": "", "description": ""})
+        st.markdown("### ✨ Manage Sections")
 
+        # Experience
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("➕ Add Exp"):
+                st.session_state.experience_entries.append({"title": "", "company": "", "duration": "", "description": ""})
+        with col2:
+            if st.button("❌ Del Exp") and len(st.session_state.experience_entries) > 1:
+                st.session_state.experience_entries.pop()
+
+        # Education
+        col3, col4 = st.columns(2)
+        with col3:
+            if st.button("➕ Add Edu"):
+                st.session_state.education_entries.append({"degree": "", "institution": "", "year": "", "details": ""})
+        with col4:
+            if st.button("❌ Del Edu") and len(st.session_state.education_entries) > 1:
+                st.session_state.education_entries.pop()
+
+        # Project
+        col5, col6 = st.columns(2)
+        with col5:
+            if st.button("➕ Add Proj"):
+                st.session_state.project_entries.append({"title": "", "tech": "", "duration": "", "description": ""})
+        with col6:
+            if st.button("❌ Del Proj") and len(st.session_state.project_entries) > 1:
+                st.session_state.project_entries.pop()
+
+        # Certificate
+        col7, col8 = st.columns(2)
+        with col7:
+            if st.button("➕ Add Cert"):
+                st.session_state.certificate_links.append({"name": "", "link": "", "duration": "", "description": ""})
+        with col8:
+            if st.button("❌ Del Cert") and len(st.session_state.certificate_links) > 1:
+                st.session_state.certificate_links.pop()
+
+    # -------------------- Resume Form --------------------
     with st.form("resume_form"):
         st.markdown("### 👤 <u>Personal Information</u>", unsafe_allow_html=True)
         with st.container():
@@ -3166,16 +3190,13 @@ with tab2:
                 edu["details"] = st.text_area(f"Details", value=edu["details"], key=f"edu_details_{idx}")
 
         st.markdown("### 🛠 <u>Projects</u>", unsafe_allow_html=True)
-
         for idx, proj in enumerate(st.session_state.project_entries):
             with st.expander(f"Project #{idx+1}", expanded=True):
-                # Keys for each project field
                 title_key = f"proj_title_{idx}"
                 tech_key = f"proj_tech_{idx}"
                 duration_key = f"proj_duration_{idx}"
                 desc_key = f"proj_desc_{idx}"
 
-                # Initialize only once if key doesn't exist
                 if title_key not in st.session_state:
                     st.session_state[title_key] = proj["title"]
                 if tech_key not in st.session_state:
@@ -3185,13 +3206,11 @@ with tab2:
                 if desc_key not in st.session_state:
                     st.session_state[desc_key] = proj["description"]
 
-                # Inputs (no value=..., only key)
                 st.text_input("Project Title", key=title_key)
                 st.text_input("Tech Stack", key=tech_key)
                 st.text_input("Duration", key=duration_key)
                 st.text_area("Description", key=desc_key)
 
-                # Sync back to project_entries
                 proj["title"] = st.session_state[title_key]
                 proj["tech"] = st.session_state[tech_key]
                 proj["duration"] = st.session_state[duration_key]

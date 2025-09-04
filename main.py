@@ -237,70 +237,104 @@ if "processed_files" not in st.session_state:
 # ------------------- CSS Styling -------------------
 st.markdown("""
 <style>
+/* Global */
 body, .main {
-    background-color: #0d1117;
+    background: linear-gradient(135deg, #0d1117, #0b0f14);
     color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
+
+/* Login Card */
 .login-card {
-    background: #161b22;
-    padding: 30px;
+    background: rgba(22, 27, 34, 0.85);
+    backdrop-filter: blur(12px);
+    padding: 35px;
     border-radius: 20px;
-    box-shadow: 0 0 25px rgba(0,0,0,0.3);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 25px rgba(0,255,255,0.1);
     transition: all 0.4s ease;
 }
 .login-card:hover {
-    transform: translateY(-6px) scale(1.01);
-    box-shadow: 0 0 45px rgba(0,255,255,0.25);
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 0 45px rgba(0,255,255,0.35), 0 0 20px rgba(0,255,180,0.25);
 }
+
+/* Inputs */
 .stTextInput > div > input {
-    background-color: #0d1117;
-    color: white;
+    background: rgba(13,17,23,0.9);
+    color: #f0f6fc;
     border: 1px solid #30363d;
     border-radius: 10px;
-    padding: 0.6em;
+    padding: 0.7em;
+    transition: all 0.3s ease;
 }
-.stTextInput > div > input:hover {
+.stTextInput > div > input:focus {
     border: 1px solid #00BFFF;
-    box-shadow: 0 0 8px rgba(0,191,255,0.2);
+    box-shadow: 0 0 12px rgba(0,191,255,0.4);
+    outline: none;
 }
 .stTextInput > label {
     color: #c9d1d9;
+    font-weight: 500;
 }
+
+/* Buttons */
 .stButton > button {
-    background-color: #238636;
+    background: linear-gradient(135deg, #238636, #2ea043);
     color: white;
-    border-radius: 10px;
-    padding: 0.6em 1.5em;
+    border-radius: 12px;
+    padding: 0.7em 1.8em;
     border: none;
     font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+.stButton > button::after {
+    content: "";
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: rgba(255,255,255,0.2);
+    transform: skewX(-20deg);
+    transition: 0.5s;
+}
+.stButton > button:hover::after {
+    left: 100%;
 }
 .stButton > button:hover {
-    background-color: #2ea043;
-    box-shadow: 0 0 10px rgba(46,160,67,0.4);
-    transform: scale(1.02);
+    background: linear-gradient(135deg, #2ea043, #3fb950);
+    box-shadow: 0 0 15px rgba(46,160,67,0.5);
+    transform: scale(1.05);
 }
+
+/* Feature Cards */
 .feature-card {
-    background: radial-gradient(circle at top left, #1f2937, #111827);
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: 0 0 20px rgba(0,255,255,0.1);
+    background: linear-gradient(145deg, #1f2937, #111827);
+    padding: 22px;
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 20px rgba(0,255,255,0.1);
     text-align: center;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: all 0.4s ease;
     color: #fff;
-    margin-bottom: 20px;
+    margin-bottom: 22px;
 }
 .feature-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 0 30px rgba(0,255,255,0.4);
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: 0 0 35px rgba(0,255,255,0.5), 0 0 15px rgba(0,200,255,0.3);
 }
 .feature-card h3 {
     color: #00BFFF;
+    font-weight: 600;
+    margin-bottom: 10px;
 }
 .feature-card p {
     color: #c9d1d9;
+    font-size: 0.95em;
 }
 </style>
 """, unsafe_allow_html=True)
+
 # 🔹 VIDEO BACKGROUND & GLOW TEXT
 
 

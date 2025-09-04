@@ -774,12 +774,12 @@ if st.session_state.username == "admin":
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
 
     html, body, [class*="css"] {
-        font-family: 'Orbitron', sans-serif;
-        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-        color: #c5c6c7;
+        font-family: 'Inter', sans-serif;
+        background-color: #0b0c10;
+        color: #e5e7eb;
         scroll-behavior: smooth;
     }
 
@@ -788,10 +788,10 @@ st.markdown(
         width: 8px;
     }
     ::-webkit-scrollbar-track {
-        background: rgba(255,255,255,0.05);
+        background: #1f2833;
     }
     ::-webkit-scrollbar-thumb {
-        background: rgba(255,255,255,0.3);
+        background: linear-gradient(180deg, #3b82f6, #06b6d4);
         border-radius: 4px;
     }
 
@@ -799,115 +799,157 @@ st.markdown(
     .banner-container {
         width: 100%;
         height: 80px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 16px;
-        backdrop-filter: blur(12px) saturate(150%);
-        -webkit-backdrop-filter: blur(12px) saturate(150%);
-        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(12px);
+        border-bottom: 2px solid #3b82f6;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 22px;
-        font-weight: bold;
-        color: #ffffff;
         margin-bottom: 20px;
+        border-radius: 0 0 16px 16px;
+    }
+
+    .banner-text {
+        font-size: 22px;
+        font-weight: 700;
+        background: linear-gradient(90deg, #06b6d4, #3b82f6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
         letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: fadeSlide 6s ease-in-out infinite alternate;
+    }
+
+    .banner-text svg {
+        width: 26px;
+        height: 26px;
+        fill: url(#grad1);
+    }
+
+    @keyframes fadeSlide {
+        0% { opacity: 0.7; transform: translateY(5px); }
+        100% { opacity: 1; transform: translateY(-5px); }
     }
 
     /* ---------- HEADER ---------- */
     .header {
-        font-size: 26px;
-        font-weight: bold;
+        font-size: 28px;
+        font-weight: 800;
         text-align: center;
         text-transform: uppercase;
         letter-spacing: 2px;
-        padding: 16px 20px;
-        border-radius: 16px;
-        background: rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(10px) saturate(120%);
-        -webkit-backdrop-filter: blur(10px) saturate(120%);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: #e0e0e0;
-        margin-bottom: 25px;
+        padding: 16px 0;
+        background: linear-gradient(90deg, #06b6d4, #3b82f6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .header svg {
+        width: 28px;
+        height: 28px;
+        fill: url(#grad1);
     }
 
     /* ---------- FILE UPLOADER ---------- */
     .stFileUploader > div > div {
-        border: 1px solid rgba(255,255,255,0.25);
+        border: 2px solid #3b82f6;
         border-radius: 12px;
-        background: rgba(255,255,255,0.08);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        padding: 12px;
-        transition: all 0.3s ease-in-out;
+        background: rgba(30, 41, 59, 0.5);
+        backdrop-filter: blur(10px);
+        padding: 14px;
+        transition: box-shadow 0.3s ease-in-out;
     }
     .stFileUploader > div > div:hover {
-        border: 1px solid rgba(255,255,255,0.5);
+        box-shadow: 0 0 25px rgba(59,130,246,0.6);
     }
 
     /* ---------- BUTTONS ---------- */
     .stButton > button {
-        background: rgba(255, 255, 255, 0.15);
-        border: 1px solid rgba(255,255,255,0.3);
-        border-radius: 12px;
-        color: #fff;
+        background: linear-gradient(90deg, #06b6d4, #3b82f6);
+        color: white;
         font-size: 16px;
         font-weight: bold;
-        padding: 10px 20px;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 22px;
+        text-transform: uppercase;
         transition: all 0.3s ease-in-out;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
     }
     .stButton > button:hover {
-        background: rgba(255, 255, 255, 0.25);
-        transform: scale(1.05);
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0px 6px 18px rgba(59,130,246,0.6);
     }
 
     /* ---------- CHAT MESSAGES ---------- */
     .stChatMessage {
-        font-size: 18px;
-        background: rgba(255, 255, 255, 0.08);
+        font-size: 17px;
+        background: rgba(30, 41, 59, 0.6);
         padding: 14px;
         border-radius: 12px;
-        border: 1px solid rgba(255,255,255,0.25);
-        color: #e0e0e0;
-        backdrop-filter: blur(8px);
+        border: 1px solid #3b82f6;
+        color: #e0f2fe;
     }
 
     /* ---------- INPUTS ---------- */
     .stTextInput > div > input,
     .stTextArea > div > textarea {
-        background: rgba(255,255,255,0.1);
-        color: #fff;
-        border: 1px solid rgba(255,255,255,0.3);
+        background: rgba(31, 41, 51, 0.6);
+        color: #e0f2fe;
+        border: 1px solid #3b82f6;
         border-radius: 8px;
         padding: 10px;
-        backdrop-filter: blur(6px);
     }
 
     /* ---------- METRICS ---------- */
     .stMetric {
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(255,255,255,0.25);
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid #3b82f6;
         border-radius: 12px;
         padding: 15px;
         text-align: center;
-        backdrop-filter: blur(10px);
-        color: #fff;
+        box-shadow: 0 4px 12px rgba(59,130,246,0.2);
     }
 
     /* ---------- MOBILE ---------- */
     @media (max-width: 768px) {
-        .banner-container { font-size: 18px; }
+        .banner-text { font-size: 18px; }
         .header { font-size: 20px; }
     }
     </style>
 
+    <!-- SVG Gradient Defs -->
+    <svg width="0" height="0">
+        <defs>
+            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+            </linearGradient>
+        </defs>
+    </svg>
+
     <!-- Banner -->
-    <div class="banner-container">🚀 HIRELYZER - Elevate Your Resume Analysis</div>
+    <div class="banner-container">
+        <div class="banner-text">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M12 2L15 8H9L12 2ZM2 22H22L12 13L2 22Z"/>
+            </svg>
+            HIRELYZER - Elevate Your Resume Analysis
+        </div>
+    </div>
 
     <!-- Header -->
-    <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
+    <div class="header">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M4 4H20V20H4V4ZM6 6V18H18V6H6Z"/>
+        </svg>
+        HIRELYZER - AI BASED ETHICAL RESUME ANALYZER
+    </div>
     """,
     unsafe_allow_html=True
 )

@@ -250,12 +250,12 @@ body, .main {
     backdrop-filter: blur(12px);
     padding: 35px;
     border-radius: 20px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 25px rgba(0,255,255,0.1);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.6);
     transition: all 0.4s ease;
 }
 .login-card:hover {
     transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 0 45px rgba(0,255,255,0.35), 0 0 20px rgba(0,255,180,0.25);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.75);
 }
 
 /* Inputs */
@@ -269,7 +269,6 @@ body, .main {
 }
 .stTextInput > div > input:focus {
     border: 1px solid #00BFFF;
-    box-shadow: 0 0 12px rgba(0,191,255,0.4);
     outline: none;
 }
 .stTextInput > label {
@@ -295,7 +294,7 @@ body, .main {
     position: absolute;
     top: 0; left: -100%;
     width: 100%; height: 100%;
-    background: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.15);
     transform: skewX(-20deg);
     transition: 0.5s;
 }
@@ -304,7 +303,6 @@ body, .main {
 }
 .stButton > button:hover {
     background: linear-gradient(135deg, #2ea043, #3fb950);
-    box-shadow: 0 0 15px rgba(46,160,67,0.5);
     transform: scale(1.05);
 }
 
@@ -313,15 +311,15 @@ body, .main {
     background: linear-gradient(145deg, #1f2937, #111827);
     padding: 22px;
     border-radius: 18px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 20px rgba(0,255,255,0.1);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.45);
     text-align: center;
-    transition: all 0.4s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
     color: #fff;
     margin-bottom: 22px;
 }
 .feature-card:hover {
-    transform: translateY(-12px) scale(1.02);
-    box-shadow: 0 0 35px rgba(0,255,255,0.5), 0 0 15px rgba(0,200,255,0.3);
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 8px 22px rgba(0,0,0,0.6);
 }
 .feature-card h3 {
     color: #00BFFF;
@@ -334,6 +332,7 @@ body, .main {
 }
 </style>
 """, unsafe_allow_html=True)
+
 
 # 🔹 VIDEO BACKGROUND & GLOW TEXT
 

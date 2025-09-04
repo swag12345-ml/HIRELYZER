@@ -364,6 +364,13 @@ if not st.session_state.authenticated:
             </div>
             """, unsafe_allow_html=True)
 
+    # -------- Welcome Button --------
+    st.markdown("<div style='text-align:center; margin:30px;'>", unsafe_allow_html=True)
+    if st.button("🚀 Welcome to Hirelyzer"):
+        st.markdown("<a id='login-section'></a>", unsafe_allow_html=True)
+        st.session_state.show_login = True
+    st.markdown("</div>", unsafe_allow_html=True)
+
     # -------- Animated Cards --------
     image_url = "https://cdn-icons-png.flaticon.com/512/3135/3135768.png"
     response = requests.get(image_url)
@@ -383,6 +390,7 @@ if not st.session_state.authenticated:
       width: 240px;
       animation: splitCards 2.5s ease-in-out infinite alternate;
       z-index: 1;
+      filter: drop-shadow(0 0 6px rgba(0,191,255,0.5)); /* softer glow */
     }}
     .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
     .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
@@ -402,19 +410,14 @@ if not st.session_state.authenticated:
     </div>
     """, unsafe_allow_html=True)
 
-    # -------- Counter Section (Updated Layout & Style with tighter spacing) --------
-
-    # Fetch counters
+    # -------- Counter Section --------
     total_users = get_total_registered_users()
     active_logins = get_logins_today()
     stats = get_database_stats()
-
-# Replace static 15 with dynamic count
     resumes_uploaded = stats.get("total_candidates", 0)
-
     states_accessed = 29
 
-    neon_counter_style = """
+    counter_style = """
     <style>
     .counter-grid {
         display: grid;
@@ -426,7 +429,6 @@ if not st.session_state.authenticated:
         max-width: 600px;
         margin: 0 auto;
     }
-
     .counter-box {
         background-color: #0d1117;
         border: 2px solid #00FFFF;
@@ -437,22 +439,19 @@ if not st.session_state.authenticated:
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        box-shadow: 0 0 12px rgba(0, 255, 255, 0.4);
+        box-shadow: 0 0 8px rgba(0, 255, 255, 0.3); /* softer glow */
         transition: transform 0.2s ease;
     }
-
     .counter-box:hover {
         transform: translateY(-5px);
-        box-shadow: 0 0 18px rgba(0, 255, 255, 0.7);
+        box-shadow: 0 0 14px rgba(0, 255, 255, 0.5); /* reduced glow */
     }
-
     .counter-number {
         font-size: 2.2em;
         font-weight: bold;
         color: #00BFFF;
         margin: 0;
     }
-
     .counter-label {
         margin-top: 8px;
         font-size: 1em;
@@ -460,8 +459,7 @@ if not st.session_state.authenticated:
     }
     </style>
     """
-
-    st.markdown(neon_counter_style, unsafe_allow_html=True)
+    st.markdown(counter_style, unsafe_allow_html=True)
 
     st.markdown(f"""
     <div class="counter-grid">
@@ -484,236 +482,6 @@ if not st.session_state.authenticated:
     </div>
     """, unsafe_allow_html=True)
 
-if not st.session_state.get("authenticated", False):
-
-    # ✅ Futuristic silhouette
-    image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
-    response = requests.get(image_url)
-    img_base64 = b64encode(response.content).decode()
-
-    # ✅ Inject cinematic CSS
-    st.markdown(f"""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
-
-    /* ===== Card Shuffle Animation ===== */
-    .animated-cards {{
-      margin-top: 40px;
-      display: flex;
-      justify-content: center;
-      position: relative;
-      height: 260px;
-    }}
-    .animated-cards img {{
-      position: absolute;
-      width: 220px;
-      animation: splitCards 2.5s ease-in-out infinite alternate;
-      z-index: 1;
-      filter: drop-shadow(0 0 10px rgba(0,191,255,0.6));
-    }}
-    .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
-    .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
-    .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
-
-    @keyframes splitCards {{
-      0%   {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
-      100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
-    }}
-    .card-left   {{ --x-offset: -80px; --rot: -4deg; }}
-    .card-center {{ --x-offset: 0px;  --rot: 0deg;  }}
-    .card-right  {{ --x-offset: 80px;  --rot: 4deg;  }}
-
-    /* ===== Cinematic Login Card ===== */
-    .login-card {{
-      background: linear-gradient(145deg, rgba(10,20,40,0.92), rgba(0,191,255,0.1));
-      border: 1px solid #00BFFF;
-      border-radius: 18px;
-      padding: 25px;
-      box-shadow: 0px 0px 30px rgba(0,191,255,0.7);
-      font-family: 'Orbitron', sans-serif;
-      color: white;
-      margin-top: 20px;
-      opacity: 0;
-      transform: translateX(-120%);
-      animation: slideInLeft 1.2s ease-out forwards;
-    }}
-    @keyframes slideInLeft {{
-      0%   {{ transform: translateX(-120%); opacity: 0; }}
-      100% {{ transform: translateX(0); opacity: 1; }}
-    }}
-
-    .login-card h2 {{
-      text-align: center;
-      font-size: 1.6rem;
-      text-shadow: 0 0 12px #00BFFF;
-      margin-bottom: 15px;
-    }}
-    .login-card h2 span {{ color: #00BFFF; }}
-
-    /* ===== Sliding Messages ===== */
-    .slide-message {{
-      position: relative;
-      overflow: hidden;
-      margin: 10px 0;
-      padding: 10px 15px;
-      border-radius: 10px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      animation: slideIn 0.8s ease forwards;
-    }}
-    .slide-message svg {{
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-    }}
-    .success-msg {{ background: rgba(0,255,127,0.12); border-left: 5px solid #00FF7F; color:#00FF7F; }}
-    .error-msg   {{ background: rgba(255,99,71,0.12);  border-left: 5px solid #FF6347; color:#FF6347; }}
-    .info-msg    {{ background: rgba(30,144,255,0.12); border-left: 5px solid #1E90FF; color:#1E90FF; }}
-    .warn-msg    {{ background: rgba(255,215,0,0.12);  border-left: 5px solid #FFD700; color:#FFD700; }}
-
-    @keyframes slideIn {{
-      0%   {{ transform: translateX(100%); opacity: 0; }}
-      100% {{ transform: translateX(0); opacity: 1; }}
-    }}
-
-    /* ===== Futuristic Buttons ===== */
-    .stButton>button {{
-      background: linear-gradient(90deg, #00BFFF, #1E90FF);
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-family: 'Orbitron', sans-serif;
-      font-weight: bold;
-      padding: 8px 20px;
-      box-shadow: 0px 0px 15px rgba(0,191,255,0.6);
-      transition: all 0.3s ease;
-    }}
-    .stButton>button:hover {{
-      transform: scale(1.05);
-      box-shadow: 0px 0px 25px rgba(0,191,255,0.9);
-    }}
-
-    /* ===== Futuristic Input Fields ===== */
-    .stTextInput input {{
-      background: rgba(10,25,45,0.85);
-      border: 1px solid #00BFFF;
-      border-radius: 8px;
-      padding: 10px;
-      color: #E0F7FF;
-      font-family: 'Orbitron', sans-serif;
-      box-shadow: 0px 0px 15px rgba(0,191,255,0.3);
-      transition: all 0.3s ease-in-out;
-    }}
-    .stTextInput input:focus {{
-      outline: none !important;
-      border: 1px solid #1E90FF;
-      box-shadow: 0px 0px 25px rgba(0,191,255,0.9), inset 0px 0px 10px rgba(0,191,255,0.6);
-      transform: scale(1.02);
-    }}
-    .stTextInput label {{
-      font-family: 'Orbitron', sans-serif;
-      color: #00BFFF !important;
-      text-shadow: 0 0 8px rgba(0,191,255,0.8);
-    }}
-    </style>
-
-    <!-- Animated Cards -->
-    <div class="animated-cards">
-        <img class="card-left" src="data:image/png;base64,{img_base64}" />
-        <img class="card-center" src="data:image/png;base64,{img_base64}" />
-        <img class="card-right" src="data:image/png;base64,{img_base64}" />
-    </div>
-    """, unsafe_allow_html=True)
-
-    # -------- Login/Register Layout --------
-    left, center, right = st.columns([1, 2, 1])
-
-    with center:
-        st.markdown(
-            "<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>HIRELYZER</span></h2>",
-            unsafe_allow_html=True,
-        )
-
-        login_tab, register_tab = st.tabs(["Login", "Register"])
-
-        # ---------------- LOGIN TAB ----------------
-        with login_tab:
-            user = st.text_input("Username", key="login_user")
-            pwd = st.text_input("Password", type="password", key="login_pass")
-
-            if st.button("Login", key="login_btn"):
-                success, saved_key = verify_user(user.strip(), pwd.strip())
-                if success:
-                    st.session_state.authenticated = True
-                    st.session_state.username = user.strip()
-                    if saved_key:
-                        st.session_state["user_groq_key"] = saved_key
-                    log_user_action(user.strip(), "login")
-
-                    st.markdown("""<div class='slide-message success-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                        Login successful!
-                    </div>""", unsafe_allow_html=True)
-                    st.rerun()
-                else:
-                    st.markdown("""<div class='slide-message error-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                        Invalid credentials.
-                    </div>""", unsafe_allow_html=True)
-
-        # ---------------- REGISTER TAB ----------------
-        with register_tab:
-            new_user = st.text_input("Choose a Username", key="reg_user")
-            new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
-            st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
-
-            if new_user.strip():
-                if username_exists(new_user.strip()):
-                    st.markdown("""<div class='slide-message error-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                        Username already exists.
-                    </div>""", unsafe_allow_html=True)
-                else:
-                    st.markdown("""<div class='slide-message info-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
-                          <path d="M12 8h.01M12 12v4"/></svg>
-                        Username is available.
-                    </div>""", unsafe_allow_html=True)
-
-            if st.button("Register", key="register_btn"):
-                if new_user.strip() and new_pass.strip():
-                    success, message = add_user(new_user.strip(), new_pass.strip())
-                    if success:
-                        st.markdown(f"""<div class='slide-message success-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                            {message}
-                        </div>""", unsafe_allow_html=True)
-                        log_user_action(new_user.strip(), "register")
-                    else:
-                        st.markdown(f"""<div class='slide-message error-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                            {message}
-                        </div>""", unsafe_allow_html=True)
-                else:
-                    st.markdown("""<div class='slide-message warn-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24">
-                          <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
-                        </svg>
-                        Please fill in both fields.
-                    </div>""", unsafe_allow_html=True)
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    st.stop()
 
 
 

@@ -771,6 +771,8 @@ if st.session_state.username == "admin":
 
 
 # CSS Customization
+import streamlit as st
+
 st.markdown(
     """
     <style>
@@ -778,7 +780,8 @@ st.markdown(
 
     html, body, [class*="css"] {
         font-family: 'Orbitron', sans-serif;
-        background-color: #0b0c10;
+        background: linear-gradient(135deg, #0b0c10 0%, #1a1a2e 50%, #16213e 100%);
+        background-attachment: fixed;
         color: #c5c6c7;
         scroll-behavior: smooth;
     }
@@ -788,25 +791,33 @@ st.markdown(
         width: 8px;
     }
     ::-webkit-scrollbar-track {
-        background: #1f2833;
+        background: rgba(31, 40, 51, 0.3);
+        backdrop-filter: blur(10px);
     }
     ::-webkit-scrollbar-thumb {
-        background: #00ffff;
+        background: linear-gradient(45deg, #00ffff, #ff00ff);
         border-radius: 4px;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
     }
 
-    /* ---------- BANNER ---------- */
+    /* ---------- BANNER WITH GLASSMORPHISM ---------- */
     .banner-container {
         width: 100%;
         height: 80px;
-        background: linear-gradient(90deg, #000428, #004e92);
-        border-bottom: 2px solid cyan;
+        background: rgba(0, 4, 40, 0.2);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 255, 255, 0.2);
+        border-bottom: 2px solid rgba(0, 255, 255, 0.6);
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
         overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: flex-start;
         position: relative;
         margin-bottom: 20px;
+        border-radius: 15px;
     }
 
     .pulse-bar {
@@ -818,136 +829,392 @@ st.markdown(
         color: #00ffff;
         white-space: nowrap;
         animation: glideIn 12s linear infinite;
-        text-shadow: 0 0 10px #00ffff;
+        text-shadow: 
+            0 0 10px #00ffff,
+            0 0 20px rgba(0, 255, 255, 0.5),
+            0 0 30px rgba(0, 255, 255, 0.3);
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
     }
 
     .pulse-bar .bar {
         width: 10px;
         height: 30px;
         margin-right: 10px;
-        background: #00ffff;
-        box-shadow: 0 0 8px cyan;
+        background: linear-gradient(45deg, #00ffff, #ff00ff);
+        box-shadow: 
+            0 0 8px cyan,
+            0 0 16px rgba(0, 255, 255, 0.4);
         animation: pulse 1s ease-in-out infinite;
+        border-radius: 2px;
     }
 
     @keyframes glideIn {
-        0% { left: -50%; opacity: 0; }
-        10% { opacity: 1; }
-        90% { opacity: 1; }
-        100% { left: 110%; opacity: 0; }
+        0% { left: -50%; opacity: 0; transform: translateY(10px); }
+        10% { opacity: 1; transform: translateY(0); }
+        90% { opacity: 1; transform: translateY(0); }
+        100% { left: 110%; opacity: 0; transform: translateY(-10px); }
     }
 
     @keyframes pulse {
         0%, 100% {
             height: 20px;
-            background-color: #00ffff;
+            background: linear-gradient(45deg, #00ffff, #0080ff);
+            transform: scaleY(1);
         }
         50% {
             height: 40px;
-            background-color: #ff00ff;
+            background: linear-gradient(45deg, #ff00ff, #ff0080);
+            transform: scaleY(1.2);
         }
     }
 
-    /* ---------- HEADER ---------- */
+    /* ---------- HEADER WITH GLASSMORPHISM ---------- */
     .header {
         font-size: 28px;
         font-weight: bold;
         text-align: center;
         text-transform: uppercase;
-        letter-spacing: 2px;
-        padding: 12px 0;
+        letter-spacing: 3px;
+        padding: 20px;
+        margin: 20px auto;
+        max-width: 800px;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 255, 255, 0.2);
+        border-radius: 20px;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1),
+            0 0 20px rgba(0, 255, 255, 0.2);
         animation: glowPulse 3s ease-in-out infinite;
-        text-shadow: 0px 0px 10px #00ffff;
+        text-shadow: 
+            0px 0px 10px #00ffff,
+            0px 0px 20px rgba(0, 255, 255, 0.5);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.1),
+            transparent
+        );
+        animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { left: -100%; }
+        100% { left: 100%; }
     }
 
     @keyframes glowPulse {
         0%, 100% {
             color: #00ffff;
-            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+            text-shadow: 
+                0 0 10px #00ffff, 
+                0 0 20px #00ffff,
+                0 0 30px rgba(0, 255, 255, 0.5);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 0 20px rgba(0, 255, 255, 0.3);
         }
         50% {
             color: #ff00ff;
-            text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff;
+            text-shadow: 
+                0 0 20px #ff00ff, 
+                0 0 30px #ff00ff,
+                0 0 40px rgba(255, 0, 255, 0.5);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 0 25px rgba(255, 0, 255, 0.4);
         }
     }
 
-    /* ---------- FILE UPLOADER ---------- */
+    /* ---------- FILE UPLOADER WITH GLASSMORPHISM ---------- */
     .stFileUploader > div > div {
-        border: 2px solid #00ffff;
-        border-radius: 10px;
-        background-color: rgba(0, 255, 255, 0.05);
-        padding: 12px;
-        box-shadow: 0 0 15px rgba(0,255,255,0.4);
-        transition: box-shadow 0.3s ease-in-out;
-    }
-    .stFileUploader > div > div:hover {
-        box-shadow: 0 0 25px rgba(0,255,255,0.8);
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(0, 255, 255, 0.3);
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1),
+            0 0 15px rgba(0, 255, 255, 0.2);
+        transition: all 0.3s ease-in-out;
+        position: relative;
+        overflow: hidden;
     }
 
-    /* ---------- BUTTONS ---------- */
+    .stFileUploader > div > div::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+            45deg,
+            rgba(0, 255, 255, 0.05),
+            rgba(255, 0, 255, 0.05)
+        );
+        border-radius: 15px;
+        z-index: -1;
+    }
+
+    .stFileUploader > div > div:hover {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(0, 255, 255, 0.5);
+        box-shadow: 
+            0 12px 40px rgba(0, 0, 0, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2),
+            0 0 25px rgba(0, 255, 255, 0.4);
+        transform: translateY(-2px);
+    }
+
+    /* ---------- BUTTONS WITH GLASSMORPHISM ---------- */
     .stButton > button {
-        background: linear-gradient(45deg, #ff0080, #00bfff);
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(15px);
         color: white;
         font-size: 16px;
         font-weight: bold;
-        border: none;
-        border-radius: 8px;
-        padding: 10px 20px;
+        border: 1px solid rgba(0, 255, 255, 0.3);
+        border-radius: 12px;
+        padding: 12px 24px;
         text-transform: uppercase;
-        box-shadow: 0px 0px 12px #00ffff;
+        letter-spacing: 1px;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1),
+            0 0 12px rgba(0, 255, 255, 0.3);
         transition: all 0.3s ease-in-out;
+        position: relative;
+        overflow: hidden;
     }
+
+    .stButton > button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, #ff0080, #00bfff);
+        opacity: 0.8;
+        border-radius: 12px;
+        z-index: -1;
+        transition: opacity 0.3s ease;
+    }
+
     .stButton > button:hover {
-        transform: scale(1.05);
-        box-shadow: 0px 0px 24px #ff00ff;
+        transform: translateY(-3px) scale(1.02);
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(0, 255, 255, 0.6);
+        box-shadow: 
+            0 12px 40px rgba(0, 0, 0, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2),
+            0 0 24px rgba(255, 0, 255, 0.5);
+        text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+    }
+
+    .stButton > button:hover::before {
+        opacity: 1;
         background: linear-gradient(45deg, #ff00aa, #00ffff);
     }
 
-    /* ---------- CHAT MESSAGES ---------- */
+    /* ---------- CHAT MESSAGES WITH GLASSMORPHISM ---------- */
     .stChatMessage {
         font-size: 18px;
-        background: #1e293b;
-        padding: 14px;
-        border-radius: 10px;
-        border: 2px solid #00ffff;
+        background: rgba(30, 41, 59, 0.3);
+        backdrop-filter: blur(15px);
+        padding: 18px;
+        border-radius: 15px;
+        border: 1px solid rgba(0, 255, 255, 0.2);
         color: #ccffff;
-        text-shadow: 0px 0px 6px #00ffff;
+        text-shadow: 0px 0px 6px rgba(0, 255, 255, 0.6);
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
         animation: glow 1.5s ease-in-out infinite alternate;
+        margin: 10px 0;
+        position: relative;
+        overflow: hidden;
     }
 
-    /* ---------- INPUTS ---------- */
+    .stChatMessage::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+            135deg,
+            rgba(0, 255, 255, 0.05),
+            rgba(255, 0, 255, 0.05)
+        );
+        border-radius: 15px;
+        z-index: -1;
+    }
+
+    @keyframes glow {
+        0% {
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 0 15px rgba(0, 255, 255, 0.3);
+        }
+        100% {
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 0 25px rgba(255, 0, 255, 0.4);
+        }
+    }
+
+    /* ---------- INPUTS WITH GLASSMORPHISM ---------- */
     .stTextInput > div > input,
     .stTextArea > div > textarea {
-        background-color: #1f2833;
+        background: rgba(31, 40, 51, 0.4);
+        backdrop-filter: blur(10px);
         color: #00ffff;
-        border: 1px solid #00ffff;
-        border-radius: 6px;
-        padding: 10px;
-        box-shadow: 0 0 10px rgba(0,255,255,0.3);
-    }
-
-    /* ---------- METRICS ---------- */
-    .stMetric {
-        background-color: #0f172a;
-        border: 1px solid #00ffff;
+        border: 1px solid rgba(0, 255, 255, 0.3);
         border-radius: 10px;
-        padding: 15px;
-        box-shadow: 0 0 10px rgba(0,255,255,0.5);
-        text-align: center;
+        padding: 12px;
+        box-shadow: 
+            0 4px 16px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1),
+            0 0 10px rgba(0, 255, 255, 0.2);
+        transition: all 0.3s ease-in-out;
     }
 
-    /* ---------- MOBILE ---------- */
+    .stTextInput > div > input:focus,
+    .stTextArea > div > textarea:focus {
+        background: rgba(31, 40, 51, 0.6);
+        border-color: rgba(0, 255, 255, 0.6);
+        box-shadow: 
+            0 8px 24px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2),
+            0 0 20px rgba(0, 255, 255, 0.4);
+        outline: none;
+    }
+
+    /* ---------- METRICS WITH GLASSMORPHISM ---------- */
+    .stMetric {
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(0, 255, 255, 0.2);
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1),
+            0 0 15px rgba(0, 255, 255, 0.2);
+        text-align: center;
+        transition: all 0.3s ease-in-out;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stMetric::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+            135deg,
+            rgba(0, 255, 255, 0.03),
+            rgba(255, 0, 255, 0.03)
+        );
+        border-radius: 15px;
+        z-index: -1;
+    }
+
+    .stMetric:hover {
+        background: rgba(15, 23, 42, 0.6);
+        border-color: rgba(0, 255, 255, 0.4);
+        box-shadow: 
+            0 12px 40px rgba(0, 0, 0, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2),
+            0 0 25px rgba(0, 255, 255, 0.3);
+        transform: translateY(-2px);
+    }
+
+    /* ---------- SIDEBAR WITH GLASSMORPHISM ---------- */
+    .stSidebar > div {
+        background: rgba(11, 12, 16, 0.4);
+        backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(0, 255, 255, 0.2);
+        box-shadow: 
+            4px 0 16px rgba(0, 0, 0, 0.3),
+            inset -1px 0 0 rgba(255, 255, 255, 0.1);
+    }
+
+    /* ---------- CONTAINERS WITH GLASSMORPHISM ---------- */
+    .stContainer > div {
+        background: rgba(255, 255, 255, 0.02);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        margin: 10px 0;
+        padding: 20px;
+    }
+
+    /* ---------- ENHANCED ANIMATIONS ---------- */
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .banner-container {
+        animation: float 6s ease-in-out infinite;
+    }
+
+    /* ---------- MOBILE RESPONSIVENESS ---------- */
     @media (max-width: 768px) {
         .pulse-bar {
             font-size: 16px;
         }
         .header {
             font-size: 20px;
+            padding: 15px;
+            letter-spacing: 2px;
+        }
+        .banner-container {
+            height: 60px;
+            border-radius: 10px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .header {
+            font-size: 16px;
+            padding: 12px;
+            letter-spacing: 1px;
+        }
+        .pulse-bar {
+            font-size: 14px;
         }
     }
     </style>
 
-    <!-- Banner -->
+    <!-- Banner with Enhanced Glassmorphism -->
     <div class="banner-container">
         <div class="pulse-bar">
             <div class="bar"></div>
@@ -955,12 +1222,11 @@ st.markdown(
         </div>
     </div>
 
-    <!-- Header -->
+    <!-- Header with Enhanced Glassmorphism -->
     <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
     """,
     unsafe_allow_html=True
 )
-
 # Load environment variables
 # ------------------- Core Setup -------------------
 

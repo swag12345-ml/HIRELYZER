@@ -2869,10 +2869,10 @@ with tab2:
     with st.sidebar:
         st.markdown("### ✨ Manage Sections")
 
-        # Custom CSS for compact Add/Delete toggle
-        st.markdown(
-            """
+        # Custom CSS for toggle + glass buttons
+        st.markdown("""
             <style>
+            /* Compact Add/Delete toggle */
             div[role='radiogroup'] {
                 display: flex !important;
                 justify-content: center;
@@ -2895,16 +2895,41 @@ with tab2:
             div[role='radiogroup'] label[data-selected="true"][aria-label="Delete"] {
                 background: linear-gradient(135deg, #ef4444, #dc2626);
             }
+
+            /* Glassmorphic Buttons inside expanders */
+            .glass-btn {
+                background: linear-gradient(135deg, rgba(0, 183, 255, 0.8), rgba(117, 0, 255, 0.8));
+                border: none;
+                border-radius: 14px;
+                padding: 12px 20px;
+                color: white;
+                font-size: 14px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                cursor: pointer;
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                box-shadow: 0px 4px 20px rgba(0, 183, 255, 0.5);
+                transition: all 0.3s ease;
+                width: 100%;
+                text-align: center;
+                display: block;
+                margin-top: 8px;
+            }
+            .glass-btn:hover {
+                transform: scale(1.05);
+                box-shadow: 0px 6px 25px rgba(117, 0, 255, 0.7);
+            }
             </style>
-            """,
-            unsafe_allow_html=True
-        )
+        """, unsafe_allow_html=True)
 
         if "edit_mode" not in st.session_state:
             st.session_state.edit_mode = "Add"
 
-        # Compact horizontal toggle
-        mode = st.radio("Mode", ["Add", "Delete"], index=0, horizontal=True, key="mode_toggle", label_visibility="collapsed")
+        # Compact toggle
+        mode = st.radio("Mode", ["Add", "Delete"], index=0, horizontal=True,
+                        key="mode_toggle", label_visibility="collapsed")
         st.session_state.edit_mode = mode
         st.markdown("---")
 
@@ -2917,6 +2942,7 @@ with tab2:
                     )
                 elif mode == "Delete" and len(st.session_state.experience_entries) > 1:
                     st.session_state.experience_entries.pop()
+            st.markdown(f"<button class='glass-btn'>{'➕ Add' if mode=='Add' else '❌ Delete'} Experience</button>", unsafe_allow_html=True)
 
         # 🎓 Education
         with st.expander("🎓 Education"):
@@ -2927,6 +2953,7 @@ with tab2:
                     )
                 elif mode == "Delete" and len(st.session_state.education_entries) > 1:
                     st.session_state.education_entries.pop()
+            st.markdown(f"<button class='glass-btn'>{'➕ Add' if mode=='Add' else '❌ Delete'} Education</button>", unsafe_allow_html=True)
 
         # 🛠 Projects
         with st.expander("🛠 Projects"):
@@ -2937,6 +2964,7 @@ with tab2:
                     )
                 elif mode == "Delete" and len(st.session_state.project_entries) > 1:
                     st.session_state.project_entries.pop()
+            st.markdown(f"<button class='glass-btn'>{'➕ Add' if mode=='Add' else '❌ Delete'} Project</button>", unsafe_allow_html=True)
 
         # 📜 Certificates
         with st.expander("📜 Certificates"):
@@ -2947,6 +2975,7 @@ with tab2:
                     )
                 elif mode == "Delete" and len(st.session_state.certificate_links) > 1:
                     st.session_state.certificate_links.pop()
+            st.markdown(f"<button class='glass-btn'>{'➕ Add' if mode=='Add' else '❌ Delete'} Certificate</button>", unsafe_allow_html=True)
 
 
 

@@ -2808,18 +2808,22 @@ with tab1:
 with tab2:
     st.session_state.active_tab = "Resume Builder"
 
-    # ---------- Title ----------
+    # ---------- Title with Blue Glassmorphism ----------
     st.markdown("""
     <div style="
-        background: rgba(255, 255, 255, 0.08);
+        background: rgba(10, 20, 40, 0.5);
         border-radius: 20px;
         padding: 20px;
         backdrop-filter: blur(14px);
         box-shadow: 0 8px 32px rgba(0, 200, 255, 0.25);
+        border: 1px solid rgba(0, 200, 255, 0.3);
         text-align: center;">
-        <h2 style="color:#4da6ff; margin:0;">🧾 Advanced Resume Builder</h2>
+        <h2 style="color:#4da6ff; margin:0; text-shadow: 0 0 12px rgba(0,200,255,0.7);">
+            🧾 Advanced Resume Builder
+        </h2>
     </div>
     """, unsafe_allow_html=True)
+
     st.markdown("<hr style='border-top: 2px solid rgba(0,200,255,0.4);'>", unsafe_allow_html=True)
 
     # 📸 Upload profile photo with enhanced styling
@@ -2906,7 +2910,7 @@ with tab2:
         st.session_state.edit_mode = mode
         st.markdown("---")
 
-        # 💎 Custom Glassmorphism Button Style (all blue)
+        # 💎 Custom Glassmorphism Button Style (blue)
         st.markdown("""
             <style>
             div.stButton > button {

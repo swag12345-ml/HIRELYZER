@@ -2840,13 +2840,16 @@ with tab2:
                     border-radius: 50%;
                     object-fit: cover;
                     object-position: center;
-                    border: 4px solid #ffffff;
+                    border: 4px solid rgba(255,255,255,0.6);
                     box-shadow:
                         0 0 0 3px #4da6ff,
                         0 8px 25px rgba(77, 166, 255, 0.3),
-                        0 4px 15px rgba(0, 0, 0, 0.1);
-                    transition: all 0.3s ease;
-                " />
+                        0 4px 15px rgba(0, 0, 0, 0.15);
+                    transition: transform 0.3s ease-in-out;
+                "
+                onmouseover="this.style.transform='scale(1.07)'"
+                onmouseout="this.style.transform='scale(1)'"
+             />
         </div>
         """
         st.markdown(profile_img_html, unsafe_allow_html=True)
@@ -2869,69 +2872,41 @@ with tab2:
     with st.sidebar:
         st.markdown("### ✨ Manage Sections")
 
-        # Custom CSS for toggle + glass buttons
-        st.markdown("""
-            <style>
-            /* Compact Add/Delete toggle */
-            div[role='radiogroup'] {
-                display: flex !important;
-                justify-content: center;
-                gap: 10px;
-            }
-            div[role='radiogroup'] label {
-                flex: 1;
-                text-align: center;
-                padding: 6px 12px;
-                border-radius: 8px;
-                border: 1px solid #4da6ff;
-                font-weight: 600;
-                cursor: pointer;
-                background: rgba(255,255,255,0.05);
-            }
-            div[role='radiogroup'] label[data-selected="true"] {
-                background: linear-gradient(135deg, #22c55e, #16a34a);
-                color: white !important;
-            }
-            div[role='radiogroup'] label[data-selected="true"][aria-label="Delete"] {
-                background: linear-gradient(135deg, #ef4444, #dc2626);
-            }
-
-            /* Glassmorphic Buttons inside expanders */
-            .glass-btn {
-                background: linear-gradient(135deg, rgba(0, 183, 255, 0.8), rgba(117, 0, 255, 0.8));
-                border: none;
-                border-radius: 14px;
-                padding: 12px 20px;
-                color: white;
-                font-size: 14px;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                cursor: pointer;
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-                box-shadow: 0px 4px 20px rgba(0, 183, 255, 0.5);
-                transition: all 0.3s ease;
-                width: 100%;
-                text-align: center;
-                display: block;
-                margin-top: 8px;
-            }
-            .glass-btn:hover {
-                transform: scale(1.05);
-                box-shadow: 0px 6px 25px rgba(117, 0, 255, 0.7);
-            }
-            </style>
-        """, unsafe_allow_html=True)
-
         if "edit_mode" not in st.session_state:
             st.session_state.edit_mode = "Add"
 
-        # Compact toggle
-        mode = st.radio("Mode", ["Add", "Delete"], index=0, horizontal=True,
-                        key="mode_toggle", label_visibility="collapsed")
+        # Toggle Mode
+        mode = st.radio("Mode", ["Add", "Delete"], index=0, horizontal=True, key="mode_toggle")
         st.session_state.edit_mode = mode
         st.markdown("---")
+
+        # 💎 Custom Glassmorphism Button Style
+        button_style = """
+            <style>
+            div.stButton > button {
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.4);
+                backdrop-filter: blur(12px);
+                color: #fff;
+                padding: 8px 18px;
+                border-radius: 12px;
+                font-size: 15px;
+                font-weight: 500;
+                transition: all 0.3s ease-in-out;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            }
+            div.stButton > button:hover {
+                background: rgba(77, 166, 255, 0.25);
+                box-shadow: 0 6px 18px rgba(77, 166, 255, 0.4);
+                transform: translateY(-2px);
+            }
+            div.stButton > button:active {
+                transform: scale(0.95);
+                box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            }
+            </style>
+        """
+        st.markdown(button_style, unsafe_allow_html=True)
 
         # 💼 Experience
         with st.expander("💼 Experience"):
@@ -2942,7 +2917,6 @@ with tab2:
                     )
                 elif mode == "Delete" and len(st.session_state.experience_entries) > 1:
                     st.session_state.experience_entries.pop()
-            st.markdown(f"<button class='glass-btn'>{'➕ Add' if mode=='Add' else '❌ Delete'} Experience</button>", unsafe_allow_html=True)
 
         # 🎓 Education
         with st.expander("🎓 Education"):
@@ -2953,7 +2927,6 @@ with tab2:
                     )
                 elif mode == "Delete" and len(st.session_state.education_entries) > 1:
                     st.session_state.education_entries.pop()
-            st.markdown(f"<button class='glass-btn'>{'➕ Add' if mode=='Add' else '❌ Delete'} Education</button>", unsafe_allow_html=True)
 
         # 🛠 Projects
         with st.expander("🛠 Projects"):
@@ -2964,7 +2937,6 @@ with tab2:
                     )
                 elif mode == "Delete" and len(st.session_state.project_entries) > 1:
                     st.session_state.project_entries.pop()
-            st.markdown(f"<button class='glass-btn'>{'➕ Add' if mode=='Add' else '❌ Delete'} Project</button>", unsafe_allow_html=True)
 
         # 📜 Certificates
         with st.expander("📜 Certificates"):
@@ -2975,7 +2947,6 @@ with tab2:
                     )
                 elif mode == "Delete" and len(st.session_state.certificate_links) > 1:
                     st.session_state.certificate_links.pop()
-            st.markdown(f"<button class='glass-btn'>{'➕ Add' if mode=='Add' else '❌ Delete'} Certificate</button>", unsafe_allow_html=True)
 
 
 

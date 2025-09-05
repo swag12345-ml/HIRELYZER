@@ -1917,31 +1917,32 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 with tab1:
-    st.sidebar.markdown("### 🏷️ Job Information")
-    job_title = st.sidebar.text_input("💼 Job Title")  # <-- New input for job title
+    st.markdown("### 🏷️ Job Information")
+    job_title = st.text_input("💼 Job Title")  # <-- Now inside tab1
 
-    st.sidebar.markdown("### 📝 Paste Job Description")
-    job_description = st.sidebar.text_area("Enter the Job Description here", height=200)
+    st.markdown("### 📝 Paste Job Description")
+    job_description = st.text_area("Enter the Job Description here", height=200)
 
     if job_description.strip() == "":
-        st.sidebar.warning("Please enter a job description to evaluate the resumes.")
+        st.warning("Please enter a job description to evaluate the resumes.")
 
-    user_location = st.sidebar.text_input("📍 Preferred Job Location (City, Country)")
+    user_location = st.text_input("📍 Preferred Job Location (City, Country)")
 
-    st.sidebar.markdown("### 🎛️ Customize ATS Scoring Weights")
+    st.markdown("### 🎛️ Customize ATS Scoring Weights")
 
-    edu_weight = st.sidebar.slider("🎓 Education Weight", 0, 50, 20)
-    exp_weight = st.sidebar.slider("💼 Experience Weight", 0, 50, 35)
-    skills_weight = st.sidebar.slider("🛠 Skills Match Weight", 0, 50, 30)
-    lang_weight = st.sidebar.slider("🗣 Language Quality Weight", 0, 10, 5)
-    keyword_weight = st.sidebar.slider("🔑 Keyword Match Weight", 0, 20, 10)
+    edu_weight = st.slider("🎓 Education Weight", 0, 50, 20)
+    exp_weight = st.slider("💼 Experience Weight", 0, 50, 35)
+    skills_weight = st.slider("🛠 Skills Match Weight", 0, 50, 30)
+    lang_weight = st.slider("🗣 Language Quality Weight", 0, 10, 5)
+    keyword_weight = st.slider("🔑 Keyword Match Weight", 0, 20, 10)
 
     total_weight = edu_weight + exp_weight + skills_weight + lang_weight + keyword_weight
 
     if total_weight != 100:
-        st.sidebar.error(f"⚠️ Total = {total_weight}. Please make it exactly 100.")
+        st.error(f"⚠️ Total = {total_weight}. Please make it exactly 100.")
     else:
-        st.sidebar.success("✅ Total weight = 100")
+        st.success("✅ Total weight = 100")
+
 
 with tab1:
     from streamlit_pdf_viewer import pdf_viewer

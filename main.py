@@ -2801,7 +2801,7 @@ with tab2:
     st.session_state.setdefault("project_links", [])
     st.session_state.setdefault("certificate_links", [{"name": "", "link": "", "duration": "", "description": ""}])
 
-    # ---------------- Sidebar ----------------
+    # ---------------- Sidebar (only inside Tab 2) ----------------
     with st.sidebar:
         st.markdown("### ✨ Manage Sections")
 

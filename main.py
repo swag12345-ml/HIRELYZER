@@ -1916,7 +1916,7 @@ def create_chain(vectorstore):
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-    st.sidebar.markdown("### 🏷️ Job Information")
+st.sidebar.markdown("### 🏷️ Job Information")
 # ---------------- Sidebar Layout with Inline Images ----------------
 
 job_title = st.sidebar.text_input(

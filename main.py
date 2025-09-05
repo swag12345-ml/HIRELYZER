@@ -2869,26 +2869,10 @@ with tab2:
     with st.sidebar:
         st.markdown("### ✨ Manage Sections")
 
-        # Glassmorphism CSS
-        st.markdown("""
+        # Custom CSS for compact Add/Delete toggle
+        st.markdown(
+            """
             <style>
-            .glass-box {
-                background: rgba(13, 42, 74, 0.35);
-                border-radius: 16px;
-                padding: 12px;
-                margin-bottom: 15px;
-                border: 1px solid rgba(77, 166, 255, 0.4);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-                color: #e0f2ff;
-                font-weight: 600;
-            }
-            .glass-box h4 {
-                margin: 0;
-                font-size: 16px;
-                color: #4da6ff;
-            }
             div[role='radiogroup'] {
                 display: flex !important;
                 justify-content: center;
@@ -2897,16 +2881,12 @@ with tab2:
             div[role='radiogroup'] label {
                 flex: 1;
                 text-align: center;
-                padding: 8px 12px;
-                border-radius: 12px;
+                padding: 6px 12px;
+                border-radius: 8px;
                 border: 1px solid #4da6ff;
-                cursor: pointer;
-                background: rgba(255,255,255,0.08);
                 font-weight: 600;
-                transition: 0.3s;
-            }
-            div[role='radiogroup'] label:hover {
-                background: rgba(77, 166, 255, 0.2);
+                cursor: pointer;
+                background: rgba(255,255,255,0.05);
             }
             div[role='radiogroup'] label[data-selected="true"] {
                 background: linear-gradient(135deg, #22c55e, #16a34a);
@@ -2916,57 +2896,57 @@ with tab2:
                 background: linear-gradient(135deg, #ef4444, #dc2626);
             }
             </style>
-        """, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True
+        )
 
         if "edit_mode" not in st.session_state:
             st.session_state.edit_mode = "Add"
 
-        # Glassmorphic Mode Selector
-        st.markdown('<div class="glass-box"><h4>Mode</h4></div>', unsafe_allow_html=True)
-        mode = st.radio("Mode", ["Add", "Delete"], index=0, horizontal=True,
-                        key="mode_toggle", label_visibility="collapsed")
+        # Compact horizontal toggle
+        mode = st.radio("Mode", ["Add", "Delete"], index=0, horizontal=True, key="mode_toggle", label_visibility="collapsed")
         st.session_state.edit_mode = mode
+        st.markdown("---")
 
         # 💼 Experience
-        st.markdown('<div class="glass-box"><h4>💼 Experience</h4></div>', unsafe_allow_html=True)
-        if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Experience", key="exp_btn"):
-            if mode == "Add":
-                st.session_state.experience_entries.append(
-                    {"title": "", "company": "", "duration": "", "description": ""}
-                )
-            elif mode == "Delete" and len(st.session_state.experience_entries) > 1:
-                st.session_state.experience_entries.pop()
+        with st.expander("💼 Experience"):
+            if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Experience", key="exp_btn"):
+                if mode == "Add":
+                    st.session_state.experience_entries.append(
+                        {"title": "", "company": "", "duration": "", "description": ""}
+                    )
+                elif mode == "Delete" and len(st.session_state.experience_entries) > 1:
+                    st.session_state.experience_entries.pop()
 
         # 🎓 Education
-        st.markdown('<div class="glass-box"><h4>🎓 Education</h4></div>', unsafe_allow_html=True)
-        if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Education", key="edu_btn"):
-            if mode == "Add":
-                st.session_state.education_entries.append(
-                    {"degree": "", "institution": "", "year": "", "details": ""}
-                )
-            elif mode == "Delete" and len(st.session_state.education_entries) > 1:
-                st.session_state.education_entries.pop()
+        with st.expander("🎓 Education"):
+            if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Education", key="edu_btn"):
+                if mode == "Add":
+                    st.session_state.education_entries.append(
+                        {"degree": "", "institution": "", "year": "", "details": ""}
+                    )
+                elif mode == "Delete" and len(st.session_state.education_entries) > 1:
+                    st.session_state.education_entries.pop()
 
         # 🛠 Projects
-        st.markdown('<div class="glass-box"><h4>🛠 Projects</h4></div>', unsafe_allow_html=True)
-        if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Project", key="proj_btn"):
-            if mode == "Add":
-                st.session_state.project_entries.append(
-                    {"title": "", "tech": "", "duration": "", "description": ""}
-                )
-            elif mode == "Delete" and len(st.session_state.project_entries) > 1:
-                st.session_state.project_entries.pop()
+        with st.expander("🛠 Projects"):
+            if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Project", key="proj_btn"):
+                if mode == "Add":
+                    st.session_state.project_entries.append(
+                        {"title": "", "tech": "", "duration": "", "description": ""}
+                    )
+                elif mode == "Delete" and len(st.session_state.project_entries) > 1:
+                    st.session_state.project_entries.pop()
 
         # 📜 Certificates
-        st.markdown('<div class="glass-box"><h4>📜 Certificates</h4></div>', unsafe_allow_html=True)
-        if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Certificate", key="cert_btn"):
-            if mode == "Add":
-                st.session_state.certificate_links.append(
-                    {"name": "", "link": "", "duration": "", "description": ""}
-                )
-            elif mode == "Delete" and len(st.session_state.certificate_links) > 1:
-                st.session_state.certificate_links.pop()
-
+        with st.expander("📜 Certificates"):
+            if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Certificate", key="cert_btn"):
+                if mode == "Add":
+                    st.session_state.certificate_links.append(
+                        {"name": "", "link": "", "duration": "", "description": ""}
+                    )
+                elif mode == "Delete" and len(st.session_state.certificate_links) > 1:
+                    st.session_state.certificate_links.pop()
 
 
 

@@ -1917,6 +1917,8 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 # ---------------- Sidebar Layout with Inline Images ----------------
+import streamlit as st
+
 st.sidebar.markdown("### 🏷️ Job Information")
 
 # ---------------- Job Information Dropdown ----------------
@@ -1925,16 +1927,17 @@ with st.sidebar.expander("![Job](https://img.icons8.com/ios-filled/20/briefcase.
         "![Job](https://img.icons8.com/ios-filled/20/briefcase.png) Job Title"
     )
 
+    user_location = st.text_input(
+        "![Location](https://img.icons8.com/ios-filled/20/marker.png) Preferred Job Location (City, Country)"
+    )
+
     job_description = st.text_area(
         "![Description](https://img.icons8.com/ios-filled/20/document.png) Paste Job Description",
         height=200
     )
+
     if job_description.strip() == "":
         st.warning("Please enter a job description to evaluate the resumes.")
-
-    user_location = st.text_input(
-        "![Location](https://img.icons8.com/ios-filled/20/marker.png) Preferred Job Location (City, Country)"
-    )
 
 # ---------------- Advanced Weights Dropdown ----------------
 with st.sidebar.expander("![Settings](https://img.icons8.com/ios-filled/20/settings.png) Customize ATS Scoring Weights", expanded=False):
@@ -1988,6 +1991,7 @@ with st.sidebar.expander("![Settings](https://img.icons8.com/ios-filled/20/setti
             """,
             unsafe_allow_html=True
         )
+
 
 
 with tab1:

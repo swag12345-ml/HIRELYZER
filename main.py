@@ -2808,22 +2808,18 @@ with tab1:
 with tab2:
     st.session_state.active_tab = "Resume Builder"
 
-    # ---------- Title with Blue Glassmorphism ----------
+    # ---------- Title ----------
     st.markdown("""
     <div style="
-        background: rgba(10, 20, 40, 0.5);
+        background: rgba(255, 255, 255, 0.08);
         border-radius: 20px;
         padding: 20px;
         backdrop-filter: blur(14px);
         box-shadow: 0 8px 32px rgba(0, 200, 255, 0.25);
-        border: 1px solid rgba(0, 200, 255, 0.3);
         text-align: center;">
-        <h2 style="color:#4da6ff; margin:0; text-shadow: 0 0 12px rgba(0,200,255,0.7);">
-            🧾 Advanced Resume Builder
-        </h2>
+        <h2 style="color:#4da6ff; margin:0;">🧾 Advanced Resume Builder</h2>
     </div>
     """, unsafe_allow_html=True)
-
     st.markdown("<hr style='border-top: 2px solid rgba(0,200,255,0.4);'>", unsafe_allow_html=True)
 
     # 📸 Upload profile photo with enhanced styling
@@ -2879,9 +2875,10 @@ with tab2:
         if "edit_mode" not in st.session_state:
             st.session_state.edit_mode = "Add"
 
-        # 🔘 Custom styled radio toggle
+        # 💎 Inject Global Glassmorphism Styles
         st.markdown("""
             <style>
+            /* 🔘 Radio buttons */
             div[role="radiogroup"] > label {
                 background: rgba(10, 20, 40, 0.6);
                 border: 1px solid rgba(0, 200, 255, 0.6);
@@ -2903,16 +2900,8 @@ with tab2:
                 box-shadow: 0 0 14px rgba(0,200,255,0.8);
                 font-weight: 600;
             }
-            </style>
-        """, unsafe_allow_html=True)
 
-        mode = st.radio("Mode", ["Add", "Delete"], index=0, horizontal=True, key="mode_toggle")
-        st.session_state.edit_mode = mode
-        st.markdown("---")
-
-        # 💎 Custom Glassmorphism Button Style (blue)
-        st.markdown("""
-            <style>
+            /* 🔵 Buttons */
             div.stButton > button {
                 background: rgba(10, 20, 40, 0.55);
                 border: 1px solid rgba(0, 200, 255, 0.6);
@@ -2934,8 +2923,43 @@ with tab2:
                 transform: scale(0.95);
                 box-shadow: 0 0 8px rgba(0, 200, 255, 0.4);
             }
+
+            /* 📝 Input fields (text, textarea, selectbox, multiselect) */
+            .stTextInput > div > div > input,
+            .stTextArea > div > textarea,
+            .stSelectbox > div > div,
+            .stMultiSelect > div > div {
+                background: rgba(10, 20, 40, 0.55) !important;
+                border: 1px solid rgba(0, 200, 255, 0.5) !important;
+                border-radius: 12px !important;
+                color: #e6f7ff !important;
+                padding: 8px 12px !important;
+                box-shadow: 0 0 8px rgba(0,200,255,0.25) !important;
+            }
+            .stTextInput > div > div > input:focus,
+            .stTextArea > div > textarea:focus,
+            .stSelectbox > div > div:focus,
+            .stMultiSelect > div > div:focus {
+                border: 1px solid rgba(0, 200, 255, 0.9) !important;
+                box-shadow: 0 0 12px rgba(0,200,255,0.6) !important;
+            }
+
+            /* 📂 Expanders */
+            .streamlit-expanderHeader {
+                background: rgba(10, 20, 40, 0.55) !important;
+                border: 1px solid rgba(0, 200, 255, 0.5) !important;
+                border-radius: 10px !important;
+                color: #e6f7ff !important;
+                font-weight: 500 !important;
+                box-shadow: 0 0 10px rgba(0,200,255,0.3) !important;
+            }
             </style>
         """, unsafe_allow_html=True)
+
+        # Toggle mode
+        mode = st.radio("Mode", ["Add", "Delete"], index=0, horizontal=True, key="mode_toggle")
+        st.session_state.edit_mode = mode
+        st.markdown("---")
 
         # 💼 Experience
         with st.expander("💼 Experience"):
@@ -2976,7 +3000,6 @@ with tab2:
                     )
                 elif mode == "Delete" and len(st.session_state.certificate_links) > 1:
                     st.session_state.certificate_links.pop()
-
 
 
 

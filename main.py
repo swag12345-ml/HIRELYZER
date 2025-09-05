@@ -2354,11 +2354,27 @@ if uploaded_files and job_description:
         st.session_state.chain = create_chain(st.session_state.vectorstore)
 
 # 🔄 Developer Reset Button
+import time
+
 with tab1:
     if st.button("🔄 Refresh view"):
         st.session_state.processed_files.clear()
         st.session_state.resume_data.clear()
-        st.success("✅ Cleared uploaded resume history. You can re-upload now.")
+
+        # Temporary placeholder for sliding success message
+        msg_placeholder = st.empty()
+        msg_placeholder.markdown("""
+        <div class='slide-message success-msg'>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+            ✅ Cleared uploaded resume history. You can re-upload now.
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Wait 3 seconds then clear message
+        time.sleep(3)
+        msg_placeholder.empty()
+
 
 
 

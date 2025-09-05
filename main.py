@@ -2869,10 +2869,42 @@ with tab2:
     with st.sidebar:
         st.markdown("### ✨ Manage Sections")
 
+        # Custom CSS for compact Add/Delete toggle
+        st.markdown(
+            """
+            <style>
+            div[role='radiogroup'] {
+                display: flex !important;
+                justify-content: center;
+                gap: 10px;
+            }
+            div[role='radiogroup'] label {
+                flex: 1;
+                text-align: center;
+                padding: 6px 12px;
+                border-radius: 8px;
+                border: 1px solid #4da6ff;
+                font-weight: 600;
+                cursor: pointer;
+                background: rgba(255,255,255,0.05);
+            }
+            div[role='radiogroup'] label[data-selected="true"] {
+                background: linear-gradient(135deg, #22c55e, #16a34a);
+                color: white !important;
+            }
+            div[role='radiogroup'] label[data-selected="true"][aria-label="Delete"] {
+                background: linear-gradient(135deg, #ef4444, #dc2626);
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
         if "edit_mode" not in st.session_state:
             st.session_state.edit_mode = "Add"
 
-        mode = st.radio("Mode", ["Add", "Delete"], index=0, horizontal=True, key="mode_toggle")
+        # Compact horizontal toggle
+        mode = st.radio("Mode", ["Add", "Delete"], index=0, horizontal=True, key="mode_toggle", label_visibility="collapsed")
         st.session_state.edit_mode = mode
         st.markdown("---")
 
@@ -2915,6 +2947,7 @@ with tab2:
                     )
                 elif mode == "Delete" and len(st.session_state.certificate_links) > 1:
                     st.session_state.certificate_links.pop()
+
 
 
 

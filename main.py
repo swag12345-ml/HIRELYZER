@@ -1916,44 +1916,37 @@ def create_chain(vectorstore):
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-with tab1:
-    # --- Job Info Card ---
-    st.markdown("""
-        <div style='background-color:#1e1e1e; padding:18px; border-radius:10px; margin-bottom:15px;'>
-            <h3 style='color:white; margin:0 0 10px 0;'>🏷️ Job Information</h3>
-        </div>
-    """, unsafe_allow_html=True)
+    st.sidebar.markdown("### 🏷️ Job Information")
+# ---------------- Sidebar Layout with Inline Images ----------------
 
-    job_title = st.text_input("💼 Job Title")
+job_title = st.sidebar.text_input(
+    "![Job](https://img.icons8.com/ios-filled/20/briefcase.png) Job Title"
+)
 
-    job_description = st.text_area("📝 Paste Job Description", height=200)
+job_description = st.sidebar.text_area(
+    "![Description](https://img.icons8.com/ios-filled/20/document.png) Paste Job Description",
+    height=200
+)
+if job_description.strip() == "":
+    st.sidebar.warning("Please enter a job description to evaluate the resumes.")
 
-    if job_description.strip() == "":
-        st.warning("Please enter a job description to evaluate the resumes.")
+user_location = st.sidebar.text_input(
+    "![Location](https://img.icons8.com/ios-filled/20/marker.png) Preferred Job Location (City, Country)"
+)
 
-    user_location = st.text_input("📍 Preferred Job Location (City, Country)")
-
-    # --- ATS Weights Card ---
-    st.markdown("""
-        <div style='background-color:#1e1e1e; padding:18px; border-radius:10px; margin-top:20px; margin-bottom:15px;'>
-            <h3 style='color:white; margin:0 0 10px 0;'>🎛️ Customize ATS Scoring Weights</h3>
-        </div>
-    """, unsafe_allow_html=True)
-
-    edu_weight = st.slider("🎓 Education Weight", 0, 50, 20)
-    exp_weight = st.slider("💼 Experience Weight", 0, 50, 35)
-    skills_weight = st.slider("🛠 Skills Match Weight", 0, 50, 30)
-    lang_weight = st.slider("🗣 Language Quality Weight", 0, 10, 5)
-    keyword_weight = st.slider("🔑 Keyword Match Weight", 0, 20, 10)
+# ---------------- Advanced Dropdowns ----------------
+with st.sidebar.expander("![Settings](https://img.icons8.com/ios-filled/20/settings.png) Customize ATS Scoring Weights", expanded=False):
+    edu_weight = st.slider("![Education](https://img.icons8.com/ios-filled/20/graduation-cap.png) Education Weight", 0, 50, 20)
+    exp_weight = st.slider("![Experience](https://img.icons8.com/ios-filled/20/portfolio.png) Experience Weight", 0, 50, 35)
+    skills_weight = st.slider("![Skills](https://img.icons8.com/ios-filled/20/gear.png) Skills Match Weight", 0, 50, 30)
+    lang_weight = st.slider("![Language](https://img.icons8.com/ios-filled/20/language.png) Language Quality Weight", 0, 10, 5)
+    keyword_weight = st.slider("![Keyword](https://img.icons8.com/ios-filled/20/key.png) Keyword Match Weight", 0, 20, 10)
 
     total_weight = edu_weight + exp_weight + skills_weight + lang_weight + keyword_weight
-
     if total_weight != 100:
         st.error(f"⚠️ Total = {total_weight}. Please make it exactly 100.")
     else:
         st.success("✅ Total weight = 100")
-
-
 
 with tab1:
     from streamlit_pdf_viewer import pdf_viewer

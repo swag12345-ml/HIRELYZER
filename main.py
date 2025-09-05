@@ -2804,97 +2804,57 @@ with tab1:
     else:           
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
 
-with tab2:
-    st.session_state.active_tab = "Resume Builder"
+# ---------------- Sidebar (ONLY in Tab 2) ----------------
+with st.sidebar:
+    st.markdown("### ✨ Manage Sections")
 
-    st.markdown("## 🧾 <span style='color:#336699;'>Advanced Resume Builder</span>", unsafe_allow_html=True)
-    st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
+    if "edit_mode" not in st.session_state:
+        st.session_state.edit_mode = "Add"
 
-    # 📸 Upload profile photo with enhanced styling
-    uploaded_image = st.file_uploader("Upload a Profile Image", type=["png", "jpg", "jpeg"], key="profile_img_upload")
-    profile_img_html = ""
+    mode = st.radio("Mode", ["Add", "Delete"], index=0, horizontal=True, key="mode_toggle")
+    st.session_state.edit_mode = mode
+    st.markdown("---")
 
-    if uploaded_image:
-        import base64
-        encoded_image = base64.b64encode(uploaded_image.read()).decode()
-        st.session_state["encoded_profile_image"] = encoded_image
-
-        profile_img_html = f"""
-        <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
-            <img src="data:image/png;base64,{encoded_image}" alt="Profile Photo"
-                 style="
-                    width: 140px;
-                    height: 140px;
-                    border-radius: 50%;
-                    object-fit: cover;
-                    object-position: center;
-                    border: 4px solid #ffffff;
-                    box-shadow:
-                        0 0 0 3px #4da6ff,
-                        0 8px 25px rgba(77, 166, 255, 0.3),
-                        0 4px 15px rgba(0, 0, 0, 0.1);
-                    transition: all 0.3s ease;
-                " />
-        </div>
-        """
-        st.markdown(profile_img_html, unsafe_allow_html=True)
-    else:
-        st.info("📸 Please upload a clear, front-facing profile photo (square or vertical preferred).")
-
-    # ---------------- Session State Defaults ----------------
-    fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary",
-              "skills", "languages", "interests", "Softskills", "job_title"]
-    for f in fields:
-        st.session_state.setdefault(f, "")
-
-    st.session_state.setdefault("experience_entries", [{"title": "", "company": "", "duration": "", "description": ""}])
-    st.session_state.setdefault("education_entries", [{"degree": "", "institution": "", "year": "", "details": ""}])
-    st.session_state.setdefault("project_entries", [{"title": "", "tech": "", "duration": "", "description": ""}])
-    st.session_state.setdefault("project_links", [])
-    st.session_state.setdefault("certificate_links", [{"name": "", "link": "", "duration": "", "description": ""}])
-
-    # ---------------- Sidebar (ONLY in Tab 2) ----------------
-    with st.sidebar:
-        st.markdown("### ✨ Manage Sections")
-
-        if "edit_mode" not in st.session_state:
-            st.session_state.edit_mode = "Add"
-
-        mode = st.radio("Mode", ["Add", "Delete"], index=0, horizontal=True, key="mode_toggle")
-        st.session_state.edit_mode = mode
-        st.markdown("---")
-
-        # Experience
-        st.markdown("**💼 Experience**")
+    # 💼 Experience Dropdown
+    with st.expander("💼 Experience", expanded=False):
         if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Experience", key="exp_btn"):
             if mode == "Add":
-                st.session_state.experience_entries.append({"title": "", "company": "", "duration": "", "description": ""})
+                st.session_state.experience_entries.append(
+                    {"title": "", "company": "", "duration": "", "description": ""}
+                )
             elif mode == "Delete" and len(st.session_state.experience_entries) > 1:
                 st.session_state.experience_entries.pop()
 
-        # Education
-        st.markdown("**🎓 Education**")
+    # 🎓 Education Dropdown
+    with st.expander("🎓 Education", expanded=False):
         if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Education", key="edu_btn"):
             if mode == "Add":
-                st.session_state.education_entries.append({"degree": "", "institution": "", "year": "", "details": ""})
+                st.session_state.education_entries.append(
+                    {"degree": "", "institution": "", "year": "", "details": ""}
+                )
             elif mode == "Delete" and len(st.session_state.education_entries) > 1:
                 st.session_state.education_entries.pop()
 
-        # Projects
-        st.markdown("**🛠 Projects**")
+    # 🛠 Projects Dropdown
+    with st.expander("🛠 Projects", expanded=False):
         if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Project", key="proj_btn"):
             if mode == "Add":
-                st.session_state.project_entries.append({"title": "", "tech": "", "duration": "", "description": ""})
+                st.session_state.project_entries.append(
+                    {"title": "", "tech": "", "duration": "", "description": ""}
+                )
             elif mode == "Delete" and len(st.session_state.project_entries) > 1:
                 st.session_state.project_entries.pop()
 
-        # Certificates
-        st.markdown("**📜 Certificates**")
+    # 📜 Certificates Dropdown
+    with st.expander("📜 Certificates", expanded=False):
         if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Certificate", key="cert_btn"):
             if mode == "Add":
-                st.session_state.certificate_links.append({"name": "", "link": "", "duration": "", "description": ""})
+                st.session_state.certificate_links.append(
+                    {"name": "", "link": "", "duration": "", "description": ""}
+                )
             elif mode == "Delete" and len(st.session_state.certificate_links) > 1:
                 st.session_state.certificate_links.pop()
+
 
 
     # ---------------- Resume Form ----------------

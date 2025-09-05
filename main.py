@@ -1917,18 +1917,28 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 with tab1:
-    st.markdown("### 🏷️ Job Information")
-    job_title = st.text_input("💼 Job Title")  # <-- Now inside tab1
+    # --- Job Info Card ---
+    st.markdown("""
+        <div style='background-color:#1e1e1e; padding:18px; border-radius:10px; margin-bottom:15px;'>
+            <h3 style='color:white; margin:0 0 10px 0;'>🏷️ Job Information</h3>
+        </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown("### 📝 Paste Job Description")
-    job_description = st.text_area("Enter the Job Description here", height=200)
+    job_title = st.text_input("💼 Job Title")
+
+    job_description = st.text_area("📝 Paste Job Description", height=200)
 
     if job_description.strip() == "":
         st.warning("Please enter a job description to evaluate the resumes.")
 
     user_location = st.text_input("📍 Preferred Job Location (City, Country)")
 
-    st.markdown("### 🎛️ Customize ATS Scoring Weights")
+    # --- ATS Weights Card ---
+    st.markdown("""
+        <div style='background-color:#1e1e1e; padding:18px; border-radius:10px; margin-top:20px; margin-bottom:15px;'>
+            <h3 style='color:white; margin:0 0 10px 0;'>🎛️ Customize ATS Scoring Weights</h3>
+        </div>
+    """, unsafe_allow_html=True)
 
     edu_weight = st.slider("🎓 Education Weight", 0, 50, 20)
     exp_weight = st.slider("💼 Experience Weight", 0, 50, 35)
@@ -1942,6 +1952,7 @@ with tab1:
         st.error(f"⚠️ Total = {total_weight}. Please make it exactly 100.")
     else:
         st.success("✅ Total weight = 100")
+
 
 
 with tab1:

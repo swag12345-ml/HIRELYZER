@@ -2808,18 +2808,7 @@ with tab1:
 with tab2:
     st.session_state.active_tab = "Resume Builder"
 
-    # ---------- Title ----------
-    st.markdown("""
-    <div style="
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
-        padding: 20px;
-        backdrop-filter: blur(12px);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-        text-align: center;">
-        <h2 style="color:#336699; margin:0;">🧾 Advanced Resume Builder</h2>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("## 🧾 <span style='color:#336699;'>Advanced Resume Builder</span>", unsafe_allow_html=True)
     st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
     # 📸 Upload profile photo with enhanced styling
@@ -2840,16 +2829,13 @@ with tab2:
                     border-radius: 50%;
                     object-fit: cover;
                     object-position: center;
-                    border: 4px solid rgba(255,255,255,0.6);
+                    border: 4px solid #ffffff;
                     box-shadow:
                         0 0 0 3px #4da6ff,
                         0 8px 25px rgba(77, 166, 255, 0.3),
-                        0 4px 15px rgba(0, 0, 0, 0.15);
-                    transition: transform 0.3s ease-in-out;
-                "
-                onmouseover="this.style.transform='scale(1.07)'"
-                onmouseout="this.style.transform='scale(1)'"
-             />
+                        0 4px 15px rgba(0, 0, 0, 0.1);
+                    transition: all 0.3s ease;
+                " />
         </div>
         """
         st.markdown(profile_img_html, unsafe_allow_html=True)
@@ -2875,38 +2861,9 @@ with tab2:
         if "edit_mode" not in st.session_state:
             st.session_state.edit_mode = "Add"
 
-        # Toggle Mode
         mode = st.radio("Mode", ["Add", "Delete"], index=0, horizontal=True, key="mode_toggle")
         st.session_state.edit_mode = mode
         st.markdown("---")
-
-        # 💎 Custom Glassmorphism Button Style
-        button_style = """
-            <style>
-            div.stButton > button {
-                background: rgba(255, 255, 255, 0.1);
-                border: 1px solid rgba(255, 255, 255, 0.4);
-                backdrop-filter: blur(12px);
-                color: #fff;
-                padding: 8px 18px;
-                border-radius: 12px;
-                font-size: 15px;
-                font-weight: 500;
-                transition: all 0.3s ease-in-out;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            }
-            div.stButton > button:hover {
-                background: rgba(77, 166, 255, 0.25);
-                box-shadow: 0 6px 18px rgba(77, 166, 255, 0.4);
-                transform: translateY(-2px);
-            }
-            div.stButton > button:active {
-                transform: scale(0.95);
-                box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-            }
-            </style>
-        """
-        st.markdown(button_style, unsafe_allow_html=True)
 
         # 💼 Experience
         with st.expander("💼 Experience"):
@@ -2947,7 +2904,6 @@ with tab2:
                     )
                 elif mode == "Delete" and len(st.session_state.certificate_links) > 1:
                     st.session_state.certificate_links.pop()
-
 
 
 

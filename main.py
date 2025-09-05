@@ -2865,37 +2865,45 @@ with tab2:
         st.session_state.edit_mode = mode
         st.markdown("---")
 
-        # Experience
-        st.markdown("**💼 Experience**")
-        if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Experience", key="exp_btn"):
-            if mode == "Add":
-                st.session_state.experience_entries.append({"title": "", "company": "", "duration": "", "description": ""})
-            elif mode == "Delete" and len(st.session_state.experience_entries) > 1:
-                st.session_state.experience_entries.pop()
+        # 💼 Experience
+        with st.expander("💼 Experience"):
+            if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Experience", key="exp_btn"):
+                if mode == "Add":
+                    st.session_state.experience_entries.append(
+                        {"title": "", "company": "", "duration": "", "description": ""}
+                    )
+                elif mode == "Delete" and len(st.session_state.experience_entries) > 1:
+                    st.session_state.experience_entries.pop()
 
-        # Education
-        st.markdown("**🎓 Education**")
-        if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Education", key="edu_btn"):
-            if mode == "Add":
-                st.session_state.education_entries.append({"degree": "", "institution": "", "year": "", "details": ""})
-            elif mode == "Delete" and len(st.session_state.education_entries) > 1:
-                st.session_state.education_entries.pop()
+        # 🎓 Education
+        with st.expander("🎓 Education"):
+            if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Education", key="edu_btn"):
+                if mode == "Add":
+                    st.session_state.education_entries.append(
+                        {"degree": "", "institution": "", "year": "", "details": ""}
+                    )
+                elif mode == "Delete" and len(st.session_state.education_entries) > 1:
+                    st.session_state.education_entries.pop()
 
-        # Projects
-        st.markdown("**🛠 Projects**")
-        if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Project", key="proj_btn"):
-            if mode == "Add":
-                st.session_state.project_entries.append({"title": "", "tech": "", "duration": "", "description": ""})
-            elif mode == "Delete" and len(st.session_state.project_entries) > 1:
-                st.session_state.project_entries.pop()
+        # 🛠 Projects
+        with st.expander("🛠 Projects"):
+            if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Project", key="proj_btn"):
+                if mode == "Add":
+                    st.session_state.project_entries.append(
+                        {"title": "", "tech": "", "duration": "", "description": ""}
+                    )
+                elif mode == "Delete" and len(st.session_state.project_entries) > 1:
+                    st.session_state.project_entries.pop()
 
-        # Certificates
-        st.markdown("**📜 Certificates**")
-        if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Certificate", key="cert_btn"):
-            if mode == "Add":
-                st.session_state.certificate_links.append({"name": "", "link": "", "duration": "", "description": ""})
-            elif mode == "Delete" and len(st.session_state.certificate_links) > 1:
-                st.session_state.certificate_links.pop()
+        # 📜 Certificates
+        with st.expander("📜 Certificates"):
+            if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Certificate", key="cert_btn"):
+                if mode == "Add":
+                    st.session_state.certificate_links.append(
+                        {"name": "", "link": "", "duration": "", "description": ""}
+                    )
+                elif mode == "Delete" and len(st.session_state.certificate_links) > 1:
+                    st.session_state.certificate_links.pop()
 
 
 

@@ -2808,7 +2808,18 @@ with tab1:
 with tab2:
     st.session_state.active_tab = "Resume Builder"
 
-    st.markdown("## 🧾 <span style='color:#336699;'>Advanced Resume Builder</span>", unsafe_allow_html=True)
+    # ---------- Title ----------
+    st.markdown("""
+    <div style="
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 20px;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        text-align: center;">
+        <h2 style="color:#336699; margin:0;">🧾 Advanced Resume Builder</h2>
+    </div>
+    """, unsafe_allow_html=True)
     st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
     # 📸 Upload profile photo with enhanced styling

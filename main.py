@@ -2879,38 +2879,24 @@ with tab2:
         if "edit_mode" not in st.session_state:
             st.session_state.edit_mode = "Add"
 
-        # 🔘 Custom styled radio toggle
+        # 🔽 Mode as Dropdown (compact instead of radio)
         st.markdown("""
             <style>
-            div[role="radiogroup"] > label {
+            div[data-baseweb="select"] {
                 background: rgba(10, 20, 40, 0.6);
                 border: 1px solid rgba(0, 200, 255, 0.6);
                 border-radius: 12px;
-                padding: 6px 14px;
-                margin: 4px;
                 color: #e6f7ff;
-                cursor: pointer;
-                transition: all 0.3s ease-in-out;
                 box-shadow: 0 0 8px rgba(0,200,255,0.3);
-            }
-            div[role="radiogroup"] > label:hover {
-                background: rgba(0, 200, 255, 0.15);
-                box-shadow: 0 0 12px rgba(0,200,255,0.6);
-            }
-            div[role="radiogroup"] > label[data-checked="true"] {
-                background: rgba(0, 200, 255, 0.25);
-                border: 1px solid rgba(0, 200, 255, 0.9);
-                box-shadow: 0 0 14px rgba(0,200,255,0.8);
-                font-weight: 600;
             }
             </style>
         """, unsafe_allow_html=True)
 
-        mode = st.radio("Mode", ["Add", "Delete"], index=0, horizontal=True, key="mode_toggle")
+        mode = st.selectbox("Mode", ["Add", "Delete"], index=0, key="mode_dropdown")
         st.session_state.edit_mode = mode
         st.markdown("---")
 
-        # 💎 Custom Glassmorphism Button Style (blue)
+        # 💎 Custom Glassmorphism Button Style
         st.markdown("""
             <style>
             div.stButton > button {
@@ -2976,6 +2962,7 @@ with tab2:
                     )
                 elif mode == "Delete" and len(st.session_state.certificate_links) > 1:
                     st.session_state.certificate_links.pop()
+
 
 
 

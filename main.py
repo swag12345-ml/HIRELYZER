@@ -2359,10 +2359,7 @@ if st.button("🔄 Refresh view"):
     st.session_state.resume_data.clear()
     st.success("✅ Cleared uploaded resume history. You can re-upload now.")
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", 
-    "📚 Course Recommendation", "📁 Admin DB View"
-])
+
 
 def generate_resume_report_html(resume):
     candidate_name = resume.get('Candidate Name', 'Not Found')
@@ -2737,6 +2734,7 @@ with tab1:
 
     else:           
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
+
 with tab2:
     st.session_state.active_tab = "Resume Builder"
 

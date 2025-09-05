@@ -1942,88 +1942,88 @@ if total_weight != 100:
     st.sidebar.error(f"⚠️ Total = {total_weight}. Please make it exactly 100.")
 else:
     st.sidebar.success("✅ Total weight = 100")
+with tab1:
+    from streamlit_pdf_viewer import pdf_viewer
 
-from streamlit_pdf_viewer import pdf_viewer
+    # 🎨 CSS for sliding success message
+    st.markdown("""
+    <style>
+    .slide-message {
+      position: relative;
+      overflow: hidden;
+      margin: 10px 0;
+      padding: 10px 15px;
+      border-radius: 10px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: slideIn 0.8s ease forwards;
+    }
+    .slide-message svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+    .success-msg { background: rgba(0,255,127,0.12); border-left: 5px solid #00FF7F; color:#00FF7F; }
+    .error-msg   { background: rgba(255,99,71,0.12);  border-left: 5px solid #FF6347; color:#FF6347; }
+    .warn-msg    { background: rgba(255,215,0,0.12); border-left: 5px solid #FFD700; color:#FFD700; }
 
-# 🎨 CSS for sliding success message
-st.markdown("""
-<style>
-.slide-message {
-  position: relative;
-  overflow: hidden;
-  margin: 10px 0;
-  padding: 10px 15px;
-  border-radius: 10px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  animation: slideIn 0.8s ease forwards;
-}
-.slide-message svg {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-}
-.success-msg { background: rgba(0,255,127,0.12); border-left: 5px solid #00FF7F; color:#00FF7F; }
-.error-msg   { background: rgba(255,99,71,0.12);  border-left: 5px solid #FF6347; color:#FF6347; }
-.warn-msg    { background: rgba(255,215,0,0.12); border-left: 5px solid #FFD700; color:#FFD700; }
+    @keyframes slideIn {
+      0%   { transform: translateX(100%); opacity: 0; }
+      100% { transform: translateX(0); opacity: 1; }
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-@keyframes slideIn {
-  0%   { transform: translateX(100%); opacity: 0; }
-  100% { transform: translateX(0); opacity: 1; }
-}
-</style>
-""", unsafe_allow_html=True)
+    uploaded_files = st.file_uploader(
+        "📄 Upload PDF Resumes",
+        type=["pdf"],
+        accept_multiple_files=True,
+        help="Upload one or more resumes in PDF format (max 200MB each)."
+    )
 
+    if uploaded_files:
+        for uploaded_file in uploaded_files:
+            with st.container():
+                st.subheader(f"📄 Original Resume Preview: {uploaded_file.name}")
 
-uploaded_files = st.file_uploader(
-    "📄 Upload PDF Resumes",
-    type=["pdf"],
-    accept_multiple_files=True,
-    help="Upload one or more resumes in PDF format (max 200MB each)."
-)
+                try:
+                    # ✅ Show PDF preview safely
+                    pdf_viewer(
+                        uploaded_file.read(),
+                        key=f"pdf_viewer_{uploaded_file.name}"
+                    )
 
-if uploaded_files:
-    for uploaded_file in uploaded_files:
-        with st.container():
-            st.subheader(f"📄 Original Resume Preview: {uploaded_file.name}")
+                    # Reset pointer so file can be read again later
+                    uploaded_file.seek(0)
 
-            try:
-                # ✅ Show PDF preview safely
-                pdf_viewer(
-                    uploaded_file.read(),
-                    key=f"pdf_viewer_{uploaded_file.name}"
-                )
+                    # ✅ Extract text safely
+                    resume_text = safe_extract_text(uploaded_file)
 
-                # Reset pointer so file can be read again later
-                uploaded_file.seek(0)
+                    if resume_text:
+                        st.markdown(f"""
+                        <div class='slide-message success-msg'>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                            ✅ Successfully processed <b>{uploaded_file.name}</b>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        # 🔹 Continue with ATS scoring, bias detection, etc. here
+                    else:
+                        st.markdown(f"""
+                        <div class='slide-message warn-msg'>
+                            ⚠️ <b>{uploaded_file.name}</b> does not contain valid resume text.
+                        </div>
+                        """, unsafe_allow_html=True)
 
-                # ✅ Extract text safely
-                resume_text = safe_extract_text(uploaded_file)
-
-                if resume_text:
+                except Exception as e:
                     st.markdown(f"""
-                    <div class='slide-message success-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                        ✅ Successfully processed <b>{uploaded_file.name}</b>
+                    <div class='slide-message error-msg'>
+                        ❌ Could not display or process <b>{uploaded_file.name}</b>: {e}
                     </div>
                     """, unsafe_allow_html=True)
-                    # 🔹 Continue with ATS scoring, bias detection, etc. here
-                else:
-                    st.markdown(f"""
-                    <div class='slide-message warn-msg'>
-                        ⚠️ <b>{uploaded_file.name}</b> does not contain valid resume text.
-                    </div>
-                    """, unsafe_allow_html=True)
 
-            except Exception as e:
-                st.markdown(f"""
-                <div class='slide-message error-msg'>
-                    ❌ Could not display or process <b>{uploaded_file.name}</b>: {e}
-                </div>
-                """, unsafe_allow_html=True)
 
 
 

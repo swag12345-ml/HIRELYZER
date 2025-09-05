@@ -770,8 +770,12 @@ if st.session_state.username == "admin":
         st.info("No logs found yet.")
 
 
-# CSS Customization
-st.markdown(
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", 
+    "📚 Course Recommendation", "📁 Admin DB View"
+])
+with tab1:
+    st.markdown(
     """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
@@ -994,339 +998,7 @@ def ensure_nltk():
 lemmatizer = ensure_nltk()
 reader = get_easyocr_reader()
 
-from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
 
-
-
-
-
-FEATURED_COMPANIES = {
-    "tech": [
-        {
-            "name": "Google",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg",
-            "color": "#4285F4",
-            "careers_url": "https://careers.google.com",
-            "description": "Leading technology company known for search, cloud, and innovation",
-            "categories": ["Software", "AI/ML", "Cloud", "Data Science"]
-        },
-        {
-            "name": "Microsoft",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
-            "color": "#00A4EF",
-            "careers_url": "https://careers.microsoft.com",
-            "description": "Global leader in software, cloud, and enterprise solutions",
-            "categories": ["Software", "Cloud", "Gaming", "Enterprise"]
-        },
-        {
-            "name": "Amazon",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
-            "color": "#FF9900",
-            "careers_url": "https://www.amazon.jobs",
-            "description": "E-commerce and cloud computing giant",
-            "categories": ["Software", "Operations", "Cloud", "Retail"]
-        },
-        {
-            "name": "Apple",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
-            "color": "#555555",
-            "careers_url": "https://www.apple.com/careers",
-            "description": "Innovation leader in consumer technology",
-            "categories": ["Software", "Hardware", "Design", "AI/ML"]
-        },
-        {
-            "name": "Facebook",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/0/05/Facebook_Logo_%282019%29.png",
-            "color": "#1877F2",
-            "careers_url": "https://www.metacareers.com/",
-            "description": "Social media and technology company",
-            "categories": ["Software", "Marketing", "Networking", "AI/ML"]
-        },
-        {
-            "name": "Netflix",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg",
-            "color": "#E50914",
-            "careers_url": "https://explore.jobs.netflix.net/careers",
-            "description": "Streaming media company",
-            "categories": ["Software", "Marketing", "Design", "Service"],
-            "website": "https://jobs.netflix.com/",
-            "industry": "Entertainment & Technology"
-        }
-    ],
-    "indian_tech": [
-        {
-            "name": "TCS",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/f6/TCS_New_Logo.svg",
-            "color": "#0070C0",
-            "careers_url": "https://www.tcs.com/careers",
-            "description": "India's largest IT services company",
-            "categories": ["IT Services", "Consulting", "Digital"]
-        },
-        {
-            "name": "Infosys",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/5/55/Infosys_logo.svg",
-            "color": "#007CC3",
-            "careers_url": "https://www.infosys.com/careers",
-            "description": "Global leader in digital services and consulting",
-            "categories": ["IT Services", "Consulting", "Digital"]
-        },
-        {
-            "name": "Wipro",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/8/80/Wipro_Primary_Logo_Color_RGB.svg",
-            "color": "#341F65",
-            "careers_url": "https://careers.wipro.com",
-            "description": "Leading global information technology company",
-            "categories": ["IT Services", "Consulting", "Digital"]
-        },
-        {
-            "name": "HCL",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/5/5e/HCL_Technologies_logo.svg",
-            "color": "#0075C9",
-            "careers_url": "https://www.hcltech.com/careers",
-            "description": "Global technology company",
-            "categories": ["IT Services", "Engineering", "Digital"]
-        }
-    ],
-    "global_corps": [
-        {
-            "name": "IBM",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg",
-            "color": "#1F70C1",
-            "careers_url": "https://www.ibm.com/careers",
-            "description": "Global leader in technology and consulting",
-            "categories": ["Software", "Consulting", "AI/ML", "Cloud"],
-            "website": "https://www.ibm.com/careers/",
-            "industry": "Technology & Consulting"
-        },
-        {
-            "name": "Accenture",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/8/80/Accenture_Logo.svg",
-            "color": "#A100FF",
-            "careers_url": "https://www.accenture.com/careers",
-            "description": "Global professional services company",
-            "categories": ["Consulting", "Technology", "Digital"]
-        },
-        {
-            "name": "Cognizant",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/6/6e/Cognizant_logo_2022.svg",
-            "color": "#1299D8",
-            "careers_url": "https://careers.cognizant.com",
-            "description": "Leading professional services company",
-            "categories": ["IT Services", "Consulting", "Digital"]
-        }
-    ]
-}
-
-
-JOB_MARKET_INSIGHTS = {
-    "trending_skills": [
-        {"name": "Artificial Intelligence", "growth": "+45%", "icon": "fas fa-brain"},
-        {"name": "Cloud Computing", "growth": "+38%", "icon": "fas fa-cloud"},
-        {"name": "Data Science", "growth": "+35%", "icon": "fas fa-chart-line"},
-        {"name": "Cybersecurity", "growth": "+32%", "icon": "fas fa-shield-alt"},
-        {"name": "DevOps", "growth": "+30%", "icon": "fas fa-code-branch"},
-        {"name": "Machine Learning", "growth": "+28%", "icon": "fas fa-robot"},
-        {"name": "Blockchain", "growth": "+25%", "icon": "fas fa-lock"},
-        {"name": "Big Data", "growth": "+23%", "icon": "fas fa-database"},
-        {"name": "Internet of Things", "growth": "+21%", "icon": "fas fa-wifi"}
-    ],
-    "top_locations": [
-        {"name": "Bangalore", "jobs": "50,000+", "icon": "fas fa-city"},
-        {"name": "Mumbai", "jobs": "35,000+", "icon": "fas fa-city"},
-        {"name": "Delhi NCR", "jobs": "30,000+", "icon": "fas fa-city"},
-        {"name": "Hyderabad", "jobs": "25,000+", "icon": "fas fa-city"},
-        {"name": "Pune", "jobs": "20,000+", "icon": "fas fa-city"},
-        {"name": "Chennai", "jobs": "15,000+", "icon": "fas fa-city"},
-        {"name": "Noida", "jobs": "10,000+", "icon": "fas fa-city"},
-        {"name": "Vadodara", "jobs": "7,000+", "icon": "fas fa-city"},
-        {"name": "Ahmedabad", "jobs": "6,000+", "icon": "fas fa-city"},
-        {"name": "Remote", "jobs": "3,000+", "icon": "fas fa-globe-americas"},
-    ],
-    "salary_insights": [
-        {"role": "Machine Learning Engineer", "range": "10-35 LPA", "experience": "0-5 years"},
-        {"role": "Big Data Engineer", "range": "8-30 LPA", "experience": "0-5 years"},
-        {"role": "Software Engineer", "range": "5-25 LPA", "experience": "0-5 years"},
-        {"role": "Data Scientist", "range": "8-30 LPA", "experience": "0-5 years"},
-        {"role": "DevOps Engineer", "range": "6-28 LPA", "experience": "0-5 years"},
-        {"role": "UI/UX Designer", "range": "5-25 LPA", "experience": "0-5 years"},
-        {"role": "Full Stack Developer", "range": "8-30 LPA", "experience": "0-5 years"},
-        {"role": "C++/C#/Python/Java Developer", "range": "6-26 LPA", "experience": "0-5 years"},
-        {"role": "Django Developer", "range": "7-27 LPA", "experience": "0-5 years"},
-        {"role": "Cloud Engineer", "range": "6-26 LPA", "experience": "0-5 years"},
-        {"role": "Google Cloud/AWS/Azure Engineer", "range": "6-26 LPA", "experience": "0-5 years"},
-        {"role": "Salesforce Engineer", "range": "6-26 LPA", "experience": "0-5 years"},
-    ]
-}
-
-def get_featured_companies(category=None):
-    """Get featured companies with original logos, optionally filtered by category"""
-    def has_valid_logo(company):
-        return "logo_url" in company and company["logo_url"].startswith("https://upload.wikimedia.org/")
-
-    if category and category in FEATURED_COMPANIES:
-        return [company for company in FEATURED_COMPANIES[category] if has_valid_logo(company)]
-    
-    return [
-        company for companies in FEATURED_COMPANIES.values()
-        for company in companies if has_valid_logo(company)
-    ]
-
-
-def get_market_insights():
-    """Get job market insights"""
-    return JOB_MARKET_INSIGHTS
-
-def get_company_info(company_name):
-    """Get company information by name"""
-    for companies in FEATURED_COMPANIES.values():
-        for company in companies:
-            if company["name"] == company_name:
-                return company
-    return None
-
-def get_companies_by_industry(industry):
-    """Get list of companies by industry"""
-    companies = []
-    for companies_list in FEATURED_COMPANIES.values():
-        for company in companies_list:
-            if "industry" in company and company["industry"] == industry:
-                companies.append(company)
-    return companies
-
-# Gender-coded language
-gender_words = {
-    "masculine": [
-        "active", "aggressive", "ambitious", "analytical", "assertive", "autonomous", "boast", "bold",
-        "challenging", "competitive", "confident", "courageous", "decisive", "determined", "dominant", "driven",
-        "dynamic", "forceful", "independent", "individualistic", "intellectual", "lead", "leader", "objective",
-        "outspoken", "persistent", "principled", "proactive", "resilient", "self-reliant", "self-sufficient",
-        "strong", "superior", "tenacious","guru","tech guru","technical guru", "visionary", "manpower", "strongman", "command",
-        "assert", "headstrong", "rockstar", "superstar", "go-getter", "trailblazer", "results-driven",
-        "fast-paced", "driven", "determination", "competitive spirit"
-    ],
-    
-    "feminine": [
-        "affectionate", "agreeable", "attentive", "collaborative", "committed", "compassionate", "considerate",
-        "cooperative", "dependable", "dependent", "emotional", "empathetic", "enthusiastic", "friendly", "gentle",
-        "honest", "inclusive", "interpersonal", "kind", "loyal", "modest", "nurturing", "pleasant", "polite",
-        "sensitive", "supportive", "sympathetic", "tactful", "tender", "trustworthy", "understanding", "warm",
-        "yield", "adaptable", "communal", "helpful", "dedicated", "respectful", "nurture", "sociable",
-        "relationship-oriented", "team player", "dependable", "people-oriented", "empathetic listener",
-        "gentle communicator", "open-minded"
-    ]
-}
-# Sample job search function
-import uuid
-import urllib.parse
-
-def search_jobs(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
-    # Encode values for query
-    role_encoded = urllib.parse.quote_plus(job_role.strip())
-    loc_encoded = urllib.parse.quote_plus(location.strip())
-
-    # Create role/city slugs for path
-    role_path = job_role.strip().lower().replace(" ", "-")
-    city = location.strip().split(",")[0].strip().lower()
-    city_path = city.replace(" ", "-")
-    city_query = city.replace(" ", "%20") + "%20and%20india"
-
-    # Experience mappings
-    experience_range_map = {
-        "Internship": "0~0", "Entry Level": "1~1", "Associate": "2~3",
-        "Mid-Senior Level": "4~7", "Director": "8~15", "Executive": "16~20"
-    }
-    experience_exact_map = {
-        "Internship": "0", "Entry Level": "1", "Associate": "2",
-        "Mid-Senior Level": "4", "Director": "8", "Executive": "16"
-    }
-    linkedin_exp_map = {
-        "Internship": "1", "Entry Level": "2", "Associate": "3",
-        "Mid-Senior Level": "4", "Director": "5", "Executive": "6"
-    }
-    job_type_map = {
-        "Full-time": "F", "Part-time": "P", "Contract": "C",
-        "Temporary": "T", "Volunteer": "V", "Internship": "I"
-    }
-
-    # LinkedIn
-    linkedin_url = f"https://www.linkedin.com/jobs/search/?keywords={role_encoded}&location={loc_encoded}"
-    if experience_level in linkedin_exp_map:
-        linkedin_url += f"&f_E={linkedin_exp_map[experience_level]}"
-    if job_type in job_type_map:
-        linkedin_url += f"&f_JT={job_type_map[job_type]}"
-
-    # Experience values
-    if foundit_experience is not None:
-        experience_range = f"{foundit_experience}~{foundit_experience}"
-        experience_exact = str(foundit_experience)
-    else:
-        experience_range = experience_range_map.get(experience_level, "")
-        experience_exact = experience_exact_map.get(experience_level, "")
-
-    # ✅ Naukri (cleaned)
-    naukri_url = (
-        f"https://www.naukri.com/{role_path}-jobs-in-{city_path}-and-india"
-        f"?k={role_encoded}"
-        f"&l={city_query}"
-    )
-    if experience_exact:
-        naukri_url += f"&experience={experience_exact}"
-    naukri_url += "&nignbevent_src=jobsearchDeskGNB"
-
-    # ✅ FoundIt
-    search_id = uuid.uuid4()
-    child_search_id = uuid.uuid4()
-    foundit_url = (
-        f"https://www.foundit.in/search/{role_path}-jobs-in-{city_path}"
-        f"?query={role_encoded}"
-        f"&locations={loc_encoded}"
-        f"&experienceRanges={urllib.parse.quote_plus(experience_range)}"
-        f"&experience={experience_exact}"
-        f"&queryDerived=true"
-        f"&searchId={search_id}"
-        f"&child_search_id={child_search_id}"
-    )
-
-    return [
-        {"title": f"LinkedIn: {job_role} jobs in {location}", "link": linkedin_url},
-        {"title": f"Naukri: {job_role} jobs in {location}", "link": naukri_url},
-        {"title": f"FoundIt (Monster): {job_role} jobs in {location}", "link": foundit_url}
-    ]
-
-
-
-def add_hyperlink(paragraph, url, text, color="0000FF", underline=True):
-    """
-    A function to add a hyperlink to a paragraph.
-    """
-    part = paragraph.part
-    r_id = part.relate_to(url, RT.HYPERLINK, is_external=True)
-
-    hyperlink = OxmlElement('w:hyperlink')
-    hyperlink.set(qn('r:id'), r_id)
-
-    new_run = OxmlElement('w:r')
-    rPr = OxmlElement('w:rPr')
-
-    # Color and underline
-    if underline:
-        u = OxmlElement('w:u')
-        u.set(qn('w:val'), 'single')
-        rPr.append(u)
-
-    color_element = OxmlElement('w:color')
-    color_element.set(qn('w:val'), color)
-    rPr.append(color_element)
-
-    new_run.append(rPr)
-
-    text_elem = OxmlElement('w:t')
-    text_elem.text = text
-    new_run.append(text_elem)
-
-    hyperlink.append(new_run)
-    paragraph._p.append(hyperlink)
-    return hyperlink
 
 def generate_docx(text, filename="bias_free_resume.docx"):
     doc = Document()
@@ -4669,8 +4341,319 @@ with tab2:
 
 
 
+from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
 
-import streamlit as st
+
+
+
+
+FEATURED_COMPANIES = {
+    "tech": [
+        {
+            "name": "Google",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg",
+            "color": "#4285F4",
+            "careers_url": "https://careers.google.com",
+            "description": "Leading technology company known for search, cloud, and innovation",
+            "categories": ["Software", "AI/ML", "Cloud", "Data Science"]
+        },
+        {
+            "name": "Microsoft",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
+            "color": "#00A4EF",
+            "careers_url": "https://careers.microsoft.com",
+            "description": "Global leader in software, cloud, and enterprise solutions",
+            "categories": ["Software", "Cloud", "Gaming", "Enterprise"]
+        },
+        {
+            "name": "Amazon",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
+            "color": "#FF9900",
+            "careers_url": "https://www.amazon.jobs",
+            "description": "E-commerce and cloud computing giant",
+            "categories": ["Software", "Operations", "Cloud", "Retail"]
+        },
+        {
+            "name": "Apple",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
+            "color": "#555555",
+            "careers_url": "https://www.apple.com/careers",
+            "description": "Innovation leader in consumer technology",
+            "categories": ["Software", "Hardware", "Design", "AI/ML"]
+        },
+        {
+            "name": "Facebook",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/0/05/Facebook_Logo_%282019%29.png",
+            "color": "#1877F2",
+            "careers_url": "https://www.metacareers.com/",
+            "description": "Social media and technology company",
+            "categories": ["Software", "Marketing", "Networking", "AI/ML"]
+        },
+        {
+            "name": "Netflix",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg",
+            "color": "#E50914",
+            "careers_url": "https://explore.jobs.netflix.net/careers",
+            "description": "Streaming media company",
+            "categories": ["Software", "Marketing", "Design", "Service"],
+            "website": "https://jobs.netflix.com/",
+            "industry": "Entertainment & Technology"
+        }
+    ],
+    "indian_tech": [
+        {
+            "name": "TCS",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/f6/TCS_New_Logo.svg",
+            "color": "#0070C0",
+            "careers_url": "https://www.tcs.com/careers",
+            "description": "India's largest IT services company",
+            "categories": ["IT Services", "Consulting", "Digital"]
+        },
+        {
+            "name": "Infosys",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/5/55/Infosys_logo.svg",
+            "color": "#007CC3",
+            "careers_url": "https://www.infosys.com/careers",
+            "description": "Global leader in digital services and consulting",
+            "categories": ["IT Services", "Consulting", "Digital"]
+        },
+        {
+            "name": "Wipro",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/8/80/Wipro_Primary_Logo_Color_RGB.svg",
+            "color": "#341F65",
+            "careers_url": "https://careers.wipro.com",
+            "description": "Leading global information technology company",
+            "categories": ["IT Services", "Consulting", "Digital"]
+        },
+        {
+            "name": "HCL",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/5/5e/HCL_Technologies_logo.svg",
+            "color": "#0075C9",
+            "careers_url": "https://www.hcltech.com/careers",
+            "description": "Global technology company",
+            "categories": ["IT Services", "Engineering", "Digital"]
+        }
+    ],
+    "global_corps": [
+        {
+            "name": "IBM",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg",
+            "color": "#1F70C1",
+            "careers_url": "https://www.ibm.com/careers",
+            "description": "Global leader in technology and consulting",
+            "categories": ["Software", "Consulting", "AI/ML", "Cloud"],
+            "website": "https://www.ibm.com/careers/",
+            "industry": "Technology & Consulting"
+        },
+        {
+            "name": "Accenture",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/8/80/Accenture_Logo.svg",
+            "color": "#A100FF",
+            "careers_url": "https://www.accenture.com/careers",
+            "description": "Global professional services company",
+            "categories": ["Consulting", "Technology", "Digital"]
+        },
+        {
+            "name": "Cognizant",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/6/6e/Cognizant_logo_2022.svg",
+            "color": "#1299D8",
+            "careers_url": "https://careers.cognizant.com",
+            "description": "Leading professional services company",
+            "categories": ["IT Services", "Consulting", "Digital"]
+        }
+    ]
+}
+
+
+JOB_MARKET_INSIGHTS = {
+    "trending_skills": [
+        {"name": "Artificial Intelligence", "growth": "+45%", "icon": "fas fa-brain"},
+        {"name": "Cloud Computing", "growth": "+38%", "icon": "fas fa-cloud"},
+        {"name": "Data Science", "growth": "+35%", "icon": "fas fa-chart-line"},
+        {"name": "Cybersecurity", "growth": "+32%", "icon": "fas fa-shield-alt"},
+        {"name": "DevOps", "growth": "+30%", "icon": "fas fa-code-branch"},
+        {"name": "Machine Learning", "growth": "+28%", "icon": "fas fa-robot"},
+        {"name": "Blockchain", "growth": "+25%", "icon": "fas fa-lock"},
+        {"name": "Big Data", "growth": "+23%", "icon": "fas fa-database"},
+        {"name": "Internet of Things", "growth": "+21%", "icon": "fas fa-wifi"}
+    ],
+    "top_locations": [
+        {"name": "Bangalore", "jobs": "50,000+", "icon": "fas fa-city"},
+        {"name": "Mumbai", "jobs": "35,000+", "icon": "fas fa-city"},
+        {"name": "Delhi NCR", "jobs": "30,000+", "icon": "fas fa-city"},
+        {"name": "Hyderabad", "jobs": "25,000+", "icon": "fas fa-city"},
+        {"name": "Pune", "jobs": "20,000+", "icon": "fas fa-city"},
+        {"name": "Chennai", "jobs": "15,000+", "icon": "fas fa-city"},
+        {"name": "Noida", "jobs": "10,000+", "icon": "fas fa-city"},
+        {"name": "Vadodara", "jobs": "7,000+", "icon": "fas fa-city"},
+        {"name": "Ahmedabad", "jobs": "6,000+", "icon": "fas fa-city"},
+        {"name": "Remote", "jobs": "3,000+", "icon": "fas fa-globe-americas"},
+    ],
+    "salary_insights": [
+        {"role": "Machine Learning Engineer", "range": "10-35 LPA", "experience": "0-5 years"},
+        {"role": "Big Data Engineer", "range": "8-30 LPA", "experience": "0-5 years"},
+        {"role": "Software Engineer", "range": "5-25 LPA", "experience": "0-5 years"},
+        {"role": "Data Scientist", "range": "8-30 LPA", "experience": "0-5 years"},
+        {"role": "DevOps Engineer", "range": "6-28 LPA", "experience": "0-5 years"},
+        {"role": "UI/UX Designer", "range": "5-25 LPA", "experience": "0-5 years"},
+        {"role": "Full Stack Developer", "range": "8-30 LPA", "experience": "0-5 years"},
+        {"role": "C++/C#/Python/Java Developer", "range": "6-26 LPA", "experience": "0-5 years"},
+        {"role": "Django Developer", "range": "7-27 LPA", "experience": "0-5 years"},
+        {"role": "Cloud Engineer", "range": "6-26 LPA", "experience": "0-5 years"},
+        {"role": "Google Cloud/AWS/Azure Engineer", "range": "6-26 LPA", "experience": "0-5 years"},
+        {"role": "Salesforce Engineer", "range": "6-26 LPA", "experience": "0-5 years"},
+    ]
+}
+
+def get_featured_companies(category=None):
+    """Get featured companies with original logos, optionally filtered by category"""
+    def has_valid_logo(company):
+        return "logo_url" in company and company["logo_url"].startswith("https://upload.wikimedia.org/")
+
+    if category and category in FEATURED_COMPANIES:
+        return [company for company in FEATURED_COMPANIES[category] if has_valid_logo(company)]
+    
+    return [
+        company for companies in FEATURED_COMPANIES.values()
+        for company in companies if has_valid_logo(company)
+    ]
+
+
+def get_market_insights():
+    """Get job market insights"""
+    return JOB_MARKET_INSIGHTS
+
+def get_company_info(company_name):
+    """Get company information by name"""
+    for companies in FEATURED_COMPANIES.values():
+        for company in companies:
+            if company["name"] == company_name:
+                return company
+    return None
+
+def get_companies_by_industry(industry):
+    """Get list of companies by industry"""
+    companies = []
+    for companies_list in FEATURED_COMPANIES.values():
+        for company in companies_list:
+            if "industry" in company and company["industry"] == industry:
+                companies.append(company)
+    return companies
+
+# Gender-coded language
+
+# Sample job search function
+import uuid
+import urllib.parse
+
+def search_jobs(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
+    # Encode values for query
+    role_encoded = urllib.parse.quote_plus(job_role.strip())
+    loc_encoded = urllib.parse.quote_plus(location.strip())
+
+    # Create role/city slugs for path
+    role_path = job_role.strip().lower().replace(" ", "-")
+    city = location.strip().split(",")[0].strip().lower()
+    city_path = city.replace(" ", "-")
+    city_query = city.replace(" ", "%20") + "%20and%20india"
+
+    # Experience mappings
+    experience_range_map = {
+        "Internship": "0~0", "Entry Level": "1~1", "Associate": "2~3",
+        "Mid-Senior Level": "4~7", "Director": "8~15", "Executive": "16~20"
+    }
+    experience_exact_map = {
+        "Internship": "0", "Entry Level": "1", "Associate": "2",
+        "Mid-Senior Level": "4", "Director": "8", "Executive": "16"
+    }
+    linkedin_exp_map = {
+        "Internship": "1", "Entry Level": "2", "Associate": "3",
+        "Mid-Senior Level": "4", "Director": "5", "Executive": "6"
+    }
+    job_type_map = {
+        "Full-time": "F", "Part-time": "P", "Contract": "C",
+        "Temporary": "T", "Volunteer": "V", "Internship": "I"
+    }
+
+    # LinkedIn
+    linkedin_url = f"https://www.linkedin.com/jobs/search/?keywords={role_encoded}&location={loc_encoded}"
+    if experience_level in linkedin_exp_map:
+        linkedin_url += f"&f_E={linkedin_exp_map[experience_level]}"
+    if job_type in job_type_map:
+        linkedin_url += f"&f_JT={job_type_map[job_type]}"
+
+    # Experience values
+    if foundit_experience is not None:
+        experience_range = f"{foundit_experience}~{foundit_experience}"
+        experience_exact = str(foundit_experience)
+    else:
+        experience_range = experience_range_map.get(experience_level, "")
+        experience_exact = experience_exact_map.get(experience_level, "")
+
+    # ✅ Naukri (cleaned)
+    naukri_url = (
+        f"https://www.naukri.com/{role_path}-jobs-in-{city_path}-and-india"
+        f"?k={role_encoded}"
+        f"&l={city_query}"
+    )
+    if experience_exact:
+        naukri_url += f"&experience={experience_exact}"
+    naukri_url += "&nignbevent_src=jobsearchDeskGNB"
+
+    # ✅ FoundIt
+    search_id = uuid.uuid4()
+    child_search_id = uuid.uuid4()
+    foundit_url = (
+        f"https://www.foundit.in/search/{role_path}-jobs-in-{city_path}"
+        f"?query={role_encoded}"
+        f"&locations={loc_encoded}"
+        f"&experienceRanges={urllib.parse.quote_plus(experience_range)}"
+        f"&experience={experience_exact}"
+        f"&queryDerived=true"
+        f"&searchId={search_id}"
+        f"&child_search_id={child_search_id}"
+    )
+
+    return [
+        {"title": f"LinkedIn: {job_role} jobs in {location}", "link": linkedin_url},
+        {"title": f"Naukri: {job_role} jobs in {location}", "link": naukri_url},
+        {"title": f"FoundIt (Monster): {job_role} jobs in {location}", "link": foundit_url}
+    ]
+
+
+
+def add_hyperlink(paragraph, url, text, color="0000FF", underline=True):
+    """
+    A function to add a hyperlink to a paragraph.
+    """
+    part = paragraph.part
+    r_id = part.relate_to(url, RT.HYPERLINK, is_external=True)
+
+    hyperlink = OxmlElement('w:hyperlink')
+    hyperlink.set(qn('r:id'), r_id)
+
+    new_run = OxmlElement('w:r')
+    rPr = OxmlElement('w:rPr')
+
+    # Color and underline
+    if underline:
+        u = OxmlElement('w:u')
+        u.set(qn('w:val'), 'single')
+        rPr.append(u)
+
+    color_element = OxmlElement('w:color')
+    color_element.set(qn('w:val'), color)
+    rPr.append(color_element)
+
+    new_run.append(rPr)
+
+    text_elem = OxmlElement('w:t')
+    text_elem.text = text
+    new_run.append(text_elem)
+
+    hyperlink.append(new_run)
+    paragraph._p.append(hyperlink)
+    return hyperlink
 
 # Your existing tab3 code with enhanced CSS styling
 with tab3:

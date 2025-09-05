@@ -2875,7 +2875,33 @@ with tab2:
         if "edit_mode" not in st.session_state:
             st.session_state.edit_mode = "Add"
 
-        # Toggle Mode
+        # 🔘 Custom styled radio toggle
+        st.markdown("""
+            <style>
+            div[role="radiogroup"] > label {
+                background: rgba(10, 15, 30, 0.6);
+                border: 1px solid rgba(0, 200, 255, 0.6);
+                border-radius: 12px;
+                padding: 6px 14px;
+                margin: 4px;
+                color: #e6f7ff;
+                cursor: pointer;
+                transition: all 0.3s ease-in-out;
+                box-shadow: 0 0 8px rgba(0,200,255,0.3);
+            }
+            div[role="radiogroup"] > label:hover {
+                background: rgba(0, 200, 255, 0.15);
+                box-shadow: 0 0 12px rgba(0,200,255,0.6);
+            }
+            div[role="radiogroup"] > label[data-checked="true"] {
+                background: rgba(0, 200, 255, 0.25);
+                border: 1px solid rgba(0, 200, 255, 0.9);
+                box-shadow: 0 0 14px rgba(0,200,255,0.8);
+                font-weight: 600;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+
         mode = st.radio("Mode", ["Add", "Delete"], index=0, horizontal=True, key="mode_toggle")
         st.session_state.edit_mode = mode
         st.markdown("---")
@@ -2884,25 +2910,35 @@ with tab2:
         button_style = """
             <style>
             div.stButton > button {
-                background: rgba(255, 255, 255, 0.1);
-                border: 1px solid rgba(255, 255, 255, 0.4);
-                backdrop-filter: blur(12px);
-                color: #fff;
-                padding: 8px 18px;
-                border-radius: 12px;
+                background: rgba(10, 15, 30, 0.6);
+                border: 1px solid rgba(0, 200, 255, 0.6);
+                color: #e6f7ff;
+                border-radius: 14px;
+                padding: 10px 20px;
                 font-size: 15px;
                 font-weight: 500;
+                backdrop-filter: blur(12px);
+                box-shadow: 0 0 12px rgba(0, 200, 255, 0.3);
                 transition: all 0.3s ease-in-out;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             }
             div.stButton > button:hover {
-                background: rgba(77, 166, 255, 0.25);
-                box-shadow: 0 6px 18px rgba(77, 166, 255, 0.4);
+                background: rgba(0, 200, 255, 0.15);
+                box-shadow: 0 0 18px rgba(0, 200, 255, 0.6);
                 transform: translateY(-2px);
             }
             div.stButton > button:active {
                 transform: scale(0.95);
-                box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+                box-shadow: 0 0 8px rgba(0, 200, 255, 0.4);
+            }
+            /* Special Delete button style */
+            div.stButton > button[kind="secondary"] {
+                border: 1px solid rgba(255, 50, 50, 0.7);
+                color: #ff4d4d;
+                box-shadow: 0 0 12px rgba(255, 50, 50, 0.4);
+            }
+            div.stButton > button[kind="secondary"]:hover {
+                background: rgba(255, 50, 50, 0.15);
+                box-shadow: 0 0 18px rgba(255, 50, 50, 0.7);
             }
             </style>
         """

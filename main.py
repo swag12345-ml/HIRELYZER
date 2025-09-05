@@ -1916,8 +1916,8 @@ def create_chain(vectorstore):
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
+    st.sidebar.markdown("### 🏷️ Job Information")
 # ---------------- Sidebar Layout with Inline Images ----------------
-st.sidebar.markdown("### 🏷️ Job Information")
 
 job_title = st.sidebar.text_input(
     "![Job](https://img.icons8.com/ios-filled/20/briefcase.png) Job Title"
@@ -1943,50 +1943,10 @@ with st.sidebar.expander("![Settings](https://img.icons8.com/ios-filled/20/setti
     keyword_weight = st.slider("![Keyword](https://img.icons8.com/ios-filled/20/key.png) Keyword Match Weight", 0, 20, 10)
 
     total_weight = edu_weight + exp_weight + skills_weight + lang_weight + keyword_weight
-
-    # ---------------- Inline SVG Validation ----------------
     if total_weight != 100:
-        st.sidebar.markdown(
-            f"""
-            <div style="display:flex;align-items:center;gap:6px;
-                        border:1px solid #fca5a5;
-                        background:#fee2e2;
-                        padding:8px;
-                        border-radius:6px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="red" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10
-                             10-4.48 10-10S17.52 2 12 2zm0 15
-                             c-.83 0-1.5.67-1.5 1.5S11.17 20
-                             12 20s1.5-.67 1.5-1.5S12.83 17
-                             12 17zm1-4V7h-2v6h2z"/>
-                </svg>
-                <span style="color:#b91c1c;font-weight:500;">
-                    Total = {total_weight}. Please make it exactly 100.
-                </span>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        st.error(f"⚠️ Total = {total_weight}. Please make it exactly 100.")
     else:
-        st.sidebar.markdown(
-            f"""
-            <div style="display:flex;align-items:center;gap:6px;
-                        border:1px solid #86efac;
-                        background:#dcfce7;
-                        padding:8px;
-                        border-radius:6px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="green" viewBox="0 0 24 24">
-                    <path d="M9 16.2l-3.5-3.5-1.4 1.4L9
-                             19 20.3 7.7l-1.4-1.4z"/>
-                </svg>
-                <span style="color:#166534;font-weight:500;">
-                    Total weight = 100
-                </span>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
+        st.success("✅ Total weight = 100")
 
 with tab1:
     from streamlit_pdf_viewer import pdf_viewer

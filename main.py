@@ -2811,16 +2811,16 @@ with tab2:
     # ---------- Title ----------
     st.markdown("""
     <div style="
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.08);
         border-radius: 20px;
         padding: 20px;
-        backdrop-filter: blur(12px);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        backdrop-filter: blur(14px);
+        box-shadow: 0 8px 32px rgba(0, 200, 255, 0.25);
         text-align: center;">
-        <h2 style="color:#336699; margin:0;">🧾 Advanced Resume Builder</h2>
+        <h2 style="color:#4da6ff; margin:0;">🧾 Advanced Resume Builder</h2>
     </div>
     """, unsafe_allow_html=True)
-    st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
+    st.markdown("<hr style='border-top: 2px solid rgba(0,200,255,0.4);'>", unsafe_allow_html=True)
 
     # 📸 Upload profile photo with enhanced styling
     uploaded_image = st.file_uploader("Upload a Profile Image", type=["png", "jpg", "jpeg"], key="profile_img_upload")
@@ -2840,10 +2840,10 @@ with tab2:
                     border-radius: 50%;
                     object-fit: cover;
                     object-position: center;
-                    border: 4px solid rgba(255,255,255,0.6);
+                    border: 3px solid rgba(0,200,255,0.5);
                     box-shadow:
                         0 0 0 3px #4da6ff,
-                        0 8px 25px rgba(77, 166, 255, 0.3),
+                        0 8px 25px rgba(77, 166, 255, 0.4),
                         0 4px 15px rgba(0, 0, 0, 0.15);
                     transition: transform 0.3s ease-in-out;
                 "
@@ -2879,7 +2879,7 @@ with tab2:
         st.markdown("""
             <style>
             div[role="radiogroup"] > label {
-                background: rgba(10, 15, 30, 0.6);
+                background: rgba(10, 20, 40, 0.6);
                 border: 1px solid rgba(0, 200, 255, 0.6);
                 border-radius: 12px;
                 padding: 6px 14px;
@@ -2906,11 +2906,11 @@ with tab2:
         st.session_state.edit_mode = mode
         st.markdown("---")
 
-        # 💎 Custom Glassmorphism Button Style
-        button_style = """
+        # 💎 Custom Glassmorphism Button Style (all blue)
+        st.markdown("""
             <style>
             div.stButton > button {
-                background: rgba(10, 15, 30, 0.6);
+                background: rgba(10, 20, 40, 0.55);
                 border: 1px solid rgba(0, 200, 255, 0.6);
                 color: #e6f7ff;
                 border-radius: 14px;
@@ -2918,7 +2918,7 @@ with tab2:
                 font-size: 15px;
                 font-weight: 500;
                 backdrop-filter: blur(12px);
-                box-shadow: 0 0 12px rgba(0, 200, 255, 0.3);
+                box-shadow: 0 0 12px rgba(0, 200, 255, 0.35);
                 transition: all 0.3s ease-in-out;
             }
             div.stButton > button:hover {
@@ -2930,19 +2930,8 @@ with tab2:
                 transform: scale(0.95);
                 box-shadow: 0 0 8px rgba(0, 200, 255, 0.4);
             }
-            /* Special Delete button style */
-            div.stButton > button[kind="secondary"] {
-                border: 1px solid rgba(255, 50, 50, 0.7);
-                color: #ff4d4d;
-                box-shadow: 0 0 12px rgba(255, 50, 50, 0.4);
-            }
-            div.stButton > button[kind="secondary"]:hover {
-                background: rgba(255, 50, 50, 0.15);
-                box-shadow: 0 0 18px rgba(255, 50, 50, 0.7);
-            }
             </style>
-        """
-        st.markdown(button_style, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
         # 💼 Experience
         with st.expander("💼 Experience"):

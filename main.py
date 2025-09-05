@@ -1917,7 +1917,7 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 # ---------------- Sidebar Layout with Inline Images ----------------
-st.sidebar.markdown("### Job Information")
+st.sidebar.markdown("### 🏷️ Job Information")
 
 job_title = st.sidebar.text_input(
     "![Job](https://img.icons8.com/ios-filled/20/briefcase.png) Job Title"

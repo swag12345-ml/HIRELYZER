@@ -2354,10 +2354,11 @@ if uploaded_files and job_description:
         st.session_state.chain = create_chain(st.session_state.vectorstore)
 
 # 🔄 Developer Reset Button
-if st.button("🔄 Refresh view"):
-    st.session_state.processed_files.clear()
-    st.session_state.resume_data.clear()
-    st.success("✅ Cleared uploaded resume history. You can re-upload now.")
+with tab1:
+    if st.button("🔄 Refresh view"):
+        st.session_state.processed_files.clear()
+        st.session_state.resume_data.clear()
+        st.success("✅ Cleared uploaded resume history. You can re-upload now.")
 
 
 

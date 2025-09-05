@@ -2801,14 +2801,7 @@ with tab2:
     st.session_state.setdefault("project_links", [])
     st.session_state.setdefault("certificate_links", [{"name": "", "link": "", "duration": "", "description": ""}])
 
-    # ---------------- Sidebar (only inside Tab 2) ----------------
-    show_sidebar = """
-        <style>
-            [data-testid="stSidebar"] {display: block;}
-        </style>
-    """
-    st.markdown(show_sidebar, unsafe_allow_html=True)
-
+    # ---------------- Sidebar (ONLY in Tab 2) ----------------
     with st.sidebar:
         st.markdown("### ✨ Manage Sections")
 
@@ -2851,15 +2844,6 @@ with tab2:
             elif mode == "Delete" and len(st.session_state.certificate_links) > 1:
                 st.session_state.certificate_links.pop()
 
-# ---------------- Hide Sidebar when not in Tab 2 ----------------
-if st.session_state.get("active_tab") != "Resume Builder":
-    hide_sidebar = """
-        <style>
-            [data-testid="stSidebar"] {display: none;}
-            [data-testid="stSidebarNav"] {display: none;}
-        </style>
-    """
-    st.markdown(hide_sidebar, unsafe_allow_html=True)
 
     # ---------------- Resume Form ----------------
     with st.form("resume_form", clear_on_submit=False):

@@ -5749,7 +5749,7 @@ with tab5:
 
     db_manager = get_db_manager()
 
-    # -------- Glassmorphism Styles with Hover/Click Shimmer --------
+    # -------- Glassmorphism Styles with Shimmer --------
     st.markdown("""
     <style>
     .glass-box {
@@ -5763,7 +5763,6 @@ with tab5:
         overflow: hidden;
         text-align: center;
         margin-bottom: 2rem;
-        cursor: pointer;
     }
     .glass-box::before {
         content: "";
@@ -5779,18 +5778,12 @@ with tab5:
             transparent 60%
         );
         transform: rotate(25deg);
-        opacity: 0;
-    }
-    /* Trigger shimmer only on hover or click */
-    .glass-box:hover::before,
-    .glass-box:active::before {
-        animation: shimmer 1.8s forwards;
-        opacity: 1;
+        animation: shimmer 6s infinite;
     }
     @keyframes shimmer {
-        0% { top: -50%; left: -50%; opacity: 1; }
-        50% { top: 100%; left: 100%; opacity: 1; }
-        100% { top: -50%; left: -50%; opacity: 0; }
+        0% { top: -50%; left: -50%; }
+        50% { top: 100%; left: 100%; }
+        100% { top: -50%; left: -50%; }
     }
     .glass-box h1, .glass-box h2 {
         color: #4da6ff;
@@ -6451,3 +6444,4 @@ with tab5:
     </div>
     """.format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
 
+        <p>Last updated: {}</p>

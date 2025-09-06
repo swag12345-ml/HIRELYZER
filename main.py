@@ -788,16 +788,9 @@ with tab1:
     }
 
     /* ---------- SCROLLBAR ---------- */
-    ::-webkit-scrollbar {
-        width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-        background: #1f2833;
-    }
-    ::-webkit-scrollbar-thumb {
-        background: #00ffff;
-        border-radius: 4px;
-    }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #1f2833; }
+    ::-webkit-scrollbar-thumb { background: #00ffff; border-radius: 4px; }
 
     /* ---------- BANNER ---------- */
     .banner-container {
@@ -837,17 +830,8 @@ with tab1:
         animation: pulse 1s ease-in-out infinite;
     }
 
-    @keyframes glideIn {
-        0% { left: -50%; opacity: 0; }
-        10% { opacity: 1; }
-        90% { opacity: 1; }
-        100% { left: 110%; opacity: 0; }
-    }
-
-    @keyframes pulse {
-        0%, 100% { height: 20px; background-color: #00ffff; }
-        50% { height: 40px; background-color: #ff00ff; }
-    }
+    @keyframes glideIn { 0% { left: -50%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { left: 110%; opacity: 0; } }
+    @keyframes pulse { 0%,100% { height: 20px; background-color: #00ffff; } 50% { height: 40px; background-color: #ff00ff; } }
 
     /* ---------- HEADER ---------- */
     .header {
@@ -874,19 +858,11 @@ with tab1:
         left: -50%;
         width: 200%;
         height: 200%;
-        background: linear-gradient(
-            120deg,
-            rgba(255,255,255,0.18) 0%,
-            rgba(255,255,255,0.05) 40%,
-            transparent 60%
-        );
+        background: linear-gradient(120deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.05) 40%, transparent 60%);
         transform: rotate(25deg);
         animation: shineLoop 3s linear infinite;
     }
-    @keyframes shineLoop {
-        0% { transform: rotate(25deg) translateX(-100%); }
-        100% { transform: rotate(25deg) translateX(100%); }
-    }
+    @keyframes shineLoop { 0% { transform: rotate(25deg) translateX(-100%); } 100% { transform: rotate(25deg) translateX(100%); } }
 
     /* ---------- FILE UPLOADER ---------- */
     .stFileUploader > div > div {
@@ -898,9 +874,7 @@ with tab1:
         backdrop-filter: blur(14px);
         transition: box-shadow 0.3s ease-in-out;
     }
-    .stFileUploader > div > div:hover {
-        box-shadow: 0 0 25px rgba(0,255,255,0.8);
-    }
+    .stFileUploader > div > div:hover { box-shadow: 0 0 25px rgba(0,255,255,0.8); }
 
     /* ---------- BUTTONS ---------- */
     .stButton > button {
@@ -925,29 +899,18 @@ with tab1:
         left: -50%;
         width: 200%;
         height: 200%;
-        background: linear-gradient(
-            120deg,
-            rgba(255,255,255,0.15) 0%,
-            rgba(255,255,255,0.05) 40%,
-            transparent 60%
-        );
+        background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%);
         transform: rotate(25deg);
         transition: all 0.6s;
     }
-    .stButton > button:hover::before {
-        left: 100%;
-        top: 100%;
-    }
+    .stButton > button:hover::before { left: 100%; top: 100%; }
     .stButton > button:hover {
         background: rgba(0, 200, 255, 0.12);
         box-shadow: 0 0 20px rgba(0, 200, 255, 0.65),
                     inset 0 0 25px rgba(0, 200, 255, 0.15);
         transform: translateY(-2px);
     }
-    .stButton > button:active {
-        transform: scale(0.95);
-        box-shadow: 0 0 10px rgba(0, 200, 255, 0.45);
-    }
+    .stButton > button:active { transform: scale(0.95); box-shadow: 0 0 10px rgba(0, 200, 255,0.45); }
 
     /* ---------- CHAT MESSAGES ---------- */
     .stChatMessage {
@@ -985,7 +948,6 @@ with tab1:
         backdrop-filter: blur(14px);
     }
 
-    /* ---------- MOBILE ---------- */
     @media (max-width: 768px) {
         .pulse-bar { font-size: 16px; }
         .header { font-size: 20px; }
@@ -1005,6 +967,7 @@ with tab1:
     """,
     unsafe_allow_html=True
 )
+
 
 
 

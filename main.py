@@ -2826,7 +2826,7 @@ with tab2:
 
     st.markdown("<hr style='border-top: 2px solid rgba(0,200,255,0.4);'>", unsafe_allow_html=True)
 
-    # ---------- Global Styles ----------
+    # ---------- Global Styles (Glassmorphism + Glow + Shine) ----------
     st.markdown("""
         <style>
         /* File uploader */
@@ -2837,12 +2837,20 @@ with tab2:
             color: #cce6ff !important;
             box-shadow: 0 0 12px rgba(0,200,255,0.3) !important;
         }
+
         /* Sidebar expander style */
         .streamlit-expanderHeader {
-            background: rgba(10, 20, 40, 0.55);
+            background: rgba(10, 20, 40, 0.45);
             border-radius: 12px;
             color: #4da6ff !important;
             font-weight: bold;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 12px rgba(0,200,255,0.25);
+            transition: all 0.3s ease-in-out;
+        }
+        .streamlit-expanderHeader:hover {
+            background: rgba(0, 200, 255, 0.12);
+            box-shadow: 0 0 16px rgba(0,200,255,0.4);
         }
         .streamlit-expanderContent {
             background: rgba(10, 20, 40, 0.45);
@@ -2850,35 +2858,62 @@ with tab2:
             padding: 8px;
             color: #e6f7ff;
         }
+
         /* Selectbox */
         div[data-baseweb="select"] {
-            background: rgba(10, 20, 40, 0.6);
+            background: rgba(10, 20, 40, 0.35);
             border: 1px solid rgba(0, 200, 255, 0.6);
             border-radius: 12px;
             color: #e6f7ff;
-            box-shadow: 0 0 8px rgba(0,200,255,0.3);
+            backdrop-filter: blur(14px);
+            box-shadow: 0 0 10px rgba(0,200,255,0.3);
         }
-        /* Buttons */
+
+        /* Buttons with Shine Effect */
         div.stButton > button {
-            background: rgba(10, 20, 40, 0.55);
+            position: relative;
+            background: rgba(10, 20, 40, 0.35);
             border: 1px solid rgba(0, 200, 255, 0.6);
             color: #e6f7ff;
             border-radius: 14px;
             padding: 10px 20px;
             font-size: 15px;
             font-weight: 500;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 0 12px rgba(0, 200, 255, 0.35);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 0 12px rgba(0, 200, 255, 0.35),
+                        inset 0 0 20px rgba(0, 200, 255, 0.05);
+            overflow: hidden;
             transition: all 0.3s ease-in-out;
         }
+        div.stButton > button::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                120deg,
+                rgba(255,255,255,0.15) 0%,
+                rgba(255,255,255,0.05) 40%,
+                transparent 60%
+            );
+            transform: rotate(25deg);
+            transition: all 0.6s;
+        }
+        div.stButton > button:hover::before {
+            left: 100%;
+            top: 100%;
+        }
         div.stButton > button:hover {
-            background: rgba(0, 200, 255, 0.15);
-            box-shadow: 0 0 18px rgba(0, 200, 255, 0.6);
+            background: rgba(0, 200, 255, 0.12);
+            box-shadow: 0 0 20px rgba(0, 200, 255, 0.65),
+                        inset 0 0 25px rgba(0, 200, 255, 0.15);
             transform: translateY(-2px);
         }
         div.stButton > button:active {
             transform: scale(0.95);
-            box-shadow: 0 0 8px rgba(0, 200, 255, 0.4);
+            box-shadow: 0 0 10px rgba(0, 200, 255, 0.45);
         }
         </style>
     """, unsafe_allow_html=True)
@@ -2979,7 +3014,6 @@ with tab2:
                     )
                 elif mode == "Delete" and len(st.session_state.certificate_links) > 1:
                     st.session_state.certificate_links.pop()
-
 
 
 

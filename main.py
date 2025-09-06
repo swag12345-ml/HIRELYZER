@@ -2805,7 +2805,7 @@ with tab1:
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
 
 # ---------------- Sidebar (ONLY in Tab 2) ----------------
-tab2:
+with tab2:
     st.session_state.active_tab = "Resume Builder"
 
     # ---------- Title with Blue Glassmorphism ----------

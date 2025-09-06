@@ -5766,14 +5766,20 @@ with tab5:
         st.markdown("""
         <style>
         .auth-card {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.08);
             backdrop-filter: blur(15px);
             border-radius: 18px;
             padding: 2rem;
             margin-bottom: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 0 15px rgba(102, 126, 234, 0.4),
-                        inset 0 0 25px rgba(255,255,255,0.05);
+            border: 1px solid rgba(0, 170, 255, 0.4);
+
+            /* 🌌 Blue vibe aura */
+            box-shadow: 
+                0 0 20px rgba(0, 170, 255, 0.6),
+                0 0 50px rgba(0, 170, 255, 0.4),
+                0 0 100px rgba(0, 170, 255, 0.2),
+                inset 0 0 20px rgba(0, 170, 255, 0.15);
+
             text-align: center;
             position: relative;
             overflow: hidden;
@@ -5796,37 +5802,43 @@ with tab5:
             transform: rotate(25deg);
             transition: all 0.7s ease-in-out;
         }
-
         .auth-card:hover::before {
             left: 100%;
             top: 100%;
         }
 
         .auth-title {
-            color: white;
+            color: #cceeff;
             font-size: 1.8rem;
             margin-bottom: 0.5rem;
+            text-shadow: 0 0 10px #00aaff, 0 0 20px #00aaff;
         }
         .auth-subtitle {
-            color: #f0f0f0;
+            color: #e0f7ff;
             font-size: 1rem;
         }
 
-        /* Glassy button with shimmer */
+        /* Glassy neon button */
         .glass-btn {
-            background: rgba(255,255,255,0.1);
+            background: rgba(0, 30, 60, 0.4);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
+            border: 1px solid rgba(0, 170, 255, 0.4);
             border-radius: 12px;
             padding: 0.75rem 1.5rem;
             font-size: 1rem;
-            color: #fff;
+            color: #99e6ff;
             cursor: pointer;
             position: relative;
             overflow: hidden;
             width: 100%;
             text-align: center;
             transition: all 0.3s ease-in-out;
+
+            /* 🌌 Blue aura */
+            box-shadow: 
+                0 0 15px rgba(0, 200, 255, 0.6),
+                0 0 40px rgba(0, 200, 255, 0.4),
+                inset 0 0 15px rgba(0, 200, 255, 0.3);
         }
         .glass-btn::after {
             content: "";
@@ -5849,7 +5861,11 @@ with tab5:
             top: 100%;
         }
         .glass-btn:hover {
-            box-shadow: 0 0 20px rgba(102,126,234,0.6);
+            color: #ccf6ff;
+            box-shadow: 
+                0 0 25px rgba(0, 200, 255, 1),
+                0 0 60px rgba(0, 200, 255, 0.8),
+                inset 0 0 20px rgba(0, 200, 255, 0.4);
         }
         </style>
 

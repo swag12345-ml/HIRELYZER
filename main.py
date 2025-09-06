@@ -795,6 +795,7 @@ with tab1:
     .banner-container {
         width: 100%;
         height: 80px;
+        min-height: 80px; /* prevents shrinking */
         background: linear-gradient(90deg, #000428, #004e92);
         border-bottom: 2px solid cyan;
         overflow: hidden;
@@ -816,6 +817,9 @@ with tab1:
         white-space: nowrap;
         animation: glideIn 12s linear infinite;
         text-shadow: 0 0 10px #00ffff;
+        padding: 0 20px;   /* spacing for text */
+        height: 100%;      /* align to banner height */
+        box-sizing: border-box;
     }
     .pulse-bar .bar {
         width: 10px;
@@ -994,7 +998,8 @@ with tab1:
 
     <!-- Header -->
     <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
-    """, unsafe_allow_html=True) 
+    """, unsafe_allow_html=True)
+
 
 
 

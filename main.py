@@ -836,7 +836,7 @@ with tab1:
         50% { height: 40px; background-color: #ff00ff; }
     }
 
-    /* ---------- HEADER ---------- */
+    /* ---------- HEADER (KEEP ORIGINAL EFFECT) ---------- */
     .header {
         font-size: 28px;
         font-weight: bold;
@@ -872,6 +872,25 @@ with tab1:
     }
     .header:hover::before { left: 100%; top: 100%; }
 
+    /* ---------- SHIMMER EFFECT (COMMON STYLE) ---------- */
+    .shimmer::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+            120deg,
+            rgba(255,255,255,0.15) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%
+        );
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
+    .shimmer:hover::before { left: 100%; top: 100%; }
+
     /* ---------- FILE UPLOADER ---------- */
     .stFileUploader > div > div {
         border: 1px solid rgba(0,200,255,0.5);
@@ -882,24 +901,14 @@ with tab1:
         box-shadow: 0 0 12px rgba(0,200,255,0.3);
         position: relative;
         overflow: hidden;
-        transition: all 0.3s ease-in-out;
     }
-    .stFileUploader > div > div::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%);
-        transform: rotate(25deg);
-        transition: all 0.6s;
-    }
+    .stFileUploader > div > div::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%); transform: rotate(25deg); transition: all 0.6s; }
     .stFileUploader > div > div:hover::before { left: 100%; top: 100%; }
 
     /* ---------- BUTTONS ---------- */
     .stButton > button {
         position: relative;
+        overflow: hidden;
         background: rgba(10,20,40,0.35);
         border: 1px solid rgba(0,200,255,0.6);
         color: #e6f7ff;
@@ -911,36 +920,16 @@ with tab1:
         backdrop-filter: blur(16px);
         box-shadow: 0 0 12px rgba(0,200,255,0.35),
                     inset 0 0 20px rgba(0,200,255,0.05);
-        overflow: hidden;
         transition: all 0.3s ease-in-out;
     }
-    .stButton > button::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%);
-        transform: rotate(25deg);
-        transition: all 0.6s;
-    }
+    .stButton > button::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%); transform: rotate(25deg); transition: all 0.6s; }
     .stButton > button:hover::before { left: 100%; top: 100%; }
-    .stButton > button:hover {
-        background: rgba(0,200,255,0.12);
-        box-shadow: 0 0 20px rgba(0,200,255,0.65),
-                    inset 0 0 25px rgba(0,200,255,0.15);
-        transform: translateY(-2px);
-    }
-    .stButton > button:active {
-        transform: scale(0.95);
-        box-shadow: 0 0 25px rgba(0,200,255,0.75),
-                    inset 0 0 25px rgba(0,200,255,0.2);
-    }
 
     /* ---------- INPUTS ---------- */
     .stTextInput > div > input,
     .stTextArea > div > textarea {
+        position: relative;
+        overflow: hidden;
         background: rgba(10,20,40,0.35);
         border: 1px solid rgba(0,200,255,0.6);
         border-radius: 14px;
@@ -949,27 +938,17 @@ with tab1:
         backdrop-filter: blur(16px);
         box-shadow: 0 0 12px rgba(0,200,255,0.3),
                     inset 0 0 15px rgba(0,200,255,0.05);
-        position: relative;
-        overflow: hidden;
         transition: all 0.3s ease-in-out;
     }
     .stTextInput > div > input::before,
-    .stTextArea > div > textarea::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%);
-        transform: rotate(25deg);
-        transition: all 0.6s;
-    }
+    .stTextArea > div > textarea::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%); transform: rotate(25deg); transition: all 0.6s; }
     .stTextInput > div > input:focus::before,
     .stTextArea > div > textarea:focus::before { left: 100%; top: 100%; }
 
     /* ---------- CHAT MESSAGES ---------- */
     .stChatMessage {
+        position: relative;
+        overflow: hidden;
         font-size: 18px;
         background: rgba(10,20,40,0.35);
         border: 1px solid rgba(0,200,255,0.5);
@@ -979,24 +958,14 @@ with tab1:
         text-shadow: 0 0 6px rgba(0,200,255,0.7);
         box-shadow: 0 0 12px rgba(0,200,255,0.3),
                     inset 0 0 15px rgba(0,200,255,0.05);
-        position: relative;
-        overflow: hidden;
     }
-    .stChatMessage::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%);
-        transform: rotate(25deg);
-        transition: all 0.6s;
-    }
+    .stChatMessage::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%); transform: rotate(25deg); transition: all 0.6s; }
     .stChatMessage:hover::before { left: 100%; top: 100%; }
 
     /* ---------- METRICS ---------- */
     .stMetric {
+        position: relative;
+        overflow: hidden;
         background-color: rgba(10,20,40,0.35);
         border: 1px solid rgba(0,200,255,0.6);
         border-radius: 14px;
@@ -1005,6 +974,8 @@ with tab1:
                     inset 0 0 20px rgba(0,200,255,0.05);
         text-align: center;
     }
+    .stMetric::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%); transform: rotate(25deg); transition: all 0.6s; }
+    .stMetric:hover::before { left: 100%; top: 100%; }
 
     /* ---------- MOBILE ---------- */
     @media (max-width: 768px) {
@@ -1023,9 +994,7 @@ with tab1:
 
     <!-- Header -->
     <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
-    """,
-    unsafe_allow_html=True)
-
+    """, unsafe_allow_html=True)
 
 
 

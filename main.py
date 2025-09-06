@@ -2425,7 +2425,7 @@ if uploaded_files and job_description:
         st.markdown(SUCCESS_HTML, unsafe_allow_html=True)
 
         # ⏳ Short pause, then auto rerun
-        time.sleep(4)
+        time.sleep(6)
         st.rerun()
 
 

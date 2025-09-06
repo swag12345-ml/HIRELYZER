@@ -795,20 +795,19 @@ with tab1:
     .banner-container {
         width: 100%;
         height: 80px;
-        min-height: 80px; /* prevents shrinking */
         background: linear-gradient(90deg, #000428, #004e92);
         border-bottom: 2px solid cyan;
-        overflow: hidden;
         display: flex;
-        align-items: center;
-        justify-content: flex-start;
+        align-items: center;  /* center vertically */
         position: relative;
         margin-bottom: 20px;
         border-radius: 12px;
         backdrop-filter: blur(14px);
+        padding: 10px 0;   /* space top & bottom */
+        box-sizing: border-box;
+        overflow: hidden;
     }
     .pulse-bar {
-        position: absolute;
         display: flex;
         align-items: center;
         font-size: 22px;
@@ -817,9 +816,7 @@ with tab1:
         white-space: nowrap;
         animation: glideIn 12s linear infinite;
         text-shadow: 0 0 10px #00ffff;
-        padding: 0 20px;   /* spacing for text */
-        height: 100%;      /* align to banner height */
-        box-sizing: border-box;
+        padding-left: 20px;   /* left spacing */
     }
     .pulse-bar .bar {
         width: 10px;
@@ -830,10 +827,10 @@ with tab1:
         animation: pulse 1s ease-in-out infinite;
     }
     @keyframes glideIn {
-        0% { left: -50%; opacity: 0; }
+        0% { transform: translateX(-50%); opacity: 0; }
         10% { opacity: 1; }
         90% { opacity: 1; }
-        100% { left: 110%; opacity: 0; }
+        100% { transform: translateX(110%); opacity: 0; }
     }
     @keyframes pulse {
         0%, 100% { height: 20px; background-color: #00ffff; }
@@ -906,7 +903,17 @@ with tab1:
         position: relative;
         overflow: hidden;
     }
-    .stFileUploader > div > div::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%); transform: rotate(25deg); transition: all 0.6s; }
+    .stFileUploader > div > div::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%);
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
     .stFileUploader > div > div:hover::before { left: 100%; top: 100%; }
 
     /* ---------- BUTTONS ---------- */
@@ -926,7 +933,17 @@ with tab1:
                     inset 0 0 20px rgba(0,200,255,0.05);
         transition: all 0.3s ease-in-out;
     }
-    .stButton > button::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%); transform: rotate(25deg); transition: all 0.6s; }
+    .stButton > button::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%);
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
     .stButton > button:hover::before { left: 100%; top: 100%; }
 
     /* ---------- INPUTS ---------- */
@@ -944,10 +961,6 @@ with tab1:
                     inset 0 0 15px rgba(0,200,255,0.05);
         transition: all 0.3s ease-in-out;
     }
-    .stTextInput > div > input::before,
-    .stTextArea > div > textarea::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%); transform: rotate(25deg); transition: all 0.6s; }
-    .stTextInput > div > input:focus::before,
-    .stTextArea > div > textarea:focus::before { left: 100%; top: 100%; }
 
     /* ---------- CHAT MESSAGES ---------- */
     .stChatMessage {
@@ -963,8 +976,6 @@ with tab1:
         box-shadow: 0 0 12px rgba(0,200,255,0.3),
                     inset 0 0 15px rgba(0,200,255,0.05);
     }
-    .stChatMessage::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%); transform: rotate(25deg); transition: all 0.6s; }
-    .stChatMessage:hover::before { left: 100%; top: 100%; }
 
     /* ---------- METRICS ---------- */
     .stMetric {
@@ -978,8 +989,6 @@ with tab1:
                     inset 0 0 20px rgba(0,200,255,0.05);
         text-align: center;
     }
-    .stMetric::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%); transform: rotate(25deg); transition: all 0.6s; }
-    .stMetric:hover::before { left: 100%; top: 100%; }
 
     /* ---------- MOBILE ---------- */
     @media (max-width: 768px) {
@@ -999,7 +1008,6 @@ with tab1:
     <!-- Header -->
     <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
     """, unsafe_allow_html=True)
-
 
 
 

@@ -5752,6 +5752,54 @@ with tab5:
 
     db_manager = get_db_manager()
 
+    def create_enhanced_pie_chart(df, values_col, labels_col, title):
+        """Create an enhanced pie chart with better styling"""
+        fig = px.pie(
+            df, 
+            values=values_col, 
+            names=labels_col,
+            title=title,
+            color_discrete_sequence=px.colors.qualitative.Set3
+        )
+        fig.update_traces(
+            textposition='inside', 
+            textinfo='percent+label',
+            hovertemplate='<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>'
+        )
+        fig.update_layout(
+            showlegend=True,
+            legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.01),
+            margin=dict(t=50, b=50, l=50, r=150)
+        )
+        return fig
+
+    def create_enhanced_bar_chart(df, x_col, y_col, title, orientation='v'):
+        """Create enhanced bar chart with better interactivity"""
+        if orientation == 'v':
+            fig = px.bar(df, x=x_col, y=y_col, title=title, 
+                        color=y_col, color_continuous_scale='viridis')
+            fig.update_xaxes(tickangle=45)
+        else:
+            fig = px.bar(df, x=y_col, y=x_col, title=title, orientation='h',
+                        color=y_col, color_continuous_scale='viridis')
+        
+        fig.update_traces(
+            hovertemplate='<b>%{y if orientation == "v" else x}</b><br>Value: %{x if orientation == "v" else y}<extra></extra>'
+        )
+        fig.update_layout(showlegend=False, margin=dict(t=50, b=50, l=50, r=50))
+        return fig
+
+    def load_domain_distribution():
+        """Enhanced domain distribution loading with error handling"""
+        try:
+            df = get_domain_distribution()
+            if not df.empty:
+                df = df.sort_values(by="count", ascending=False).reset_index(drop=True)
+                return df
+        except Exception as e:
+            st.error(f"Error loading domain distribution: {e}")
+        return pd.DataFrame()
+
     # -------- Glassmorphism Styles with Shimmer --------
     st.markdown("""
     <style>

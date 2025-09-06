@@ -1593,23 +1593,25 @@ def ats_percentage_score(
     # Helper: Determine education status
     # ------------------------------
     def determine_education_status(edu_text):
-        current_year = datetime.datetime.now().year
-        current_month = datetime.datetime.now().month
+        current_year = datetime.datetime.now().year  # 2025 now
 
         # Check for year-only ranges like 2021-2024
         match = re.search(r'(\d{4})\s*[-–]\s*(\d{4})', edu_text)
         if match:
-            start_year, end_year = int(match.group(1)), int(match.group(2))
+            _, end_year = int(match.group(1)), int(match.group(2))
             if end_year < current_year:
                 return "Completed"
-            elif end_year == current_year:
-                return "Completed" if current_month > 6 else "Ongoing"
-            else:
+            else:  # end_year >= current_year
                 return "Ongoing"
 
         # Explicit text indicators override year logic
-        ongoing_keywords = ["now", "present", "current", "till date", "pursuing", "currently enrolled", "in progress"]
-        completed_keywords = ["graduated", "completed", "finished", "degree awarded"]
+        ongoing_keywords = [
+            "now", "present", "current", "till date",
+            "pursuing", "currently enrolled", "in progress", "ongoing"
+        ]
+        completed_keywords = [
+            "graduated", "completed", "finished", "degree awarded"
+        ]
 
         text_lower = edu_text.lower()
         if any(k in text_lower for k in ongoing_keywords):
@@ -1617,7 +1619,7 @@ def ats_percentage_score(
         if any(k in text_lower for k in completed_keywords):
             return "Completed"
 
-        # Fallback
+        # Fallback → assume completed if no clear indicator
         return "Completed"
 
     # ------------------------------
@@ -1652,7 +1654,6 @@ def ats_percentage_score(
     # ------------------------------
     # Education scoring logic
     # ------------------------------
-    # Example: extract education entries (you may replace this with your actual parser)
     education_entries = re.findall(r'.{10,1000}', resume_text)  # crude split; replace with actual extraction
     edu_scores = []
     for edu in education_entries:
@@ -1669,7 +1670,6 @@ def ats_percentage_score(
     # Build refined ATS prompt
     # ------------------------------
     current_year = datetime.datetime.now().year
-    current_month = datetime.datetime.now().month
     prompt = f"""
 You are a professional ATS evaluator specializing in **technical roles** (AI/ML, Blockchain, Cloud, Data, Software, Cybersecurity). 
 Your role is to provide **balanced, objective scoring** that reflects industry standards and recognizes candidate potential while maintaining professional standards.
@@ -1685,18 +1685,14 @@ Your role is to provide **balanced, objective scoring** that reflects industry s
 - 3-5: Basic (unrelated degree but evidence of self-learning)
 - 0-2: Insufficient (no relevant education)
 
-⏳ **CRITICAL DATE PARSING RULES:**
-- Year-only ranges (e.g., "2021-2024"):
-  - End year < {current_year} → Completed
-  - End year == {current_year} AND past June → Completed
-  - End year == {current_year} AND before June → Ongoing
-  - End year > {current_year} → Ongoing
+⏳ **STRICT DATE RULES ({current_year} aware):**
+- End year < {current_year} → Completed
+- End year ≥ {current_year} → Ongoing
 
 **EXPLICIT STATUS INDICATORS (override year logic):**
 - Words like "Now", "Present", "Current", "Till Date", "Ongoing" → Ongoing
 - Words like "pursuing", "currently enrolled", "in progress" → Ongoing
 - Words like "Graduated", "Completed", "Finished" → Completed
-- Override rule: end year < {current_year} always = Completed
 
 **SCORING IMPACT:**
 - Completed relevant education: full scoring potential

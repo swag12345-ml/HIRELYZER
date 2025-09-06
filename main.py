@@ -2844,10 +2844,10 @@ with tab2:
                     border-radius: 50%;
                     object-fit: cover;
                     object-position: center;
-                    border: 3px solid rgba(0,200,255,0.5);
+                    border: 4px solid rgba(255,255,255,0.6);
                     box-shadow:
                         0 0 0 3px #4da6ff,
-                        0 8px 25px rgba(77, 166, 255, 0.4),
+                        0 8px 25px rgba(77, 166, 255, 0.3),
                         0 4px 15px rgba(0, 0, 0, 0.15);
                     transition: transform 0.3s ease-in-out;
                 "

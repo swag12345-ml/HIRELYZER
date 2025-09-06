@@ -2805,7 +2805,7 @@ with tab1:
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
 
 # ---------------- Sidebar (ONLY in Tab 2) ----------------
-with tab2:
+tab2:
     st.session_state.active_tab = "Resume Builder"
 
     # ---------- Title with Blue Glassmorphism ----------
@@ -2826,7 +2826,64 @@ with tab2:
 
     st.markdown("<hr style='border-top: 2px solid rgba(0,200,255,0.4);'>", unsafe_allow_html=True)
 
-    # 📸 Upload profile photo with enhanced styling
+    # ---------- Global Styles ----------
+    st.markdown("""
+        <style>
+        /* File uploader */
+        .uploadedFile { 
+            background: rgba(10, 20, 40, 0.6) !important;
+            border: 1px solid rgba(0,200,255,0.5) !important;
+            border-radius: 14px !important;
+            color: #cce6ff !important;
+            box-shadow: 0 0 12px rgba(0,200,255,0.3) !important;
+        }
+        /* Sidebar expander style */
+        .streamlit-expanderHeader {
+            background: rgba(10, 20, 40, 0.55);
+            border-radius: 12px;
+            color: #4da6ff !important;
+            font-weight: bold;
+        }
+        .streamlit-expanderContent {
+            background: rgba(10, 20, 40, 0.45);
+            border-radius: 10px;
+            padding: 8px;
+            color: #e6f7ff;
+        }
+        /* Selectbox */
+        div[data-baseweb="select"] {
+            background: rgba(10, 20, 40, 0.6);
+            border: 1px solid rgba(0, 200, 255, 0.6);
+            border-radius: 12px;
+            color: #e6f7ff;
+            box-shadow: 0 0 8px rgba(0,200,255,0.3);
+        }
+        /* Buttons */
+        div.stButton > button {
+            background: rgba(10, 20, 40, 0.55);
+            border: 1px solid rgba(0, 200, 255, 0.6);
+            color: #e6f7ff;
+            border-radius: 14px;
+            padding: 10px 20px;
+            font-size: 15px;
+            font-weight: 500;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 0 12px rgba(0, 200, 255, 0.35);
+            transition: all 0.3s ease-in-out;
+        }
+        div.stButton > button:hover {
+            background: rgba(0, 200, 255, 0.15);
+            box-shadow: 0 0 18px rgba(0, 200, 255, 0.6);
+            transform: translateY(-2px);
+        }
+        div.stButton > button:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 8px rgba(0, 200, 255, 0.4);
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # 📸 Upload profile photo
     uploaded_image = st.file_uploader("Upload a Profile Image", type=["png", "jpg", "jpeg"], key="profile_img_upload")
     profile_img_html = ""
 
@@ -2879,49 +2936,9 @@ with tab2:
         if "edit_mode" not in st.session_state:
             st.session_state.edit_mode = "Add"
 
-        # 🔽 Mode as Dropdown (compact instead of radio)
-        st.markdown("""
-            <style>
-            div[data-baseweb="select"] {
-                background: rgba(10, 20, 40, 0.6);
-                border: 1px solid rgba(0, 200, 255, 0.6);
-                border-radius: 12px;
-                color: #e6f7ff;
-                box-shadow: 0 0 8px rgba(0,200,255,0.3);
-            }
-            </style>
-        """, unsafe_allow_html=True)
-
         mode = st.selectbox("Mode", ["Add", "Delete"], index=0, key="mode_dropdown")
         st.session_state.edit_mode = mode
         st.markdown("---")
-
-        # 💎 Custom Glassmorphism Button Style
-        st.markdown("""
-            <style>
-            div.stButton > button {
-                background: rgba(10, 20, 40, 0.55);
-                border: 1px solid rgba(0, 200, 255, 0.6);
-                color: #e6f7ff;
-                border-radius: 14px;
-                padding: 10px 20px;
-                font-size: 15px;
-                font-weight: 500;
-                backdrop-filter: blur(12px);
-                box-shadow: 0 0 12px rgba(0, 200, 255, 0.35);
-                transition: all 0.3s ease-in-out;
-            }
-            div.stButton > button:hover {
-                background: rgba(0, 200, 255, 0.15);
-                box-shadow: 0 0 18px rgba(0, 200, 255, 0.6);
-                transform: translateY(-2px);
-            }
-            div.stButton > button:active {
-                transform: scale(0.95);
-                box-shadow: 0 0 8px rgba(0, 200, 255, 0.4);
-            }
-            </style>
-        """, unsafe_allow_html=True)
 
         # 💼 Experience
         with st.expander("💼 Experience"):

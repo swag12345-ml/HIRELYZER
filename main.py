@@ -5734,7 +5734,6 @@ with tab5:
         filter_candidates_by_date,
         delete_candidate_by_id,
         get_all_candidates,
-        create_enhanced_pie_chart,
         get_candidate_by_id,
         get_domain_performance_stats,
         get_daily_ats_stats,

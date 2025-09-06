@@ -872,6 +872,19 @@ with tab1:
     }
     .header:hover::before { left: 100%; top: 100%; }
 
+    /* brand row inside header */
+    .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .brand svg {
+        width: 28px;
+        height: 28px;
+        filter: drop-shadow(0 0 8px rgba(0,200,255,0.6));
+        flex-shrink: 0;
+    }
+
     /* ---------- SHIMMER EFFECT (COMMON STYLE) ---------- */
     .shimmer::before {
         content: "";
@@ -981,6 +994,7 @@ with tab1:
     @media (max-width: 768px) {
         .pulse-bar { font-size: 16px; }
         .header { font-size: 20px; }
+        .brand svg { width: 22px; height: 22px; }
     }
     </style>
 
@@ -992,9 +1006,54 @@ with tab1:
         </div>
     </div>
 
-    <!-- Header -->
-    <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
-    """, unsafe_allow_html=True) 
+    <!-- Header with inline SVG (replaces emoji) -->
+    <div class="header">
+      <span class="brand">
+        <!-- briefcase + chip inline SVG -->
+        <svg viewBox="0 0 64 64" role="img" aria-label="Hirelyzer logo">
+          <defs>
+            <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#00ffff" />
+              <stop offset="100%" stop-color="#ff00ff" />
+            </linearGradient>
+          </defs>
+          <!-- briefcase body -->
+          <rect x="6" y="18" width="52" height="34" rx="6" ry="6"
+                fill="rgba(0,20,40,0.65)" stroke="url(#g)" stroke-width="2"/>
+          <!-- handle -->
+          <path d="M24 18 v-4 a4 4 0 0 1 4-4 h8 a4 4 0 0 1 4 4 v4"
+                fill="none" stroke="url(#g)" stroke-width="2"/>
+          <!-- latch -->
+          <rect x="30" y="32" width="4" height="6" rx="1" fill="url(#g)"/>
+          <!-- chip inside briefcase -->
+          <rect x="22" y="26" width="20" height="16" rx="2" fill="rgba(0,255,255,0.08)" stroke="url(#g)" stroke-width="1.5"/>
+          <!-- chip pins -->
+          <g stroke="url(#g)" stroke-width="1.5">
+            <line x1="24" y1="24" x2="24" y2="26"/>
+            <line x1="28" y1="24" x2="28" y2="26"/>
+            <line x1="32" y1="24" x2="32" y2="26"/>
+            <line x1="36" y1="24" x2="36" y2="26"/>
+            <line x1="40" y1="24" x2="40" y2="26"/>
+
+            <line x1="24" y1="42" x2="24" y2="44"/>
+            <line x1="28" y1="42" x2="28" y2="44"/>
+            <line x1="32" y1="42" x2="32" y2="44"/>
+            <line x1="36" y1="42" x2="36" y2="44"/>
+            <line x1="40" y1="42" x2="40" y2="44"/>
+
+            <line x1="20" y1="30" x2="22" y2="30"/>
+            <line x1="20" y1="34" x2="22" y2="34"/>
+            <line x1="20" y1="38" x2="22" y2="38"/>
+
+            <line x1="42" y1="30" x2="44" y2="30"/>
+            <line x1="42" y1="34" x2="44" y2="34"/>
+            <line x1="42" y1="38" x2="44" y2="38"/>
+          </g>
+        </svg>
+        HIRELYZER - ETHICAL RESUME ANALYZER
+      </span>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 

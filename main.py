@@ -5800,71 +5800,40 @@ with tab5:
         font-size: 0.95rem;
     }
 
-    /* 🔹 Glassmorphism effect for input fields */
+    /* Glassy input fields */
     .stTextInput > div > div > input {
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        border-radius: 12px;
-        padding: 12px;
-        color: #ffffff;
-        font-size: 16px;
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(0, 200, 255, 0.3) !important;
+        border-radius: 12px !important;
+        padding: 10px !important;
+        color: #e6f7ff !important;
+        font-weight: 500 !important;
+        backdrop-filter: blur(10px) !important;
     }
     .stTextInput > div > div > input:focus {
-        border: 1px solid #00f7ff;
-        box-shadow: 0 0 12px #00f7ff, 0 0 24px rgba(0, 247, 255, 0.5);
-        outline: none;
+        border: 1px solid rgba(0, 200, 255, 0.8) !important;
+        box-shadow: 0 0 12px rgba(0, 200, 255, 0.6) !important;
+        outline: none !important;
+    }
+
+    /* Glassy button */
+    .stButton > button {
+        background: rgba(0, 200, 255, 0.15);
+        border: 1px solid rgba(0, 200, 255, 0.4);
+        border-radius: 12px;
+        color: #e6f7ff;
+        padding: 0.6rem 1.2rem;
+        font-weight: bold;
+        backdrop-filter: blur(8px);
+        transition: all 0.3s ease;
+    }
+    .stButton > button:hover {
+        background: rgba(0, 200, 255, 0.3);
+        box-shadow: 0 0 16px rgba(0, 200, 255, 0.7);
+        transform: translateY(-2px);
     }
     </style>
     """, unsafe_allow_html=True)
-
-    def create_enhanced_pie_chart(df, values_col, labels_col, title):
-        fig = px.pie(
-            df, 
-            values=values_col, 
-            names=labels_col,
-            title=title,
-            color_discrete_sequence=px.colors.qualitative.Set3
-        )
-        fig.update_traces(
-            textposition='inside', 
-            textinfo='percent+label',
-            hovertemplate='<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>'
-        )
-        fig.update_layout(
-            showlegend=True,
-            legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.01),
-            margin=dict(t=50, b=50, l=50, r=150)
-        )
-        return fig
-
-    def create_enhanced_bar_chart(df, x_col, y_col, title, orientation='v'):
-        if orientation == 'v':
-            fig = px.bar(df, x=x_col, y=y_col, title=title, 
-                        color=y_col, color_continuous_scale='viridis')
-            fig.update_xaxes(tickangle=45)
-        else:
-            fig = px.bar(df, x=y_col, y=x_col, title=title, orientation='h',
-                        color=y_col, color_continuous_scale='viridis')
-        
-        fig.update_traces(
-            hovertemplate='<b>%{y if orientation == "v" else x}</b><br>Value: %{x if orientation == "v" else y}<extra></extra>'
-        )
-        fig.update_layout(showlegend=False, margin=dict(t=50, b=50, l=50, r=50))
-        return fig
-
-    def load_domain_distribution():
-        try:
-            df = get_domain_distribution()
-            if not df.empty:
-                df = df.sort_values(by="count", ascending=False).reset_index(drop=True)
-                return df
-        except Exception as e:
-            st.error(f"Error loading domain distribution: {e}")
-        return pd.DataFrame()
 
     # ---------------- Enhanced Authentication System ----------------
     if "admin_logged_in" not in st.session_state:
@@ -5911,7 +5880,7 @@ with tab5:
                         </style>
                     """, unsafe_allow_html=True)
                     time.sleep(3)
-                    msg_placeholder.empty()  # remove after 3 seconds
+                    msg_placeholder.empty()
 
         st.stop()
 
@@ -5922,8 +5891,6 @@ with tab5:
         <p>Advanced Resume Analysis System Dashboard</p>
     </div>
     """, unsafe_allow_html=True)
-
-
 
 
 

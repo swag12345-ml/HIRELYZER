@@ -5710,6 +5710,7 @@ with tab4:
                 with cols[idx % 2]:
                     st.markdown(f"**{title}**")
                     st.video(url)
+# tab5:
 with tab5:
     import sqlite3
     import pandas as pd
@@ -5720,6 +5721,7 @@ with tab5:
     import plotly.express as px
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
+    import time
 
     # Import enhanced database manager functions
     from db_manager import (
@@ -5800,7 +5802,6 @@ with tab5:
     """, unsafe_allow_html=True)
 
     def create_enhanced_pie_chart(df, values_col, labels_col, title):
-        """Create an enhanced pie chart with better styling"""
         fig = px.pie(
             df, 
             values=values_col, 
@@ -5821,7 +5822,6 @@ with tab5:
         return fig
 
     def create_enhanced_bar_chart(df, x_col, y_col, title, orientation='v'):
-        """Create enhanced bar chart with better interactivity"""
         if orientation == 'v':
             fig = px.bar(df, x=x_col, y=y_col, title=title, 
                         color=y_col, color_continuous_scale='viridis')
@@ -5837,7 +5837,6 @@ with tab5:
         return fig
 
     def load_domain_distribution():
-        """Enhanced domain distribution loading with error handling"""
         try:
             df = get_domain_distribution()
             if not df.empty:
@@ -5847,7 +5846,7 @@ with tab5:
             st.error(f"Error loading domain distribution: {e}")
         return pd.DataFrame()
 
-    # Enhanced Authentication System
+    # ---------------- Enhanced Authentication System ----------------
     if "admin_logged_in" not in st.session_state:
         st.session_state.admin_logged_in = False
 
@@ -5855,23 +5854,48 @@ with tab5:
         st.markdown("""
         <div class="glass-box">
             <h2>🔐 Admin Authentication Required</h2>
-            <p>Please enter your credentials to access the admin dashboard</p>
+            <p>Please enter your email and password to access the admin dashboard</p>
         </div>
         """, unsafe_allow_html=True)
         
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
+            email = st.text_input("📧 Enter Admin Email", placeholder="Enter email...")
             password = st.text_input("🔑 Enter Admin Password", type="password", placeholder="Enter password...")
-            if st.button("🚀 Login", use_container_width=True):
-                if password == "Swagato@2002":
+            login_clicked = st.button("🚀 Login", use_container_width=True)
+
+            if login_clicked:
+                valid_email = "admin@example.com"
+                valid_password = "Swagato@2002"
+
+                if email == valid_email and password == valid_password:
                     st.session_state.admin_logged_in = True
                     st.success("✅ Authentication successful! Redirecting to dashboard...")
                     st.rerun()
                 else:
-                    st.error("❌ Invalid credentials. Please try again.")
+                    msg_placeholder = st.empty()
+                    msg_placeholder.markdown("""
+                        <div style='
+                            background-color: #ff4d4d;
+                            color: white;
+                            padding: 10px 15px;
+                            border-radius: 10px;
+                            text-align: center;
+                            animation: slideDown 0.5s ease-in-out;
+                        '>❌ Invalid credentials. Please try again.</div>
+                        <style>
+                        @keyframes slideDown {
+                            0% {transform: translateY(-50px); opacity: 0;}
+                            100% {transform: translateY(0); opacity: 1;}
+                        }
+                        </style>
+                    """, unsafe_allow_html=True)
+                    time.sleep(3)
+                    msg_placeholder.empty()  # remove after 3 seconds
+
         st.stop()
 
-    # Enhanced Header with Database Stats
+    # ---------------- Enhanced Header with Database Stats ----------------
     st.markdown("""
     <div class="glass-box">
         <h1>🛡️ Enhanced Admin Database Panel</h1>

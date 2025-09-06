@@ -5777,16 +5777,108 @@ with tab5:
 
     if not st.session_state.admin_logged_in:
         st.markdown("""
-        <div style='text-align: center; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; margin-bottom: 2rem;'>
-            <h2 style='color: white; margin-bottom: 1rem;'>🔐 Admin Authentication Required</h2>
-            <p style='color: #f0f0f0;'>Please enter your credentials to access the admin dashboard</p>
+        <style>
+        .auth-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 18px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.4),
+                        inset 0 0 25px rgba(255,255,255,0.05);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Shimmer effect */
+        .auth-card::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                120deg,
+                rgba(255, 255, 255, 0.25) 0%,
+                rgba(255, 255, 255, 0.05) 40%,
+                transparent 60%
+            );
+            transform: rotate(25deg);
+            transition: all 0.7s ease-in-out;
+        }
+
+        .auth-card:hover::before {
+            left: 100%;
+            top: 100%;
+        }
+
+        .auth-title {
+            color: white;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+        .auth-subtitle {
+            color: #f0f0f0;
+            font-size: 1rem;
+        }
+
+        /* Glassy button with shimmer */
+        .glass-btn {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            color: #fff;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            text-align: center;
+            transition: all 0.3s ease-in-out;
+        }
+        .glass-btn::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                120deg,
+                rgba(255,255,255,0.3) 0%,
+                rgba(255,255,255,0.05) 40%,
+                transparent 60%
+            );
+            transform: rotate(25deg);
+            transition: all 0.7s ease-in-out;
+        }
+        .glass-btn:hover::after {
+            left: 100%;
+            top: 100%;
+        }
+        .glass-btn:hover {
+            box-shadow: 0 0 20px rgba(102,126,234,0.6);
+        }
+        </style>
+
+        <div class="auth-card">
+            <h2 class="auth-title">🔐 Admin Authentication Required</h2>
+            <p class="auth-subtitle">Please enter your credentials to access the admin dashboard</p>
         </div>
         """, unsafe_allow_html=True)
         
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             password = st.text_input("🔑 Enter Admin Password", type="password", placeholder="Enter password...")
-            if st.button("🚀 Login", use_container_width=True):
+            login_html = """
+            <button class="glass-btn">🚀 Login</button>
+            """
+            if st.markdown(login_html, unsafe_allow_html=True):
                 if password == "Swagato@2002":
                     st.session_state.admin_logged_in = True
                     st.success("✅ Authentication successful! Redirecting to dashboard...")
@@ -5794,6 +5886,7 @@ with tab5:
                 else:
                     st.error("❌ Invalid credentials. Please try again.")
         st.stop()
+
 
     # Enhanced Header with Database Stats
     st.markdown("""
@@ -6365,3 +6458,4 @@ with tab5:
         <p>Last updated: {}</p>
     </div>
     """.format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
+

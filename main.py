@@ -1587,89 +1587,33 @@ def ats_percentage_score(
     keyword_weight=10
 ):
     import datetime
-    import re
 
-    # ------------------------------
-    # Helper: Determine education status
-    # ------------------------------
-    def determine_education_status(edu_text):
-        current_year = datetime.datetime.now().year  # 2025 now
-
-        # Check for year-only ranges like 2021-2024
-        match = re.search(r'(\d{4})\s*[-–]\s*(\d{4})', edu_text)
-        if match:
-            _, end_year = int(match.group(1)), int(match.group(2))
-            if end_year < current_year:
-                return "Completed"
-            else:  # end_year >= current_year
-                return "Ongoing"
-
-        # Explicit text indicators override year logic
-        ongoing_keywords = [
-            "now", "present", "current", "till date",
-            "pursuing", "currently enrolled", "in progress", "ongoing"
-        ]
-        completed_keywords = [
-            "graduated", "completed", "finished", "degree awarded"
-        ]
-
-        text_lower = edu_text.lower()
-        if any(k in text_lower for k in ongoing_keywords):
-            return "Ongoing"
-        if any(k in text_lower for k in completed_keywords):
-            return "Completed"
-
-        # Fallback → assume completed if no clear indicator
-        return "Completed"
-
-    # ------------------------------
-    # Grammar evaluation
-    # ------------------------------
+    # ✅ Grammar evaluation
     grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(
         resume_text, max_score=lang_weight
     )
 
-    # ------------------------------
-    # Domain similarity detection
-    # ------------------------------
+    # ✅ Domain similarity detection
     resume_domain = detect_domain_from_title_and_description("Unknown", resume_text)
     job_domain = detect_domain_from_title_and_description(job_title, job_description)
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
-    # ------------------------------
-    # Balanced domain penalty
-    # ------------------------------
+    # ✅ Balanced domain penalty
     MAX_DOMAIN_PENALTY = 15
     domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
 
-    # ------------------------------
-    # Optional logic-based profile note
-    # ------------------------------
+    # ✅ Optional profile score note
     logic_score_note = (
         f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 "
         f"based on resume length, experience, and skills."
         if logic_profile_score else ""
     )
 
-    # ------------------------------
-    # Education scoring logic
-    # ------------------------------
-    education_entries = re.findall(r'.{10,1000}', resume_text)  # crude split; replace with actual extraction
-    edu_scores = []
-    for edu in education_entries:
-        status = determine_education_status(edu)
-        if status == "Completed":
-            score = edu_weight  # full points
-        else:  # Ongoing
-            score = max(12, int(edu_weight * 0.8))  # strong minimum
-        edu_scores.append(score)
-
-    final_edu_score = max(edu_scores) if edu_scores else 0
-
-    # ------------------------------
-    # Build refined ATS prompt
-    # ------------------------------
+    # ✅ FIXED: Improved date parsing logic for year-only ranges
     current_year = datetime.datetime.now().year
+    current_month = datetime.datetime.now().month
+    
+    # ✅ Refined education scoring prompt (STANDARDIZED)
     prompt = f"""
 You are a professional ATS evaluator specializing in **technical roles** (AI/ML, Blockchain, Cloud, Data, Software, Cybersecurity). 
 Your role is to provide **balanced, objective scoring** that reflects industry standards and recognizes candidate potential while maintaining professional standards.
@@ -1677,29 +1621,34 @@ Your role is to provide **balanced, objective scoring** that reflects industry s
 🎯 **BALANCED SCORING GUIDELINES - Tech-Focused (AI/ML/Blockchain/Software/Data):**
 
 **Education Scoring Framework ({edu_weight} points max):**
-- 18-{edu_weight}: Outstanding (completed OR ongoing highly relevant degree + strong certifications/projects)
-- 15-17: Excellent (completed OR ongoing technical degree + solid certifications/bootcamps/hackathons)
-- 12-14: Very Good (related degree OR strong online certifications/projects)
-- 9-11: Good (somewhat related education; currently pursuing counts positively)
-- 6-8: Fair (different degree but clear transition via MOOCs/projects/certs)
-- 3-5: Basic (unrelated degree but evidence of self-learning)
-- 0-2: Insufficient (no relevant education)
+- 18-{edu_weight}: Outstanding (completed OR ongoing highly relevant degree in CS/AI/ML/Data Science/Stats/Engineering/Blockchain + strong certifications/projects; institution quality only boosts, never penalizes)
+- 15-17: Excellent (completed OR ongoing technical degree in a related domain [IT, Software, ECE, Math, Physics] + solid certifications/bootcamps/hackathons; recency aligned with tech role)
+- 12-14: Very Good (related technical/quantitative degree OR strong online certifications/projects in AI/ML/Blockchain/Data/Cloud; GitHub repos add credit)
+- 9-11: Good (somewhat related education with transferable knowledge; currently pursuing counts positively)
+- 6-8: Fair (different degree but clear transition via MOOCs, projects, hackathons, or certs)
+- 3-5: Basic (unrelated degree but evidence of self-learning and interest in tech)
+- 0-2: Insufficient (no relevant education, no certifications, no evidence of learning)
 
-⏳ **STRICT DATE RULES ({current_year} aware):**
-- End year < {current_year} → Completed
-- End year ≥ {current_year} → Ongoing
+⏳ **FIXED: Recency & Pursuing Rules (STRICT – STANDARDIZED, NO INTERPRETATION):**
+
+**CRITICAL DATE PARSING RULES:**
+- **Year-only ranges (e.g., "2021-2024", "2020-2023"):**
+  - If end year < {current_year} → **ALWAYS Completed** (e.g., "2020-2023" = Completed)
+  - If end year == {current_year} AND we're past June → **LIKELY Completed** (e.g., "2021-2024" in late 2024 = Completed)
+  - If end year == {current_year} AND we're before June → **Could be Ongoing** (check for other indicators)
+  - If end year > {current_year} → **Ongoing** (e.g., "2023-2025" = Ongoing)
 
 **EXPLICIT STATUS INDICATORS (override year logic):**
-- Words like "Now", "Present", "Current", "Till Date", "Ongoing" → Ongoing
-- Words like "pursuing", "currently enrolled", "in progress" → Ongoing
-- Words like "Graduated", "Completed", "Finished" → Completed
+- Words like "Now", "Present", "Current", "Till Date", "Ongoing" → **Ongoing**
+- Words like "pursuing", "currently enrolled", "in progress" → **Ongoing**  
+- Words like "Graduated", "Completed", "Finished" → **Completed**
+- **OVERRIDE RULE**: If end year < {current_year}, treat as **Completed** regardless of text
 
 **SCORING IMPACT:**
-- Completed relevant education: full scoring potential
-- Ongoing relevant education: strong scoring (minimum 12 points)
-- Recent completion: recency bonus
-- Older completion: no penalty if skills are current
-
+- **Completed relevant education**: Full scoring potential (up to max points)
+- **Ongoing relevant education**: Still gets strong scoring (minimum 12 points for technical fields)
+- **Recent completion** (within 2 years): Gets recency bonus
+- **Older completion**: No penalty if skills are current
 
 **Experience Scoring Framework ({exp_weight} points max):**
 - 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
@@ -6555,5 +6504,7 @@ with tab5:
         <p>Last updated: {}</p>
     </div>
     """.format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
+
+     
 
      

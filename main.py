@@ -836,23 +836,23 @@ with tab1:
         50% { height: 40px; background-color: #ff00ff; }
     }
 
-    /* ---------- HEADER (KEEP ORIGINAL EFFECT) ---------- */
+    /* ---------- HEADER (RESIZED TO FIT) ---------- */
     .header {
-        font-size: 28px;
-        font-weight: bold;
+        font-size: 22px;
+        font-weight: 600;
         text-align: center;
         text-transform: uppercase;
-        letter-spacing: 2px;
-        padding: 12px 0;
+        letter-spacing: 1.5px;
+        padding: 10px 0;
         color: #00ffff;
-        text-shadow: 0px 0px 10px #00ffff;
+        text-shadow: 0px 0px 6px #00ffff;
         position: relative;
         overflow: hidden;
         border-radius: 14px;
         background: rgba(10,20,40,0.35);
         backdrop-filter: blur(14px);
         border: 1px solid rgba(0,200,255,0.5);
-        box-shadow: 0 0 12px rgba(0,200,255,0.25);
+        box-shadow: 0 0 10px rgba(0,200,255,0.25);
     }
     .header::before {
         content: "";
@@ -980,7 +980,7 @@ with tab1:
     /* ---------- MOBILE ---------- */
     @media (max-width: 768px) {
         .pulse-bar { font-size: 16px; }
-        .header { font-size: 20px; }
+        .header { font-size: 18px; letter-spacing: 1px; }
     }
     </style>
 
@@ -995,7 +995,6 @@ with tab1:
     <!-- Header -->
     <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
     """, unsafe_allow_html=True)
-
 
 
 

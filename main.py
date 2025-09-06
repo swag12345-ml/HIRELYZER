@@ -843,7 +843,7 @@ with tab1:
         text-align: center;
         text-transform: uppercase;
         letter-spacing: 2px;
-        padding: 12px 0;
+        padding: 20px 30px;  /* ✅ More spacing inside the bar */
         color: #00ffff;
         text-shadow: 0px 0px 10px #00ffff;
         position: relative;
@@ -1031,6 +1031,8 @@ with tab1:
     <!-- Header -->
     <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
     """, unsafe_allow_html=True)
+
+
 
 
 

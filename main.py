@@ -836,7 +836,7 @@ with tab1:
         50% { height: 40px; background-color: #ff00ff; }
     }
 
-    /* ---------- HEADER (KEEP ORIGINAL EFFECT) ---------- */
+    /* ---------- HEADER ---------- */
     .header {
         font-size: 28px;
         font-weight: bold;
@@ -872,7 +872,7 @@ with tab1:
     }
     .header:hover::before { left: 100%; top: 100%; }
 
-    /* ---------- SHIMMER EFFECT (COMMON STYLE) ---------- */
+    /* ---------- SHIMMER (COMMON) ---------- */
     .shimmer::before {
         content: "";
         position: absolute;
@@ -902,7 +902,17 @@ with tab1:
         position: relative;
         overflow: hidden;
     }
-    .stFileUploader > div > div::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%); transform: rotate(25deg); transition: all 0.6s; }
+    .stFileUploader > div > div::before {
+        content: "";
+        position: absolute; top: -50%; left: -50%;
+        width: 200%; height: 200%;
+        background: linear-gradient(120deg,
+            rgba(255,255,255,0.15) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%);
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
     .stFileUploader > div > div:hover::before { left: 100%; top: 100%; }
 
     /* ---------- BUTTONS ---------- */
@@ -922,7 +932,17 @@ with tab1:
                     inset 0 0 20px rgba(0,200,255,0.05);
         transition: all 0.3s ease-in-out;
     }
-    .stButton > button::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%); transform: rotate(25deg); transition: all 0.6s; }
+    .stButton > button::before {
+        content: "";
+        position: absolute; top: -50%; left: -50%;
+        width: 200%; height: 200%;
+        background: linear-gradient(120deg,
+            rgba(255,255,255,0.15) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%);
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
     .stButton > button:hover::before { left: 100%; top: 100%; }
 
     /* ---------- INPUTS ---------- */
@@ -940,10 +960,6 @@ with tab1:
                     inset 0 0 15px rgba(0,200,255,0.05);
         transition: all 0.3s ease-in-out;
     }
-    .stTextInput > div > input::before,
-    .stTextArea > div > textarea::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%); transform: rotate(25deg); transition: all 0.6s; }
-    .stTextInput > div > input:focus::before,
-    .stTextArea > div > textarea:focus::before { left: 100%; top: 100%; }
 
     /* ---------- CHAT MESSAGES ---------- */
     .stChatMessage {
@@ -959,7 +975,17 @@ with tab1:
         box-shadow: 0 0 12px rgba(0,200,255,0.3),
                     inset 0 0 15px rgba(0,200,255,0.05);
     }
-    .stChatMessage::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%); transform: rotate(25deg); transition: all 0.6s; }
+    .stChatMessage::before {
+        content: "";
+        position: absolute; top: -50%; left: -50%;
+        width: 200%; height: 200%;
+        background: linear-gradient(120deg,
+            rgba(255,255,255,0.15) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%);
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
     .stChatMessage:hover::before { left: 100%; top: 100%; }
 
     /* ---------- METRICS ---------- */
@@ -974,7 +1000,17 @@ with tab1:
                     inset 0 0 20px rgba(0,200,255,0.05);
         text-align: center;
     }
-    .stMetric::before { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%); transform: rotate(25deg); transition: all 0.6s; }
+    .stMetric::before {
+        content: "";
+        position: absolute; top: -50%; left: -50%;
+        width: 200%; height: 200%;
+        background: linear-gradient(120deg,
+            rgba(255,255,255,0.15) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%);
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
     .stMetric:hover::before { left: 100%; top: 100%; }
 
     /* ---------- MOBILE ---------- */
@@ -994,7 +1030,8 @@ with tab1:
 
     <!-- Header -->
     <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
-    """, unsafe_allow_html=True) 
+    """, unsafe_allow_html=True)
+
 
 
 

@@ -775,8 +775,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📚 Course Recommendation", "📁 Admin DB View"
 ])
 with tab1:
-    st.markdown(
-    """
+    st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 
@@ -788,16 +787,9 @@ with tab1:
     }
 
     /* ---------- SCROLLBAR ---------- */
-    ::-webkit-scrollbar {
-        width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-        background: #1f2833;
-    }
-    ::-webkit-scrollbar-thumb {
-        background: #00ffff;
-        border-radius: 4px;
-    }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #1f2833; }
+    ::-webkit-scrollbar-thumb { background: #00ffff; border-radius: 4px; }
 
     /* ---------- BANNER ---------- */
     .banner-container {
@@ -811,6 +803,8 @@ with tab1:
         justify-content: flex-start;
         position: relative;
         margin-bottom: 20px;
+        border-radius: 12px;
+        backdrop-filter: blur(14px);
     }
     .pulse-bar {
         position: absolute;
@@ -850,15 +844,35 @@ with tab1:
         text-transform: uppercase;
         letter-spacing: 2px;
         padding: 12px 0;
-        animation: glowPulse 3s ease-in-out infinite;
+        color: #00ffff;
         text-shadow: 0px 0px 10px #00ffff;
+        position: relative;
+        overflow: hidden;
+        border-radius: 14px;
+        background: rgba(10,20,40,0.35);
+        backdrop-filter: blur(14px);
+        border: 1px solid rgba(0,200,255,0.5);
+        box-shadow: 0 0 12px rgba(0,200,255,0.25);
     }
-    @keyframes glowPulse {
-        0%, 100% { color: #00ffff; text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff; }
-        50% { color: #ff00ff; text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff; }
+    .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+            120deg,
+            rgba(255,255,255,0.18) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%
+        );
+        transform: rotate(25deg);
+        transition: all 0.6s;
     }
+    .header:hover::before { left: 100%; top: 100%; }
 
-    /* ---------- FILE UPLOADER (Glass) ---------- */
+    /* ---------- FILE UPLOADER ---------- */
     .stFileUploader > div > div {
         border: 1px solid rgba(0,200,255,0.5);
         border-radius: 14px;
@@ -866,14 +880,24 @@ with tab1:
         backdrop-filter: blur(14px);
         color: #cce6ff;
         box-shadow: 0 0 12px rgba(0,200,255,0.3);
+        position: relative;
+        overflow: hidden;
         transition: all 0.3s ease-in-out;
     }
-    .stFileUploader > div > div:hover {
-        box-shadow: 0 0 25px rgba(0,200,255,0.65),
-                    inset 0 0 25px rgba(0,200,255,0.1);
+    .stFileUploader > div > div::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%);
+        transform: rotate(25deg);
+        transition: all 0.6s;
     }
+    .stFileUploader > div > div:hover::before { left: 100%; top: 100%; }
 
-    /* ---------- BUTTONS (Glass + Shine) ---------- */
+    /* ---------- BUTTONS ---------- */
     .stButton > button {
         position: relative;
         background: rgba(10,20,40,0.35);
@@ -914,7 +938,7 @@ with tab1:
                     inset 0 0 25px rgba(0,200,255,0.2);
     }
 
-    /* ---------- INPUTS (Glass) ---------- */
+    /* ---------- INPUTS ---------- */
     .stTextInput > div > input,
     .stTextArea > div > textarea {
         background: rgba(10,20,40,0.35);
@@ -925,15 +949,26 @@ with tab1:
         backdrop-filter: blur(16px);
         box-shadow: 0 0 12px rgba(0,200,255,0.3),
                     inset 0 0 15px rgba(0,200,255,0.05);
+        position: relative;
+        overflow: hidden;
         transition: all 0.3s ease-in-out;
     }
-    .stTextInput > div > input:focus,
-    .stTextArea > div > textarea:focus {
-        box-shadow: 0 0 20px rgba(0,200,255,0.6),
-                    inset 0 0 25px rgba(0,200,255,0.15);
+    .stTextInput > div > input::before,
+    .stTextArea > div > textarea::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%);
+        transform: rotate(25deg);
+        transition: all 0.6s;
     }
+    .stTextInput > div > input:focus::before,
+    .stTextArea > div > textarea:focus::before { left: 100%; top: 100%; }
 
-    /* ---------- CHAT MESSAGES (Glass) ---------- */
+    /* ---------- CHAT MESSAGES ---------- */
     .stChatMessage {
         font-size: 18px;
         background: rgba(10,20,40,0.35);
@@ -944,7 +979,21 @@ with tab1:
         text-shadow: 0 0 6px rgba(0,200,255,0.7);
         box-shadow: 0 0 12px rgba(0,200,255,0.3),
                     inset 0 0 15px rgba(0,200,255,0.05);
+        position: relative;
+        overflow: hidden;
     }
+    .stChatMessage::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%);
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
+    .stChatMessage:hover::before { left: 100%; top: 100%; }
 
     /* ---------- METRICS ---------- */
     .stMetric {
@@ -975,8 +1024,7 @@ with tab1:
     <!-- Header -->
     <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
     """,
-    unsafe_allow_html=True
-)
+    unsafe_allow_html=True)
 
 
 

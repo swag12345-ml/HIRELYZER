@@ -997,7 +997,7 @@ with tab1:
     </div>
 
     <!-- Header -->
-    <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
+    <div class="header">💼 HIRELYZER - ETHICAL RESUME ANALYZER</div>
     """, unsafe_allow_html=True)
 
 

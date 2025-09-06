@@ -797,24 +797,23 @@ with tab1:
     ::-webkit-scrollbar-thumb {
         background: #00ffff;
         border-radius: 4px;
-        box-shadow: 0 0 10px cyan;
     }
 
     /* ---------- BANNER ---------- */
     .banner-container {
         width: 100%;
         height: 80px;
-        background: rgba(10, 20, 40, 0.4);
-        border-bottom: 2px solid cyan;
+        background: rgba(10, 20, 40, 0.5);
+        border-bottom: 2px solid rgba(0,200,255,0.4);
+        border-radius: 20px;
+        backdrop-filter: blur(14px);
+        box-shadow: 0 8px 32px rgba(0, 200, 255, 0.25);
         overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: flex-start;
         position: relative;
         margin-bottom: 20px;
-        border-radius: 12px;
-        backdrop-filter: blur(14px);
-        box-shadow: 0 8px 32px rgba(0, 200, 255, 0.25);
     }
 
     .pulse-bar {
@@ -823,10 +822,10 @@ with tab1:
         align-items: center;
         font-size: 22px;
         font-weight: bold;
-        color: #00ffff;
+        color: #4da6ff;
         white-space: nowrap;
+        text-shadow: 0 0 12px rgba(0,200,255,0.7);
         animation: glideIn 12s linear infinite;
-        text-shadow: 0 0 10px #00ffff;
     }
 
     .pulse-bar .bar {
@@ -834,9 +833,8 @@ with tab1:
         height: 30px;
         margin-right: 10px;
         background: #00ffff;
-        box-shadow: 0 0 8px cyan, 0 0 16px cyan;
+        box-shadow: 0 0 8px cyan;
         animation: pulse 1s ease-in-out infinite;
-        border-radius: 4px;
     }
 
     @keyframes glideIn {
@@ -847,14 +845,8 @@ with tab1:
     }
 
     @keyframes pulse {
-        0%, 100% {
-            height: 20px;
-            background-color: #00ffff;
-        }
-        50% {
-            height: 40px;
-            background-color: #ff00ff;
-        }
+        0%, 100% { height: 20px; background-color: #00ffff; }
+        50% { height: 40px; background-color: #ff00ff; }
     }
 
     /* ---------- HEADER ---------- */
@@ -864,44 +856,45 @@ with tab1:
         text-align: center;
         text-transform: uppercase;
         letter-spacing: 2px;
-        padding: 14px 0;
-        margin: 15px auto;
-        width: 90%;
-        border-radius: 18px;
-        background: rgba(10, 20, 40, 0.45);
-        backdrop-filter: blur(16px);
-        border: 1px solid rgba(0, 200, 255, 0.35);
-        box-shadow: 0 8px 32px rgba(0, 200, 255, 0.25),
-                    inset 0 0 20px rgba(0, 200, 255, 0.05);
-        animation: glowPulse 3s ease-in-out infinite, shimmer 8s infinite linear;
-        text-shadow: 0px 0px 12px #00ffff;
+        padding: 12px 0;
+        color: #4da6ff;
+        text-shadow: 0 0 12px rgba(0,200,255,0.7);
+        background: rgba(10, 20, 40, 0.5);
+        border-radius: 20px;
+        backdrop-filter: blur(14px);
+        box-shadow: 0 8px 32px rgba(0, 200, 255, 0.25);
+        border: 1px solid rgba(0, 200, 255, 0.3);
         position: relative;
         overflow: hidden;
     }
-
-    @keyframes glowPulse {
-        0%, 100% {
-            color: #00ffff;
-            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
-        }
-        50% {
-            color: #ff00ff;
-            text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff;
-        }
+    .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+            120deg,
+            rgba(255,255,255,0.18) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%
+        );
+        transform: rotate(25deg);
+        animation: shineLoop 3s linear infinite;
     }
-
-    @keyframes shimmer {
-        0% { background-position: -200px 0; }
-        100% { background-position: 200px 0; }
+    @keyframes shineLoop {
+        0% { transform: rotate(25deg) translateX(-100%); }
+        100% { transform: rotate(25deg) translateX(100%); }
     }
 
     /* ---------- FILE UPLOADER ---------- */
     .stFileUploader > div > div {
-        border: 2px solid #00ffff;
+        border: 2px solid rgba(0,200,255,0.5);
         border-radius: 12px;
-        background: rgba(10, 20, 40, 0.45);
+        background: rgba(10, 20, 40, 0.5);
         padding: 12px;
-        box-shadow: 0 0 15px rgba(0,255,255,0.4);
+        box-shadow: 0 8px 32px rgba(0, 200, 255, 0.25);
         backdrop-filter: blur(14px);
         transition: box-shadow 0.3s ease-in-out;
     }
@@ -912,12 +905,12 @@ with tab1:
     /* ---------- BUTTONS ---------- */
     .stButton > button {
         position: relative;
-        background: rgba(10, 20, 40, 0.35);
-        border: 1px solid rgba(0, 200, 255, 0.6);
+        background: rgba(10, 20, 40, 0.5);
+        border: 1px solid rgba(0,200,255,0.6);
         color: #e6f7ff;
-        border-radius: 12px;
+        border-radius: 14px;
         padding: 10px 20px;
-        font-size: 15px;
+        font-size: 16px;
         font-weight: bold;
         backdrop-filter: blur(16px);
         box-shadow: 0 0 12px rgba(0, 200, 255, 0.35),
@@ -959,47 +952,43 @@ with tab1:
     /* ---------- CHAT MESSAGES ---------- */
     .stChatMessage {
         font-size: 18px;
-        background: rgba(10, 20, 40, 0.45);
+        background: rgba(10, 20, 40, 0.5);
         padding: 14px;
         border-radius: 12px;
-        border: 1px solid #00ffff;
+        border: 1px solid rgba(0,200,255,0.5);
         color: #ccffff;
+        text-shadow: 0px 0px 6px #00ffff;
         backdrop-filter: blur(14px);
-        box-shadow: 0px 0px 12px rgba(0, 200, 255, 0.35);
         animation: glow 1.5s ease-in-out infinite alternate;
     }
 
     /* ---------- INPUTS ---------- */
     .stTextInput > div > input,
     .stTextArea > div > textarea {
-        background: rgba(10, 20, 40, 0.35);
-        color: #00ffff;
-        border: 1px solid #00ffff;
-        border-radius: 8px;
+        background: rgba(10, 20, 40, 0.5);
+        color: #e6f7ff;
+        border: 1px solid rgba(0,200,255,0.5);
+        border-radius: 12px;
         padding: 10px;
+        box-shadow: 0 0 12px rgba(0,200,255,0.3);
         backdrop-filter: blur(14px);
-        box-shadow: 0 0 12px rgba(0,255,255,0.3);
     }
 
     /* ---------- METRICS ---------- */
     .stMetric {
-        background: rgba(10, 20, 40, 0.45);
-        border: 1px solid #00ffff;
+        background: rgba(10, 20, 40, 0.5);
+        border: 1px solid rgba(0,200,255,0.5);
         border-radius: 12px;
         padding: 15px;
-        backdrop-filter: blur(14px);
-        box-shadow: 0 0 12px rgba(0,255,255,0.5);
+        box-shadow: 0 0 12px rgba(0,200,255,0.5);
         text-align: center;
+        backdrop-filter: blur(14px);
     }
 
     /* ---------- MOBILE ---------- */
     @media (max-width: 768px) {
-        .pulse-bar {
-            font-size: 16px;
-        }
-        .header {
-            font-size: 20px;
-        }
+        .pulse-bar { font-size: 16px; }
+        .header { font-size: 20px; }
     }
     </style>
 

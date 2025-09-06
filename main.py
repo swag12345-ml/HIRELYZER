@@ -775,7 +775,8 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📚 Course Recommendation", "📁 Admin DB View"
 ])
 with tab1:
-    st.markdown("""
+    st.markdown(
+    """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 
@@ -787,9 +788,16 @@ with tab1:
     }
 
     /* ---------- SCROLLBAR ---------- */
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: #1f2833; }
-    ::-webkit-scrollbar-thumb { background: #00ffff; border-radius: 4px; }
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #1f2833;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #00ffff;
+        border-radius: 4px;
+    }
 
     /* ---------- BANNER ---------- */
     .banner-container {
@@ -803,9 +811,8 @@ with tab1:
         justify-content: flex-start;
         position: relative;
         margin-bottom: 20px;
-        border-radius: 12px;
-        backdrop-filter: blur(14px);
     }
+
     .pulse-bar {
         position: absolute;
         display: flex;
@@ -817,6 +824,7 @@ with tab1:
         animation: glideIn 12s linear infinite;
         text-shadow: 0 0 10px #00ffff;
     }
+
     .pulse-bar .bar {
         width: 10px;
         height: 30px;
@@ -825,15 +833,23 @@ with tab1:
         box-shadow: 0 0 8px cyan;
         animation: pulse 1s ease-in-out infinite;
     }
+
     @keyframes glideIn {
         0% { left: -50%; opacity: 0; }
         10% { opacity: 1; }
         90% { opacity: 1; }
         100% { left: 110%; opacity: 0; }
     }
+
     @keyframes pulse {
-        0%, 100% { height: 20px; background-color: #00ffff; }
-        50% { height: 40px; background-color: #ff00ff; }
+        0%, 100% {
+            height: 20px;
+            background-color: #00ffff;
+        }
+        50% {
+            height: 40px;
+            background-color: #ff00ff;
+        }
     }
 
     /* ---------- HEADER ---------- */
@@ -844,172 +860,105 @@ with tab1:
         text-transform: uppercase;
         letter-spacing: 2px;
         padding: 12px 0;
-        color: #00ffff;
+        animation: glowPulse 3s ease-in-out infinite;
         text-shadow: 0px 0px 10px #00ffff;
-        position: relative;
-        overflow: hidden;
-        border-radius: 14px;
-        background: rgba(10,20,40,0.35);
-        backdrop-filter: blur(14px);
-        border: 1px solid rgba(0,200,255,0.5);
-        box-shadow: 0 0 12px rgba(0,200,255,0.25);
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(12px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     }
-    .header::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(
-            120deg,
-            rgba(255,255,255,0.18) 0%,
-            rgba(255,255,255,0.05) 40%,
-            transparent 60%
-        );
-        transform: rotate(25deg);
-        transition: all 0.6s;
+
+    @keyframes glowPulse {
+        0%, 100% {
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+        }
+        50% {
+            color: #ff00ff;
+            text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff;
+        }
     }
-    .header:hover::before { left: 100%; top: 100%; }
 
     /* ---------- FILE UPLOADER ---------- */
     .stFileUploader > div > div {
-        border: 1px solid rgba(0,200,255,0.5);
-        border-radius: 14px;
-        background: rgba(10,20,40,0.35);
-        backdrop-filter: blur(14px);
-        color: #cce6ff;
-        box-shadow: 0 0 12px rgba(0,200,255,0.3);
-        position: relative;
-        overflow: hidden;
-        transition: all 0.3s ease-in-out;
+        border: 2px solid #00ffff;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(12px);
+        padding: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        transition: box-shadow 0.3s ease-in-out;
     }
-    .stFileUploader > div > div::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%);
-        transform: rotate(25deg);
-        transition: all 0.6s;
+    .stFileUploader > div > div:hover {
+        box-shadow: 0 0 25px rgba(0,255,255,0.8);
     }
-    .stFileUploader > div > div:hover::before { left: 100%; top: 100%; }
 
     /* ---------- BUTTONS ---------- */
     .stButton > button {
-        position: relative;
-        background: rgba(10,20,40,0.35);
-        border: 1px solid rgba(0,200,255,0.6);
-        color: #e6f7ff;
-        border-radius: 14px;
-        padding: 10px 20px;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px);
+        color: white;
         font-size: 16px;
-        font-weight: 500;
+        font-weight: bold;
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 12px;
+        padding: 10px 20px;
         text-transform: uppercase;
-        backdrop-filter: blur(16px);
-        box-shadow: 0 0 12px rgba(0,200,255,0.35),
-                    inset 0 0 20px rgba(0,200,255,0.05);
-        overflow: hidden;
+        box-shadow: 0px 8px 32px rgba(0,0,0,0.4);
         transition: all 0.3s ease-in-out;
     }
-    .stButton > button::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%);
-        transform: rotate(25deg);
-        transition: all 0.6s;
-    }
-    .stButton > button:hover::before { left: 100%; top: 100%; }
     .stButton > button:hover {
-        background: rgba(0,200,255,0.12);
-        box-shadow: 0 0 20px rgba(0,200,255,0.65),
-                    inset 0 0 25px rgba(0,200,255,0.15);
-        transform: translateY(-2px);
+        transform: scale(1.05);
+        box-shadow: 0px 0px 24px #00ffff;
+        background: rgba(0, 255, 255, 0.15);
     }
-    .stButton > button:active {
-        transform: scale(0.95);
-        box-shadow: 0 0 25px rgba(0,200,255,0.75),
-                    inset 0 0 25px rgba(0,200,255,0.2);
+
+    /* ---------- CHAT MESSAGES ---------- */
+    .stChatMessage {
+        font-size: 18px;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(12px);
+        padding: 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #ccffff;
+        text-shadow: 0px 0px 6px #00ffff;
+        animation: glow 1.5s ease-in-out infinite alternate;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     }
 
     /* ---------- INPUTS ---------- */
     .stTextInput > div > input,
     .stTextArea > div > textarea {
-        background: rgba(10,20,40,0.35);
-        border: 1px solid rgba(0,200,255,0.6);
-        border-radius: 14px;
-        color: #e6f7ff;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px);
+        color: #00ffff;
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 10px;
         padding: 10px;
-        backdrop-filter: blur(16px);
-        box-shadow: 0 0 12px rgba(0,200,255,0.3),
-                    inset 0 0 15px rgba(0,200,255,0.05);
-        position: relative;
-        overflow: hidden;
-        transition: all 0.3s ease-in-out;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     }
-    .stTextInput > div > input::before,
-    .stTextArea > div > textarea::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%);
-        transform: rotate(25deg);
-        transition: all 0.6s;
-    }
-    .stTextInput > div > input:focus::before,
-    .stTextArea > div > textarea:focus::before { left: 100%; top: 100%; }
-
-    /* ---------- CHAT MESSAGES ---------- */
-    .stChatMessage {
-        font-size: 18px;
-        background: rgba(10,20,40,0.35);
-        border: 1px solid rgba(0,200,255,0.5);
-        border-radius: 14px;
-        padding: 14px;
-        color: #e6f7ff;
-        text-shadow: 0 0 6px rgba(0,200,255,0.7);
-        box-shadow: 0 0 12px rgba(0,200,255,0.3),
-                    inset 0 0 15px rgba(0,200,255,0.05);
-        position: relative;
-        overflow: hidden;
-    }
-    .stChatMessage::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(120deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%);
-        transform: rotate(25deg);
-        transition: all 0.6s;
-    }
-    .stChatMessage:hover::before { left: 100%; top: 100%; }
 
     /* ---------- METRICS ---------- */
     .stMetric {
-        background-color: rgba(10,20,40,0.35);
-        border: 1px solid rgba(0,200,255,0.6);
-        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 12px;
         padding: 15px;
-        box-shadow: 0 0 12px rgba(0,200,255,0.35),
-                    inset 0 0 20px rgba(0,200,255,0.05);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
         text-align: center;
     }
 
     /* ---------- MOBILE ---------- */
     @media (max-width: 768px) {
-        .pulse-bar { font-size: 16px; }
-        .header { font-size: 20px; }
+        .pulse-bar {
+            font-size: 16px;
+        }
+        .header {
+            font-size: 20px;
+        }
     }
     </style>
 
@@ -1024,7 +973,9 @@ with tab1:
     <!-- Header -->
     <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
     """,
-    unsafe_allow_html=True)
+    unsafe_allow_html=True
+)
+
 
 
 

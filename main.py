@@ -2808,19 +2808,50 @@ with tab1:
 with tab2:
     st.session_state.active_tab = "Resume Builder"
 
-    # ---------- Title with Blue Glassmorphism ----------
+    # ---------- Title with Blue Glassmorphism + Shine ----------
     st.markdown("""
-    <div style="
+    <style>
+    .glass-title {
         background: rgba(10, 20, 40, 0.5);
         border-radius: 20px;
         padding: 20px;
         backdrop-filter: blur(14px);
         box-shadow: 0 8px 32px rgba(0, 200, 255, 0.25);
         border: 1px solid rgba(0, 200, 255, 0.3);
-        text-align: center;">
-        <h2 style="color:#4da6ff; margin:0; text-shadow: 0 0 12px rgba(0,200,255,0.7);">
-            🧾 Advanced Resume Builder
-        </h2>
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .glass-title h2 {
+        color: #4da6ff;
+        margin: 0;
+        text-shadow: 0 0 12px rgba(0,200,255,0.7);
+        font-weight: 600;
+    }
+    .glass-title::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+            120deg,
+            rgba(255,255,255,0.18) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%
+        );
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
+    .glass-title:hover::before {
+        left: 100%;
+        top: 100%;
+    }
+    </style>
+
+    <div class="glass-title">
+        <h2>🧾 Advanced Resume Builder</h2>
     </div>
     """, unsafe_allow_html=True)
 
@@ -3014,6 +3045,7 @@ with tab2:
                     )
                 elif mode == "Delete" and len(st.session_state.certificate_links) > 1:
                     st.session_state.certificate_links.pop()
+
 
 
 

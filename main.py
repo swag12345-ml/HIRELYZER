@@ -799,57 +799,50 @@ with tab1:
         border-radius: 4px;
     }
 
-    /* ---------- BANNER (Glass + Glow) ---------- */
+    /* ---------- BANNER ---------- */
     .banner-container {
         width: 100%;
         height: 80px;
-        background: rgba(10,20,40,0.5);
-        border-bottom: 2px solid rgba(0,200,255,0.4);
-        backdrop-filter: blur(12px);
+        background: linear-gradient(90deg, #000428, #004e92);
+        border-bottom: 2px solid cyan;
+        overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: flex-start;
         position: relative;
         margin-bottom: 20px;
-        box-shadow: 0 8px 32px rgba(0,200,255,0.2);
-        overflow: hidden;
-        border-radius: 14px;
     }
-
     .pulse-bar {
         position: absolute;
         display: flex;
         align-items: center;
         font-size: 22px;
         font-weight: bold;
-        color: #4da6ff;
+        color: #00ffff;
         white-space: nowrap;
         animation: glideIn 12s linear infinite;
-        text-shadow: 0 0 12px rgba(0,200,255,0.7);
+        text-shadow: 0 0 10px #00ffff;
     }
-
     .pulse-bar .bar {
         width: 10px;
         height: 30px;
         margin-right: 10px;
-        background: rgba(0,200,255,0.7);
-        box-shadow: 0 0 12px rgba(0,200,255,0.6);
+        background: #00ffff;
+        box-shadow: 0 0 8px cyan;
         animation: pulse 1s ease-in-out infinite;
     }
-
     @keyframes glideIn {
         0% { left: -50%; opacity: 0; }
         10% { opacity: 1; }
         90% { opacity: 1; }
         100% { left: 110%; opacity: 0; }
     }
-
     @keyframes pulse {
-        0%,100% { height: 20px; background-color: rgba(0,200,255,0.6);}
-        50% { height: 40px; background-color: rgba(255,0,255,0.6);}
+        0%, 100% { height: 20px; background-color: #00ffff; }
+        50% { height: 40px; background-color: #ff00ff; }
     }
 
-    /* ---------- HEADER (Glass + Glow) ---------- */
+    /* ---------- HEADER ---------- */
     .header {
         font-size: 28px;
         font-weight: bold;
@@ -857,32 +850,27 @@ with tab1:
         text-transform: uppercase;
         letter-spacing: 2px;
         padding: 12px 0;
-        color: #4da6ff;
-        background: rgba(10,20,40,0.5);
-        border-radius: 14px;
-        border: 1px solid rgba(0,200,255,0.4);
-        box-shadow: 0 8px 32px rgba(0,200,255,0.25);
-        backdrop-filter: blur(12px);
-        text-shadow: 0 0 12px rgba(0,200,255,0.6);
         animation: glowPulse 3s ease-in-out infinite;
+        text-shadow: 0px 0px 10px #00ffff;
     }
-
     @keyframes glowPulse {
-        0%, 100% { color: #4da6ff; text-shadow: 0 0 12px rgba(0,200,255,0.7);}
-        50% { color: #ff00ff; text-shadow: 0 0 20px rgba(255,0,255,0.7);}
+        0%, 100% { color: #00ffff; text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff; }
+        50% { color: #ff00ff; text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff; }
     }
 
-    /* ---------- FILE UPLOADER (Glass + Hover Shine) ---------- */
+    /* ---------- FILE UPLOADER (Glass) ---------- */
     .stFileUploader > div > div {
-        background: rgba(10,20,40,0.5);
-        border-radius: 12px;
         border: 1px solid rgba(0,200,255,0.5);
-        padding: 12px;
-        box-shadow: 0 0 12px rgba(0,200,255,0.3), inset 0 0 15px rgba(0,200,255,0.1);
+        border-radius: 14px;
+        background: rgba(10,20,40,0.35);
+        backdrop-filter: blur(14px);
+        color: #cce6ff;
+        box-shadow: 0 0 12px rgba(0,200,255,0.3);
         transition: all 0.3s ease-in-out;
     }
     .stFileUploader > div > div:hover {
-        box-shadow: 0 0 25px rgba(0,200,255,0.6), inset 0 0 20px rgba(0,200,255,0.2);
+        box-shadow: 0 0 25px rgba(0,200,255,0.65),
+                    inset 0 0 25px rgba(0,200,255,0.1);
     }
 
     /* ---------- BUTTONS (Glass + Shine) ---------- */
@@ -893,11 +881,12 @@ with tab1:
         color: #e6f7ff;
         border-radius: 14px;
         padding: 10px 20px;
-        font-size: 15px;
+        font-size: 16px;
         font-weight: 500;
+        text-transform: uppercase;
         backdrop-filter: blur(16px);
-        box-shadow: 0 0 12px rgba(0, 200, 255, 0.35),
-                    inset 0 0 20px rgba(0, 200, 255, 0.05);
+        box-shadow: 0 0 12px rgba(0,200,255,0.35),
+                    inset 0 0 20px rgba(0,200,255,0.05);
         overflow: hidden;
         transition: all 0.3s ease-in-out;
     }
@@ -912,55 +901,67 @@ with tab1:
         transform: rotate(25deg);
         transition: all 0.6s;
     }
-    .stButton > button:hover::before {
-        left: 100%;
-        top: 100%;
-    }
+    .stButton > button:hover::before { left: 100%; top: 100%; }
     .stButton > button:hover {
-        background: rgba(0, 200, 255, 0.12);
-        box-shadow: 0 0 20px rgba(0, 200, 255, 0.65), inset 0 0 25px rgba(0, 200, 255, 0.15);
+        background: rgba(0,200,255,0.12);
+        box-shadow: 0 0 20px rgba(0,200,255,0.65),
+                    inset 0 0 25px rgba(0,200,255,0.15);
         transform: translateY(-2px);
     }
     .stButton > button:active {
         transform: scale(0.95);
-        box-shadow: 0 0 10px rgba(0, 200, 255, 0.45);
+        box-shadow: 0 0 25px rgba(0,200,255,0.75),
+                    inset 0 0 25px rgba(0,200,255,0.2);
     }
 
-    /* ---------- INPUTS (Glass + Glow) ---------- */
+    /* ---------- INPUTS (Glass) ---------- */
     .stTextInput > div > input,
     .stTextArea > div > textarea {
-        background: rgba(10,20,40,0.5);
-        color: #e6f7ff;
+        background: rgba(10,20,40,0.35);
         border: 1px solid rgba(0,200,255,0.6);
-        border-radius: 12px;
+        border-radius: 14px;
+        color: #e6f7ff;
         padding: 10px;
-        box-shadow: 0 0 12px rgba(0,200,255,0.25);
-        backdrop-filter: blur(12px);
+        backdrop-filter: blur(16px);
+        box-shadow: 0 0 12px rgba(0,200,255,0.3),
+                    inset 0 0 15px rgba(0,200,255,0.05);
+        transition: all 0.3s ease-in-out;
+    }
+    .stTextInput > div > input:focus,
+    .stTextArea > div > textarea:focus {
+        box-shadow: 0 0 20px rgba(0,200,255,0.6),
+                    inset 0 0 25px rgba(0,200,255,0.15);
     }
 
-    /* ---------- CHAT MESSAGES (Glass + Glow) ---------- */
+    /* ---------- CHAT MESSAGES (Glass) ---------- */
     .stChatMessage {
         font-size: 18px;
-        background: rgba(10,20,40,0.45);
+        background: rgba(10,20,40,0.35);
+        border: 1px solid rgba(0,200,255,0.5);
+        border-radius: 14px;
         padding: 14px;
-        border-radius: 12px;
-        border: 1px solid rgba(0,200,255,0.6);
         color: #e6f7ff;
-        text-shadow: 0px 0px 6px rgba(0,200,255,0.7);
-        box-shadow: 0 0 12px rgba(0,200,255,0.25);
-        animation: glow 1.5s ease-in-out infinite alternate;
+        text-shadow: 0 0 6px rgba(0,200,255,0.7);
+        box-shadow: 0 0 12px rgba(0,200,255,0.3),
+                    inset 0 0 15px rgba(0,200,255,0.05);
     }
 
     /* ---------- METRICS ---------- */
     .stMetric {
-        background: rgba(10,20,40,0.5);
-        border: 1px solid rgba(0,200,255,0.5);
-        border-radius: 12px;
+        background-color: rgba(10,20,40,0.35);
+        border: 1px solid rgba(0,200,255,0.6);
+        border-radius: 14px;
         padding: 15px;
-        box-shadow: 0 0 12px rgba(0,200,255,0.35);
+        box-shadow: 0 0 12px rgba(0,200,255,0.35),
+                    inset 0 0 20px rgba(0,200,255,0.05);
         text-align: center;
     }
 
+    /* ---------- MOBILE ---------- */
+    @media (max-width: 768px) {
+        .pulse-bar { font-size: 16px; }
+        .header { font-size: 20px; }
+    }
     </style>
 
     <!-- Banner -->
@@ -976,6 +977,7 @@ with tab1:
     """,
     unsafe_allow_html=True
 )
+
 
 
 

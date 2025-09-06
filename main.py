@@ -5749,6 +5749,56 @@ with tab5:
 
     db_manager = get_db_manager()
 
+    # -------- Glassmorphism Styles with Shimmer --------
+    st.markdown("""
+    <style>
+    .glass-box {
+        background: rgba(10, 20, 40, 0.55);
+        border-radius: 18px;
+        padding: 2rem;
+        backdrop-filter: blur(14px);
+        border: 1px solid rgba(0, 200, 255, 0.35);
+        box-shadow: 0 8px 32px rgba(0, 200, 255, 0.25);
+        position: relative;
+        overflow: hidden;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .glass-box::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+            120deg,
+            rgba(255,255,255,0.15) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%
+        );
+        transform: rotate(25deg);
+        animation: shimmer 6s infinite;
+    }
+    @keyframes shimmer {
+        0% { top: -50%; left: -50%; }
+        50% { top: 100%; left: 100%; }
+        100% { top: -50%; left: -50%; }
+    }
+    .glass-box h1, .glass-box h2 {
+        color: #4da6ff;
+        text-shadow: 0 0 12px rgba(0,200,255,0.7);
+        margin: 0 0 0.5rem 0;
+        font-weight: 600;
+    }
+    .glass-box p {
+        color: #cce6ff;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     def create_enhanced_pie_chart(df, values_col, labels_col, title):
         """Create an enhanced pie chart with better styling"""
         fig = px.pie(
@@ -5803,9 +5853,9 @@ with tab5:
 
     if not st.session_state.admin_logged_in:
         st.markdown("""
-        <div style='text-align: center; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; margin-bottom: 2rem;'>
-            <h2 style='color: white; margin-bottom: 1rem;'>🔐 Admin Authentication Required</h2>
-            <p style='color: #f0f0f0;'>Please enter your credentials to access the admin dashboard</p>
+        <div class="glass-box">
+            <h2>🔐 Admin Authentication Required</h2>
+            <p>Please enter your credentials to access the admin dashboard</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -5823,11 +5873,12 @@ with tab5:
 
     # Enhanced Header with Database Stats
     st.markdown("""
-    <div style='text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; margin-bottom: 2rem;'>
-        <h1 style='color: white; margin: 0;'>🛡️ Enhanced Admin Database Panel</h1>
-        <p style='color: #f0f0f0; margin: 0.5rem 0 0 0;'>Advanced Resume Analysis System Dashboard</p>
+    <div class="glass-box">
+        <h1>🛡️ Enhanced Admin Database Panel</h1>
+        <p>Advanced Resume Analysis System Dashboard</p>
     </div>
     """, unsafe_allow_html=True)
+
 
     # Enhanced Control Panel
     col1, col2, col3, col4 = st.columns(4)
@@ -6391,3 +6442,4 @@ with tab5:
         <p>Last updated: {}</p>
     </div>
     """.format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
+

@@ -797,13 +797,14 @@ with tab1:
     ::-webkit-scrollbar-thumb {
         background: #00ffff;
         border-radius: 4px;
+        box-shadow: 0 0 10px cyan;
     }
 
     /* ---------- BANNER ---------- */
     .banner-container {
         width: 100%;
         height: 80px;
-        background: linear-gradient(90deg, #000428, #004e92);
+        background: rgba(10, 20, 40, 0.4);
         border-bottom: 2px solid cyan;
         overflow: hidden;
         display: flex;
@@ -811,6 +812,9 @@ with tab1:
         justify-content: flex-start;
         position: relative;
         margin-bottom: 20px;
+        border-radius: 12px;
+        backdrop-filter: blur(14px);
+        box-shadow: 0 8px 32px rgba(0, 200, 255, 0.25);
     }
 
     .pulse-bar {
@@ -830,8 +834,9 @@ with tab1:
         height: 30px;
         margin-right: 10px;
         background: #00ffff;
-        box-shadow: 0 0 8px cyan;
+        box-shadow: 0 0 8px cyan, 0 0 16px cyan;
         animation: pulse 1s ease-in-out infinite;
+        border-radius: 4px;
     }
 
     @keyframes glideIn {
@@ -859,9 +864,19 @@ with tab1:
         text-align: center;
         text-transform: uppercase;
         letter-spacing: 2px;
-        padding: 12px 0;
-        animation: glowPulse 3s ease-in-out infinite;
-        text-shadow: 0px 0px 10px #00ffff;
+        padding: 14px 0;
+        margin: 15px auto;
+        width: 90%;
+        border-radius: 18px;
+        background: rgba(10, 20, 40, 0.45);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(0, 200, 255, 0.35);
+        box-shadow: 0 8px 32px rgba(0, 200, 255, 0.25),
+                    inset 0 0 20px rgba(0, 200, 255, 0.05);
+        animation: glowPulse 3s ease-in-out infinite, shimmer 8s infinite linear;
+        text-shadow: 0px 0px 12px #00ffff;
+        position: relative;
+        overflow: hidden;
     }
 
     @keyframes glowPulse {
@@ -875,13 +890,19 @@ with tab1:
         }
     }
 
+    @keyframes shimmer {
+        0% { background-position: -200px 0; }
+        100% { background-position: 200px 0; }
+    }
+
     /* ---------- FILE UPLOADER ---------- */
     .stFileUploader > div > div {
         border: 2px solid #00ffff;
-        border-radius: 10px;
-        background-color: rgba(0, 255, 255, 0.05);
+        border-radius: 12px;
+        background: rgba(10, 20, 40, 0.45);
         padding: 12px;
         box-shadow: 0 0 15px rgba(0,255,255,0.4);
+        backdrop-filter: blur(14px);
         transition: box-shadow 0.3s ease-in-out;
     }
     .stFileUploader > div > div:hover {
@@ -890,53 +911,84 @@ with tab1:
 
     /* ---------- BUTTONS ---------- */
     .stButton > button {
-        background: linear-gradient(45deg, #ff0080, #00bfff);
-        color: white;
-        font-size: 16px;
-        font-weight: bold;
-        border: none;
-        border-radius: 8px;
+        position: relative;
+        background: rgba(10, 20, 40, 0.35);
+        border: 1px solid rgba(0, 200, 255, 0.6);
+        color: #e6f7ff;
+        border-radius: 12px;
         padding: 10px 20px;
-        text-transform: uppercase;
-        box-shadow: 0px 0px 12px #00ffff;
+        font-size: 15px;
+        font-weight: bold;
+        backdrop-filter: blur(16px);
+        box-shadow: 0 0 12px rgba(0, 200, 255, 0.35),
+                    inset 0 0 20px rgba(0, 200, 255, 0.05);
+        overflow: hidden;
         transition: all 0.3s ease-in-out;
     }
+    .stButton > button::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+            120deg,
+            rgba(255,255,255,0.15) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%
+        );
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
+    .stButton > button:hover::before {
+        left: 100%;
+        top: 100%;
+    }
     .stButton > button:hover {
-        transform: scale(1.05);
-        box-shadow: 0px 0px 24px #ff00ff;
-        background: linear-gradient(45deg, #ff00aa, #00ffff);
+        background: rgba(0, 200, 255, 0.12);
+        box-shadow: 0 0 20px rgba(0, 200, 255, 0.65),
+                    inset 0 0 25px rgba(0, 200, 255, 0.15);
+        transform: translateY(-2px);
+    }
+    .stButton > button:active {
+        transform: scale(0.95);
+        box-shadow: 0 0 10px rgba(0, 200, 255, 0.45);
     }
 
     /* ---------- CHAT MESSAGES ---------- */
     .stChatMessage {
         font-size: 18px;
-        background: #1e293b;
+        background: rgba(10, 20, 40, 0.45);
         padding: 14px;
-        border-radius: 10px;
-        border: 2px solid #00ffff;
+        border-radius: 12px;
+        border: 1px solid #00ffff;
         color: #ccffff;
-        text-shadow: 0px 0px 6px #00ffff;
+        backdrop-filter: blur(14px);
+        box-shadow: 0px 0px 12px rgba(0, 200, 255, 0.35);
         animation: glow 1.5s ease-in-out infinite alternate;
     }
 
     /* ---------- INPUTS ---------- */
     .stTextInput > div > input,
     .stTextArea > div > textarea {
-        background-color: #1f2833;
+        background: rgba(10, 20, 40, 0.35);
         color: #00ffff;
         border: 1px solid #00ffff;
-        border-radius: 6px;
+        border-radius: 8px;
         padding: 10px;
-        box-shadow: 0 0 10px rgba(0,255,255,0.3);
+        backdrop-filter: blur(14px);
+        box-shadow: 0 0 12px rgba(0,255,255,0.3);
     }
 
     /* ---------- METRICS ---------- */
     .stMetric {
-        background-color: #0f172a;
+        background: rgba(10, 20, 40, 0.45);
         border: 1px solid #00ffff;
-        border-radius: 10px;
+        border-radius: 12px;
         padding: 15px;
-        box-shadow: 0 0 10px rgba(0,255,255,0.5);
+        backdrop-filter: blur(14px);
+        box-shadow: 0 0 12px rgba(0,255,255,0.5);
         text-align: center;
     }
 
@@ -964,6 +1016,7 @@ with tab1:
     """,
     unsafe_allow_html=True
 )
+
 
 
 

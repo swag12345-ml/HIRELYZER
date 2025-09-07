@@ -2876,6 +2876,10 @@ with tab1:
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
 
 # ---------------- Sidebar (ONLY in Tab 2) ----------------
+
+
+
+
 with tab2:
     st.session_state.active_tab = "Resume Builder"
 
@@ -3278,11 +3282,14 @@ with tab2:
                 st.markdown(f"""
                 <div style='margin-bottom:15px; padding: 10px;'>
                 <strong style='font-size:16px;'>{proj['title']}</strong><br>
-                <span style='font-size:14px;'>🛠️ <strong>Tech Stack:</strong> {proj['tech']}</span><br>
-                <span style='font-size:14px;'>⏳ <strong>Duration:</strong> {proj['duration']}</span><br>
-                <span style='font-size:17px;'>📝 <strong>Description:</strong> {proj['description']}</span>
-                </div>
-                """, unsafe_allow_html=True)
+                <span style='font-size:14px; word-wrap:break-word; overflow-wrap:break-word; white-space:normal;'>
+                   🛠️ <strong>Tech Stack:</strong> {proj['tech']}
+             </span><br>
+            <span style='font-size:14px;'>⏳ <strong>Duration:</strong> {proj['duration']}</span><br>
+            <span style='font-size:17px;'>📝 <strong>Description:</strong> {proj['description']}</span>
+            </div>
+            """, unsafe_allow_html=True)
+
 
             if st.session_state.project_links:
                 st.markdown("<h4 style='color:#336699;'>Project Links</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
@@ -3300,7 +3307,6 @@ with tab2:
                         </div>
                         <div style='margin-bottom:10px; font-size:14px;'>{cert['description']}</div>
                         """, unsafe_allow_html=True)
-
 import re
 
 with tab2:

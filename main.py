@@ -770,9 +770,12 @@ if st.session_state.username == "admin":
         st.info("No logs found yet.")
 
 
-# CSS Customization
-st.markdown(
-    """
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", 
+    "📚 Course Recommendation", "📁 Admin DB View"
+])
+with tab1:
+    st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 
@@ -784,16 +787,9 @@ st.markdown(
     }
 
     /* ---------- SCROLLBAR ---------- */
-    ::-webkit-scrollbar {
-        width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-        background: #1f2833;
-    }
-    ::-webkit-scrollbar-thumb {
-        background: #00ffff;
-        border-radius: 4px;
-    }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #1f2833; }
+    ::-webkit-scrollbar-thumb { background: #00ffff; border-radius: 4px; }
 
     /* ---------- BANNER ---------- */
     .banner-container {
@@ -807,8 +803,9 @@ st.markdown(
         justify-content: flex-start;
         position: relative;
         margin-bottom: 20px;
+        border-radius: 12px;
+        backdrop-filter: blur(14px);
     }
-
     .pulse-bar {
         position: absolute;
         display: flex;
@@ -820,7 +817,6 @@ st.markdown(
         animation: glideIn 12s linear infinite;
         text-shadow: 0 0 10px #00ffff;
     }
-
     .pulse-bar .bar {
         width: 10px;
         height: 30px;
@@ -829,23 +825,15 @@ st.markdown(
         box-shadow: 0 0 8px cyan;
         animation: pulse 1s ease-in-out infinite;
     }
-
     @keyframes glideIn {
         0% { left: -50%; opacity: 0; }
         10% { opacity: 1; }
         90% { opacity: 1; }
         100% { left: 110%; opacity: 0; }
     }
-
     @keyframes pulse {
-        0%, 100% {
-            height: 20px;
-            background-color: #00ffff;
-        }
-        50% {
-            height: 40px;
-            background-color: #ff00ff;
-        }
+        0%, 100% { height: 20px; background-color: #00ffff; }
+        50% { height: 40px; background-color: #ff00ff; }
     }
 
     /* ---------- HEADER ---------- */
@@ -855,95 +843,180 @@ st.markdown(
         text-align: center;
         text-transform: uppercase;
         letter-spacing: 2px;
-        padding: 12px 0;
-        animation: glowPulse 3s ease-in-out infinite;
+        padding: 20px 30px;  /* ✅ More spacing inside the bar */
+        color: #00ffff;
         text-shadow: 0px 0px 10px #00ffff;
+        position: relative;
+        overflow: hidden;
+        border-radius: 14px;
+        background: rgba(10,20,40,0.35);
+        backdrop-filter: blur(14px);
+        border: 1px solid rgba(0,200,255,0.5);
+        box-shadow: 0 0 12px rgba(0,200,255,0.25);
     }
+    .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+            120deg,
+            rgba(255,255,255,0.18) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%
+        );
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
+    .header:hover::before { left: 100%; top: 100%; }
 
-    @keyframes glowPulse {
-        0%, 100% {
-            color: #00ffff;
-            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
-        }
-        50% {
-            color: #ff00ff;
-            text-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff;
-        }
+    /* ---------- SHIMMER (COMMON) ---------- */
+    .shimmer::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+            120deg,
+            rgba(255,255,255,0.15) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%
+        );
+        transform: rotate(25deg);
+        transition: all 0.6s;
     }
+    .shimmer:hover::before { left: 100%; top: 100%; }
 
     /* ---------- FILE UPLOADER ---------- */
     .stFileUploader > div > div {
-        border: 2px solid #00ffff;
-        border-radius: 10px;
-        background-color: rgba(0, 255, 255, 0.05);
-        padding: 12px;
-        box-shadow: 0 0 15px rgba(0,255,255,0.4);
-        transition: box-shadow 0.3s ease-in-out;
+        border: 1px solid rgba(0,200,255,0.5);
+        border-radius: 14px;
+        background: rgba(10,20,40,0.35);
+        backdrop-filter: blur(14px);
+        color: #cce6ff;
+        box-shadow: 0 0 12px rgba(0,200,255,0.3);
+        position: relative;
+        overflow: hidden;
     }
-    .stFileUploader > div > div:hover {
-        box-shadow: 0 0 25px rgba(0,255,255,0.8);
+    .stFileUploader > div > div::before {
+        content: "";
+        position: absolute; top: -50%; left: -50%;
+        width: 200%; height: 200%;
+        background: linear-gradient(120deg,
+            rgba(255,255,255,0.15) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%);
+        transform: rotate(25deg);
+        transition: all 0.6s;
     }
+    .stFileUploader > div > div:hover::before { left: 100%; top: 100%; }
 
     /* ---------- BUTTONS ---------- */
     .stButton > button {
-        background: linear-gradient(45deg, #ff0080, #00bfff);
-        color: white;
-        font-size: 16px;
-        font-weight: bold;
-        border: none;
-        border-radius: 8px;
+        position: relative;
+        overflow: hidden;
+        background: rgba(10,20,40,0.35);
+        border: 1px solid rgba(0,200,255,0.6);
+        color: #e6f7ff;
+        border-radius: 14px;
         padding: 10px 20px;
+        font-size: 16px;
+        font-weight: 500;
         text-transform: uppercase;
-        box-shadow: 0px 0px 12px #00ffff;
+        backdrop-filter: blur(16px);
+        box-shadow: 0 0 12px rgba(0,200,255,0.35),
+                    inset 0 0 20px rgba(0,200,255,0.05);
         transition: all 0.3s ease-in-out;
     }
-    .stButton > button:hover {
-        transform: scale(1.05);
-        box-shadow: 0px 0px 24px #ff00ff;
-        background: linear-gradient(45deg, #ff00aa, #00ffff);
+    .stButton > button::before {
+        content: "";
+        position: absolute; top: -50%; left: -50%;
+        width: 200%; height: 200%;
+        background: linear-gradient(120deg,
+            rgba(255,255,255,0.15) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%);
+        transform: rotate(25deg);
+        transition: all 0.6s;
     }
-
-    /* ---------- CHAT MESSAGES ---------- */
-    .stChatMessage {
-        font-size: 18px;
-        background: #1e293b;
-        padding: 14px;
-        border-radius: 10px;
-        border: 2px solid #00ffff;
-        color: #ccffff;
-        text-shadow: 0px 0px 6px #00ffff;
-        animation: glow 1.5s ease-in-out infinite alternate;
-    }
+    .stButton > button:hover::before { left: 100%; top: 100%; }
 
     /* ---------- INPUTS ---------- */
     .stTextInput > div > input,
     .stTextArea > div > textarea {
-        background-color: #1f2833;
-        color: #00ffff;
-        border: 1px solid #00ffff;
-        border-radius: 6px;
+        position: relative;
+        overflow: hidden;
+        background: rgba(10,20,40,0.35);
+        border: 1px solid rgba(0,200,255,0.6);
+        border-radius: 14px;
+        color: #e6f7ff;
         padding: 10px;
-        box-shadow: 0 0 10px rgba(0,255,255,0.3);
+        backdrop-filter: blur(16px);
+        box-shadow: 0 0 12px rgba(0,200,255,0.3),
+                    inset 0 0 15px rgba(0,200,255,0.05);
+        transition: all 0.3s ease-in-out;
     }
+
+    /* ---------- CHAT MESSAGES ---------- */
+    .stChatMessage {
+        position: relative;
+        overflow: hidden;
+        font-size: 18px;
+        background: rgba(10,20,40,0.35);
+        border: 1px solid rgba(0,200,255,0.5);
+        border-radius: 14px;
+        padding: 14px;
+        color: #e6f7ff;
+        text-shadow: 0 0 6px rgba(0,200,255,0.7);
+        box-shadow: 0 0 12px rgba(0,200,255,0.3),
+                    inset 0 0 15px rgba(0,200,255,0.05);
+    }
+    .stChatMessage::before {
+        content: "";
+        position: absolute; top: -50%; left: -50%;
+        width: 200%; height: 200%;
+        background: linear-gradient(120deg,
+            rgba(255,255,255,0.15) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%);
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
+    .stChatMessage:hover::before { left: 100%; top: 100%; }
 
     /* ---------- METRICS ---------- */
     .stMetric {
-        background-color: #0f172a;
-        border: 1px solid #00ffff;
-        border-radius: 10px;
+        position: relative;
+        overflow: hidden;
+        background-color: rgba(10,20,40,0.35);
+        border: 1px solid rgba(0,200,255,0.6);
+        border-radius: 14px;
         padding: 15px;
-        box-shadow: 0 0 10px rgba(0,255,255,0.5);
+        box-shadow: 0 0 12px rgba(0,200,255,0.35),
+                    inset 0 0 20px rgba(0,200,255,0.05);
         text-align: center;
     }
+    .stMetric::before {
+        content: "";
+        position: absolute; top: -50%; left: -50%;
+        width: 200%; height: 200%;
+        background: linear-gradient(120deg,
+            rgba(255,255,255,0.15) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%);
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
+    .stMetric:hover::before { left: 100%; top: 100%; }
 
     /* ---------- MOBILE ---------- */
     @media (max-width: 768px) {
-        .pulse-bar {
-            font-size: 16px;
-        }
-        .header {
-            font-size: 20px;
-        }
+        .pulse-bar { font-size: 16px; }
+        .header { font-size: 20px; }
     }
     </style>
 
@@ -957,9 +1030,12 @@ st.markdown(
 
     <!-- Header -->
     <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
-    """,
-    unsafe_allow_html=True
-)
+    """, unsafe_allow_html=True)
+
+
+
+
+
 
 # Load environment variables
 # ------------------- Core Setup -------------------
@@ -992,339 +1068,7 @@ def ensure_nltk():
 lemmatizer = ensure_nltk()
 reader = get_easyocr_reader()
 
-from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
 
-
-
-
-
-FEATURED_COMPANIES = {
-    "tech": [
-        {
-            "name": "Google",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg",
-            "color": "#4285F4",
-            "careers_url": "https://careers.google.com",
-            "description": "Leading technology company known for search, cloud, and innovation",
-            "categories": ["Software", "AI/ML", "Cloud", "Data Science"]
-        },
-        {
-            "name": "Microsoft",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
-            "color": "#00A4EF",
-            "careers_url": "https://careers.microsoft.com",
-            "description": "Global leader in software, cloud, and enterprise solutions",
-            "categories": ["Software", "Cloud", "Gaming", "Enterprise"]
-        },
-        {
-            "name": "Amazon",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
-            "color": "#FF9900",
-            "careers_url": "https://www.amazon.jobs",
-            "description": "E-commerce and cloud computing giant",
-            "categories": ["Software", "Operations", "Cloud", "Retail"]
-        },
-        {
-            "name": "Apple",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
-            "color": "#555555",
-            "careers_url": "https://www.apple.com/careers",
-            "description": "Innovation leader in consumer technology",
-            "categories": ["Software", "Hardware", "Design", "AI/ML"]
-        },
-        {
-            "name": "Facebook",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/0/05/Facebook_Logo_%282019%29.png",
-            "color": "#1877F2",
-            "careers_url": "https://www.metacareers.com/",
-            "description": "Social media and technology company",
-            "categories": ["Software", "Marketing", "Networking", "AI/ML"]
-        },
-        {
-            "name": "Netflix",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg",
-            "color": "#E50914",
-            "careers_url": "https://explore.jobs.netflix.net/careers",
-            "description": "Streaming media company",
-            "categories": ["Software", "Marketing", "Design", "Service"],
-            "website": "https://jobs.netflix.com/",
-            "industry": "Entertainment & Technology"
-        }
-    ],
-    "indian_tech": [
-        {
-            "name": "TCS",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/f6/TCS_New_Logo.svg",
-            "color": "#0070C0",
-            "careers_url": "https://www.tcs.com/careers",
-            "description": "India's largest IT services company",
-            "categories": ["IT Services", "Consulting", "Digital"]
-        },
-        {
-            "name": "Infosys",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/5/55/Infosys_logo.svg",
-            "color": "#007CC3",
-            "careers_url": "https://www.infosys.com/careers",
-            "description": "Global leader in digital services and consulting",
-            "categories": ["IT Services", "Consulting", "Digital"]
-        },
-        {
-            "name": "Wipro",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/8/80/Wipro_Primary_Logo_Color_RGB.svg",
-            "color": "#341F65",
-            "careers_url": "https://careers.wipro.com",
-            "description": "Leading global information technology company",
-            "categories": ["IT Services", "Consulting", "Digital"]
-        },
-        {
-            "name": "HCL",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/5/5e/HCL_Technologies_logo.svg",
-            "color": "#0075C9",
-            "careers_url": "https://www.hcltech.com/careers",
-            "description": "Global technology company",
-            "categories": ["IT Services", "Engineering", "Digital"]
-        }
-    ],
-    "global_corps": [
-        {
-            "name": "IBM",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg",
-            "color": "#1F70C1",
-            "careers_url": "https://www.ibm.com/careers",
-            "description": "Global leader in technology and consulting",
-            "categories": ["Software", "Consulting", "AI/ML", "Cloud"],
-            "website": "https://www.ibm.com/careers/",
-            "industry": "Technology & Consulting"
-        },
-        {
-            "name": "Accenture",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/8/80/Accenture_Logo.svg",
-            "color": "#A100FF",
-            "careers_url": "https://www.accenture.com/careers",
-            "description": "Global professional services company",
-            "categories": ["Consulting", "Technology", "Digital"]
-        },
-        {
-            "name": "Cognizant",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/6/6e/Cognizant_logo_2022.svg",
-            "color": "#1299D8",
-            "careers_url": "https://careers.cognizant.com",
-            "description": "Leading professional services company",
-            "categories": ["IT Services", "Consulting", "Digital"]
-        }
-    ]
-}
-
-
-JOB_MARKET_INSIGHTS = {
-    "trending_skills": [
-        {"name": "Artificial Intelligence", "growth": "+45%", "icon": "fas fa-brain"},
-        {"name": "Cloud Computing", "growth": "+38%", "icon": "fas fa-cloud"},
-        {"name": "Data Science", "growth": "+35%", "icon": "fas fa-chart-line"},
-        {"name": "Cybersecurity", "growth": "+32%", "icon": "fas fa-shield-alt"},
-        {"name": "DevOps", "growth": "+30%", "icon": "fas fa-code-branch"},
-        {"name": "Machine Learning", "growth": "+28%", "icon": "fas fa-robot"},
-        {"name": "Blockchain", "growth": "+25%", "icon": "fas fa-lock"},
-        {"name": "Big Data", "growth": "+23%", "icon": "fas fa-database"},
-        {"name": "Internet of Things", "growth": "+21%", "icon": "fas fa-wifi"}
-    ],
-    "top_locations": [
-        {"name": "Bangalore", "jobs": "50,000+", "icon": "fas fa-city"},
-        {"name": "Mumbai", "jobs": "35,000+", "icon": "fas fa-city"},
-        {"name": "Delhi NCR", "jobs": "30,000+", "icon": "fas fa-city"},
-        {"name": "Hyderabad", "jobs": "25,000+", "icon": "fas fa-city"},
-        {"name": "Pune", "jobs": "20,000+", "icon": "fas fa-city"},
-        {"name": "Chennai", "jobs": "15,000+", "icon": "fas fa-city"},
-        {"name": "Noida", "jobs": "10,000+", "icon": "fas fa-city"},
-        {"name": "Vadodara", "jobs": "7,000+", "icon": "fas fa-city"},
-        {"name": "Ahmedabad", "jobs": "6,000+", "icon": "fas fa-city"},
-        {"name": "Remote", "jobs": "3,000+", "icon": "fas fa-globe-americas"},
-    ],
-    "salary_insights": [
-        {"role": "Machine Learning Engineer", "range": "10-35 LPA", "experience": "0-5 years"},
-        {"role": "Big Data Engineer", "range": "8-30 LPA", "experience": "0-5 years"},
-        {"role": "Software Engineer", "range": "5-25 LPA", "experience": "0-5 years"},
-        {"role": "Data Scientist", "range": "8-30 LPA", "experience": "0-5 years"},
-        {"role": "DevOps Engineer", "range": "6-28 LPA", "experience": "0-5 years"},
-        {"role": "UI/UX Designer", "range": "5-25 LPA", "experience": "0-5 years"},
-        {"role": "Full Stack Developer", "range": "8-30 LPA", "experience": "0-5 years"},
-        {"role": "C++/C#/Python/Java Developer", "range": "6-26 LPA", "experience": "0-5 years"},
-        {"role": "Django Developer", "range": "7-27 LPA", "experience": "0-5 years"},
-        {"role": "Cloud Engineer", "range": "6-26 LPA", "experience": "0-5 years"},
-        {"role": "Google Cloud/AWS/Azure Engineer", "range": "6-26 LPA", "experience": "0-5 years"},
-        {"role": "Salesforce Engineer", "range": "6-26 LPA", "experience": "0-5 years"},
-    ]
-}
-
-def get_featured_companies(category=None):
-    """Get featured companies with original logos, optionally filtered by category"""
-    def has_valid_logo(company):
-        return "logo_url" in company and company["logo_url"].startswith("https://upload.wikimedia.org/")
-
-    if category and category in FEATURED_COMPANIES:
-        return [company for company in FEATURED_COMPANIES[category] if has_valid_logo(company)]
-    
-    return [
-        company for companies in FEATURED_COMPANIES.values()
-        for company in companies if has_valid_logo(company)
-    ]
-
-
-def get_market_insights():
-    """Get job market insights"""
-    return JOB_MARKET_INSIGHTS
-
-def get_company_info(company_name):
-    """Get company information by name"""
-    for companies in FEATURED_COMPANIES.values():
-        for company in companies:
-            if company["name"] == company_name:
-                return company
-    return None
-
-def get_companies_by_industry(industry):
-    """Get list of companies by industry"""
-    companies = []
-    for companies_list in FEATURED_COMPANIES.values():
-        for company in companies_list:
-            if "industry" in company and company["industry"] == industry:
-                companies.append(company)
-    return companies
-
-# Gender-coded language
-gender_words = {
-    "masculine": [
-        "active", "aggressive", "ambitious", "analytical", "assertive", "autonomous", "boast", "bold",
-        "challenging", "competitive", "confident", "courageous", "decisive", "determined", "dominant", "driven",
-        "dynamic", "forceful", "independent", "individualistic", "intellectual", "lead", "leader", "objective",
-        "outspoken", "persistent", "principled", "proactive", "resilient", "self-reliant", "self-sufficient",
-        "strong", "superior", "tenacious","guru","tech guru","technical guru", "visionary", "manpower", "strongman", "command",
-        "assert", "headstrong", "rockstar", "superstar", "go-getter", "trailblazer", "results-driven",
-        "fast-paced", "driven", "determination", "competitive spirit"
-    ],
-    
-    "feminine": [
-        "affectionate", "agreeable", "attentive", "collaborative", "committed", "compassionate", "considerate",
-        "cooperative", "dependable", "dependent", "emotional", "empathetic", "enthusiastic", "friendly", "gentle",
-        "honest", "inclusive", "interpersonal", "kind", "loyal", "modest", "nurturing", "pleasant", "polite",
-        "sensitive", "supportive", "sympathetic", "tactful", "tender", "trustworthy", "understanding", "warm",
-        "yield", "adaptable", "communal", "helpful", "dedicated", "respectful", "nurture", "sociable",
-        "relationship-oriented", "team player", "dependable", "people-oriented", "empathetic listener",
-        "gentle communicator", "open-minded"
-    ]
-}
-# Sample job search function
-import uuid
-import urllib.parse
-
-def search_jobs(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
-    # Encode values for query
-    role_encoded = urllib.parse.quote_plus(job_role.strip())
-    loc_encoded = urllib.parse.quote_plus(location.strip())
-
-    # Create role/city slugs for path
-    role_path = job_role.strip().lower().replace(" ", "-")
-    city = location.strip().split(",")[0].strip().lower()
-    city_path = city.replace(" ", "-")
-    city_query = city.replace(" ", "%20") + "%20and%20india"
-
-    # Experience mappings
-    experience_range_map = {
-        "Internship": "0~0", "Entry Level": "1~1", "Associate": "2~3",
-        "Mid-Senior Level": "4~7", "Director": "8~15", "Executive": "16~20"
-    }
-    experience_exact_map = {
-        "Internship": "0", "Entry Level": "1", "Associate": "2",
-        "Mid-Senior Level": "4", "Director": "8", "Executive": "16"
-    }
-    linkedin_exp_map = {
-        "Internship": "1", "Entry Level": "2", "Associate": "3",
-        "Mid-Senior Level": "4", "Director": "5", "Executive": "6"
-    }
-    job_type_map = {
-        "Full-time": "F", "Part-time": "P", "Contract": "C",
-        "Temporary": "T", "Volunteer": "V", "Internship": "I"
-    }
-
-    # LinkedIn
-    linkedin_url = f"https://www.linkedin.com/jobs/search/?keywords={role_encoded}&location={loc_encoded}"
-    if experience_level in linkedin_exp_map:
-        linkedin_url += f"&f_E={linkedin_exp_map[experience_level]}"
-    if job_type in job_type_map:
-        linkedin_url += f"&f_JT={job_type_map[job_type]}"
-
-    # Experience values
-    if foundit_experience is not None:
-        experience_range = f"{foundit_experience}~{foundit_experience}"
-        experience_exact = str(foundit_experience)
-    else:
-        experience_range = experience_range_map.get(experience_level, "")
-        experience_exact = experience_exact_map.get(experience_level, "")
-
-    # ✅ Naukri (cleaned)
-    naukri_url = (
-        f"https://www.naukri.com/{role_path}-jobs-in-{city_path}-and-india"
-        f"?k={role_encoded}"
-        f"&l={city_query}"
-    )
-    if experience_exact:
-        naukri_url += f"&experience={experience_exact}"
-    naukri_url += "&nignbevent_src=jobsearchDeskGNB"
-
-    # ✅ FoundIt
-    search_id = uuid.uuid4()
-    child_search_id = uuid.uuid4()
-    foundit_url = (
-        f"https://www.foundit.in/search/{role_path}-jobs-in-{city_path}"
-        f"?query={role_encoded}"
-        f"&locations={loc_encoded}"
-        f"&experienceRanges={urllib.parse.quote_plus(experience_range)}"
-        f"&experience={experience_exact}"
-        f"&queryDerived=true"
-        f"&searchId={search_id}"
-        f"&child_search_id={child_search_id}"
-    )
-
-    return [
-        {"title": f"LinkedIn: {job_role} jobs in {location}", "link": linkedin_url},
-        {"title": f"Naukri: {job_role} jobs in {location}", "link": naukri_url},
-        {"title": f"FoundIt (Monster): {job_role} jobs in {location}", "link": foundit_url}
-    ]
-
-
-
-def add_hyperlink(paragraph, url, text, color="0000FF", underline=True):
-    """
-    A function to add a hyperlink to a paragraph.
-    """
-    part = paragraph.part
-    r_id = part.relate_to(url, RT.HYPERLINK, is_external=True)
-
-    hyperlink = OxmlElement('w:hyperlink')
-    hyperlink.set(qn('r:id'), r_id)
-
-    new_run = OxmlElement('w:r')
-    rPr = OxmlElement('w:rPr')
-
-    # Color and underline
-    if underline:
-        u = OxmlElement('w:u')
-        u.set(qn('w:val'), 'single')
-        rPr.append(u)
-
-    color_element = OxmlElement('w:color')
-    color_element.set(qn('w:val'), color)
-    rPr.append(color_element)
-
-    new_run.append(rPr)
-
-    text_elem = OxmlElement('w:t')
-    text_elem.text = text
-    new_run.append(text_elem)
-
-    hyperlink.append(new_run)
-    paragraph._p.append(hyperlink)
-    return hyperlink
 
 def generate_docx(text, filename="bias_free_resume.docx"):
     doc = Document()
@@ -1905,6 +1649,8 @@ Your role is to provide **balanced, objective scoring** that reflects industry s
 - 📅 Recent completion (within 2 years) → Gets recency bonus
 - 📂 Older completion → No penalty if skills are current
 
+
+
 **Experience Scoring Framework ({exp_weight} points max):**
 - 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
 - 28-31: Excellent (meets/exceeds years + strong domain fit + leadership + clear results)
@@ -2241,114 +1987,166 @@ def create_chain(vectorstore):
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-    st.sidebar.markdown("### 🏷️ Job Information")
-job_title = st.sidebar.text_input("💼 Job Title")  # <-- New input for job title
+# ---------------- Sidebar Layout with Inline Images ----------------
+import streamlit as st
 
-st.sidebar.markdown("### 📝 Paste Job Description")
-job_description = st.sidebar.text_area("Enter the Job Description here", height=200)
+st.sidebar.markdown("### 🏷️ Job Information")
 
-if job_description.strip() == "":
-    st.sidebar.warning("Please enter a job description to evaluate the resumes.")
+# ---------------- Job Information Dropdown ----------------
+with st.sidebar.expander("![Job](https://img.icons8.com/ios-filled/20/briefcase.png) Enter Job Details", expanded=False):
+    job_title = st.text_input(
+        "![Job](https://img.icons8.com/ios-filled/20/briefcase.png) Job Title"
+    )
 
-user_location = st.sidebar.text_input("📍 Preferred Job Location (City, Country)")
+    user_location = st.text_input(
+        "![Location](https://img.icons8.com/ios-filled/20/marker.png) Preferred Job Location (City, Country)"
+    )
 
-st.sidebar.markdown("### 🎛️ Customize ATS Scoring Weights")
+    job_description = st.text_area(
+        "![Description](https://img.icons8.com/ios-filled/20/document.png) Paste Job Description",
+        height=200
+    )
+
+    if job_description.strip() == "":
+        st.warning("Please enter a job description to evaluate the resumes.")
+
+# ---------------- Advanced Weights Dropdown ----------------
+with st.sidebar.expander("![Settings](https://img.icons8.com/ios-filled/20/settings.png) Customize ATS Scoring Weights", expanded=False):
+    edu_weight = st.slider("![Education](https://img.icons8.com/ios-filled/20/graduation-cap.png) Education Weight", 0, 50, 20)
+    exp_weight = st.slider("![Experience](https://img.icons8.com/ios-filled/20/portfolio.png) Experience Weight", 0, 50, 35)
+    skills_weight = st.slider("![Skills](https://img.icons8.com/ios-filled/20/gear.png) Skills Match Weight", 0, 50, 30)
+    lang_weight = st.slider("![Language](https://img.icons8.com/ios-filled/20/language.png) Language Quality Weight", 0, 10, 5)
+    keyword_weight = st.slider("![Keyword](https://img.icons8.com/ios-filled/20/key.png) Keyword Match Weight", 0, 20, 10)
+
+    total_weight = edu_weight + exp_weight + skills_weight + lang_weight + keyword_weight
+
+    # ---------------- Inline SVG Validation ----------------
+    if total_weight != 100:
+        st.markdown(
+            f"""
+            <div style="display:flex;align-items:center;gap:6px;
+                        border:1px solid #fca5a5;
+                        background:#fee2e2;
+                        padding:8px;
+                        border-radius:6px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="red" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10
+                             10-4.48 10-10S17.52 2 12 2zm0 15
+                             c-.83 0-1.5.67-1.5 1.5S11.17 20
+                             12 20s1.5-.67 1.5-1.5S12.83 17
+                             12 17zm1-4V7h-2v6h2z"/>
+                </svg>
+                <span style="color:#b91c1c;font-weight:500;">
+                    Total = {total_weight}. Please make it exactly 100.
+                </span>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    else:
+        st.markdown(
+            f"""
+            <div style="display:flex;align-items:center;gap:6px;
+                        border:1px solid #86efac;
+                        background:#dcfce7;
+                        padding:8px;
+                        border-radius:6px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="green" viewBox="0 0 24 24">
+                    <path d="M9 16.2l-3.5-3.5-1.4 1.4L9
+                             19 20.3 7.7l-1.4-1.4z"/>
+                </svg>
+                <span style="color:#166534;font-weight:500;">
+                    Total weight = 100
+                </span>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 
-edu_weight = st.sidebar.slider("🎓 Education Weight", 0, 50, 20)
-exp_weight = st.sidebar.slider("💼 Experience Weight", 0, 50, 35)
-skills_weight = st.sidebar.slider("🛠 Skills Match Weight", 0, 50, 30)
-lang_weight = st.sidebar.slider("🗣 Language Quality Weight", 0, 10, 5)
-keyword_weight = st.sidebar.slider("🔑 Keyword Match Weight", 0, 20, 10)
 
-total_weight = edu_weight + exp_weight + skills_weight + lang_weight + keyword_weight
+with tab1:
+    from streamlit_pdf_viewer import pdf_viewer
 
-if total_weight != 100:
-    st.sidebar.error(f"⚠️ Total = {total_weight}. Please make it exactly 100.")
-else:
-    st.sidebar.success("✅ Total weight = 100")
+    # 🎨 CSS for sliding success message
+    st.markdown("""
+    <style>
+    .slide-message {
+      position: relative;
+      overflow: hidden;
+      margin: 10px 0;
+      padding: 10px 15px;
+      border-radius: 10px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: slideIn 0.8s ease forwards;
+    }
+    .slide-message svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+    .success-msg { background: rgba(0,255,127,0.12); border-left: 5px solid #00FF7F; color:#00FF7F; }
+    .error-msg   { background: rgba(255,99,71,0.12);  border-left: 5px solid #FF6347; color:#FF6347; }
+    .warn-msg    { background: rgba(255,215,0,0.12); border-left: 5px solid #FFD700; color:#FFD700; }
 
-from streamlit_pdf_viewer import pdf_viewer
+    @keyframes slideIn {
+      0%   { transform: translateX(100%); opacity: 0; }
+      100% { transform: translateX(0); opacity: 1; }
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-# 🎨 CSS for sliding success message
-st.markdown("""
-<style>
-.slide-message {
-  position: relative;
-  overflow: hidden;
-  margin: 10px 0;
-  padding: 10px 15px;
-  border-radius: 10px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  animation: slideIn 0.8s ease forwards;
-}
-.slide-message svg {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-}
-.success-msg { background: rgba(0,255,127,0.12); border-left: 5px solid #00FF7F; color:#00FF7F; }
-.error-msg   { background: rgba(255,99,71,0.12);  border-left: 5px solid #FF6347; color:#FF6347; }
-.warn-msg    { background: rgba(255,215,0,0.12); border-left: 5px solid #FFD700; color:#FFD700; }
+    uploaded_files = st.file_uploader(
+        "📄 Upload PDF Resumes",
+        type=["pdf"],
+        accept_multiple_files=True,
+        help="Upload one or more resumes in PDF format (max 200MB each)."
+    )
 
-@keyframes slideIn {
-  0%   { transform: translateX(100%); opacity: 0; }
-  100% { transform: translateX(0); opacity: 1; }
-}
-</style>
-""", unsafe_allow_html=True)
+    if uploaded_files:
+        for uploaded_file in uploaded_files:
+            with st.container():
+                st.subheader(f"📄 Original Resume Preview: {uploaded_file.name}")
 
+                try:
+                    # ✅ Show PDF preview safely
+                    pdf_viewer(
+                        uploaded_file.read(),
+                        key=f"pdf_viewer_{uploaded_file.name}"
+                    )
 
-uploaded_files = st.file_uploader(
-    "📄 Upload PDF Resumes",
-    type=["pdf"],
-    accept_multiple_files=True,
-    help="Upload one or more resumes in PDF format (max 200MB each)."
-)
+                    # Reset pointer so file can be read again later
+                    uploaded_file.seek(0)
 
-if uploaded_files:
-    for uploaded_file in uploaded_files:
-        with st.container():
-            st.subheader(f"📄 Original Resume Preview: {uploaded_file.name}")
+                    # ✅ Extract text safely
+                    resume_text = safe_extract_text(uploaded_file)
 
-            try:
-                # ✅ Show PDF preview safely
-                pdf_viewer(
-                    uploaded_file.read(),
-                    key=f"pdf_viewer_{uploaded_file.name}"
-                )
+                    if resume_text:
+                        st.markdown(f"""
+                        <div class='slide-message success-msg'>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                            ✅ Successfully processed <b>{uploaded_file.name}</b>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        # 🔹 Continue with ATS scoring, bias detection, etc. here
+                    else:
+                        st.markdown(f"""
+                        <div class='slide-message warn-msg'>
+                            ⚠️ <b>{uploaded_file.name}</b> does not contain valid resume text.
+                        </div>
+                        """, unsafe_allow_html=True)
 
-                # Reset pointer so file can be read again later
-                uploaded_file.seek(0)
-
-                # ✅ Extract text safely
-                resume_text = safe_extract_text(uploaded_file)
-
-                if resume_text:
+                except Exception as e:
                     st.markdown(f"""
-                    <div class='slide-message success-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                        ✅ Successfully processed <b>{uploaded_file.name}</b>
+                    <div class='slide-message error-msg'>
+                        ❌ Could not display or process <b>{uploaded_file.name}</b>: {e}
                     </div>
                     """, unsafe_allow_html=True)
-                    # 🔹 Continue with ATS scoring, bias detection, etc. here
-                else:
-                    st.markdown(f"""
-                    <div class='slide-message warn-msg'>
-                        ⚠️ <b>{uploaded_file.name}</b> does not contain valid resume text.
-                    </div>
-                    """, unsafe_allow_html=True)
 
-            except Exception as e:
-                st.markdown(f"""
-                <div class='slide-message error-msg'>
-                    ❌ Could not display or process <b>{uploaded_file.name}</b>: {e}
-                </div>
-                """, unsafe_allow_html=True)
 
 
 
@@ -2494,7 +2292,7 @@ if uploaded_files and job_description:
             f.write(uploaded_file.getbuffer())
 
         # ✅ Simulate scanning delay
-        time.sleep(4)
+        time.sleep(8)
 
         # ✅ Extract text from PDF
         text = extract_text_from_pdf(file_path)
@@ -2665,7 +2463,7 @@ if uploaded_files and job_description:
         st.markdown(SUCCESS_HTML, unsafe_allow_html=True)
 
         # ⏳ Short pause, then auto rerun
-        time.sleep(4)
+        time.sleep(6)
         st.rerun()
 
 
@@ -2679,15 +2477,29 @@ if uploaded_files and job_description:
         st.session_state.chain = create_chain(st.session_state.vectorstore)
 
 # 🔄 Developer Reset Button
-if st.button("🔄 Refresh view"):
-    st.session_state.processed_files.clear()
-    st.session_state.resume_data.clear()
-    st.success("✅ Cleared uploaded resume history. You can re-upload now.")
+import time
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", 
-    "📚 Course Recommendation", "📁 Admin DB View"
-])
+with tab1:
+    if st.button("🔄 Refresh view"):
+        st.session_state.processed_files.clear()
+        st.session_state.resume_data.clear()
+
+        # Temporary placeholder for sliding success message
+        msg_placeholder = st.empty()
+        msg_placeholder.markdown("""
+        <div class='slide-message success-msg'>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+            ✅ Cleared uploaded resume history. You can re-upload now.
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Wait 3 seconds then clear message
+        time.sleep(3)
+        msg_placeholder.empty()
+
+
+
 
 def generate_resume_report_html(resume):
     candidate_name = resume.get('Candidate Name', 'Not Found')
@@ -3062,25 +2874,161 @@ with tab1:
 
     else:           
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
+
+# ---------------- Sidebar (ONLY in Tab 2) ----------------
 with tab2:
     st.session_state.active_tab = "Resume Builder"
 
-    st.markdown("## 🧾 <span style='color:#336699;'>Advanced Resume Builder</span>", unsafe_allow_html=True)
-    st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
+    # ---------- Title with Blue Glassmorphism + Shine ----------
+    st.markdown("""
+    <style>
+    .glass-title {
+        background: rgba(10, 20, 40, 0.5);
+        border-radius: 20px;
+        padding: 20px;
+        backdrop-filter: blur(14px);
+        box-shadow: 0 8px 32px rgba(0, 200, 255, 0.25);
+        border: 1px solid rgba(0, 200, 255, 0.3);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .glass-title h2 {
+        color: #4da6ff;
+        margin: 0;
+        text-shadow: 0 0 12px rgba(0,200,255,0.7);
+        font-weight: 600;
+    }
+    .glass-title::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+            120deg,
+            rgba(255,255,255,0.18) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%
+        );
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
+    .glass-title:hover::before {
+        left: 100%;
+        top: 100%;
+    }
+    </style>
 
-    # 📸 Upload profile photo with enhanced styling
-    uploaded_image = st.file_uploader("Upload a Profile Image", type=["png", "jpg", "jpeg"])
+    <div class="glass-title">
+        <h2>🧾 Advanced Resume Builder</h2>
+    </div>
+    """, unsafe_allow_html=True)
 
+    st.markdown("<hr style='border-top: 2px solid rgba(0,200,255,0.4);'>", unsafe_allow_html=True)
+
+    # ---------- Global Styles (Glassmorphism + Glow + Shine) ----------
+    st.markdown("""
+        <style>
+        /* File uploader */
+        .uploadedFile { 
+            background: rgba(10, 20, 40, 0.6) !important;
+            border: 1px solid rgba(0,200,255,0.5) !important;
+            border-radius: 14px !important;
+            color: #cce6ff !important;
+            box-shadow: 0 0 12px rgba(0,200,255,0.3) !important;
+        }
+
+        /* Sidebar expander style */
+        .streamlit-expanderHeader {
+            background: rgba(10, 20, 40, 0.45);
+            border-radius: 12px;
+            color: #4da6ff !important;
+            font-weight: bold;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 12px rgba(0,200,255,0.25);
+            transition: all 0.3s ease-in-out;
+        }
+        .streamlit-expanderHeader:hover {
+            background: rgba(0, 200, 255, 0.12);
+            box-shadow: 0 0 16px rgba(0,200,255,0.4);
+        }
+        .streamlit-expanderContent {
+            background: rgba(10, 20, 40, 0.45);
+            border-radius: 10px;
+            padding: 8px;
+            color: #e6f7ff;
+        }
+
+        /* Selectbox */
+        div[data-baseweb="select"] {
+            background: rgba(10, 20, 40, 0.35);
+            border: 1px solid rgba(0, 200, 255, 0.6);
+            border-radius: 12px;
+            color: #e6f7ff;
+            backdrop-filter: blur(14px);
+            box-shadow: 0 0 10px rgba(0,200,255,0.3);
+        }
+
+        /* Buttons with Shine Effect */
+        div.stButton > button {
+            position: relative;
+            background: rgba(10, 20, 40, 0.35);
+            border: 1px solid rgba(0, 200, 255, 0.6);
+            color: #e6f7ff;
+            border-radius: 14px;
+            padding: 10px 20px;
+            font-size: 15px;
+            font-weight: 500;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 0 12px rgba(0, 200, 255, 0.35),
+                        inset 0 0 20px rgba(0, 200, 255, 0.05);
+            overflow: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+        div.stButton > button::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                120deg,
+                rgba(255,255,255,0.15) 0%,
+                rgba(255,255,255,0.05) 40%,
+                transparent 60%
+            );
+            transform: rotate(25deg);
+            transition: all 0.6s;
+        }
+        div.stButton > button:hover::before {
+            left: 100%;
+            top: 100%;
+        }
+        div.stButton > button:hover {
+            background: rgba(0, 200, 255, 0.12);
+            box-shadow: 0 0 20px rgba(0, 200, 255, 0.65),
+                        inset 0 0 25px rgba(0, 200, 255, 0.15);
+            transform: translateY(-2px);
+        }
+        div.stButton > button:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 10px rgba(0, 200, 255, 0.45);
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # 📸 Upload profile photo
+    uploaded_image = st.file_uploader("Upload a Profile Image", type=["png", "jpg", "jpeg"], key="profile_img_upload")
     profile_img_html = ""
 
     if uploaded_image:
         import base64
         encoded_image = base64.b64encode(uploaded_image.read()).decode()
-
-        # 🔄 Save to session state for reuse in preview/export
         st.session_state["encoded_profile_image"] = encoded_image
 
-        # 🖼️ Enhanced image preview with modern styling
         profile_img_html = f"""
         <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
             <img src="data:image/png;base64,{encoded_image}" alt="Profile Photo"
@@ -3090,126 +3038,151 @@ with tab2:
                     border-radius: 50%;
                     object-fit: cover;
                     object-position: center;
-                    border: 4px solid #ffffff;
+                    border: 4px solid rgba(255,255,255,0.6);
                     box-shadow:
                         0 0 0 3px #4da6ff,
                         0 8px 25px rgba(77, 166, 255, 0.3),
-                        0 4px 15px rgba(0, 0, 0, 0.1);
-                    transition: all 0.3s ease;
-                " />
+                        0 4px 15px rgba(0, 0, 0, 0.15);
+                    transition: transform 0.3s ease-in-out;
+                "
+                onmouseover="this.style.transform='scale(1.07)'"
+                onmouseout="this.style.transform='scale(1)'"
+             />
         </div>
         """
         st.markdown(profile_img_html, unsafe_allow_html=True)
     else:
         st.info("📸 Please upload a clear, front-facing profile photo (square or vertical preferred).")
 
-    # Initialize session state
-    fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary", "skills", "languages", "interests","Softskills","job_title"]
+    # ---------------- Session State Defaults ----------------
+    fields = ["name", "email", "phone", "linkedin", "location", "portfolio", "summary",
+              "skills", "languages", "interests", "Softskills", "job_title"]
     for f in fields:
         st.session_state.setdefault(f, "")
+
     st.session_state.setdefault("experience_entries", [{"title": "", "company": "", "duration": "", "description": ""}])
     st.session_state.setdefault("education_entries", [{"degree": "", "institution": "", "year": "", "details": ""}])
     st.session_state.setdefault("project_entries", [{"title": "", "tech": "", "duration": "", "description": ""}])
     st.session_state.setdefault("project_links", [])
     st.session_state.setdefault("certificate_links", [{"name": "", "link": "", "duration": "", "description": ""}])
-    
-    # Sidebar controls
-    with st.sidebar:
-        st.markdown("### ➕ Add More Sections")
-        if st.button("➕ Add Experience"):
-            st.session_state.experience_entries.append({"title": "", "company": "", "duration": "", "description": ""})
-        if st.button("➕ Add Education"):
-            st.session_state.education_entries.append({"degree": "", "institution": "", "year": "", "details": ""})
-        if st.button("➕ Add Project"):
-            st.session_state.project_entries.append({"title": "", "tech": "", "duration": "", "description": ""})
-        if st.button("➕ Add Certificate"):
-           st.session_state.certificate_links.append({"name": "", "link": "", "duration": "", "description": ""})
 
-    with st.form("resume_form"):
+    # ---------------- Sidebar (ONLY in Tab 2) ----------------
+    with st.sidebar:
+        st.markdown("### ✨ Manage Sections")
+
+        if "edit_mode" not in st.session_state:
+            st.session_state.edit_mode = "Add"
+
+        mode = st.selectbox("Mode", ["Add", "Delete"], index=0, key="mode_dropdown")
+        st.session_state.edit_mode = mode
+        st.markdown("---")
+
+        # 💼 Experience
+        with st.expander("💼 Experience"):
+            if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Experience", key="exp_btn"):
+                if mode == "Add":
+                    st.session_state.experience_entries.append(
+                        {"title": "", "company": "", "duration": "", "description": ""}
+                    )
+                elif mode == "Delete" and len(st.session_state.experience_entries) > 1:
+                    st.session_state.experience_entries.pop()
+
+        # 🎓 Education
+        with st.expander("🎓 Education"):
+            if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Education", key="edu_btn"):
+                if mode == "Add":
+                    st.session_state.education_entries.append(
+                        {"degree": "", "institution": "", "year": "", "details": ""}
+                    )
+                elif mode == "Delete" and len(st.session_state.education_entries) > 1:
+                    st.session_state.education_entries.pop()
+
+        # 🛠 Projects
+        with st.expander("🛠 Projects"):
+            if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Project", key="proj_btn"):
+                if mode == "Add":
+                    st.session_state.project_entries.append(
+                        {"title": "", "tech": "", "duration": "", "description": ""}
+                    )
+                elif mode == "Delete" and len(st.session_state.project_entries) > 1:
+                    st.session_state.project_entries.pop()
+
+        # 📜 Certificates
+        with st.expander("📜 Certificates"):
+            if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Certificate", key="cert_btn"):
+                if mode == "Add":
+                    st.session_state.certificate_links.append(
+                        {"name": "", "link": "", "duration": "", "description": ""}
+                    )
+                elif mode == "Delete" and len(st.session_state.certificate_links) > 1:
+                    st.session_state.certificate_links.pop()
+
+
+
+
+
+    # ---------------- Resume Form ----------------
+    with st.form("resume_form", clear_on_submit=False):
         st.markdown("### 👤 <u>Personal Information</u>", unsafe_allow_html=True)
-        with st.container():
-            col1, col2 = st.columns(2)
-            with col1:
-                st.text_input("👤 Full Name ", key="name")
-                st.text_input("📞 Phone Number", key="phone")
-                st.text_input("📍 Location", key="location")
-            with col2:
-                st.text_input("📧 Email", key="email")
-                st.text_input("🔗 LinkedIn", key="linkedin")
-                st.text_input("🌐 Portfolio", key="portfolio")
-                st.text_input("💼 Job Title", key="job_title")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.session_state.name = st.text_input("👤 Full Name", value=st.session_state.name, key="name_input")
+            st.session_state.phone = st.text_input("📞 Phone Number", value=st.session_state.phone, key="phone_input")
+            st.session_state.location = st.text_input("📍 Location", value=st.session_state.location, key="loc_input")
+        with col2:
+            st.session_state.email = st.text_input("📧 Email", value=st.session_state.email, key="email_input")
+            st.session_state.linkedin = st.text_input("🔗 LinkedIn", value=st.session_state.linkedin, key="ln_input")
+            st.session_state.portfolio = st.text_input("🌐 Portfolio", value=st.session_state.portfolio, key="port_input")
+            st.session_state.job_title = st.text_input("💼 Job Title", value=st.session_state.job_title, key="job_input")
 
         st.markdown("### 📝 <u>Professional Summary</u>", unsafe_allow_html=True)
-        st.text_area("Summary", key="summary")
+        st.session_state.summary = st.text_area("Summary", value=st.session_state.summary, key="summary_input")
 
         st.markdown("### 💼 <u>Skills, Languages, Interests & Soft Skills</u>", unsafe_allow_html=True)
-        st.text_area("Skills (comma-separated)", key="skills")
-        st.text_area("Languages (comma-separated)", key="languages")
-        st.text_area("Interests (comma-separated)", key="interests")
-        st.text_area("Softskills (comma-separated)", key="Softskills")
+        st.session_state.skills = st.text_area("Skills (comma-separated)", value=st.session_state.skills, key="skills_input")
+        st.session_state.languages = st.text_area("Languages (comma-separated)", value=st.session_state.languages, key="lang_input")
+        st.session_state.interests = st.text_area("Interests (comma-separated)", value=st.session_state.interests, key="int_input")
+        st.session_state.Softskills = st.text_area("Softskills (comma-separated)", value=st.session_state.Softskills, key="soft_input")
 
         st.markdown("### 🧱 <u>Work Experience</u>", unsafe_allow_html=True)
         for idx, exp in enumerate(st.session_state.experience_entries):
             with st.expander(f"Experience #{idx+1}", expanded=True):
-                exp["title"] = st.text_input(f"Job Title", value=exp["title"], key=f"title_{idx}")
-                exp["company"] = st.text_input(f"Company", value=exp["company"], key=f"company_{idx}")
-                exp["duration"] = st.text_input(f"Duration", value=exp["duration"], key=f"duration_{idx}")
-                exp["description"] = st.text_area(f"Description", value=exp["description"], key=f"description_{idx}")
+                exp["title"] = st.text_input("Job Title", value=exp.get("title", ""), key=f"title_{idx}_{len(st.session_state.experience_entries)}")
+                exp["company"] = st.text_input("Company", value=exp.get("company", ""), key=f"company_{idx}_{len(st.session_state.experience_entries)}")
+                exp["duration"] = st.text_input("Duration", value=exp.get("duration", ""), key=f"duration_{idx}_{len(st.session_state.experience_entries)}")
+                exp["description"] = st.text_area("Description", value=exp.get("description", ""), key=f"description_{idx}_{len(st.session_state.experience_entries)}")
 
         st.markdown("### 🎓 <u>Education</u>", unsafe_allow_html=True)
         for idx, edu in enumerate(st.session_state.education_entries):
             with st.expander(f"Education #{idx+1}", expanded=True):
-                edu["degree"] = st.text_input(f"Degree", value=edu["degree"], key=f"degree_{idx}")
-                edu["institution"] = st.text_input(f"Institution", value=edu["institution"], key=f"institution_{idx}")
-                edu["year"] = st.text_input(f"Year", value=edu["year"], key=f"edu_year_{idx}")
-                edu["details"] = st.text_area(f"Details", value=edu["details"], key=f"edu_details_{idx}")
+                edu["degree"] = st.text_input("Degree", value=edu.get("degree", ""), key=f"degree_{idx}_{len(st.session_state.education_entries)}")
+                edu["institution"] = st.text_input("Institution", value=edu.get("institution", ""), key=f"institution_{idx}_{len(st.session_state.education_entries)}")
+                edu["year"] = st.text_input("Year", value=edu.get("year", ""), key=f"edu_year_{idx}_{len(st.session_state.education_entries)}")
+                edu["details"] = st.text_area("Details", value=edu.get("details", ""), key=f"edu_details_{idx}_{len(st.session_state.education_entries)}")
 
         st.markdown("### 🛠 <u>Projects</u>", unsafe_allow_html=True)
-
         for idx, proj in enumerate(st.session_state.project_entries):
             with st.expander(f"Project #{idx+1}", expanded=True):
-                # Keys for each project field
-                title_key = f"proj_title_{idx}"
-                tech_key = f"proj_tech_{idx}"
-                duration_key = f"proj_duration_{idx}"
-                desc_key = f"proj_desc_{idx}"
-
-                # Initialize only once if key doesn't exist
-                if title_key not in st.session_state:
-                    st.session_state[title_key] = proj["title"]
-                if tech_key not in st.session_state:
-                    st.session_state[tech_key] = proj["tech"]
-                if duration_key not in st.session_state:
-                    st.session_state[duration_key] = proj["duration"]
-                if desc_key not in st.session_state:
-                    st.session_state[desc_key] = proj["description"]
-
-                # Inputs (no value=..., only key)
-                st.text_input("Project Title", key=title_key)
-                st.text_input("Tech Stack", key=tech_key)
-                st.text_input("Duration", key=duration_key)
-                st.text_area("Description", key=desc_key)
-
-                # Sync back to project_entries
-                proj["title"] = st.session_state[title_key]
-                proj["tech"] = st.session_state[tech_key]
-                proj["duration"] = st.session_state[duration_key]
-                proj["description"] = st.session_state[desc_key]
+                proj["title"] = st.text_input("Project Title", value=proj.get("title", ""), key=f"proj_title_{idx}_{len(st.session_state.project_entries)}")
+                proj["tech"] = st.text_input("Tech Stack", value=proj.get("tech", ""), key=f"proj_tech_{idx}_{len(st.session_state.project_entries)}")
+                proj["duration"] = st.text_input("Duration", value=proj.get("duration", ""), key=f"proj_duration_{idx}_{len(st.session_state.project_entries)}")
+                proj["description"] = st.text_area("Description", value=proj.get("description", ""), key=f"proj_desc_{idx}_{len(st.session_state.project_entries)}")
 
         st.markdown("### 🔗 Project Links")
-        project_links_input = st.text_area("Enter one project link per line:")
+        project_links_input = st.text_area("Enter one project link per line:", value="\n".join(st.session_state.project_links), key="proj_links_input")
         if project_links_input:
             st.session_state.project_links = [link.strip() for link in project_links_input.splitlines() if link.strip()]
 
         st.markdown("### 🧾 <u>Certificates</u>", unsafe_allow_html=True)
         for idx, cert in enumerate(st.session_state.certificate_links):
             with st.expander(f"Certificate #{idx+1}", expanded=True):
-                cert["name"] = st.text_input(f"Certificate Name", value=cert["name"], key=f"cert_name_{idx}")
-                cert["link"] = st.text_input(f"Certificate Link", value=cert["link"], key=f"cert_link_{idx}")
-                cert["duration"] = st.text_input(f"Duration", value=cert["duration"], key=f"cert_duration_{idx}")
-                cert["description"] = st.text_area(f"Description", value=cert["description"], key=f"cert_description_{idx}")
+                cert["name"] = st.text_input("Certificate Name", value=cert.get("name", ""), key=f"cert_name_{idx}_{len(st.session_state.certificate_links)}")
+                cert["link"] = st.text_input("Certificate Link", value=cert.get("link", ""), key=f"cert_link_{idx}_{len(st.session_state.certificate_links)}")
+                cert["duration"] = st.text_input("Duration", value=cert.get("duration", ""), key=f"cert_duration_{idx}_{len(st.session_state.certificate_links)}")
+                cert["description"] = st.text_area("Description", value=cert.get("description", ""), key=f"cert_description_{idx}_{len(st.session_state.certificate_links)}")
 
         submitted = st.form_submit_button("📑 Generate Resume")
+
 
         if submitted:
             st.success("✅ Resume Generated Successfully! Scroll down to preview or download.")
@@ -4660,8 +4633,319 @@ with tab2:
 
 
 
+from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
 
-import streamlit as st
+
+
+
+
+FEATURED_COMPANIES = {
+    "tech": [
+        {
+            "name": "Google",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg",
+            "color": "#4285F4",
+            "careers_url": "https://careers.google.com",
+            "description": "Leading technology company known for search, cloud, and innovation",
+            "categories": ["Software", "AI/ML", "Cloud", "Data Science"]
+        },
+        {
+            "name": "Microsoft",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
+            "color": "#00A4EF",
+            "careers_url": "https://careers.microsoft.com",
+            "description": "Global leader in software, cloud, and enterprise solutions",
+            "categories": ["Software", "Cloud", "Gaming", "Enterprise"]
+        },
+        {
+            "name": "Amazon",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
+            "color": "#FF9900",
+            "careers_url": "https://www.amazon.jobs",
+            "description": "E-commerce and cloud computing giant",
+            "categories": ["Software", "Operations", "Cloud", "Retail"]
+        },
+        {
+            "name": "Apple",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
+            "color": "#555555",
+            "careers_url": "https://www.apple.com/careers",
+            "description": "Innovation leader in consumer technology",
+            "categories": ["Software", "Hardware", "Design", "AI/ML"]
+        },
+        {
+            "name": "Facebook",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/0/05/Facebook_Logo_%282019%29.png",
+            "color": "#1877F2",
+            "careers_url": "https://www.metacareers.com/",
+            "description": "Social media and technology company",
+            "categories": ["Software", "Marketing", "Networking", "AI/ML"]
+        },
+        {
+            "name": "Netflix",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg",
+            "color": "#E50914",
+            "careers_url": "https://explore.jobs.netflix.net/careers",
+            "description": "Streaming media company",
+            "categories": ["Software", "Marketing", "Design", "Service"],
+            "website": "https://jobs.netflix.com/",
+            "industry": "Entertainment & Technology"
+        }
+    ],
+    "indian_tech": [
+        {
+            "name": "TCS",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/f6/TCS_New_Logo.svg",
+            "color": "#0070C0",
+            "careers_url": "https://www.tcs.com/careers",
+            "description": "India's largest IT services company",
+            "categories": ["IT Services", "Consulting", "Digital"]
+        },
+        {
+            "name": "Infosys",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/5/55/Infosys_logo.svg",
+            "color": "#007CC3",
+            "careers_url": "https://www.infosys.com/careers",
+            "description": "Global leader in digital services and consulting",
+            "categories": ["IT Services", "Consulting", "Digital"]
+        },
+        {
+            "name": "Wipro",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/8/80/Wipro_Primary_Logo_Color_RGB.svg",
+            "color": "#341F65",
+            "careers_url": "https://careers.wipro.com",
+            "description": "Leading global information technology company",
+            "categories": ["IT Services", "Consulting", "Digital"]
+        },
+        {
+            "name": "HCL",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/5/5e/HCL_Technologies_logo.svg",
+            "color": "#0075C9",
+            "careers_url": "https://www.hcltech.com/careers",
+            "description": "Global technology company",
+            "categories": ["IT Services", "Engineering", "Digital"]
+        }
+    ],
+    "global_corps": [
+        {
+            "name": "IBM",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg",
+            "color": "#1F70C1",
+            "careers_url": "https://www.ibm.com/careers",
+            "description": "Global leader in technology and consulting",
+            "categories": ["Software", "Consulting", "AI/ML", "Cloud"],
+            "website": "https://www.ibm.com/careers/",
+            "industry": "Technology & Consulting"
+        },
+        {
+            "name": "Accenture",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/8/80/Accenture_Logo.svg",
+            "color": "#A100FF",
+            "careers_url": "https://www.accenture.com/careers",
+            "description": "Global professional services company",
+            "categories": ["Consulting", "Technology", "Digital"]
+        },
+        {
+            "name": "Cognizant",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/6/6e/Cognizant_logo_2022.svg",
+            "color": "#1299D8",
+            "careers_url": "https://careers.cognizant.com",
+            "description": "Leading professional services company",
+            "categories": ["IT Services", "Consulting", "Digital"]
+        }
+    ]
+}
+
+
+JOB_MARKET_INSIGHTS = {
+    "trending_skills": [
+        {"name": "Artificial Intelligence", "growth": "+45%", "icon": "fas fa-brain"},
+        {"name": "Cloud Computing", "growth": "+38%", "icon": "fas fa-cloud"},
+        {"name": "Data Science", "growth": "+35%", "icon": "fas fa-chart-line"},
+        {"name": "Cybersecurity", "growth": "+32%", "icon": "fas fa-shield-alt"},
+        {"name": "DevOps", "growth": "+30%", "icon": "fas fa-code-branch"},
+        {"name": "Machine Learning", "growth": "+28%", "icon": "fas fa-robot"},
+        {"name": "Blockchain", "growth": "+25%", "icon": "fas fa-lock"},
+        {"name": "Big Data", "growth": "+23%", "icon": "fas fa-database"},
+        {"name": "Internet of Things", "growth": "+21%", "icon": "fas fa-wifi"}
+    ],
+    "top_locations": [
+        {"name": "Bangalore", "jobs": "50,000+", "icon": "fas fa-city"},
+        {"name": "Mumbai", "jobs": "35,000+", "icon": "fas fa-city"},
+        {"name": "Delhi NCR", "jobs": "30,000+", "icon": "fas fa-city"},
+        {"name": "Hyderabad", "jobs": "25,000+", "icon": "fas fa-city"},
+        {"name": "Pune", "jobs": "20,000+", "icon": "fas fa-city"},
+        {"name": "Chennai", "jobs": "15,000+", "icon": "fas fa-city"},
+        {"name": "Noida", "jobs": "10,000+", "icon": "fas fa-city"},
+        {"name": "Vadodara", "jobs": "7,000+", "icon": "fas fa-city"},
+        {"name": "Ahmedabad", "jobs": "6,000+", "icon": "fas fa-city"},
+        {"name": "Remote", "jobs": "3,000+", "icon": "fas fa-globe-americas"},
+    ],
+    "salary_insights": [
+        {"role": "Machine Learning Engineer", "range": "10-35 LPA", "experience": "0-5 years"},
+        {"role": "Big Data Engineer", "range": "8-30 LPA", "experience": "0-5 years"},
+        {"role": "Software Engineer", "range": "5-25 LPA", "experience": "0-5 years"},
+        {"role": "Data Scientist", "range": "8-30 LPA", "experience": "0-5 years"},
+        {"role": "DevOps Engineer", "range": "6-28 LPA", "experience": "0-5 years"},
+        {"role": "UI/UX Designer", "range": "5-25 LPA", "experience": "0-5 years"},
+        {"role": "Full Stack Developer", "range": "8-30 LPA", "experience": "0-5 years"},
+        {"role": "C++/C#/Python/Java Developer", "range": "6-26 LPA", "experience": "0-5 years"},
+        {"role": "Django Developer", "range": "7-27 LPA", "experience": "0-5 years"},
+        {"role": "Cloud Engineer", "range": "6-26 LPA", "experience": "0-5 years"},
+        {"role": "Google Cloud/AWS/Azure Engineer", "range": "6-26 LPA", "experience": "0-5 years"},
+        {"role": "Salesforce Engineer", "range": "6-26 LPA", "experience": "0-5 years"},
+    ]
+}
+
+def get_featured_companies(category=None):
+    """Get featured companies with original logos, optionally filtered by category"""
+    def has_valid_logo(company):
+        return "logo_url" in company and company["logo_url"].startswith("https://upload.wikimedia.org/")
+
+    if category and category in FEATURED_COMPANIES:
+        return [company for company in FEATURED_COMPANIES[category] if has_valid_logo(company)]
+    
+    return [
+        company for companies in FEATURED_COMPANIES.values()
+        for company in companies if has_valid_logo(company)
+    ]
+
+
+def get_market_insights():
+    """Get job market insights"""
+    return JOB_MARKET_INSIGHTS
+
+def get_company_info(company_name):
+    """Get company information by name"""
+    for companies in FEATURED_COMPANIES.values():
+        for company in companies:
+            if company["name"] == company_name:
+                return company
+    return None
+
+def get_companies_by_industry(industry):
+    """Get list of companies by industry"""
+    companies = []
+    for companies_list in FEATURED_COMPANIES.values():
+        for company in companies_list:
+            if "industry" in company and company["industry"] == industry:
+                companies.append(company)
+    return companies
+
+# Gender-coded language
+
+# Sample job search function
+import uuid
+import urllib.parse
+
+def search_jobs(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
+    # Encode values for query
+    role_encoded = urllib.parse.quote_plus(job_role.strip())
+    loc_encoded = urllib.parse.quote_plus(location.strip())
+
+    # Create role/city slugs for path
+    role_path = job_role.strip().lower().replace(" ", "-")
+    city = location.strip().split(",")[0].strip().lower()
+    city_path = city.replace(" ", "-")
+    city_query = city.replace(" ", "%20") + "%20and%20india"
+
+    # Experience mappings
+    experience_range_map = {
+        "Internship": "0~0", "Entry Level": "1~1", "Associate": "2~3",
+        "Mid-Senior Level": "4~7", "Director": "8~15", "Executive": "16~20"
+    }
+    experience_exact_map = {
+        "Internship": "0", "Entry Level": "1", "Associate": "2",
+        "Mid-Senior Level": "4", "Director": "8", "Executive": "16"
+    }
+    linkedin_exp_map = {
+        "Internship": "1", "Entry Level": "2", "Associate": "3",
+        "Mid-Senior Level": "4", "Director": "5", "Executive": "6"
+    }
+    job_type_map = {
+        "Full-time": "F", "Part-time": "P", "Contract": "C",
+        "Temporary": "T", "Volunteer": "V", "Internship": "I"
+    }
+
+    # LinkedIn
+    linkedin_url = f"https://www.linkedin.com/jobs/search/?keywords={role_encoded}&location={loc_encoded}"
+    if experience_level in linkedin_exp_map:
+        linkedin_url += f"&f_E={linkedin_exp_map[experience_level]}"
+    if job_type in job_type_map:
+        linkedin_url += f"&f_JT={job_type_map[job_type]}"
+
+    # Experience values
+    if foundit_experience is not None:
+        experience_range = f"{foundit_experience}~{foundit_experience}"
+        experience_exact = str(foundit_experience)
+    else:
+        experience_range = experience_range_map.get(experience_level, "")
+        experience_exact = experience_exact_map.get(experience_level, "")
+
+    # ✅ Naukri (cleaned)
+    naukri_url = (
+        f"https://www.naukri.com/{role_path}-jobs-in-{city_path}-and-india"
+        f"?k={role_encoded}"
+        f"&l={city_query}"
+    )
+    if experience_exact:
+        naukri_url += f"&experience={experience_exact}"
+    naukri_url += "&nignbevent_src=jobsearchDeskGNB"
+
+    # ✅ FoundIt
+    search_id = uuid.uuid4()
+    child_search_id = uuid.uuid4()
+    foundit_url = (
+        f"https://www.foundit.in/search/{role_path}-jobs-in-{city_path}"
+        f"?query={role_encoded}"
+        f"&locations={loc_encoded}"
+        f"&experienceRanges={urllib.parse.quote_plus(experience_range)}"
+        f"&experience={experience_exact}"
+        f"&queryDerived=true"
+        f"&searchId={search_id}"
+        f"&child_search_id={child_search_id}"
+    )
+
+    return [
+        {"title": f"LinkedIn: {job_role} jobs in {location}", "link": linkedin_url},
+        {"title": f"Naukri: {job_role} jobs in {location}", "link": naukri_url},
+        {"title": f"FoundIt (Monster): {job_role} jobs in {location}", "link": foundit_url}
+    ]
+
+
+
+def add_hyperlink(paragraph, url, text, color="0000FF", underline=True):
+    """
+    A function to add a hyperlink to a paragraph.
+    """
+    part = paragraph.part
+    r_id = part.relate_to(url, RT.HYPERLINK, is_external=True)
+
+    hyperlink = OxmlElement('w:hyperlink')
+    hyperlink.set(qn('r:id'), r_id)
+
+    new_run = OxmlElement('w:r')
+    rPr = OxmlElement('w:rPr')
+
+    # Color and underline
+    if underline:
+        u = OxmlElement('w:u')
+        u.set(qn('w:val'), 'single')
+        rPr.append(u)
+
+    color_element = OxmlElement('w:color')
+    color_element.set(qn('w:val'), color)
+    rPr.append(color_element)
+
+    new_run.append(rPr)
+
+    text_elem = OxmlElement('w:t')
+    text_elem.text = text
+    new_run.append(text_elem)
+
+    hyperlink.append(new_run)
+    paragraph._p.append(hyperlink)
+    return hyperlink
 
 # Your existing tab3 code with enhanced CSS styling
 with tab3:
@@ -5427,6 +5711,8 @@ with tab4:
                 with cols[idx % 2]:
                     st.markdown(f"**{title}**")
                     st.video(url)
+# tab5:
+# tab5:
 with tab5:
     import sqlite3
     import pandas as pd
@@ -5437,6 +5723,7 @@ with tab5:
     import plotly.express as px
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
+    import time
 
     # Import enhanced database manager functions
     from db_manager import (
@@ -5514,37 +5801,147 @@ with tab5:
             st.error(f"Error loading domain distribution: {e}")
         return pd.DataFrame()
 
-    # Enhanced Authentication System
+    # -------- Glassmorphism Styles with Shimmer --------
+    st.markdown("""
+    <style>
+    .glass-box {
+        background: rgba(10, 20, 40, 0.55);
+        border-radius: 18px;
+        padding: 2rem;
+        backdrop-filter: blur(14px);
+        border: 1px solid rgba(0, 200, 255, 0.35);
+        box-shadow: 0 8px 32px rgba(0, 200, 255, 0.25);
+        position: relative;
+        overflow: hidden;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .glass-box::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+            120deg,
+            rgba(255,255,255,0.15) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%
+        );
+        transform: rotate(25deg);
+        animation: shimmer 6s infinite;
+    }
+    @keyframes shimmer {
+        0% { top: -50%; left: -50%; }
+        50% { top: 100%; left: 100%; }
+        100% { top: -50%; left: -50%; }
+    }
+    .glass-box h1, .glass-box h2 {
+        color: #4da6ff;
+        text-shadow: 0 0 12px rgba(0,200,255,0.7);
+        margin: 0 0 0.5rem 0;
+        font-weight: 600;
+    }
+    .glass-box p {
+        color: #cce6ff;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    /* Glassy input fields */
+    .stTextInput > div > div > input {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(0, 200, 255, 0.3) !important;
+        border-radius: 12px !important;
+        padding: 10px !important;
+        color: #e6f7ff !important;
+        font-weight: 500 !important;
+        backdrop-filter: blur(10px) !important;
+    }
+    .stTextInput > div > div > input:focus {
+        border: 1px solid rgba(0, 200, 255, 0.8) !important;
+        box-shadow: 0 0 12px rgba(0, 200, 255, 0.6) !important;
+        outline: none !important;
+    }
+
+    /* Glassy button */
+    .stButton > button {
+        background: rgba(0, 200, 255, 0.15);
+        border: 1px solid rgba(0, 200, 255, 0.4);
+        border-radius: 12px;
+        color: #e6f7ff;
+        padding: 0.6rem 1.2rem;
+        font-weight: bold;
+        backdrop-filter: blur(8px);
+        transition: all 0.3s ease;
+    }
+    .stButton > button:hover {
+        background: rgba(0, 200, 255, 0.3);
+        box-shadow: 0 0 16px rgba(0, 200, 255, 0.7);
+        transform: translateY(-2px);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # ---------------- Enhanced Authentication System ----------------
     if "admin_logged_in" not in st.session_state:
         st.session_state.admin_logged_in = False
 
     if not st.session_state.admin_logged_in:
         st.markdown("""
-        <div style='text-align: center; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; margin-bottom: 2rem;'>
-            <h2 style='color: white; margin-bottom: 1rem;'>🔐 Admin Authentication Required</h2>
-            <p style='color: #f0f0f0;'>Please enter your credentials to access the admin dashboard</p>
+        <div class="glass-box">
+            <h2>🔐 Admin Authentication Required</h2>
+            <p>Please enter your email and password to access the admin dashboard</p>
         </div>
         """, unsafe_allow_html=True)
         
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
+            email = st.text_input("📧 Enter Admin Email", placeholder="Enter email...")
             password = st.text_input("🔑 Enter Admin Password", type="password", placeholder="Enter password...")
-            if st.button("🚀 Login", use_container_width=True):
-                if password == "Swagato@2002":
+            login_clicked = st.button("🚀 Login", use_container_width=True)
+
+            if login_clicked:
+                valid_email = "admin@example.com"
+                valid_password = "Swagato@2002"
+
+                if email == valid_email and password == valid_password:
                     st.session_state.admin_logged_in = True
                     st.success("✅ Authentication successful! Redirecting to dashboard...")
                     st.rerun()
                 else:
-                    st.error("❌ Invalid credentials. Please try again.")
+                    msg_placeholder = st.empty()
+                    msg_placeholder.markdown("""
+                        <div style='
+                            background-color: #ff4d4d;
+                            color: white;
+                            padding: 10px 15px;
+                            border-radius: 10px;
+                            text-align: center;
+                            animation: slideDown 0.5s ease-in-out;
+                        '>❌ Invalid credentials. Please try again.</div>
+                        <style>
+                        @keyframes slideDown {
+                            0% {transform: translateY(-50px); opacity: 0;}
+                            100% {transform: translateY(0); opacity: 1;}
+                        }
+                        </style>
+                    """, unsafe_allow_html=True)
+                    time.sleep(3)
+                    msg_placeholder.empty()
+
         st.stop()
 
-    # Enhanced Header with Database Stats
+    # ---------------- Enhanced Header with Database Stats ----------------
     st.markdown("""
-    <div style='text-align: center; padding: 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; margin-bottom: 2rem;'>
-        <h1 style='color: white; margin: 0;'>🛡️ Enhanced Admin Database Panel</h1>
-        <p style='color: #f0f0f0; margin: 0.5rem 0 0 0;'>Advanced Resume Analysis System Dashboard</p>
+    <div class="glass-box">
+        <h1>🛡️ Enhanced Admin Database Panel</h1>
+        <p>Advanced Resume Analysis System Dashboard</p>
     </div>
     """, unsafe_allow_html=True)
+
+
 
     # Enhanced Control Panel
     col1, col2, col3, col4 = st.columns(4)
@@ -6109,5 +6506,6 @@ with tab5:
     </div>
     """.format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
 
+     
 
      

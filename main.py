@@ -1629,25 +1629,26 @@ Your role is to provide **balanced, objective scoring** that reflects industry s
 - 3-5: Basic (unrelated degree but evidence of self-learning and interest in tech)
 - 0-2: Insufficient (no relevant education, no certifications, no evidence of learning)
 
-⏳ **STRICT DATE INTERPRETATION RULES (applies to year-only ranges like 2021-2024):**
+⏳ **FIXED: Recency & Pursuing Rules (STRICT – STANDARDIZED, NO INTERPRETATION):**
 
-- If end year < {current_year} → **Completed** (always, no exceptions)  
-- If end year == {current_year}:  
-  - If current month > 6 → **Completed**  
-  - If current month ≤ 6 → **Ongoing**  
-- If end year > {current_year} → **Ongoing**
+**CRITICAL DATE PARSING RULES:**
+- **Year-only ranges (e.g., "2021-2024", "2020-2023"):**
+  - If end year < {current_year} → **ALWAYS Completed** (e.g., "2020-2023" = Completed)
+  - If end year == {current_year} AND we're past June → **LIKELY Completed** (e.g., "2021-2024" in late 2024 = Completed)
+  - If end year == {current_year} AND we're before June → **Could be Ongoing** (check for other indicators)
+  - If end year > {current_year} → **Ongoing** (e.g., "2023-2025" = Ongoing)
 
-**Explicit Status Overrides (these take priority over year rules):**
-- "Now", "Present", "Current", "Till Date", "Ongoing" → **Ongoing**  
-- "pursuing", "currently enrolled", "in progress" → **Ongoing**  
-- "Graduated", "Completed", "Finished" → **Completed**  
-- **Final safeguard:** If end year < {current_year}, it is **Completed** regardless of wording.
+**EXPLICIT STATUS INDICATORS (override year logic):**
+- Words like "Now", "Present", "Current", "Till Date", "Ongoing" → **Ongoing**
+- Words like "pursuing", "currently enrolled", "in progress" → **Ongoing**  
+- Words like "Graduated", "Completed", "Finished" → **Completed**
+- **OVERRIDE RULE**: If end year < {current_year}, treat as **Completed** regardless of text
 
-**Scoring Impact:**
-- Completed relevant education → Full scoring potential (up to max points)  
-- Ongoing relevant education → Strong scoring (minimum 12 points for technical fields)  
-- Recently completed (within last 2 years) → Bonus credit  
-- Older completion → No penalty if skills are current
+**SCORING IMPACT:**
+- **Completed relevant education**: Full scoring potential (up to max points)
+- **Ongoing relevant education**: Still gets strong scoring (minimum 12 points for technical fields)
+- **Recent completion** (within 2 years): Gets recency bonus
+- **Older completion**: No penalty if skills are current
 
 **Experience Scoring Framework ({exp_weight} points max):**
 - 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)

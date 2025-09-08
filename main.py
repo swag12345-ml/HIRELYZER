@@ -770,10 +770,27 @@ if st.session_state.username == "admin":
         st.info("No logs found yet.")
 
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", 
-    "📚 Course Recommendation", "📁 Admin DB View"
-])
+# Always-visible tabs
+tab_labels = [
+    "📊 Dashboard",
+    "🧾 Resume Builder",
+    "💼 Job Search",
+    "📚 Course Recommendation"
+]
+
+# Add Admin tab only for admin user
+if st.session_state.username == "admin":
+    tab_labels.append("📁 Admin DB View")
+
+# Create tabs dynamically
+tabs = st.tabs(tab_labels)
+
+# Unpack first four (always exist)
+tab1, tab2, tab3, tab4 = tabs[:4]
+
+# Handle optional admin tab
+tab5 = tabs[4] if len(tabs) > 4 else None
+
 with tab1:
     st.markdown("""
     <style>
@@ -5719,8 +5736,10 @@ with tab4:
                     st.video(url)
 # tab5:
 # tab5:
-with tab5:
-    import sqlite3
+
+if tab5:
+    with tab5:
+     import sqlite3
     import pandas as pd
     import matplotlib.pyplot as plt
     import numpy as np

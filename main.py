@@ -307,6 +307,11 @@ body, .main {
 
 
 # ------------------- BEFORE LOGIN -------------------
+import streamlit as st
+import requests
+from base64 import b64encode
+import time
+
 if not st.session_state.authenticated:
 
     # -------- Sidebar --------
@@ -395,12 +400,12 @@ if not st.session_state.authenticated:
 
     .counter-grid {
         display: grid;
-        grid-template-columns: repeat(2, 250px);
-        column-gap: 40px;
-        row-gap: 25px;
+        grid-template-columns: repeat(2, 200px);
+        column-gap: 30px;
+        row-gap: 20px;
         justify-content: center;
         padding: 30px 10px;
-        max-width: 600px;
+        max-width: 500px;
         margin: 0 auto;
     }
 
@@ -414,7 +419,7 @@ if not st.session_state.authenticated:
         border: 1px solid rgba(0, 191, 255, 0.2);
         border-radius: 16px;
         width: 100%;
-        height: 120px;
+        height: 100px;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -442,14 +447,14 @@ if not st.session_state.authenticated:
     }
 
     .counter-box:hover {
-        transform: translateY(-8px) scale(1.02);
+        transform: translateY(-5px) scale(1.02);
         background: linear-gradient(135deg, 
             rgba(0, 191, 255, 0.15) 0%, 
             rgba(30, 144, 255, 0.08) 50%, 
             rgba(0, 191, 255, 0.15) 100%);
         border: 1px solid rgba(0, 191, 255, 0.4);
         box-shadow: 
-            0 20px 40px rgba(0, 191, 255, 0.1),
+            0 15px 30px rgba(0, 191, 255, 0.1),
             inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
 
@@ -459,7 +464,7 @@ if not st.session_state.authenticated:
     .counter-box:nth-child(4) { animation-delay: 1.5s; }
 
     .counter-number {
-        font-size: 2.2em;
+        font-size: 1.8em;
         font-weight: bold;
         color: #00BFFF;
         margin: 0;
@@ -469,8 +474,8 @@ if not st.session_state.authenticated:
     }
 
     .counter-label {
-        margin-top: 8px;
-        font-size: 1em;
+        margin-top: 5px;
+        font-size: 0.9em;
         color: #c9d1d9;
         position: relative;
         z-index: 2;
@@ -606,7 +611,7 @@ if not st.session_state.get("authenticated", False):
     }}
     .login-card h2 span {{ color: #00BFFF; }}
 
-    /* ===== Sliding Messages ===== */
+    /* ===== Auto-disappearing Messages ===== */
     .slide-message {{
       position: relative;
       overflow: hidden;
@@ -617,7 +622,7 @@ if not st.session_state.get("authenticated", False):
       display: flex;
       align-items: center;
       gap: 8px;
-      animation: slideIn 0.8s ease forwards;
+      animation: slideInAndOut 4s ease forwards;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
     }}
@@ -647,9 +652,11 @@ if not st.session_state.get("authenticated", False):
       color:#FFD700; 
     }}
 
-    @keyframes slideIn {{
+    @keyframes slideInAndOut {{
       0%   {{ transform: translateX(100%); opacity: 0; }}
-      100% {{ transform: translateX(0); opacity: 1; }}
+      15%  {{ transform: translateX(0); opacity: 1; }}
+      85%  {{ transform: translateX(0); opacity: 1; }}
+      100% {{ transform: translateX(-100%); opacity: 0; }}
     }}
 
     /* ===== Glassmorphism Buttons ===== */
@@ -758,10 +765,28 @@ if not st.session_state.get("authenticated", False):
 
         login_tab, register_tab = st.tabs(["Login", "Register"])
 
+        # Initialize message containers
+        if 'login_message' not in st.session_state:
+            st.session_state.login_message = None
+        if 'login_message_time' not in st.session_state:
+            st.session_state.login_message_time = None
+        if 'register_message' not in st.session_state:
+            st.session_state.register_message = None
+        if 'register_message_time' not in st.session_state:
+            st.session_state.register_message_time = None
+
         # ---------------- LOGIN TAB ----------------
         with login_tab:
             user = st.text_input("Username", key="login_user")
             pwd = st.text_input("Password", type="password", key="login_pass")
+
+            # Display login message if exists and not expired
+            if st.session_state.login_message and st.session_state.login_message_time:
+                if time.time() - st.session_state.login_message_time < 4:
+                    st.markdown(st.session_state.login_message, unsafe_allow_html=True)
+                else:
+                    st.session_state.login_message = None
+                    st.session_state.login_message_time = None
 
             if st.button("Login", key="login_btn"):
                 success, saved_key = verify_user(user.strip(), pwd.strip())
@@ -772,24 +797,35 @@ if not st.session_state.get("authenticated", False):
                         st.session_state["user_groq_key"] = saved_key
                     log_user_action(user.strip(), "login")
 
-                    st.markdown("""<div class='slide-message success-msg'>
+                    st.session_state.login_message = """<div class='slide-message success-msg'>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                           stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
                         Login successful!
-                    </div>""", unsafe_allow_html=True)
+                    </div>"""
+                    st.session_state.login_message_time = time.time()
                     st.rerun()
                 else:
-                    st.markdown("""<div class='slide-message error-msg'>
+                    st.session_state.login_message = """<div class='slide-message error-msg'>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                           stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
                         Invalid credentials.
-                    </div>""", unsafe_allow_html=True)
+                    </div>"""
+                    st.session_state.login_message_time = time.time()
+                    st.rerun()
 
         # ---------------- REGISTER TAB ----------------
         with register_tab:
             new_user = st.text_input("Choose a Username", key="reg_user")
             new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
             st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
+
+            # Display register message if exists and not expired
+            if st.session_state.register_message and st.session_state.register_message_time:
+                if time.time() - st.session_state.register_message_time < 4:
+                    st.markdown(st.session_state.register_message, unsafe_allow_html=True)
+                else:
+                    st.session_state.register_message = None
+                    st.session_state.register_message_time = None
 
             if new_user.strip():
                 if username_exists(new_user.strip()):
@@ -810,26 +846,32 @@ if not st.session_state.get("authenticated", False):
                 if new_user.strip() and new_pass.strip():
                     success, message = add_user(new_user.strip(), new_pass.strip())
                     if success:
-                        st.markdown(f"""<div class='slide-message success-msg'>
+                        st.session_state.register_message = f"""<div class='slide-message success-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                               stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
                             {message}
-                        </div>""", unsafe_allow_html=True)
+                        </div>"""
+                        st.session_state.register_message_time = time.time()
                         log_user_action(new_user.strip(), "register")
+                        st.rerun()
                     else:
-                        st.markdown(f"""<div class='slide-message error-msg'>
+                        st.session_state.register_message = f"""<div class='slide-message error-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                               stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
                             {message}
-                        </div>""", unsafe_allow_html=True)
+                        </div>"""
+                        st.session_state.register_message_time = time.time()
+                        st.rerun()
                 else:
-                    st.markdown("""<div class='slide-message warn-msg'>
+                    st.session_state.register_message = """<div class='slide-message warn-msg'>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                           stroke-width="2" viewBox="0 0 24 24">
                           <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
                         </svg>
                         Please fill in both fields.
-                    </div>""", unsafe_allow_html=True)
+                    </div>"""
+                    st.session_state.register_message_time = time.time()
+                    st.rerun()
 
         st.markdown("</div>", unsafe_allow_html=True)
 

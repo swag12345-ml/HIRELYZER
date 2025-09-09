@@ -348,11 +348,11 @@ if not st.session_state.authenticated:
       display: flex;
       justify-content: center;
       position: relative;
-      height: 300px;
+      height: 180px;
     }}
     .animated-cards img {{
       position: absolute;
-      width: 240px;
+      width: 140px;
       animation: splitCards 2.5s ease-in-out infinite alternate;
       z-index: 1;
     }}
@@ -363,9 +363,9 @@ if not st.session_state.authenticated:
       0% {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
       100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
     }}
-    .card-left {{ --x-offset: -80px; --rot: -5deg; }}
+    .card-left {{ --x-offset: -50px; --rot: -5deg; }}
     .card-center {{ --x-offset: 0px; --rot: 0deg; }}
-    .card-right {{ --x-offset: 80px; --rot: 5deg; }}
+    .card-right {{ --x-offset: 50px; --rot: 5deg; }}
     </style>
     <div class="animated-cards">
         <img class="card-left" src="data:image/png;base64,{img_base64}" />
@@ -535,11 +535,11 @@ if not st.session_state.get("authenticated", False):
       display: flex;
       justify-content: center;
       position: relative;
-      height: 260px;
+      height: 160px;
     }}
     .animated-cards img {{
       position: absolute;
-      width: 220px;
+      width: 120px;
       animation: splitCards 2.5s ease-in-out infinite alternate;
       z-index: 1;
       filter: drop-shadow(0 0 15px rgba(0,191,255,0.3));
@@ -552,9 +552,9 @@ if not st.session_state.get("authenticated", False):
       0%   {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
       100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
     }}
-    .card-left   {{ --x-offset: -80px; --rot: -4deg; }}
+    .card-left   {{ --x-offset: -40px; --rot: -4deg; }}
     .card-center {{ --x-offset: 0px;  --rot: 0deg;  }}
-    .card-right  {{ --x-offset: 80px;  --rot: 4deg;  }}
+    .card-right  {{ --x-offset: 40px;  --rot: 4deg;  }}
 
     /* ===== Glassmorphism Login Card ===== */
     .login-card {{
@@ -876,7 +876,6 @@ if not st.session_state.get("authenticated", False):
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()
-
 
 
 # ------------------- AFTER LOGIN -------------------

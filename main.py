@@ -560,11 +560,7 @@ if not st.session_state.authenticated:
     st.markdown(glassmorphism_counter_style, unsafe_allow_html=True)
 
     # Add glass title before counters
-    st.markdown("""
-    <div class="glass-title">
-        <h2>📊 Live Statistics Dashboard</h2>
-    </div>
-    """, unsafe_allow_html=True)
+    
 
     st.markdown(f"""
     <div class="counter-grid">

@@ -383,6 +383,86 @@ if not st.session_state.authenticated:
 
     glassmorphism_counter_style = """
     <style>
+    /* Glass Title Style */
+    .glass-title {
+        background: rgba(10, 20, 40, 0.5);
+        border-radius: 20px;
+        padding: 20px;
+        backdrop-filter: blur(14px);
+        box-shadow: 0 8px 32px rgba(0, 200, 255, 0.25);
+        border: 1px solid rgba(0, 200, 255, 0.3);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+    .glass-title h2 {
+        color: #4da6ff;
+        margin: 0;
+        text-shadow: 0 0 12px rgba(0,200,255,0.7);
+        font-weight: 600;
+    }
+    .glass-title::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+            120deg,
+            rgba(255,255,255,0.18) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%
+        );
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
+    .glass-title:hover::before {
+        left: 100%;
+        top: 100%;
+    }
+
+    /* File uploader */
+    .uploadedFile { 
+        background: rgba(10, 20, 40, 0.6) !important;
+        border: 1px solid rgba(0,200,255,0.5) !important;
+        border-radius: 14px !important;
+        color: #cce6ff !important;
+        box-shadow: 0 0 12px rgba(0,200,255,0.3) !important;
+    }
+
+    /* Sidebar expander style */
+    .streamlit-expanderHeader {
+        background: rgba(10, 20, 40, 0.45);
+        border-radius: 12px;
+        color: #4da6ff !important;
+        font-weight: bold;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 4px 12px rgba(0,200,255,0.25);
+        transition: all 0.3s ease-in-out;
+    }
+    .streamlit-expanderHeader:hover {
+        background: rgba(0, 200, 255, 0.12);
+        box-shadow: 0 0 16px rgba(0,200,255,0.4);
+    }
+    .streamlit-expanderContent {
+        background: rgba(10, 20, 40, 0.45);
+        border-radius: 10px;
+        padding: 8px;
+        color: #e6f7ff;
+    }
+
+    /* Selectbox */
+    div[data-baseweb="select"] {
+        background: rgba(10, 20, 40, 0.35);
+        border: 1px solid rgba(0, 200, 255, 0.6);
+        border-radius: 12px;
+        color: #e6f7ff;
+        backdrop-filter: blur(14px);
+        box-shadow: 0 0 10px rgba(0,200,255,0.3);
+    }
+
     @keyframes shimmer {
         0% { background-position: -200% 0; }
         100% { background-position: 200% 0; }
@@ -433,23 +513,21 @@ if not st.session_state.authenticated:
         width: 100%;
         height: 100%;
         background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(0, 191, 255, 0.3),
-            transparent
+            120deg,
+            rgba(255,255,255,0.18) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%
         );
+        transform: rotate(25deg);
         animation: shimmer 2s infinite;
     }
 
     .counter-box:hover {
         transform: translateY(-8px) scale(1.02);
-        background: linear-gradient(135deg, 
-            rgba(0, 191, 255, 0.15) 0%, 
-            rgba(30, 144, 255, 0.08) 50%, 
-            rgba(0, 191, 255, 0.15) 100%);
-        border: 1px solid rgba(0, 191, 255, 0.4);
+        background: rgba(0, 200, 255, 0.12);
+        border: 1px solid rgba(0, 200, 255, 0.6);
         box-shadow: 
-            0 20px 40px rgba(0, 191, 255, 0.1),
+            0 0 20px rgba(0, 200, 255, 0.65),
             inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
 
@@ -461,17 +539,17 @@ if not st.session_state.authenticated:
     .counter-number {
         font-size: 2.2em;
         font-weight: bold;
-        color: #00BFFF;
+        color: #4da6ff;
         margin: 0;
         position: relative;
         z-index: 2;
-        text-shadow: 0 0 20px rgba(0, 191, 255, 0.5);
+        text-shadow: 0 0 12px rgba(0,200,255,0.7);
     }
 
     .counter-label {
         margin-top: 8px;
         font-size: 1em;
-        color: #c9d1d9;
+        color: #e6f7ff;
         position: relative;
         z-index: 2;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -480,6 +558,9 @@ if not st.session_state.authenticated:
     """
 
     st.markdown(glassmorphism_counter_style, unsafe_allow_html=True)
+
+    # Add glass title before counters
+    
 
     st.markdown(f"""
     <div class="counter-grid">
@@ -537,7 +618,7 @@ if not st.session_state.get("authenticated", False):
       width: 220px;
       animation: splitCards 2.5s ease-in-out infinite alternate;
       z-index: 1;
-      filter: drop-shadow(0 0 15px rgba(0,191,255,0.3));
+      filter: drop-shadow(0 0 12px rgba(0,200,255,0.3));
     }}
     .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
     .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
@@ -553,18 +634,13 @@ if not st.session_state.get("authenticated", False):
 
     /* ===== Glassmorphism Login Card ===== */
     .login-card {{
-      background: linear-gradient(135deg, 
-        rgba(0, 191, 255, 0.1) 0%, 
-        rgba(30, 144, 255, 0.05) 50%, 
-        rgba(0, 191, 255, 0.1) 100%);
-      backdrop-filter: blur(20px);
+      background: rgba(10, 20, 40, 0.5);
+      backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(0, 191, 255, 0.2);
+      border: 1px solid rgba(0, 200, 255, 0.3);
       border-radius: 20px;
       padding: 25px;
-      box-shadow: 
-        0 8px 32px rgba(0, 191, 255, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 200, 255, 0.25);
       font-family: 'Orbitron', sans-serif;
       color: white;
       margin-top: 20px;
@@ -578,17 +654,23 @@ if not st.session_state.get("authenticated", False):
     .login-card::before {{
       content: '';
       position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
       background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(0, 191, 255, 0.2),
-        transparent
+        120deg,
+        rgba(255,255,255,0.18) 0%,
+        rgba(255,255,255,0.05) 40%,
+        transparent 60%
       );
-      animation: glassShimmer 3s infinite;
+      transform: rotate(25deg);
+      transition: all 0.6s;
+    }}
+    
+    .login-card:hover::before {{
+      left: 100%;
+      top: 100%;
     }}
     
     @keyframes slideInLeft {{
@@ -599,12 +681,12 @@ if not st.session_state.get("authenticated", False):
     .login-card h2 {{
       text-align: center;
       font-size: 1.6rem;
-      text-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
+      text-shadow: 0 0 12px rgba(0,200,255,0.7);
       margin-bottom: 15px;
       position: relative;
       z-index: 2;
     }}
-    .login-card h2 span {{ color: #00BFFF; }}
+    .login-card h2 span {{ color: #4da6ff; }}
 
     /* ===== Sliding Messages ===== */
     .slide-message {{
@@ -618,34 +700,18 @@ if not st.session_state.get("authenticated", False):
       align-items: center;
       gap: 8px;
       animation: slideIn 0.8s ease forwards;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }}
     .slide-message svg {{
       width: 18px;
       height: 18px;
       flex-shrink: 0;
     }}
-    .success-msg {{ 
-      background: linear-gradient(135deg, rgba(0,255,127,0.15), rgba(0,255,127,0.05)); 
-      border: 1px solid rgba(0,255,127,0.3); 
-      color:#00FF7F; 
-    }}
-    .error-msg {{ 
-      background: linear-gradient(135deg, rgba(255,99,71,0.15), rgba(255,99,71,0.05)); 
-      border: 1px solid rgba(255,99,71,0.3); 
-      color:#FF6347; 
-    }}
-    .info-msg {{ 
-      background: linear-gradient(135deg, rgba(30,144,255,0.15), rgba(30,144,255,0.05)); 
-      border: 1px solid rgba(30,144,255,0.3); 
-      color:#1E90FF; 
-    }}
-    .warn-msg {{ 
-      background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,215,0,0.05)); 
-      border: 1px solid rgba(255,215,0,0.3); 
-      color:#FFD700; 
-    }}
+    .success-msg {{ background: rgba(0,255,127,0.12); border: 1px solid rgba(0,255,127,0.5); color:#00FF7F; }}
+    .error-msg   {{ background: rgba(255,99,71,0.12);  border: 1px solid rgba(255,99,71,0.5); color:#FF6347; }}
+    .info-msg    {{ background: rgba(30,144,255,0.12); border: 1px solid rgba(30,144,255,0.5); color:#1E90FF; }}
+    .warn-msg    {{ background: rgba(255,215,0,0.12);  border: 1px solid rgba(255,215,0,0.5); color:#FFD700; }}
 
     @keyframes slideIn {{
       0%   {{ transform: translateX(100%); opacity: 0; }}
@@ -654,88 +720,82 @@ if not st.session_state.get("authenticated", False):
 
     /* ===== Glassmorphism Buttons ===== */
     .stButton>button {{
-      background: linear-gradient(135deg, 
-        rgba(0, 191, 255, 0.2) 0%, 
-        rgba(30, 144, 255, 0.1) 100%);
-      backdrop-filter: blur(15px);
+      position: relative;
+      background: rgba(10, 20, 40, 0.35);
+      backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(15px);
-      color: white;
-      border: 1px solid rgba(0, 191, 255, 0.3);
-      border-radius: 12px;
+      color: #e6f7ff;
+      border: 1px solid rgba(0, 200, 255, 0.6);
+      border-radius: 14px;
       font-family: 'Orbitron', sans-serif;
       font-weight: bold;
-      padding: 8px 20px;
-      box-shadow: 
-        0 4px 16px rgba(0, 191, 255, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      padding: 10px 20px;
+      font-size: 15px;
+      font-weight: 500;
+      box-shadow: 0 0 12px rgba(0, 200, 255, 0.35),
+                  inset 0 0 20px rgba(0, 200, 255, 0.05);
       transition: all 0.3s ease;
-      position: relative;
       overflow: hidden;
     }}
     
     .stButton>button::before {{
       content: '';
       position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
       background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.2),
-        transparent
+        120deg,
+        rgba(255,255,255,0.15) 0%,
+        rgba(255,255,255,0.05) 40%,
+        transparent 60%
       );
-      transition: left 0.5s;
+      transform: rotate(25deg);
+      transition: all 0.6s;
     }}
     
     .stButton>button:hover {{
+      background: rgba(0, 200, 255, 0.12);
+      box-shadow: 0 0 20px rgba(0, 200, 255, 0.65),
+                  inset 0 0 25px rgba(0, 200, 255, 0.15);
       transform: translateY(-2px);
-      background: linear-gradient(135deg, 
-        rgba(0, 191, 255, 0.3) 0%, 
-        rgba(30, 144, 255, 0.15) 100%);
-      border: 1px solid rgba(0, 191, 255, 0.5);
-      box-shadow: 
-        0 8px 25px rgba(0, 191, 255, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }}
     
     .stButton>button:hover::before {{
       left: 100%;
+      top: 100%;
+    }}
+    
+    .stButton>button:active {{
+      transform: scale(0.95);
+      box-shadow: 0 0 10px rgba(0, 200, 255, 0.45);
     }}
 
     /* ===== Glassmorphism Input Fields ===== */
     .stTextInput input {{
-      background: linear-gradient(135deg, 
-        rgba(0, 191, 255, 0.08) 0%, 
-        rgba(30, 144, 255, 0.04) 100%);
-      backdrop-filter: blur(15px);
+      background: rgba(10, 20, 40, 0.35);
+      backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(15px);
-      border: 1px solid rgba(0, 191, 255, 0.2);
-      border-radius: 10px;
+      border: 1px solid rgba(0, 200, 255, 0.6);
+      border-radius: 12px;
       padding: 10px;
-      color: #E0F7FF;
+      color: #e6f7ff;
       font-family: 'Orbitron', sans-serif;
-      box-shadow: 
-        0 4px 16px rgba(0, 191, 255, 0.05),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      box-shadow: 0 0 10px rgba(0,200,255,0.3);
       transition: all 0.3s ease-in-out;
     }}
     .stTextInput input:focus {{
       outline: none !important;
-      background: linear-gradient(135deg, 
-        rgba(0, 191, 255, 0.12) 0%, 
-        rgba(30, 144, 255, 0.06) 100%);
-      border: 1px solid rgba(0, 191, 255, 0.4);
-      box-shadow: 
-        0 8px 25px rgba(0, 191, 255, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      transform: translateY(-1px);
+      background: rgba(0, 200, 255, 0.12);
+      border: 1px solid rgba(0, 200, 255, 0.8);
+      box-shadow: 0 0 16px rgba(0,200,255,0.4);
+      transform: scale(1.02);
     }}
     .stTextInput label {{
       font-family: 'Orbitron', sans-serif;
-      color: #00BFFF !important;
-      text-shadow: 0 0 10px rgba(0, 191, 255, 0.3);
+      color: #4da6ff !important;
+      text-shadow: 0 0 8px rgba(0,200,255,0.8);
     }}
     </style>
 
@@ -3242,7 +3302,7 @@ with tab2:
 
     # ---------------- Sidebar (ONLY in Tab 2) ----------------
     with st.sidebar:
-        st.markdown("### ✨ Manage Resume Sections")
+        st.markdown("### ✨ Manage Sections")
 
         if "edit_mode" not in st.session_state:
             st.session_state.edit_mode = "Add"

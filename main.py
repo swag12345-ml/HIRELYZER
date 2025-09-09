@@ -369,7 +369,7 @@ if not st.session_state.authenticated:
     </div>
     """, unsafe_allow_html=True)
 
-    # -------- Counter Section (Updated Layout & Style with tighter spacing) --------
+    # -------- Counter Section (Updated Layout & Style with glassmorphism and shimmer) --------
 
     # Fetch counters
     total_users = get_total_registered_users()
@@ -381,8 +381,18 @@ if not st.session_state.authenticated:
 
     states_accessed = 29
 
-    neon_counter_style = """
+    glassmorphism_counter_style = """
     <style>
+    @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-5px); }
+    }
+
     .counter-grid {
         display: grid;
         grid-template-columns: repeat(2, 250px);
@@ -395,40 +405,81 @@ if not st.session_state.authenticated:
     }
 
     .counter-box {
-        background-color: #0d1117;
-        border: 2px solid #00FFFF;
-        border-radius: 10px;
+        background: linear-gradient(135deg, 
+            rgba(0, 191, 255, 0.1) 0%, 
+            rgba(30, 144, 255, 0.05) 50%, 
+            rgba(0, 191, 255, 0.1) 100%);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(0, 191, 255, 0.2);
+        border-radius: 16px;
         width: 100%;
         height: 120px;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        box-shadow: 0 0 12px rgba(0, 255, 255, 0.4);
-        transition: transform 0.2s ease;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    .counter-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(0, 191, 255, 0.3),
+            transparent
+        );
+        animation: shimmer 2s infinite;
     }
 
     .counter-box:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 0 18px rgba(0, 255, 255, 0.7);
+        transform: translateY(-8px) scale(1.02);
+        background: linear-gradient(135deg, 
+            rgba(0, 191, 255, 0.15) 0%, 
+            rgba(30, 144, 255, 0.08) 50%, 
+            rgba(0, 191, 255, 0.15) 100%);
+        border: 1px solid rgba(0, 191, 255, 0.4);
+        box-shadow: 
+            0 20px 40px rgba(0, 191, 255, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
+
+    .counter-box:nth-child(1) { animation-delay: 0s; }
+    .counter-box:nth-child(2) { animation-delay: 0.5s; }
+    .counter-box:nth-child(3) { animation-delay: 1s; }
+    .counter-box:nth-child(4) { animation-delay: 1.5s; }
 
     .counter-number {
         font-size: 2.2em;
         font-weight: bold;
         color: #00BFFF;
         margin: 0;
+        position: relative;
+        z-index: 2;
+        text-shadow: 0 0 20px rgba(0, 191, 255, 0.5);
     }
 
     .counter-label {
         margin-top: 8px;
         font-size: 1em;
         color: #c9d1d9;
+        position: relative;
+        z-index: 2;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     </style>
     """
 
-    st.markdown(neon_counter_style, unsafe_allow_html=True)
+    st.markdown(glassmorphism_counter_style, unsafe_allow_html=True)
 
     st.markdown(f"""
     <div class="counter-grid">
@@ -458,10 +509,20 @@ if not st.session_state.get("authenticated", False):
     response = requests.get(image_url)
     img_base64 = b64encode(response.content).decode()
 
-    # ✅ Inject cinematic CSS
+    # ✅ Inject glassmorphism CSS with shimmer effects
     st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+
+    @keyframes shimmer {{
+        0% {{ background-position: -200% 0; }}
+        100% {{ background-position: 200% 0; }}
+    }}
+    
+    @keyframes glassShimmer {{
+        0% {{ transform: translateX(-100%) skewX(-15deg); }}
+        100% {{ transform: translateX(200%) skewX(-15deg); }}
+    }}
 
     /* ===== Card Shuffle Animation ===== */
     .animated-cards {{
@@ -476,7 +537,7 @@ if not st.session_state.get("authenticated", False):
       width: 220px;
       animation: splitCards 2.5s ease-in-out infinite alternate;
       z-index: 1;
-      filter: drop-shadow(0 0 10px rgba(0,191,255,0.6));
+      filter: drop-shadow(0 0 15px rgba(0,191,255,0.3));
     }}
     .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
     .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
@@ -490,20 +551,46 @@ if not st.session_state.get("authenticated", False):
     .card-center {{ --x-offset: 0px;  --rot: 0deg;  }}
     .card-right  {{ --x-offset: 80px;  --rot: 4deg;  }}
 
-    /* ===== Cinematic Login Card ===== */
+    /* ===== Glassmorphism Login Card ===== */
     .login-card {{
-      background: linear-gradient(145deg, rgba(10,20,40,0.92), rgba(0,191,255,0.1));
-      border: 1px solid #00BFFF;
-      border-radius: 18px;
+      background: linear-gradient(135deg, 
+        rgba(0, 191, 255, 0.1) 0%, 
+        rgba(30, 144, 255, 0.05) 50%, 
+        rgba(0, 191, 255, 0.1) 100%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(0, 191, 255, 0.2);
+      border-radius: 20px;
       padding: 25px;
-      box-shadow: 0px 0px 30px rgba(0,191,255,0.7);
+      box-shadow: 
+        0 8px 32px rgba(0, 191, 255, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
       font-family: 'Orbitron', sans-serif;
       color: white;
       margin-top: 20px;
       opacity: 0;
       transform: translateX(-120%);
       animation: slideInLeft 1.2s ease-out forwards;
+      position: relative;
+      overflow: hidden;
     }}
+    
+    .login-card::before {{
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(0, 191, 255, 0.2),
+        transparent
+      );
+      animation: glassShimmer 3s infinite;
+    }}
+    
     @keyframes slideInLeft {{
       0%   {{ transform: translateX(-120%); opacity: 0; }}
       100% {{ transform: translateX(0); opacity: 1; }}
@@ -512,8 +599,10 @@ if not st.session_state.get("authenticated", False):
     .login-card h2 {{
       text-align: center;
       font-size: 1.6rem;
-      text-shadow: 0 0 12px #00BFFF;
+      text-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
       margin-bottom: 15px;
+      position: relative;
+      z-index: 2;
     }}
     .login-card h2 span {{ color: #00BFFF; }}
 
@@ -523,66 +612,130 @@ if not st.session_state.get("authenticated", False):
       overflow: hidden;
       margin: 10px 0;
       padding: 10px 15px;
-      border-radius: 10px;
+      border-radius: 12px;
       font-weight: bold;
       display: flex;
       align-items: center;
       gap: 8px;
       animation: slideIn 0.8s ease forwards;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }}
     .slide-message svg {{
       width: 18px;
       height: 18px;
       flex-shrink: 0;
     }}
-    .success-msg {{ background: rgba(0,255,127,0.12); border-left: 5px solid #00FF7F; color:#00FF7F; }}
-    .error-msg   {{ background: rgba(255,99,71,0.12);  border-left: 5px solid #FF6347; color:#FF6347; }}
-    .info-msg    {{ background: rgba(30,144,255,0.12); border-left: 5px solid #1E90FF; color:#1E90FF; }}
-    .warn-msg    {{ background: rgba(255,215,0,0.12);  border-left: 5px solid #FFD700; color:#FFD700; }}
+    .success-msg {{ 
+      background: linear-gradient(135deg, rgba(0,255,127,0.15), rgba(0,255,127,0.05)); 
+      border: 1px solid rgba(0,255,127,0.3); 
+      color:#00FF7F; 
+    }}
+    .error-msg {{ 
+      background: linear-gradient(135deg, rgba(255,99,71,0.15), rgba(255,99,71,0.05)); 
+      border: 1px solid rgba(255,99,71,0.3); 
+      color:#FF6347; 
+    }}
+    .info-msg {{ 
+      background: linear-gradient(135deg, rgba(30,144,255,0.15), rgba(30,144,255,0.05)); 
+      border: 1px solid rgba(30,144,255,0.3); 
+      color:#1E90FF; 
+    }}
+    .warn-msg {{ 
+      background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,215,0,0.05)); 
+      border: 1px solid rgba(255,215,0,0.3); 
+      color:#FFD700; 
+    }}
 
     @keyframes slideIn {{
       0%   {{ transform: translateX(100%); opacity: 0; }}
       100% {{ transform: translateX(0); opacity: 1; }}
     }}
 
-    /* ===== Futuristic Buttons ===== */
+    /* ===== Glassmorphism Buttons ===== */
     .stButton>button {{
-      background: linear-gradient(90deg, #00BFFF, #1E90FF);
+      background: linear-gradient(135deg, 
+        rgba(0, 191, 255, 0.2) 0%, 
+        rgba(30, 144, 255, 0.1) 100%);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
       color: white;
-      border: none;
-      border-radius: 10px;
+      border: 1px solid rgba(0, 191, 255, 0.3);
+      border-radius: 12px;
       font-family: 'Orbitron', sans-serif;
       font-weight: bold;
       padding: 8px 20px;
-      box-shadow: 0px 0px 15px rgba(0,191,255,0.6);
+      box-shadow: 
+        0 4px 16px rgba(0, 191, 255, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
       transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }}
+    
+    .stButton>button::before {{
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+      );
+      transition: left 0.5s;
+    }}
+    
     .stButton>button:hover {{
-      transform: scale(1.05);
-      box-shadow: 0px 0px 25px rgba(0,191,255,0.9);
+      transform: translateY(-2px);
+      background: linear-gradient(135deg, 
+        rgba(0, 191, 255, 0.3) 0%, 
+        rgba(30, 144, 255, 0.15) 100%);
+      border: 1px solid rgba(0, 191, 255, 0.5);
+      box-shadow: 
+        0 8px 25px rgba(0, 191, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }}
+    
+    .stButton>button:hover::before {{
+      left: 100%;
     }}
 
-    /* ===== Futuristic Input Fields ===== */
+    /* ===== Glassmorphism Input Fields ===== */
     .stTextInput input {{
-      background: rgba(10,25,45,0.85);
-      border: 1px solid #00BFFF;
-      border-radius: 8px;
+      background: linear-gradient(135deg, 
+        rgba(0, 191, 255, 0.08) 0%, 
+        rgba(30, 144, 255, 0.04) 100%);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(0, 191, 255, 0.2);
+      border-radius: 10px;
       padding: 10px;
       color: #E0F7FF;
       font-family: 'Orbitron', sans-serif;
-      box-shadow: 0px 0px 15px rgba(0,191,255,0.3);
+      box-shadow: 
+        0 4px 16px rgba(0, 191, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
       transition: all 0.3s ease-in-out;
     }}
     .stTextInput input:focus {{
       outline: none !important;
-      border: 1px solid #1E90FF;
-      box-shadow: 0px 0px 25px rgba(0,191,255,0.9), inset 0px 0px 10px rgba(0,191,255,0.6);
-      transform: scale(1.02);
+      background: linear-gradient(135deg, 
+        rgba(0, 191, 255, 0.12) 0%, 
+        rgba(30, 144, 255, 0.06) 100%);
+      border: 1px solid rgba(0, 191, 255, 0.4);
+      box-shadow: 
+        0 8px 25px rgba(0, 191, 255, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transform: translateY(-1px);
     }}
     .stTextInput label {{
       font-family: 'Orbitron', sans-serif;
       color: #00BFFF !important;
-      text-shadow: 0 0 8px rgba(0,191,255,0.8);
+      text-shadow: 0 0 10px rgba(0, 191, 255, 0.3);
     }}
     </style>
 

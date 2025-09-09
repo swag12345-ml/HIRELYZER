@@ -307,11 +307,6 @@ body, .main {
 
 
 # ------------------- BEFORE LOGIN -------------------
-import streamlit as st
-import requests
-from base64 import b64encode
-import time
-
 if not st.session_state.authenticated:
 
     # -------- Sidebar --------
@@ -348,11 +343,11 @@ if not st.session_state.authenticated:
       display: flex;
       justify-content: center;
       position: relative;
-      height: 180px;
+      height: 300px;
     }}
     .animated-cards img {{
       position: absolute;
-      width: 140px;
+      width: 240px;
       animation: splitCards 2.5s ease-in-out infinite alternate;
       z-index: 1;
     }}
@@ -363,9 +358,9 @@ if not st.session_state.authenticated:
       0% {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
       100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
     }}
-    .card-left {{ --x-offset: -50px; --rot: -5deg; }}
+    .card-left {{ --x-offset: -80px; --rot: -5deg; }}
     .card-center {{ --x-offset: 0px; --rot: 0deg; }}
-    .card-right {{ --x-offset: 50px; --rot: 5deg; }}
+    .card-right {{ --x-offset: 80px; --rot: 5deg; }}
     </style>
     <div class="animated-cards">
         <img class="card-left" src="data:image/png;base64,{img_base64}" />
@@ -400,12 +395,12 @@ if not st.session_state.authenticated:
 
     .counter-grid {
         display: grid;
-        grid-template-columns: repeat(2, 200px);
-        column-gap: 30px;
-        row-gap: 20px;
+        grid-template-columns: repeat(2, 250px);
+        column-gap: 40px;
+        row-gap: 25px;
         justify-content: center;
         padding: 30px 10px;
-        max-width: 500px;
+        max-width: 600px;
         margin: 0 auto;
     }
 
@@ -419,7 +414,7 @@ if not st.session_state.authenticated:
         border: 1px solid rgba(0, 191, 255, 0.2);
         border-radius: 16px;
         width: 100%;
-        height: 100px;
+        height: 120px;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -447,14 +442,14 @@ if not st.session_state.authenticated:
     }
 
     .counter-box:hover {
-        transform: translateY(-5px) scale(1.02);
+        transform: translateY(-8px) scale(1.02);
         background: linear-gradient(135deg, 
             rgba(0, 191, 255, 0.15) 0%, 
             rgba(30, 144, 255, 0.08) 50%, 
             rgba(0, 191, 255, 0.15) 100%);
         border: 1px solid rgba(0, 191, 255, 0.4);
         box-shadow: 
-            0 15px 30px rgba(0, 191, 255, 0.1),
+            0 20px 40px rgba(0, 191, 255, 0.1),
             inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
 
@@ -464,7 +459,7 @@ if not st.session_state.authenticated:
     .counter-box:nth-child(4) { animation-delay: 1.5s; }
 
     .counter-number {
-        font-size: 1.8em;
+        font-size: 2.2em;
         font-weight: bold;
         color: #00BFFF;
         margin: 0;
@@ -474,8 +469,8 @@ if not st.session_state.authenticated:
     }
 
     .counter-label {
-        margin-top: 5px;
-        font-size: 0.9em;
+        margin-top: 8px;
+        font-size: 1em;
         color: #c9d1d9;
         position: relative;
         z-index: 2;
@@ -535,11 +530,11 @@ if not st.session_state.get("authenticated", False):
       display: flex;
       justify-content: center;
       position: relative;
-      height: 160px;
+      height: 260px;
     }}
     .animated-cards img {{
       position: absolute;
-      width: 120px;
+      width: 220px;
       animation: splitCards 2.5s ease-in-out infinite alternate;
       z-index: 1;
       filter: drop-shadow(0 0 15px rgba(0,191,255,0.3));
@@ -552,9 +547,9 @@ if not st.session_state.get("authenticated", False):
       0%   {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
       100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
     }}
-    .card-left   {{ --x-offset: -40px; --rot: -4deg; }}
+    .card-left   {{ --x-offset: -80px; --rot: -4deg; }}
     .card-center {{ --x-offset: 0px;  --rot: 0deg;  }}
-    .card-right  {{ --x-offset: 40px;  --rot: 4deg;  }}
+    .card-right  {{ --x-offset: 80px;  --rot: 4deg;  }}
 
     /* ===== Glassmorphism Login Card ===== */
     .login-card {{
@@ -611,7 +606,7 @@ if not st.session_state.get("authenticated", False):
     }}
     .login-card h2 span {{ color: #00BFFF; }}
 
-    /* ===== Auto-disappearing Messages ===== */
+    /* ===== Sliding Messages ===== */
     .slide-message {{
       position: relative;
       overflow: hidden;
@@ -622,7 +617,7 @@ if not st.session_state.get("authenticated", False):
       display: flex;
       align-items: center;
       gap: 8px;
-      animation: slideInAndOut 4s ease forwards;
+      animation: slideIn 0.8s ease forwards;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
     }}
@@ -652,11 +647,9 @@ if not st.session_state.get("authenticated", False):
       color:#FFD700; 
     }}
 
-    @keyframes slideInAndOut {{
+    @keyframes slideIn {{
       0%   {{ transform: translateX(100%); opacity: 0; }}
-      15%  {{ transform: translateX(0); opacity: 1; }}
-      85%  {{ transform: translateX(0); opacity: 1; }}
-      100% {{ transform: translateX(-100%); opacity: 0; }}
+      100% {{ transform: translateX(0); opacity: 1; }}
     }}
 
     /* ===== Glassmorphism Buttons ===== */
@@ -765,28 +758,10 @@ if not st.session_state.get("authenticated", False):
 
         login_tab, register_tab = st.tabs(["Login", "Register"])
 
-        # Initialize message containers
-        if 'login_message' not in st.session_state:
-            st.session_state.login_message = None
-        if 'login_message_time' not in st.session_state:
-            st.session_state.login_message_time = None
-        if 'register_message' not in st.session_state:
-            st.session_state.register_message = None
-        if 'register_message_time' not in st.session_state:
-            st.session_state.register_message_time = None
-
         # ---------------- LOGIN TAB ----------------
         with login_tab:
             user = st.text_input("Username", key="login_user")
             pwd = st.text_input("Password", type="password", key="login_pass")
-
-            # Display login message if exists and not expired
-            if st.session_state.login_message and st.session_state.login_message_time:
-                if time.time() - st.session_state.login_message_time < 4:
-                    st.markdown(st.session_state.login_message, unsafe_allow_html=True)
-                else:
-                    st.session_state.login_message = None
-                    st.session_state.login_message_time = None
 
             if st.button("Login", key="login_btn"):
                 success, saved_key = verify_user(user.strip(), pwd.strip())
@@ -797,35 +772,24 @@ if not st.session_state.get("authenticated", False):
                         st.session_state["user_groq_key"] = saved_key
                     log_user_action(user.strip(), "login")
 
-                    st.session_state.login_message = """<div class='slide-message success-msg'>
+                    st.markdown("""<div class='slide-message success-msg'>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                           stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
                         Login successful!
-                    </div>"""
-                    st.session_state.login_message_time = time.time()
+                    </div>""", unsafe_allow_html=True)
                     st.rerun()
                 else:
-                    st.session_state.login_message = """<div class='slide-message error-msg'>
+                    st.markdown("""<div class='slide-message error-msg'>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                           stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
                         Invalid credentials.
-                    </div>"""
-                    st.session_state.login_message_time = time.time()
-                    st.rerun()
+                    </div>""", unsafe_allow_html=True)
 
         # ---------------- REGISTER TAB ----------------
         with register_tab:
             new_user = st.text_input("Choose a Username", key="reg_user")
             new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
             st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
-
-            # Display register message if exists and not expired
-            if st.session_state.register_message and st.session_state.register_message_time:
-                if time.time() - st.session_state.register_message_time < 4:
-                    st.markdown(st.session_state.register_message, unsafe_allow_html=True)
-                else:
-                    st.session_state.register_message = None
-                    st.session_state.register_message_time = None
 
             if new_user.strip():
                 if username_exists(new_user.strip()):
@@ -846,36 +810,31 @@ if not st.session_state.get("authenticated", False):
                 if new_user.strip() and new_pass.strip():
                     success, message = add_user(new_user.strip(), new_pass.strip())
                     if success:
-                        st.session_state.register_message = f"""<div class='slide-message success-msg'>
+                        st.markdown(f"""<div class='slide-message success-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                               stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
                             {message}
-                        </div>"""
-                        st.session_state.register_message_time = time.time()
+                        </div>""", unsafe_allow_html=True)
                         log_user_action(new_user.strip(), "register")
-                        st.rerun()
                     else:
-                        st.session_state.register_message = f"""<div class='slide-message error-msg'>
+                        st.markdown(f"""<div class='slide-message error-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                               stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
                             {message}
-                        </div>"""
-                        st.session_state.register_message_time = time.time()
-                        st.rerun()
+                        </div>""", unsafe_allow_html=True)
                 else:
-                    st.session_state.register_message = """<div class='slide-message warn-msg'>
+                    st.markdown("""<div class='slide-message warn-msg'>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                           stroke-width="2" viewBox="0 0 24 24">
                           <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
                         </svg>
                         Please fill in both fields.
-                    </div>"""
-                    st.session_state.register_message_time = time.time()
-                    st.rerun()
+                    </div>""", unsafe_allow_html=True)
 
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()
+
 
 
 # ------------------- AFTER LOGIN -------------------

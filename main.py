@@ -3242,7 +3242,7 @@ with tab2:
 
     # ---------------- Sidebar (ONLY in Tab 2) ----------------
     with st.sidebar:
-        st.markdown("### ✨ Manage Sections")
+        st.markdown("### ✨ Manage Resume Sections")
 
         if "edit_mode" not in st.session_state:
             st.session_state.edit_mode = "Add"

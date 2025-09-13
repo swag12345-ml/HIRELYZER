@@ -303,6 +303,58 @@ body, .main {
 """, unsafe_allow_html=True)
 # 🔹 VIDEO BACKGROUND & GLOW TEXT
 
+# ------------------- BEFORE LOGIN -------------------
+if not st.session_state.authenticated:
+
+    # -------- Landing Hero Section --------
+    st.markdown("""
+    <style>
+    .landing-hero {
+        text-align: center;
+        padding: 60px 20px 30px;
+        font-family: 'Orbitron', sans-serif;
+    }
+    .landing-hero h1 {
+        font-size: 3rem;
+        color: #00BFFF;
+        text-shadow: 0 0 20px rgba(0,191,255,0.5);
+        margin-bottom: 15px;
+    }
+    .landing-hero p {
+        font-size: 1.2rem;
+        color: #c9d1d9;
+        max-width: 700px;
+        margin: 0 auto 25px;
+    }
+    .landing-btn {
+        background: linear-gradient(135deg, rgba(0,191,255,0.2), rgba(30,144,255,0.1));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        color: white;
+        border: 1px solid rgba(0,191,255,0.4);
+        border-radius: 12px;
+        font-weight: bold;
+        padding: 12px 28px;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 1.1rem;
+        box-shadow: 0 0 20px rgba(0,191,255,0.3);
+        transition: all 0.3s ease;
+    }
+    .landing-btn:hover {
+        background: linear-gradient(135deg, rgba(0,191,255,0.3), rgba(30,144,255,0.15));
+        border: 1px solid rgba(0,191,255,0.6);
+        box-shadow: 0 0 30px rgba(0,191,255,0.6);
+        transform: scale(1.05);
+    }
+    </style>
+    
+    <div class="landing-hero">
+        <h1>🚀 Welcome to <span style="color:#00FFFF;">HIRELYZER</span></h1>
+        <p>AI-powered resume analysis, job-matching, and career insights — all in one smart platform.</p>
+        <a class="landing-btn" href="#login-section">Get Started</a>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 

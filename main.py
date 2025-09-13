@@ -242,7 +242,7 @@ if "landing_done" not in st.session_state:
 
 # ------------------- LANDING PAGE -------------------
 if not st.session_state.landing_done:
-    # Force cinematic layout ONLY on landing page
+    # ✅ Cinematic wide layout ONLY for landing
     st.set_page_config(page_title="KecxuBot — Cinematic Landing", page_icon="🚀", layout="wide")
 
     # --- CSS + HTML Landing Page ---
@@ -377,6 +377,7 @@ if not st.session_state.landing_done:
 
     st.stop()
 
+# ------------------- REGULAR APP AFTER LANDING -------------------
 
 
 

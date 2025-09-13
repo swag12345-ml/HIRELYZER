@@ -1,4 +1,17 @@
-from xhtml2pdf import pisa
+import streamlit as st
+
+# ------------------- Landing Page -------------------
+def landing_page():
+    st.markdown("<h1>🚀 Welcome to KecxuBot</h1>", unsafe_allow_html=True)
+    st.markdown("<p>Your AI-powered career assistant.</p>", unsafe_allow_html=True)
+
+    # Button to switch to main website
+    if st.button("✨ Get Started"):
+        st.session_state["page"] = "main"
+
+# ------------------- Main Website -------------------
+def main_app():
+    from xhtml2pdf import pisa
 from io import BytesIO
 
 def html_to_pdf_bytes(html_string):
@@ -6680,3 +6693,15 @@ if tab5:
 			<p>Last updated: {}</p>
 		</div>
 		""".format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
+    
+
+# ------------------- App Controller -------------------
+if "page" not in st.session_state:
+    st.session_state["page"] = "landing"
+
+if st.session_state["page"] == "landing":
+    landing_page()
+elif st.session_state["page"] == "main":
+    main_app()
+
+

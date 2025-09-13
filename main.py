@@ -230,9 +230,7 @@ import streamlit as st
 import base64
 from textwrap import dedent
 
-st.set_page_config(page_title="KecxuBot — Cinematic Landing", page_icon="🚀", layout="wide")
-
-# -------------------- Session state --------------------
+# ------------------- Session State -------------------
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "username" not in st.session_state:
@@ -242,20 +240,17 @@ if "processed_files" not in st.session_state:
 if "landing_done" not in st.session_state:
     st.session_state.landing_done = False
 
-# -------------------- Helper --------------------------
-def local_css(css: str):
-    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
-
-# -------------------- Landing Page --------------------
+# ------------------- Cinematic Landing -------------------
 if not st.session_state.authenticated and not st.session_state.landing_done:
-    # CSS
-    css = dedent("""
+
+    # CSS styling
+    st.markdown("""
+    <style>
     :root{
       --bg1: #050816;
       --bg2: #0e0b1a;
       --accent: linear-gradient(90deg,#ff6a88 0%,#5f2c82 50%,#2b5876 100%);
       --glass: rgba(255,255,255,0.04);
-      --glass-strong: rgba(255,255,255,0.06);
       --card-shadow: 0 10px 30px rgba(2,6,23,0.6);
     }
     html, body, [class*="css"]{
@@ -265,58 +260,45 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
       color: rgba(255,255,255,0.95);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
-    .hero{display:flex;gap:24px;align-items:center;padding:48px 24px;border-radius:18px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:var(--card-shadow);}
+    .hero{display:flex;gap:24px;align-items:center;padding:48px 24px;border-radius:18px;
+          background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+          box-shadow:var(--card-shadow);}
     .hero-left{flex:1;}
     .hero-right{width:420px;min-width:320px}
     .h-eyebrow{letter-spacing:2px;color:rgba(255,255,255,0.55);font-weight:600}
-    .h-title{font-size:48px;font-weight:800;line-height:1.02;margin:8px 0;}
+    .h-title{font-size:44px;font-weight:800;line-height:1.1;margin:8px 0;}
     .h-sub{color:rgba(255,255,255,0.7);font-size:18px;margin-bottom:18px}
     .cta-row{display:flex;gap:12px}
-    .btn{background:var(--accent);padding:12px 20px;border-radius:12px;font-weight:700;border:none;cursor:pointer;box-shadow:0 8px 18px rgba(79,70,229,0.18);}
+    .btn{background:var(--accent);padding:12px 20px;border-radius:12px;font-weight:700;
+         border:none;cursor:pointer;box-shadow:0 8px 18px rgba(79,70,229,0.18);color:white;}
     .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);}
     .features{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:24px}
-    .feature-card{padding:18px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);}
+    .feature-card{padding:18px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+                  border:1px solid rgba(255,255,255,0.03);}
     .feature-title{font-weight:700;margin-top:8px}
     .feature-desc{color:rgba(255,255,255,0.68);font-size:14px;margin-top:6px}
-    .footer{padding:28px 12px;margin-top:28px;color:rgba(255,255,255,0.6)}
     @media (max-width: 900px){
       .hero{flex-direction:column}
-      .features{grid-template-columns:repeat(1,1fr)}
+      .features{grid-template-columns:1fr}
       .h-title{font-size:32px}
     }
     .typewriter{display:inline-block;overflow:hidden;white-space:nowrap;}
     .typewriter-text{border-right:2px solid rgba(255,255,255,0.6);padding-right:6px}
-    """)
-    local_css(css)
-
-    # Navigation bar
-    st.markdown("""
-    <div style='display:flex;justify-content:space-between;align-items:center;padding:10px 6px;margin-bottom:8px;'>
-      <div style='display:flex;align-items:center;gap:12px'>
-        <div style='width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#ff6a88,#5f2c82);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px'>KB</div>
-        <div style='font-weight:700'>KecxuBot</div>
-      </div>
-      <div style='display:flex;gap:10px;align-items:center'>
-        <a href='#features' style='text-decoration:none;color:rgba(255,255,255,0.75);font-weight:600'>Features</a>
-        <a href='#pricing' style='text-decoration:none;color:rgba(255,255,255,0.75);font-weight:600'>Pricing</a>
-        <a href='#contact' style='text-decoration:none;color:rgba(255,255,255,0.75);font-weight:600'>Contact</a>
-        <button class='btn' onclick="window.location='#app'">Open App</button>
-      </div>
-    </div>
+    </style>
     """, unsafe_allow_html=True)
 
     # Hero section
-    hero_html = """
+    st.markdown("""
     <div class='hero'>
       <div class='hero-left'>
         <div class='h-eyebrow'>AI-Powered Career Tools · Instant · Insightful</div>
         <div class='h-title'>Make Resumes that Pass — and People who Hire.</div>
         <div class='h-sub'><span class='typewriter'><span id='typewriter' class='typewriter-text'></span></span></div>
         <div class='cta-row'>
-          <button class='btn' onclick="window.location='#app'">Launch App</button>
-          <button class='btn secondary' onclick="window.location='#pricing'">View Plans</button>
+          <button class='btn' id='launch-btn'>🚀 Launch App</button>
+          <button class='btn secondary'>View Plans</button>
         </div>
-        <div class='features' style='margin-top:22px' id='features'>
+        <div class='features' style='margin-top:22px'>
           <div class='feature-card'>
             <div style='font-size:20px'>📄 Resume Analyzer</div>
             <div class='feature-title'>ATS-ready scoring & AI rewrite</div>
@@ -335,7 +317,8 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         </div>
       </div>
       <div class='hero-right'>
-        <div style='border-radius:14px;padding:18px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.2));box-shadow:0 20px 60px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03)'>
+        <div style='border-radius:14px;padding:18px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.2));
+                    box-shadow:0 20px 60px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03)'>
           <div style='display:flex;justify-content:space-between;align-items:center'>
             <div style='font-weight:800'>Live ATS Preview</div>
             <div style='font-size:12px;color:rgba(255,255,255,0.6)'>Preview</div>
@@ -358,6 +341,7 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         </div>
       </div>
     </div>
+
     <script>
     const phrases = [
       'Upload your resume — get ATS-ready feedback in seconds.',
@@ -378,16 +362,14 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     }
     if(el) show();
     </script>
-    """
-    st.markdown(hero_html, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-    # Start button to go to app
-    if st.button("🚀 Start", key="start_btn"):
+    # Streamlit Launch button (linked to landing_done)
+    if st.button("🚀 Start App", key="start_btn"):
         st.session_state.landing_done = True
         st.rerun()
 
     st.stop()
-
 
 
 

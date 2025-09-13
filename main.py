@@ -228,7 +228,6 @@ create_user_table()
 
 import streamlit as st
 import base64
-from textwrap import dedent
 
 # ------------------- Session State -------------------
 if "authenticated" not in st.session_state:
@@ -259,55 +258,59 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
       color: rgba(255,255,255,0.95);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
-    .hero {
-      display: grid;
-      grid-template-columns: 1fr 420px;
-      gap: 40px;
-      align-items: start;
-      padding: 48px 32px;
-      border-radius: 20px;
+    .container{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .hero{
+      display: flex;
+      gap: 48px;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 48px;
+      border-radius: 18px;
       background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
       box-shadow: var(--card-shadow);
     }
-    .hero-left { display: flex; flex-direction: column; gap: 16px; }
-    .h-eyebrow{letter-spacing:2px;color:rgba(255,255,255,0.55);font-weight:600}
-    .h-title{font-size:48px;font-weight:800;line-height:1.15;}
-    .h-sub{color:rgba(255,255,255,0.7);font-size:18px;margin-top:4px}
-    .cta-row{display:flex;gap:12px;margin-top:12px}
-    .btn{
-      background:var(--accent);padding:12px 22px;border-radius:14px;font-weight:700;
-      border:none;cursor:pointer;box-shadow:0 8px 18px rgba(79,70,229,0.18);color:white;
-      transition: all 0.25s ease-in-out;
+    .hero-left{flex:1;}
+    .hero-right{
+      width: 360px;
+      min-width: 320px;
+      flex-shrink: 0;
     }
-    .btn:hover { transform: scale(1.03); }
+    .h-eyebrow{letter-spacing:2px;color:rgba(255,255,255,0.55);font-weight:600}
+    .h-title{font-size:44px;font-weight:800;line-height:1.1;margin:8px 0;}
+    .h-sub{color:rgba(255,255,255,0.7);font-size:18px;margin-bottom:24px}
+    .cta-row{display:flex;gap:12px;margin-bottom:28px}
+    .btn{
+      background: var(--accent);
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(79,70,229,0.18);
+      color: white;
+    }
     .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);}
-    .features {
+    .features{
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 20px;
-      margin-top: 28px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
     }
     .feature-card{
-      padding:20px;border-radius:14px;
-      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border:1px solid rgba(255,255,255,0.04);
-      min-height:160px;
-      display:flex;
-      flex-direction:column;
-      justify-content:space-between;
-    }
-    .feature-title{font-weight:700;margin-top:8px;font-size:16px}
-    .feature-desc{color:rgba(255,255,255,0.68);font-size:14px;margin-top:6px;line-height:1.4}
-    .hero-right-box {
-      border-radius: 18px;
-      padding: 20px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.2));
-      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      padding: 18px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
       border: 1px solid rgba(255,255,255,0.03);
     }
+    .feature-title{font-weight:700;margin-top:8px}
+    .feature-desc{color:rgba(255,255,255,0.68);font-size:14px;margin-top:6px}
     @media (max-width: 900px){
-      .hero{grid-template-columns: 1fr;gap:28px;padding:32px 20px;}
-      .h-title{font-size:34px}
+      .hero{flex-direction:column;padding:24px;}
+      .hero-right{width:100%;}
+      .h-title{font-size:32px;}
     }
     .typewriter{display:inline-block;overflow:hidden;white-space:nowrap;}
     .typewriter-text{border-right:2px solid rgba(255,255,255,0.6);padding-right:6px}
@@ -315,52 +318,55 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     """, unsafe_allow_html=True)
 
     st.markdown("""
-    <div class='hero'>
-      <div class='hero-left'>
-        <div class='h-eyebrow'>AI-Powered Career Tools · Instant · Insightful</div>
-        <div class='h-title'>Make Resumes that Pass — and People who Hire.</div>
-        <div class='h-sub'><span class='typewriter'><span id='typewriter' class='typewriter-text'></span></span></div>
-        <div class='cta-row'>
-          <button class='btn' id='launch-btn'>🚀 Launch App</button>
-          <button class='btn secondary'>View Plans</button>
-        </div>
-        <div class='features'>
-          <div class='feature-card'>
-            <div style='font-size:20px'>📄 Resume Analyzer</div>
-            <div class='feature-title'>ATS-ready scoring & AI rewrite</div>
-            <div class='feature-desc'>Upload resumes, get ATS score, grammar, bias detection & AI suggestions.</div>
+    <div class='container'>
+      <div class='hero'>
+        <div class='hero-left'>
+          <div class='h-eyebrow'>AI-Powered Career Tools · Instant · Insightful</div>
+          <div class='h-title'>Make Resumes that Pass — and People who Hire.</div>
+          <div class='h-sub'><span class='typewriter'><span id='typewriter' class='typewriter-text'></span></span></div>
+          <div class='cta-row'>
+            <button class='btn' id='launch-btn'>🚀 Launch App</button>
+            <button class='btn secondary'>View Plans</button>
           </div>
-          <div class='feature-card'>
-            <div style='font-size:20px'>📝 Builder & Cover Letter</div>
-            <div class='feature-title'>Templates, AI preview & export</div>
-            <div class='feature-desc'>Create resumes with templates, auto-generate cover letters, and export.</div>
-          </div>
-          <div class='feature-card'>
-            <div style='font-size:20px'>🔍 Job Gateway</div>
-            <div class='feature-title'>Search & market insights</div>
-            <div class='feature-desc'>Direct search links plus premium market & salary insights.</div>
-          </div>
-        </div>
-      </div>
-      <div class='hero-right'>
-        <div class='hero-right-box'>
-          <div style='display:flex;justify-content:space-between;align-items:center'>
-            <div style='font-weight:800'>Live ATS Preview</div>
-            <div style='font-size:12px;color:rgba(255,255,255,0.6)'>Preview</div>
-          </div>
-          <div style='height:16px'></div>
-          <div style='background:rgba(255,255,255,0.02);padding:14px;border-radius:12px'>
-            <div style='font-size:12px;color:rgba(255,255,255,0.6)'>Resume: <b>John Doe — Backend Engineer</b></div>
-            <div style='height:10px'></div>
-            <div style='display:flex;gap:8px;flex-wrap:wrap'>
-              <div style='padding:8px 10px;border-radius:999px;background:rgba(0,0,0,0.3);font-size:12px'>Python</div>
-              <div style='padding:8px 10px;border-radius:999px;background:rgba(0,0,0,0.3);font-size:12px'>Django</div>
-              <div style='padding:8px 10px;border-radius:999px;background:rgba(0,0,0,0.3);font-size:12px'>Postgres</div>
+          <div class='features'>
+            <div class='feature-card'>
+              <div style='font-size:20px'>📄 Resume Analyzer</div>
+              <div class='feature-title'>ATS-ready scoring & AI rewrite</div>
+              <div class='feature-desc'>Upload resumes, get ATS score, grammar, bias detection & AI suggestions.</div>
             </div>
-            <div style='height:14px'></div>
+            <div class='feature-card'>
+              <div style='font-size:20px'>📝 Builder & Cover Letter</div>
+              <div class='feature-title'>Templates, AI preview & export</div>
+              <div class='feature-desc'>Create resumes with templates, auto-generate cover letters, and export.</div>
+            </div>
+            <div class='feature-card'>
+              <div style='font-size:20px'>🔍 Job Gateway</div>
+              <div class='feature-title'>Search & market insights</div>
+              <div class='feature-desc'>Direct search links plus premium market & salary insights.</div>
+            </div>
+          </div>
+        </div>
+        <div class='hero-right'>
+          <div style='border-radius:14px;padding:18px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.2));
+                      box-shadow:0 20px 60px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03)'>
             <div style='display:flex;justify-content:space-between;align-items:center'>
-              <div style='font-size:12px;color:rgba(255,255,255,0.6)'>ATS Score</div>
-              <div style='font-weight:800;font-size:20px'>78%</div>
+              <div style='font-weight:800'>Live ATS Preview</div>
+              <div style='font-size:12px;color:rgba(255,255,255,0.6)'>Preview</div>
+            </div>
+            <div style='height:16px'></div>
+            <div style='background:rgba(255,255,255,0.02);padding:12px;border-radius:10px'>
+              <div style='font-size:12px;color:rgba(255,255,255,0.6)'>Resume: <b>John Doe — Backend Engineer</b></div>
+              <div style='height:10px'></div>
+              <div style='display:flex;gap:8px;flex-wrap:wrap'>
+                <div style='padding:8px 10px;border-radius:999px;background:rgba(0,0,0,0.3);font-size:12px'>Python</div>
+                <div style='padding:8px 10px;border-radius:999px;background:rgba(0,0,0,0.3);font-size:12px'>Django</div>
+                <div style='padding:8px 10px;border-radius:999px;background:rgba(0,0,0,0.3);font-size:12px'>Postgres</div>
+              </div>
+              <div style='height:14px'></div>
+              <div style='display:flex;justify-content:space-between;align-items:center'>
+                <div style='font-size:12px;color:rgba(255,255,255,0.6)'>ATS Score</div>
+                <div style='font-weight:800;font-size:18px'>78%</div>
+              </div>
             </div>
           </div>
         </div>
@@ -394,6 +400,7 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         st.rerun()
 
     st.stop()
+
 
 # ------------------- CSS Styling -------------------
 st.markdown("""

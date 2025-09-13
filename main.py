@@ -238,589 +238,173 @@ if "processed_files" not in st.session_state:
 if "landing_done" not in st.session_state:
     st.session_state.landing_done = False
 
-# ------------------- Enhanced Glass Morphism Landing Page -------------------
+# ------------------- Cinematic Landing Page -------------------
 if not st.session_state.authenticated and not st.session_state.landing_done:
+    import pandas as pd
+    import plotly.express as px
+
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
 
-    /* Global Styles with Glass Background */
-    .stApp {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
-        background-size: 400% 400%;
-        animation: gradientShift 20s ease infinite;
-        min-height: 100vh;
-        position: relative;
+    body, .main {
+        background-color: #0d1117;
+        color: white;
+        font-family: 'Orbitron', sans-serif;
     }
 
-    .stApp::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        z-index: -1;
-    }
-
-    @keyframes gradientShift {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-
-    body, .main, .stApp > div {
-        background: transparent !important;
-        color: #2d3748;
-        font-family: 'Inter', sans-serif;
-    }
-
-    /* Hide Streamlit elements */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    .stDeployButton {display: none;}
-
-    /* Enhanced Particle Background */
-    .particles {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: -1;
-    }
-
-    .particle {
-        position: absolute;
-        width: 3px;
-        height: 3px;
-        background: rgba(255, 255, 255, 0.4);
-        border-radius: 50%;
-        animation: float 8s ease-in-out infinite;
-        box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-    }
-
-    .particle:nth-child(1) { left: 10%; animation-delay: 0s; }
-    .particle:nth-child(2) { left: 20%; animation-delay: 1s; }
-    .particle:nth-child(3) { left: 30%; animation-delay: 2s; }
-    .particle:nth-child(4) { left: 40%; animation-delay: 3s; }
-    .particle:nth-child(5) { left: 50%; animation-delay: 4s; }
-    .particle:nth-child(6) { left: 60%; animation-delay: 5s; }
-    .particle:nth-child(7) { left: 70%; animation-delay: 0.5s; }
-    .particle:nth-child(8) { left: 80%; animation-delay: 1.5s; }
-    .particle:nth-child(9) { left: 90%; animation-delay: 2.5s; }
-
-    @keyframes float {
-        0%, 100% { transform: translateY(100vh) scale(0); opacity: 0; }
-        10% { opacity: 1; }
-        90% { opacity: 1; }
-        100% { transform: translateY(-100px) scale(1); }
-    }
-
-    /* Glass Morphism Landing Container */
     .landing-container {
         text-align: center;
-        padding: 80px 20px 60px;
-        position: relative;
-        z-index: 1;
-        background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 30px;
-        margin: 40px auto;
-        max-width: 900px;
-        box-shadow: 
-            0 25px 50px rgba(0, 0, 0, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        padding-top: 60px;
+        animation: fadeIn 2s ease-in-out;
     }
 
-    /* Enhanced Bag with Glass Effect */
-    .bag {
-        width: 120px; 
-        height: 90px;
-        margin: 0 auto;
-        border-radius: 20px 20px 8px 8px;
-        background: rgba(255, 255, 255, 0.25);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 
-            0 15px 35px rgba(0, 0, 0, 0.1),
-            inset 0 2px 5px rgba(255, 255, 255, 0.4);
-        position: relative;
-        animation: bagEnter 2s cubic-bezier(.2,.8,.2,1) both;
-        transform-style: preserve-3d;
+    .resume-bag {
+        width: 180px;
+        animation: slideBag 3s ease-in-out infinite alternate;
+        filter: drop-shadow(0 0 25px rgba(0,191,255,0.6));
     }
 
-    .bag:before {
-        content: ""; 
-        position: absolute; 
-        left: 15px; 
-        right: 15px; 
-        top: -18px; 
-        height: 20px;
-        background: rgba(255, 255, 255, 0.3);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        border-radius: 8px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    @keyframes slideBag {
+        0% { transform: translateX(-40px) rotate(-8deg); }
+        100% { transform: translateX(40px) rotate(8deg); }
     }
 
-    .bag:after {
-        content: ""; 
-        position: absolute; 
-        left: 0; 
-        right: 0; 
-        top: 30px; 
-        height: 6px;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
-        border-radius: 3px;
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(40px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
-    .lock {
-        position: absolute; 
-        left: 50%; 
-        top: 35px;
-        transform: translateX(-50%);
-        width: 22px; 
-        height: 22px; 
-        border-radius: 6px;
-        background: rgba(236, 72, 153, 0.8);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 
-            0 8px 20px rgba(236, 72, 153, 0.3),
-            inset 0 1px 3px rgba(255, 255, 255, 0.4);
-        animation: lockBounce 2s ease-out 1.2s both;
-    }
-
-    .lock:before {
-        content: "";
-        position: absolute;
-        top: -6px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 10px;
-        height: 10px;
-        border: 2px solid rgba(236, 72, 153, 0.8);
-        border-bottom: none;
-        border-radius: 10px 10px 0 0;
-        background: transparent;
-    }
-
-    @keyframes bagEnter {
-      0%   { 
-        transform: translateY(-60px) scale(.7) rotate(-5deg); 
-        opacity: 0; 
-        filter: blur(8px);
-      }
-      60%  { 
-        transform: translateY(6px) scale(1.05) rotate(1deg); 
-        opacity: 1; 
-        filter: blur(0px);
-      }
-      80%  { 
-        transform: translateY(-3px) scale(1.01) rotate(-0.5deg); 
-      }
-      100% { 
-        transform: translateY(0) scale(1) rotate(0deg); 
-      }
-    }
-
-    @keyframes lockBounce {
-      0% { 
-        transform: translate(-50%, -25px) scale(0) rotate(90deg); 
-        opacity: 0; 
-      }
-      40% { 
-        transform: translate(-50%, 5px) scale(1.15) rotate(-5deg); 
-        opacity: 1; 
-      }
-      70% { 
-        transform: translate(-50%, -1px) scale(0.95) rotate(2deg); 
-      }
-      100% { 
-        transform: translate(-50%, 0) scale(1) rotate(0deg); 
-      }
-    }
-
-    /* Modern Typography */
-    .main-title {
-        font-family: 'Poppins', sans-serif;
-        font-size: 3.2rem;
-        font-weight: 700;
-        margin-top: 35px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        animation: titleReveal 1.5s ease-in-out 2s both;
-        letter-spacing: 1px;
-        line-height: 1.2;
-    }
-
-    .brand-name {
-        background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #06b6d4 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        font-weight: 700;
-        animation: brandGlow 3s ease-in-out infinite alternate;
-    }
-
-    @keyframes brandGlow {
-        from { 
-            filter: drop-shadow(0 0 10px rgba(236, 72, 153, 0.3));
-        }
-        to { 
-            filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.4));
-        }
+    h1 {
+        font-size: 2.5rem;
+        margin-top: 20px;
+        color: #00BFFF;
+        text-shadow: 0 0 20px rgba(0,191,255,0.8);
     }
 
     .tagline {
-        font-size: 1.3rem;
-        font-weight: 400;
-        margin-top: 20px;
-        color: #4a5568;
-        animation: slideUp 1.5s ease-in-out 2.5s both;
-        line-height: 1.6;
-        max-width: 600px;
-        margin-left: auto;
-        margin-right: auto;
+        font-size: 1.2rem;
+        margin-top: 10px;
+        color: #c9d1d9;
     }
 
-    @keyframes titleReveal {
-        from { 
-            opacity: 0; 
-            transform: translateY(30px) scale(0.9); 
-            filter: blur(5px);
-        }
-        to   { 
-            opacity: 1; 
-            transform: translateY(0) scale(1); 
-            filter: blur(0px);
-        }
-    }
-
-    @keyframes slideUp {
-        from { 
-            opacity: 0; 
-            transform: translateY(25px); 
-        }
-        to   { 
-            opacity: 1; 
-            transform: translateY(0); 
-        }
-    }
-
-    /* Glass Morphism Button */
-    .stButton > button {
-        background: rgba(255, 255, 255, 0.2);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        color: #2d3748;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        border-radius: 50px;
-        padding: 16px 40px;
+    .start-btn > button {
+        background: linear-gradient(135deg, rgba(0,191,255,0.2), rgba(30,144,255,0.1));
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        color: white;
+        border: 1px solid rgba(0,191,255,0.4);
+        border-radius: 14px;
+        padding: 12px 32px;
         font-size: 1.1rem;
-        font-weight: 600;
-        margin-top: 40px;
-        font-family: 'Poppins', sans-serif;
-        box-shadow: 
-            0 10px 30px rgba(0, 0, 0, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.3);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        animation: buttonReveal 1.5s ease-in-out 3s both;
-        position: relative;
-        overflow: hidden;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+        margin-top: 35px;
+        font-weight: bold;
+        box-shadow: 0 6px 20px rgba(0,191,255,0.3);
+        transition: all 0.3s ease;
+    }
+    .start-btn > button:hover {
+        transform: translateY(-3px) scale(1.05);
+        background: linear-gradient(135deg, rgba(0,191,255,0.3), rgba(30,144,255,0.2));
+        border: 1px solid rgba(0,191,255,0.6);
+        box-shadow: 0 8px 28px rgba(0,191,255,0.45);
     }
 
-    .stButton > button:before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-        transition: left 0.6s;
-    }
-
-    .stButton > button:hover:before {
-        left: 100%;
-    }
-
-    .stButton > button:hover {
-        transform: translateY(-3px) scale(1.03);
-        background: rgba(255, 255, 255, 0.3);
-        border: 2px solid rgba(255, 255, 255, 0.5);
-        box-shadow: 
-            0 15px 40px rgba(0, 0, 0, 0.15),
-            inset 0 1px 0 rgba(255, 255, 255, 0.4);
-        color: #1a202c;
-    }
-
-    @keyframes buttonReveal {
-        from { 
-            opacity: 0; 
-            transform: translateY(15px) scale(0.95); 
-        }
-        to   { 
-            opacity: 1; 
-            transform: translateY(0) scale(1); 
-        }
-    }
-
-    /* Glass Morphism Sections */
-    .section { 
-        margin: 60px auto; 
-        text-align: center; 
-        padding: 50px 30px;
-        position: relative;
-        z-index: 1;
-        background: rgba(255, 255, 255, 0.12);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 25px;
-        max-width: 1100px;
-        box-shadow: 
-            0 20px 40px rgba(0, 0, 0, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    }
-
-    .section h2 { 
-        font-family: 'Poppins', sans-serif;
-        font-size: 2.3rem;
-        font-weight: 600;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin-bottom: 25px;
-        animation: fadeInUp 1s ease-out;
-    }
-
-    .section p {
-        font-size: 1.1rem;
-        line-height: 1.7;
-        color: #4a5568;
-        max-width: 800px;
-        margin: 0 auto;
-        font-weight: 400;
-    }
-
-    /* Enhanced Features Grid */
-    .features {
+    /* Glass cards */
+    .features-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-        gap: 25px;
-        max-width: 1000px;
-        margin: 0 auto;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+        margin-top: 40px;
         padding: 0 20px;
     }
-
     .feature-card {
-        background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        border-radius: 20px;
-        padding: 35px 25px;
-        box-shadow: 
-            0 15px 35px rgba(0, 0, 0, 0.08),
-            inset 0 1px 0 rgba(255, 255, 255, 0.3);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 4px 25px rgba(0,0,0,0.4);
+        transition: transform 0.3s ease;
     }
-
-    .feature-card:before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
-        opacity: 0;
-        transition: opacity 0.3s;
+    .feature-card:hover {
+        transform: translateY(-6px) scale(1.03);
     }
-
-    .feature-card:hover:before {
-        opacity: 1;
-    }
-
-    .feature-card:hover { 
-        transform: translateY(-8px) scale(1.02);
-        background: rgba(255, 255, 255, 0.2);
-        border-color: rgba(255, 255, 255, 0.4);
-        box-shadow: 
-            0 25px 50px rgba(0, 0, 0, 0.12),
-            inset 0 1px 0 rgba(255, 255, 255, 0.4);
-    }
-
     .feature-card h3 {
-        font-size: 1.3rem;
-        font-weight: 600;
-        margin-bottom: 15px;
-        color: #2d3748;
-        font-family: 'Poppins', sans-serif;
-    }
-
-    .feature-card p {
-        color: #4a5568;
-        line-height: 1.6;
-        font-size: 1rem;
-    }
-
-    /* Glass Contact Section */
-    .contact {
-        margin-top: 40px;
-        padding: 35px;
-        background: rgba(255, 255, 255, 0.18);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 20px;
-        display: inline-block;
-        box-shadow: 
-            0 20px 40px rgba(0, 0, 0, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    }
-
-    .contact p {
-        margin: 12px 0;
+        color: #00BFFF;
+        margin-top: 12px;
         font-size: 1.1rem;
-        color: #2d3748;
-        font-weight: 500;
     }
-
-    /* Responsive Design */
-    @media (max-width: 768px) {
-        .main-title {
-            font-size: 2.2rem;
-        }
-        
-        .tagline {
-            font-size: 1.1rem;
-            padding: 0 20px;
-        }
-        
-        .features {
-            grid-template-columns: 1fr;
-            gap: 20px;
-        }
-        
-        .feature-card {
-            padding: 25px 20px;
-        }
-        
-        .section {
-            margin: 40px 20px;
-            padding: 35px 20px;
-        }
-        
-        .landing-container {
-            margin: 20px;
-            padding: 60px 20px 40px;
-        }
-    }
-
-    /* Scroll animations */
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(25px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    .feature-card p {
+        font-size: 0.9rem;
+        color: #c9d1d9;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # Enhanced particle background
-    st.markdown("""
-    <div class="particles">
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # HERO SECTION
-    st.markdown("""
+    # Hero Section
+    st.markdown(f"""
     <div class="landing-container">
-        <div class="bag"><div class="lock"></div></div>
-        <h1 class="main-title">Welcome to <span class="brand-name">HIRELYZER</span></h1>
-        <p class="tagline">AI-powered Resume Analysis • Smart Career Builder • Job & Course Recommendations</p>
+        <img src="https://cdn-icons-png.flaticon.com/512/3135/3135768.png" class="resume-bag" />
+        <h1>Welcome to <span style="color:#00BFFF;">HIRLEYZER</span></h1>
+        <p class="tagline">AI-powered Resume Analysis & Career Acceleration</p>
     </div>
     """, unsafe_allow_html=True)
 
-    # ABOUT US SECTION
+    # Feature Cards
     st.markdown("""
-    <div class="section">
-        <h2>About Us</h2>
-        <p>Hirelyzer is your intelligent career companion, designed to accelerate your professional journey. 
-        We combine cutting-edge AI technology with deep industry insights to provide comprehensive resume analysis, 
-        an intuitive resume builder, strategic job matching, and personalized course recommendations tailored to your career goals.</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # FEATURES SECTION
-    st.markdown("""
-    <div class="section">
-        <h2>Features</h2>
-        <div class="features">
-            <div class="feature-card">
-                <h3>📊 AI Resume Analyzer</h3>
-                <p>Advanced ATS compatibility scoring, unconscious bias detection, and data-driven recommendations 
-                to optimize your resume for maximum impact and interview success.</p>
-            </div>
-            <div class="feature-card">
-                <h3>📝 Smart Resume Builder</h3>
-                <p>Create stunning, professional resumes with AI-powered content suggestions, industry-specific templates, 
-                and real-time optimization feedback.</p>
-            </div>
-            <div class="feature-card">
-                <h3>🔍 Career Intelligence</h3>
-                <p>Intelligent job matching algorithms and curated learning pathways to help you discover opportunities 
-                and develop skills that align with your career aspirations.</p>
-            </div>
+    <div class="features-grid">
+        <div class="feature-card">
+            <h3>📊 Resume Analyzer</h3>
+            <p>ATS scoring, grammar checks, bias detection & AI rewrites.</p>
+        </div>
+        <div class="feature-card">
+            <h3>📝 Resume Builder & Cover Letter</h3>
+            <p>Build resumes with AI previews, templates, and cover letters.</p>
+        </div>
+        <div class="feature-card">
+            <h3>🔍 Job Search Gateway</h3>
+            <p>Find jobs via LinkedIn, Naukri, FoundIt + salary insights.</p>
+        </div>
+        <div class="feature-card">
+            <h3>🎓 Course Recommendation</h3>
+            <p>Close skill gaps with curated learning paths & upskilling.</p>
+        </div>
+        <div class="feature-card">
+            <h3>📈 Admin Dashboard</h3>
+            <p>HR & Universities: candidate stats, analytics & exports.</p>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # CONTACT SECTION
+    # Job Market Chart
+    df = pd.DataFrame({
+        'month': pd.date_range(start='2024-01-01', periods=12, freq='M').strftime('%b'),
+        'Full Stack': [50,55,53,60,65,70,72,78,82,85,88,94],
+        'ML/AI': [20,22,21,25,28,30,33,35,37,40,43,46],
+        'Cloud': [30,32,35,36,38,40,42,44,46,48,50,53]
+    })
+    fig = px.line(df, x='month', y=['Full Stack','ML/AI','Cloud'],
+                  title="📈 Job Market Trends (Sample Data)",
+                  labels={'value':'Open Roles','month':'Month'})
+    fig.update_layout(template="plotly_dark", margin=dict(t=40,l=20,r=20,b=20))
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Quick Insights
     st.markdown("""
-    <div class="section">
-        <h2>Contact Us</h2>
-        <div class="contact">
-            <p>📧 Email: support@hirelyzer.ai</p>
-            <p>🌐 Website: www.hirelyzer.ai</p>
-            <p>🔗 LinkedIn | Twitter | GitHub</p>
-        </div>
+    <div style="margin:30px auto; max-width:800px; text-align:left; line-height:1.6;">
+        <h3 style="color:#00BFFF;">✨ Quick Insights</h3>
+        <ul>
+            <li>Full Stack demand leads with steady YoY growth.</li>
+            <li>AI/ML roles growing fastest in emerging markets.</li>
+            <li>Cloud jobs up 8% as companies scale infrastructure.</li>
+        </ul>
     </div>
     """, unsafe_allow_html=True)
 
-    # Enhanced Start Button
-    if st.button("🚀 Get Started", key="start_btn"):
+    # Start button
+    if st.button("🚀 Start", key="start_btn"):
         st.session_state.landing_done = True
         st.rerun()
 

@@ -1,4 +1,4 @@
-from xhtml2pdf import pisa
+\from xhtml2pdf import pisa
 from io import BytesIO
 
 def html_to_pdf_bytes(html_string):
@@ -226,243 +226,32 @@ from user_login import (
 # ------------------- Initialize -------------------
 create_user_table()
 
-import streamlit as st
-import base64
-from textwrap import dedent
-
-# ------------------- Session State -------------------
+# ------------------- Initialize Session State -------------------
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "username" not in st.session_state:
     st.session_state.username = None
 if "processed_files" not in st.session_state:
     st.session_state.processed_files = set()
-if "landing_done" not in st.session_state:
-    st.session_state.landing_done = False
 
-# ------------------- LANDING PAGE -------------------
-if not st.session_state.landing_done:
-
-    # --- Contained layout CSS for landing page ---
-    st.markdown(
-        """
-        <style>
-        /* Reset and base container styling */
-        .main .block-container {
-            max-width: 1200px !important;
-            padding-left: 2rem !important;
-            padding-right: 2rem !important;
-            margin: 0 auto !important;
-        }
-        
-        /* Responsive container adjustments */
-        @media (max-width: 768px) {
-            .main .block-container {
-                max-width: 100% !important;
-                padding-left: 1rem !important;
-                padding-right: 1rem !important;
-            }
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
-    # --- Your Existing Landing Page CSS + HTML ---
-    st.markdown("""<style>
-    :root {
-      --bg1: #050816;
-      --bg2: #0e0b1a;
-      --accent: linear-gradient(90deg,#ff6a88 0%,#5f2c82 50%,#2b5876 100%);
-      --glass: rgba(255,255,255,0.04);
-      --card-shadow: 0 10px 30px rgba(2,6,23,0.6);
-    }
-    html, body, [class*="css"] {
-      background: radial-gradient(1200px 600px at 10% 10%, rgba(79, 70, 229, 0.12), transparent),
-                  radial-gradient(1000px 600px at 90% 90%, rgba(59,130,246,0.06), transparent),
-                  linear-gradient(180deg,var(--bg1),var(--bg2));
-      color: rgba(255,255,255,0.95);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    }
-    .container { 
-      max-width: 1200px; 
-      margin: 0 auto; 
-      padding: 48px 24px; 
-      width: 100%;
-      box-sizing: border-box;
-    }
-    .hero { 
-      display: grid; 
-      grid-template-columns: 1fr 380px; 
-      gap: 48px; 
-      align-items: start; 
-      max-width: 100%;
-    }
-    .hero-left { display: flex; flex-direction: column; gap: 20px; }
-    .h-eyebrow { letter-spacing:2px;color:rgba(255,255,255,0.55);font-weight:600 }
-    .h-title { font-size:48px;font-weight:800;line-height:1.15; }
-    .h-sub { color:rgba(255,255,255,0.7);font-size:18px;margin-top:4px }
-    .cta-row { display:flex;gap:12px;margin-top:12px }
-    .btn {
-      background:var(--accent);padding:12px 22px;border-radius:14px;
-      font-weight:700;border:none;cursor:pointer;color:white;
-      box-shadow:0 8px 18px rgba(79,70,229,0.18);
-      transition:all 0.25s ease-in-out;
-    }
-    .btn:hover { transform: scale(1.05); }
-    .btn.secondary { background:transparent;border:1px solid rgba(255,255,255,0.06); }
-    .features { 
-      display: grid; 
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
-      gap: 20px; 
-      margin-top: 28px; 
-      max-width: 100%;
-    }
-    .feature-card {
-      padding:20px;border-radius:14px;
-      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border:1px solid rgba(255,255,255,0.04);min-height:160px;
-      display:flex;flex-direction:column;justify-content:space-between;
-      transition:transform 0.25s ease, box-shadow 0.25s ease;
-    }
-    .feature-card:hover { transform: translateY(-4px);box-shadow: 0 8px 28px rgba(0,0,0,0.4); }
-    .hero-right-box {
-      border-radius: 18px;padding: 20px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.2));
-      box-shadow: 0 20px 60px rgba(0,0,0,0.6);border: 1px solid rgba(255,255,255,0.03);
-    }
-    @media (max-width: 900px) {
-      .hero { grid-template-columns: 1fr; gap: 32px; }
-      .h-title { font-size:36px }
-      .container { padding: 24px 16px; }
-    }
-    .typewriter { display:inline-block;overflow:hidden;white-space:nowrap; }
-    .typewriter-text { border-right:2px solid rgba(255,255,255,0.6);padding-right:6px }
-    </style>""", unsafe_allow_html=True)
-
-    # --- HTML Content ---
-    st.markdown("""
-    <div class="container">
-      <div class="hero">
-        <div class="hero-left">
-          <div class="h-eyebrow">AI-Powered Career Tools · Instant · Insightful</div>
-          <div class="h-title">Make Resumes that Pass — and People who Hire.</div>
-          <div class="h-sub"><span class="typewriter"><span id="typewriter" class="typewriter-text"></span></span></div>
-          <div class="cta-row">
-            <button class="btn" id="launch-btn">🚀 Launch App</button>
-            <button class="btn secondary">View Plans</button>
-          </div>
-          <div class="features">
-            <div class="feature-card"><div style='font-size:20px'>📄 Resume Analyzer</div>
-              <div class="feature-title">ATS-ready scoring & AI rewrite</div>
-              <div class="feature-desc">Upload resumes, get ATS score, grammar, bias detection & AI suggestions.</div>
-            </div>
-            <div class="feature-card"><div style='font-size:20px'>📝 Builder & Cover Letter</div>
-              <div class="feature-title">Templates, AI preview & export</div>
-              <div class="feature-desc">Create resumes with templates, auto-generate cover letters, and export.</div>
-            </div>
-            <div class="feature-card"><div style='font-size:20px'>🔍 Job Gateway</div>
-              <div class="feature-title">Search & market insights</div>
-              <div class="feature-desc">Direct search links plus premium market & salary insights.</div>
-            </div>
-          </div>
-        </div>
-        <div class="hero-right">
-          <div class="hero-right-box">
-            <div style='display:flex;justify-content:space-between;align-items:center'>
-              <div style='font-weight:800'>Live ATS Preview</div>
-              <div style='font-size:12px;color:rgba(255,255,255,0.6)'>Preview</div>
-            </div>
-            <div style='height:16px'></div>
-            <div style='background:rgba(255,255,255,0.02);padding:14px;border-radius:12px'>
-              <div style='font-size:12px;color:rgba(255,255,255,0.6)'>Resume: <b>John Doe — Backend Engineer</b></div>
-              <div style='height:10px'></div>
-              <div style='display:flex;gap:8px;flex-wrap:wrap'>
-                <div style='padding:8px 10px;border-radius:999px;background:rgba(0,0,0,0.3);font-size:12px'>Python</div>
-                <div style='padding:8px 10px;border-radius:999px;background:rgba(0,0,0,0.3);font-size:12px'>Django</div>
-                <div style='padding:8px 10px;border-radius:999px;background:rgba(0,0,0,0.3);font-size:12px'>Postgres</div>
-              </div>
-              <div style='height:14px'></div>
-              <div style='display:flex;justify-content:space-between;align-items:center'>
-                <div style='font-size:12px;color:rgba(255,255,255,0.6)'>ATS Score</div>
-                <div style='font-weight:800;font-size:20px'>78%</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <script>
-    const phrases = [
-      'Upload your resume — get ATS-ready feedback in seconds.',
-      'Rewrite bullets for impact. Fix grammar & bias automatically.',
-      'Discover jobs, recommended courses, and salary insights.'
-    ];
-    let idx=0;const el=document.getElementById('typewriter');
-    function show(){
-      const txt = phrases[idx];
-      let i=0;el.innerText='';
-      const t = setInterval(()=>{
-        el.innerText += txt[i++];
-        if(i>txt.length-1){
-          clearInterval(t);
-          setTimeout(()=>{ idx=(idx+1)%phrases.length; show(); },2500);
-        }
-      },24);
-    }
-    if(el) show();
-    </script>
-    """, unsafe_allow_html=True)
-
-    if st.button("🚀 Start App", key="start_btn"):
-        st.session_state.landing_done = True
-        st.rerun()
-
-    st.stop()
-
-
-# ------------------- REGULAR APP AFTER LANDING -------------------
-
-# ------------------- CSS Styling for Main App -------------------
+# ------------------- CSS Styling -------------------
 st.markdown("""
 <style>
-/* Main app container styling - contained and centered */
-.main .block-container {
-    max-width: 1200px !important;
-    padding-left: 2rem !important;
-    padding-right: 2rem !important;
-    margin: 0 auto !important;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .main .block-container {
-        max-width: 100% !important;
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
-    }
-}
-
 body, .main {
     background-color: #0d1117;
     color: white;
 }
-
 .login-card {
     background: #161b22;
     padding: 30px;
     border-radius: 20px;
     box-shadow: 0 0 25px rgba(0,0,0,0.3);
     transition: all 0.4s ease;
-    max-width: 500px;
-    margin: 0 auto;
 }
-
 .login-card:hover {
     transform: translateY(-6px) scale(1.01);
     box-shadow: 0 0 45px rgba(0,255,255,0.25);
 }
-
 .stTextInput > div > input {
     background-color: #0d1117;
     color: white;
@@ -470,16 +259,13 @@ body, .main {
     border-radius: 10px;
     padding: 0.6em;
 }
-
 .stTextInput > div > input:hover {
     border: 1px solid #00BFFF;
     box-shadow: 0 0 8px rgba(0,191,255,0.2);
 }
-
 .stTextInput > label {
     color: #c9d1d9;
 }
-
 .stButton > button {
     background-color: #238636;
     color: white;
@@ -488,13 +274,11 @@ body, .main {
     border: none;
     font-weight: bold;
 }
-
 .stButton > button:hover {
     background-color: #2ea043;
     box-shadow: 0 0 10px rgba(46,160,67,0.4);
     transform: scale(1.02);
 }
-
 .feature-card {
     background: radial-gradient(circle at top left, #1f2937, #111827);
     padding: 20px;
@@ -504,82 +288,23 @@ body, .main {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     color: #fff;
     margin-bottom: 20px;
-    max-width: 100%;
 }
-
 .feature-card:hover {
     transform: translateY(-10px);
     box-shadow: 0 0 30px rgba(0,255,255,0.4);
 }
-
 .feature-card h3 {
     color: #00BFFF;
 }
-
 .feature-card p {
     color: #c9d1d9;
 }
-
-/* Counter grid responsive layout */
-.counter-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    justify-content: center;
-    padding: 30px 10px;
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-.counter-box {
-    background: linear-gradient(135deg, 
-        rgba(0, 191, 255, 0.1) 0%, 
-        rgba(30, 144, 255, 0.05) 50%, 
-        rgba(0, 191, 255, 0.1) 100%);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(0, 191, 255, 0.2);
-    border-radius: 16px;
-    width: 100%;
-    height: 120px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease;
-}
-
-/* Animated cards container */
-.animated-cards {
-    margin-top: 40px;
-    display: flex;
-    justify-content: center;
-    position: relative;
-    height: 260px;
-    max-width: 100%;
-}
-
-.animated-cards img {
-    position: absolute;
-    width: 220px;
-    max-width: 30vw;
-    animation: splitCards 2.5s ease-in-out infinite alternate;
-    z-index: 1;
-    filter: drop-shadow(0 0 15px rgba(0,191,255,0.3));
-}
-
-/* Login form centering */
-.login-form-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 60vh;
-    padding: 2rem 0;
-}
 </style>
 """, unsafe_allow_html=True)
+# 🔹 VIDEO BACKGROUND & GLOW TEXT
+
+
+
 
 # ------------------- BEFORE LOGIN -------------------
 if not st.session_state.authenticated:
@@ -607,15 +332,28 @@ if not st.session_state.authenticated:
             """, unsafe_allow_html=True)
 
     # -------- Animated Cards --------
-    import requests
-    from base64 import b64encode
-    
     image_url = "https://cdn-icons-png.flaticon.com/512/3135/3135768.png"
     response = requests.get(image_url)
     img_base64 = b64encode(response.content).decode()
 
     st.markdown(f"""
     <style>
+    .animated-cards {{
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+      position: relative;
+      height: 300px;
+    }}
+    .animated-cards img {{
+      position: absolute;
+      width: 240px;
+      animation: splitCards 2.5s ease-in-out infinite alternate;
+      z-index: 1;
+    }}
+    .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
+    .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
+    .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
     @keyframes splitCards {{
       0% {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
       100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
@@ -623,9 +361,6 @@ if not st.session_state.authenticated:
     .card-left {{ --x-offset: -80px; --rot: -5deg; }}
     .card-center {{ --x-offset: 0px; --rot: 0deg; }}
     .card-right {{ --x-offset: 80px; --rot: 5deg; }}
-    .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
-    .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
-    .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
     </style>
     <div class="animated-cards">
         <img class="card-left" src="data:image/png;base64,{img_base64}" />
@@ -634,18 +369,15 @@ if not st.session_state.authenticated:
     </div>
     """, unsafe_allow_html=True)
 
-    # -------- Counter Section --------
-    # Note: You'll need to implement these functions or replace with dummy data
-    try:
-        total_users = get_total_registered_users()
-        active_logins = get_logins_today()
-        stats = get_database_stats()
-        resumes_uploaded = stats.get("total_candidates", 0)
-    except:
-        # Fallback values if functions don't exist
-        total_users = 1250
-        active_logins = 45
-        resumes_uploaded = 890
+    # -------- Counter Section (Updated Layout & Style with glassmorphism and shimmer) --------
+
+    # Fetch counters
+    total_users = get_total_registered_users()
+    active_logins = get_logins_today()
+    stats = get_database_stats()
+
+# Replace static 15 with dynamic count
+    resumes_uploaded = stats.get("total_candidates", 0)
 
     states_accessed = 29
 
@@ -659,6 +391,38 @@ if not st.session_state.authenticated:
     @keyframes float {
         0%, 100% { transform: translateY(0px); }
         50% { transform: translateY(-5px); }
+    }
+
+    .counter-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 250px);
+        column-gap: 40px;
+        row-gap: 25px;
+        justify-content: center;
+        padding: 30px 10px;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .counter-box {
+        background: linear-gradient(135deg, 
+            rgba(0, 191, 255, 0.1) 0%, 
+            rgba(30, 144, 255, 0.05) 50%, 
+            rgba(0, 191, 255, 0.1) 100%);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(0, 191, 255, 0.2);
+        border-radius: 16px;
+        width: 100%;
+        height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        animation: float 3s ease-in-out infinite;
     }
 
     .counter-box::before {
@@ -759,6 +523,33 @@ if not st.session_state.get("authenticated", False):
         0% {{ transform: translateX(-100%) skewX(-15deg); }}
         100% {{ transform: translateX(200%) skewX(-15deg); }}
     }}
+
+    /* ===== Card Shuffle Animation ===== */
+    .animated-cards {{
+      margin-top: 40px;
+      display: flex;
+      justify-content: center;
+      position: relative;
+      height: 260px;
+    }}
+    .animated-cards img {{
+      position: absolute;
+      width: 220px;
+      animation: splitCards 2.5s ease-in-out infinite alternate;
+      z-index: 1;
+      filter: drop-shadow(0 0 15px rgba(0,191,255,0.3));
+    }}
+    .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
+    .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
+    .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
+
+    @keyframes splitCards {{
+      0%   {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
+      100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
+    }}
+    .card-left   {{ --x-offset: -80px; --rot: -4deg; }}
+    .card-center {{ --x-offset: 0px;  --rot: 0deg;  }}
+    .card-right  {{ --x-offset: 80px;  --rot: 4deg;  }}
 
     /* ===== Glassmorphism Login Card ===== */
     .login-card {{
@@ -947,12 +738,16 @@ if not st.session_state.get("authenticated", False):
       text-shadow: 0 0 10px rgba(0, 191, 255, 0.3);
     }}
     </style>
+
+    <!-- Animated Cards -->
+    <div class="animated-cards">
+        <img class="card-left" src="data:image/png;base64,{img_base64}" />
+        <img class="card-center" src="data:image/png;base64,{img_base64}" />
+        <img class="card-right" src="data:image/png;base64,{img_base64}" />
+    </div>
     """, unsafe_allow_html=True)
 
     # -------- Login/Register Layout --------
-    # Create a centered container for the login form
-    st.markdown('<div class="login-form-container">', unsafe_allow_html=True)
-    
     left, center, right = st.columns([1, 2, 1])
 
     with center:
@@ -969,32 +764,25 @@ if not st.session_state.get("authenticated", False):
             pwd = st.text_input("Password", type="password", key="login_pass")
 
             if st.button("Login", key="login_btn"):
-                try:
-                    success, saved_key = verify_user(user.strip(), pwd.strip())
-                    if success:
-                        st.session_state.authenticated = True
-                        st.session_state.username = user.strip()
-                        if saved_key:
-                            st.session_state["user_groq_key"] = saved_key
-                        log_user_action(user.strip(), "login")
+                success, saved_key = verify_user(user.strip(), pwd.strip())
+                if success:
+                    st.session_state.authenticated = True
+                    st.session_state.username = user.strip()
+                    if saved_key:
+                        st.session_state["user_groq_key"] = saved_key
+                    log_user_action(user.strip(), "login")
 
-                        st.markdown("""<div class='slide-message success-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                            Login successful!
-                        </div>""", unsafe_allow_html=True)
-                        st.rerun()
-                    else:
-                        st.markdown("""<div class='slide-message error-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                            Invalid credentials.
-                        </div>""", unsafe_allow_html=True)
-                except:
+                    st.markdown("""<div class='slide-message success-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                        Login successful!
+                    </div>""", unsafe_allow_html=True)
+                    st.rerun()
+                else:
                     st.markdown("""<div class='slide-message error-msg'>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                           stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                        Login system unavailable.
+                        Invalid credentials.
                     </div>""", unsafe_allow_html=True)
 
         # ---------------- REGISTER TAB ----------------
@@ -1004,45 +792,35 @@ if not st.session_state.get("authenticated", False):
             st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
 
             if new_user.strip():
-                try:
-                    if username_exists(new_user.strip()):
-                        st.markdown("""<div class='slide-message error-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                            Username already exists.
-                        </div>""", unsafe_allow_html=True)
-                    else:
-                        st.markdown("""<div class='slide-message info-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
-                              <path d="M12 8h.01M12 12v4"/></svg>
-                            Username is available.
-                        </div>""", unsafe_allow_html=True)
-                except:
-                    pass
+                if username_exists(new_user.strip()):
+                    st.markdown("""<div class='slide-message error-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                        Username already exists.
+                    </div>""", unsafe_allow_html=True)
+                else:
+                    st.markdown("""<div class='slide-message info-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
+                          <path d="M12 8h.01M12 12v4"/></svg>
+                        Username is available.
+                    </div>""", unsafe_allow_html=True)
 
             if st.button("Register", key="register_btn"):
                 if new_user.strip() and new_pass.strip():
-                    try:
-                        success, message = add_user(new_user.strip(), new_pass.strip())
-                        if success:
-                            st.markdown(f"""<div class='slide-message success-msg'>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                                  stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                                {message}
-                            </div>""", unsafe_allow_html=True)
-                            log_user_action(new_user.strip(), "register")
-                        else:
-                            st.markdown(f"""<div class='slide-message error-msg'>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                                  stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                                {message}
-                            </div>""", unsafe_allow_html=True)
-                    except:
-                        st.markdown("""<div class='slide-message error-msg'>
+                    success, message = add_user(new_user.strip(), new_pass.strip())
+                    if success:
+                        st.markdown(f"""<div class='slide-message success-msg'>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                            {message}
+                        </div>""", unsafe_allow_html=True)
+                        log_user_action(new_user.strip(), "register")
+                    else:
+                        st.markdown(f"""<div class='slide-message error-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                               stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                            Registration system unavailable.
+                            {message}
                         </div>""", unsafe_allow_html=True)
                 else:
                     st.markdown("""<div class='slide-message warn-msg'>
@@ -1054,10 +832,9 @@ if not st.session_state.get("authenticated", False):
                     </div>""", unsafe_allow_html=True)
 
         st.markdown("</div>", unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
 
     st.stop()
+
 
 
 # ------------------- AFTER LOGIN -------------------
@@ -6903,4 +6680,3 @@ if tab5:
 			<p>Last updated: {}</p>
 		</div>
 		""".format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
-

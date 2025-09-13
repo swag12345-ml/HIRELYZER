@@ -242,10 +242,25 @@ if "landing_done" not in st.session_state:
 
 # ------------------- LANDING PAGE -------------------
 if not st.session_state.landing_done:
-    # ✅ Cinematic wide layout ONLY for landing
-    st.set_page_config(page_title="KecxuBot — Cinematic Landing", page_icon="🚀", layout="wide")
+    # ✅ DO NOT use layout="wide" (keeps rest of app normal)
+    st.set_page_config(page_title="KecxuBot — Cinematic Landing", page_icon="🚀")
 
-    # --- CSS + HTML Landing Page ---
+    # --- Full-width wrapper to fake wide layout ---
+    st.markdown(
+        """
+        <style>
+        /* Expand Streamlit's default container to full width just for this page */
+        .main .block-container {
+            max-width: 100% !important;
+            padding-left: 0rem;
+            padding-right: 0rem;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # --- Your Existing Landing Page CSS + HTML ---
     st.markdown("""<style>
     :root {
       --bg1: #050816;
@@ -298,6 +313,7 @@ if not st.session_state.landing_done:
     .typewriter-text { border-right:2px solid rgba(255,255,255,0.6);padding-right:6px }
     </style>""", unsafe_allow_html=True)
 
+    # --- HTML Content ---
     st.markdown("""
     <div class="container">
       <div class="hero">
@@ -376,6 +392,7 @@ if not st.session_state.landing_done:
         st.rerun()
 
     st.stop()
+
 
 # ------------------- REGULAR APP AFTER LANDING -------------------
 

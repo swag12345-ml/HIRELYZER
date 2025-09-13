@@ -227,12 +227,104 @@ from user_login import (
 create_user_table()
 
 # ------------------- Initialize Session State -------------------
+# ------------------- Session State -------------------
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "username" not in st.session_state:
     st.session_state.username = None
 if "processed_files" not in st.session_state:
     st.session_state.processed_files = set()
+if "landing_done" not in st.session_state:
+    st.session_state.landing_done = False
+
+# ------------------- Cinematic Landing Page -------------------
+if not st.session_state.authenticated and not st.session_state.landing_done:
+    st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
+
+    body, .main {
+        background-color: #0d1117;
+        color: white;
+        font-family: 'Orbitron', sans-serif;
+    }
+
+    .landing-container {
+        text-align: center;
+        padding-top: 80px;
+        animation: fadeIn 2s ease-in-out;
+    }
+
+    .resume-bag {
+        width: 220px;
+        animation: slideBag 3s ease-in-out infinite alternate;
+        filter: drop-shadow(0 0 25px rgba(0,191,255,0.6));
+    }
+
+    @keyframes slideBag {
+        0% { transform: translateX(-50px) rotate(-8deg); }
+        100% { transform: translateX(50px) rotate(8deg); }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(40px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+        font-size: 2.5rem;
+        margin-top: 30px;
+        color: #00BFFF;
+        text-shadow: 0 0 20px rgba(0,191,255,0.8);
+    }
+
+    .tagline {
+        font-size: 1.2rem;
+        margin-top: 10px;
+        color: #c9d1d9;
+    }
+
+    .start-btn > button {
+        background: linear-gradient(135deg, rgba(0,191,255,0.2), rgba(30,144,255,0.1));
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        color: white;
+        border: 1px solid rgba(0,191,255,0.4);
+        border-radius: 14px;
+        padding: 12px 32px;
+        font-size: 1.1rem;
+        margin-top: 35px;
+        font-weight: bold;
+        box-shadow: 0 6px 20px rgba(0,191,255,0.3);
+        transition: all 0.3s ease;
+    }
+
+    .start-btn > button:hover {
+        transform: translateY(-3px) scale(1.05);
+        background: linear-gradient(135deg, rgba(0,191,255,0.3), rgba(30,144,255,0.2));
+        border: 1px solid rgba(0,191,255,0.6);
+        box-shadow: 0 8px 28px rgba(0,191,255,0.45);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div class="landing-container">
+        <img src="https://cdn-icons-png.flaticon.com/512/3135/3135768.png" class="resume-bag" />
+        <h1>Welcome to <span style="color:#00BFFF;">HIRELYZER</span></h1>
+        <p class="tagline">AI-powered Resume Analysis & Career Acceleration</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Start button
+    if st.button("🚀 Start", key="start_btn"):
+        st.session_state.landing_done = True
+        st.rerun()
+
+    st.stop()
+
+# ------------------- AFTER LANDING → LOGIN SCREEN -------------------
+
 
 # ------------------- CSS Styling -------------------
 st.markdown("""

@@ -250,24 +250,9 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         font-family: 'Orbitron', sans-serif;
     }
 
-    /* --- HERO CONTAINER --- */
     .landing-container {
         text-align: center;
-        padding-top: 100px;
-        padding-bottom: 60px;
-        position: relative;
-    }
-    .hero-glass {
-        display: inline-block;
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(0,191,255,0.3);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-        border-radius: 24px;
-        padding: 40px 60px;
-        box-shadow: 0 0 40px rgba(0,191,255,0.3),
-                    inset 0 0 20px rgba(0,191,255,0.2);
-        animation: fadeInHero 1.6s ease-in-out both;
+        padding-top: 80px;
     }
 
     /* --- BAG + LOCK ANIMATION --- */
@@ -311,22 +296,21 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
       100% { transform: translate(-50%, 0) scale(1); }
     }
 
-    /* --- HERO TEXT --- */
     h1 {
         font-size: 2.8rem;
         margin-top: 25px;
         color: #00BFFF;
-        text-shadow: 0 0 25px rgba(0,191,255,0.9);
+        text-shadow: 0 0 20px rgba(0,191,255,0.8);
         animation: fadeIn 1.2s ease-in-out 1.8s both;
     }
+
     .tagline {
         font-size: 1.3rem;
-        margin-top: 12px;
-        color: #e5e7eb;
+        margin-top: 10px;
+        color: #c9d1d9;
         animation: fadeIn 1.2s ease-in-out 2.3s both;
     }
 
-    /* --- START BUTTON --- */
     .start-btn > button {
         background: linear-gradient(135deg, rgba(0,191,255,0.2), rgba(30,144,255,0.1));
         backdrop-filter: blur(12px);
@@ -342,6 +326,7 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         transition: all 0.3s ease;
         animation: fadeIn 1.2s ease-in-out 2.5s both;
     }
+
     .start-btn > button:hover {
         transform: translateY(-3px) scale(1.05);
         background: linear-gradient(135deg, rgba(0,191,255,0.3), rgba(30,144,255,0.2));
@@ -352,10 +337,6 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(30px); }
         to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeInHero {
-        from { opacity: 0; transform: scale(.9) translateY(40px); }
-        to   { opacity: 1; transform: scale(1) translateY(0); }
     }
 
     /* --- Sections --- */
@@ -393,11 +374,9 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     # HERO
     st.markdown(f"""
     <div class="landing-container">
-        <div class="hero-glass">
-            <div class="bag"><div class="lock"></div></div>
-            <h1>Welcome to <span style="color:#00BFFF;">HIRELYZER</span></h1>
-            <p class="tagline">AI-powered Resume Analysis • Smart Career Builder • Job & Course Recommendations</p>
-        </div>
+        <div class="bag"><div class="lock"></div></div>
+        <h1>Welcome to <span style="color:#00BFFF;">HIRELYZER</span></h1>
+        <p class="tagline">AI-powered Resume Analysis • Smart Career Builder • Job & Course Recommendations</p>
     </div>
     """, unsafe_allow_html=True)
 

@@ -240,11 +240,13 @@ if "processed_files" not in st.session_state:
 if "landing_done" not in st.session_state:
     st.session_state.landing_done = False
 
-# ------------------- Cinematic Landing -------------------
-if not st.session_state.authenticated and not st.session_state.landing_done:
+# ------------------- LANDING PAGE -------------------
+if not st.session_state.landing_done:
+    # Force cinematic layout ONLY on landing page
+    st.set_page_config(page_title="KecxuBot — Cinematic Landing", page_icon="🚀", layout="wide")
 
-    st.markdown("""
-    <style>
+    # --- CSS + HTML Landing Page ---
+    st.markdown("""<style>
     :root {
       --bg1: #050816;
       --bg2: #0e0b1a;
@@ -259,71 +261,34 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
       color: rgba(255,255,255,0.95);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 48px 24px;
-    }
-    .hero {
-      display: grid;
-      grid-template-columns: 1fr 380px;
-      gap: 48px;
-      align-items: start;
-    }
-    .hero-left {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 48px 24px; }
+    .hero { display: grid; grid-template-columns: 1fr 380px; gap: 48px; align-items: start; }
+    .hero-left { display: flex; flex-direction: column; gap: 20px; }
     .h-eyebrow { letter-spacing:2px;color:rgba(255,255,255,0.55);font-weight:600 }
     .h-title { font-size:48px;font-weight:800;line-height:1.15; }
     .h-sub { color:rgba(255,255,255,0.7);font-size:18px;margin-top:4px }
     .cta-row { display:flex;gap:12px;margin-top:12px }
     .btn {
-      background:var(--accent);
-      padding:12px 22px;
-      border-radius:14px;
-      font-weight:700;
-      border:none;
-      cursor:pointer;
+      background:var(--accent);padding:12px 22px;border-radius:14px;
+      font-weight:700;border:none;cursor:pointer;color:white;
       box-shadow:0 8px 18px rgba(79,70,229,0.18);
-      color:white;
-      transition: all 0.25s ease-in-out;
+      transition:all 0.25s ease-in-out;
     }
     .btn:hover { transform: scale(1.05); }
-    .btn.secondary {
-      background:transparent;
-      border:1px solid rgba(255,255,255,0.06);
-    }
-    .features {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 20px;
-      margin-top: 28px;
-    }
+    .btn.secondary { background:transparent;border:1px solid rgba(255,255,255,0.06); }
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-top: 28px; }
     .feature-card {
-      padding:20px;
-      border-radius:14px;
+      padding:20px;border-radius:14px;
       background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border:1px solid rgba(255,255,255,0.04);
-      min-height:160px;
-      display:flex;
-      flex-direction:column;
-      justify-content:space-between;
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      border:1px solid rgba(255,255,255,0.04);min-height:160px;
+      display:flex;flex-direction:column;justify-content:space-between;
+      transition:transform 0.25s ease, box-shadow 0.25s ease;
     }
-    .feature-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 28px rgba(0,0,0,0.4);
-    }
-    .feature-title { font-weight:700;margin-top:8px;font-size:16px }
-    .feature-desc { color:rgba(255,255,255,0.68);font-size:14px;margin-top:6px;line-height:1.4 }
+    .feature-card:hover { transform: translateY(-4px);box-shadow: 0 8px 28px rgba(0,0,0,0.4); }
     .hero-right-box {
-      border-radius: 18px;
-      padding: 20px;
+      border-radius: 18px;padding: 20px;
       background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.2));
-      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-      border: 1px solid rgba(255,255,255,0.03);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);border: 1px solid rgba(255,255,255,0.03);
     }
     @media (max-width: 900px) {
       .hero { grid-template-columns: 1fr; gap: 32px; }
@@ -331,8 +296,7 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     }
     .typewriter { display:inline-block;overflow:hidden;white-space:nowrap; }
     .typewriter-text { border-right:2px solid rgba(255,255,255,0.6);padding-right:6px }
-    </style>
-    """, unsafe_allow_html=True)
+    </style>""", unsafe_allow_html=True)
 
     st.markdown("""
     <div class="container">
@@ -346,18 +310,15 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
             <button class="btn secondary">View Plans</button>
           </div>
           <div class="features">
-            <div class="feature-card">
-              <div style='font-size:20px'>📄 Resume Analyzer</div>
+            <div class="feature-card"><div style='font-size:20px'>📄 Resume Analyzer</div>
               <div class="feature-title">ATS-ready scoring & AI rewrite</div>
               <div class="feature-desc">Upload resumes, get ATS score, grammar, bias detection & AI suggestions.</div>
             </div>
-            <div class="feature-card">
-              <div style='font-size:20px'>📝 Builder & Cover Letter</div>
+            <div class="feature-card"><div style='font-size:20px'>📝 Builder & Cover Letter</div>
               <div class="feature-title">Templates, AI preview & export</div>
               <div class="feature-desc">Create resumes with templates, auto-generate cover letters, and export.</div>
             </div>
-            <div class="feature-card">
-              <div style='font-size:20px'>🔍 Job Gateway</div>
+            <div class="feature-card"><div style='font-size:20px'>🔍 Job Gateway</div>
               <div class="feature-title">Search & market insights</div>
               <div class="feature-desc">Direct search links plus premium market & salary insights.</div>
             </div>
@@ -388,7 +349,6 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         </div>
       </div>
     </div>
-
     <script>
     const phrases = [
       'Upload your resume — get ATS-ready feedback in seconds.',
@@ -416,6 +376,8 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         st.rerun()
 
     st.stop()
+
+
 
 
 

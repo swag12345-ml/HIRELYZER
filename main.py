@@ -239,122 +239,114 @@ if "landing_done" not in st.session_state:
     st.session_state.landing_done = False
 
 # ------------------- Cinematic Landing Page -------------------
+# ------------------- Cinematic Landing Page -------------------
 if not st.session_state.authenticated and not st.session_state.landing_done:
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
 
+    /* BACKGROUND & THEME */
     body, .main {
-        background-color: #0d1117;
+        background: radial-gradient(1200px 700px at 10% -10%, rgba(135,206,250,.25), transparent 60%),
+                    radial-gradient(900px 600px at 110% 10%, rgba(255,182,193,.25), transparent 60%),
+                    linear-gradient(135deg, #0e0f14 0%, #0b0c10 100%) fixed;
         color: white;
         font-family: 'Orbitron', sans-serif;
     }
+    header[tabindex="-1"], footer { visibility: hidden; }
 
-    .landing-container {
-        text-align: center;
-        padding-top: 60px;
-        animation: fadeIn 2s ease-in-out;
+    /* NAVBAR */
+    .nav-pill {
+        position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
+        padding: 8px 16px;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 999px;
+        backdrop-filter: blur(8px);
+        font-size: 14px;
+        color: #e5e7eb;
+        z-index: 999;
     }
 
+    /* HERO */
+    .landing-container {
+        text-align: center;
+        padding-top: 100px;
+        animation: fadeIn 2s ease-in-out;
+    }
     .resume-bag {
         width: 220px;
         animation: slideBag 2s ease-in-out;
-        filter: drop-shadow(0 0 25px rgba(0,191,255,0.6));
+        filter: drop-shadow(0 0 35px rgba(0,191,255,0.7));
+    }
+    h1 {
+        font-size: 3rem;
+        margin-top: 25px;
+        color: #00BFFF;
+        text-shadow: 0 0 20px rgba(0,191,255,0.8);
+    }
+    .tagline {
+        font-size: 1.3rem;
+        margin-top: 10px;
+        color: #c9d1d9;
     }
 
+    /* PROGRESS CARD */
+    .statcard {
+        position: fixed; right: 20px; bottom: 20px;
+        padding: 14px; border-radius: 16px;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.2);
+        backdrop-filter: blur(8px);
+        color: #e5e7eb;
+        min-width: 240px; box-shadow: 0 12px 40px rgba(0,0,0,.35);
+    }
+    .bar { height: 8px; background: rgba(255,255,255,.15); border-radius: 999px; overflow: hidden; }
+    .bar > i { display: block; height: 100%; width: 0;
+      background: linear-gradient(90deg, #ec4899, #38bdf8);
+      animation: fill 1.2s ease-out 2.0s forwards;
+    }
+
+    /* PRICING */
+    .pricing {
+        display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; margin-top: 40px;
+    }
+    .pricing-card {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.25);
+        border-radius: 20px;
+        padding: 25px;
+        width: 260px;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .pricing-card:hover {
+        transform: translateY(-8px) scale(1.05);
+        box-shadow: 0 0 25px rgba(0,191,255,0.6);
+    }
+    .pricing-card h3 {
+        color: #00BFFF;
+        margin-bottom: 12px;
+    }
+    .pricing-card ul { text-align: left; padding-left: 18px; }
+    .pricing-card ul li { margin-bottom: 6px; }
+
+    /* ANIMATIONS */
     @keyframes slideBag {
         0% { transform: translateY(-50px) scale(0.8); opacity: 0; }
         60% { transform: translateY(8px) scale(1.05); opacity: 1; }
         100% { transform: translateY(0) scale(1); opacity: 1; }
     }
-
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(40px); }
         to { opacity: 1; transform: translateY(0); }
     }
-
-    h1 {
-        font-size: 2.8rem;
-        margin-top: 25px;
-        color: #00BFFF;
-        text-shadow: 0 0 20px rgba(0,191,255,0.8);
-        animation: fadeIn 1.2s ease-in-out 1.4s both;
-    }
-
-    .tagline {
-        font-size: 1.3rem;
-        margin-top: 10px;
-        color: #c9d1d9;
-        animation: fadeIn 1.2s ease-in-out 2s both;
-    }
-
-    .start-btn > button {
-        background: linear-gradient(135deg, rgba(0,191,255,0.2), rgba(30,144,255,0.1));
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        color: white;
-        border: 1px solid rgba(0,191,255,0.4);
-        border-radius: 14px;
-        padding: 12px 32px;
-        font-size: 1.1rem;
-        margin-top: 35px;
-        font-weight: bold;
-        box-shadow: 0 6px 20px rgba(0,191,255,0.3);
-        transition: all 0.3s ease;
-        animation: fadeIn 1.2s ease-in-out 2.5s both;
-    }
-
-    .start-btn > button:hover {
-        transform: translateY(-3px) scale(1.05);
-        background: linear-gradient(135deg, rgba(0,191,255,0.3), rgba(30,144,255,0.2));
-        border: 1px solid rgba(0,191,255,0.6);
-        box-shadow: 0 8px 28px rgba(0,191,255,0.45);
-    }
-
-    /* Sections */
-    .section {
-        margin-top: 70px;
-        text-align: center;
-        padding: 20px;
-        animation: fadeIn 1.2s ease-in-out both;
-    }
-
-    .section h2 {
-        color: #00BFFF;
-        text-shadow: 0 0 12px rgba(0,191,255,0.6);
-        margin-bottom: 16px;
-    }
-
-    .features {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        flex-wrap: wrap;
-    }
-
-    .feature-card {
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(0,191,255,0.3);
-        border-radius: 14px;
-        padding: 20px;
-        width: 260px;
-        box-shadow: 0 6px 18px rgba(0,191,255,0.2);
-        transition: transform 0.3s ease;
-    }
-    .feature-card:hover {
-        transform: translateY(-5px) scale(1.02);
-    }
-
-    .contact {
-        margin-top: 50px;
-        padding: 20px;
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(0,191,255,0.3);
-        border-radius: 16px;
-        display: inline-block;
-    }
+    @keyframes fill { from { width: 0; } to { width: 90%; } }
     </style>
     """, unsafe_allow_html=True)
+
+    # NAVBAR
+    st.markdown('<div class="nav-pill">🚀 AI-Powered Career Assistant</div>', unsafe_allow_html=True)
 
     # HERO
     st.markdown(f"""
@@ -375,7 +367,7 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     </div>
     """, unsafe_allow_html=True)
 
-    # FEATURES (Employee Management card removed)
+    # FEATURES
     st.markdown("""
     <div class="section">
         <h2>Features</h2>
@@ -408,6 +400,41 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     </div>
     """, unsafe_allow_html=True)
 
+    # PRICING
+    st.markdown("""
+    <div class="section">
+        <h2>Pricing</h2>
+        <div class="pricing">
+            <div class="pricing-card">
+                <h3>Free Plan</h3>
+                <ul>
+                    <li>✔ ATS Scoring</li>
+                    <li>✔ Basic Resume Rewrite</li>
+                    <li>✔ Limited Job Suggestions</li>
+                </ul>
+            </div>
+            <div class="pricing-card">
+                <h3>Premium Plan</h3>
+                <ul>
+                    <li>✔ Unlimited Resume Analysis</li>
+                    <li>✔ Advanced AI Rewriting</li>
+                    <li>✔ Smart Job & Course Matching</li>
+                    <li>✔ Personalized Insights</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # STATCARD
+    st.markdown("""
+    <div class="statcard">
+        <div style="font-weight:700; margin-bottom:6px;">Scanning Resume...</div>
+        <div class="bar"><i></i></div>
+        <div style="font-size:12px; opacity:.8; margin-top:8px;">Optimizing for ATS</div>
+    </div>
+    """, unsafe_allow_html=True)
+
     # Start button
     if st.button("🚀 Get Started", key="start_btn"):
         st.session_state.landing_done = True
@@ -415,10 +442,6 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
 
     st.stop()
 
-# ------------------- AFTER LANDING → LOGIN SCREEN -------------------
-if not st.session_state.authenticated:
-    # your existing login/register code goes here...
-    pass
 
 
 

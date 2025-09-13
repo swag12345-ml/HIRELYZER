@@ -228,7 +228,7 @@ create_user_table()
 
 import streamlit as st
 
-# ---------- Session state defaults ----------
+# ------------------- Session State Init -------------------
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "username" not in st.session_state:
@@ -250,12 +250,27 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         font-family: 'Orbitron', sans-serif;
     }
 
+    /* --- HERO CONTAINER --- */
     .landing-container {
         text-align: center;
-        padding-top: 80px;
+        padding-top: 100px;
+        padding-bottom: 60px;
+        position: relative;
+    }
+    .hero-glass {
+        display: inline-block;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(0,191,255,0.3);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border-radius: 24px;
+        padding: 40px 60px;
+        box-shadow: 0 0 40px rgba(0,191,255,0.3),
+                    inset 0 0 20px rgba(0,191,255,0.2);
+        animation: fadeInHero 1.6s ease-in-out both;
     }
 
-    /* --- BAG + LOCK ANIMATION (PinkShield Style) --- */
+    /* --- BAG + LOCK ANIMATION --- */
     .bag {
         width: 120px; height: 90px;
         margin: 0 auto;
@@ -296,32 +311,54 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
       100% { transform: translate(-50%, 0) scale(1); }
     }
 
-    /* --- HERO TITLE + TAGLINE (Glow like PinkShield) --- */
+    /* --- HERO TEXT --- */
     h1 {
-        font-size: 3.2rem;
+        font-size: 2.8rem;
         margin-top: 25px;
-        color: white;
-        text-shadow: 0 0 20px rgba(0,191,255,0.9);
+        color: #00BFFF;
+        text-shadow: 0 0 25px rgba(0,191,255,0.9);
         animation: fadeIn 1.2s ease-in-out 1.8s both;
     }
-    h1 span {
-        color: #00BFFF;
-    }
-
     .tagline {
         font-size: 1.3rem;
-        margin-top: 10px;
-        color: #c9d1d9;
-        text-shadow: 0 0 12px rgba(255,255,255,0.4);
+        margin-top: 12px;
+        color: #e5e7eb;
         animation: fadeIn 1.2s ease-in-out 2.3s both;
+    }
+
+    /* --- START BUTTON --- */
+    .start-btn > button {
+        background: linear-gradient(135deg, rgba(0,191,255,0.2), rgba(30,144,255,0.1));
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        color: white;
+        border: 1px solid rgba(0,191,255,0.4);
+        border-radius: 14px;
+        padding: 12px 32px;
+        font-size: 1.1rem;
+        margin-top: 35px;
+        font-weight: bold;
+        box-shadow: 0 6px 20px rgba(0,191,255,0.3);
+        transition: all 0.3s ease;
+        animation: fadeIn 1.2s ease-in-out 2.5s both;
+    }
+    .start-btn > button:hover {
+        transform: translateY(-3px) scale(1.05);
+        background: linear-gradient(135deg, rgba(0,191,255,0.3), rgba(30,144,255,0.2));
+        border: 1px solid rgba(0,191,255,0.6);
+        box-shadow: 0 8px 28px rgba(0,191,255,0.45);
     }
 
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(30px); }
         to   { opacity: 1; transform: translateY(0); }
     }
+    @keyframes fadeInHero {
+        from { opacity: 0; transform: scale(.9) translateY(40px); }
+        to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
 
-    /* --- Section styles remain same --- */
+    /* --- Sections --- */
     .section { margin-top: 70px; text-align: center; padding: 20px; }
     .section h2 { color: #00BFFF; text-shadow: 0 0 12px rgba(0,191,255,0.6); margin-bottom: 16px; }
 
@@ -353,12 +390,14 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     </style>
     """, unsafe_allow_html=True)
 
-    # HERO (PinkShield style but Hirelyzer text)
+    # HERO
     st.markdown(f"""
     <div class="landing-container">
-        <div class="bag"><div class="lock"></div></div>
-        <h1>Welcome to <span>HIRELYZER</span></h1>
-        <p class="tagline">AI-powered Resume Analysis • Smart Career Builder • Job & Course Recommendations</p>
+        <div class="hero-glass">
+            <div class="bag"><div class="lock"></div></div>
+            <h1>Welcome to <span style="color:#00BFFF;">HIRELYZER</span></h1>
+            <p class="tagline">AI-powered Resume Analysis • Smart Career Builder • Job & Course Recommendations</p>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 

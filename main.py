@@ -226,9 +226,6 @@ from user_login import (
 # ------------------- Initialize -------------------
 create_user_table()
 
-import streamlit as st
-
-# ------------------- Session State Init -------------------
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "username" not in st.session_state:
@@ -253,62 +250,36 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     .landing-container {
         text-align: center;
         padding-top: 80px;
+        animation: fadeIn 2s ease-in-out;
     }
 
-    /* --- BAG + LOCK ANIMATION --- */
-    .bag {
-        width: 120px; height: 90px;
-        margin: 0 auto;
-        border-radius: 18px 18px 8px 8px;
-        background: linear-gradient(180deg, #00BFFF, #1E90FF);
-        box-shadow: inset 0 2px 6px rgba(255,255,255,.35),
-                    0 14px 30px rgba(0,191,255,.45);
-        position: relative;
-        animation: bagEnter 1.4s cubic-bezier(.2,.8,.2,1) both;
-    }
-    .bag:before {
-        content: ""; position: absolute; left: 18px; right: 18px; top: -18px; height: 20px;
-        background: linear-gradient(180deg, #87CEFA, #00BFFF);
-        border-radius: 8px;
-        box-shadow: 0 6px 14px rgba(0,191,255,.35);
-    }
-    .bag:after {
-        content: ""; position: absolute; left: 0; right: 0; top: 32px; height: 6px;
-        background: rgba(255,255,255,.35);
-    }
-    .lock {
-        position: absolute; left: 50%; top: 40px;
-        transform: translateX(-50%);
-        width: 22px; height: 22px; border-radius: 6px;
-        background: linear-gradient(180deg, #f9a8d4, #db2777);
-        box-shadow: 0 6px 12px rgba(219,39,119,.35);
-        animation: lockBounce 1.6s ease-out 1s both;
+    .resume-bag {
+        width: 220px;
+        animation: slideBag 3s ease-in-out infinite alternate;
+        filter: drop-shadow(0 0 25px rgba(0,191,255,0.6));
     }
 
-    @keyframes bagEnter {
-      0%   { transform: translateY(-60px) scale(.7) rotate(-6deg); opacity: 0; }
-      60%  { transform: translateY(6px) scale(1.05) rotate(0); opacity: 1; }
-      100% { transform: translateY(0) scale(1); }
+    @keyframes slideBag {
+        0% { transform: translateX(-50px) rotate(-8deg); }
+        100% { transform: translateX(50px) rotate(8deg); }
     }
-    @keyframes lockBounce {
-      0% { transform: translate(-50%, -20px) scale(0); opacity: 0; }
-      60% { transform: translate(-50%, 4px) scale(1.1); opacity: 1; }
-      100% { transform: translate(-50%, 0) scale(1); }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(40px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     h1 {
-        font-size: 2.8rem;
-        margin-top: 25px;
+        font-size: 2.5rem;
+        margin-top: 30px;
         color: #00BFFF;
         text-shadow: 0 0 20px rgba(0,191,255,0.8);
-        animation: fadeIn 1.2s ease-in-out 1.8s both;
     }
 
     .tagline {
-        font-size: 1.3rem;
+        font-size: 1.2rem;
         margin-top: 10px;
         color: #c9d1d9;
-        animation: fadeIn 1.2s ease-in-out 2.3s both;
     }
 
     .start-btn > button {
@@ -324,7 +295,6 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         font-weight: bold;
         box-shadow: 0 6px 20px rgba(0,191,255,0.3);
         transition: all 0.3s ease;
-        animation: fadeIn 1.2s ease-in-out 2.5s both;
     }
 
     .start-btn > button:hover {
@@ -333,97 +303,19 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         border: 1px solid rgba(0,191,255,0.6);
         box-shadow: 0 8px 28px rgba(0,191,255,0.45);
     }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(30px); }
-        to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* --- Sections --- */
-    .section { margin-top: 70px; text-align: center; padding: 20px; }
-    .section h2 { color: #00BFFF; text-shadow: 0 0 12px rgba(0,191,255,0.6); margin-bottom: 16px; }
-
-    .features {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        flex-wrap: wrap;
-    }
-    .feature-card {
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(0,191,255,0.3);
-        border-radius: 14px;
-        padding: 20px;
-        width: 260px;
-        box-shadow: 0 6px 18px rgba(0,191,255,0.2);
-        transition: transform 0.3s ease;
-    }
-    .feature-card:hover { transform: translateY(-5px) scale(1.02); }
-
-    .contact {
-        margin-top: 50px;
-        padding: 20px;
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(0,191,255,0.3);
-        border-radius: 16px;
-        display: inline-block;
-    }
     </style>
     """, unsafe_allow_html=True)
 
-    # HERO
     st.markdown(f"""
     <div class="landing-container">
-        <div class="bag"><div class="lock"></div></div>
+        <img src="https://cdn-icons-png.flaticon.com/512/3135/3135768.png" class="resume-bag" />
         <h1>Welcome to <span style="color:#00BFFF;">HIRELYZER</span></h1>
-        <p class="tagline">AI-powered Resume Analysis • Smart Career Builder • Job & Course Recommendations</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # ABOUT US
-    st.markdown("""
-    <div class="section">
-        <h2>About Us</h2>
-        <p>Hirelyzer is your smart career assistant. We accelerate your journey with AI-powered resume analysis,
-        an intelligent resume builder, job search, and personalized course recommendations.</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # FEATURES
-    st.markdown("""
-    <div class="section">
-        <h2>Features</h2>
-        <div class="features">
-            <div class="feature-card">
-                <h3>📊 Resume Analyzer</h3>
-                <p>ATS scoring, bias detection, and actionable improvements to boost your chances.</p>
-            </div>
-            <div class="feature-card">
-                <h3>📝 AI Resume Builder</h3>
-                <p>Create professional resumes with AI suggestions or customize manually.</p>
-            </div>
-            <div class="feature-card">
-                <h3>🔍 Jobs & Courses</h3>
-                <p>Smart job matching and curated course recommendations to upskill in your domain.</p>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # CONTACT
-    st.markdown("""
-    <div class="section">
-        <h2>Contact Us</h2>
-        <div class="contact">
-            <p>📧 Email: support@hirelyzer.ai</p>
-            <p>🌐 Website: www.hirelyzer.ai</p>
-            <p>🔗 LinkedIn | Twitter | GitHub</p>
-        </div>
+        <p class="tagline">AI-powered Resume Analysis & Career Acceleration</p>
     </div>
     """, unsafe_allow_html=True)
 
     # Start button
-    if st.button("🚀 Get Started", key="start_btn"):
+    if st.button("🚀 Start", key="start_btn"):
         st.session_state.landing_done = True
         st.rerun()
 

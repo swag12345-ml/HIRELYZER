@@ -241,10 +241,21 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
 
+    /* PinkShield-style background + grid */
     body, .main {
-        background-color: #0d1117;
+        background: radial-gradient(circle at 30% 30%, #1e2a36 0%, #0d1117 80%);
         color: white;
         font-family: 'Orbitron', sans-serif;
+        position: relative;
+    }
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-image: linear-gradient(transparent 24px, rgba(255,255,255,0.02) 25px),
+                          linear-gradient(90deg, transparent 24px, rgba(255,255,255,0.02) 25px);
+        background-size: 25px 25px;
+        z-index: -1;
     }
 
     .landing-container {
@@ -425,6 +436,7 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         st.rerun()
 
     st.stop()
+
 
 
 

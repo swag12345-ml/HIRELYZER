@@ -226,6 +226,9 @@ from user_login import (
 # ------------------- Initialize -------------------
 create_user_table()
 
+import streamlit as st
+
+# Session state initialization
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "username" not in st.session_state:
@@ -235,94 +238,550 @@ if "processed_files" not in st.session_state:
 if "landing_done" not in st.session_state:
     st.session_state.landing_done = False
 
-# ------------------- Cinematic Landing Page -------------------
+# ------------------- Advanced Cinematic Landing Page -------------------
 if not st.session_state.authenticated and not st.session_state.landing_done:
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap');
 
-    body, .main {
-        background-color: #0d1117;
-        color: white;
-        font-family: 'Orbitron', sans-serif;
+    /* Global Styles */
+    .stApp {
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #0a0a0a 100%);
+        background-size: 400% 400%;
+        animation: gradientShift 15s ease infinite;
+        min-height: 100vh;
     }
 
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    body, .main, .stApp > div {
+        background: transparent !important;
+        color: white;
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Hide Streamlit elements */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    .stDeployButton {display: none;}
+
+    /* Particle Background Effect */
+    .particles {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: -1;
+    }
+
+    .particle {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background: rgba(0, 191, 255, 0.6);
+        border-radius: 50%;
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .particle:nth-child(1) { left: 10%; animation-delay: 0s; }
+    .particle:nth-child(2) { left: 20%; animation-delay: 1s; }
+    .particle:nth-child(3) { left: 30%; animation-delay: 2s; }
+    .particle:nth-child(4) { left: 40%; animation-delay: 3s; }
+    .particle:nth-child(5) { left: 50%; animation-delay: 4s; }
+    .particle:nth-child(6) { left: 60%; animation-delay: 5s; }
+    .particle:nth-child(7) { left: 70%; animation-delay: 0.5s; }
+    .particle:nth-child(8) { left: 80%; animation-delay: 1.5s; }
+    .particle:nth-child(9) { left: 90%; animation-delay: 2.5s; }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(100vh) scale(0); opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% { transform: translateY(-100px) scale(1); }
+    }
+
+    /* Landing Container */
     .landing-container {
         text-align: center;
-        padding-top: 80px;
-        animation: fadeIn 2s ease-in-out;
+        padding: 100px 20px 60px;
+        position: relative;
+        z-index: 1;
     }
 
-    .resume-bag {
-        width: 220px;
-        animation: slideBag 3s ease-in-out infinite alternate;
-        filter: drop-shadow(0 0 25px rgba(0,191,255,0.6));
+    /* Enhanced Bag + Lock Animation */
+    .bag {
+        width: 140px; 
+        height: 105px;
+        margin: 0 auto;
+        border-radius: 22px 22px 10px 10px;
+        background: linear-gradient(145deg, #00BFFF 0%, #1E90FF 50%, #0066CC 100%);
+        box-shadow: 
+            inset 0 3px 8px rgba(255,255,255,.4),
+            0 20px 40px rgba(0,191,255,.5),
+            0 0 60px rgba(0,191,255,.3);
+        position: relative;
+        animation: bagEnter 2s cubic-bezier(.2,.8,.2,1) both;
+        transform-style: preserve-3d;
     }
 
-    @keyframes slideBag {
-        0% { transform: translateX(-50px) rotate(-8deg); }
-        100% { transform: translateX(50px) rotate(8deg); }
+    .bag:before {
+        content: ""; 
+        position: absolute; 
+        left: 20px; 
+        right: 20px; 
+        top: -22px; 
+        height: 24px;
+        background: linear-gradient(145deg, #87CEFA 0%, #00BFFF 50%, #1E90FF 100%);
+        border-radius: 10px;
+        box-shadow: 
+            0 8px 16px rgba(0,191,255,.4),
+            inset 0 2px 4px rgba(255,255,255,.3);
     }
 
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(40px); }
-        to { opacity: 1; transform: translateY(0); }
+    .bag:after {
+        content: ""; 
+        position: absolute; 
+        left: 0; 
+        right: 0; 
+        top: 38px; 
+        height: 8px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent);
+        border-radius: 4px;
     }
 
-    h1 {
-        font-size: 2.5rem;
-        margin-top: 30px;
+    .lock {
+        position: absolute; 
+        left: 50%; 
+        top: 45px;
+        transform: translateX(-50%);
+        width: 26px; 
+        height: 26px; 
+        border-radius: 8px;
+        background: linear-gradient(145deg, #ff6b9d 0%, #f9a8d4 50%, #db2777 100%);
+        box-shadow: 
+            0 8px 16px rgba(219,39,119,.4),
+            inset 0 2px 4px rgba(255,255,255,.3),
+            0 0 20px rgba(219,39,119,.3);
+        animation: lockBounce 2s ease-out 1.2s both;
+    }
+
+    .lock:before {
+        content: "";
+        position: absolute;
+        top: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 12px;
+        height: 12px;
+        border: 3px solid #ff6b9d;
+        border-bottom: none;
+        border-radius: 12px 12px 0 0;
+        background: transparent;
+    }
+
+    @keyframes bagEnter {
+      0%   { 
+        transform: translateY(-80px) scale(.6) rotate(-8deg) rotateX(30deg); 
+        opacity: 0; 
+        filter: blur(10px);
+      }
+      60%  { 
+        transform: translateY(8px) scale(1.08) rotate(2deg) rotateX(-5deg); 
+        opacity: 1; 
+        filter: blur(0px);
+      }
+      80%  { 
+        transform: translateY(-4px) scale(1.02) rotate(-1deg) rotateX(2deg); 
+      }
+      100% { 
+        transform: translateY(0) scale(1) rotate(0deg) rotateX(0deg); 
+      }
+    }
+
+    @keyframes lockBounce {
+      0% { 
+        transform: translate(-50%, -30px) scale(0) rotate(180deg); 
+        opacity: 0; 
+        filter: blur(5px);
+      }
+      40% { 
+        transform: translate(-50%, 8px) scale(1.2) rotate(-10deg); 
+        opacity: 1; 
+        filter: blur(0px);
+      }
+      70% { 
+        transform: translate(-50%, -2px) scale(0.95) rotate(5deg); 
+      }
+      100% { 
+        transform: translate(-50%, 0) scale(1) rotate(0deg); 
+      }
+    }
+
+    /* Typography */
+    .main-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 3.5rem;
+        font-weight: 900;
+        margin-top: 40px;
+        background: linear-gradient(135deg, #00BFFF 0%, #87CEEB 50%, #00CED1 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 0 30px rgba(0,191,255,0.8);
+        animation: titleReveal 1.5s ease-in-out 2s both;
+        letter-spacing: 2px;
+    }
+
+    .brand-name {
         color: #00BFFF;
-        text-shadow: 0 0 20px rgba(0,191,255,0.8);
+        text-shadow: 
+            0 0 20px rgba(0,191,255,0.8),
+            0 0 40px rgba(0,191,255,0.6),
+            0 0 60px rgba(0,191,255,0.4);
+        animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+        from { 
+            text-shadow: 
+                0 0 20px rgba(0,191,255,0.8),
+                0 0 40px rgba(0,191,255,0.6),
+                0 0 60px rgba(0,191,255,0.4);
+        }
+        to { 
+            text-shadow: 
+                0 0 30px rgba(0,191,255,1),
+                0 0 50px rgba(0,191,255,0.8),
+                0 0 70px rgba(0,191,255,0.6);
+        }
     }
 
     .tagline {
-        font-size: 1.2rem;
-        margin-top: 10px;
-        color: #c9d1d9;
+        font-size: 1.4rem;
+        font-weight: 300;
+        margin-top: 20px;
+        color: #e2e8f0;
+        animation: slideUp 1.5s ease-in-out 2.5s both;
+        line-height: 1.6;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
     }
 
-    .start-btn > button {
-        background: linear-gradient(135deg, rgba(0,191,255,0.2), rgba(30,144,255,0.1));
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+    @keyframes titleReveal {
+        from { 
+            opacity: 0; 
+            transform: translateY(40px) scale(0.8); 
+            filter: blur(10px);
+        }
+        to   { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); 
+            filter: blur(0px);
+        }
+    }
+
+    @keyframes slideUp {
+        from { 
+            opacity: 0; 
+            transform: translateY(30px); 
+        }
+        to   { 
+            opacity: 1; 
+            transform: translateY(0); 
+        }
+    }
+
+    /* Enhanced Button */
+    .stButton > button {
+        background: linear-gradient(135deg, rgba(0,191,255,0.15) 0%, rgba(30,144,255,0.1) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         color: white;
-        border: 1px solid rgba(0,191,255,0.4);
-        border-radius: 14px;
-        padding: 12px 32px;
-        font-size: 1.1rem;
-        margin-top: 35px;
-        font-weight: bold;
-        box-shadow: 0 6px 20px rgba(0,191,255,0.3);
-        transition: all 0.3s ease;
+        border: 2px solid rgba(0,191,255,0.5);
+        border-radius: 50px;
+        padding: 16px 40px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-top: 50px;
+        font-family: 'Inter', sans-serif;
+        box-shadow: 
+            0 8px 32px rgba(0,191,255,0.3),
+            inset 0 1px 0 rgba(255,255,255,0.1);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: buttonReveal 1.5s ease-in-out 3s both;
+        position: relative;
+        overflow: hidden;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
 
-    .start-btn > button:hover {
-        transform: translateY(-3px) scale(1.05);
-        background: linear-gradient(135deg, rgba(0,191,255,0.3), rgba(30,144,255,0.2));
-        border: 1px solid rgba(0,191,255,0.6);
-        box-shadow: 0 8px 28px rgba(0,191,255,0.45);
+    .stButton > button:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .stButton > button:hover:before {
+        left: 100%;
+    }
+
+    .stButton > button:hover {
+        transform: translateY(-4px) scale(1.05);
+        background: linear-gradient(135deg, rgba(0,191,255,0.25) 0%, rgba(30,144,255,0.2) 100%);
+        border: 2px solid rgba(0,191,255,0.8);
+        box-shadow: 
+            0 12px 40px rgba(0,191,255,0.5),
+            inset 0 1px 0 rgba(255,255,255,0.2);
+        color: #ffffff;
+    }
+
+    @keyframes buttonReveal {
+        from { 
+            opacity: 0; 
+            transform: translateY(20px) scale(0.9); 
+        }
+        to   { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); 
+        }
+    }
+
+    /* Sections */
+    .section { 
+        margin-top: 100px; 
+        text-align: center; 
+        padding: 40px 20px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .section h2 { 
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #00BFFF; 
+        text-shadow: 0 0 20px rgba(0,191,255,0.6); 
+        margin-bottom: 30px;
+        animation: fadeInUp 1s ease-out;
+    }
+
+    .section p {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        color: #cbd5e1;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    /* Features Grid */
+    .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    .feature-card {
+        background: linear-gradient(145deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+        border: 1px solid rgba(0,191,255,0.3);
+        border-radius: 20px;
+        padding: 40px 30px;
+        box-shadow: 
+            0 10px 30px rgba(0,191,255,0.2),
+            inset 0 1px 0 rgba(255,255,255,0.1);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+    }
+
+    .feature-card:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #00BFFF, transparent);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .feature-card:hover:before {
+        opacity: 1;
+    }
+
+    .feature-card:hover { 
+        transform: translateY(-8px) scale(1.02);
+        border-color: rgba(0,191,255,0.6);
+        box-shadow: 
+            0 20px 50px rgba(0,191,255,0.3),
+            inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+
+    .feature-card h3 {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #ffffff;
+    }
+
+    .feature-card p {
+        color: #94a3b8;
+        line-height: 1.6;
+    }
+
+    /* Contact Section */
+    .contact {
+        margin-top: 60px;
+        padding: 40px;
+        background: linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        border: 1px solid rgba(0,191,255,0.4);
+        border-radius: 24px;
+        display: inline-block;
+        backdrop-filter: blur(15px);
+        box-shadow: 
+            0 15px 35px rgba(0,191,255,0.2),
+            inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+
+    .contact p {
+        margin: 15px 0;
+        font-size: 1.1rem;
+        color: #e2e8f0;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .main-title {
+            font-size: 2.5rem;
+        }
+        
+        .tagline {
+            font-size: 1.1rem;
+            padding: 0 20px;
+        }
+        
+        .features {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        .feature-card {
+            padding: 30px 20px;
+        }
+        
+        .section {
+            margin-top: 60px;
+            padding: 20px 10px;
+        }
+    }
+
+    /* Scroll animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown(f"""
-    <div class="landing-container">
-        <img src="https://cdn-icons-png.flaticon.com/512/3135/3135768.png" class="resume-bag" />
-        <h1>Welcome to <span style="color:#00BFFF;">HIRELYZER</span></h1>
-        <p class="tagline">AI-powered Resume Analysis & Career Acceleration</p>
+    # Particle background
+    st.markdown("""
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Start button
-    if st.button("🚀 Start", key="start_btn"):
+    # HERO SECTION
+    st.markdown("""
+    <div class="landing-container">
+        <div class="bag"><div class="lock"></div></div>
+        <h1 class="main-title">Welcome to <span class="brand-name">HIRELYZER</span></h1>
+        <p class="tagline">AI-powered Resume Analysis • Smart Career Builder • Job & Course Recommendations</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ABOUT US SECTION
+    st.markdown("""
+    <div class="section">
+        <h2>About Us</h2>
+        <p>Hirelyzer is your intelligent career companion, designed to accelerate your professional journey. 
+        We combine cutting-edge AI technology with deep industry insights to provide comprehensive resume analysis, 
+        an intuitive resume builder, strategic job matching, and personalized course recommendations tailored to your career goals.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # FEATURES SECTION
+    st.markdown("""
+    <div class="section">
+        <h2>Features</h2>
+        <div class="features">
+            <div class="feature-card">
+                <h3>📊 AI Resume Analyzer</h3>
+                <p>Advanced ATS compatibility scoring, unconscious bias detection, and data-driven recommendations 
+                to optimize your resume for maximum impact and interview success.</p>
+            </div>
+            <div class="feature-card">
+                <h3>📝 Smart Resume Builder</h3>
+                <p>Create stunning, professional resumes with AI-powered content suggestions, industry-specific templates, 
+                and real-time optimization feedback.</p>
+            </div>
+            <div class="feature-card">
+                <h3>🔍 Career Intelligence</h3>
+                <p>Intelligent job matching algorithms and curated learning pathways to help you discover opportunities 
+                and develop skills that align with your career aspirations.</p>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # CONTACT SECTION
+    st.markdown("""
+    <div class="section">
+        <h2>Contact Us</h2>
+        <div class="contact">
+            <p>📧 Email: support@hirelyzer.ai</p>
+            <p>🌐 Website: www.hirelyzer.ai</p>
+            <p>🔗 LinkedIn | Twitter | GitHub</p>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Enhanced Start Button
+    if st.button("🚀 Get Started", key="start_btn"):
         st.session_state.landing_done = True
         st.rerun()
 
     st.stop()
-
-
-
 
 
 

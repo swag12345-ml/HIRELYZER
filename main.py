@@ -227,11 +227,10 @@ from user_login import (
 create_user_table()
 
 import streamlit as st
-
-# Session state initialization
-import streamlit as st
 import base64
 from textwrap import dedent
+
+st.set_page_config(page_title="KecxuBot — Cinematic Landing", page_icon="🚀", layout="wide")
 
 # -------------------- Session state --------------------
 if "authenticated" not in st.session_state:
@@ -243,11 +242,11 @@ if "processed_files" not in st.session_state:
 if "landing_done" not in st.session_state:
     st.session_state.landing_done = False
 
-# ---------------------- Helper -------------------------
+# -------------------- Helper --------------------------
 def local_css(css: str):
     st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
 
-# ------------------- Cinematic Landing Page -------------------
+# -------------------- Landing Page --------------------
 if not st.session_state.authenticated and not st.session_state.landing_done:
     # CSS
     css = dedent("""
@@ -290,7 +289,23 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     """)
     local_css(css)
 
-    # Hero HTML
+    # Navigation bar
+    st.markdown("""
+    <div style='display:flex;justify-content:space-between;align-items:center;padding:10px 6px;margin-bottom:8px;'>
+      <div style='display:flex;align-items:center;gap:12px'>
+        <div style='width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#ff6a88,#5f2c82);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px'>KB</div>
+        <div style='font-weight:700'>KecxuBot</div>
+      </div>
+      <div style='display:flex;gap:10px;align-items:center'>
+        <a href='#features' style='text-decoration:none;color:rgba(255,255,255,0.75);font-weight:600'>Features</a>
+        <a href='#pricing' style='text-decoration:none;color:rgba(255,255,255,0.75);font-weight:600'>Pricing</a>
+        <a href='#contact' style='text-decoration:none;color:rgba(255,255,255,0.75);font-weight:600'>Contact</a>
+        <button class='btn' onclick="window.location='#app'">Open App</button>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Hero section
     hero_html = """
     <div class='hero'>
       <div class='hero-left'>
@@ -366,13 +381,22 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     """
     st.markdown(hero_html, unsafe_allow_html=True)
 
-    # Start button to move to actual app
+    # Start button to go to app
     if st.button("🚀 Start", key="start_btn"):
         st.session_state.landing_done = True
         st.rerun()
 
-    st.stop()  # stop here until user clicks start
+    st.stop()
 
+# -------------------- Main App Tabs --------------------
+st.markdown("<div id='app' style='margin-top:18px'><h3>The App</h3></div>", unsafe_allow_html=True)
+tabs = st.tabs(["Resume Analyzer","Resume Builder","Job Search","Course Recommender","Admin Dashboard"])
+
+with tabs[0]:
+    st.header("Resume Analyzer — Upload & Scan")
+    st.file_uploader("Upload resume (PDF/DOCX)", type=["pdf","docx"])
+
+# … add other tabs similarly
 
 
 

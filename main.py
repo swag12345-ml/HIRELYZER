@@ -238,19 +238,14 @@ if "processed_files" not in st.session_state:
 if "landing_done" not in st.session_state:
     st.session_state.landing_done = False
 
-# ---------- Cinematic Landing Page ----------
+# ------------------- Cinematic Landing Page -------------------
 if not st.session_state.authenticated and not st.session_state.landing_done:
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
 
-    /* PinkShield-style background */
     body, .main {
-        background: radial-gradient(circle at 30% 30%, #1b2735, #090a0f);
-        background-image:
-            linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-        background-size: 40px 40px;
+        background-color: #0d1117;
         color: white;
         font-family: 'Orbitron', sans-serif;
     }
@@ -260,14 +255,7 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         padding-top: 80px;
     }
 
-    /* --- BAG + LOCK ANIMATION --- */
-    .bag-container {
-        display: inline-block;
-        padding: 30px;
-        border-radius: 20px;
-        background: rgba(255,255,255,0.05);
-        box-shadow: 0 0 40px rgba(0,191,255,0.3);
-    }
+    /* --- BAG + LOCK ANIMATION (PinkShield Style) --- */
     .bag {
         width: 120px; height: 90px;
         margin: 0 auto;
@@ -308,42 +296,24 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
       100% { transform: translate(-50%, 0) scale(1); }
     }
 
+    /* --- HERO TITLE + TAGLINE (Glow like PinkShield) --- */
     h1 {
-        font-size: 2.8rem;
+        font-size: 3.2rem;
         margin-top: 25px;
-        color: #00BFFF;
-        text-shadow: 0 0 20px rgba(0,191,255,0.8);
+        color: white;
+        text-shadow: 0 0 20px rgba(0,191,255,0.9);
         animation: fadeIn 1.2s ease-in-out 1.8s both;
+    }
+    h1 span {
+        color: #00BFFF;
     }
 
     .tagline {
         font-size: 1.3rem;
         margin-top: 10px;
         color: #c9d1d9;
+        text-shadow: 0 0 12px rgba(255,255,255,0.4);
         animation: fadeIn 1.2s ease-in-out 2.3s both;
-    }
-
-    .start-btn > button {
-        background: linear-gradient(135deg, rgba(0,191,255,0.2), rgba(30,144,255,0.1));
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        color: white;
-        border: 1px solid rgba(0,191,255,0.4);
-        border-radius: 14px;
-        padding: 12px 32px;
-        font-size: 1.1rem;
-        margin-top: 35px;
-        font-weight: bold;
-        box-shadow: 0 6px 20px rgba(0,191,255,0.3);
-        transition: all 0.3s ease;
-        animation: fadeIn 1.2s ease-in-out 2.5s both;
-    }
-
-    .start-btn > button:hover {
-        transform: translateY(-3px) scale(1.05);
-        background: linear-gradient(135deg, rgba(0,191,255,0.3), rgba(30,144,255,0.2));
-        border: 1px solid rgba(0,191,255,0.6);
-        box-shadow: 0 8px 28px rgba(0,191,255,0.45);
     }
 
     @keyframes fadeIn {
@@ -351,7 +321,7 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* --- Sections --- */
+    /* --- Section styles remain same --- */
     .section { margin-top: 70px; text-align: center; padding: 20px; }
     .section h2 { color: #00BFFF; text-shadow: 0 0 12px rgba(0,191,255,0.6); margin-bottom: 16px; }
 
@@ -383,18 +353,16 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     </style>
     """, unsafe_allow_html=True)
 
-    # ---------- HERO ----------
+    # HERO (PinkShield style but Hirelyzer text)
     st.markdown(f"""
     <div class="landing-container">
-        <div class="bag-container">
-            <div class="bag"><div class="lock"></div></div>
-        </div>
-        <h1>Welcome to <span style="color:#00BFFF;">HIRELYZER</span></h1>
+        <div class="bag"><div class="lock"></div></div>
+        <h1>Welcome to <span>HIRELYZER</span></h1>
         <p class="tagline">AI-powered Resume Analysis • Smart Career Builder • Job & Course Recommendations</p>
     </div>
     """, unsafe_allow_html=True)
 
-    # ---------- ABOUT US ----------
+    # ABOUT US
     st.markdown("""
     <div class="section">
         <h2>About Us</h2>
@@ -403,7 +371,7 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     </div>
     """, unsafe_allow_html=True)
 
-    # ---------- FEATURES ----------
+    # FEATURES
     st.markdown("""
     <div class="section">
         <h2>Features</h2>
@@ -424,7 +392,7 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     </div>
     """, unsafe_allow_html=True)
 
-    # ---------- CONTACT ----------
+    # CONTACT
     st.markdown("""
     <div class="section">
         <h2>Contact Us</h2>
@@ -436,12 +404,13 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     </div>
     """, unsafe_allow_html=True)
 
-    # ---------- Start button ----------
+    # Start button
     if st.button("🚀 Get Started", key="start_btn"):
         st.session_state.landing_done = True
         st.rerun()
 
     st.stop()
+
 
 
 

@@ -226,8 +226,6 @@ from user_login import (
 # ------------------- Initialize -------------------
 create_user_table()
 
-# ------------------- Initialize Session State -------------------
-# ------------------- Session State -------------------
 # ------------------- Session State -------------------
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
@@ -240,7 +238,7 @@ if "landing_done" not in st.session_state:
 
 # ------------------- Cinematic Landing Page -------------------
 if not st.session_state.authenticated and not st.session_state.landing_done:
-    st.markdown("""
+    HERO_HTML = """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
 
@@ -250,163 +248,108 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         font-family: 'Orbitron', sans-serif;
     }
 
-    .landing-container {
-        text-align: center;
-        padding-top: 60px;
-        animation: fadeIn 2s ease-in-out;
+    .hero {
+      position: relative;
+      width: 100%;
+      height: 480px;
+      border-radius: 28px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,0));
     }
 
-    .resume-bag {
-        width: 220px;
-        animation: slideBag 2s ease-in-out;
-        filter: drop-shadow(0 0 25px rgba(0,191,255,0.6));
+    .stage {
+      position: absolute; inset: 0; display: flex;
+      flex-direction: column; align-items: center; justify-content: center;
+      text-align: center;
     }
 
-    @keyframes slideBag {
-        0% { transform: translateY(-50px) scale(0.8); opacity: 0; }
-        60% { transform: translateY(8px) scale(1.05); opacity: 1; }
-        100% { transform: translateY(0) scale(1); opacity: 1; }
+    .bag {
+      width: 100px; height: 80px; border-radius: 18px 18px 8px 8px;
+      background: linear-gradient(180deg, #38bdf8, #0284c7);
+      box-shadow: inset 0 2px 6px rgba(255,255,255,.35), 0 14px 30px rgba(56,189,248,.35);
+      position: relative;
+      animation: bag-enter 1.4s cubic-bezier(.2,.8,.2,1) 0s both;
+    }
+    .bag:before {
+      content: ""; position: absolute; left: 14px; right: 14px; top: -16px; height: 18px;
+      background: linear-gradient(180deg, #bae6fd, #38bdf8);
+      border-radius: 8px; box-shadow: 0 6px 14px rgba(56,189,248,.35);
+    }
+    .bag:after {
+      content: ""; position: absolute; left: 0; right: 0; top: 28px; height: 6px;
+      background: rgba(255,255,255,.35);
     }
 
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(40px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    h1 {
-        font-size: 2.8rem;
-        margin-top: 25px;
-        color: #00BFFF;
-        text-shadow: 0 0 20px rgba(0,191,255,0.8);
-        animation: fadeIn 1.2s ease-in-out 1.4s both;
+    .brand {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: 48px;
+      margin-top: 20px;
+      color: #00BFFF;
+      text-shadow: 0 0 12px rgba(0,191,255,0.8);
+      animation: brand-reveal 1.0s ease-out 1.6s both;
     }
 
     .tagline {
-        font-size: 1.3rem;
-        margin-top: 10px;
-        color: #c9d1d9;
-        animation: fadeIn 1.2s ease-in-out 2s both;
+      font-size: 18px;
+      color: #c9d1d9;
+      margin-top: 10px;
+      max-width: 480px;
+      line-height: 1.4;
+      animation: brand-reveal 1.2s ease-out 2.2s both;
     }
 
-    .start-btn > button {
-        background: linear-gradient(135deg, rgba(0,191,255,0.2), rgba(30,144,255,0.1));
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        color: white;
-        border: 1px solid rgba(0,191,255,0.4);
-        border-radius: 14px;
-        padding: 12px 32px;
-        font-size: 1.1rem;
-        margin-top: 35px;
-        font-weight: bold;
-        box-shadow: 0 6px 20px rgba(0,191,255,0.3);
-        transition: all 0.3s ease;
-        animation: fadeIn 1.2s ease-in-out 2.5s both;
+    @keyframes bag-enter {
+      0% { transform: translateY(-40px) scale(.6) rotate(-8deg); opacity: 0; }
+      60% { transform: translateY(4px) scale(1.04) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(0) scale(1) rotate(0deg); }
     }
+    @keyframes brand-reveal { 0% { opacity: 0; } 100% { opacity: 1; } }
 
-    .start-btn > button:hover {
-        transform: translateY(-3px) scale(1.05);
-        background: linear-gradient(135deg, rgba(0,191,255,0.3), rgba(30,144,255,0.2));
-        border: 1px solid rgba(0,191,255,0.6);
-        box-shadow: 0 8px 28px rgba(0,191,255,0.45);
-    }
-
-    /* Sections */
     .section {
-        margin-top: 70px;
+        margin-top: 50px;
         text-align: center;
         padding: 20px;
-        animation: fadeIn 1.2s ease-in-out both;
+        animation: brand-reveal 1.2s ease-in-out both;
     }
-
     .section h2 {
         color: #00BFFF;
         text-shadow: 0 0 12px rgba(0,191,255,0.6);
-        margin-bottom: 16px;
-    }
-
-    .features {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        flex-wrap: wrap;
-    }
-
-    .feature-card {
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(0,191,255,0.3);
-        border-radius: 14px;
-        padding: 20px;
-        width: 260px;
-        box-shadow: 0 6px 18px rgba(0,191,255,0.2);
-        transition: transform 0.3s ease;
-    }
-    .feature-card:hover {
-        transform: translateY(-5px) scale(1.02);
-    }
-
-    .contact {
-        margin-top: 50px;
-        padding: 20px;
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(0,191,255,0.3);
-        border-radius: 16px;
-        display: inline-block;
+        margin-bottom: 12px;
     }
     </style>
-    """, unsafe_allow_html=True)
 
-    # HERO
-    st.markdown(f"""
-    <div class="landing-container">
-        <img src="https://cdn-icons-png.flaticon.com/512/3135/3135768.png" class="resume-bag" />
-        <h1>Welcome to <span style="color:#00BFFF;">HIRELYZER</span></h1>
-        <p class="tagline">AI-powered Resume Analysis • Smart Career Builder • Job & Course Recommendations</p>
+    <div class="hero">
+      <div class="stage">
+        <div class="bag"></div>
+        <div class="brand">HIRELYZER</div>
+        <div class="tagline">AI-powered Resume Analysis • Smart Career Builder • Job & Course Recommendations</div>
+      </div>
     </div>
-    """, unsafe_allow_html=True)
 
-    # ABOUT US
-    st.markdown("""
+    <!-- About Us -->
     <div class="section">
         <h2>About Us</h2>
-        <p>Hirelyzer is a cutting-edge career platform designed to accelerate your professional journey. 
-        With AI-powered resume analysis, smart resume building, job search, and personalized course recommendations, 
-        we help you land your dream job faster.</p>
+        <p>Hirelyzer is an AI-powered platform helping students & professionals craft optimized resumes, detect bias, 
+        explore job opportunities, and discover personalized learning paths to boost their careers.</p>
     </div>
-    """, unsafe_allow_html=True)
 
-    # FEATURES
-    st.markdown("""
+    <!-- Features -->
     <div class="section">
-        <h2>Features</h2>
-        <div class="features">
-            <div class="feature-card">
-                <h3>📊 Resume Analyzer</h3>
-                <p>ATS scoring, bias detection, and actionable improvements to boost your chances.</p>
-            </div>
-            <div class="feature-card">
-                <h3>📝 AI Resume Builder</h3>
-                <p>Create professional resumes with AI suggestions or customize manually.</p>
-            </div>
-            <div class="feature-card">
-                <h3>🔍 Jobs & Courses</h3>
-                <p>Smart job matching and curated course recommendations to upskill in your domain.</p>
-            </div>
-        </div>
+        <h2>Our Features</h2>
+        <p>📊 Resume Analyzer | 📝 AI Resume Builder | 🔍 Job Search & Course Recommendations</p>
     </div>
-    """, unsafe_allow_html=True)
 
-    # CONTACT
-    st.markdown("""
+    <!-- Contact -->
     <div class="section">
         <h2>Contact Us</h2>
-        <div class="contact">
-            <p>📧 Email: support@hirelyzer.ai</p>
-            <p>🌐 Website: www.hirelyzer.ai</p>
-            <p>🔗 LinkedIn | Twitter | GitHub</p>
-        </div>
+        <p>📧 support@hirelyzer.ai</p>
+        <p>🌐 www.hirelyzer.ai</p>
+        <p>🔗 LinkedIn | Twitter | GitHub</p>
     </div>
-    """, unsafe_allow_html=True)
+    """
+
+    st.components.v1.html(HERO_HTML, height=900)
 
     # Start button
     if st.button("🚀 Get Started", key="start_btn"):
@@ -416,9 +359,10 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     st.stop()
 
 # ------------------- AFTER LANDING → LOGIN SCREEN -------------------
+if not st.session_state.authenticated:
+    # your existing login/register code goes here...
+    pass
 
-
-# ------------------- AFTER LANDING → LOGIN SCREEN -------------------
 
 
 

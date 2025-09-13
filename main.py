@@ -388,17 +388,6 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
 
     st.stop()
 
-# -------------------- Main App Tabs --------------------
-st.markdown("<div id='app' style='margin-top:18px'><h3>The App</h3></div>", unsafe_allow_html=True)
-tabs = st.tabs(["Resume Analyzer","Resume Builder","Job Search","Course Recommender","Admin Dashboard"])
-
-with tabs[0]:
-    st.header("Resume Analyzer — Upload & Scan")
-    st.file_uploader("Upload resume (PDF/DOCX)", type=["pdf","docx"])
-
-# … add other tabs similarly
-
-
 
 
 

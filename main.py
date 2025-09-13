@@ -238,18 +238,32 @@ if "processed_files" not in st.session_state:
 if "landing_done" not in st.session_state:
     st.session_state.landing_done = False
 
-# ------------------- Advanced Cinematic Landing Page -------------------
+# ------------------- Enhanced Glass Morphism Landing Page -------------------
 if not st.session_state.authenticated and not st.session_state.landing_done:
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;600;700&display=swap');
 
-    /* Global Styles */
+    /* Global Styles with Glass Background */
     .stApp {
-        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #0a0a0a 100%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
         background-size: 400% 400%;
-        animation: gradientShift 15s ease infinite;
+        animation: gradientShift 20s ease infinite;
         min-height: 100vh;
+        position: relative;
+    }
+
+    .stApp::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        z-index: -1;
     }
 
     @keyframes gradientShift {
@@ -260,7 +274,7 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
 
     body, .main, .stApp > div {
         background: transparent !important;
-        color: white;
+        color: #2d3748;
         font-family: 'Inter', sans-serif;
     }
 
@@ -270,7 +284,7 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     header {visibility: hidden;}
     .stDeployButton {display: none;}
 
-    /* Particle Background Effect */
+    /* Enhanced Particle Background */
     .particles {
         position: fixed;
         top: 0;
@@ -283,11 +297,12 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
 
     .particle {
         position: absolute;
-        width: 2px;
-        height: 2px;
-        background: rgba(0, 191, 255, 0.6);
+        width: 3px;
+        height: 3px;
+        background: rgba(255, 255, 255, 0.4);
         border-radius: 50%;
-        animation: float 6s ease-in-out infinite;
+        animation: float 8s ease-in-out infinite;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
     }
 
     .particle:nth-child(1) { left: 10%; animation-delay: 0s; }
@@ -307,25 +322,37 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         100% { transform: translateY(-100px) scale(1); }
     }
 
-    /* Landing Container */
+    /* Glass Morphism Landing Container */
     .landing-container {
         text-align: center;
-        padding: 100px 20px 60px;
+        padding: 80px 20px 60px;
         position: relative;
         z-index: 1;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 30px;
+        margin: 40px auto;
+        max-width: 900px;
+        box-shadow: 
+            0 25px 50px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
 
-    /* Enhanced Bag + Lock Animation */
+    /* Enhanced Bag with Glass Effect */
     .bag {
-        width: 140px; 
-        height: 105px;
+        width: 120px; 
+        height: 90px;
         margin: 0 auto;
-        border-radius: 22px 22px 10px 10px;
-        background: linear-gradient(145deg, #00BFFF 0%, #1E90FF 50%, #0066CC 100%);
+        border-radius: 20px 20px 8px 8px;
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
         box-shadow: 
-            inset 0 3px 8px rgba(255,255,255,.4),
-            0 20px 40px rgba(0,191,255,.5),
-            0 0 60px rgba(0,191,255,.3);
+            0 15px 35px rgba(0, 0, 0, 0.1),
+            inset 0 2px 5px rgba(255, 255, 255, 0.4);
         position: relative;
         animation: bagEnter 2s cubic-bezier(.2,.8,.2,1) both;
         transform-style: preserve-3d;
@@ -334,15 +361,15 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     .bag:before {
         content: ""; 
         position: absolute; 
-        left: 20px; 
-        right: 20px; 
-        top: -22px; 
-        height: 24px;
-        background: linear-gradient(145deg, #87CEFA 0%, #00BFFF 50%, #1E90FF 100%);
-        border-radius: 10px;
-        box-shadow: 
-            0 8px 16px rgba(0,191,255,.4),
-            inset 0 2px 4px rgba(255,255,255,.3);
+        left: 15px; 
+        right: 15px; 
+        top: -18px; 
+        height: 20px;
+        background: rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
 
     .bag:after {
@@ -350,124 +377,117 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         position: absolute; 
         left: 0; 
         right: 0; 
-        top: 38px; 
-        height: 8px;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent);
-        border-radius: 4px;
+        top: 30px; 
+        height: 6px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+        border-radius: 3px;
     }
 
     .lock {
         position: absolute; 
         left: 50%; 
-        top: 45px;
+        top: 35px;
         transform: translateX(-50%);
-        width: 26px; 
-        height: 26px; 
-        border-radius: 8px;
-        background: linear-gradient(145deg, #ff6b9d 0%, #f9a8d4 50%, #db2777 100%);
+        width: 22px; 
+        height: 22px; 
+        border-radius: 6px;
+        background: rgba(236, 72, 153, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
         box-shadow: 
-            0 8px 16px rgba(219,39,119,.4),
-            inset 0 2px 4px rgba(255,255,255,.3),
-            0 0 20px rgba(219,39,119,.3);
+            0 8px 20px rgba(236, 72, 153, 0.3),
+            inset 0 1px 3px rgba(255, 255, 255, 0.4);
         animation: lockBounce 2s ease-out 1.2s both;
     }
 
     .lock:before {
         content: "";
         position: absolute;
-        top: -8px;
+        top: -6px;
         left: 50%;
         transform: translateX(-50%);
-        width: 12px;
-        height: 12px;
-        border: 3px solid #ff6b9d;
+        width: 10px;
+        height: 10px;
+        border: 2px solid rgba(236, 72, 153, 0.8);
         border-bottom: none;
-        border-radius: 12px 12px 0 0;
+        border-radius: 10px 10px 0 0;
         background: transparent;
     }
 
     @keyframes bagEnter {
       0%   { 
-        transform: translateY(-80px) scale(.6) rotate(-8deg) rotateX(30deg); 
+        transform: translateY(-60px) scale(.7) rotate(-5deg); 
         opacity: 0; 
-        filter: blur(10px);
+        filter: blur(8px);
       }
       60%  { 
-        transform: translateY(8px) scale(1.08) rotate(2deg) rotateX(-5deg); 
+        transform: translateY(6px) scale(1.05) rotate(1deg); 
         opacity: 1; 
         filter: blur(0px);
       }
       80%  { 
-        transform: translateY(-4px) scale(1.02) rotate(-1deg) rotateX(2deg); 
+        transform: translateY(-3px) scale(1.01) rotate(-0.5deg); 
       }
       100% { 
-        transform: translateY(0) scale(1) rotate(0deg) rotateX(0deg); 
+        transform: translateY(0) scale(1) rotate(0deg); 
       }
     }
 
     @keyframes lockBounce {
       0% { 
-        transform: translate(-50%, -30px) scale(0) rotate(180deg); 
+        transform: translate(-50%, -25px) scale(0) rotate(90deg); 
         opacity: 0; 
-        filter: blur(5px);
       }
       40% { 
-        transform: translate(-50%, 8px) scale(1.2) rotate(-10deg); 
+        transform: translate(-50%, 5px) scale(1.15) rotate(-5deg); 
         opacity: 1; 
-        filter: blur(0px);
       }
       70% { 
-        transform: translate(-50%, -2px) scale(0.95) rotate(5deg); 
+        transform: translate(-50%, -1px) scale(0.95) rotate(2deg); 
       }
       100% { 
         transform: translate(-50%, 0) scale(1) rotate(0deg); 
       }
     }
 
-    /* Typography */
+    /* Modern Typography */
     .main-title {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 3.5rem;
-        font-weight: 900;
-        margin-top: 40px;
-        background: linear-gradient(135deg, #00BFFF 0%, #87CEEB 50%, #00CED1 100%);
+        font-family: 'Poppins', sans-serif;
+        font-size: 3.2rem;
+        font-weight: 700;
+        margin-top: 35px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        text-shadow: 0 0 30px rgba(0,191,255,0.8);
         animation: titleReveal 1.5s ease-in-out 2s both;
-        letter-spacing: 2px;
+        letter-spacing: 1px;
+        line-height: 1.2;
     }
 
     .brand-name {
-        color: #00BFFF;
-        text-shadow: 
-            0 0 20px rgba(0,191,255,0.8),
-            0 0 40px rgba(0,191,255,0.6),
-            0 0 60px rgba(0,191,255,0.4);
-        animation: glow 2s ease-in-out infinite alternate;
+        background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #06b6d4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 700;
+        animation: brandGlow 3s ease-in-out infinite alternate;
     }
 
-    @keyframes glow {
+    @keyframes brandGlow {
         from { 
-            text-shadow: 
-                0 0 20px rgba(0,191,255,0.8),
-                0 0 40px rgba(0,191,255,0.6),
-                0 0 60px rgba(0,191,255,0.4);
+            filter: drop-shadow(0 0 10px rgba(236, 72, 153, 0.3));
         }
         to { 
-            text-shadow: 
-                0 0 30px rgba(0,191,255,1),
-                0 0 50px rgba(0,191,255,0.8),
-                0 0 70px rgba(0,191,255,0.6);
+            filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.4));
         }
     }
 
     .tagline {
-        font-size: 1.4rem;
-        font-weight: 300;
+        font-size: 1.3rem;
+        font-weight: 400;
         margin-top: 20px;
-        color: #e2e8f0;
+        color: #4a5568;
         animation: slideUp 1.5s ease-in-out 2.5s both;
         line-height: 1.6;
         max-width: 600px;
@@ -478,8 +498,8 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     @keyframes titleReveal {
         from { 
             opacity: 0; 
-            transform: translateY(40px) scale(0.8); 
-            filter: blur(10px);
+            transform: translateY(30px) scale(0.9); 
+            filter: blur(5px);
         }
         to   { 
             opacity: 1; 
@@ -491,7 +511,7 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     @keyframes slideUp {
         from { 
             opacity: 0; 
-            transform: translateY(30px); 
+            transform: translateY(25px); 
         }
         to   { 
             opacity: 1; 
@@ -499,22 +519,22 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         }
     }
 
-    /* Enhanced Button */
+    /* Glass Morphism Button */
     .stButton > button {
-        background: linear-gradient(135deg, rgba(0,191,255,0.15) 0%, rgba(30,144,255,0.1) 100%);
+        background: rgba(255, 255, 255, 0.2);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
-        color: white;
-        border: 2px solid rgba(0,191,255,0.5);
+        color: #2d3748;
+        border: 2px solid rgba(255, 255, 255, 0.3);
         border-radius: 50px;
         padding: 16px 40px;
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: 600;
-        margin-top: 50px;
-        font-family: 'Inter', sans-serif;
+        margin-top: 40px;
+        font-family: 'Poppins', sans-serif;
         box-shadow: 
-            0 8px 32px rgba(0,191,255,0.3),
-            inset 0 1px 0 rgba(255,255,255,0.1);
+            0 10px 30px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         animation: buttonReveal 1.5s ease-in-out 3s both;
         position: relative;
@@ -530,8 +550,8 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         left: -100%;
         width: 100%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        transition: left 0.5s;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.6s;
     }
 
     .stButton > button:hover:before {
@@ -539,19 +559,19 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     }
 
     .stButton > button:hover {
-        transform: translateY(-4px) scale(1.05);
-        background: linear-gradient(135deg, rgba(0,191,255,0.25) 0%, rgba(30,144,255,0.2) 100%);
-        border: 2px solid rgba(0,191,255,0.8);
+        transform: translateY(-3px) scale(1.03);
+        background: rgba(255, 255, 255, 0.3);
+        border: 2px solid rgba(255, 255, 255, 0.5);
         box-shadow: 
-            0 12px 40px rgba(0,191,255,0.5),
-            inset 0 1px 0 rgba(255,255,255,0.2);
-        color: #ffffff;
+            0 15px 40px rgba(0, 0, 0, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        color: #1a202c;
     }
 
     @keyframes buttonReveal {
         from { 
             opacity: 0; 
-            transform: translateY(20px) scale(0.9); 
+            transform: translateY(15px) scale(0.95); 
         }
         to   { 
             opacity: 1; 
@@ -559,55 +579,68 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         }
     }
 
-    /* Sections */
+    /* Glass Morphism Sections */
     .section { 
-        margin-top: 100px; 
+        margin: 60px auto; 
         text-align: center; 
-        padding: 40px 20px;
+        padding: 50px 30px;
         position: relative;
         z-index: 1;
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 25px;
+        max-width: 1100px;
+        box-shadow: 
+            0 20px 40px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
 
     .section h2 { 
-        font-family: 'Orbitron', sans-serif;
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #00BFFF; 
-        text-shadow: 0 0 20px rgba(0,191,255,0.6); 
-        margin-bottom: 30px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 2.3rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 25px;
         animation: fadeInUp 1s ease-out;
     }
 
     .section p {
         font-size: 1.1rem;
-        line-height: 1.8;
-        color: #cbd5e1;
+        line-height: 1.7;
+        color: #4a5568;
         max-width: 800px;
         margin: 0 auto;
+        font-weight: 400;
     }
 
-    /* Features Grid */
+    /* Enhanced Features Grid */
     .features {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 30px;
-        max-width: 1200px;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 25px;
+        max-width: 1000px;
         margin: 0 auto;
         padding: 0 20px;
     }
 
     .feature-card {
-        background: linear-gradient(145deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
-        border: 1px solid rgba(0,191,255,0.3);
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.25);
         border-radius: 20px;
-        padding: 40px 30px;
+        padding: 35px 25px;
         box-shadow: 
-            0 10px 30px rgba(0,191,255,0.2),
-            inset 0 1px 0 rgba(255,255,255,0.1);
+            0 15px 35px rgba(0, 0, 0, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
-        backdrop-filter: blur(10px);
     }
 
     .feature-card:before {
@@ -616,8 +649,8 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         top: 0;
         left: 0;
         right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, #00BFFF, transparent);
+        height: 3px;
+        background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
         opacity: 0;
         transition: opacity 0.3s;
     }
@@ -628,48 +661,53 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
 
     .feature-card:hover { 
         transform: translateY(-8px) scale(1.02);
-        border-color: rgba(0,191,255,0.6);
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.4);
         box-shadow: 
-            0 20px 50px rgba(0,191,255,0.3),
-            inset 0 1px 0 rgba(255,255,255,0.2);
+            0 25px 50px rgba(0, 0, 0, 0.12),
+            inset 0 1px 0 rgba(255, 255, 255, 0.4);
     }
 
     .feature-card h3 {
-        font-size: 1.4rem;
+        font-size: 1.3rem;
         font-weight: 600;
         margin-bottom: 15px;
-        color: #ffffff;
+        color: #2d3748;
+        font-family: 'Poppins', sans-serif;
     }
 
     .feature-card p {
-        color: #94a3b8;
+        color: #4a5568;
         line-height: 1.6;
+        font-size: 1rem;
     }
 
-    /* Contact Section */
+    /* Glass Contact Section */
     .contact {
-        margin-top: 60px;
-        padding: 40px;
-        background: linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
-        border: 1px solid rgba(0,191,255,0.4);
-        border-radius: 24px;
+        margin-top: 40px;
+        padding: 35px;
+        background: rgba(255, 255, 255, 0.18);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
         display: inline-block;
-        backdrop-filter: blur(15px);
         box-shadow: 
-            0 15px 35px rgba(0,191,255,0.2),
-            inset 0 1px 0 rgba(255,255,255,0.1);
+            0 20px 40px rgba(0, 0, 0, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
 
     .contact p {
-        margin: 15px 0;
+        margin: 12px 0;
         font-size: 1.1rem;
-        color: #e2e8f0;
+        color: #2d3748;
+        font-weight: 500;
     }
 
     /* Responsive Design */
     @media (max-width: 768px) {
         .main-title {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
         }
         
         .tagline {
@@ -683,12 +721,17 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         }
         
         .feature-card {
-            padding: 30px 20px;
+            padding: 25px 20px;
         }
         
         .section {
-            margin-top: 60px;
-            padding: 20px 10px;
+            margin: 40px 20px;
+            padding: 35px 20px;
+        }
+        
+        .landing-container {
+            margin: 20px;
+            padding: 60px 20px 40px;
         }
     }
 
@@ -696,7 +739,7 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     @keyframes fadeInUp {
         from {
             opacity: 0;
-            transform: translateY(30px);
+            transform: translateY(25px);
         }
         to {
             opacity: 1;
@@ -706,7 +749,7 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     </style>
     """, unsafe_allow_html=True)
 
-    # Particle background
+    # Enhanced particle background
     st.markdown("""
     <div class="particles">
         <div class="particle"></div>

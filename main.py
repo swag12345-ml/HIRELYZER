@@ -242,8 +242,7 @@ if "landing_done" not in st.session_state:
 
 # ------------------- LANDING PAGE -------------------
 if not st.session_state.landing_done:
-    # ✅ DO NOT use layout="wide" (keeps rest of app normal)
-    st.set_page_config(page_title="KecxuBot — Cinematic Landing", page_icon="🚀")
+
 
     # --- Full-width wrapper to fake wide layout ---
     st.markdown(

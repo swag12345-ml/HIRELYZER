@@ -229,6 +229,11 @@ create_user_table()
 import streamlit as st
 
 # Session state initialization
+import streamlit as st
+import base64
+from textwrap import dedent
+
+# -------------------- Session state --------------------
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "username" not in st.session_state:
@@ -238,177 +243,136 @@ if "processed_files" not in st.session_state:
 if "landing_done" not in st.session_state:
     st.session_state.landing_done = False
 
+# ---------------------- Helper -------------------------
+def local_css(css: str):
+    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+
 # ------------------- Cinematic Landing Page -------------------
 if not st.session_state.authenticated and not st.session_state.landing_done:
-    import pandas as pd
-    import plotly.express as px
+    # CSS
+    css = dedent("""
+    :root{
+      --bg1: #050816;
+      --bg2: #0e0b1a;
+      --accent: linear-gradient(90deg,#ff6a88 0%,#5f2c82 50%,#2b5876 100%);
+      --glass: rgba(255,255,255,0.04);
+      --glass-strong: rgba(255,255,255,0.06);
+      --card-shadow: 0 10px 30px rgba(2,6,23,0.6);
+    }
+    html, body, [class*="css"]{
+      background: radial-gradient(1200px 600px at 10% 10%, rgba(79, 70, 229, 0.12), transparent),
+                  radial-gradient(1000px 600px at 90% 90%, rgba(59,130,246,0.06), transparent),
+                  linear-gradient(180deg,var(--bg1),var(--bg2));
+      color: rgba(255,255,255,0.95);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    .hero{display:flex;gap:24px;align-items:center;padding:48px 24px;border-radius:18px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:var(--card-shadow);}
+    .hero-left{flex:1;}
+    .hero-right{width:420px;min-width:320px}
+    .h-eyebrow{letter-spacing:2px;color:rgba(255,255,255,0.55);font-weight:600}
+    .h-title{font-size:48px;font-weight:800;line-height:1.02;margin:8px 0;}
+    .h-sub{color:rgba(255,255,255,0.7);font-size:18px;margin-bottom:18px}
+    .cta-row{display:flex;gap:12px}
+    .btn{background:var(--accent);padding:12px 20px;border-radius:12px;font-weight:700;border:none;cursor:pointer;box-shadow:0 8px 18px rgba(79,70,229,0.18);}
+    .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);}
+    .features{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:24px}
+    .feature-card{padding:18px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);}
+    .feature-title{font-weight:700;margin-top:8px}
+    .feature-desc{color:rgba(255,255,255,0.68);font-size:14px;margin-top:6px}
+    .footer{padding:28px 12px;margin-top:28px;color:rgba(255,255,255,0.6)}
+    @media (max-width: 900px){
+      .hero{flex-direction:column}
+      .features{grid-template-columns:repeat(1,1fr)}
+      .h-title{font-size:32px}
+    }
+    .typewriter{display:inline-block;overflow:hidden;white-space:nowrap;}
+    .typewriter-text{border-right:2px solid rgba(255,255,255,0.6);padding-right:6px}
+    """)
+    local_css(css)
 
-    st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
-
-    body, .main {
-        background-color: #0d1117;
-        color: white;
-        font-family: 'Orbitron', sans-serif;
-    }
-
-    .landing-container {
-        text-align: center;
-        padding-top: 60px;
-        animation: fadeIn 2s ease-in-out;
-    }
-
-    .resume-bag {
-        width: 180px;
-        animation: slideBag 3s ease-in-out infinite alternate;
-        filter: drop-shadow(0 0 25px rgba(0,191,255,0.6));
-    }
-
-    @keyframes slideBag {
-        0% { transform: translateX(-40px) rotate(-8deg); }
-        100% { transform: translateX(40px) rotate(8deg); }
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(40px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    h1 {
-        font-size: 2.5rem;
-        margin-top: 20px;
-        color: #00BFFF;
-        text-shadow: 0 0 20px rgba(0,191,255,0.8);
-    }
-
-    .tagline {
-        font-size: 1.2rem;
-        margin-top: 10px;
-        color: #c9d1d9;
-    }
-
-    .start-btn > button {
-        background: linear-gradient(135deg, rgba(0,191,255,0.2), rgba(30,144,255,0.1));
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        color: white;
-        border: 1px solid rgba(0,191,255,0.4);
-        border-radius: 14px;
-        padding: 12px 32px;
-        font-size: 1.1rem;
-        margin-top: 35px;
-        font-weight: bold;
-        box-shadow: 0 6px 20px rgba(0,191,255,0.3);
-        transition: all 0.3s ease;
-    }
-    .start-btn > button:hover {
-        transform: translateY(-3px) scale(1.05);
-        background: linear-gradient(135deg, rgba(0,191,255,0.3), rgba(30,144,255,0.2));
-        border: 1px solid rgba(0,191,255,0.6);
-        box-shadow: 0 8px 28px rgba(0,191,255,0.45);
-    }
-
-    /* Glass cards */
-    .features-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 20px;
-        margin-top: 40px;
-        padding: 0 20px;
-    }
-    .feature-card {
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(255,255,255,0.12);
-        border-radius: 16px;
-        padding: 20px;
-        text-align: center;
-        box-shadow: 0 4px 25px rgba(0,0,0,0.4);
-        transition: transform 0.3s ease;
-    }
-    .feature-card:hover {
-        transform: translateY(-6px) scale(1.03);
-    }
-    .feature-card h3 {
-        color: #00BFFF;
-        margin-top: 12px;
-        font-size: 1.1rem;
-    }
-    .feature-card p {
-        font-size: 0.9rem;
-        color: #c9d1d9;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # Hero Section
-    st.markdown(f"""
-    <div class="landing-container">
-        <img src="https://cdn-icons-png.flaticon.com/512/3135/3135768.png" class="resume-bag" />
-        <h1>Welcome to <span style="color:#00BFFF;">HIRLEYZER</span></h1>
-        <p class="tagline">AI-powered Resume Analysis & Career Acceleration</p>
+    # Hero HTML
+    hero_html = """
+    <div class='hero'>
+      <div class='hero-left'>
+        <div class='h-eyebrow'>AI-Powered Career Tools · Instant · Insightful</div>
+        <div class='h-title'>Make Resumes that Pass — and People who Hire.</div>
+        <div class='h-sub'><span class='typewriter'><span id='typewriter' class='typewriter-text'></span></span></div>
+        <div class='cta-row'>
+          <button class='btn' onclick="window.location='#app'">Launch App</button>
+          <button class='btn secondary' onclick="window.location='#pricing'">View Plans</button>
+        </div>
+        <div class='features' style='margin-top:22px' id='features'>
+          <div class='feature-card'>
+            <div style='font-size:20px'>📄 Resume Analyzer</div>
+            <div class='feature-title'>ATS-ready scoring & AI rewrite</div>
+            <div class='feature-desc'>Upload resumes, get ATS score, grammar, bias detection & AI suggestions.</div>
+          </div>
+          <div class='feature-card'>
+            <div style='font-size:20px'>📝 Builder & Cover Letter</div>
+            <div class='feature-title'>Templates, AI preview & export</div>
+            <div class='feature-desc'>Create resumes with templates, auto-generate cover letters, and export.</div>
+          </div>
+          <div class='feature-card'>
+            <div style='font-size:20px'>🔍 Job Gateway</div>
+            <div class='feature-title'>Search & market insights</div>
+            <div class='feature-desc'>Direct search links plus premium market & salary insights.</div>
+          </div>
+        </div>
+      </div>
+      <div class='hero-right'>
+        <div style='border-radius:14px;padding:18px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.2));box-shadow:0 20px 60px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03)'>
+          <div style='display:flex;justify-content:space-between;align-items:center'>
+            <div style='font-weight:800'>Live ATS Preview</div>
+            <div style='font-size:12px;color:rgba(255,255,255,0.6)'>Preview</div>
+          </div>
+          <div style='height:16px'></div>
+          <div style='background:rgba(255,255,255,0.02);padding:12px;border-radius:10px'>
+            <div style='font-size:12px;color:rgba(255,255,255,0.6)'>Resume: <b>John Doe — Backend Engineer</b></div>
+            <div style='height:10px'></div>
+            <div style='display:flex;gap:8px;flex-wrap:wrap'>
+              <div style='padding:8px 10px;border-radius:999px;background:rgba(0,0,0,0.3);font-size:12px'>Python</div>
+              <div style='padding:8px 10px;border-radius:999px;background:rgba(0,0,0,0.3);font-size:12px'>Django</div>
+              <div style='padding:8px 10px;border-radius:999px;background:rgba(0,0,0,0.3);font-size:12px'>Postgres</div>
+            </div>
+            <div style='height:14px'></div>
+            <div style='display:flex;justify-content:space-between;align-items:center'>
+              <div style='font-size:12px;color:rgba(255,255,255,0.6)'>ATS Score</div>
+              <div style='font-weight:800;font-size:18px'>78%</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    """, unsafe_allow_html=True)
+    <script>
+    const phrases = [
+      'Upload your resume — get ATS-ready feedback in seconds.',
+      'Rewrite bullets for impact. Fix grammar & bias automatically.',
+      'Discover jobs, recommended courses, and salary insights.'
+    ];
+    let idx=0;const el=document.getElementById('typewriter');
+    function show(){
+      const txt = phrases[idx];
+      let i=0;el.innerText='';
+      const t = setInterval(()=>{
+        el.innerText += txt[i++];
+        if(i>txt.length-1){
+          clearInterval(t);
+          setTimeout(()=>{ idx=(idx+1)%phrases.length; show(); },2500);
+        }
+      },24);
+    }
+    if(el) show();
+    </script>
+    """
+    st.markdown(hero_html, unsafe_allow_html=True)
 
-    # Feature Cards
-    st.markdown("""
-    <div class="features-grid">
-        <div class="feature-card">
-            <h3>📊 Resume Analyzer</h3>
-            <p>ATS scoring, grammar checks, bias detection & AI rewrites.</p>
-        </div>
-        <div class="feature-card">
-            <h3>📝 Resume Builder & Cover Letter</h3>
-            <p>Build resumes with AI previews, templates, and cover letters.</p>
-        </div>
-        <div class="feature-card">
-            <h3>🔍 Job Search Gateway</h3>
-            <p>Find jobs via LinkedIn, Naukri, FoundIt + salary insights.</p>
-        </div>
-        <div class="feature-card">
-            <h3>🎓 Course Recommendation</h3>
-            <p>Close skill gaps with curated learning paths & upskilling.</p>
-        </div>
-        <div class="feature-card">
-            <h3>📈 Admin Dashboard</h3>
-            <p>HR & Universities: candidate stats, analytics & exports.</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Job Market Chart
-    df = pd.DataFrame({
-        'month': pd.date_range(start='2024-01-01', periods=12, freq='M').strftime('%b'),
-        'Full Stack': [50,55,53,60,65,70,72,78,82,85,88,94],
-        'ML/AI': [20,22,21,25,28,30,33,35,37,40,43,46],
-        'Cloud': [30,32,35,36,38,40,42,44,46,48,50,53]
-    })
-    fig = px.line(df, x='month', y=['Full Stack','ML/AI','Cloud'],
-                  title="📈 Job Market Trends (Sample Data)",
-                  labels={'value':'Open Roles','month':'Month'})
-    fig.update_layout(template="plotly_dark", margin=dict(t=40,l=20,r=20,b=20))
-    st.plotly_chart(fig, use_container_width=True)
-
-    # Quick Insights
-    st.markdown("""
-    <div style="margin:30px auto; max-width:800px; text-align:left; line-height:1.6;">
-        <h3 style="color:#00BFFF;">✨ Quick Insights</h3>
-        <ul>
-            <li>Full Stack demand leads with steady YoY growth.</li>
-            <li>AI/ML roles growing fastest in emerging markets.</li>
-            <li>Cloud jobs up 8% as companies scale infrastructure.</li>
-        </ul>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Start button
+    # Start button to move to actual app
     if st.button("🚀 Start", key="start_btn"):
         st.session_state.landing_done = True
         st.rerun()
 
-    st.stop()
+    st.stop()  # stop here until user clicks start
+
 
 
 

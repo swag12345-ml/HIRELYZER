@@ -228,6 +228,7 @@ create_user_table()
 
 # ------------------- Initialize Session State -------------------
 # ------------------- Session State -------------------
+# ------------------- Session State -------------------
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "username" not in st.session_state:
@@ -251,19 +252,20 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
 
     .landing-container {
         text-align: center;
-        padding-top: 80px;
+        padding-top: 60px;
         animation: fadeIn 2s ease-in-out;
     }
 
     .resume-bag {
         width: 220px;
-        animation: slideBag 3s ease-in-out infinite alternate;
+        animation: slideBag 2s ease-in-out;
         filter: drop-shadow(0 0 25px rgba(0,191,255,0.6));
     }
 
     @keyframes slideBag {
-        0% { transform: translateX(-50px) rotate(-8deg); }
-        100% { transform: translateX(50px) rotate(8deg); }
+        0% { transform: translateY(-50px) scale(0.8); opacity: 0; }
+        60% { transform: translateY(8px) scale(1.05); opacity: 1; }
+        100% { transform: translateY(0) scale(1); opacity: 1; }
     }
 
     @keyframes fadeIn {
@@ -272,16 +274,18 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     }
 
     h1 {
-        font-size: 2.5rem;
-        margin-top: 30px;
+        font-size: 2.8rem;
+        margin-top: 25px;
         color: #00BFFF;
         text-shadow: 0 0 20px rgba(0,191,255,0.8);
+        animation: fadeIn 1.2s ease-in-out 1.4s both;
     }
 
     .tagline {
-        font-size: 1.2rem;
+        font-size: 1.3rem;
         margin-top: 10px;
         color: #c9d1d9;
+        animation: fadeIn 1.2s ease-in-out 2s both;
     }
 
     .start-btn > button {
@@ -297,6 +301,7 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         font-weight: bold;
         box-shadow: 0 6px 20px rgba(0,191,255,0.3);
         transition: all 0.3s ease;
+        animation: fadeIn 1.2s ease-in-out 2.5s both;
     }
 
     .start-btn > button:hover {
@@ -305,23 +310,113 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         border: 1px solid rgba(0,191,255,0.6);
         box-shadow: 0 8px 28px rgba(0,191,255,0.45);
     }
+
+    /* Sections */
+    .section {
+        margin-top: 70px;
+        text-align: center;
+        padding: 20px;
+        animation: fadeIn 1.2s ease-in-out both;
+    }
+
+    .section h2 {
+        color: #00BFFF;
+        text-shadow: 0 0 12px rgba(0,191,255,0.6);
+        margin-bottom: 16px;
+    }
+
+    .features {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .feature-card {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(0,191,255,0.3);
+        border-radius: 14px;
+        padding: 20px;
+        width: 260px;
+        box-shadow: 0 6px 18px rgba(0,191,255,0.2);
+        transition: transform 0.3s ease;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px) scale(1.02);
+    }
+
+    .contact {
+        margin-top: 50px;
+        padding: 20px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(0,191,255,0.3);
+        border-radius: 16px;
+        display: inline-block;
+    }
     </style>
     """, unsafe_allow_html=True)
 
+    # HERO
     st.markdown(f"""
     <div class="landing-container">
         <img src="https://cdn-icons-png.flaticon.com/512/3135/3135768.png" class="resume-bag" />
         <h1>Welcome to <span style="color:#00BFFF;">HIRELYZER</span></h1>
-        <p class="tagline">AI-powered Resume Analysis & Career Acceleration</p>
+        <p class="tagline">AI-powered Resume Analysis • Smart Career Builder • Job & Course Recommendations</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ABOUT US
+    st.markdown("""
+    <div class="section">
+        <h2>About Us</h2>
+        <p>Hirelyzer is a cutting-edge career platform designed to accelerate your professional journey. 
+        With AI-powered resume analysis, smart resume building, job search, and personalized course recommendations, 
+        we help you land your dream job faster.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # FEATURES
+    st.markdown("""
+    <div class="section">
+        <h2>Features</h2>
+        <div class="features">
+            <div class="feature-card">
+                <h3>📊 Resume Analyzer</h3>
+                <p>ATS scoring, bias detection, and actionable improvements to boost your chances.</p>
+            </div>
+            <div class="feature-card">
+                <h3>📝 AI Resume Builder</h3>
+                <p>Create professional resumes with AI suggestions or customize manually.</p>
+            </div>
+            <div class="feature-card">
+                <h3>🔍 Jobs & Courses</h3>
+                <p>Smart job matching and curated course recommendations to upskill in your domain.</p>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # CONTACT
+    st.markdown("""
+    <div class="section">
+        <h2>Contact Us</h2>
+        <div class="contact">
+            <p>📧 Email: support@hirelyzer.ai</p>
+            <p>🌐 Website: www.hirelyzer.ai</p>
+            <p>🔗 LinkedIn | Twitter | GitHub</p>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
     # Start button
-    if st.button("🚀 Start", key="start_btn"):
+    if st.button("🚀 Get Started", key="start_btn"):
         st.session_state.landing_done = True
         st.rerun()
 
     st.stop()
+
+# ------------------- AFTER LANDING → LOGIN SCREEN -------------------
+
 
 # ------------------- AFTER LANDING → LOGIN SCREEN -------------------
 

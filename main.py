@@ -226,6 +226,9 @@ from user_login import (
 # ------------------- Initialize -------------------
 create_user_table()
 
+import streamlit as st
+
+# ---------- Session state defaults ----------
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "username" not in st.session_state:
@@ -235,25 +238,21 @@ if "processed_files" not in st.session_state:
 if "landing_done" not in st.session_state:
     st.session_state.landing_done = False
 
-# ------------------- Cinematic Landing Page -------------------
+# ---------- Cinematic Landing Page ----------
 if not st.session_state.authenticated and not st.session_state.landing_done:
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
 
-    /* dark gradient + grid overlay */
-    html, body, .stApp, .block-container {
-        background: radial-gradient(circle at 30% 30%, #1b2735 0%, #090a0f 80%) !important;
-        font-family: 'Orbitron', sans-serif !important;
-        color: #fff !important;
-    }
-    html::before {
-        content:"";
-        position:fixed;top:0;left:0;right:0;bottom:0;
-        background-image: linear-gradient(transparent 24px, rgba(255,255,255,0.02) 25px),
-                          linear-gradient(90deg, transparent 24px, rgba(255,255,255,0.02) 25px);
-        background-size:25px 25px;
-        z-index:-1;
+    /* PinkShield-style background */
+    body, .main {
+        background: radial-gradient(circle at 30% 30%, #1b2735, #090a0f);
+        background-image:
+            linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+        background-size: 40px 40px;
+        color: white;
+        font-family: 'Orbitron', sans-serif;
     }
 
     .landing-container {
@@ -261,7 +260,14 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         padding-top: 80px;
     }
 
-    /* BAG + LOCK ANIMATION (logo) */
+    /* --- BAG + LOCK ANIMATION --- */
+    .bag-container {
+        display: inline-block;
+        padding: 30px;
+        border-radius: 20px;
+        background: rgba(255,255,255,0.05);
+        box-shadow: 0 0 40px rgba(0,191,255,0.3);
+    }
     .bag {
         width: 120px; height: 90px;
         margin: 0 auto;
@@ -345,7 +351,7 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* glass feature cards */
+    /* --- Sections --- */
     .section { margin-top: 70px; text-align: center; padding: 20px; }
     .section h2 { color: #00BFFF; text-shadow: 0 0 12px rgba(0,191,255,0.6); margin-bottom: 16px; }
 
@@ -362,7 +368,6 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         padding: 20px;
         width: 260px;
         box-shadow: 0 6px 18px rgba(0,191,255,0.2);
-        backdrop-filter: blur(10px);
         transition: transform 0.3s ease;
     }
     .feature-card:hover { transform: translateY(-5px) scale(1.02); }
@@ -374,21 +379,22 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         border: 1px solid rgba(0,191,255,0.3);
         border-radius: 16px;
         display: inline-block;
-        backdrop-filter: blur(8px);
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # HERO
+    # ---------- HERO ----------
     st.markdown(f"""
     <div class="landing-container">
-        <div class="bag"><div class="lock"></div></div>
+        <div class="bag-container">
+            <div class="bag"><div class="lock"></div></div>
+        </div>
         <h1>Welcome to <span style="color:#00BFFF;">HIRELYZER</span></h1>
         <p class="tagline">AI-powered Resume Analysis • Smart Career Builder • Job & Course Recommendations</p>
     </div>
     """, unsafe_allow_html=True)
 
-    # ABOUT US
+    # ---------- ABOUT US ----------
     st.markdown("""
     <div class="section">
         <h2>About Us</h2>
@@ -397,7 +403,7 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     </div>
     """, unsafe_allow_html=True)
 
-    # FEATURES
+    # ---------- FEATURES ----------
     st.markdown("""
     <div class="section">
         <h2>Features</h2>
@@ -418,7 +424,7 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     </div>
     """, unsafe_allow_html=True)
 
-    # CONTACT
+    # ---------- CONTACT ----------
     st.markdown("""
     <div class="section">
         <h2>Contact Us</h2>
@@ -430,7 +436,7 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
     </div>
     """, unsafe_allow_html=True)
 
-    # Start button
+    # ---------- Start button ----------
     if st.button("🚀 Get Started", key="start_btn"):
         st.session_state.landing_done = True
         st.rerun()

@@ -226,10 +226,14 @@ from user_login import (
 # ------------------- Initialize -------------------
 create_user_table()
 
-# ------------------- Session State -------------------
-# ------------------- Session State -------------------
-# ------------------- Session State -------------------
-# ------------------- Cinematic Landing Page -------------------
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+if "username" not in st.session_state:
+    st.session_state.username = None
+if "processed_files" not in st.session_state:
+    st.session_state.processed_files = set()
+if "landing_done" not in st.session_state:
+    st.session_state.landing_done = False
 if not st.session_state.authenticated and not st.session_state.landing_done:
     st.markdown("""
     <style>
@@ -302,6 +306,70 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         animation: fadeIn 1.2s ease-in-out 2.3s both;
     }
 
+    /* --- STAT CARD --- */
+    .statcard {
+        position: fixed; right: 20px; bottom: 20px;
+        padding: 14px; border-radius: 16px;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(0,191,255,0.3);
+        color: #e5e7eb;
+        backdrop-filter: blur(8px);
+        min-width: 240px;
+        box-shadow: 0 12px 40px rgba(0,0,0,.35);
+        font-size: 14px;
+    }
+    .bar { height: 8px; background: rgba(255,255,255,.15); border-radius: 999px; overflow: hidden; margin-top:6px; }
+    .bar > i { display: block; height: 100%; width: 0;
+        background: linear-gradient(90deg, #ec4899, #38bdf8);
+        animation: fill 1.2s ease-out 2.0s forwards;
+    }
+    @keyframes fill { from { width: 0; } to { width: 90%; } }
+
+    /* Sections */
+    .section {
+        margin-top: 70px;
+        text-align: center;
+        padding: 20px;
+        animation: fadeIn 1.2s ease-in-out both;
+    }
+
+    .section h2 {
+        color: #00BFFF;
+        text-shadow: 0 0 12px rgba(0,191,255,0.6);
+        margin-bottom: 16px;
+    }
+
+    .features {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .feature-card {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(0,191,255,0.3);
+        border-radius: 14px;
+        padding: 20px;
+        width: 260px;
+        box-shadow: 0 6px 18px rgba(0,191,255,0.25);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px) scale(1.03);
+        box-shadow: 0 10px 28px rgba(0,191,255,0.45);
+    }
+
+    .contact {
+        margin-top: 50px;
+        padding: 20px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(0,191,255,0.3);
+        border-radius: 16px;
+        display: inline-block;
+        box-shadow: 0 6px 18px rgba(0,191,255,0.25);
+    }
+
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(30px); }
         to   { opacity: 1; transform: translateY(0); }
@@ -316,8 +384,63 @@ if not st.session_state.authenticated and not st.session_state.landing_done:
         <h1>Welcome to <span style="color:#00BFFF;">HIRELYZER</span></h1>
         <p class="tagline">AI-powered Resume Analysis • Smart Career Builder • Job & Course Recommendations</p>
     </div>
+
+    <div class="statcard">
+        <div style="font-weight:700; margin-bottom:6px;">Analyzing Careers...</div>
+        <div class="bar"><i></i></div>
+        <div style="font-size:12px; opacity:.8; margin-top:8px;">Optimizing Resumes</div>
+    </div>
     """, unsafe_allow_html=True)
 
+    # ABOUT US
+    st.markdown("""
+    <div class="section">
+        <h2>About Us</h2>
+        <p>Hirelyzer is a cutting-edge career platform designed to accelerate your professional journey. 
+        With AI-powered resume analysis, smart resume building, job search, and personalized course recommendations, 
+        we help you land your dream job faster.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # FEATURES
+    st.markdown("""
+    <div class="section">
+        <h2>Features</h2>
+        <div class="features">
+            <div class="feature-card">
+                <h3>📊 Resume Analyzer</h3>
+                <p>ATS scoring, bias detection, and actionable improvements to boost your chances.</p>
+            </div>
+            <div class="feature-card">
+                <h3>📝 AI Resume Builder</h3>
+                <p>Create professional resumes with AI suggestions or customize manually.</p>
+            </div>
+            <div class="feature-card">
+                <h3>🔍 Jobs & Courses</h3>
+                <p>Smart job matching and curated course recommendations to upskill in your domain.</p>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # CONTACT
+    st.markdown("""
+    <div class="section">
+        <h2>Contact Us</h2>
+        <div class="contact">
+            <p>📧 Email: support@hirelyzer.ai</p>
+            <p>🌐 Website: www.hirelyzer.ai</p>
+            <p>🔗 LinkedIn | Twitter | GitHub</p>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Start button
+    if st.button("🚀 Get Started", key="start_btn"):
+        st.session_state.landing_done = True
+        st.rerun()
+
+    st.stop()
 
 
 

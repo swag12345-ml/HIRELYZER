@@ -1514,40 +1514,6 @@ replacement_mapping = {
         "open-minded": "inclusive"
     }
 }
-
-import re
-import streamlit as st
-
-def enforce_projects_section(output_text: str) -> str:
-    """
-    Post-processing step to ensure 'Projects' is never placed inside 'Work Experience'.
-    If any 'Projects' content leaks into Work Experience, it will be removed and kept
-    only under its proper section.
-    """
-    # Regex to capture Work Experience and Projects sections
-    work_exp_pattern = r"(###? .*?(Work Experience).*?)(?=###|\Z)"
-    projects_pattern = r"(###? .*?(Projects).*?)(?=###|\Z)"
-
-    work_exp_match = re.search(work_exp_pattern, output_text, re.DOTALL | re.IGNORECASE)
-    projects_match = re.search(projects_pattern, output_text, re.DOTALL | re.IGNORECASE)
-
-    if work_exp_match and projects_match:
-        work_exp_text = work_exp_match.group(0)
-        projects_text = projects_match.group(0)
-
-        # If "Projects" is mentioned inside Work Experience → strip it out
-        fixed_work_exp = re.sub(r"(?i)(projects?:?.*?)(\n|•).*", "", work_exp_text)
-
-        # Replace corrupted work experience section
-        output_text = output_text.replace(work_exp_text, fixed_work_exp)
-
-        # Ensure Projects section remains intact
-        if projects_text not in output_text:
-            output_text += f"\n\n{projects_text}"
-
-    return output_text
-
-
 def rewrite_text_with_llm(text, replacement_mapping, user_location):
     """
     Uses LLM to rewrite a resume with bias-free language, while preserving
@@ -1563,13 +1529,6 @@ def rewrite_text_with_llm(text, replacement_mapping, user_location):
     # Prompt for LLM
     prompt = f"""
 You are an expert resume editor and career advisor.
-
-⚠️ CRITICAL NON-NEGOTIABLE RULES:
-- ❌ It is STRICTLY FORBIDDEN to place **Projects** inside **Work Experience**. 
-- ✅ If "Projects" exists in the original text, it MUST appear as a separate section titled **📂 Projects**.
-- ❌ Do not merge, relocate, or rename "Projects". 
-- ❌ Do not duplicate "Projects" content under other sections.
-- ✅ If "Projects" does not exist in the original text, do not add it.
 
 Your tasks:
 
@@ -1596,19 +1555,16 @@ Your tasks:
    - 📂 **Projects**
    - 🌟 **Interests**
 
-   🔒 IMPORTANT STRUCTURE RULES:
-   - **Projects must never appear under Work Experience.**
-   - If a section does not exist in the original text, leave it out. Do NOT invent or relocate content.
-   - Preserve original order of sections as much as possible.
    - Use bullet points (•) inside each section for clarity.
-   - Maintain new lines after each point properly.
-   - Keep all hyperlinks intact and show them in full where applicable.
+   - Maintain new lines after each points properly.
+   - Keep all hyperlinks intact and show them in full where applicable (e.g., LinkedIn, GitHub, project links).
+   - Do not invent or assume any information not present in the original.
 
 3. 📌 Strictly apply this **replacement mapping** (match exact phrases only — avoid altering keywords or terminology):
 {formatted_mapping}
 
 4. 💼 Suggest **5 relevant job titles** suited for this candidate based in **{user_location}**. For each:
-   - Provide a detailed reason for relevance.
+   - Provide a detailed  reason for relevance.
    - Attach a direct LinkedIn job search URL.
 
 ---
@@ -1641,11 +1597,7 @@ Your tasks:
 """
 
     # Call the LLM of your choice
-    raw_response = call_llm(prompt, session=st.session_state)
-
-    # Apply safety net fix
-    response = enforce_projects_section(raw_response)
-
+    response = call_llm(prompt, session=st.session_state)
     return response
 
 

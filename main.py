@@ -1556,16 +1556,19 @@ Your tasks:
    - 📂 **Projects**
    - 🌟 **Interests**
 
+   🔒 IMPORTANT STRUCTURE RULES:
+   - **Never move "Projects" under Work Experience**. Keep "Projects" as its own section exactly as it appeared in the original.
+   - If a section does not exist in the original text, leave it out. Do NOT invent or relocate content.
+   - Preserve original order of sections as much as possible.
    - Use bullet points (•) inside each section for clarity.
-   - Maintain new lines after each points properly.
-   - Keep all hyperlinks intact and show them in full where applicable (e.g., LinkedIn, GitHub, project links).
-   - Do not invent or assume any information not present in the original.
+   - Maintain new lines after each point properly.
+   - Keep all hyperlinks intact and show them in full where applicable.
 
 3. 📌 Strictly apply this **replacement mapping** (match exact phrases only — avoid altering keywords or terminology):
 {formatted_mapping}
 
 4. 💼 Suggest **5 relevant job titles** suited for this candidate based in **{user_location}**. For each:
-   - Provide a detailed  reason for relevance.
+   - Provide a detailed reason for relevance.
    - Attach a direct LinkedIn job search URL.
 
 ---

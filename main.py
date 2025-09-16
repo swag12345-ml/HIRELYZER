@@ -5520,7 +5520,7 @@ import streamlit as st
 import plotly.graph_objects as go
 from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
 
-with tab4():
+with tab4:
     # Inject CSS styles (keeping existing styles)
     st.markdown("""
         <style>

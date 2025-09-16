@@ -6663,35 +6663,10 @@ with tab4:
     # EXISTING SECTIONS (keeping exactly as they were)
     
     # Section 1: Courses by Role (unchanged)
-    if page == "Courses by Role":
-        st.subheader("🎯 Courses by Career Role")
-        category = st.selectbox(
-            "Select Career Category",
-            options=list(COURSES_BY_CATEGORY.keys()),
-            key="category_selection"
-        )
-        if category:
-            roles = list(COURSES_BY_CATEGORY[category].keys())
-            role = st.selectbox(
-                "Select Role / Job Title",
-                options=roles,
-                key="role_selection"
-            )
-            if role:
-                st.subheader(f"📘 Courses for **{role}** in **{category}**:")
-                courses = get_courses_for_role(category, role)
-                if courses:
-                    for title, url in courses:
-                        st.markdown(f"""
-                            <div class="card">
-                                <a href="{url}" target="_blank">🔗 {title}</a>
-                            </div>
-                        """, unsafe_allow_html=True)
-                else:
-                    st.info("🚫 No courses found for this role.")
+
 
     # Section 2: Resume Videos (unchanged)
-    elif page == "Resume Videos":
+    if page == "Resume Videos":
         st.subheader("📄 Resume Writing Videos")
         categories = list(RESUME_VIDEOS.keys())
         selected_cat = st.selectbox(

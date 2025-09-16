@@ -5519,6 +5519,7 @@ with tab3:
 
 # Tab 4 content with dynamic role-specific questions
 # Tab 4 content with dynamic role-specific questions
+# Tab 4 content with dynamic role-specific questions
 with tab4:
     # Inject CSS styles (keeping existing styles)
     st.markdown("""
@@ -5820,6 +5821,88 @@ with tab4:
             padding: 20px;
             margin: 15px 0;
         }
+
+        /* NEW: Course tile styling */
+        .course-tile {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 2px solid #00c3ff;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .course-tile:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 195, 255, 0.3);
+        }
+
+        .course-title {
+            color: #00c3ff;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .course-description {
+            color: #ffffff;
+            font-size: 14px;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .difficulty-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+
+        .difficulty-beginner {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .difficulty-intermediate {
+            background: linear-gradient(135deg, #FF9800, #f57c00);
+            color: white;
+        }
+
+        .difficulty-advanced {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+        }
+
+        .course-link-btn {
+            background: linear-gradient(135deg, #00c3ff, #0099cc);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .course-link-btn:hover {
+            background: linear-gradient(135deg, #0099cc, #007acc);
+            transform: translateX(2px);
+            text-decoration: none;
+            color: white;
+        }
+
+        /* Radar chart container */
+        .radar-container {
+            background: linear-gradient(135deg, rgba(0, 195, 255, 0.05) 0%, rgba(0, 195, 255, 0.1) 100%);
+            border: 1px solid rgba(0, 195, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
         </style>
     """, unsafe_allow_html=True)
 
@@ -5851,7 +5934,7 @@ with tab4:
 
     page = st.radio(
         label="Select Learning Option",
-        options=[ "Resume Videos", "Interview Videos", "Career Quiz 🎯", "AI Interview Coach 🤖", "Achievements 🏅"],
+        options=["Courses by Role", "Resume Videos", "Interview Videos", "Career Quiz 🎯", "AI Interview Coach 🤖", "Achievements 🏅"],
         horizontal=True,
         key="page_selection",
         label_visibility="collapsed"
@@ -6660,13 +6743,194 @@ with tab4:
         
         return score, feedback
 
+    def create_skill_radar_chart(skills_data):
+        """Create a radar chart for skills using Plotly"""
+        import plotly.graph_objects as go
+        
+        # Extract skills and values
+        skills = list(skills_data.keys())
+        values = list(skills_data.values())
+        
+        # Create radar chart
+        fig = go.Figure()
+        
+        fig.add_trace(go.Scatterpolar(
+            r=values,
+            theta=skills,
+            fill='toself',
+            name='Skills',
+            line=dict(color='#00c3ff', width=2),
+            fillcolor='rgba(0, 195, 255, 0.2)',
+            hovertemplate='<b>%{theta}</b><br>Importance: %{r}/10<br><extra></extra>'
+        ))
+        
+        fig.update_layout(
+            polar=dict(
+                radialaxis=dict(
+                    visible=True,
+                    range=[0, 10],
+                    tickfont=dict(color='white', size=10),
+                    gridcolor='rgba(255, 255, 255, 0.2)'
+                ),
+                angularaxis=dict(
+                    tickfont=dict(color='white', size=12),
+                    gridcolor='rgba(255, 255, 255, 0.2)'
+                ),
+                bgcolor='rgba(0, 0, 0, 0)'
+            ),
+            showlegend=False,
+            title=dict(
+                text="Skills Importance Radar",
+                x=0.5,
+                font=dict(color='#00c3ff', size=16)
+            ),
+            paper_bgcolor='rgba(0, 0, 0, 0)',
+            plot_bgcolor='rgba(0, 0, 0, 0)',
+            font=dict(color='white'),
+            height=400
+        )
+        
+        return fig
+
+    def get_course_difficulty(course_title):
+        """Determine course difficulty based on title keywords"""
+        title_lower = course_title.lower()
+        
+        if any(word in title_lower for word in ['beginner', 'basics', 'introduction', 'fundamentals', 'getting started', 'zero to']):
+            return 'Beginner'
+        elif any(word in title_lower for word in ['advanced', 'expert', 'professional', 'master', 'complete guide']):
+            return 'Advanced'
+        else:
+            return 'Intermediate'
+
+    def get_course_description(course_title, role):
+        """Generate a short description for the course"""
+        descriptions = {
+            'Frontend Developer': f"Master modern frontend development with {course_title.split()[0]} and build responsive web applications.",
+            'Backend Developer': f"Learn server-side development and API design to become a skilled backend developer.",
+            'Full Stack Developer': f"Comprehensive full-stack development course covering both frontend and backend technologies.",
+            'Data Scientist': f"Dive deep into data science methodologies, machine learning, and statistical analysis.",
+            'Machine Learning Engineer': f"Build and deploy machine learning models at scale with industry best practices.",
+            'Cloud Architect': f"Design scalable cloud infrastructure and learn enterprise-grade cloud solutions.",
+            'DevOps Engineer': f"Master CI/CD pipelines, containerization, and infrastructure automation.",
+            'UI Designer': f"Create stunning user interfaces with modern design principles and tools.",
+            'UX Designer': f"Learn user research, wireframing, and create exceptional user experiences."
+        }
+        
+        return descriptions.get(role, f"Comprehensive course to advance your skills in {role} role.")
+
     # EXISTING SECTIONS (keeping exactly as they were)
     
-    # Section 1: Courses by Role (unchanged)
-
+    # Section 1: ENHANCED Courses by Role with Interactive Tiles and Filtering
+    if page == "Courses by Role":
+        st.subheader("🎯 Courses by Career Role")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            category = st.selectbox(
+                "Select Career Category",
+                options=list(COURSES_BY_CATEGORY.keys()),
+                key="category_selection"
+            )
+        
+        with col2:
+            if category:
+                roles = list(COURSES_BY_CATEGORY[category].keys())
+                role = st.selectbox(
+                    "Select Role / Job Title",
+                    options=roles,
+                    key="role_selection"
+                )
+            else:
+                role = None
+        
+        if category and role:
+            # ENHANCED: Add difficulty filter
+            difficulty_filter = st.selectbox(
+                "Filter by Difficulty Level",
+                options=["All Levels", "Beginner", "Intermediate", "Advanced"],
+                key="difficulty_filter"
+            )
+            
+            st.subheader(f"📘 Courses for **{role}** in **{category}**:")
+            courses = get_courses_for_role(category, role)
+            
+            if courses:
+                # ENHANCED: Display courses as interactive tiles
+                for title, url in courses:
+                    difficulty = get_course_difficulty(title)
+                    
+                    # Apply difficulty filter
+                    if difficulty_filter != "All Levels" and difficulty != difficulty_filter:
+                        continue
+                    
+                    description = get_course_description(title, role)
+                    
+                    # ENHANCED: Interactive course tile
+                    st.markdown(f"""
+                        <div class="course-tile">
+                            <div class="course-title">{title}</div>
+                            <div class="course-description">{description}</div>
+                            <span class="difficulty-badge difficulty-{difficulty.lower()}">{difficulty}</span>
+                            <br>
+                            <a href="{url}" target="_blank" class="course-link-btn">
+                                🚀 Start Learning
+                            </a>
+                        </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.info("🚫 No courses found for this role.")
+        
+        # ENHANCED: Show skill radar chart for selected role
+        if category and role:
+            st.markdown("---")
+            st.markdown('<div class="radar-container">', unsafe_allow_html=True)
+            st.subheader("🎯 Skills Radar Chart")
+            
+            # Generate sample skills data based on role
+            role_skills = {
+                "Frontend Developer": {
+                    "JavaScript": 9, "React/Vue": 8, "CSS/HTML": 9, 
+                    "Responsive Design": 8, "Performance Optimization": 7, "Testing": 6
+                },
+                "Backend Developer": {
+                    "API Design": 9, "Database Management": 8, "Security": 8,
+                    "Scalability": 7, "Cloud Services": 7, "Testing": 6
+                },
+                "Data Scientist": {
+                    "Python/R": 9, "Machine Learning": 8, "Statistics": 9,
+                    "Data Visualization": 7, "SQL": 8, "Domain Knowledge": 6
+                },
+                "UI Designer": {
+                    "Design Tools": 9, "Visual Design": 8, "Typography": 7,
+                    "Color Theory": 8, "Prototyping": 7, "User Research": 6
+                },
+                "DevOps Engineer": {
+                    "CI/CD": 9, "Containerization": 8, "Cloud Platforms": 8,
+                    "Monitoring": 7, "Infrastructure as Code": 8, "Security": 7
+                }
+            }
+            
+            skills_data = role_skills.get(role, {
+                "Technical Skills": 8, "Problem Solving": 7, "Communication": 6,
+                "Leadership": 5, "Domain Knowledge": 7, "Continuous Learning": 8
+            })
+            
+            # Create and display radar chart
+            radar_fig = create_skill_radar_chart(skills_data)
+            st.plotly_chart(radar_fig, use_container_width=True)
+            
+            # Add hover tooltip information
+            st.markdown("""
+                <div style="text-align: center; color: #00c3ff; margin-top: 10px;">
+                    💡 Hover over the chart points to see skill importance ratings!
+                </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown('</div>', unsafe_allow_html=True)
 
     # Section 2: Resume Videos (unchanged)
-    if page == "Resume Videos":
+    elif page == "Resume Videos":
         st.subheader("📄 Resume Writing Videos")
         categories = list(RESUME_VIDEOS.keys())
         selected_cat = st.selectbox(
@@ -6852,7 +7116,7 @@ with tab4:
                         st.session_state.dynamic_quiz_completed = False
                         st.rerun()
 
-    # Section 5: NEW Dynamic AI Interview Coach 🤖
+    # Section 5: ENHANCED AI Interview Coach 🤖 with Refresh Button
     elif page == "AI Interview Coach 🤖":
         st.subheader("🤖 AI Interview Coach")
         st.markdown("Practice role-specific interview questions with our AI coach. Get instant feedback on your answers!")
@@ -6903,6 +7167,8 @@ with tab4:
                     st.session_state.dynamic_interview_started = False
                 if 'dynamic_answer_submitted' not in st.session_state:
                     st.session_state.dynamic_answer_submitted = False
+                if 'current_interview_question_text' not in st.session_state:
+                    st.session_state.current_interview_question_text = ""
                 if 'interview_domain' not in st.session_state or st.session_state.interview_domain != selected_domain:
                     st.session_state.interview_domain = selected_domain
                     st.session_state.interview_role = selected_role
@@ -6945,12 +7211,13 @@ with tab4:
                         st.session_state.dynamic_interview_completed = False
                         st.session_state.dynamic_interview_started = True
                         st.session_state.dynamic_answer_submitted = False
+                        st.session_state.current_interview_question_text = selected_questions[0] if selected_questions else ""
                         st.rerun()
                 
                 # Interview in progress
                 elif st.session_state.dynamic_interview_started and not st.session_state.dynamic_interview_completed:
                     if st.session_state.current_dynamic_interview_question < len(st.session_state.dynamic_interview_questions):
-                        question = st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question]
+                        question = st.session_state.current_interview_question_text or st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question]
                         
                         st.markdown(f"""
                         <div class="quiz-card">
@@ -6959,6 +7226,27 @@ with tab4:
                             <p style="font-size: 18px; color: #ffffff; margin: 15px 0;">{question}</p>
                         </div>
                         """, unsafe_allow_html=True)
+                        
+                        # ENHANCED: Add refresh button for new question
+                        col1, col2 = st.columns([3, 1])
+                        with col2:
+                            if st.button("🔄 Refresh Interview Question"):
+                                import random
+                                # Get current interview type from questions
+                                current_questions = []
+                                if st.session_state.dynamic_interview_questions:
+                                    # Determine question type and get new random question
+                                    tech_questions = interview_questions.get("technical", [])
+                                    behavioral_questions = interview_questions.get("behavioral", [])
+                                    all_questions = tech_questions + behavioral_questions
+                                    
+                                    # Get a different question
+                                    available_questions = [q for q in all_questions if q != question]
+                                    if available_questions:
+                                        new_question = random.choice(available_questions)
+                                        st.session_state.current_interview_question_text = new_question
+                                        st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question] = new_question
+                                        st.rerun()
                         
                         # Answer input
                         answer = st.text_area(
@@ -7002,6 +7290,9 @@ with tab4:
                                 if st.button("Continue to Next Question ➡️"):
                                     st.session_state.current_dynamic_interview_question += 1
                                     st.session_state.dynamic_answer_submitted = False
+                                    # Set next question
+                                    if st.session_state.current_dynamic_interview_question < len(st.session_state.dynamic_interview_questions):
+                                        st.session_state.current_interview_question_text = st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question]
                                     st.rerun()
                             else:
                                 if st.button("Complete Interview 🏁"):
@@ -7057,6 +7348,7 @@ with tab4:
                         st.session_state.dynamic_interview_answers = []
                         st.session_state.dynamic_interview_scores = []
                         st.session_state.dynamic_answer_submitted = False
+                        st.session_state.current_interview_question_text = ""
                         st.rerun()
 
     # Section 6: Achievements 🏅  

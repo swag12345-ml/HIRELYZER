@@ -1,61 +1,3 @@
-def evaluate_interview_answer(answer: str):
-    """
-    Uses an LLM to evaluate an interview answer.
-    Returns (score out of 5, feedback string).
-    """
-    from llm_manager import call_llm
-    import re
-    import streamlit as st
-
-    # Empty check
-    if not answer.strip():
-        return 0, "⚠️ No answer provided."
-
-    # 🔹 LLM Prompt
-    prompt = f"""
-    You are an expert technical interview evaluator.
-
-    ### Task:
-    Evaluate the following candidate's answer and provide a numeric score + feedback.
-
-    ### Evaluation Criteria:
-    1. Clarity & Structure
-    2. Relevance to the Question
-    3. Technical Depth
-    4. Communication Skills
-
-    ### Output Format:
-    Score: <number between 1 and 5>
-    Feedback: <short constructive feedback in 1–2 sentences>
-
-    ---
-    Candidate Answer:
-    {answer}
-    ---
-    """
-
-    try:
-        # Call LLM
-        response = call_llm(prompt, session=st.session_state).strip()
-
-        # Extract Score
-        score_match = re.search(r"Score:\s*(\d+)", response)
-        score = int(score_match.group(1)) if score_match else 3  # fallback
-
-        # Extract Feedback
-        feedback_match = re.search(r"Feedback:\s*(.+)", response)
-        feedback = feedback_match.group(1).strip() if feedback_match else "Good attempt, but can be clearer."
-
-        # Keep score in range
-        score = max(1, min(score, 5))
-
-    except Exception as e:
-        score = 3
-        feedback = f"⚠️ Evaluation fallback due to error: {e}"
-
-    return score, feedback
-
-
 from xhtml2pdf import pisa
 from io import BytesIO
 
@@ -5574,6 +5516,63 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
+def evaluate_interview_answer(answer: str):
+    """
+    Uses an LLM to evaluate an interview answer.
+    Returns (score out of 5, feedback string).
+    """
+    from llm_manager import call_llm
+    import re
+    import streamlit as st
+
+    # Empty check
+    if not answer.strip():
+        return 0, "⚠️ No answer provided."
+
+    # 🔹 LLM Prompt
+    prompt = f"""
+    You are an expert technical interview evaluator.
+
+    ### Task:
+    Evaluate the following candidate's answer and provide a numeric score + feedback.
+
+    ### Evaluation Criteria:
+    1. Clarity & Structure
+    2. Relevance to the Question
+    3. Technical Depth
+    4. Communication Skills
+
+    ### Output Format:
+    Score: <number between 1 and 5>
+    Feedback: <short constructive feedback in 1–2 sentences>
+
+    ---
+    Candidate Answer:
+    {answer}
+    ---
+    """
+
+    try:
+        # Call LLM
+        response = call_llm(prompt, session=st.session_state).strip()
+
+        # Extract Score
+        score_match = re.search(r"Score:\s*(\d+)", response)
+        score = int(score_match.group(1)) if score_match else 3  # fallback
+
+        # Extract Feedback
+        feedback_match = re.search(r"Feedback:\s*(.+)", response)
+        feedback = feedback_match.group(1).strip() if feedback_match else "Good attempt, but can be clearer."
+
+        # Keep score in range
+        score = max(1, min(score, 5))
+
+    except Exception as e:
+        score = 3
+        feedback = f"⚠️ Evaluation fallback due to error: {e}"
+
+    return score, feedback
+
 import streamlit as st
 import plotly.graph_objects as go
 from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
@@ -7065,155 +7064,7 @@ with tab4:
                     st.video(url)
 
     # Section 4: Career Quiz (unchanged)
-    elif page == "Career Quiz 🎯":
-        st.subheader("🎯 Career Discovery Quiz")
-        st.markdown("Choose your target domain and role, then answer personalized questions to get specific course recommendations!")
-        
-        # Domain and Role selection
-        st.markdown('<div class="role-selector">', unsafe_allow_html=True)
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            selected_domain = st.selectbox(
-                "Select Career Domain",
-                options=list(COURSES_BY_CATEGORY.keys()),
-                key="quiz_domain_selection"
-            )
-        
-        with col2:
-            if selected_domain:
-                roles = list(COURSES_BY_CATEGORY[selected_domain].keys())
-                selected_role = st.selectbox(
-                    "Select Target Role",
-                    options=roles,
-                    key="quiz_role_selection"
-                )
-            else:
-                selected_role = None
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        if selected_domain and selected_role:
-            # Generate dynamic questions
-            quiz_questions = generate_career_quiz_questions(selected_domain, selected_role)
-            
-            if not quiz_questions:
-                st.warning("⚠️ No role-specific questions available. Please select another role.")
-            else:
-                # Initialize quiz state
-                if 'dynamic_quiz_answers' not in st.session_state:
-                    st.session_state.dynamic_quiz_answers = []
-                if 'current_dynamic_question' not in st.session_state:
-                    st.session_state.current_dynamic_question = 0
-                if 'dynamic_quiz_completed' not in st.session_state:
-                    st.session_state.dynamic_quiz_completed = False
-                if 'quiz_domain' not in st.session_state or st.session_state.quiz_domain != selected_domain:
-                    st.session_state.quiz_domain = selected_domain
-                    st.session_state.quiz_role = selected_role
-                    st.session_state.dynamic_quiz_answers = []
-                    st.session_state.current_dynamic_question = 0
-                    st.session_state.dynamic_quiz_completed = False
-                    
-                # Quiz logic
-                if not st.session_state.dynamic_quiz_completed:
-                    if st.session_state.current_dynamic_question < len(quiz_questions):
-                        question_data = quiz_questions[st.session_state.current_dynamic_question]
-                        
-                        st.markdown(f"""
-                        <div class="quiz-card">
-                            <h3 style="color: #00c3ff;">Question {st.session_state.current_dynamic_question + 1} of {len(quiz_questions)}</h3>
-                            <h4 style="color: #ffffff; margin: 15px 0;">For: {selected_role} in {selected_domain}</h4>
-                            <p style="font-size: 18px; color: #ffffff; margin: 15px 0;">{question_data['question']}</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        # Display options
-                        selected_option = st.radio(
-                            "Choose your answer:",
-                            options=range(len(question_data['options'])),
-                            format_func=lambda x: question_data['options'][x],
-                            key=f"dynamic_quiz_q_{st.session_state.current_dynamic_question}"
-                        )
-                        
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            if st.session_state.current_dynamic_question > 0:
-                                if st.button("⬅️ Previous Question"):
-                                    st.session_state.current_dynamic_question -= 1
-                                    st.rerun()
-                        
-                        with col2:
-                            if st.button("Next Question ➡️" if st.session_state.current_dynamic_question < len(quiz_questions) - 1 else "Complete Quiz 🎯"):
-                                # Store answer
-                                if st.session_state.current_dynamic_question >= len(st.session_state.dynamic_quiz_answers):
-                                    st.session_state.dynamic_quiz_answers.append(selected_option)
-                                else:
-                                    st.session_state.dynamic_quiz_answers[st.session_state.current_dynamic_question] = selected_option
-                                
-                                if st.session_state.current_dynamic_question < len(quiz_questions) - 1:
-                                    st.session_state.current_dynamic_question += 1
-                                else:
-                                    st.session_state.dynamic_quiz_completed = True
-                                st.rerun()
-                                
-                        # Progress bar
-                        progress = (st.session_state.current_dynamic_question + 1) / len(quiz_questions)
-                        st.progress(progress)
-                else:
-                    # Show results
-                    total_questions = len(quiz_questions)
-                    answered_questions = len(st.session_state.dynamic_quiz_answers)
-                    score = (answered_questions / total_questions) * 100
-                    
-                    # Store results in session state for gamification
-                    st.session_state.career_quiz_result = {
-                        "role": selected_role,
-                        "domain": selected_domain,
-                        "score": score,
-                        "answers": st.session_state.dynamic_quiz_answers
-                    }
-                    
-                    # Get badge
-                    badge_emoji, badge_title = get_badge_for_score("career_quiz", score)
-                    
-                    st.markdown(f"""
-                    <div class="badge-container">
-                        <h2 style="margin: 0; color: #333;">🎉 Quiz Complete!</h2>
-                        <div style="margin: 20px 0;">
-                            <div class="score-display">{score:.0f}%</div>
-                            <h3 style="color: #333; margin: 10px 0;">{badge_emoji} {badge_title}</h3>
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    st.markdown(f"""
-                    <div class="quiz-card">
-                        <h3 style="color: #00c3ff;">🎯 Your Target Career Path:</h3>
-                        <h2 style="color: #ffffff; text-align: center; margin: 20px 0;">{selected_role}</h2>
-                        <h4 style="color: #00c3ff; text-align: center; margin: 10px 0;">Domain: {selected_domain}</h4>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    # Show recommended courses
-                    courses = get_courses_for_role(selected_domain, selected_role)
-                    if courses:
-                        st.subheader("📚 Recommended Courses for You:")
-                        for title, url in courses[:5]:  # Top 5 courses
-                            st.markdown(f"""
-                                <div class="card">
-                                    <a href="{url}" target="_blank">🔗 {title}</a>
-                                </div>
-                            """, unsafe_allow_html=True)
-                    else:
-                        st.info("Explore our course categories to find relevant learning resources!")
-                
-                # Restart button
-                if st.session_state.dynamic_quiz_completed:
-                    if st.button("🔄 Take Quiz for Different Role"):
-                        st.session_state.dynamic_quiz_answers = []
-                        st.session_state.current_dynamic_question = 0
-                        st.session_state.dynamic_quiz_completed = False
-                        st.rerun()
+    
 
     # Section 5: UNIFIED AI Interview Coach 🤖 with Courses
     elif page == "AI Interview Coach 🤖":
@@ -7468,39 +7319,7 @@ with tab4:
         st.markdown("Track your learning progress and unlock badges!")
         
         # Display achievements
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("### 🎯 Career Quiz")
-            if 'career_quiz_result' in st.session_state:
-                result = st.session_state.career_quiz_result
-                badge_emoji, badge_title = get_badge_for_score("career_quiz", result['score'])
-                
-                st.markdown(f"""
-                <div class="badge-container">
-                    <h3 style="color: #333; margin: 0;">{badge_emoji} {badge_title}</h3>
-                    <p style="color: #666; margin: 10px 0;">Score: {result['score']:.0f}%</p>
-                    <p style="color: #666; margin: 5px 0;">Target Role: <strong>{result['role']}</strong></p>
-                    <p style="color: #666; margin: 5px 0;">Domain: <strong>{result.get('domain', 'General')}</strong></p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                if st.button("🔄 Take Quiz for Different Role", key="restart_quiz_achievements"):
-                    if 'career_quiz_result' in st.session_state:
-                        del st.session_state.career_quiz_result
-                    if 'dynamic_quiz_answers' in st.session_state:
-                        del st.session_state.dynamic_quiz_answers
-                    if 'current_dynamic_question' in st.session_state:
-                        del st.session_state.current_dynamic_question
-                    if 'dynamic_quiz_completed' in st.session_state:
-                        del st.session_state.dynamic_quiz_completed
-                    st.success("Career quiz reset! Go to Career Quiz tab to take it for a different role.")
-            else:
-                st.info("🎯 Take the Career Quiz to earn your first badge!")
-        
-        with col2:
-            st.markdown("### 🤖 Interview Practice")
-            if 'interview_result' in st.session_state:
+        if 'interview_result' in st.session_state:
                 result = st.session_state.interview_result
                 badge_emoji, badge_title = get_badge_for_score("interview", result['avg_score'])
                 
@@ -7522,31 +7341,16 @@ with tab4:
                         if 'interview' in key:
                             del st.session_state[key]
                     st.success("Interview practice reset! Go to AI Interview Coach tab to practice for a different role.")
-            else:
-                st.info("🤖 Complete the Interview Practice to earn your badge!")
+                else:
+                 st.info("🤖 Complete the Interview Practice to earn your badge!")
         
         # Achievement statistics
-        if 'career_quiz_result' in st.session_state or 'interview_result' in st.session_state:
+        if  'interview_result' in st.session_state:
             st.markdown("### 📈 Your Progress")
-            achievements_earned = 0
-            total_achievements = 2
+            st.progress(1.0)
+            st.markdown("**Progress: 1/1 achievement unlocked**")
             
-            if 'career_quiz_result' in st.session_state:
-                achievements_earned += 1
-            if 'interview_result' in st.session_state:
-                achievements_earned += 1
-                
-            progress = achievements_earned / total_achievements
-            st.progress(progress)
-            st.markdown(f"**Progress: {achievements_earned}/{total_achievements} achievements unlocked**")
             
-            # Show next steps
-            if achievements_earned < total_achievements:
-                st.markdown("### 🎯 Next Steps:")
-                if 'career_quiz_result' not in st.session_state:
-                    st.info("📝 Complete the Career Quiz to discover your ideal career path!")
-                if 'interview_result' not in st.session_state:
-                    st.info("🎤 Try the AI Interview Coach to improve your interview skills!")
         else:
             st.markdown("### 🌟 Get Started!")
             st.info("Complete the Career Quiz and Interview Practice to start earning badges!")

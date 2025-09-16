@@ -5516,8 +5516,210 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
+
+from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
+
+CAREER_QUIZ_QUESTIONS = [
+    {
+        "question": "Which type of tasks do you enjoy most?",
+        "options": [
+            {"text": "Analyzing data and finding patterns", "weights": {"data_scientist": 3, "data_analyst": 3, "ml_engineer": 2}},
+            {"text": "Building websites and applications", "weights": {"web_developer": 3, "full_stack_developer": 3, "frontend_developer": 2}},
+            {"text": "Managing teams and projects", "weights": {"project_manager": 3, "product_manager": 3, "scrum_master": 2}},
+            {"text": "Securing systems and networks", "weights": {"cybersecurity_analyst": 3, "security_engineer": 3, "ethical_hacker": 2}},
+            {"text": "Automating processes and deployment", "weights": {"devops_engineer": 3, "cloud_engineer": 3, "sre": 2}}
+        ]
+    },
+    {
+        "question": "What programming languages/tools interest you most?",
+        "options": [
+            {"text": "Python, R, SQL for data analysis", "weights": {"data_scientist": 3, "data_analyst": 3, "ml_engineer": 3}},
+            {"text": "JavaScript, React, HTML/CSS", "weights": {"web_developer": 3, "frontend_developer": 3, "full_stack_developer": 2}},
+            {"text": "Java, .NET, databases", "weights": {"backend_developer": 3, "full_stack_developer": 2, "software_engineer": 2}},
+            {"text": "Security tools, penetration testing", "weights": {"cybersecurity_analyst": 3, "ethical_hacker": 3, "security_engineer": 2}},
+            {"text": "Docker, Kubernetes, CI/CD tools", "weights": {"devops_engineer": 3, "cloud_engineer": 3, "sre": 3}}
+        ]
+    },
+    {
+        "question": "Which work environment appeals to you?",
+        "options": [
+            {"text": "Research-focused, experimental", "weights": {"data_scientist": 3, "ml_engineer": 2, "research_scientist": 3}},
+            {"text": "Fast-paced, user-facing products", "weights": {"web_developer": 2, "frontend_developer": 3, "product_manager": 2}},
+            {"text": "Strategic planning and coordination", "weights": {"project_manager": 3, "product_manager": 3, "business_analyst": 2}},
+            {"text": "High-security, critical systems", "weights": {"cybersecurity_analyst": 3, "security_engineer": 3, "systems_admin": 2}},
+            {"text": "Infrastructure and scalability", "weights": {"devops_engineer": 3, "cloud_engineer": 3, "sre": 3}}
+        ]
+    },
+    {
+        "question": "What type of problems do you like solving?",
+        "options": [
+            {"text": "Finding insights from large datasets", "weights": {"data_scientist": 3, "data_analyst": 3, "business_intelligence": 2}},
+            {"text": "Creating intuitive user experiences", "weights": {"ux_designer": 3, "frontend_developer": 2, "product_manager": 2}},
+            {"text": "Optimizing business processes", "weights": {"business_analyst": 3, "project_manager": 2, "operations_manager": 3}},
+            {"text": "Identifying and fixing security vulnerabilities", "weights": {"cybersecurity_analyst": 3, "ethical_hacker": 3, "security_consultant": 2}},
+            {"text": "Building reliable, scalable systems", "weights": {"devops_engineer": 3, "sre": 3, "cloud_architect": 2}}
+        ]
+    },
+    {
+        "question": "How do you prefer to work?",
+        "options": [
+            {"text": "Independently with occasional collaboration", "weights": {"data_scientist": 2, "backend_developer": 2, "researcher": 3}},
+            {"text": "In cross-functional teams with designers", "weights": {"frontend_developer": 3, "full_stack_developer": 2, "product_manager": 2}},
+            {"text": "Leading and coordinating with stakeholders", "weights": {"project_manager": 3, "product_manager": 3, "team_lead": 3}},
+            {"text": "In specialized security teams", "weights": {"cybersecurity_analyst": 3, "security_engineer": 3, "compliance_officer": 2}},
+            {"text": "Supporting development teams with infrastructure", "weights": {"devops_engineer": 3, "sre": 3, "cloud_engineer": 2}}
+        ]
+    }
+]
+
+# Career role mappings to course categories
+ROLE_TO_CATEGORY_MAP = {
+    "data_scientist": "Data Science & Analytics",
+    "data_analyst": "Data Science & Analytics", 
+    "ml_engineer": "AI & Machine Learning",
+    "web_developer": "Web Development",
+    "frontend_developer": "Web Development",
+    "full_stack_developer": "Web Development",
+    "backend_developer": "Web Development",
+    "project_manager": "Project Management",
+    "product_manager": "Product Management", 
+    "scrum_master": "Project Management",
+    "cybersecurity_analyst": "Cybersecurity",
+    "security_engineer": "Cybersecurity",
+    "ethical_hacker": "Cybersecurity",
+    "devops_engineer": "DevOps & Cloud",
+    "cloud_engineer": "DevOps & Cloud",
+    "sre": "DevOps & Cloud"
+}
+
+# Interview questions by category
+INTERVIEW_QUESTIONS = {
+    "technical": [
+        "Explain the difference between supervised and unsupervised learning.",
+        "How would you handle a situation where your code is not working as expected?",
+        "Describe your experience with version control systems like Git.",
+        "What is your approach to debugging complex technical issues?",
+        "How do you stay updated with the latest technology trends?"
+    ],
+    "behavioral": [
+        "Tell me about a challenging project you worked on and how you overcame obstacles.",
+        "Describe a time when you had to work with a difficult team member.",
+        "How do you prioritize your tasks when working on multiple projects?",
+        "Give an example of when you had to learn something completely new for a project.",
+        "Describe a situation where you had to meet a tight deadline."
+    ],
+    "situational": [
+        "How would you approach a project with unclear requirements?",
+        "What would you do if you disagreed with your manager's technical decision?",
+        "How would you handle a situation where a stakeholder keeps changing requirements?",
+        "Describe how you would onboard a new team member.",
+        "How would you handle a security breach in a system you're responsible for?"
+    ]
+}
+
+# Badge system
+BADGE_CONFIG = {
+    "career_quiz": {
+        "novice": {"min_score": 0, "max_score": 40, "emoji": "🌱", "title": "Career Explorer"},
+        "intermediate": {"min_score": 41, "max_score": 70, "emoji": "📚", "title": "Career Seeker"},
+        "advanced": {"min_score": 71, "max_score": 100, "emoji": "🎯", "title": "Career Champion"}
+    },
+    "interview": {
+        "needs_practice": {"min_score": 1.0, "max_score": 2.5, "emoji": "💪", "title": "Keep Practicing"},
+        "good": {"min_score": 2.6, "max_score": 3.5, "emoji": "👍", "title": "Good Performer"},
+        "excellent": {"min_score": 3.6, "max_score": 4.5, "emoji": "🌟", "title": "Star Performer"},
+        "interview_ready": {"min_score": 4.6, "max_score": 5.0, "emoji": "🏆", "title": "Interview Ready"}
+    }
+}
+
+def calculate_career_quiz_score(answers):
+    """Calculate career quiz score and suggest role"""
+    role_scores = {}
+    total_possible = len(CAREER_QUIZ_QUESTIONS) * 3  # Maximum 3 points per question
+    
+    for answer in answers:
+        for role, weight in answer.items():
+            role_scores[role] = role_scores.get(role, 0) + weight
+    
+    if not role_scores:
+        return None, 0, []
+    
+    # Get top role
+    top_role = max(role_scores.items(), key=lambda x: x[1])
+    suggested_role = top_role[0].replace("_", " ").title()
+    
+    # Calculate percentage score
+    max_score = max(role_scores.values())
+    percentage_score = (max_score / total_possible) * 100
+    
+    # Get recommended courses
+    category = ROLE_TO_CATEGORY_MAP.get(top_role[0])
+    recommended_courses = []
+    if category and category in COURSES_BY_CATEGORY:
+        # Get courses for the suggested role
+        role_key = top_role[0].replace("_", " ").title()
+        if role_key in COURSES_BY_CATEGORY[category]:
+            recommended_courses = COURSES_BY_CATEGORY[category][role_key][:5]  # Top 5 courses
+    
+    return suggested_role, percentage_score, recommended_courses
+
+def get_badge_for_score(score_type, score):
+    """Get badge based on score type and value"""
+    badges = BADGE_CONFIG.get(score_type, {})
+    for badge_name, config in badges.items():
+        if config["min_score"] <= score <= config["max_score"]:
+            return config["emoji"], config["title"]
+    return "🎖️", "Participant"
+
+def evaluate_interview_answer(answer, question_type="general"):
+    """Evaluate interview answer and provide feedback"""
+    answer_length = len(answer.split())
+    
+    # Length-based feedback
+    if answer_length < 20:
+        length_feedback = "Too short"
+        length_score = 2
+    elif answer_length > 200:
+        length_feedback = "Too long" 
+        length_score = 3
+    else:
+        length_feedback = "Good length"
+        length_score = 4
+    
+    # Content quality (simplified scoring)
+    score = length_score
+    
+    # Basic content checks
+    if len(answer.strip()) == 0:
+        return 1, "No answer provided"
+    
+    if "experience" in answer.lower() or "project" in answer.lower():
+        score += 0.5
+        
+    if any(word in answer.lower() for word in ["because", "however", "therefore", "additionally"]):
+        score += 0.5  # Good connecting words
+        
+    # Cap at 5
+    score = min(5, score)
+    
+    # Generate feedback
+    feedback_parts = [length_feedback]
+    
+    if score >= 4:
+        feedback_parts.append("Good answer ✅")
+    elif score >= 3:
+        feedback_parts.append("Adequate response")
+    else:
+        feedback_parts.append("Needs improvement")
+        
+    feedback = " - ".join(feedback_parts)
+    
+    return score, feedback
+
+# Modified Tab 4 content with new features added below existing sections
+
 with tab4:
-    # Inject CSS styles
+    # Inject CSS styles (keeping existing styles)
     st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -5783,21 +5985,47 @@ with tab4:
             border: 1px solid rgba(0, 195, 255, 0.3);
             border-radius: 10px;
         }
+
+        /* New styles for quiz and interview sections */
+        .quiz-card {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 2px solid #00c3ff;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 4px 20px rgba(0, 195, 255, 0.15);
+        }
+
+        .badge-container {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 193, 7, 0.1) 100%);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            margin: 20px 0;
+        }
+
+        .score-display {
+            font-size: 48px;
+            font-weight: bold;
+            color: #00c3ff;
+            text-shadow: 0 0 20px rgba(0, 195, 255, 0.8);
+        }
         </style>
     """, unsafe_allow_html=True)
 
-    # Header
+    # Header (keeping existing)
     st.markdown("""
         <div class="header-box">
             <h2>📚 Recommended Learning Hub</h2>
         </div>
     """, unsafe_allow_html=True)
 
-    # Subheader
+    # Subheader (keeping existing)
     st.markdown('<div class="glow-header">🎓 Explore Career Resources</div>', unsafe_allow_html=True)
     st.markdown("<p style='text-align:center; color:#ccc; font-size: 16px; margin-bottom: 25px;'>Curated courses and videos for your career growth, resume tips, and interview success.</p>", unsafe_allow_html=True)
 
-    # Learning path label
+    # Learning path label (keeping existing)
     st.markdown("""
         <div class="learning-path-container">
             <span class="learning-path-text">
@@ -5806,7 +6034,7 @@ with tab4:
         </div>
     """, unsafe_allow_html=True)
 
-    # Centered Radio buttons
+    # Updated Radio buttons with new options
     st.markdown("""
         <div style="display: flex; justify-content: center; width: 100%;">
             <div style="display: flex; justify-content: center; gap: 16px;">
@@ -5814,7 +6042,7 @@ with tab4:
 
     page = st.radio(
         label="Select Learning Option",
-        options=["Courses by Role", "Resume Videos", "Interview Videos"],
+        options=["Courses by Role", "Resume Videos", "Interview Videos", "Career Quiz 🎯", "AI Interview Coach 🤖", "Achievements 🏅"],
         horizontal=True,
         key="page_selection",
         label_visibility="collapsed"
@@ -5822,7 +6050,9 @@ with tab4:
 
     st.markdown("</div></div>", unsafe_allow_html=True)
 
-    # Section 1: Courses by Role
+    # EXISTING SECTIONS (keeping exactly as they were)
+    
+    # Section 1: Courses by Role (unchanged)
     if page == "Courses by Role":
         st.subheader("🎯 Courses by Career Role")
         category = st.selectbox(
@@ -5850,7 +6080,7 @@ with tab4:
                 else:
                     st.info("🚫 No courses found for this role.")
 
-    # Section 2: Resume Videos
+    # Section 2: Resume Videos (unchanged)
     elif page == "Resume Videos":
         st.subheader("📄 Resume Writing Videos")
         categories = list(RESUME_VIDEOS.keys())
@@ -5868,7 +6098,7 @@ with tab4:
                     st.markdown(f"**{title}**")
                     st.video(url)
 
-    # Section 3: Interview Videos
+    # Section 3: Interview Videos (unchanged)
     elif page == "Interview Videos":
         st.subheader("🗣️ Interview Preparation Videos")
         categories = list(INTERVIEW_VIDEOS.keys())
@@ -5885,6 +6115,343 @@ with tab4:
                 with cols[idx % 2]:
                     st.markdown(f"**{title}**")
                     st.video(url)
+
+    # NEW SECTIONS (adding below existing content)
+
+    # Section 4: Career Quiz 🎯
+    elif page == "Career Quiz 🎯":
+        st.subheader("🎯 Career Discovery Quiz")
+        st.markdown("Answer these questions to discover your ideal career path and get personalized course recommendations!")
+        
+        # Initialize quiz state
+        if 'quiz_answers' not in st.session_state:
+            st.session_state.quiz_answers = []
+        if 'current_question' not in st.session_state:
+            st.session_state.current_question = 0
+        if 'quiz_completed' not in st.session_state:
+            st.session_state.quiz_completed = False
+            
+        # Quiz logic
+        if not st.session_state.quiz_completed:
+            if st.session_state.current_question < len(CAREER_QUIZ_QUESTIONS):
+                question_data = CAREER_QUIZ_QUESTIONS[st.session_state.current_question]
+                
+                st.markdown(f"""
+                <div class="quiz-card">
+                    <h3 style="color: #00c3ff;">Question {st.session_state.current_question + 1} of {len(CAREER_QUIZ_QUESTIONS)}</h3>
+                    <p style="font-size: 18px; color: #ffffff; margin: 15px 0;">{question_data['question']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Display options
+                selected_option = st.radio(
+                    "Choose your answer:",
+                    options=range(len(question_data['options'])),
+                    format_func=lambda x: question_data['options'][x]['text'],
+                    key=f"quiz_q_{st.session_state.current_question}"
+                )
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.session_state.current_question > 0:
+                        if st.button("⬅️ Previous Question"):
+                            st.session_state.current_question -= 1
+                            st.rerun()
+                
+                with col2:
+                    if st.button("Next Question ➡️" if st.session_state.current_question < len(CAREER_QUIZ_QUESTIONS) - 1 else "Complete Quiz 🎯"):
+                        # Store answer
+                        if st.session_state.current_question >= len(st.session_state.quiz_answers):
+                            st.session_state.quiz_answers.append(question_data['options'][selected_option]['weights'])
+                        else:
+                            st.session_state.quiz_answers[st.session_state.current_question] = question_data['options'][selected_option]['weights']
+                        
+                        if st.session_state.current_question < len(CAREER_QUIZ_QUESTIONS) - 1:
+                            st.session_state.current_question += 1
+                        else:
+                            st.session_state.quiz_completed = True
+                        st.rerun()
+                        
+                # Progress bar
+                progress = (st.session_state.current_question + 1) / len(CAREER_QUIZ_QUESTIONS)
+                st.progress(progress)
+        else:
+            # Show results
+            suggested_role, score, recommended_courses = calculate_career_quiz_score(st.session_state.quiz_answers)
+            
+            if suggested_role:
+                # Store results in session state for gamification
+                st.session_state.career_quiz_result = {
+                    "role": suggested_role,
+                    "score": score,
+                    "courses": recommended_courses
+                }
+                
+                # Get badge
+                badge_emoji, badge_title = get_badge_for_score("career_quiz", score)
+                
+                st.markdown(f"""
+                <div class="badge-container">
+                    <h2 style="margin: 0; color: #333;">🎉 Quiz Complete!</h2>
+                    <div style="margin: 20px 0;">
+                        <div class="score-display">{score:.0f}%</div>
+                        <h3 style="color: #333; margin: 10px 0;">{badge_emoji} {badge_title}</h3>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                st.markdown(f"""
+                <div class="quiz-card">
+                    <h3 style="color: #00c3ff;">🎯 Your Recommended Career Path:</h3>
+                    <h2 style="color: #ffffff; text-align: center; margin: 20px 0;">{suggested_role}</h2>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                if recommended_courses:
+                    st.subheader("📚 Recommended Courses for You:")
+                    for title, url in recommended_courses:
+                        st.markdown(f"""
+                            <div class="card">
+                                <a href="{url}" target="_blank">🔗 {title}</a>
+                            </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.info("No specific courses found for this role, but explore our general categories above!")
+            
+            # Restart button
+            if st.button("🔄 Restart Quiz"):
+                st.session_state.quiz_answers = []
+                st.session_state.current_question = 0
+                st.session_state.quiz_completed = False
+                st.rerun()
+
+    # Section 5: AI Interview Coach 🤖
+    elif page == "AI Interview Coach 🤖":
+        st.subheader("🤖 AI Interview Coach")
+        st.markdown("Practice your interview skills with our AI coach. Get instant feedback on your answers!")
+        
+        # Initialize interview state
+        if 'interview_questions' not in st.session_state:
+            st.session_state.interview_questions = []
+        if 'current_interview_question' not in st.session_state:
+            st.session_state.current_interview_question = 0
+        if 'interview_answers' not in st.session_state:
+            st.session_state.interview_answers = []
+        if 'interview_scores' not in st.session_state:
+            st.session_state.interview_scores = []
+        if 'interview_completed' not in st.session_state:
+            st.session_state.interview_completed = False
+        if 'interview_started' not in st.session_state:
+            st.session_state.interview_started = False
+            
+        # Start interview setup
+        if not st.session_state.interview_started:
+            st.markdown("### Choose your interview focus:")
+            interview_type = st.selectbox(
+                "Interview Type",
+                options=list(INTERVIEW_QUESTIONS.keys()),
+                format_func=lambda x: x.title().replace("_", " "),
+                key="interview_type_select"
+            )
+            
+            num_questions = st.slider("Number of questions:", 3, 8, 5)
+            
+            if st.button("🚀 Start Interview Practice"):
+                # Randomly select questions
+                import random
+                available_questions = INTERVIEW_QUESTIONS[interview_type]
+                selected_questions = random.sample(available_questions, min(num_questions, len(available_questions)))
+                
+                st.session_state.interview_questions = selected_questions
+                st.session_state.current_interview_question = 0
+                st.session_state.interview_answers = []
+                st.session_state.interview_scores = []
+                st.session_state.interview_completed = False
+                st.session_state.interview_started = True
+                st.rerun()
+        
+        # Interview in progress
+        elif st.session_state.interview_started and not st.session_state.interview_completed:
+            if st.session_state.current_interview_question < len(st.session_state.interview_questions):
+                question = st.session_state.interview_questions[st.session_state.current_interview_question]
+                
+                st.markdown(f"""
+                <div class="quiz-card">
+                    <h3 style="color: #00c3ff;">Question {st.session_state.current_interview_question + 1} of {len(st.session_state.interview_questions)}</h3>
+                    <p style="font-size: 18px; color: #ffffff; margin: 15px 0;">{question}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Answer input
+                answer = st.text_area(
+                    "Your answer:",
+                    placeholder="Type your detailed answer here...",
+                    height=150,
+                    key=f"interview_answer_{st.session_state.current_interview_question}"
+                )
+                
+                if st.button("Submit Answer & Get Feedback"):
+                    if answer.strip():
+                        # Evaluate answer
+                        score, feedback = evaluate_interview_answer(answer)
+                        
+                        # Store answer and score
+                        st.session_state.interview_answers.append(answer)
+                        st.session_state.interview_scores.append(score)
+                        
+                        # Show feedback
+                        st.markdown(f"""
+                        <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%); 
+                                    border: 1px solid rgba(0, 195, 255, 0.3); border-radius: 10px; padding: 15px; margin: 15px 0;">
+                            <h4 style="color: #00c3ff;">Feedback:</h4>
+                            <p style="color: #ffffff;">📊 Score: {score:.1f}/5.0</p>
+                            <p style="color: #ffffff;">💬 {feedback}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Progress to next question
+                        if st.session_state.current_interview_question < len(st.session_state.interview_questions) - 1:
+                            if st.button("Next Question ➡️"):
+                                st.session_state.current_interview_question += 1
+                                st.rerun()
+                        else:
+                            if st.button("Complete Interview 🏁"):
+                                st.session_state.interview_completed = True
+                                st.rerun()
+                    else:
+                        st.warning("Please provide an answer before proceeding.")
+                        
+                # Progress bar
+                progress = (st.session_state.current_interview_question + 1) / len(st.session_state.interview_questions)
+                st.progress(progress)
+        
+        # Interview completed
+        elif st.session_state.interview_completed:
+            # Calculate average score
+            avg_score = sum(st.session_state.interview_scores) / len(st.session_state.interview_scores)
+            
+            # Store results for gamification
+            st.session_state.interview_result = {
+                "avg_score": avg_score,
+                "num_questions": len(st.session_state.interview_questions),
+                "scores": st.session_state.interview_scores
+            }
+            
+            # Get badge
+            badge_emoji, badge_title = get_badge_for_score("interview", avg_score)
+            
+            st.markdown(f"""
+            <div class="badge-container">
+                <h2 style="margin: 0; color: #333;">🎉 Interview Practice Complete!</h2>
+                <div style="margin: 20px 0;">
+                    <div class="score-display">{avg_score:.1f}/5.0</div>
+                    <h3 style="color: #333; margin: 10px 0;">{badge_emoji} {badge_title}</h3>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Show detailed results
+            st.subheader("📊 Detailed Results:")
+            for i, (score, answer) in enumerate(zip(st.session_state.interview_scores, st.session_state.interview_answers)):
+                with st.expander(f"Question {i+1}: Score {score:.1f}/5.0"):
+                    st.write(f"**Question:** {st.session_state.interview_questions[i]}")
+                    st.write(f"**Your Answer:** {answer[:200]}...")
+                    st.write(f"**Score:** {score:.1f}/5.0")
+            
+            # Restart button
+            if st.button("🔄 Restart Interview Practice"):
+                st.session_state.interview_started = False
+                st.session_state.interview_completed = False
+                st.session_state.interview_questions = []
+                st.session_state.current_interview_question = 0
+                st.session_state.interview_answers = []
+                st.session_state.interview_scores = []
+                st.rerun()
+
+    # Section 6: Achievements 🏅  
+    elif page == "Achievements 🏅":
+        st.subheader("🏅 Your Achievements")
+        st.markdown("Track your learning progress and unlock badges!")
+        
+        # Display achievements
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("### 🎯 Career Quiz")
+            if 'career_quiz_result' in st.session_state:
+                result = st.session_state.career_quiz_result
+                badge_emoji, badge_title = get_badge_for_score("career_quiz", result['score'])
+                
+                st.markdown(f"""
+                <div class="badge-container">
+                    <h3 style="color: #333; margin: 0;">{badge_emoji} {badge_title}</h3>
+                    <p style="color: #666; margin: 10px 0;">Score: {result['score']:.0f}%</p>
+                    <p style="color: #666; margin: 5px 0;">Recommended Role: <strong>{result['role']}</strong></p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                if st.button("🔄 Restart Career Quiz", key="restart_quiz_achievements"):
+                    st.session_state.quiz_answers = []
+                    st.session_state.current_question = 0
+                    st.session_state.quiz_completed = False
+                    if 'career_quiz_result' in st.session_state:
+                        del st.session_state.career_quiz_result
+                    st.success("Career quiz reset! Go to Career Quiz tab to retake.")
+            else:
+                st.info("🎯 Take the Career Quiz to earn your first badge!")
+        
+        with col2:
+            st.markdown("### 🤖 Interview Practice")
+            if 'interview_result' in st.session_state:
+                result = st.session_state.interview_result
+                badge_emoji, badge_title = get_badge_for_score("interview", result['avg_score'])
+                
+                st.markdown(f"""
+                <div class="badge-container">
+                    <h3 style="color: #333; margin: 0;">{badge_emoji} {badge_title}</h3>
+                    <p style="color: #666; margin: 10px 0;">Average Score: {result['avg_score']:.1f}/5.0</p>
+                    <p style="color: #666; margin: 5px 0;">Questions Answered: {result['num_questions']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                if st.button("🔄 Restart Interview Practice", key="restart_interview_achievements"):
+                    st.session_state.interview_started = False
+                    st.session_state.interview_completed = False
+                    st.session_state.interview_questions = []
+                    st.session_state.current_interview_question = 0
+                    st.session_state.interview_answers = []
+                    st.session_state.interview_scores = []
+                    if 'interview_result' in st.session_state:
+                        del st.session_state.interview_result
+                    st.success("Interview practice reset! Go to AI Interview Coach tab to practice again.")
+            else:
+                st.info("🤖 Complete the Interview Practice to earn your badge!")
+        
+        # Achievement statistics
+        if 'career_quiz_result' in st.session_state or 'interview_result' in st.session_state:
+            st.markdown("### 📈 Your Progress")
+            achievements_earned = 0
+            total_achievements = 2
+            
+            if 'career_quiz_result' in st.session_state:
+                achievements_earned += 1
+            if 'interview_result' in st.session_state:
+                achievements_earned += 1
+                
+            progress = achievements_earned / total_achievements
+            st.progress(progress)
+            st.markdown(f"**Progress: {achievements_earned}/{total_achievements} achievements unlocked**")
+            
+            # Show next steps
+            if achievements_earned < total_achievements:
+                st.markdown("### 🎯 Next Steps:")
+                if 'career_quiz_result' not in st.session_state:
+                    st.info("📝 Complete the Career Quiz to discover your ideal career path!")
+                if 'interview_result' not in st.session_state:
+                    st.info("🎤 Try the AI Interview Coach to improve your interview skills!")
+        else:
+            st.markdown("### 🌟 Get Started!")
+            st.info("Complete the Career Quiz and Interview Practice to start earning badges!")
 if tab5:
 	with tab5:
 		import sqlite3

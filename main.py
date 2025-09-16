@@ -5991,7 +5991,7 @@ with tab4:
 
     page = st.radio(
         label="Select Learning Option",
-        options=["Courses by Role", "Resume Videos", "Interview Videos",  "AI Interview Coach 🤖", "Achievements 🏅"],
+        options=["Courses by Role", "Resume Videos", "Interview Videos",  "AI Interview Coach 🤖"],
         horizontal=True,
         key="page_selection",
         label_visibility="collapsed"
@@ -7314,46 +7314,7 @@ with tab4:
                         st.rerun()
 
     # Section 6: Achievements 🏅 (unchanged)
-    elif page == "Achievements 🏅":
-        st.subheader("🏅 Your Achievements")
-        st.markdown("Track your learning progress and unlock badges!")
-        
-        # Display achievements
-        if 'interview_result' in st.session_state:
-                result = st.session_state.interview_result
-                badge_emoji, badge_title = get_badge_for_score("interview", result['avg_score'])
-                
-                st.markdown(f"""
-                <div class="badge-container">
-                    <h3 style="color: #333; margin: 0;">{badge_emoji} {badge_title}</h3>
-                    <p style="color: #666; margin: 10px 0;">Average Score: {result['avg_score']:.1f}/5.0</p>
-                    <p style="color: #666; margin: 5px 0;">Questions: {result['num_questions']}</p>
-                    <p style="color: #666; margin: 5px 0;">Role: <strong>{result.get('role', 'General')}</strong></p>
-                    <p style="color: #666; margin: 5px 0;">Domain: <strong>{result.get('domain', 'General')}</strong></p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                if st.button("🔄 Practice for Different Role", key="restart_interview_achievements"):
-                    if 'interview_result' in st.session_state:
-                        del st.session_state.interview_result
-                    # Clear all interview session state
-                    for key in list(st.session_state.keys()):
-                        if 'interview' in key:
-                            del st.session_state[key]
-                    st.success("Interview practice reset! Go to AI Interview Coach tab to practice for a different role.")
-                else:
-                 st.info("🤖 Complete the Interview Practice to earn your badge!")
-        
-        # Achievement statistics
-        if  'interview_result' in st.session_state:
-            st.markdown("### 📈 Your Progress")
-            st.progress(1.0)
-            st.markdown("**Progress: 1/1 achievement unlocked**")
-            
-            
-        else:
-            st.markdown("### 🌟 Get Started!")
-            st.info("Complete the Career Quiz and Interview Practice to start earning badges!")
+   
 if tab5:
 	with tab5:
 		import sqlite3

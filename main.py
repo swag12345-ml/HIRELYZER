@@ -1,3 +1,61 @@
+def evaluate_interview_answer(answer: str):
+    """
+    Uses an LLM to evaluate an interview answer.
+    Returns (score out of 5, feedback string).
+    """
+    from llm_manager import call_llm
+    import re
+    import streamlit as st
+
+    # Empty check
+    if not answer.strip():
+        return 0, "⚠️ No answer provided."
+
+    # 🔹 LLM Prompt
+    prompt = f"""
+    You are an expert technical interview evaluator.
+
+    ### Task:
+    Evaluate the following candidate's answer and provide a numeric score + feedback.
+
+    ### Evaluation Criteria:
+    1. Clarity & Structure
+    2. Relevance to the Question
+    3. Technical Depth
+    4. Communication Skills
+
+    ### Output Format:
+    Score: <number between 1 and 5>
+    Feedback: <short constructive feedback in 1–2 sentences>
+
+    ---
+    Candidate Answer:
+    {answer}
+    ---
+    """
+
+    try:
+        # Call LLM
+        response = call_llm(prompt, session=st.session_state).strip()
+
+        # Extract Score
+        score_match = re.search(r"Score:\s*(\d+)", response)
+        score = int(score_match.group(1)) if score_match else 3  # fallback
+
+        # Extract Feedback
+        feedback_match = re.search(r"Feedback:\s*(.+)", response)
+        feedback = feedback_match.group(1).strip() if feedback_match else "Good attempt, but can be clearer."
+
+        # Keep score in range
+        score = max(1, min(score, 5))
+
+    except Exception as e:
+        score = 3
+        feedback = f"⚠️ Evaluation fallback due to error: {e}"
+
+    return score, feedback
+
+
 from xhtml2pdf import pisa
 from io import BytesIO
 
@@ -6707,50 +6765,9 @@ with tab4:
                 return config["emoji"], config["title"]
         return "🎖️", "Participant"
 
-    def evaluate_interview_answer(answer, question_type="general"):
-        """Evaluate interview answer and provide feedback"""
-        answer_length = len(answer.split())
-        
-        # Length-based feedback
-        if answer_length < 20:
-            length_feedback = "Too short - consider providing more detail"
-            length_score = 2
-        elif answer_length > 200:
-            length_feedback = "Too long - try to be more concise" 
-            length_score = 3
-        else:
-            length_feedback = "Good length"
-            length_score = 4
-        
-        # Content quality (simplified scoring)
-        score = length_score
-        
-        # Basic content checks
-        if len(answer.strip()) == 0:
-            return 1, "No answer provided"
-        
-        if "experience" in answer.lower() or "project" in answer.lower():
-            score += 0.5
-            
-        if any(word in answer.lower() for word in ["because", "however", "therefore", "additionally"]):
-            score += 0.5  # Good connecting words
-            
-        # Cap at 5
-        score = min(5, score)
-        
-        # Generate feedback
-        feedback_parts = [length_feedback]
-        
-        if score >= 4:
-            feedback_parts.append("Good answer with specific examples ✅")
-        elif score >= 3:
-            feedback_parts.append("Adequate response - consider adding more specific examples")
-        else:
-            feedback_parts.append("Needs improvement - try to provide more detailed, specific examples")
-            
-        feedback = " - ".join(feedback_parts)
-        
-        return score, feedback
+    
+
+
 
     def create_skill_radar_chart(skills_data):
         """Create a radar chart for skills using Plotly"""

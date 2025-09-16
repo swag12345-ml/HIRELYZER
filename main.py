@@ -5516,7 +5516,6 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
-
 from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
 
 CAREER_QUIZ_QUESTIONS = [
@@ -5572,24 +5571,59 @@ CAREER_QUIZ_QUESTIONS = [
     }
 ]
 
-# Career role mappings to course categories
+# FIXED Career role mappings to match exact course categories
 ROLE_TO_CATEGORY_MAP = {
-    "data_scientist": "Data Science & Analytics",
-    "data_analyst": "Data Science & Analytics", 
-    "ml_engineer": "AI & Machine Learning",
-    "web_developer": "Web Development",
-    "frontend_developer": "Web Development",
-    "full_stack_developer": "Web Development",
-    "backend_developer": "Web Development",
+    "data_scientist": "Data Science and Analytics",
+    "data_analyst": "Data Science and Analytics", 
+    "ml_engineer": "Data Science and Analytics",
+    "web_developer": "Software Development and Engineering",
+    "frontend_developer": "Software Development and Engineering",
+    "full_stack_developer": "Software Development and Engineering",
+    "backend_developer": "Software Development and Engineering",
+    "mobile_app_developer": "Software Development and Engineering",
+    "game_developer": "Software Development and Engineering",
     "project_manager": "Project Management",
-    "product_manager": "Product Management", 
+    "product_manager": "Project Management", 
     "scrum_master": "Project Management",
     "cybersecurity_analyst": "Cybersecurity",
     "security_engineer": "Cybersecurity",
     "ethical_hacker": "Cybersecurity",
-    "devops_engineer": "DevOps & Cloud",
-    "cloud_engineer": "DevOps & Cloud",
-    "sre": "DevOps & Cloud"
+    "penetration_tester": "Cybersecurity",
+    "security_analyst": "Cybersecurity",
+    "devops_engineer": "Cloud Computing and DevOps",
+    "cloud_engineer": "Cloud Computing and DevOps",
+    "cloud_architect": "Cloud Computing and DevOps",
+    "sre": "Cloud Computing and DevOps",
+    "site_reliability_engineer": "Cloud Computing and DevOps",
+    "ux_designer": "UI/UX Design",
+    "ui_designer": "UI/UX Design"
+}
+
+# Role name mappings to match exact course role names
+ROLE_NAME_MAP = {
+    "data_scientist": "Data Scientist",
+    "data_analyst": "Data Analyst",
+    "ml_engineer": "Machine Learning Engineer",
+    "web_developer": "Full Stack Developer",
+    "frontend_developer": "Frontend Developer", 
+    "full_stack_developer": "Full Stack Developer",
+    "backend_developer": "Backend Developer",
+    "mobile_app_developer": "Mobile App Developer",
+    "game_developer": "Game Developer",
+    "project_manager": "Project Manager",
+    "product_manager": "Product Manager",
+    "cybersecurity_analyst": "Security Analyst",
+    "security_engineer": "Security Analyst",
+    "ethical_hacker": "Penetration Tester",
+    "penetration_tester": "Penetration Tester",
+    "security_analyst": "Security Analyst",
+    "devops_engineer": "DevOps Engineer",
+    "cloud_engineer": "Cloud Architect",
+    "cloud_architect": "Cloud Architect", 
+    "sre": "Site Reliability Engineer",
+    "site_reliability_engineer": "Site Reliability Engineer",
+    "ux_designer": "UX Designer",
+    "ui_designer": "UI Designer"
 }
 
 # Interview questions by category
@@ -5633,7 +5667,7 @@ BADGE_CONFIG = {
 }
 
 def calculate_career_quiz_score(answers):
-    """Calculate career quiz score and suggest role"""
+    """Calculate career quiz score and suggest role - FIXED"""
     role_scores = {}
     total_possible = len(CAREER_QUIZ_QUESTIONS) * 3  # Maximum 3 points per question
     
@@ -5646,20 +5680,23 @@ def calculate_career_quiz_score(answers):
     
     # Get top role
     top_role = max(role_scores.items(), key=lambda x: x[1])
-    suggested_role = top_role[0].replace("_", " ").title()
+    role_key = top_role[0]
+    
+    # Get human-readable role name
+    suggested_role = ROLE_NAME_MAP.get(role_key, role_key.replace("_", " ").title())
     
     # Calculate percentage score
     max_score = max(role_scores.values())
     percentage_score = (max_score / total_possible) * 100
     
-    # Get recommended courses
-    category = ROLE_TO_CATEGORY_MAP.get(top_role[0])
+    # Get recommended courses using FIXED mapping
+    category = ROLE_TO_CATEGORY_MAP.get(role_key)
     recommended_courses = []
     if category and category in COURSES_BY_CATEGORY:
-        # Get courses for the suggested role
-        role_key = top_role[0].replace("_", " ").title()
-        if role_key in COURSES_BY_CATEGORY[category]:
-            recommended_courses = COURSES_BY_CATEGORY[category][role_key][:5]  # Top 5 courses
+        # Use the mapped role name to find courses
+        role_name_for_courses = ROLE_NAME_MAP.get(role_key, suggested_role)
+        if role_name_for_courses in COURSES_BY_CATEGORY[category]:
+            recommended_courses = COURSES_BY_CATEGORY[category][role_name_for_courses][:5]  # Top 5 courses
     
     return suggested_role, percentage_score, recommended_courses
 
@@ -5716,8 +5753,7 @@ def evaluate_interview_answer(answer, question_type="general"):
     
     return score, feedback
 
-# Modified Tab 4 content with new features added below existing sections
-
+# Tab 4 content with fixes
 with tab4:
     # Inject CSS styles (keeping existing styles)
     st.markdown("""
@@ -6116,9 +6152,7 @@ with tab4:
                     st.markdown(f"**{title}**")
                     st.video(url)
 
-    # NEW SECTIONS (adding below existing content)
-
-    # Section 4: Career Quiz 🎯
+    # Section 4: Career Quiz 🎯 (FIXED)
     elif page == "Career Quiz 🎯":
         st.subheader("🎯 Career Discovery Quiz")
         st.markdown("Answer these questions to discover your ideal career path and get personalized course recommendations!")
@@ -6225,7 +6259,7 @@ with tab4:
                 st.session_state.quiz_completed = False
                 st.rerun()
 
-    # Section 5: AI Interview Coach 🤖
+    # Section 5: AI Interview Coach 🤖 (FIXED)
     elif page == "AI Interview Coach 🤖":
         st.subheader("🤖 AI Interview Coach")
         st.markdown("Practice your interview skills with our AI coach. Get instant feedback on your answers!")
@@ -6243,6 +6277,8 @@ with tab4:
             st.session_state.interview_completed = False
         if 'interview_started' not in st.session_state:
             st.session_state.interview_started = False
+        if 'answer_submitted' not in st.session_state:
+            st.session_state.answer_submitted = False
             
         # Start interview setup
         if not st.session_state.interview_started:
@@ -6268,9 +6304,10 @@ with tab4:
                 st.session_state.interview_scores = []
                 st.session_state.interview_completed = False
                 st.session_state.interview_started = True
+                st.session_state.answer_submitted = False
                 st.rerun()
         
-        # Interview in progress
+        # Interview in progress (FIXED)
         elif st.session_state.interview_started and not st.session_state.interview_completed:
             if st.session_state.current_interview_question < len(st.session_state.interview_questions):
                 question = st.session_state.interview_questions[st.session_state.current_interview_question]
@@ -6290,36 +6327,48 @@ with tab4:
                     key=f"interview_answer_{st.session_state.current_interview_question}"
                 )
                 
-                if st.button("Submit Answer & Get Feedback"):
-                    if answer.strip():
-                        # Evaluate answer
-                        score, feedback = evaluate_interview_answer(answer)
-                        
-                        # Store answer and score
-                        st.session_state.interview_answers.append(answer)
-                        st.session_state.interview_scores.append(score)
-                        
-                        # Show feedback
-                        st.markdown(f"""
-                        <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%); 
-                                    border: 1px solid rgba(0, 195, 255, 0.3); border-radius: 10px; padding: 15px; margin: 15px 0;">
-                            <h4 style="color: #00c3ff;">Feedback:</h4>
-                            <p style="color: #ffffff;">📊 Score: {score:.1f}/5.0</p>
-                            <p style="color: #ffffff;">💬 {feedback}</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        # Progress to next question
-                        if st.session_state.current_interview_question < len(st.session_state.interview_questions) - 1:
-                            if st.button("Next Question ➡️"):
-                                st.session_state.current_interview_question += 1
-                                st.rerun()
+                # FIXED: Submit answer button
+                if not st.session_state.answer_submitted:
+                    if st.button("Submit Answer & Get Feedback"):
+                        if answer.strip():
+                            # Evaluate answer
+                            score, feedback = evaluate_interview_answer(answer)
+                            
+                            # Store answer and score
+                            st.session_state.interview_answers.append(answer)
+                            st.session_state.interview_scores.append(score)
+                            st.session_state.answer_submitted = True
+                            st.rerun()
                         else:
-                            if st.button("Complete Interview 🏁"):
-                                st.session_state.interview_completed = True
-                                st.rerun()
+                            st.warning("Please provide an answer before proceeding.")
+                else:
+                    # Show feedback after answer submitted
+                    score = st.session_state.interview_scores[st.session_state.current_interview_question]
+                    answer_text = st.session_state.interview_answers[st.session_state.current_interview_question]
+                    _, feedback = evaluate_interview_answer(answer_text)
+                    
+                    st.markdown(f"""
+                    <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%); 
+                                border: 1px solid rgba(0, 195, 255, 0.3); border-radius: 10px; padding: 15px; margin: 15px 0;">
+                        <h4 style="color: #00c3ff;">Feedback:</h4>
+                        <p style="color: #ffffff;">📊 Score: {score:.1f}/5.0</p>
+                        <p style="color: #ffffff;">💬 {feedback}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # FIXED: Auto-advance logic
+                    if st.session_state.current_interview_question < len(st.session_state.interview_questions) - 1:
+                        # Not the last question - advance automatically after a short delay
+                        import time
+                        time.sleep(1)
+                        st.session_state.current_interview_question += 1
+                        st.session_state.answer_submitted = False
+                        st.rerun()
                     else:
-                        st.warning("Please provide an answer before proceeding.")
+                        # Last question - show complete button
+                        if st.button("Complete Interview 🏁"):
+                            st.session_state.interview_completed = True
+                            st.rerun()
                         
                 # Progress bar
                 progress = (st.session_state.current_interview_question + 1) / len(st.session_state.interview_questions)
@@ -6366,6 +6415,7 @@ with tab4:
                 st.session_state.current_interview_question = 0
                 st.session_state.interview_answers = []
                 st.session_state.interview_scores = []
+                st.session_state.answer_submitted = False
                 st.rerun()
 
     # Section 6: Achievements 🏅  
@@ -6421,6 +6471,7 @@ with tab4:
                     st.session_state.current_interview_question = 0
                     st.session_state.interview_answers = []
                     st.session_state.interview_scores = []
+                    st.session_state.answer_submitted = False
                     if 'interview_result' in st.session_state:
                         del st.session_state.interview_result
                     st.success("Interview practice reset! Go to AI Interview Coach tab to practice again.")

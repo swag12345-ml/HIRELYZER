@@ -4813,6 +4813,13 @@ from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_co
 
 
 
+import streamlit as st
+import plotly.graph_objects as go
+import plotly.express as px
+import uuid
+import urllib.parse
+
+# Data structures
 FEATURED_COMPANIES = {
     "tech": [
         {
@@ -4930,44 +4937,41 @@ FEATURED_COMPANIES = {
     ]
 }
 
-
 JOB_MARKET_INSIGHTS = {
     "trending_skills": [
-        {"name": "Artificial Intelligence", "growth": "+45%", "icon": "fas fa-brain"},
-        {"name": "Cloud Computing", "growth": "+38%", "icon": "fas fa-cloud"},
-        {"name": "Data Science", "growth": "+35%", "icon": "fas fa-chart-line"},
-        {"name": "Cybersecurity", "growth": "+32%", "icon": "fas fa-shield-alt"},
-        {"name": "DevOps", "growth": "+30%", "icon": "fas fa-code-branch"},
-        {"name": "Machine Learning", "growth": "+28%", "icon": "fas fa-robot"},
-        {"name": "Blockchain", "growth": "+25%", "icon": "fas fa-lock"},
-        {"name": "Big Data", "growth": "+23%", "icon": "fas fa-database"},
-        {"name": "Internet of Things", "growth": "+21%", "icon": "fas fa-wifi"}
+        {"name": "Artificial Intelligence", "growth": 45, "growth_text": "+45%", "icon": "fas fa-brain"},
+        {"name": "Cloud Computing", "growth": 38, "growth_text": "+38%", "icon": "fas fa-cloud"},
+        {"name": "Data Science", "growth": 35, "growth_text": "+35%", "icon": "fas fa-chart-line"},
+        {"name": "Cybersecurity", "growth": 32, "growth_text": "+32%", "icon": "fas fa-shield-alt"},
+        {"name": "DevOps", "growth": 30, "growth_text": "+30%", "icon": "fas fa-code-branch"},
+        {"name": "Machine Learning", "growth": 28, "growth_text": "+28%", "icon": "fas fa-robot"},
+        {"name": "Blockchain", "growth": 25, "growth_text": "+25%", "icon": "fas fa-lock"},
+        {"name": "Big Data", "growth": 23, "growth_text": "+23%", "icon": "fas fa-database"},
+        {"name": "Internet of Things", "growth": 21, "growth_text": "+21%", "icon": "fas fa-wifi"}
     ],
     "top_locations": [
-        {"name": "Bangalore", "jobs": "50,000+", "icon": "fas fa-city"},
-        {"name": "Mumbai", "jobs": "35,000+", "icon": "fas fa-city"},
-        {"name": "Delhi NCR", "jobs": "30,000+", "icon": "fas fa-city"},
-        {"name": "Hyderabad", "jobs": "25,000+", "icon": "fas fa-city"},
-        {"name": "Pune", "jobs": "20,000+", "icon": "fas fa-city"},
-        {"name": "Chennai", "jobs": "15,000+", "icon": "fas fa-city"},
-        {"name": "Noida", "jobs": "10,000+", "icon": "fas fa-city"},
-        {"name": "Vadodara", "jobs": "7,000+", "icon": "fas fa-city"},
-        {"name": "Ahmedabad", "jobs": "6,000+", "icon": "fas fa-city"},
-        {"name": "Remote", "jobs": "3,000+", "icon": "fas fa-globe-americas"},
+        {"name": "Bangalore", "jobs": 50000, "jobs_text": "50,000+", "icon": "fas fa-city"},
+        {"name": "Mumbai", "jobs": 35000, "jobs_text": "35,000+", "icon": "fas fa-city"},
+        {"name": "Delhi NCR", "jobs": 30000, "jobs_text": "30,000+", "icon": "fas fa-city"},
+        {"name": "Hyderabad", "jobs": 25000, "jobs_text": "25,000+", "icon": "fas fa-city"},
+        {"name": "Pune", "jobs": 20000, "jobs_text": "20,000+", "icon": "fas fa-city"},
+        {"name": "Chennai", "jobs": 15000, "jobs_text": "15,000+", "icon": "fas fa-city"},
+        {"name": "Noida", "jobs": 10000, "jobs_text": "10,000+", "icon": "fas fa-city"},
+        {"name": "Vadodara", "jobs": 7000, "jobs_text": "7,000+", "icon": "fas fa-city"},
+        {"name": "Ahmedabad", "jobs": 6000, "jobs_text": "6,000+", "icon": "fas fa-city"},
+        {"name": "Remote", "jobs": 3000, "jobs_text": "3,000+", "icon": "fas fa-globe-americas"},
     ],
     "salary_insights": [
-        {"role": "Machine Learning Engineer", "range": "10-35 LPA", "experience": "0-5 years"},
-        {"role": "Big Data Engineer", "range": "8-30 LPA", "experience": "0-5 years"},
-        {"role": "Software Engineer", "range": "5-25 LPA", "experience": "0-5 years"},
-        {"role": "Data Scientist", "range": "8-30 LPA", "experience": "0-5 years"},
-        {"role": "DevOps Engineer", "range": "6-28 LPA", "experience": "0-5 years"},
-        {"role": "UI/UX Designer", "range": "5-25 LPA", "experience": "0-5 years"},
-        {"role": "Full Stack Developer", "range": "8-30 LPA", "experience": "0-5 years"},
-        {"role": "C++/C#/Python/Java Developer", "range": "6-26 LPA", "experience": "0-5 years"},
-        {"role": "Django Developer", "range": "7-27 LPA", "experience": "0-5 years"},
-        {"role": "Cloud Engineer", "range": "6-26 LPA", "experience": "0-5 years"},
-        {"role": "Google Cloud/AWS/Azure Engineer", "range": "6-26 LPA", "experience": "0-5 years"},
-        {"role": "Salesforce Engineer", "range": "6-26 LPA", "experience": "0-5 years"},
+        {"role": "Machine Learning Engineer", "min_salary": 10, "max_salary": 35, "range": "10-35 LPA", "experience": "0-5 years"},
+        {"role": "Big Data Engineer", "min_salary": 8, "max_salary": 30, "range": "8-30 LPA", "experience": "0-5 years"},
+        {"role": "Software Engineer", "min_salary": 5, "max_salary": 25, "range": "5-25 LPA", "experience": "0-5 years"},
+        {"role": "Data Scientist", "min_salary": 8, "max_salary": 30, "range": "8-30 LPA", "experience": "0-5 years"},
+        {"role": "DevOps Engineer", "min_salary": 6, "max_salary": 28, "range": "6-28 LPA", "experience": "0-5 years"},
+        {"role": "UI/UX Designer", "min_salary": 5, "max_salary": 25, "range": "5-25 LPA", "experience": "0-5 years"},
+        {"role": "Full Stack Developer", "min_salary": 8, "max_salary": 30, "range": "8-30 LPA", "experience": "0-5 years"},
+        {"role": "Python Developer", "min_salary": 6, "max_salary": 26, "range": "6-26 LPA", "experience": "0-5 years"},
+        {"role": "Django Developer", "min_salary": 7, "max_salary": 27, "range": "7-27 LPA", "experience": "0-5 years"},
+        {"role": "Cloud Engineer", "min_salary": 6, "max_salary": 26, "range": "6-26 LPA", "experience": "0-5 years"},
     ]
 }
 
@@ -4983,34 +4987,6 @@ def get_featured_companies(category=None):
         company for companies in FEATURED_COMPANIES.values()
         for company in companies if has_valid_logo(company)
     ]
-
-
-def get_market_insights():
-    """Get job market insights"""
-    return JOB_MARKET_INSIGHTS
-
-def get_company_info(company_name):
-    """Get company information by name"""
-    for companies in FEATURED_COMPANIES.values():
-        for company in companies:
-            if company["name"] == company_name:
-                return company
-    return None
-
-def get_companies_by_industry(industry):
-    """Get list of companies by industry"""
-    companies = []
-    for companies_list in FEATURED_COMPANIES.values():
-        for company in companies_list:
-            if "industry" in company and company["industry"] == industry:
-                companies.append(company)
-    return companies
-
-# Gender-coded language
-
-# Sample job search function
-import uuid
-import urllib.parse
 
 def search_jobs(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
     # Encode values for query
@@ -5056,7 +5032,7 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         experience_range = experience_range_map.get(experience_level, "")
         experience_exact = experience_exact_map.get(experience_level, "")
 
-    # ✅ Naukri (cleaned)
+    # Naukri
     naukri_url = (
         f"https://www.naukri.com/{role_path}-jobs-in-{city_path}-and-india"
         f"?k={role_encoded}"
@@ -5066,7 +5042,7 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         naukri_url += f"&experience={experience_exact}"
     naukri_url += "&nignbevent_src=jobsearchDeskGNB"
 
-    # ✅ FoundIt
+    # FoundIt
     search_id = uuid.uuid4()
     child_search_id = uuid.uuid4()
     foundit_url = (
@@ -5086,43 +5062,169 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         {"title": f"FoundIt (Monster): {job_role} jobs in {location}", "link": foundit_url}
     ]
 
+def create_trending_skills_radar_chart():
+    """Create interactive radar chart for trending skills"""
+    skills_data = JOB_MARKET_INSIGHTS["trending_skills"]
+    
+    fig = go.Figure()
+    
+    fig.add_trace(go.Scatterpolar(
+        r=[skill["growth"] for skill in skills_data],
+        theta=[skill["name"] for skill in skills_data],
+        fill='toself',
+        fillcolor='rgba(0, 196, 204, 0.3)',
+        line=dict(color='rgb(0, 196, 204)', width=3),
+        marker=dict(size=8, color='rgb(0, 196, 204)'),
+        hovertemplate='<b>%{theta}</b><br>Growth: +%{r}% 🚀<extra></extra>',
+        name='Skills Growth'
+    ))
+    
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                range=[0, 50],
+                gridcolor='rgba(255, 255, 255, 0.2)',
+                tickfont=dict(color='white', size=10)
+            ),
+            angularaxis=dict(
+                gridcolor='rgba(255, 255, 255, 0.2)',
+                tickfont=dict(color='white', size=11)
+            ),
+            bgcolor='rgba(30, 30, 30, 0.8)'
+        ),
+        paper_bgcolor='rgba(30, 30, 30, 0.9)',
+        plot_bgcolor='rgba(30, 30, 30, 0.9)',
+        font=dict(color='white', size=12),
+        title=dict(
+            text="🚀 Trending Skills Growth Rate",
+            x=0.5,
+            font=dict(size=18, color='white')
+        ),
+        margin=dict(l=50, r=50, t=60, b=50)
+    )
+    
+    return fig
 
+def create_locations_bubble_chart():
+    """Create interactive bubble scatter plot for job locations"""
+    locations_data = JOB_MARKET_INSIGHTS["top_locations"]
+    
+    fig = go.Figure()
+    
+    # Create color scale based on job count
+    colors = ['#7c4dff', '#00c4cc', '#ff5722', '#4caf50', '#ff9800', 
+              '#e91e63', '#2196f3', '#9c27b0', '#607d8b', '#795548']
+    
+    fig.add_trace(go.Scatter(
+        x=list(range(len(locations_data))),
+        y=[loc["jobs"] for loc in locations_data],
+        mode='markers',
+        marker=dict(
+            size=[loc["jobs"]/1000 for loc in locations_data],  # Bubble size
+            sizemode='diameter',
+            sizeref=2,
+            sizemin=10,
+            color=colors[:len(locations_data)],
+            opacity=0.8,
+            line=dict(width=2, color='white')
+        ),
+        text=[loc["name"] for loc in locations_data],
+        hovertemplate='<b>%{text}</b><br>Jobs: %{y:,}+ Jobs 🔥<extra></extra>',
+        name='Job Locations'
+    ))
+    
+    fig.update_layout(
+        xaxis=dict(
+            tickvals=list(range(len(locations_data))),
+            ticktext=[loc["name"] for loc in locations_data],
+            tickangle=45,
+            gridcolor='rgba(255, 255, 255, 0.2)',
+            tickfont=dict(color='white', size=10)
+        ),
+        yaxis=dict(
+            title='Number of Jobs',
+            gridcolor='rgba(255, 255, 255, 0.2)',
+            tickfont=dict(color='white', size=10),
+            titlefont=dict(color='white', size=12)
+        ),
+        paper_bgcolor='rgba(30, 30, 30, 0.9)',
+        plot_bgcolor='rgba(30, 30, 30, 0.9)',
+        font=dict(color='white'),
+        title=dict(
+            text="🌍 Top Job Locations",
+            x=0.5,
+            font=dict(size=18, color='white')
+        ),
+        margin=dict(l=60, r=50, t=60, b=100)
+    )
+    
+    return fig
 
-def add_hyperlink(paragraph, url, text, color="0000FF", underline=True):
-    """
-    A function to add a hyperlink to a paragraph.
-    """
-    part = paragraph.part
-    r_id = part.relate_to(url, RT.HYPERLINK, is_external=True)
+def create_salary_bar_chart():
+    """Create interactive bar chart for salary insights"""
+    salary_data = JOB_MARKET_INSIGHTS["salary_insights"]
+    
+    fig = go.Figure()
+    
+    # Create gradient colors
+    colors = ['rgba(16, 185, 129, 0.8)', 'rgba(0, 196, 204, 0.8)', 
+              'rgba(124, 77, 255, 0.8)', 'rgba(255, 87, 34, 0.8)',
+              'rgba(76, 175, 80, 0.8)', 'rgba(233, 30, 99, 0.8)',
+              'rgba(33, 150, 243, 0.8)', 'rgba(156, 39, 176, 0.8)',
+              'rgba(96, 125, 139, 0.8)', 'rgba(255, 152, 0, 0.8)']
+    
+    # Add bars for salary ranges
+    fig.add_trace(go.Bar(
+        x=[role["role"] for role in salary_data],
+        y=[role["max_salary"] for role in salary_data],
+        name='Max Salary',
+        marker_color=colors[:len(salary_data)],
+        hovertemplate='<b>%{x}</b><br>Salary Range: %{customdata}<extra></extra>',
+        customdata=[f"{role['min_salary']}-{role['max_salary']} LPA" for role in salary_data]
+    ))
+    
+    # Add line for minimum salary
+    fig.add_trace(go.Scatter(
+        x=[role["role"] for role in salary_data],
+        y=[role["min_salary"] for role in salary_data],
+        mode='markers+lines',
+        name='Min Salary',
+        line=dict(color='white', width=2),
+        marker=dict(size=6, color='white'),
+        hovertemplate='<b>%{x}</b><br>Min Salary: %{y} LPA<extra></extra>'
+    ))
+    
+    fig.update_layout(
+        xaxis=dict(
+            tickangle=45,
+            gridcolor='rgba(255, 255, 255, 0.2)',
+            tickfont=dict(color='white', size=10)
+        ),
+        yaxis=dict(
+            title='Salary (LPA)',
+            gridcolor='rgba(255, 255, 255, 0.2)',
+            tickfont=dict(color='white', size=10),
+            titlefont=dict(color='white', size=12)
+        ),
+        paper_bgcolor='rgba(30, 30, 30, 0.9)',
+        plot_bgcolor='rgba(30, 30, 30, 0.9)',
+        font=dict(color='white'),
+        title=dict(
+            text="💰 Salary Insights by Role",
+            x=0.5,
+            font=dict(size=18, color='white')
+        ),
+        margin=dict(l=60, r=50, t=60, b=120),
+        legend=dict(
+            font=dict(color='white')
+        )
+    )
+    
+    return fig
 
-    hyperlink = OxmlElement('w:hyperlink')
-    hyperlink.set(qn('r:id'), r_id)
-
-    new_run = OxmlElement('w:r')
-    rPr = OxmlElement('w:rPr')
-
-    # Color and underline
-    if underline:
-        u = OxmlElement('w:u')
-        u.set(qn('w:val'), 'single')
-        rPr.append(u)
-
-    color_element = OxmlElement('w:color')
-    color_element.set(qn('w:val'), color)
-    rPr.append(color_element)
-
-    new_run.append(rPr)
-
-    text_elem = OxmlElement('w:t')
-    text_elem.text = text
-    new_run.append(text_elem)
-
-    hyperlink.append(new_run)
-    paragraph._p.append(hyperlink)
-    return hyperlink
-
-# Your existing tab3 code with enhanced CSS styling
-with tab3:
+# TAB 3 IMPLEMENTATION
+def render_tab3():
     st.header("🔍 Job Search Across LinkedIn, Naukri, and FoundIt")
 
     col1, col2 = st.columns(2)
@@ -5482,40 +5584,28 @@ with tab3:
         </a>
         """, unsafe_allow_html=True)
 
-    # ---------- Market Insights ----------
-    st.markdown("### <div class='title-header'>📈 Job Market Trends</div>", unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
+    # ---------- Interactive Market Insights Charts ----------
+    st.markdown("### <div class='title-header'>📈 Interactive Job Market Trends</div>", unsafe_allow_html=True)
+    
+    # Trending Skills Radar Chart
+    st.markdown("#### 🚀 Trending Skills Growth")
+    radar_chart = create_trending_skills_radar_chart()
+    st.plotly_chart(radar_chart, use_container_width=True, config={'displayModeBar': False})
+    
+    # Job Locations Bubble Chart
+    st.markdown("#### 🌍 Top Job Locations")
+    bubble_chart = create_locations_bubble_chart()
+    st.plotly_chart(bubble_chart, use_container_width=True, config={'displayModeBar': False})
+    
+    # Salary Insights Bar Chart
+    st.markdown("#### 💰 Salary Range Analysis")
+    bar_chart = create_salary_bar_chart()
+    st.plotly_chart(bar_chart, use_container_width=True, config={'displayModeBar': False})
 
-    with col1:
-        st.markdown("#### <div style='color: #00c4cc; font-size: 20px; font-weight: 600; margin-bottom: 20px;'>🚀 Trending Skills</div>", unsafe_allow_html=True)
-        for skill in JOB_MARKET_INSIGHTS["trending_skills"]:
-            st.markdown(f"""
-            <div class="company-card">
-                <h4 style="color: #00c4cc; margin-bottom: 10px; position: relative; z-index: 2;">🔧 {skill['name']}</h4>
-                <p style="position: relative; z-index: 2;">📈 Growth Rate: <span style="color: #4ade80; font-weight: 600;">{skill['growth']}</span></p>
-            </div>
-            """, unsafe_allow_html=True)
-
-    with col2:
-        st.markdown("#### <div style='color: #7c4dff; font-size: 20px; font-weight: 600; margin-bottom: 20px;'>🌍 Top Job Locations</div>", unsafe_allow_html=True)
-        for loc in JOB_MARKET_INSIGHTS["top_locations"]:
-            st.markdown(f"""
-            <div class="company-card">
-                <h4 style="color: #7c4dff; margin-bottom: 10px; position: relative; z-index: 2;">📍 {loc['name']}</h4>
-                <p style="position: relative; z-index: 2;">💼 Openings: <span style="color: #fbbf24; font-weight: 600;">{loc['jobs']}</span></p>
-            </div>
-            """, unsafe_allow_html=True)
-
-    # ---------- Salary Insights ----------
-    st.markdown("### <div class='title-header'>💰 Salary Insights</div>", unsafe_allow_html=True)
-    for role in JOB_MARKET_INSIGHTS["salary_insights"]:
-        st.markdown(f"""
-        <div class="company-card">
-            <h4 style="color: #10b981; margin-bottom: 10px; position: relative; z-index: 2;">💼 {role['role']}</h4>
-            <p style="margin-bottom: 8px; position: relative; z-index: 2;">📅 Experience: <span style="color: #60a5fa; font-weight: 500;">{role['experience']}</span></p>
-            <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
-        </div>
-        """, unsafe_allow_html=True)
+# Usage example - call this function in your main app where Tab 3 is defined
+if __name__ == "__main__":
+    # This would be called within your tab3 context in the main app
+    render_tab3()
 
 # Tab 4 content with dynamic role-specific questions
 # Tab 4 content with dynamic role-specific questions

@@ -5517,9 +5517,6 @@ with tab3:
         </div>
         """, unsafe_allow_html=True)
 
-# Tab 4 content with dynamic role-specific questions
-# Tab 4 content with dynamic role-specific questions
-# Tab 4 content with dynamic role-specific questions
 with tab4:
     # Inject CSS styles (keeping existing styles)
     st.markdown("""
@@ -6889,27 +6886,87 @@ with tab4:
             
             # Generate sample skills data based on role
             role_skills = {
+    # ==== Software Development & Engineering ====
                 "Frontend Developer": {
-                    "JavaScript": 9, "React/Vue": 8, "CSS/HTML": 9, 
-                    "Responsive Design": 8, "Performance Optimization": 7, "Testing": 6
+                   "JavaScript": 9, "React/Vue": 8, "CSS/HTML": 9,
+                   "Responsive Design": 8, "Performance Optimization": 7, "Testing": 6
                 },
                 "Backend Developer": {
                     "API Design": 9, "Database Management": 8, "Security": 8,
                     "Scalability": 7, "Cloud Services": 7, "Testing": 6
                 },
-                "Data Scientist": {
-                    "Python/R": 9, "Machine Learning": 8, "Statistics": 9,
-                    "Data Visualization": 7, "SQL": 8, "Domain Knowledge": 6
+                "Full Stack Developer": {
+                    "Frontend": 8, "Backend": 8, "Databases": 7,
+                    "API Integration": 8, "DevOps Basics": 6, "Testing": 7
+               },
+               "Mobile App Developer": {
+                   "Flutter/React Native": 8, "Swift/Kotlin": 8, "UI/UX": 8,
+                    "APIs": 7, "Performance Optimization": 7, "App Deployment": 7
                 },
-                "UI Designer": {
-                    "Design Tools": 9, "Visual Design": 8, "Typography": 7,
-                    "Color Theory": 8, "Prototyping": 7, "User Research": 6
+                "Game Developer": {
+                    "Unity/Unreal": 9, "C# / C++": 8, "Game Physics": 7,
+                    "Graphics/Rendering": 8, "AI in Games": 6, "Multiplayer Systems": 7
+                },
+
+    # ==== Data Science & Analytics ====
+               "Data Scientist": {
+                  "Python/R": 9, "Machine Learning": 8, "Statistics": 9,
+                  "Data Visualization": 7, "SQL": 8, "Domain Knowledge": 6
+                },
+                "Data Analyst": {
+                   "SQL": 9, "Excel/Spreadsheets": 8, "Visualization": 8,
+                   "Statistics": 8, "Python/R": 7, "Business Acumen": 7
+                },
+                "Machine Learning Engineer": {
+                    "ML Algorithms": 9, "Deep Learning": 8, "MLOps": 7,
+                     "Data Engineering": 8, "Python/Frameworks": 9, "Cloud Deployment": 7
+                    },
+
+    # ==== Cloud Computing & DevOps ====
+                "Cloud Architect": {
+                   "AWS/Azure/GCP": 9, "System Design": 8, "Networking": 7,
+                    "Security": 8, "Scalability": 9, "Cost Optimization": 7
                 },
                 "DevOps Engineer": {
-                    "CI/CD": 9, "Containerization": 8, "Cloud Platforms": 8,
-                    "Monitoring": 7, "Infrastructure as Code": 8, "Security": 7
+                   "CI/CD": 9, "Containerization": 8, "Cloud Platforms": 8,
+                   "Monitoring": 7, "Infrastructure as Code": 8, "Security": 7
+                },
+               "Site Reliability Engineer": {
+                  "Reliability Engineering": 9, "Monitoring": 8, "Automation": 8,
+                  "Incident Response": 8, "System Design": 7, "Security": 7
+                },
+
+    # ==== Cybersecurity ====
+                "Security Analyst": {
+                  "Threat Detection": 9, "Incident Response": 8, "Networking": 7,
+                    "SIEM Tools": 8, "Risk Management": 7, "Compliance": 6
+                },
+                "Penetration Tester": {
+                    "Ethical Hacking": 9, "Web Security": 8, "Exploitation": 8,
+                     "Scripting": 7, "Reporting": 6, "Network Security": 7
+                },
+
+    # ==== UI/UX Design ====
+                "UI Designer": {
+                  "Design Tools": 9, "Visual Design": 8, "Typography": 7,
+                   "Color Theory": 8, "Prototyping": 7, "User Research": 6
+                },
+                "UX Designer": {
+                "User Research": 9, "Wireframing": 8, "Prototyping": 8,
+                "Usability Testing": 7, "Accessibility": 8, "Design Thinking": 7
+                },
+
+    # ==== Project Management ====
+               "Project Manager": {
+                   "Planning": 9, "Communication": 8, "Risk Management": 8,
+                    "Leadership": 7, "Agile/Scrum": 8, "Budgeting": 7
+               },
+                "Product Manager": {
+                   "Market Research": 9, "Product Strategy": 8, "Analytics": 8,
+                    "Communication": 8, "Agile Methods": 7, "User-Centered Design": 7
                 }
-            }
+         }
+
             
             skills_data = role_skills.get(role, {
                 "Technical Skills": 8, "Problem Solving": 7, "Communication": 6,
@@ -7439,6 +7496,7 @@ with tab4:
         else:
             st.markdown("### 🌟 Get Started!")
             st.info("Complete the Career Quiz and Interview Practice to start earning badges!")
+
 if tab5:
 	with tab5:
 		import sqlite3

@@ -5518,6 +5518,7 @@ with tab3:
         """, unsafe_allow_html=True)
 
 # Tab 4 content with dynamic role-specific questions
+# Tab 4 content with dynamic role-specific questions
 with tab4:
     # Inject CSS styles (keeping existing styles)
     st.markdown("""

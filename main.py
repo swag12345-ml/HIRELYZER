@@ -5516,362 +5516,8 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
-import streamlit as st
-import pandas as pd
-from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
-import random
 
-# Dynamic question generation functions
-def generate_career_quiz_questions(role_name, domain):
-    """Generate career quiz questions specific to a role"""
-    role_lower = role_name.lower()
-    
-    # Define role-specific question templates
-    role_questions = {
-        "data scientist": [
-            {
-                "question": "Which data science task excites you most?",
-                "options": [
-                    {"text": "Building predictive models with machine learning", "weights": {"data_scientist": 3, "ml_engineer": 2}},
-                    {"text": "Creating data visualizations and dashboards", "weights": {"data_analyst": 3, "data_scientist": 1}},
-                    {"text": "Cleaning and preprocessing large datasets", "weights": {"data_scientist": 2, "data_engineer": 3}},
-                    {"text": "Statistical analysis and hypothesis testing", "weights": {"data_scientist": 3, "statistician": 2}}
-                ]
-            },
-            {
-                "question": "What programming approach do you prefer for data science?",
-                "options": [
-                    {"text": "Python with scikit-learn and TensorFlow", "weights": {"data_scientist": 3, "ml_engineer": 3}},
-                    {"text": "R for statistical computing and analysis", "weights": {"data_scientist": 2, "statistician": 3}},
-                    {"text": "SQL for database queries and data manipulation", "weights": {"data_analyst": 3, "data_scientist": 1}},
-                    {"text": "Scala/Spark for big data processing", "weights": {"data_engineer": 3, "data_scientist": 2}}
-                ]
-            }
-        ],
-        "web developer": [
-            {
-                "question": "Which aspect of web development interests you most?",
-                "options": [
-                    {"text": "Creating interactive user interfaces", "weights": {"frontend_developer": 3, "web_developer": 2}},
-                    {"text": "Building APIs and server-side logic", "weights": {"backend_developer": 3, "web_developer": 2}},
-                    {"text": "Full-stack application development", "weights": {"full_stack_developer": 3, "web_developer": 3}},
-                    {"text": "Database design and optimization", "weights": {"backend_developer": 2, "database_administrator": 3}}
-                ]
-            },
-            {
-                "question": "What technology stack appeals to you?",
-                "options": [
-                    {"text": "React, Vue.js, or Angular for frontend", "weights": {"frontend_developer": 3, "web_developer": 2}},
-                    {"text": "Node.js, Python Django, or Ruby on Rails", "weights": {"backend_developer": 3, "web_developer": 2}},
-                    {"text": "MEAN/MERN stack for full-stack", "weights": {"full_stack_developer": 3, "web_developer": 3}},
-                    {"text": "WordPress, Drupal, or other CMS", "weights": {"web_developer": 2, "cms_developer": 3}}
-                ]
-            }
-        ],
-        "cybersecurity analyst": [
-            {
-                "question": "Which cybersecurity area interests you most?",
-                "options": [
-                    {"text": "Penetration testing and ethical hacking", "weights": {"penetration_tester": 3, "ethical_hacker": 3}},
-                    {"text": "Security monitoring and incident response", "weights": {"cybersecurity_analyst": 3, "security_analyst": 3}},
-                    {"text": "Security architecture and engineering", "weights": {"security_engineer": 3, "security_architect": 2}},
-                    {"text": "Compliance and risk assessment", "weights": {"compliance_officer": 3, "risk_analyst": 2}}
-                ]
-            },
-            {
-                "question": "What type of security work excites you?",
-                "options": [
-                    {"text": "Finding vulnerabilities in systems", "weights": {"penetration_tester": 3, "vulnerability_assessor": 3}},
-                    {"text": "Analyzing security logs and alerts", "weights": {"cybersecurity_analyst": 3, "soc_analyst": 3}},
-                    {"text": "Implementing security controls", "weights": {"security_engineer": 3, "cybersecurity_analyst": 2}},
-                    {"text": "Training users on security awareness", "weights": {"security_trainer": 3, "cybersecurity_analyst": 1}}
-                ]
-            }
-        ]
-    }
-    
-    # Try to find specific questions for the role
-    for key, questions in role_questions.items():
-        if key in role_lower:
-            return questions
-    
-    # Generate generic questions based on domain
-    domain_lower = domain.lower()
-    if "data" in domain_lower:
-        return role_questions.get("data scientist", [])
-    elif "software" in domain_lower or "web" in domain_lower:
-        return role_questions.get("web developer", [])
-    elif "cyber" in domain_lower or "security" in domain_lower:
-        return role_questions.get("cybersecurity analyst", [])
-    
-    # Fallback generic questions
-    return [
-        {
-            "question": f"How interested are you in {role_name} responsibilities?",
-            "options": [
-                {"text": "Very interested - it's my ideal role", "weights": {role_name.lower().replace(" ", "_"): 3}},
-                {"text": "Somewhat interested - could be good fit", "weights": {role_name.lower().replace(" ", "_"): 2}},
-                {"text": "Neutral - need to learn more", "weights": {role_name.lower().replace(" ", "_"): 1}},
-                {"text": "Not very interested", "weights": {role_name.lower().replace(" ", "_"): 0}}
-            ]
-        },
-        {
-            "question": f"How much experience do you have with {role_name} tasks?",
-            "options": [
-                {"text": "Extensive professional experience", "weights": {role_name.lower().replace(" ", "_"): 3}},
-                {"text": "Some experience through projects", "weights": {role_name.lower().replace(" ", "_"): 2}},
-                {"text": "Basic knowledge from courses/learning", "weights": {role_name.lower().replace(" ", "_"): 1}},
-                {"text": "No experience yet", "weights": {role_name.lower().replace(" ", "_"): 0}}
-            ]
-        }
-    ]
-
-def generate_interview_questions(role_name, domain):
-    """Generate interview questions specific to a role"""
-    role_lower = role_name.lower()
-    
-    # Role-specific interview questions
-    role_interview_questions = {
-        "data scientist": {
-            "technical": [
-                "Explain the bias-variance tradeoff in machine learning.",
-                "How do you handle missing data in a dataset?",
-                "What's the difference between supervised and unsupervised learning?",
-                "Describe how you would validate a machine learning model.",
-                "Explain overfitting and how to prevent it."
-            ],
-            "behavioral": [
-                "Tell me about a time you used data to solve a real-world problem.",
-                "Describe a challenging data science project and how you approached it.",
-                "How do you communicate complex findings to non-technical stakeholders?",
-                "Give an example of when your initial hypothesis was wrong.",
-                "How do you stay updated with the latest data science trends?"
-            ]
-        },
-        "web developer": {
-            "technical": [
-                "Explain the difference between var, let, and const in JavaScript.",
-                "How do you optimize website performance?",
-                "What is responsive design and how do you implement it?",
-                "Describe the difference between HTTP and HTTPS.",
-                "How do you handle cross-browser compatibility issues?"
-            ],
-            "behavioral": [
-                "Describe a challenging web development project you worked on.",
-                "How do you approach debugging a complex web application?",
-                "Tell me about a time you had to learn a new technology quickly.",
-                "How do you ensure your code is maintainable and readable?",
-                "Describe your experience working with designers and other developers."
-            ]
-        },
-        "cybersecurity analyst": {
-            "technical": [
-                "Explain the CIA triad in cybersecurity.",
-                "How would you investigate a potential security breach?",
-                "What are the most common types of cyber attacks?",
-                "Describe how you would secure a web application.",
-                "What is the difference between vulnerability scanning and penetration testing?"
-            ],
-            "behavioral": [
-                "Tell me about a time you identified a security vulnerability.",
-                "How do you stay updated with the latest security threats?",
-                "Describe a situation where you had to communicate security risks to management.",
-                "How do you handle the pressure of protecting critical systems?",
-                "Give an example of when you had to balance security with usability."
-            ]
-        },
-        "devops engineer": {
-            "technical": [
-                "Explain the concept of Infrastructure as Code.",
-                "How do you implement CI/CD pipelines?",
-                "What is containerization and why is it useful?",
-                "Describe your experience with cloud platforms.",
-                "How do you monitor and troubleshoot production systems?"
-            ],
-            "behavioral": [
-                "Tell me about a time you automated a manual process.",
-                "Describe how you handle system outages or incidents.",
-                "How do you collaborate with development and operations teams?",
-                "Give an example of when you improved system reliability.",
-                "How do you balance speed of deployment with system stability?"
-            ]
-        },
-        "project manager": {
-            "technical": [
-                "Explain different project management methodologies.",
-                "How do you estimate project timelines and resources?",
-                "What tools do you use for project tracking and management?",
-                "Describe your approach to risk management.",
-                "How do you manage project scope and prevent scope creep?"
-            ],
-            "behavioral": [
-                "Tell me about a project that didn't go as planned and how you handled it.",
-                "Describe how you manage conflicts within a team.",
-                "How do you motivate team members and ensure accountability?",
-                "Give an example of when you had to manage multiple stakeholders.",
-                "How do you communicate project status to different audiences?"
-            ]
-        }
-    }
-    
-    # Try to find specific questions for the role
-    for key, questions in role_interview_questions.items():
-        if key in role_lower:
-            return questions
-    
-    # Generate based on domain
-    domain_lower = domain.lower()
-    if "data" in domain_lower:
-        return role_interview_questions.get("data scientist", {})
-    elif "software" in domain_lower or "web" in domain_lower:
-        return role_interview_questions.get("web developer", {})
-    elif "cyber" in domain_lower or "security" in domain_lower:
-        return role_interview_questions.get("cybersecurity analyst", {})
-    elif "cloud" in domain_lower or "devops" in domain_lower:
-        return role_interview_questions.get("devops engineer", {})
-    elif "project" in domain_lower:
-        return role_interview_questions.get("project manager", {})
-    
-    # Fallback generic questions
-    return {
-        "technical": [
-            f"What technical skills are most important for a {role_name}?",
-            f"How do you stay updated with {role_name} best practices?",
-            f"Describe the tools and technologies used in {role_name} work.",
-            f"What are the biggest challenges facing {role_name}s today?",
-            f"How would you explain your {role_name} work to a non-technical person?"
-        ],
-        "behavioral": [
-            f"Why are you interested in becoming a {role_name}?",
-            f"Describe a project relevant to {role_name} work you've completed.",
-            f"How do you handle challenges specific to {role_name} roles?",
-            f"What motivates you about {role_name} work?",
-            f"Where do you see yourself in your {role_name} career in 5 years?"
-        ]
-    }
-
-# Rest of the original helper functions (unchanged)
-ROLE_TO_CATEGORY_MAP = {
-    "data_scientist": "Data Science and Analytics",
-    "data_analyst": "Data Science and Analytics", 
-    "ml_engineer": "Data Science and Analytics",
-    "web_developer": "Software Development and Engineering",
-    "frontend_developer": "Software Development and Engineering",
-    "full_stack_developer": "Software Development and Engineering",
-    "backend_developer": "Software Development and Engineering",
-    "mobile_app_developer": "Software Development and Engineering",
-    "game_developer": "Software Development and Engineering",
-    "project_manager": "Project Management",
-    "product_manager": "Project Management", 
-    "scrum_master": "Project Management",
-    "cybersecurity_analyst": "Cybersecurity",
-    "security_engineer": "Cybersecurity",
-    "ethical_hacker": "Cybersecurity",
-    "penetration_tester": "Cybersecurity",
-    "security_analyst": "Cybersecurity",
-    "devops_engineer": "Cloud Computing and DevOps",
-    "cloud_engineer": "Cloud Computing and DevOps",
-    "cloud_architect": "Cloud Computing and DevOps",
-    "sre": "Cloud Computing and DevOps",
-    "site_reliability_engineer": "Cloud Computing and DevOps",
-    "ux_designer": "UI/UX Design",
-    "ui_designer": "UI/UX Design"
-}
-
-BADGE_CONFIG = {
-    "career_quiz": {
-        "novice": {"min_score": 0, "max_score": 40, "emoji": "🌱", "title": "Career Explorer"},
-        "intermediate": {"min_score": 41, "max_score": 70, "emoji": "📚", "title": "Career Seeker"},
-        "advanced": {"min_score": 71, "max_score": 100, "emoji": "🎯", "title": "Career Champion"}
-    },
-    "interview": {
-        "needs_practice": {"min_score": 1.0, "max_score": 2.5, "emoji": "💪", "title": "Keep Practicing"},
-        "good": {"min_score": 2.6, "max_score": 3.5, "emoji": "👍", "title": "Good Performer"},
-        "excellent": {"min_score": 3.6, "max_score": 4.5, "emoji": "🌟", "title": "Star Performer"},
-        "interview_ready": {"min_score": 4.6, "max_score": 5.0, "emoji": "🏆", "title": "Interview Ready"}
-    }
-}
-
-def calculate_career_quiz_score(answers, selected_role):
-    """Calculate career quiz score for selected role"""
-    if not answers:
-        return selected_role, 0, []
-    
-    role_key = selected_role.lower().replace(" ", "_")
-    total_score = 0
-    total_possible = len(answers) * 3  # Maximum 3 points per question
-    
-    for answer in answers:
-        # Get score for the selected role, default to 1 if not found
-        score = answer.get(role_key, answer.get(selected_role.lower().replace(" ", "_"), 1))
-        total_score += score
-    
-    # Calculate percentage score
-    percentage_score = (total_score / total_possible) * 100 if total_possible > 0 else 0
-    
-    # Get recommended courses
-    recommended_courses = []
-    for category, roles in COURSES_BY_CATEGORY.items():
-        if selected_role in roles:
-            recommended_courses = roles[selected_role][:5]  # Top 5 courses
-            break
-    
-    return selected_role, percentage_score, recommended_courses
-
-def get_badge_for_score(score_type, score):
-    """Get badge based on score type and value"""
-    badges = BADGE_CONFIG.get(score_type, {})
-    for badge_name, config in badges.items():
-        if config["min_score"] <= score <= config["max_score"]:
-            return config["emoji"], config["title"]
-    return "🎖️", "Participant"
-
-def evaluate_interview_answer(answer, question_type="general"):
-    """Evaluate interview answer and provide feedback"""
-    answer_length = len(answer.split())
-    
-    # Length-based feedback
-    if answer_length < 20:
-        length_feedback = "Too short"
-        length_score = 2
-    elif answer_length > 200:
-        length_feedback = "Too long" 
-        length_score = 3
-    else:
-        length_feedback = "Good length"
-        length_score = 4
-    
-    # Content quality (simplified scoring)
-    score = length_score
-    
-    # Basic content checks
-    if len(answer.strip()) == 0:
-        return 1, "No answer provided"
-    
-    if "experience" in answer.lower() or "project" in answer.lower():
-        score += 0.5
-        
-    if any(word in answer.lower() for word in ["because", "however", "therefore", "additionally"]):
-        score += 0.5  # Good connecting words
-        
-    # Cap at 5
-    score = min(5, score)
-    
-    # Generate feedback
-    feedback_parts = [length_feedback]
-    
-    if score >= 4:
-        feedback_parts.append("Good answer ✅")
-    elif score >= 3:
-        feedback_parts.append("Adequate response")
-    else:
-        feedback_parts.append("Needs improvement")
-        
-    feedback = " - ".join(feedback_parts)
-    
-    return score, feedback
-
-# Tab 4 content
+# Tab 4 content with dynamic role-specific questions
 with tab4:
     # Inject CSS styles (keeping existing styles)
     st.markdown("""
@@ -6083,6 +5729,7 @@ with tab4:
             transform: translateX(4px);
         }
 
+        /* Enhanced selectbox styling */
         .stSelectbox > div > div {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             border: 2px solid #00c3ff;
@@ -6094,6 +5741,7 @@ with tab4:
             box-shadow: 0 0 15px rgba(0, 195, 255, 0.3);
         }
 
+        /* Enhanced subheader styling */
         .stApp h3 {
             color: #00c3ff;
             text-shadow: 0 0 10px rgba(0, 195, 255, 0.5);
@@ -6101,6 +5749,7 @@ with tab4:
             margin-bottom: 20px;
         }
 
+        /* Learning path container */
         .learning-path-container {
             text-align: center;
             margin: 30px 0 20px 0;
@@ -6118,6 +5767,7 @@ with tab4:
             letter-spacing: -0.3px;
         }
 
+        /* Video container enhancements */
         .stVideo {
             border-radius: 12px;
             overflow: hidden;
@@ -6129,12 +5779,14 @@ with tab4:
             transform: scale(1.02);
         }
 
+        /* Info message styling */
         .stAlert {
             background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%);
             border: 1px solid rgba(0, 195, 255, 0.3);
             border-radius: 10px;
         }
 
+        /* New styles for quiz and interview sections */
         .quiz-card {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             border: 2px solid #00c3ff;
@@ -6160,28 +5812,28 @@ with tab4:
             text-shadow: 0 0 20px rgba(0, 195, 255, 0.8);
         }
 
-        .role-selection-card {
+        .role-selector {
             background: linear-gradient(135deg, rgba(0, 195, 255, 0.05) 0%, rgba(0, 195, 255, 0.1) 100%);
-            border: 2px solid rgba(0, 195, 255, 0.3);
-            border-radius: 15px;
+            border: 1px solid rgba(0, 195, 255, 0.2);
+            border-radius: 12px;
             padding: 20px;
-            margin: 20px 0;
+            margin: 15px 0;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    # Header
+    # Header (keeping existing)
     st.markdown("""
         <div class="header-box">
             <h2>📚 Recommended Learning Hub</h2>
         </div>
     """, unsafe_allow_html=True)
 
-    # Subheader
+    # Subheader (keeping existing)
     st.markdown('<div class="glow-header">🎓 Explore Career Resources</div>', unsafe_allow_html=True)
     st.markdown("<p style='text-align:center; color:#ccc; font-size: 16px; margin-bottom: 25px;'>Curated courses and videos for your career growth, resume tips, and interview success.</p>", unsafe_allow_html=True)
 
-    # Learning path label
+    # Learning path label (keeping existing)
     st.markdown("""
         <div class="learning-path-container">
             <span class="learning-path-text">
@@ -6190,7 +5842,12 @@ with tab4:
         </div>
     """, unsafe_allow_html=True)
 
-    # Radio buttons
+    # Updated Radio buttons with new options
+    st.markdown("""
+        <div style="display: flex; justify-content: center; width: 100%;">
+            <div style="display: flex; justify-content: center; gap: 16px;">
+    """, unsafe_allow_html=True)
+
     page = st.radio(
         label="Select Learning Option",
         options=["Courses by Role", "Resume Videos", "Interview Videos", "Career Quiz 🎯", "AI Interview Coach 🤖", "Achievements 🏅"],
@@ -6199,7 +5856,812 @@ with tab4:
         label_visibility="collapsed"
     )
 
-    # EXISTING SECTIONS (unchanged)
+    st.markdown("</div></div>", unsafe_allow_html=True)
+
+    # Helper functions for dynamic question generation
+    def generate_career_quiz_questions(domain, role):
+        """Generate role-specific career quiz questions"""
+        questions = []
+        
+        # Role-specific question templates
+        role_templates = {
+            "Software Development and Engineering": {
+                "Frontend Developer": [
+                    {
+                        "question": "Which aspect of web development excites you most?",
+                        "options": [
+                            "Creating beautiful, interactive user interfaces",
+                            "Building responsive designs that work on all devices", 
+                            "Optimizing website performance and accessibility",
+                            "Working with modern JavaScript frameworks"
+                        ]
+                    },
+                    {
+                        "question": "What's your preferred approach to styling?",
+                        "options": [
+                            "Writing custom CSS from scratch",
+                            "Using CSS frameworks like Bootstrap or Tailwind",
+                            "CSS-in-JS solutions for component-based styling", 
+                            "CSS preprocessors like Sass or Less"
+                        ]
+                    },
+                    {
+                        "question": "Which tools do you enjoy working with most?",
+                        "options": [
+                            "React, Vue, or Angular for building SPAs",
+                            "HTML5, CSS3, and vanilla JavaScript",
+                            "Design tools like Figma or Adobe XD",
+                            "Build tools like Webpack, Vite, or Parcel"
+                        ]
+                    }
+                ],
+                "Backend Developer": [
+                    {
+                        "question": "What backend architecture interests you most?",
+                        "options": [
+                            "RESTful API design and implementation",
+                            "Microservices architecture and distributed systems",
+                            "Database design and optimization",
+                            "Server-side security and authentication"
+                        ]
+                    },
+                    {
+                        "question": "Which programming paradigm do you prefer?",
+                        "options": [
+                            "Object-oriented programming with Java/.NET",
+                            "Functional programming with languages like Scala",
+                            "Dynamic languages like Python or JavaScript",
+                            "Systems programming with Go or Rust"
+                        ]
+                    },
+                    {
+                        "question": "What type of backend challenges excite you?",
+                        "options": [
+                            "Scaling applications to handle millions of users",
+                            "Integrating complex third-party services",
+                            "Optimizing database queries and performance",
+                            "Building robust error handling and monitoring"
+                        ]
+                    }
+                ],
+                "Full Stack Developer": [
+                    {
+                        "question": "What full-stack aspect appeals to you most?",
+                        "options": [
+                            "Building end-to-end features from UI to database",
+                            "Managing the entire application development lifecycle",
+                            "Working with both frontend and backend technologies",
+                            "Understanding how all system components interact"
+                        ]
+                    },
+                    {
+                        "question": "Which tech stack interests you most?",
+                        "options": [
+                            "MERN (MongoDB, Express, React, Node.js)",
+                            "MEAN (MongoDB, Express, Angular, Node.js)",
+                            "Django + React/Vue for Python development",
+                            "Ruby on Rails with modern frontend frameworks"
+                        ]
+                    }
+                ],
+                "Mobile App Developer": [
+                    {
+                        "question": "What type of mobile development interests you?",
+                        "options": [
+                            "Native iOS development with Swift",
+                            "Native Android development with Kotlin/Java",
+                            "Cross-platform development with React Native",
+                            "Hybrid app development with Flutter"
+                        ]
+                    },
+                    {
+                        "question": "Which mobile development aspect excites you most?",
+                        "options": [
+                            "Creating intuitive mobile user experiences",
+                            "Integrating with device hardware and sensors",
+                            "Optimizing app performance and battery usage",
+                            "Publishing apps to App Store and Google Play"
+                        ]
+                    }
+                ],
+                "Game Developer": [
+                    {
+                        "question": "What type of game development interests you?",
+                        "options": [
+                            "3D game development with Unity or Unreal Engine",
+                            "2D indie game development and pixel art",
+                            "Mobile gaming and casual game mechanics",
+                            "VR/AR game development and immersive experiences"
+                        ]
+                    },
+                    {
+                        "question": "Which game development aspect excites you most?",
+                        "options": [
+                            "Game design and player experience",
+                            "Graphics programming and visual effects",
+                            "Game physics and realistic simulations",
+                            "Multiplayer networking and real-time systems"
+                        ]
+                    }
+                ]
+            },
+            "Data Science and Analytics": {
+                "Data Scientist": [
+                    {
+                        "question": "Which data science task excites you most?",
+                        "options": [
+                            "Building predictive models and machine learning algorithms",
+                            "Exploring large datasets to discover hidden patterns",
+                            "Creating data visualizations and storytelling with data",
+                            "Designing experiments and A/B testing strategies"
+                        ]
+                    },
+                    {
+                        "question": "What's your preferred approach to data analysis?",
+                        "options": [
+                            "Statistical modeling and hypothesis testing",
+                            "Deep learning and neural networks",
+                            "Feature engineering and data preprocessing",
+                            "Time series analysis and forecasting"
+                        ]
+                    },
+                    {
+                        "question": "Which tools do you enjoy working with most?",
+                        "options": [
+                            "Python with pandas, scikit-learn, and TensorFlow",
+                            "R for statistical computing and analysis",
+                            "SQL for database querying and data manipulation",
+                            "Jupyter notebooks for exploratory data analysis"
+                        ]
+                    }
+                ],
+                "Data Analyst": [
+                    {
+                        "question": "Which type of analysis interests you most?",
+                        "options": [
+                            "Business intelligence and performance dashboards",
+                            "Customer behavior analysis and segmentation",
+                            "Financial analysis and risk assessment",
+                            "Market research and competitive analysis"
+                        ]
+                    },
+                    {
+                        "question": "What's your preferred way to present insights?",
+                        "options": [
+                            "Interactive dashboards with Tableau or Power BI",
+                            "Statistical reports with clear recommendations",
+                            "Data visualizations and infographics",
+                            "Executive summaries and business presentations"
+                        ]
+                    }
+                ],
+                "Machine Learning Engineer": [
+                    {
+                        "question": "Which ML engineering task excites you most?",
+                        "options": [
+                            "Deploying models to production at scale",
+                            "Building ML pipelines and automation systems",
+                            "Optimizing model performance and efficiency",
+                            "Implementing MLOps and model monitoring"
+                        ]
+                    },
+                    {
+                        "question": "What type of ML problems interest you?",
+                        "options": [
+                            "Computer vision and image processing",
+                            "Natural language processing and text analysis",
+                            "Recommendation systems and personalization",
+                            "Reinforcement learning and autonomous systems"
+                        ]
+                    }
+                ]
+            },
+            "Cloud Computing and DevOps": {
+                "Cloud Architect": [
+                    {
+                        "question": "Which cloud architecture aspect interests you most?",
+                        "options": [
+                            "Designing scalable, fault-tolerant systems",
+                            "Multi-cloud and hybrid cloud strategies",
+                            "Cloud security and compliance frameworks",
+                            "Cost optimization and resource management"
+                        ]
+                    },
+                    {
+                        "question": "What type of cloud solutions excite you?",
+                        "options": [
+                            "Serverless architectures and event-driven systems",
+                            "Container orchestration with Kubernetes",
+                            "Data lakes and analytics platforms",
+                            "AI/ML platforms and managed services"
+                        ]
+                    }
+                ],
+                "DevOps Engineer": [
+                    {
+                        "question": "Which DevOps practice interests you most?",
+                        "options": [
+                            "Building CI/CD pipelines and automation",
+                            "Infrastructure as Code with Terraform/CloudFormation",
+                            "Container orchestration and microservices",
+                            "Monitoring, logging, and observability"
+                        ]
+                    },
+                    {
+                        "question": "What type of automation excites you?",
+                        "options": [
+                            "Deployment automation and release management",
+                            "Infrastructure provisioning and configuration",
+                            "Testing automation and quality gates",
+                            "Incident response and self-healing systems"
+                        ]
+                    }
+                ],
+                "Site Reliability Engineer": [
+                    {
+                        "question": "Which SRE responsibility interests you most?",
+                        "options": [
+                            "Maintaining system reliability and uptime",
+                            "Performance optimization and capacity planning",
+                            "Incident management and post-mortem analysis",
+                            "Service level objectives and error budgets"
+                        ]
+                    },
+                    {
+                        "question": "What aspect of system reliability excites you?",
+                        "options": [
+                            "Building robust monitoring and alerting systems",
+                            "Designing disaster recovery and backup strategies",
+                            "Automating operational tasks and runbooks",
+                            "Analyzing system performance and bottlenecks"
+                        ]
+                    }
+                ]
+            },
+            "Cybersecurity": {
+                "Security Analyst": [
+                    {
+                        "question": "Which security area interests you most?",
+                        "options": [
+                            "Threat detection and incident response",
+                            "Vulnerability assessment and risk management",
+                            "Security monitoring and SIEM analysis",
+                            "Compliance and security policy development"
+                        ]
+                    },
+                    {
+                        "question": "What type of security challenges excite you?",
+                        "options": [
+                            "Investigating security breaches and forensics",
+                            "Analyzing malware and attack patterns",
+                            "Network security and firewall management",
+                            "Identity and access management systems"
+                        ]
+                    }
+                ],
+                "Penetration Tester": [
+                    {
+                        "question": "Which penetration testing approach interests you?",
+                        "options": [
+                            "Web application security testing",
+                            "Network penetration testing and infrastructure",
+                            "Social engineering and phishing simulations",
+                            "Mobile application security testing"
+                        ]
+                    },
+                    {
+                        "question": "What aspect of ethical hacking excites you?",
+                        "options": [
+                            "Finding vulnerabilities before malicious actors",
+                            "Using creative techniques to bypass security",
+                            "Helping organizations improve their defenses",
+                            "Staying updated on latest attack methods"
+                        ]
+                    }
+                ]
+            },
+            "UI/UX Design": {
+                "UI Designer": [
+                    {
+                        "question": "Which UI design aspect interests you most?",
+                        "options": [
+                            "Creating visually stunning interface designs",
+                            "Designing consistent design systems and components",
+                            "Working with typography, colors, and visual hierarchy",
+                            "Prototyping interactions and micro-animations"
+                        ]
+                    },
+                    {
+                        "question": "What type of design work excites you?",
+                        "options": [
+                            "Mobile app interface design",
+                            "Web application and dashboard design",
+                            "Icon design and visual asset creation",
+                            "Brand identity and visual design systems"
+                        ]
+                    }
+                ],
+                "UX Designer": [
+                    {
+                        "question": "Which UX design activity interests you most?",
+                        "options": [
+                            "User research and persona development",
+                            "Information architecture and user flows",
+                            "Wireframing and prototype development",
+                            "Usability testing and design validation"
+                        ]
+                    },
+                    {
+                        "question": "What aspect of user experience excites you?",
+                        "options": [
+                            "Solving complex user problems with simple solutions",
+                            "Understanding user behavior and psychology",
+                            "Designing accessible and inclusive experiences",
+                            "Measuring and optimizing user engagement"
+                        ]
+                    }
+                ]
+            },
+            "Project Management": {
+                "Project Manager": [
+                    {
+                        "question": "Which project management aspect interests you most?",
+                        "options": [
+                            "Planning and scheduling project timelines",
+                            "Coordinating teams and stakeholder communication",
+                            "Risk management and problem-solving",
+                            "Budget management and resource allocation"
+                        ]
+                    },
+                    {
+                        "question": "What type of projects excite you?",
+                        "options": [
+                            "Large-scale software development projects",
+                            "Cross-functional digital transformation initiatives",
+                            "Product launches and go-to-market strategies",
+                            "Process improvement and organizational change"
+                        ]
+                    }
+                ],
+                "Product Manager": [
+                    {
+                        "question": "Which product management activity interests you most?",
+                        "options": [
+                            "Product strategy and roadmap development",
+                            "User research and market analysis",
+                            "Feature prioritization and requirement gathering",
+                            "Go-to-market strategy and product launches"
+                        ]
+                    },
+                    {
+                        "question": "What aspect of product development excites you?",
+                        "options": [
+                            "Identifying user needs and pain points",
+                            "Defining product vision and strategy",
+                            "Working with engineering and design teams",
+                            "Analyzing product metrics and user feedback"
+                        ]
+                    }
+                ]
+            }
+        }
+
+        # Get role-specific questions or generate generic ones
+        if domain in role_templates and role in role_templates[domain]:
+            questions = role_templates[domain][role]
+        else:
+            # Generate generic questions based on role name
+            questions = [
+                {
+                    "question": f"How interested are you in pursuing a career as a {role}?",
+                    "options": [
+                        "Very interested - it's my dream job",
+                        "Somewhat interested - I want to learn more",
+                        "Moderately interested - it seems challenging",
+                        "Not very interested - but I'm curious"
+                    ]
+                },
+                {
+                    "question": f"What attracts you most about the {role} role?",
+                    "options": [
+                        "The technical challenges and problem-solving",
+                        "The creative aspects and innovation opportunities", 
+                        "The career growth potential and salary",
+                        "The impact on users and business outcomes"
+                    ]
+                }
+            ]
+        
+        return questions
+
+    def generate_interview_questions(domain, role):
+        """Generate role-specific interview questions"""
+        
+        # Role-specific question templates
+        role_templates = {
+            "Software Development and Engineering": {
+                "Frontend Developer": {
+                    "technical": [
+                        "Explain the difference between let, const, and var in JavaScript.",
+                        "How would you optimize a website's performance?",
+                        "What is the Virtual DOM and how does React use it?",
+                        "Describe the CSS Box Model and how it affects layout.",
+                        "How do you ensure cross-browser compatibility?"
+                    ],
+                    "behavioral": [
+                        "Tell me about a time you had to implement a complex UI feature with tight deadlines.",
+                        "Describe a situation where you had to work closely with designers.",
+                        "How do you handle browser compatibility issues?",
+                        "Tell me about a time you optimized a frontend application's performance.",
+                        "Describe your process for debugging frontend issues."
+                    ]
+                },
+                "Backend Developer": {
+                    "technical": [
+                        "Explain the difference between SQL and NoSQL databases.",
+                        "How would you design a RESTful API?",
+                        "What are microservices and their advantages?",
+                        "How do you handle database transactions?",
+                        "Explain different types of authentication methods."
+                    ],
+                    "behavioral": [
+                        "Tell me about a time you had to optimize database performance.",
+                        "Describe a challenging backend integration you worked on.",
+                        "How do you approach system design for scalable applications?",
+                        "Tell me about a time you had to debug a production issue.",
+                        "Describe your experience with API design and documentation."
+                    ]
+                },
+                "Full Stack Developer": {
+                    "technical": [
+                        "How do you ensure communication between frontend and backend?",
+                        "Explain the MVC architecture pattern.",
+                        "What's your approach to state management in web applications?",
+                        "How do you handle authentication in a full-stack application?",
+                        "Describe your deployment process for web applications."
+                    ],
+                    "behavioral": [
+                        "Tell me about a full-stack project you built from scratch.",
+                        "How do you balance frontend and backend development tasks?",
+                        "Describe a time you had to learn a new technology quickly.",
+                        "How do you handle requirements that affect both frontend and backend?",
+                        "Tell me about a time you mentored someone in full-stack development."
+                    ]
+                },
+                "Mobile App Developer": {
+                    "technical": [
+                        "What's the difference between native and cross-platform development?",
+                        "How do you handle different screen sizes and orientations?",
+                        "Explain the mobile app lifecycle.",
+                        "How do you optimize mobile app performance?",
+                        "What's your approach to mobile app testing?"
+                    ],
+                    "behavioral": [
+                        "Tell me about a mobile app you developed and published.",
+                        "How do you handle user feedback and app store reviews?",
+                        "Describe a challenging mobile development problem you solved.",
+                        "How do you stay updated with mobile development trends?",
+                        "Tell me about a time you had to optimize an app for battery life."
+                    ]
+                },
+                "Game Developer": {
+                    "technical": [
+                        "Explain the game development pipeline.",
+                        "How do you optimize game performance for different platforms?",
+                        "What's your approach to game physics implementation?",
+                        "How do you handle game state management?",
+                        "Explain different game design patterns you've used."
+                    ],
+                    "behavioral": [
+                        "Tell me about a game project you're most proud of.",
+                        "How do you handle feedback during game playtesting?",
+                        "Describe a time you had to optimize game performance.",
+                        "How do you balance gameplay mechanics with technical constraints?",
+                        "Tell me about a time you worked in a multidisciplinary game team."
+                    ]
+                }
+            },
+            "Data Science and Analytics": {
+                "Data Scientist": {
+                    "technical": [
+                        "Explain the bias-variance tradeoff in machine learning.",
+                        "How do you handle missing data in your datasets?",
+                        "What's the difference between supervised and unsupervised learning?",
+                        "How do you evaluate the performance of a machine learning model?",
+                        "Explain regularization techniques and when to use them."
+                    ],
+                    "behavioral": [
+                        "Tell me about a time you used data to solve a real-world problem.",
+                        "Describe a challenging data analysis project you worked on.",
+                        "How do you communicate complex findings to non-technical stakeholders?",
+                        "Tell me about a time your model didn't work as expected.",
+                        "How do you stay updated with new data science techniques?"
+                    ]
+                },
+                "Data Analyst": {
+                    "technical": [
+                        "How do you approach data cleaning and preprocessing?",
+                        "Explain different types of data visualization and when to use them.",
+                        "What's your process for conducting A/B tests?",
+                        "How do you handle data quality issues?",
+                        "Describe your approach to statistical analysis."
+                    ],
+                    "behavioral": [
+                        "Tell me about a time you found an unexpected insight in data.",
+                        "How do you handle requests for analysis with unrealistic timelines?",
+                        "Describe a time you had to present findings to executives.",
+                        "How do you prioritize multiple analysis requests?",
+                        "Tell me about a time you had to work with messy or incomplete data."
+                    ]
+                },
+                "Machine Learning Engineer": {
+                    "technical": [
+                        "How do you deploy machine learning models to production?",
+                        "Explain model versioning and A/B testing for ML models.",
+                        "How do you monitor ML models in production?",
+                        "What's your approach to feature engineering?",
+                        "How do you handle model drift and retraining?"
+                    ],
+                    "behavioral": [
+                        "Tell me about a time you scaled an ML system for production use.",
+                        "Describe a challenging ML pipeline you built.",
+                        "How do you collaborate with data scientists and software engineers?",
+                        "Tell me about a time you optimized model performance.",
+                        "How do you handle model failures in production?"
+                    ]
+                }
+            },
+            "Cloud Computing and DevOps": {
+                "Cloud Architect": {
+                    "technical": [
+                        "How do you design for high availability in the cloud?",
+                        "Explain different cloud deployment models.",
+                        "How do you approach cloud cost optimization?",
+                        "What's your strategy for multi-cloud architecture?",
+                        "How do you ensure cloud security and compliance?"
+                    ],
+                    "behavioral": [
+                        "Tell me about a cloud migration project you led.",
+                        "How do you handle stakeholder concerns about cloud adoption?",
+                        "Describe a time you had to design a disaster recovery strategy.",
+                        "How do you stay updated with new cloud services and features?",
+                        "Tell me about a time you optimized cloud costs significantly."
+                    ]
+                },
+                "DevOps Engineer": {
+                    "technical": [
+                        "How do you implement CI/CD pipelines?",
+                        "Explain Infrastructure as Code and its benefits.",
+                        "How do you handle secrets management in DevOps?",
+                        "What's your approach to monitoring and alerting?",
+                        "How do you implement blue-green deployments?"
+                    ],
+                    "behavioral": [
+                        "Tell me about a time you automated a manual process.",
+                        "Describe a challenging deployment issue you resolved.",
+                        "How do you handle incidents and post-mortem analysis?",
+                        "Tell me about a time you improved system reliability.",
+                        "How do you collaborate with development and operations teams?"
+                    ]
+                },
+                "Site Reliability Engineer": {
+                    "technical": [
+                        "How do you define and measure service level objectives (SLOs)?",
+                        "Explain your approach to incident management.",
+                        "How do you implement effective monitoring and alerting?",
+                        "What's your strategy for capacity planning?",
+                        "How do you balance reliability with feature velocity?"
+                    ],
+                    "behavioral": [
+                        "Tell me about a major outage you helped resolve.",
+                        "How do you handle on-call responsibilities and stress?",
+                        "Describe a time you implemented a reliability improvement.",
+                        "How do you conduct blameless post-mortems?",
+                        "Tell me about a time you prevented a potential outage."
+                    ]
+                }
+            },
+            "Cybersecurity": {
+                "Security Analyst": {
+                    "technical": [
+                        "How do you identify and respond to security incidents?",
+                        "Explain different types of cyber attacks and their prevention.",
+                        "How do you perform vulnerability assessments?",
+                        "What's your approach to log analysis and SIEM tools?",
+                        "How do you stay updated on emerging security threats?"
+                    ],
+                    "behavioral": [
+                        "Tell me about a security incident you investigated.",
+                        "How do you communicate security risks to management?",
+                        "Describe a time you implemented a security improvement.",
+                        "How do you handle high-pressure security situations?",
+                        "Tell me about a time you educated others about security best practices."
+                    ]
+                },
+                "Penetration Tester": {
+                    "technical": [
+                        "What's your methodology for conducting penetration tests?",
+                        "How do you document and report security vulnerabilities?",
+                        "Explain different types of penetration testing approaches.",
+                        "How do you stay within scope during penetration testing?",
+                        "What tools do you use for different types of security testing?"
+                    ],
+                    "behavioral": [
+                        "Tell me about a critical vulnerability you discovered.",
+                        "How do you handle situations where clients resist security findings?",
+                        "Describe your approach to ethical hacking boundaries.",
+                        "How do you prioritize vulnerabilities for remediation?",
+                        "Tell me about a time you helped improve an organization's security posture."
+                    ]
+                }
+            },
+            "UI/UX Design": {
+                "UI Designer": {
+                    "technical": [
+                        "How do you ensure consistency across different interfaces?",
+                        "Explain your design system development process.",
+                        "How do you approach responsive design challenges?",
+                        "What's your process for creating and maintaining design assets?",
+                        "How do you collaborate with developers for design implementation?"
+                    ],
+                    "behavioral": [
+                        "Tell me about a design project you're particularly proud of.",
+                        "How do you handle feedback and design iterations?",
+                        "Describe a time you had to design under tight constraints.",
+                        "How do you stay updated with design trends and tools?",
+                        "Tell me about a time you had to advocate for a design decision."
+                    ]
+                },
+                "UX Designer": {
+                    "technical": [
+                        "How do you conduct user research and usability testing?",
+                        "Explain your approach to information architecture.",
+                        "How do you create and validate user personas?",
+                        "What's your process for wireframing and prototyping?",
+                        "How do you measure the success of UX improvements?"
+                    ],
+                    "behavioral": [
+                        "Tell me about a time you advocated for the user in a design decision.",
+                        "How do you handle conflicting requirements from stakeholders?",
+                        "Describe a UX research study you conducted and its impact.",
+                        "How do you approach designing for accessibility?",
+                        "Tell me about a time you had to pivot your design based on user feedback."
+                    ]
+                }
+            },
+            "Project Management": {
+                "Project Manager": {
+                    "technical": [
+                        "How do you create and manage project timelines?",
+                        "Explain your approach to risk management in projects.",
+                        "How do you handle scope creep and change requests?",
+                        "What project management methodologies do you use?",
+                        "How do you track and report project progress?"
+                    ],
+                    "behavioral": [
+                        "Tell me about a project that went off track and how you handled it.",
+                        "How do you manage stakeholder expectations?",
+                        "Describe a time you had to deliver bad news about a project.",
+                        "How do you motivate team members during challenging projects?",
+                        "Tell me about a successful project you delivered and what made it successful."
+                    ]
+                },
+                "Product Manager": {
+                    "technical": [
+                        "How do you prioritize product features and requirements?",
+                        "Explain your approach to product roadmap planning.",
+                        "How do you conduct market research and competitive analysis?",
+                        "What metrics do you use to measure product success?",
+                        "How do you gather and analyze user feedback?"
+                    ],
+                    "behavioral": [
+                        "Tell me about a product decision you made that had significant impact.",
+                        "How do you handle disagreements between engineering and business teams?",
+                        "Describe a time you had to pivot a product strategy.",
+                        "How do you balance technical debt with new feature development?",
+                        "Tell me about a time you launched a product and the results."
+                    ]
+                }
+            }
+        }
+
+        # Get role-specific questions or generate generic ones
+        questions = {"technical": [], "behavioral": []}
+        
+        if domain in role_templates and role in role_templates[domain]:
+            questions = role_templates[domain][role]
+        else:
+            # Generate generic questions based on role
+            questions = {
+                "technical": [
+                    f"What are the key technical skills required for a {role}?",
+                    f"How would you approach learning new technologies relevant to {role}?",
+                    f"What tools and technologies are essential for {role}?",
+                    f"How do you stay updated with industry trends in {role}?",
+                    f"What are the biggest technical challenges facing {role}s today?"
+                ],
+                "behavioral": [
+                    f"Why are you interested in pursuing a career as a {role}?",
+                    f"Tell me about a project that demonstrates your skills relevant to {role}.",
+                    f"How do you handle challenging situations in your work?",
+                    f"Describe a time you had to learn something new quickly.",
+                    f"How do you prioritize tasks when working on multiple projects?"
+                ]
+            }
+        
+        return questions
+
+    # Badge system for gamification
+    BADGE_CONFIG = {
+        "career_quiz": {
+            "novice": {"min_score": 0, "max_score": 40, "emoji": "🌱", "title": "Career Explorer"},
+            "intermediate": {"min_score": 41, "max_score": 70, "emoji": "📚", "title": "Career Seeker"},
+            "advanced": {"min_score": 71, "max_score": 100, "emoji": "🎯", "title": "Career Champion"}
+        },
+        "interview": {
+            "needs_practice": {"min_score": 1.0, "max_score": 2.5, "emoji": "💪", "title": "Keep Practicing"},
+            "good": {"min_score": 2.6, "max_score": 3.5, "emoji": "👍", "title": "Good Performer"},
+            "excellent": {"min_score": 3.6, "max_score": 4.5, "emoji": "🌟", "title": "Star Performer"},
+            "interview_ready": {"min_score": 4.6, "max_score": 5.0, "emoji": "🏆", "title": "Interview Ready"}
+        }
+    }
+
+    def get_badge_for_score(score_type, score):
+        """Get badge based on score type and value"""
+        badges = BADGE_CONFIG.get(score_type, {})
+        for badge_name, config in badges.items():
+            if config["min_score"] <= score <= config["max_score"]:
+                return config["emoji"], config["title"]
+        return "🎖️", "Participant"
+
+    def evaluate_interview_answer(answer, question_type="general"):
+        """Evaluate interview answer and provide feedback"""
+        answer_length = len(answer.split())
+        
+        # Length-based feedback
+        if answer_length < 20:
+            length_feedback = "Too short - consider providing more detail"
+            length_score = 2
+        elif answer_length > 200:
+            length_feedback = "Too long - try to be more concise" 
+            length_score = 3
+        else:
+            length_feedback = "Good length"
+            length_score = 4
+        
+        # Content quality (simplified scoring)
+        score = length_score
+        
+        # Basic content checks
+        if len(answer.strip()) == 0:
+            return 1, "No answer provided"
+        
+        if "experience" in answer.lower() or "project" in answer.lower():
+            score += 0.5
+            
+        if any(word in answer.lower() for word in ["because", "however", "therefore", "additionally"]):
+            score += 0.5  # Good connecting words
+            
+        # Cap at 5
+        score = min(5, score)
+        
+        # Generate feedback
+        feedback_parts = [length_feedback]
+        
+        if score >= 4:
+            feedback_parts.append("Good answer with specific examples ✅")
+        elif score >= 3:
+            feedback_parts.append("Adequate response - consider adding more specific examples")
+        else:
+            feedback_parts.append("Needs improvement - try to provide more detailed, specific examples")
+            
+        feedback = " - ".join(feedback_parts)
+        
+        return score, feedback
+
+    # EXISTING SECTIONS (keeping exactly as they were)
+    
+    # Section 1: Courses by Role (unchanged)
     if page == "Courses by Role":
         st.subheader("🎯 Courses by Career Role")
         category = st.selectbox(
@@ -6227,6 +6689,7 @@ with tab4:
                 else:
                     st.info("🚫 No courses found for this role.")
 
+    # Section 2: Resume Videos (unchanged)
     elif page == "Resume Videos":
         st.subheader("📄 Resume Writing Videos")
         categories = list(RESUME_VIDEOS.keys())
@@ -6244,6 +6707,7 @@ with tab4:
                     st.markdown(f"**{title}**")
                     st.video(url)
 
+    # Section 3: Interview Videos (unchanged)
     elif page == "Interview Videos":
         st.subheader("🗣️ Interview Preparation Videos")
         categories = list(INTERVIEW_VIDEOS.keys())
@@ -6261,418 +6725,365 @@ with tab4:
                     st.markdown(f"**{title}**")
                     st.video(url)
 
-    # MODIFIED SECTIONS - Career Quiz 🎯 (now domain + role specific)
+    # Section 4: NEW Dynamic Career Quiz 🎯
     elif page == "Career Quiz 🎯":
         st.subheader("🎯 Career Discovery Quiz")
-        st.markdown("Choose a domain and role, then answer questions tailored to that career path!")
+        st.markdown("Choose your target domain and role, then answer personalized questions to get specific course recommendations!")
         
-        # Role selection
-        if 'quiz_domain' not in st.session_state:
-            st.session_state.quiz_domain = None
-        if 'quiz_role' not in st.session_state:
-            st.session_state.quiz_role = None
-        if 'quiz_questions_generated' not in st.session_state:
-            st.session_state.quiz_questions_generated = False
+        # Domain and Role selection
+        st.markdown('<div class="role-selector">', unsafe_allow_html=True)
         
-        # Initialize quiz state
-        if 'quiz_answers' not in st.session_state:
-            st.session_state.quiz_answers = []
-        if 'current_question' not in st.session_state:
-            st.session_state.current_question = 0
-        if 'quiz_completed' not in st.session_state:
-            st.session_state.quiz_completed = False
-            
-        # Domain and Role Selection
-        if not st.session_state.quiz_questions_generated:
-            st.markdown("""
-                <div class="role-selection-card">
-                    <h3 style="color: #00c3ff; margin-bottom: 20px;">Select Your Target Role</h3>
-                </div>
-            """, unsafe_allow_html=True)
-            
-            # Domain selection
-            domain = st.selectbox(
-                "🏢 Select Career Domain",
-                options=[""] + list(COURSES_BY_CATEGORY.keys()),
-                key="quiz_domain_select",
-                help="Choose the career domain you're interested in"
+        col1, col2 = st.columns(2)
+        with col1:
+            selected_domain = st.selectbox(
+                "Select Career Domain",
+                options=list(COURSES_BY_CATEGORY.keys()),
+                key="quiz_domain_selection"
             )
-            
-            if domain:
-                # Role selection
-                roles = list(COURSES_BY_CATEGORY[domain].keys())
-                role = st.selectbox(
-                    "👨‍💼 Select Specific Role",
-                    options=[""] + roles,
-                    key="quiz_role_select",
-                    help="Choose the specific role you want to explore"
+        
+        with col2:
+            if selected_domain:
+                roles = list(COURSES_BY_CATEGORY[selected_domain].keys())
+                selected_role = st.selectbox(
+                    "Select Target Role",
+                    options=roles,
+                    key="quiz_role_selection"
                 )
-                
-                if role:
-                    st.markdown(f"""
-                        <div style="background: rgba(0, 195, 255, 0.1); padding: 15px; border-radius: 10px; margin: 15px 0;">
-                            <p style="color: #00c3ff; margin: 0;"><strong>Selected Path:</strong> {role} in {domain}</p>
+            else:
+                selected_role = None
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        if selected_domain and selected_role:
+            # Generate dynamic questions
+            quiz_questions = generate_career_quiz_questions(selected_domain, selected_role)
+            
+            if not quiz_questions:
+                st.warning("⚠️ No role-specific questions available. Please select another role.")
+            else:
+                # Initialize quiz state
+                if 'dynamic_quiz_answers' not in st.session_state:
+                    st.session_state.dynamic_quiz_answers = []
+                if 'current_dynamic_question' not in st.session_state:
+                    st.session_state.current_dynamic_question = 0
+                if 'dynamic_quiz_completed' not in st.session_state:
+                    st.session_state.dynamic_quiz_completed = False
+                if 'quiz_domain' not in st.session_state or st.session_state.quiz_domain != selected_domain:
+                    st.session_state.quiz_domain = selected_domain
+                    st.session_state.quiz_role = selected_role
+                    st.session_state.dynamic_quiz_answers = []
+                    st.session_state.current_dynamic_question = 0
+                    st.session_state.dynamic_quiz_completed = False
+                    
+                # Quiz logic
+                if not st.session_state.dynamic_quiz_completed:
+                    if st.session_state.current_dynamic_question < len(quiz_questions):
+                        question_data = quiz_questions[st.session_state.current_dynamic_question]
+                        
+                        st.markdown(f"""
+                        <div class="quiz-card">
+                            <h3 style="color: #00c3ff;">Question {st.session_state.current_dynamic_question + 1} of {len(quiz_questions)}</h3>
+                            <h4 style="color: #ffffff; margin: 15px 0;">For: {selected_role} in {selected_domain}</h4>
+                            <p style="font-size: 18px; color: #ffffff; margin: 15px 0;">{question_data['question']}</p>
                         </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Display options
+                        selected_option = st.radio(
+                            "Choose your answer:",
+                            options=range(len(question_data['options'])),
+                            format_func=lambda x: question_data['options'][x],
+                            key=f"dynamic_quiz_q_{st.session_state.current_dynamic_question}"
+                        )
+                        
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.session_state.current_dynamic_question > 0:
+                                if st.button("⬅️ Previous Question"):
+                                    st.session_state.current_dynamic_question -= 1
+                                    st.rerun()
+                        
+                        with col2:
+                            if st.button("Next Question ➡️" if st.session_state.current_dynamic_question < len(quiz_questions) - 1 else "Complete Quiz 🎯"):
+                                # Store answer
+                                if st.session_state.current_dynamic_question >= len(st.session_state.dynamic_quiz_answers):
+                                    st.session_state.dynamic_quiz_answers.append(selected_option)
+                                else:
+                                    st.session_state.dynamic_quiz_answers[st.session_state.current_dynamic_question] = selected_option
+                                
+                                if st.session_state.current_dynamic_question < len(quiz_questions) - 1:
+                                    st.session_state.current_dynamic_question += 1
+                                else:
+                                    st.session_state.dynamic_quiz_completed = True
+                                st.rerun()
+                                
+                        # Progress bar
+                        progress = (st.session_state.current_dynamic_question + 1) / len(quiz_questions)
+                        st.progress(progress)
+                else:
+                    # Show results
+                    total_questions = len(quiz_questions)
+                    answered_questions = len(st.session_state.dynamic_quiz_answers)
+                    score = (answered_questions / total_questions) * 100
+                    
+                    # Store results in session state for gamification
+                    st.session_state.career_quiz_result = {
+                        "role": selected_role,
+                        "domain": selected_domain,
+                        "score": score,
+                        "answers": st.session_state.dynamic_quiz_answers
+                    }
+                    
+                    # Get badge
+                    badge_emoji, badge_title = get_badge_for_score("career_quiz", score)
+                    
+                    st.markdown(f"""
+                    <div class="badge-container">
+                        <h2 style="margin: 0; color: #333;">🎉 Quiz Complete!</h2>
+                        <div style="margin: 20px 0;">
+                            <div class="score-display">{score:.0f}%</div>
+                            <h3 style="color: #333; margin: 10px 0;">{badge_emoji} {badge_title}</h3>
+                        </div>
+                    </div>
                     """, unsafe_allow_html=True)
                     
-                    if st.button("🎯 Generate Personalized Quiz"):
-                        # Generate questions for the selected role
-                        quiz_questions = generate_career_quiz_questions(role, domain)
-                        
-                        if quiz_questions:
-                            st.session_state.quiz_domain = domain
-                            st.session_state.quiz_role = role
-                            st.session_state.CAREER_QUIZ_QUESTIONS = quiz_questions
-                            st.session_state.quiz_questions_generated = True
-                            st.session_state.quiz_answers = []
-                            st.session_state.current_question = 0
-                            st.session_state.quiz_completed = False
-                            st.success(f"✅ Generated {len(quiz_questions)} questions for {role}!")
-                            st.rerun()
-                        else:
-                            st.warning("⚠️ No role-specific questions available. Please select another role.")
-        
-        # Quiz logic
-        elif st.session_state.quiz_questions_generated and not st.session_state.quiz_completed:
-            questions = st.session_state.CAREER_QUIZ_QUESTIONS
-            
-            st.markdown(f"""
-                <div style="background: rgba(0, 195, 255, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
-                    <p style="color: #00c3ff; margin: 0;"><strong>Quiz for:</strong> {st.session_state.quiz_role} in {st.session_state.quiz_domain}</p>
-                </div>
-            """, unsafe_allow_html=True)
-            
-            if st.session_state.current_question < len(questions):
-                question_data = questions[st.session_state.current_question]
-                
-                st.markdown(f"""
-                <div class="quiz-card">
-                    <h3 style="color: #00c3ff;">Question {st.session_state.current_question + 1} of {len(questions)}</h3>
-                    <p style="font-size: 18px; color: #ffffff; margin: 15px 0;">{question_data['question']}</p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Display options
-                selected_option = st.radio(
-                    "Choose your answer:",
-                    options=range(len(question_data['options'])),
-                    format_func=lambda x: question_data['options'][x]['text'],
-                    key=f"quiz_q_{st.session_state.current_question}"
-                )
-                
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.session_state.current_question > 0:
-                        if st.button("⬅️ Previous Question"):
-                            st.session_state.current_question -= 1
-                            st.rerun()
-                
-                with col2:
-                    if st.button("Next Question ➡️" if st.session_state.current_question < len(questions) - 1 else "Complete Quiz 🎯"):
-                        # Store answer
-                        if st.session_state.current_question >= len(st.session_state.quiz_answers):
-                            st.session_state.quiz_answers.append(question_data['options'][selected_option]['weights'])
-                        else:
-                            st.session_state.quiz_answers[st.session_state.current_question] = question_data['options'][selected_option]['weights']
-                        
-                        if st.session_state.current_question < len(questions) - 1:
-                            st.session_state.current_question += 1
-                        else:
-                            st.session_state.quiz_completed = True
-                        st.rerun()
-                        
-                # Progress bar
-                progress = (st.session_state.current_question + 1) / len(questions)
-                st.progress(progress)
-        
-        # Show results
-        elif st.session_state.quiz_completed:
-            suggested_role, score, recommended_courses = calculate_career_quiz_score(
-                st.session_state.quiz_answers, 
-                st.session_state.quiz_role
-            )
-            
-            if suggested_role:
-                # Store results
-                st.session_state.career_quiz_result = {
-                    "role": suggested_role,
-                    "score": score,
-                    "courses": recommended_courses
-                }
-                
-                # Get badge
-                badge_emoji, badge_title = get_badge_for_score("career_quiz", score)
-                
-                st.markdown(f"""
-                <div class="badge-container">
-                    <h2 style="margin: 0; color: #333;">🎉 Quiz Complete!</h2>
-                    <div style="margin: 20px 0;">
-                        <div class="score-display">{score:.0f}%</div>
-                        <h3 style="color: #333; margin: 10px 0;">{badge_emoji} {badge_title}</h3>
+                    st.markdown(f"""
+                    <div class="quiz-card">
+                        <h3 style="color: #00c3ff;">🎯 Your Target Career Path:</h3>
+                        <h2 style="color: #ffffff; text-align: center; margin: 20px 0;">{selected_role}</h2>
+                        <h4 style="color: #00c3ff; text-align: center; margin: 10px 0;">Domain: {selected_domain}</h4>
                     </div>
-                </div>
-                """, unsafe_allow_html=True)
+                    """, unsafe_allow_html=True)
+                    
+                    # Show recommended courses
+                    courses = get_courses_for_role(selected_domain, selected_role)
+                    if courses:
+                        st.subheader("📚 Recommended Courses for You:")
+                        for title, url in courses[:5]:  # Top 5 courses
+                            st.markdown(f"""
+                                <div class="card">
+                                    <a href="{url}" target="_blank">🔗 {title}</a>
+                                </div>
+                            """, unsafe_allow_html=True)
+                    else:
+                        st.info("Explore our course categories to find relevant learning resources!")
                 
-                st.markdown(f"""
-                <div class="quiz-card">
-                    <h3 style="color: #00c3ff;">🎯 Your Career Assessment:</h3>
-                    <h2 style="color: #ffffff; text-align: center; margin: 20px 0;">{suggested_role}</h2>
-                    <p style="color: #ccc; text-align: center;">Based on your responses to {len(st.session_state.quiz_answers)} role-specific questions</p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                if recommended_courses:
-                    st.subheader("📚 Recommended Courses for You:")
-                    for title, url in recommended_courses:
-                        st.markdown(f"""
-                            <div class="card">
-                                <a href="{url}" target="_blank">🔗 {title}</a>
-                            </div>
-                        """, unsafe_allow_html=True)
-                else:
-                    st.info("No specific courses found for this role, but explore our general categories above!")
-            
-            # Restart button
-            if st.button("🔄 Take Another Quiz"):
-                st.session_state.quiz_questions_generated = False
-                st.session_state.quiz_answers = []
-                st.session_state.current_question = 0
-                st.session_state.quiz_completed = False
-                st.session_state.quiz_domain = None
-                st.session_state.quiz_role = None
-                st.rerun()
+                # Restart button
+                if st.session_state.dynamic_quiz_completed:
+                    if st.button("🔄 Take Quiz for Different Role"):
+                        st.session_state.dynamic_quiz_answers = []
+                        st.session_state.current_dynamic_question = 0
+                        st.session_state.dynamic_quiz_completed = False
+                        st.rerun()
 
-    # MODIFIED SECTIONS - AI Interview Coach 🤖 (now domain + role specific)
+    # Section 5: NEW Dynamic AI Interview Coach 🤖
     elif page == "AI Interview Coach 🤖":
         st.subheader("🤖 AI Interview Coach")
-        st.markdown("Practice role-specific interview questions with our AI coach!")
+        st.markdown("Practice role-specific interview questions with our AI coach. Get instant feedback on your answers!")
         
-        # Initialize interview state
-        if 'interview_domain' not in st.session_state:
-            st.session_state.interview_domain = None
-        if 'interview_role' not in st.session_state:
-            st.session_state.interview_role = None
-        if 'interview_questions_generated' not in st.session_state:
-            st.session_state.interview_questions_generated = False
-        if 'interview_questions' not in st.session_state:
-            st.session_state.interview_questions = []
-        if 'current_interview_question' not in st.session_state:
-            st.session_state.current_interview_question = 0
-        if 'interview_answers' not in st.session_state:
-            st.session_state.interview_answers = []
-        if 'interview_scores' not in st.session_state:
-            st.session_state.interview_scores = []
-        if 'interview_completed' not in st.session_state:
-            st.session_state.interview_completed = False
-        if 'interview_started' not in st.session_state:
-            st.session_state.interview_started = False
-        if 'answer_submitted' not in st.session_state:
-            st.session_state.answer_submitted = False
-            
-        # Role Selection and Interview Setup
-        if not st.session_state.interview_started:
-            st.markdown("""
-                <div class="role-selection-card">
-                    <h3 style="color: #00c3ff; margin-bottom: 20px;">Select Role for Interview Practice</h3>
-                </div>
-            """, unsafe_allow_html=True)
-            
-            # Domain selection
-            domain = st.selectbox(
-                "🏢 Select Career Domain",
-                options=[""] + list(COURSES_BY_CATEGORY.keys()),
-                key="interview_domain_select",
-                help="Choose the career domain for interview questions"
+        # Domain and Role selection
+        st.markdown('<div class="role-selector">', unsafe_allow_html=True)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            selected_domain = st.selectbox(
+                "Select Career Domain",
+                options=list(COURSES_BY_CATEGORY.keys()),
+                key="interview_domain_selection"
             )
-            
-            if domain:
-                # Role selection
-                roles = list(COURSES_BY_CATEGORY[domain].keys())
-                role = st.selectbox(
-                    "👨‍💼 Select Specific Role",
-                    options=[""] + roles,
-                    key="interview_role_select",
-                    help="Choose the role you want to practice for"
-                )
-                
-                if role:
-                    st.markdown(f"""
-                        <div style="background: rgba(0, 195, 255, 0.1); padding: 15px; border-radius: 10px; margin: 15px 0;">
-                            <p style="color: #00c3ff; margin: 0;"><strong>Interview Practice for:</strong> {role} in {domain}</p>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    
-                    # Interview settings
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        question_type = st.selectbox(
-                            "Question Type",
-                            options=["technical", "behavioral", "mixed"],
-                            format_func=lambda x: {"technical": "Technical Questions", 
-                                                 "behavioral": "Behavioral Questions",
-                                                 "mixed": "Mixed (Technical + Behavioral)"}[x]
-                        )
-                    
-                    with col2:
-                        num_questions = st.slider("Number of questions:", 3, 8, 5)
-                    
-                    if st.button("🚀 Start Role-Specific Interview"):
-                        # Generate questions for the selected role
-                        role_questions = generate_interview_questions(role, domain)
-                        
-                        if role_questions:
-                            selected_questions = []
-                            
-                            if question_type == "mixed":
-                                # Mix of technical and behavioral
-                                tech_q = role_questions.get("technical", [])
-                                behav_q = role_questions.get("behavioral", [])
-                                
-                                # Get equal split or as close as possible
-                                half = num_questions // 2
-                                selected_questions.extend(random.sample(tech_q, min(half, len(tech_q))))
-                                selected_questions.extend(random.sample(behav_q, min(num_questions - len(selected_questions), len(behav_q))))
-                            else:
-                                # Single type
-                                available_questions = role_questions.get(question_type, [])
-                                selected_questions = random.sample(available_questions, min(num_questions, len(available_questions)))
-                            
-                            if selected_questions:
-                                st.session_state.interview_domain = domain
-                                st.session_state.interview_role = role
-                                st.session_state.interview_questions = selected_questions
-                                st.session_state.current_interview_question = 0
-                                st.session_state.interview_answers = []
-                                st.session_state.interview_scores = []
-                                st.session_state.interview_completed = False
-                                st.session_state.interview_started = True
-                                st.session_state.answer_submitted = False
-                                st.success(f"✅ Generated {len(selected_questions)} {question_type} questions for {role}!")
-                                st.rerun()
-                            else:
-                                st.warning("⚠️ No role-specific questions available. Please select another role.")
-                        else:
-                            st.warning("⚠️ No role-specific questions available. Please select another role.")
         
-        # Interview in progress
-        elif st.session_state.interview_started and not st.session_state.interview_completed:
-            st.markdown(f"""
-                <div style="background: rgba(0, 195, 255, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
-                    <p style="color: #00c3ff; margin: 0;"><strong>Interview for:</strong> {st.session_state.interview_role} in {st.session_state.interview_domain}</p>
-                </div>
-            """, unsafe_allow_html=True)
-            
-            if st.session_state.current_interview_question < len(st.session_state.interview_questions):
-                question = st.session_state.interview_questions[st.session_state.current_interview_question]
-                
-                st.markdown(f"""
-                <div class="quiz-card">
-                    <h3 style="color: #00c3ff;">Question {st.session_state.current_interview_question + 1} of {len(st.session_state.interview_questions)}</h3>
-                    <p style="font-size: 18px; color: #ffffff; margin: 15px 0;">{question}</p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Answer input
-                answer = st.text_area(
-                    "Your answer:",
-                    placeholder="Type your detailed answer here...",
-                    height=150,
-                    key=f"interview_answer_{st.session_state.current_interview_question}"
+        with col2:
+            if selected_domain:
+                roles = list(COURSES_BY_CATEGORY[selected_domain].keys())
+                selected_role = st.selectbox(
+                    "Select Target Role",
+                    options=roles,
+                    key="interview_role_selection"
                 )
-                
-                # Submit answer button
-                if not st.session_state.answer_submitted:
-                    if st.button("Submit Answer & Get Feedback"):
-                        if answer.strip():
-                            # Evaluate answer
-                            score, feedback = evaluate_interview_answer(answer)
-                            
-                            # Store answer and score
-                            st.session_state.interview_answers.append(answer)
-                            st.session_state.interview_scores.append(score)
-                            st.session_state.answer_submitted = True
-                            st.rerun()
+            else:
+                selected_role = None
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        if selected_domain and selected_role:
+            # Generate dynamic questions
+            interview_questions = generate_interview_questions(selected_domain, selected_role)
+            
+            if not interview_questions or (not interview_questions.get("technical") and not interview_questions.get("behavioral")):
+                st.warning("⚠️ No role-specific questions available. Please select another role.")
+            else:
+                # Initialize interview state
+                if 'dynamic_interview_questions' not in st.session_state:
+                    st.session_state.dynamic_interview_questions = []
+                if 'current_dynamic_interview_question' not in st.session_state:
+                    st.session_state.current_dynamic_interview_question = 0
+                if 'dynamic_interview_answers' not in st.session_state:
+                    st.session_state.dynamic_interview_answers = []
+                if 'dynamic_interview_scores' not in st.session_state:
+                    st.session_state.dynamic_interview_scores = []
+                if 'dynamic_interview_completed' not in st.session_state:
+                    st.session_state.dynamic_interview_completed = False
+                if 'dynamic_interview_started' not in st.session_state:
+                    st.session_state.dynamic_interview_started = False
+                if 'dynamic_answer_submitted' not in st.session_state:
+                    st.session_state.dynamic_answer_submitted = False
+                if 'interview_domain' not in st.session_state or st.session_state.interview_domain != selected_domain:
+                    st.session_state.interview_domain = selected_domain
+                    st.session_state.interview_role = selected_role
+                    st.session_state.dynamic_interview_started = False
+                    st.session_state.dynamic_interview_completed = False
+                    
+                # Start interview setup
+                if not st.session_state.dynamic_interview_started:
+                    st.markdown(f"### Practice interview for: {selected_role}")
+                    
+                    interview_type = st.selectbox(
+                        "Interview Type",
+                        options=["technical", "behavioral", "mixed"],
+                        format_func=lambda x: x.title() + (" (Technical + Behavioral)" if x == "mixed" else ""),
+                        key="dynamic_interview_type_select"
+                    )
+                    
+                    num_questions = st.slider("Number of questions:", 3, 8, 5)
+                    
+                    if st.button("🚀 Start Interview Practice"):
+                        import random
+                        
+                        # Prepare question pool
+                        selected_questions = []
+                        if interview_type == "mixed":
+                            # Mix technical and behavioral
+                            tech_questions = interview_questions.get("technical", [])
+                            behavioral_questions = interview_questions.get("behavioral", [])
+                            half_questions = num_questions // 2
+                            selected_questions.extend(random.sample(tech_questions, min(half_questions, len(tech_questions))))
+                            selected_questions.extend(random.sample(behavioral_questions, min(num_questions - half_questions, len(behavioral_questions))))
                         else:
-                            st.warning("Please provide an answer before proceeding.")
-                else:
-                    # Show feedback after answer submitted
-                    score = st.session_state.interview_scores[st.session_state.current_interview_question]
-                    answer_text = st.session_state.interview_answers[st.session_state.current_interview_question]
-                    _, feedback = evaluate_interview_answer(answer_text)
+                            available_questions = interview_questions.get(interview_type, [])
+                            selected_questions = random.sample(available_questions, min(num_questions, len(available_questions)))
+                        
+                        st.session_state.dynamic_interview_questions = selected_questions
+                        st.session_state.current_dynamic_interview_question = 0
+                        st.session_state.dynamic_interview_answers = []
+                        st.session_state.dynamic_interview_scores = []
+                        st.session_state.dynamic_interview_completed = False
+                        st.session_state.dynamic_interview_started = True
+                        st.session_state.dynamic_answer_submitted = False
+                        st.rerun()
+                
+                # Interview in progress
+                elif st.session_state.dynamic_interview_started and not st.session_state.dynamic_interview_completed:
+                    if st.session_state.current_dynamic_interview_question < len(st.session_state.dynamic_interview_questions):
+                        question = st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question]
+                        
+                        st.markdown(f"""
+                        <div class="quiz-card">
+                            <h3 style="color: #00c3ff;">Question {st.session_state.current_dynamic_interview_question + 1} of {len(st.session_state.dynamic_interview_questions)}</h3>
+                            <h4 style="color: #ffffff; margin: 15px 0;">Role: {selected_role}</h4>
+                            <p style="font-size: 18px; color: #ffffff; margin: 15px 0;">{question}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Answer input
+                        answer = st.text_area(
+                            "Your answer:",
+                            placeholder="Type your detailed answer here...",
+                            height=150,
+                            key=f"dynamic_interview_answer_{st.session_state.current_dynamic_interview_question}"
+                        )
+                        
+                        # Submit answer button
+                        if not st.session_state.dynamic_answer_submitted:
+                            if st.button("Submit Answer & Get Feedback"):
+                                if answer.strip():
+                                    # Evaluate answer
+                                    score, feedback = evaluate_interview_answer(answer)
+                                    
+                                    # Store answer and score
+                                    st.session_state.dynamic_interview_answers.append(answer)
+                                    st.session_state.dynamic_interview_scores.append(score)
+                                    st.session_state.dynamic_answer_submitted = True
+                                    st.rerun()
+                                else:
+                                    st.warning("Please provide an answer before proceeding.")
+                        else:
+                            # Show feedback after answer submitted
+                            score = st.session_state.dynamic_interview_scores[st.session_state.current_dynamic_interview_question]
+                            answer_text = st.session_state.dynamic_interview_answers[st.session_state.current_dynamic_interview_question]
+                            _, feedback = evaluate_interview_answer(answer_text)
+                            
+                            st.markdown(f"""
+                            <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%); 
+                                        border: 1px solid rgba(0, 195, 255, 0.3); border-radius: 10px; padding: 15px; margin: 15px 0;">
+                                <h4 style="color: #00c3ff;">Feedback:</h4>
+                                <p style="color: #ffffff;">📊 Score: {score:.1f}/5.0</p>
+                                <p style="color: #ffffff;">💬 {feedback}</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                            
+                            # Continue/Complete button
+                            if st.session_state.current_dynamic_interview_question < len(st.session_state.dynamic_interview_questions) - 1:
+                                if st.button("Continue to Next Question ➡️"):
+                                    st.session_state.current_dynamic_interview_question += 1
+                                    st.session_state.dynamic_answer_submitted = False
+                                    st.rerun()
+                            else:
+                                if st.button("Complete Interview 🏁"):
+                                    st.session_state.dynamic_interview_completed = True
+                                    st.rerun()
+                                
+                        # Progress bar
+                        progress = (st.session_state.current_dynamic_interview_question + 1) / len(st.session_state.dynamic_interview_questions)
+                        st.progress(progress)
+                
+                # Interview completed
+                elif st.session_state.dynamic_interview_completed:
+                    # Calculate average score
+                    avg_score = sum(st.session_state.dynamic_interview_scores) / len(st.session_state.dynamic_interview_scores)
+                    
+                    # Store results for gamification
+                    st.session_state.interview_result = {
+                        "avg_score": avg_score,
+                        "num_questions": len(st.session_state.dynamic_interview_questions),
+                        "scores": st.session_state.dynamic_interview_scores,
+                        "role": selected_role,
+                        "domain": selected_domain
+                    }
+                    
+                    # Get badge
+                    badge_emoji, badge_title = get_badge_for_score("interview", avg_score)
                     
                     st.markdown(f"""
-                    <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%); 
-                                border: 1px solid rgba(0, 195, 255, 0.3); border-radius: 10px; padding: 15px; margin: 15px 0;">
-                        <h4 style="color: #00c3ff;">Feedback:</h4>
-                        <p style="color: #ffffff;">📊 Score: {score:.1f}/5.0</p>
-                        <p style="color: #ffffff;">💬 {feedback}</p>
+                    <div class="badge-container">
+                        <h2 style="margin: 0; color: #333;">🎉 Interview Practice Complete!</h2>
+                        <div style="margin: 20px 0;">
+                            <div class="score-display">{avg_score:.1f}/5.0</div>
+                            <h3 style="color: #333; margin: 10px 0;">{badge_emoji} {badge_title}</h3>
+                        </div>
+                        <p style="color: #666;">Role: {selected_role} in {selected_domain}</p>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Continue to next question
-                    if st.session_state.current_interview_question < len(st.session_state.interview_questions) - 1:
-                        if st.button("Next Question ➡️"):
-                            st.session_state.current_interview_question += 1
-                            st.session_state.answer_submitted = False
-                            st.rerun()
-                    else:
-                        if st.button("Complete Interview 🏁"):
-                            st.session_state.interview_completed = True
-                            st.rerun()
-                        
-                # Progress bar
-                progress = (st.session_state.current_interview_question + 1) / len(st.session_state.interview_questions)
-                st.progress(progress)
-        
-        # Interview completed
-        elif st.session_state.interview_completed:
-            # Calculate average score
-            avg_score = sum(st.session_state.interview_scores) / len(st.session_state.interview_scores)
-            
-            # Store results
-            st.session_state.interview_result = {
-                "avg_score": avg_score,
-                "num_questions": len(st.session_state.interview_questions),
-                "scores": st.session_state.interview_scores,
-                "role": st.session_state.interview_role
-            }
-            
-            # Get badge
-            badge_emoji, badge_title = get_badge_for_score("interview", avg_score)
-            
-            st.markdown(f"""
-            <div class="badge-container">
-                <h2 style="margin: 0; color: #333;">🎉 Interview Practice Complete!</h2>
-                <div style="margin: 20px 0;">
-                    <div class="score-display">{avg_score:.1f}/5.0</div>
-                    <h3 style="color: #333; margin: 10px 0;">{badge_emoji} {badge_title}</h3>
-                </div>
-                <p style="color: #666; margin: 10px 0;">Role-specific practice for: {st.session_state.interview_role}</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Show detailed results
-            st.subheader("📊 Detailed Results:")
-            for i, (score, answer) in enumerate(zip(st.session_state.interview_scores, st.session_state.interview_answers)):
-                with st.expander(f"Question {i+1}: Score {score:.1f}/5.0"):
-                    st.write(f"**Question:** {st.session_state.interview_questions[i]}")
-                    st.write(f"**Your Answer:** {answer[:200]}...")
-                    st.write(f"**Score:** {score:.1f}/5.0")
-            
-            # Restart button
-            if st.button("🔄 Practice Another Interview"):
-                st.session_state.interview_started = False
-                st.session_state.interview_completed = False
-                st.session_state.interview_questions = []
-                st.session_state.current_interview_question = 0
-                st.session_state.interview_answers = []
-                st.session_state.interview_scores = []
-                st.session_state.answer_submitted = False
-                st.session_state.interview_domain = None
-                st.session_state.interview_role = None
-                st.rerun()
+                    # Show detailed results
+                    st.subheader("📊 Detailed Results:")
+                    for i, (score, answer) in enumerate(zip(st.session_state.dynamic_interview_scores, st.session_state.dynamic_interview_answers)):
+                        with st.expander(f"Question {i+1}: Score {score:.1f}/5.0"):
+                            st.write(f"**Question:** {st.session_state.dynamic_interview_questions[i]}")
+                            st.write(f"**Your Answer:** {answer[:200]}...")
+                            st.write(f"**Score:** {score:.1f}/5.0")
+                    
+                    # Restart button
+                    if st.button("🔄 Practice for Different Role"):
+                        st.session_state.dynamic_interview_started = False
+                        st.session_state.dynamic_interview_completed = False
+                        st.session_state.dynamic_interview_questions = []
+                        st.session_state.current_dynamic_interview_question = 0
+                        st.session_state.dynamic_interview_answers = []
+                        st.session_state.dynamic_interview_scores = []
+                        st.session_state.dynamic_answer_submitted = False
+                        st.rerun()
 
-    # ACHIEVEMENTS SECTION (unchanged)
+    # Section 6: Achievements 🏅  
     elif page == "Achievements 🏅":
         st.subheader("🏅 Your Achievements")
         st.markdown("Track your learning progress and unlock badges!")
@@ -6690,9 +7101,21 @@ with tab4:
                 <div class="badge-container">
                     <h3 style="color: #333; margin: 0;">{badge_emoji} {badge_title}</h3>
                     <p style="color: #666; margin: 10px 0;">Score: {result['score']:.0f}%</p>
-                    <p style="color: #666; margin: 5px 0;">Recommended Role: <strong>{result['role']}</strong></p>
+                    <p style="color: #666; margin: 5px 0;">Target Role: <strong>{result['role']}</strong></p>
+                    <p style="color: #666; margin: 5px 0;">Domain: <strong>{result.get('domain', 'General')}</strong></p>
                 </div>
                 """, unsafe_allow_html=True)
+                
+                if st.button("🔄 Take Quiz for Different Role", key="restart_quiz_achievements"):
+                    if 'career_quiz_result' in st.session_state:
+                        del st.session_state.career_quiz_result
+                    if 'dynamic_quiz_answers' in st.session_state:
+                        del st.session_state.dynamic_quiz_answers
+                    if 'current_dynamic_question' in st.session_state:
+                        del st.session_state.current_dynamic_question
+                    if 'dynamic_quiz_completed' in st.session_state:
+                        del st.session_state.dynamic_quiz_completed
+                    st.success("Career quiz reset! Go to Career Quiz tab to take it for a different role.")
             else:
                 st.info("🎯 Take the Career Quiz to earn your first badge!")
         
@@ -6706,9 +7129,20 @@ with tab4:
                 <div class="badge-container">
                     <h3 style="color: #333; margin: 0;">{badge_emoji} {badge_title}</h3>
                     <p style="color: #666; margin: 10px 0;">Average Score: {result['avg_score']:.1f}/5.0</p>
-                    <p style="color: #666; margin: 5px 0;">Questions: {result['num_questions']} for {result.get('role', 'General')}</p>
+                    <p style="color: #666; margin: 5px 0;">Questions: {result['num_questions']}</p>
+                    <p style="color: #666; margin: 5px 0;">Role: <strong>{result.get('role', 'General')}</strong></p>
+                    <p style="color: #666; margin: 5px 0;">Domain: <strong>{result.get('domain', 'General')}</strong></p>
                 </div>
                 """, unsafe_allow_html=True)
+                
+                if st.button("🔄 Practice for Different Role", key="restart_interview_achievements"):
+                    if 'interview_result' in st.session_state:
+                        del st.session_state.interview_result
+                    # Clear all interview session state
+                    for key in list(st.session_state.keys()):
+                        if 'interview' in key:
+                            del st.session_state[key]
+                    st.success("Interview practice reset! Go to AI Interview Coach tab to practice for a different role.")
             else:
                 st.info("🤖 Complete the Interview Practice to earn your badge!")
         

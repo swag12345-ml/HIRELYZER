@@ -5991,7 +5991,7 @@ with tab4:
 
     page = st.radio(
         label="Select Learning Option",
-        options=["Courses by Role", "Resume Videos", "Interview Videos", "Career Quiz 🎯", "AI Interview Coach 🤖", "Achievements 🏅"],
+        options=["Courses by Role", "Resume Videos", "Interview Videos",  "AI Interview Coach 🤖", "Achievements 🏅"],
         horizontal=True,
         key="page_selection",
         label_visibility="collapsed"

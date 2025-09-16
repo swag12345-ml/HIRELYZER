@@ -5516,7 +5516,11 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
-with tab4:
+import streamlit as st
+import plotly.graph_objects as go
+from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
+
+with st.container():
     # Inject CSS styles (keeping existing styles)
     st.markdown("""
         <style>
@@ -5818,7 +5822,7 @@ with tab4:
             margin: 15px 0;
         }
 
-        /* NEW: Course tile styling */
+        /* Course tile styling */
         .course-tile {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             border: 2px solid #00c3ff;
@@ -5937,6 +5941,15 @@ with tab4:
     )
 
     st.markdown("</div></div>", unsafe_allow_html=True)
+
+    # NEW: Index-based difficulty function (replaces keyword-based)
+    def get_course_difficulty_by_index(index):
+        if index == 0:
+            return "Beginner"
+        elif index in [1, 2]:
+            return "Intermediate"
+        else:
+            return "Advanced"
 
     # Helper functions for dynamic question generation
     def generate_career_quiz_questions(domain, role):
@@ -6741,8 +6754,6 @@ with tab4:
 
     def create_skill_radar_chart(skills_data):
         """Create a radar chart for skills using Plotly"""
-        import plotly.graph_objects as go
-        
         # Extract skills and values
         skills = list(skills_data.keys())
         values = list(skills_data.values())
@@ -6788,17 +6799,6 @@ with tab4:
         
         return fig
 
-    def get_course_difficulty(course_title):
-        """Determine course difficulty based on title keywords"""
-        title_lower = course_title.lower()
-        
-        if any(word in title_lower for word in ['beginner', 'basics', 'introduction', 'fundamentals', 'getting started', 'zero to']):
-            return 'Beginner'
-        elif any(word in title_lower for word in ['advanced', 'expert', 'professional', 'master', 'complete guide']):
-            return 'Advanced'
-        else:
-            return 'Intermediate'
-
     def get_course_description(course_title, role):
         """Generate a short description for the course"""
         descriptions = {
@@ -6815,9 +6815,36 @@ with tab4:
         
         return descriptions.get(role, f"Comprehensive course to advance your skills in {role} role.")
 
-    # EXISTING SECTIONS (keeping exactly as they were)
-    
-    # Section 1: ENHANCED Courses by Role with Interactive Tiles and Filtering
+    def display_courses_by_difficulty(courses, role):
+        """Display courses grouped by difficulty using index-based mapping"""
+        # Group courses by difficulty
+        difficulty_groups = {"Beginner": [], "Intermediate": [], "Advanced": []}
+        
+        for idx, (title, url) in enumerate(courses):
+            difficulty = get_course_difficulty_by_index(idx)
+            description = get_course_description(title, role)
+            difficulty_groups[difficulty].append((title, url, description))
+        
+        # Display each difficulty group
+        for difficulty in ["Beginner", "Intermediate", "Advanced"]:
+            if difficulty_groups[difficulty]:
+                st.markdown(f"### 🎯 {difficulty} Level")
+                for title, url, description in difficulty_groups[difficulty]:
+                    st.markdown(f"""
+                        <div class="course-tile">
+                            <div class="course-title">{title}</div>
+                            <div class="course-description">{description}</div>
+                            <span class="difficulty-badge difficulty-{difficulty.lower()}">{difficulty}</span>
+                            <br>
+                            <a href="{url}" target="_blank" class="course-link-btn">
+                                🚀 Start Learning
+                            </a>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+    # UPDATED SECTIONS
+
+    # Section 1: UPDATED Courses by Role with Index-based Difficulty
     if page == "Courses by Role":
         st.subheader("🎯 Courses by Career Role")
         
@@ -6841,7 +6868,7 @@ with tab4:
                 role = None
         
         if category and role:
-            # ENHANCED: Add difficulty filter
+            # UPDATED: Add difficulty filter
             difficulty_filter = st.selectbox(
                 "Filter by Difficulty Level",
                 options=["All Levels", "Beginner", "Intermediate", "Advanced"],
@@ -6852,32 +6879,37 @@ with tab4:
             courses = get_courses_for_role(category, role)
             
             if courses:
-                # ENHANCED: Display courses as interactive tiles
-                for title, url in courses:
-                    difficulty = get_course_difficulty(title)
+                # UPDATED: Display courses using index-based difficulty
+                filtered_courses = []
+                for idx, (title, url) in enumerate(courses):
+                    difficulty = get_course_difficulty_by_index(idx)
                     
                     # Apply difficulty filter
-                    if difficulty_filter != "All Levels" and difficulty != difficulty_filter:
-                        continue
-                    
-                    description = get_course_description(title, role)
-                    
-                    # ENHANCED: Interactive course tile
-                    st.markdown(f"""
-                        <div class="course-tile">
-                            <div class="course-title">{title}</div>
-                            <div class="course-description">{description}</div>
-                            <span class="difficulty-badge difficulty-{difficulty.lower()}">{difficulty}</span>
-                            <br>
-                            <a href="{url}" target="_blank" class="course-link-btn">
-                                🚀 Start Learning
-                            </a>
-                        </div>
-                    """, unsafe_allow_html=True)
+                    if difficulty_filter == "All Levels" or difficulty == difficulty_filter:
+                        filtered_courses.append((title, url, difficulty, idx))
+                
+                if filtered_courses:
+                    for title, url, difficulty, idx in filtered_courses:
+                        description = get_course_description(title, role)
+                        
+                        # UPDATED: Interactive course tile with index-based difficulty
+                        st.markdown(f"""
+                            <div class="course-tile">
+                                <div class="course-title">{title}</div>
+                                <div class="course-description">{description}</div>
+                                <span class="difficulty-badge difficulty-{difficulty.lower()}">{difficulty}</span>
+                                <br>
+                                <a href="{url}" target="_blank" class="course-link-btn">
+                                    🚀 Start Learning
+                                </a>
+                            </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.info("🚫 No courses found for this difficulty level.")
             else:
                 st.info("🚫 No courses found for this role.")
         
-        # ENHANCED: Show skill radar chart for selected role
+        # Show skill radar chart for selected role
         if category and role:
             st.markdown("---")
             st.markdown('<div class="radar-container">', unsafe_allow_html=True)
@@ -6885,87 +6917,81 @@ with tab4:
             
             # Generate sample skills data based on role
             role_skills = {
-    # ==== Software Development & Engineering ====
-    "Frontend Developer": {
-        "JavaScript": 9, "React/Vue": 8, "CSS/HTML": 9,
-        "Responsive Design": 8, "Performance Optimization": 7, "Testing": 6
-    },
-    "Backend Developer": {
-        "API Design": 9, "Database Management": 8, "Security": 8,
-        "Scalability": 7, "Cloud Services": 7, "Testing": 6
-    },
-    "Full Stack Developer": {
-        "Frontend": 8, "Backend": 8, "Databases": 7,
-        "API Integration": 8, "DevOps Basics": 6, "Testing": 7
-    },
-    "Mobile App Developer": {
-        "Flutter/React Native": 8, "Swift/Kotlin": 8, "UI/UX": 8,
-        "APIs": 7, "Performance Optimization": 7, "App Deployment": 7
-    },
-    "Game Developer": {
-        "Unity/Unreal": 9, "C# / C++": 8, "Game Physics": 7,
-        "Graphics/Rendering": 8, "AI in Games": 6, "Multiplayer Systems": 7
-    },
-
-    # ==== Data Science & Analytics ====
-    "Data Scientist": {
-        "Python/R": 9, "Machine Learning": 8, "Statistics": 9,
-        "Data Visualization": 7, "SQL": 8, "Domain Knowledge": 6
-    },
-    "Data Analyst": {
-        "SQL": 9, "Excel/Spreadsheets": 8, "Visualization": 8,
-        "Statistics": 8, "Python/R": 7, "Business Acumen": 7
-    },
-    "Machine Learning Engineer": {
-        "ML Algorithms": 9, "Deep Learning": 8, "MLOps": 7,
-        "Data Engineering": 8, "Python/Frameworks": 9, "Cloud Deployment": 7
-    },
-
-    # ==== Cloud Computing & DevOps ====
-    "Cloud Architect": {
-        "AWS/Azure/GCP": 9, "System Design": 8, "Networking": 7,
-        "Security": 8, "Scalability": 9, "Cost Optimization": 7
-    },
-    "DevOps Engineer": {
-        "CI/CD": 9, "Containerization": 8, "Cloud Platforms": 8,
-        "Monitoring": 7, "Infrastructure as Code": 8, "Security": 7
-    },
-    "Site Reliability Engineer": {
-        "Reliability Engineering": 9, "Monitoring": 8, "Automation": 8,
-        "Incident Response": 8, "System Design": 7, "Security": 7
-    },
-
-    # ==== Cybersecurity ====
-    "Security Analyst": {
-        "Threat Detection": 9, "Incident Response": 8, "Networking": 7,
-        "SIEM Tools": 8, "Risk Management": 7, "Compliance": 6
-    },
-    "Penetration Tester": {
-        "Ethical Hacking": 9, "Web Security": 8, "Exploitation": 8,
-        "Scripting": 7, "Reporting": 6, "Network Security": 7
-    },
-
-    # ==== UI/UX Design ====
-    "UI Designer": {
-        "Design Tools": 9, "Visual Design": 8, "Typography": 7,
-        "Color Theory": 8, "Prototyping": 7, "User Research": 6
-    },
-    "UX Designer": {
-        "User Research": 9, "Wireframing": 8, "Prototyping": 8,
-        "Usability Testing": 7, "Accessibility": 8, "Design Thinking": 7
-    },
-
-    # ==== Project Management ====
-    "Project Manager": {
-        "Planning": 9, "Communication": 8, "Risk Management": 8,
-        "Leadership": 7, "Agile/Scrum": 8, "Budgeting": 7
-    },
-    "Product Manager": {
-        "Market Research": 9, "Product Strategy": 8, "Analytics": 8,
-        "Communication": 8, "Agile Methods": 7, "User-Centered Design": 7
-    }
-}
-
+                # ==== Software Development & Engineering ====
+                "Frontend Developer": {
+                    "JavaScript": 9, "React/Vue": 8, "CSS/HTML": 9,
+                    "Responsive Design": 8, "Performance Optimization": 7, "Testing": 6
+                },
+                "Backend Developer": {
+                    "API Design": 9, "Database Management": 8, "Security": 8,
+                    "Scalability": 7, "Cloud Services": 7, "Testing": 6
+                },
+                "Full Stack Developer": {
+                    "Frontend": 8, "Backend": 8, "Databases": 7,
+                    "API Integration": 8, "DevOps Basics": 6, "Testing": 7
+                },
+                "Mobile App Developer": {
+                    "Flutter/React Native": 8, "Swift/Kotlin": 8, "UI/UX": 8,
+                    "APIs": 7, "Performance Optimization": 7, "App Deployment": 7
+                },
+                "Game Developer": {
+                    "Unity/Unreal": 9, "C# / C++": 8, "Game Physics": 7,
+                    "Graphics/Rendering": 8, "AI in Games": 6, "Multiplayer Systems": 7
+                },
+                # ==== Data Science & Analytics ====
+                "Data Scientist": {
+                    "Python/R": 9, "Machine Learning": 8, "Statistics": 9,
+                    "Data Visualization": 7, "SQL": 8, "Domain Knowledge": 6
+                },
+                "Data Analyst": {
+                    "SQL": 9, "Excel/Spreadsheets": 8, "Visualization": 8,
+                    "Statistics": 8, "Python/R": 7, "Business Acumen": 7
+                },
+                "Machine Learning Engineer": {
+                    "ML Algorithms": 9, "Deep Learning": 8, "MLOps": 7,
+                    "Data Engineering": 8, "Python/Frameworks": 9, "Cloud Deployment": 7
+                },
+                # ==== Cloud Computing & DevOps ====
+                "Cloud Architect": {
+                    "AWS/Azure/GCP": 9, "System Design": 8, "Networking": 7,
+                    "Security": 8, "Scalability": 9, "Cost Optimization": 7
+                },
+                "DevOps Engineer": {
+                    "CI/CD": 9, "Containerization": 8, "Cloud Platforms": 8,
+                    "Monitoring": 7, "Infrastructure as Code": 8, "Security": 7
+                },
+                "Site Reliability Engineer": {
+                    "Reliability Engineering": 9, "Monitoring": 8, "Automation": 8,
+                    "Incident Response": 8, "System Design": 7, "Security": 7
+                },
+                # ==== Cybersecurity ====
+                "Security Analyst": {
+                    "Threat Detection": 9, "Incident Response": 8, "Networking": 7,
+                    "SIEM Tools": 8, "Risk Management": 7, "Compliance": 6
+                },
+                "Penetration Tester": {
+                    "Ethical Hacking": 9, "Web Security": 8, "Exploitation": 8,
+                    "Scripting": 7, "Reporting": 6, "Network Security": 7
+                },
+                # ==== UI/UX Design ====
+                "UI Designer": {
+                    "Design Tools": 9, "Visual Design": 8, "Typography": 7,
+                    "Color Theory": 8, "Prototyping": 7, "User Research": 6
+                },
+                "UX Designer": {
+                    "User Research": 9, "Wireframing": 8, "Prototyping": 8,
+                    "Usability Testing": 7, "Accessibility": 8, "Design Thinking": 7
+                },
+                # ==== Project Management ====
+                "Project Manager": {
+                    "Planning": 9, "Communication": 8, "Risk Management": 8,
+                    "Leadership": 7, "Agile/Scrum": 8, "Budgeting": 7
+                },
+                "Product Manager": {
+                    "Market Research": 9, "Product Strategy": 8, "Analytics": 8,
+                    "Communication": 8, "Agile Methods": 7, "User-Centered Design": 7
+                }
+            }
             
             skills_data = role_skills.get(role, {
                 "Technical Skills": 8, "Problem Solving": 7, "Communication": 6,
@@ -7021,7 +7047,7 @@ with tab4:
                     st.markdown(f"**{title}**")
                     st.video(url)
 
-    # Section 4: NEW Dynamic Career Quiz 🎯
+    # Section 4: Career Quiz (unchanged)
     elif page == "Career Quiz 🎯":
         st.subheader("🎯 Career Discovery Quiz")
         st.markdown("Choose your target domain and role, then answer personalized questions to get specific course recommendations!")
@@ -7172,10 +7198,10 @@ with tab4:
                         st.session_state.dynamic_quiz_completed = False
                         st.rerun()
 
-    # Section 5: ENHANCED AI Interview Coach 🤖 with Refresh Button
+    # Section 5: UNIFIED AI Interview Coach 🤖 with Courses
     elif page == "AI Interview Coach 🤖":
         st.subheader("🤖 AI Interview Coach")
-        st.markdown("Practice role-specific interview questions with our AI coach. Get instant feedback on your answers!")
+        st.markdown("Practice role-specific interview questions with our AI coach. Get instant feedback on your answers and discover recommended courses!")
         
         # Domain and Role selection
         st.markdown('<div class="role-selector">', unsafe_allow_html=True)
@@ -7283,7 +7309,7 @@ with tab4:
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        # ENHANCED: Add refresh button for new question
+                        # Add refresh button for new question
                         col1, col2 = st.columns([3, 1])
                         with col2:
                             if st.button("🔄 Refresh Interview Question"):
@@ -7359,7 +7385,7 @@ with tab4:
                         progress = (st.session_state.current_dynamic_interview_question + 1) / len(st.session_state.dynamic_interview_questions)
                         st.progress(progress)
                 
-                # Interview completed
+                # UNIFIED: Interview completed + Course Recommendations
                 elif st.session_state.dynamic_interview_completed:
                     # Calculate average score
                     avg_score = sum(st.session_state.dynamic_interview_scores) / len(st.session_state.dynamic_interview_scores)
@@ -7395,6 +7421,18 @@ with tab4:
                             st.write(f"**Your Answer:** {answer[:200]}...")
                             st.write(f"**Score:** {score:.1f}/5.0")
                     
+                    # UNIFIED: Display recommended courses by difficulty
+                    st.markdown("---")
+                    st.subheader("📚 Recommended Courses for Your Career Growth")
+                    st.markdown(f"Based on your interview practice for **{selected_role}** in **{selected_domain}**, here are our course recommendations organized by difficulty level:")
+                    
+                    courses = get_courses_for_role(selected_domain, selected_role)
+                    if courses:
+                        # Display courses grouped by difficulty using the new index-based function
+                        display_courses_by_difficulty(courses, selected_role)
+                    else:
+                        st.info("No specific courses found for this role. Explore our course categories to find relevant learning resources!")
+                    
                     # Restart button
                     if st.button("🔄 Practice for Different Role"):
                         st.session_state.dynamic_interview_started = False
@@ -7407,7 +7445,7 @@ with tab4:
                         st.session_state.current_interview_question_text = ""
                         st.rerun()
 
-    # Section 6: Achievements 🏅  
+    # Section 6: Achievements 🏅 (unchanged)
     elif page == "Achievements 🏅":
         st.subheader("🏅 Your Achievements")
         st.markdown("Track your learning progress and unlock badges!")

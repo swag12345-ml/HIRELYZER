@@ -3518,65 +3518,106 @@ with tab2:
                 normalized_project_entries.append("Placeholder Project")
 
             enhance_prompt = f"""
-            You are a professional resume builder AI.
+            You are a professional, unbiased resume optimization specialist. Create an ATS-friendly resume that uses inclusive, neutral language and avoids gendered or culturally biased terms.
 
-            Enhance the following resume sections based on the user's job title: "{st.session_state['job_title']}". The enhancements must be aligned **strictly and specifically** with the responsibilities, tools, skills, and certifications relevant to that job title.
-            
-            Instructions:
-            1. Rewrite the summary to sound professional, achievement-driven, and role-specific using strong action verbs.
-            2. Expand experience and project descriptions into structured bullet points (• or A., B., C.). Highlight domain-specific responsibilities and achievements.
-            3. Maintain paragraph structure and meaningful line breaks.
-            4. Infer and recommend **only domain-accurate** items, even if not explicitly provided:
-               - 6–8 modern **technical Skills** (relevant to the job title; e.g., for Cyber Security: SIEM, Kali Linux, Wireshark, Burp Suite, Splunk, Nmap, Firewalls, OWASP Top 10, etc.)
-               - 6–8 strong **Soft Skills**
-               - 3–6 job-aligned **Interests** (e.g., bug bounty, ethical hacking, network defense)
-               - Only **spoken Languages**
-               - 3–6 globally recognized **Certificates** (e.g., CompTIA Security+, CEH, IBM Cybersecurity Analyst, Google Cybersecurity, Cisco CCNA Security)
+            ROLE-SPECIFIC ENHANCEMENT for: "{st.session_state['job_title']}"
+            Enhance all sections to align precisely with this role's industry standards, required competencies, and professional expectations.
 
-            Important:
-            - Do not include irrelevant frontend/backend tools if the job title is from a different domain like Cyber Security, DevOps, Data Science, etc.
-            - The certificate names must match real-world course titles from platforms like Coursera, Udemy, Google, IBM, Cisco, Microsoft, etc.
+            LANGUAGE GUIDELINES:
+            - Use neutral, professional terminology
+            - Avoid gendered language (e.g., "rockstar," "ninja," "guru")
+            - Focus on skills, achievements, and measurable outcomes
+            - Use inclusive action verbs: developed, implemented, optimized, collaborated, analyzed, designed, managed, executed
 
-            📌 Format the output exactly like this:
+            FORMATTING REQUIREMENTS (CRITICAL - Follow exactly):
+            Each section must start with the exact label followed by a colon and content on the next line.
+
+            SECTION ENHANCEMENT RULES:
+
+            1. SUMMARY: Write 3-4 bullet points highlighting role-specific expertise, quantifiable achievements, and core competencies. Use strong action verbs and avoid subjective adjectives.
+
+            2. EXPERIENCE: Structure as lettered entries (A., B., C.) with:
+               - Company Name (Duration) format
+               - Role-specific responsibilities as bullet points
+               - Focus on achievements, not just duties
+               - Include metrics where possible
+
+            3. PROJECTS: Structure as lettered entries (A., B., C.) with:
+               - Project Title
+               - Tech Stack: (role-relevant technologies only)
+               - Duration: (timeframe)
+               - Description: 4-5 bullet points covering implementation, challenges solved, technologies used, and measurable impact
+
+            4. SKILLS: List 6-8 current, industry-standard technical skills relevant to the role
+            5. SOFTSKILLS: List 6-8 professional competencies using neutral language
+            6. LANGUAGES: List only spoken/written languages
+            7. INTERESTS: List 3-6 professional interests aligned with the role
+            8. CERTIFICATES: List 3-6 real, industry-recognized certifications with provider and duration
+
+            DOMAIN-SPECIFIC REQUIREMENTS:
+            - For Technical Roles: Focus on programming languages, frameworks, tools, methodologies
+            - For Security Roles: Emphasize security tools, compliance standards, threat analysis
+            - For Data Roles: Highlight analytics tools, statistical methods, visualization platforms
+            - For Management Roles: Stress leadership frameworks, process improvement, team development
+
+            OUTPUT FORMAT (EXACT STRUCTURE REQUIRED):
 
             Summary:
-            • ...
+            • [Achievement-focused bullet point with quantifiable impact]
+            • [Core competency statement with role-specific expertise]
+            • [Professional strength with measurable outcome]
 
             Experience:
-            A. Company Name (Duration)
-               • Role
-               • Responsibility 1
-               • Responsibility 2
+            A. [Company Name] ([Duration])
+               • [Role Title]
+               • [Specific responsibility with measurable outcome]
+               • [Achievement or project contribution]
+               • [Process improvement or efficiency gain]
+
+            B. [Company Name] ([Duration])
+               • [Role Title]
+               • [Specific responsibility with measurable outcome]
+               • [Achievement or project contribution]
 
             Projects:
-            A. <Project Title>
-               • Tech Stack: <Job-relevant tools only>
-               • Duration: <Start – End>
+            A. [Project Title]
+               • Tech Stack: [Relevant technologies only]
+               • Duration: [Start – End timeframe]
                • Description:
-                 - Clearly describe a specific feature, functionality, or implementation aligned with the job role.
-                 - Mention a tool or technology used and explain its context in the project.
-                 - Highlight performance improvements, solved challenges, or measurable impacts.
-                 - Include a technical or collaborative achievement that enhanced project success.
-                 - (Optional) Add an additional impactful point if it meaningfully supports the role.
+                 - [Specific implementation or feature developed]
+                 - [Technology used and its application context]
+                 - [Performance improvement or problem solved with metrics]
+                 - [Collaborative achievement or technical innovation]
+                 - [Additional impact or learning outcome]
+
+            B. [Project Title]
+               • Tech Stack: [Relevant technologies only]
+               • Duration: [Start – End timeframe]
+               • Description:
+                 - [Specific implementation details]
+                 - [Technical challenges addressed]
+                 - [Measurable results or improvements]
+                 - [Skills demonstrated or technologies mastered]
 
             Skills:
-            Kali Linux, Splunk, SIEM, ...
+            [Skill 1], [Skill 2], [Skill 3], [Skill 4], [Skill 5], [Skill 6]
 
             SoftSkills:
-            Problem Solving, Critical Thinking...
+            [Professional Competency 1], [Professional Competency 2], [Professional Competency 3], [Professional Competency 4], [Professional Competency 5], [Professional Competency 6]
 
             Languages:
-            English, Hindi...
+            [Language 1], [Language 2], [Language 3]
 
             Interests:
-            Capture The Flag (CTF), Ethical Hacking...
+            [Professional Interest 1], [Professional Interest 2], [Professional Interest 3], [Professional Interest 4]
 
             Certificates:
-            Google Cybersecurity – Coursera (6 months)
-            IBM Cybersecurity Analyst – IBM (Professional Certificate)
-            CompTIA Security+ – CompTIA (5 months)
+            [Certificate Name] – [Provider] ([Duration/Level])
+            [Certificate Name] – [Provider] ([Duration/Level])
+            [Certificate Name] – [Provider] ([Duration/Level])
 
-            Use ONLY the user's inputs below as a reference. Rewrite and improve them meaningfully and accurately.
+            ENHANCEMENT SOURCE DATA:
+            Transform and enhance the following user inputs while maintaining accuracy and relevance:
 
             Summary:
             {st.session_state['summary']}

@@ -19,9 +19,9 @@ MIN_TOTAL_HITS = 3
 STRONG_HIT_WEIGHT = 3
 WEAK_HIT_WEIGHT = 1
 FALLBACK_THRESHOLD_SCORE = 30
-FULLSTACK_TITLE_BOOST = 30
-FULLSTACK_MENTION_BOOST = 15
-FULLSTACK_HITS_THRESHOLD_BOOST = 12
+FULLSTACK_TITLE_BOOST = 50
+FULLSTACK_MENTION_BOOST = 25
+FULLSTACK_HITS_THRESHOLD_BOOST = 20
 
 # Configurable Full Stack Detection Constants (kept for compatibility)
 FULLSTACK_TITLE_BOOST = 30
@@ -709,18 +709,50 @@ class DatabaseManager:
         backend_strong_hits = sum(1 for kw in domain_keywords["Backend Development"]["strong"] if kw in title or kw in desc)
         backend_weak_hits = sum(1 for kw in domain_keywords["Backend Development"]["weak"] if kw in title or kw in desc)
         
-        fullstack_mentioned = any(term in title or term in desc for term in ["full stack", "fullstack", "full-stack"])
+        
+        # Enhanced Full Stack detection terms
+        fullstack_terms = [
+            "full stack", "fullstack", "full-stack", "full stack developer", 
+            "fullstack developer", "full-stack developer", "end-to-end", 
+            "frontend + backend", "frontend and backend", "complete web stack"
+        ]
+        fullstack_mentioned = any(term in title or term in desc for term in fullstack_terms)
+        
+        # Strong Full Stack indicators in title
+        strong_fullstack_title = any(term in title for term in [
+            "full stack developer", "fullstack developer", "full-stack developer"
+        ])
 
         # Apply Full Stack boosts based on requirements
-        if "full stack developer" in title:
+        if strong_fullstack_title:
             domain_scores["Full Stack Development"] += FULLSTACK_TITLE_BOOST
+            # Additional boost for explicit Full Stack title
+            domain_scores["Full Stack Development"] += 20
         elif fullstack_mentioned:
             domain_scores["Full Stack Development"] += FULLSTACK_MENTION_BOOST
 
-        total_frontend_hits = frontend_strong_hits + frontend_weak_hits
+        # More lenient threshold for Full Stack detection
+        if frontend_hits >= 3 and backend_hits >= 3:
         total_backend_hits = backend_strong_hits + backend_weak_hits
         if total_frontend_hits >= 4 and total_backend_hits >= 4:
             domain_scores["Full Stack Development"] += FULLSTACK_HITS_THRESHOLD_BOOST
+        
+        # Additional Full Stack boost for comprehensive skill mentions
+        comprehensive_skills = [
+            "html", "css", "javascript", "react", "node.js", "express", 
+            "database", "api", "deployment", "cloud"
+        ]
+        comprehensive_hits = sum(1 for skill in comprehensive_skills if skill in title or skill in desc)
+        if comprehensive_hits >= 6:
+            domain_scores["Full Stack Development"] += 15
+        
+        # If title explicitly mentions "Full Stack" and we have both frontend and backend skills
+        if strong_fullstack_title and frontend_hits >= 2 and backend_hits >= 2:
+            # Ensure Full Stack gets priority over individual frontend/backend domains
+            domain_scores["Full Stack Development"] = max(
+                domain_scores["Full Stack Development"],
+                max(domain_scores.get("Frontend Development", 0), domain_scores.get("Backend Development", 0)) + 30
+            )
 
         # Step 3: Domain-specific boosts (kept from original logic)
         domain_boosts = {

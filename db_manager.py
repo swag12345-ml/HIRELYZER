@@ -14,46 +14,6 @@ import logging
 from threading import Lock
 import os
 
-# Configurable Full Stack Detection Constants
-FULLSTACK_TITLE_BOOST = 30
-FULLSTACK_MENTION_BOOST = 15
-FULLSTACK_HITS_THRESHOLD_BOOST = 12
-
-# Configurable Domain Weights
-DOMAIN_WEIGHTS = {
-    "Data Science": 4,
-    "AI/Machine Learning": 4,
-    "UI/UX Design": 3,
-    "Mobile Development": 3,
-    "Frontend Development": 3,
-    "Backend Development": 3,
-    "Full Stack Development": 4,
-    "Cybersecurity": 4,
-    "Cloud Engineering": 3,
-    "DevOps/Infrastructure": 3,
-    "Quality Assurance": 3,
-    "Game Development": 3,
-    "Blockchain Development": 3,
-    "Embedded Systems": 3,
-    "System Architecture": 4,
-    "Database Management": 3,
-    "Networking": 3,
-    "Site Reliability Engineering": 3,
-    "Product Management": 3,
-    "Project Management": 3,
-    "Business Analysis": 3,
-    "Technical Writing": 2,
-    "Digital Marketing": 3,
-    "E-commerce": 3,
-    "Fintech": 3,
-    "Healthcare Tech": 3,
-    "EdTech": 3,
-    "IoT Development": 3,
-    "AR/VR Development": 3,
-    "Technical Sales": 2,
-    "Agile Coaching": 2,
-    "Software Engineering": 2,  # General fallback
-}
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -109,39 +69,6 @@ class DatabaseManager:
             
             conn.commit()
             logger.info("Database initialized with optimized schema and indexes")
-
-    def _validate_candidate_data(self, data: Tuple) -> Tuple:
-        """
-        Validate data tuple length, types, and ranges. Return normalized data tuple.
-        """
-        # Validate data length
-        if len(data) < 9:
-            raise ValueError(f"Expected at least 9 data fields, got {len(data)}")
-
-        # Use only first 9 values
-        validated_data = list(data[:9])
-
-        # Validate score ranges (positions 2-7: ats_score to keyword_score)
-        for i in range(2, 8):
-            score = validated_data[i]
-            if not isinstance(score, (int, float)):
-                raise ValueError(f"Score at position {i} must be numeric, got {type(score)}")
-            if not (0 <= score <= 100):
-                raise ValueError(f"Score at position {i} must be between 0 and 100, got {score}")
-
-        # Validate bias score (position 8)
-        bias_score = validated_data[8]
-        if not isinstance(bias_score, (int, float)):
-            raise ValueError(f"Bias score must be numeric, got {type(bias_score)}")
-        if not (0.0 <= bias_score <= 1.0):
-            raise ValueError(f"Bias score must be between 0.0 and 1.0, got {bias_score}")
-
-        # Validate text fields (positions 0-1: resume_name, candidate_name)
-        for i in range(0, 2):
-            if not isinstance(validated_data[i], str) or not validated_data[i].strip():
-                raise ValueError(f"Text field at position {i} must be a non-empty string")
-
-        return tuple(validated_data)
 
     @contextmanager
     def get_connection(self):
@@ -223,6 +150,42 @@ class DatabaseManager:
 
         domain_scores = defaultdict(int)
 
+        # Enhanced weights for better domain differentiation
+        WEIGHTS = {
+            "Data Science": 4,
+            "AI/Machine Learning": 4,
+            "UI/UX Design": 3,
+            "Mobile Development": 3,
+            "Frontend Development": 3,
+            "Backend Development": 3,
+            "Full Stack Development": 4,
+            "Cybersecurity": 4,
+            "Cloud Engineering": 3,
+            "DevOps/Infrastructure": 3,
+            "Quality Assurance": 3,
+            "Game Development": 3,
+            "Blockchain Development": 3,
+            "Embedded Systems": 3,
+            "System Architecture": 4,
+            "Database Management": 3,
+            "Networking": 3,
+            "Site Reliability Engineering": 3,
+            "Product Management": 3,
+            "Project Management": 3,
+            "Business Analysis": 3,
+            "Technical Writing": 2,
+            "Digital Marketing": 3,
+            "E-commerce": 3,
+            "Fintech": 3,
+            "Healthcare Tech": 3,
+            "EdTech": 3,
+            "IoT Development": 3,
+            "AR/VR Development": 3,
+            "Technical Sales": 2,
+            "Agile Coaching": 2,
+            "Software Engineering": 2,  # General fallback
+        }
+
         # Comprehensive keyword mapping for 30+ domains
         keywords = {
             "Data Science": [
@@ -295,8 +258,7 @@ class DatabaseManager:
                 "database design", "middleware", "mvc", "mvvm", "authentication", "authorization",
                 "session management", "cloud deployment", "responsive ui", "performance tuning",
                 "state management", "redux", "context api", "axios", "fetch api", "isomorphic",
-                "universal rendering", "headless cms", "api-first development", "backend frontend",
-                "end to end web application", "complete web stack", "full stack engineer", "software architect"
+                "universal rendering", "headless cms", "api-first development"
             ],
             
             "Cybersecurity": [
@@ -499,21 +461,18 @@ class DatabaseManager:
         for domain, kws in keywords.items():
             title_hits = sum(1 for kw in kws if kw in title)
             desc_hits = sum(1 for kw in kws if kw in desc)
-            domain_scores[domain] = (4 * title_hits + 1 * desc_hits) * DOMAIN_WEIGHTS[domain]
+            domain_scores[domain] = (4 * title_hits + 1 * desc_hits) * WEIGHTS[domain]
 
-        # Step 2: Enhanced Full Stack Detection with configurable boosts
+        # Step 2: Enhanced Full Stack Detection
         frontend_hits = sum(1 for kw in keywords["Frontend Development"] if kw in title or kw in desc)
         backend_hits = sum(1 for kw in keywords["Backend Development"] if kw in title or kw in desc)
         fullstack_mentioned = any(term in title or term in desc for term in ["full stack", "fullstack", "full-stack"])
 
-        # Apply Full Stack boosts based on requirements
-        if "full stack developer" in title:
-            domain_scores["Full Stack Development"] += FULLSTACK_TITLE_BOOST
-        elif fullstack_mentioned:
-            domain_scores["Full Stack Development"] += FULLSTACK_MENTION_BOOST
+        if fullstack_mentioned:
+            domain_scores["Full Stack Development"] += 15
 
         if frontend_hits >= 4 and backend_hits >= 4:
-            domain_scores["Full Stack Development"] += FULLSTACK_HITS_THRESHOLD_BOOST
+            domain_scores["Full Stack Development"] += 12
 
         # Step 3: Domain-specific boosts
         domain_boosts = {
@@ -537,7 +496,7 @@ class DatabaseManager:
         if len(desc.split()) < 8:
             for domain in domain_scores:
                 desc_hits = sum(1 for kw in keywords[domain] if kw in desc)
-                domain_scores[domain] = max(0, domain_scores[domain] - (desc_hits * DOMAIN_WEIGHTS[domain] * 0.5))
+                domain_scores[domain] = max(0, domain_scores[domain] - (desc_hits * WEIGHTS[domain] * 0.5))
 
         # Step 5: Choose top domain
         if domain_scores:
@@ -754,17 +713,28 @@ class DatabaseManager:
         Returns the ID of the inserted candidate
         """
         try:
-            # Validate candidate data first
-            validated_data = self._validate_candidate_data(data)
-            
             local_tz = pytz.timezone("Asia/Kolkata")
             local_time = datetime.now(local_tz).strftime("%Y-%m-%d %H:%M:%S")
 
             # Detect domain from job title + description
             detected_domain = self.detect_domain_from_title_and_description(job_title, job_description)
 
-            # Append domain to validated data
-            final_data = validated_data + (detected_domain,)
+            # Validate data length and types
+            if len(data) < 9:
+                raise ValueError(f"Expected at least 9 data fields, got {len(data)}")
+
+            # Use only first 9 values and append domain
+            normalized_data = data[:9] + (detected_domain,)
+
+            # Validate score ranges
+            for i, score in enumerate(normalized_data[2:8]):  # ats_score to keyword_score
+                if not isinstance(score, (int, float)) or not (0 <= score <= 100):
+                    raise ValueError(f"Score at position {i+2} must be between 0 and 100, got {score}")
+
+            # Validate bias score
+            bias_score = normalized_data[8]
+            if not isinstance(bias_score, (int, float)) or not (0.0 <= bias_score <= 1.0):
+                raise ValueError(f"Bias score must be between 0.0 and 1.0, got {bias_score}")
 
             with self.get_connection() as conn:
                 cursor = conn.cursor()
@@ -773,7 +743,7 @@ class DatabaseManager:
                         resume_name, candidate_name, ats_score, edu_score, exp_score,
                         skills_score, lang_score, keyword_score, bias_score, domain, timestamp
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, final_data + (local_time,))
+                """, normalized_data + (local_time,))
                 conn.commit()
                 candidate_id = cursor.lastrowid
                 logger.info(f"Inserted candidate with ID: {candidate_id}")

@@ -1,12 +1,11 @@
 """
 Enhanced Database Manager for Resume Analysis System
 Optimized for large-scale user structures with improved performance and reliability
-Enhanced Full Stack Detection and Comprehensive Domain Coverage
 """
 
 import sqlite3
 import pandas as pd
-from datetime imp
+from datetime import datetime
 import pytz
 from collections import defaultdict
 from contextlib import contextmanager
@@ -15,33 +14,37 @@ import logging
 from threading import Lock
 import os
 
-# Enhanced Domain Detection Configuration Constants
-MIN_TOTAL_HITS = 2  # Reduced for better sensitivity
-STRONG_HIT_WEIGHT = 4  # Increased weight for strong keywords
+# Domain Detection Configuration Constants
+MIN_TOTAL_HITS = 3
+STRONG_HIT_WEIGHT = 3
 WEAK_HIT_WEIGHT = 1
-FALLBACK_THRESHOLD_SCORE = 25  # Reduced threshold
-FULLSTACK_TITLE_BOOST = 60  # Increased boost for full-stack titles
-FULLSTACK_MENTION_BOOST = 35  # Increased boost for mentions
-FULLSTACK_HITS_THRESHOLD_BOOST = 30  # Increased boost for combined hits
-FULLSTACK_COMBO_BOOST = 40  # New boost for frontend+backend combinations
+FALLBACK_THRESHOLD_SCORE = 30
+FULLSTACK_TITLE_BOOST = 50
+FULLSTACK_MENTION_BOOST = 25
+FULLSTACK_HITS_THRESHOLD_BOOST = 20
 
-# Enhanced Domain Weights - Prioritizing Full Stack
+# Configurable Full Stack Detection Constants (kept for compatibility)
+FULLSTACK_TITLE_BOOST = 30
+FULLSTACK_MENTION_BOOST = 15
+FULLSTACK_HITS_THRESHOLD_BOOST = 12
+
+# Configurable Domain Weights
 DOMAIN_WEIGHTS = {
-    "Full Stack Development": 5,  # Highest priority
     "Data Science": 4,
     "AI/Machine Learning": 4,
-    "System Architecture": 4,
-    "Cybersecurity": 4,
     "UI/UX Design": 3,
     "Mobile Development": 3,
     "Frontend Development": 3,
     "Backend Development": 3,
+    "Full Stack Development": 4,
+    "Cybersecurity": 4,
     "Cloud Engineering": 3,
     "DevOps/Infrastructure": 3,
     "Quality Assurance": 3,
     "Game Development": 3,
     "Blockchain Development": 3,
     "Embedded Systems": 3,
+    "System Architecture": 4,
     "Database Management": 3,
     "Networking": 3,
     "Site Reliability Engineering": 3,
@@ -189,7 +192,7 @@ class DatabaseManager:
     def detect_domain_from_title_and_description(self, job_title: str, job_description: str) -> str:
         """
         Enhanced Domain Detection with robust heuristic-based mechanism
-        Significantly improved Full Stack Detection and comprehensive keyword coverage
+        Implements strong/weak keyword separation, minimum hit thresholds, and fallback logic
         """
         title = job_title.lower().strip()
         desc = job_description.lower().strip()
@@ -197,14 +200,12 @@ class DatabaseManager:
         # Enhanced normalization with more synonyms
         replacements = {
             "cyber security": "cybersecurity",
-            "ai engineer": "artificial intelligence",
+            "ai engineer": "machine learning",
             "ml engineer": "machine learning",
             "software developer": "software engineer",
-            "web developer": "full stack developer",
             "frontend developer": "frontend",
             "backend developer": "backend",
-            "fullstack developer": "full stack developer",
-            "full-stack developer": "full stack developer",
+            "fullstack developer": "full stack",
             "devops engineer": "devops",
             "cloud engineer": "cloud",
             "qa engineer": "quality assurance",
@@ -222,9 +223,7 @@ class DatabaseManager:
             "scrum master": "agile coaching",
             "technical writer": "technical writing",
             "sales engineer": "technical sales",
-            "solution architect": "system architecture",
-            "software architect": "system architecture",
-            "full stack engineer": "full stack developer"
+            "solution architect": "system architecture"
         }
         
         for old, new in replacements.items():
@@ -233,25 +232,22 @@ class DatabaseManager:
 
         domain_scores = defaultdict(int)
 
-        # Comprehensive keyword mapping with significantly expanded coverage
+        # Comprehensive keyword mapping with strong/weak separation
         domain_keywords = {
             "Data Science": {
                 "strong": [
                     "data scientist", "data analyst", "data science", "pandas", "numpy", 
                     "matplotlib", "seaborn", "power bi", "tableau", "looker", "sql", 
                     "jupyter", "databricks", "spark", "hadoop", "r programming",
-                    "statistical modeling", "time series", "forecasting", "predictive analytics",
-                    "data mining", "big data", "analytics", "statistical analysis", "quantitative analysis"
+                    "statistical modeling", "time series", "forecasting", "predictive analytics"
                 ],
                 "weak": [
                     "eda", "data analysis", "statistics", "data visualization", "excel", 
                     "dashboards", "insights", "hypothesis testing", "a/b testing", 
                     "business intelligence", "data wrangling", "feature engineering", 
-                    "data storytelling", "exploratory analysis", "kpi", "metrics",
+                    "data storytelling", "exploratory analysis", "data mining", "kpi",
                     "analytics engineer", "etl", "data pipeline", "data warehouse", 
-                    "olap", "oltp", "dimensional modeling", "data governance", "data quality",
-                    "data transformation", "data cleaning", "correlation analysis", "regression analysis",
-                    "cohort analysis", "funnel analysis", "churn analysis", "segmentation"
+                    "olap", "oltp", "dimensional modeling", "data governance"
                 ]
             },
             
@@ -260,45 +256,38 @@ class DatabaseManager:
                     "machine learning", "ml engineer", "deep learning", "neural network",
                     "scikit-learn", "tensorflow", "pytorch", "llm", "huggingface", 
                     "xgboost", "lightgbm", "bert", "gpt", "yolo", "transformer", 
-                    "autoencoder", "mistral", "llama", "openai", "langchain", "artificial intelligence",
-                    "computer vision", "natural language processing", "deep neural networks"
+                    "autoencoder", "mistral", "llama", "openai", "langchain"
                 ],
                 "weak": [
-                    "nlp", "ai engineer", "classification", "regression", "clustering",
+                    "nlp", "computer vision", "ai engineer", "classification", "regression",
                     "reinforcement learning", "transfer learning", "model training", 
                     "ai models", "fine-tuning", "zero-shot", "one-shot", "vector embeddings", 
                     "prompt engineering", "mlops", "model deployment", "feature store", 
                     "model monitoring", "hyperparameter tuning", "ensemble methods", 
-                    "gradient boosting", "random forest", "svm", "pca", "dimensionality reduction",
-                    "supervised learning", "unsupervised learning", "semi-supervised learning",
-                    "feature selection", "cross validation", "overfitting", "underfitting", "bias-variance tradeoff",
-                    "recommendation systems", "anomaly detection", "sentiment analysis", "image recognition"
+                    "gradient boosting", "random forest", "svm", "clustering", "pca"
                 ]
             },
             
             "UI/UX Design": {
                 "strong": [
                     "ui", "ux", "figma", "designer", "user interface", "user experience",
-                    "adobe xd", "sketch", "wireframe", "prototyping", "interaction design",
-                    "visual design", "user research", "design systems"
+                    "adobe xd", "sketch", "wireframe", "prototyping", "interaction design"
                 ],
                 "weak": [
-                    "usability", "accessibility", "human-centered design", "affinity diagram", 
+                    "user research", "usability", "design system", "visual design", 
+                    "accessibility", "human-centered design", "affinity diagram", 
                     "journey mapping", "heuristic evaluation", "persona", "responsive design", 
                     "mobile-first", "ux audit", "design tokens", "design thinking",
                     "information architecture", "card sorting", "tree testing", 
                     "user testing", "a/b testing design", "design sprint", "atomic design", 
-                    "material design", "design ops", "brand design", "color theory", "typography",
-                    "grid systems", "design patterns", "user flow", "customer journey", "empathy mapping",
-                    "usability testing", "hci", "human computer interaction", "interface design"
+                    "material design", "design ops", "brand design"
                 ]
             },
             
             "Mobile Development": {
                 "strong": [
                     "android", "ios", "flutter", "kotlin", "swift", "mobile app", 
-                    "react native", "mobile application", "xcode", "android studio",
-                    "mobile developer", "app development", "mobile engineer"
+                    "react native", "mobile application", "xcode", "android studio"
                 ],
                 "weak": [
                     "play store", "app store", "firebase", "mobile sdk", "cross-platform", 
@@ -306,69 +295,58 @@ class DatabaseManager:
                     "mobile ux", "apk", "ipa", "expo", "capacitor", "cordova", "xamarin", 
                     "ionic", "phonegap", "mobile testing", "app optimization", 
                     "mobile security", "offline functionality", "mobile analytics", 
-                    "app monetization", "mobile performance", "gesture recognition", "touch interfaces",
-                    "mobile frameworks", "responsive mobile", "progressive web app", "mobile first"
+                    "app monetization", "mobile performance"
                 ]
             },
             
             "Frontend Development": {
                 "strong": [
                     "frontend", "html", "css", "javascript", "react", "angular", "vue",
-                    "typescript", "next.js", "webpack", "bootstrap", "tailwind",
-                    "frontend developer", "front-end", "client-side", "web development"
+                    "typescript", "next.js", "webpack", "bootstrap", "tailwind"
                 ],
                 "weak": [
-                    "sass", "scss", "less", "es6", "es2015", "responsive design", "web accessibility", "dom", "jquery", 
+                    "sass", "es6", "responsive design", "web accessibility", "dom", "jquery", 
                     "redux", "vite", "zustand", "framer motion", "storybook", "eslint", 
-                    "vitepress", "pwa", "single page application", "spa", "csr", "ssr", "hydration", 
+                    "vitepress", "pwa", "single page application", "csr", "ssr", "hydration", 
                     "component-based ui", "web components", "micro frontends", "bundler", 
                     "transpiler", "polyfill", "css grid", "flexbox", "css animations", 
-                    "web performance", "lighthouse", "core web vitals", "module federation", "build tools",
-                    "css preprocessors", "component library", "design tokens", "css-in-js", "styled components",
-                    "browser compatibility", "cross-browser", "performance optimization", "lazy loading"
+                    "web performance", "lighthouse", "core web vitals"
                 ]
             },
             
             "Backend Development": {
                 "strong": [
                     "backend", "node.js", "django", "flask", "express", "api development",
-                    "java", "spring boot", "asp.net", "laravel", "go", "fastapi", "nest.js",
-                    "backend developer", "back-end", "server-side", "api", "rest api"
+                    "java", "spring boot", "asp.net", "laravel", "go", "fastapi", "nest.js"
                 ],
                 "weak": [
-                    "sql", "nosql", "mysql", "postgresql", "mongodb", 
-                    "graphql", "authentication", "authorization", "mvc", "orm",
-                    "business logic", "database schema", "microservices", 
+                    "sql", "nosql", "server-side", "mysql", "postgresql", "mongodb", 
+                    "rest api", "graphql", "authentication", "authorization", "mvc",
+                    "business logic", "orm", "database schema", "microservices", 
                     "websockets", "rabbitmq", "message broker", "cron jobs", "redis", 
                     "elasticsearch", "kafka", "grpc", "soap", "middleware", "caching",
                     "load balancing", "rate limiting", "api gateway", "serverless", 
-                    "lambda functions", "database design", "data modeling", "server architecture",
-                    "session management", "jwt", "oauth", "security", "scalability", "performance tuning"
+                    "lambda functions"
                 ]
             },
             
             "Full Stack Development": {
                 "strong": [
-                    "full stack", "fullstack", "full-stack", "mern", "mean", "mevn", "lamp", "jamstack",
-                    "frontend and backend", "end-to-end development", "full stack developer",
-                    "full stack engineer", "web application", "complete web development",
-                    "frontend backend", "client server", "full web stack", "comprehensive web development"
+                    "full stack", "fullstack", "mern", "mean", "mevn", "lamp", "jamstack",
+                    "frontend and backend", "end-to-end development", "full stack developer"
                 ],
                 "weak": [
-                    "api integration", "rest api", "graphql", "react + node", "vue + express",
-                    "angular + spring", "react.js + express", "monolith", "microservices", 
-                    "serverless architecture", "integrated app", "cross-functional development", 
-                    "component-based architecture", "database design", "middleware", "mvc", "mvvm", 
-                    "authentication", "authorization", "session management", "cloud deployment", 
+                    "api integration", "rest api", "graphql", "react + node", 
+                    "react.js + express", "monolith", "microservices", 
+                    "serverless architecture", "integrated app", "web application", 
+                    "cross-functional development", "component-based architecture",
+                    "database design", "middleware", "mvc", "mvvm", "authentication", 
+                    "authorization", "session management", "cloud deployment", 
                     "responsive ui", "performance tuning", "state management", "redux", 
                     "context api", "axios", "fetch api", "isomorphic", "universal rendering", 
-                    "headless cms", "api-first development", "end to end web application", 
-                    "complete web stack", "software architect", "web stack", "html css javascript",
-                    "client-side server-side", "database integration", "ui backend integration",
-                    "web services", "spa backend", "ssr", "deployment", "devops", "version control",
-                    "agile development", "scrum", "project management", "technical leadership",
-                    "code review", "testing", "debugging", "optimization", "security implementation",
-                    "database administration", "server configuration", "api design", "user interface design"
+                    "headless cms", "api-first development", "backend frontend",
+                    "end to end web application", "complete web stack", "full stack engineer", 
+                    "software architect"
                 ]
             },
             
@@ -376,40 +354,37 @@ class DatabaseManager:
                 "strong": [
                     "cybersecurity", "security analyst", "penetration testing", 
                     "ethical hacking", "owasp", "kali linux", "burp suite", "nmap", 
-                    "wireshark", "information security", "cyber security", "security engineer"
+                    "wireshark"
                 ],
                 "weak": [
                     "vulnerability", "threat analysis", "infosec", "red team", "blue team",
                     "incident response", "firewall", "ids", "ips", "malware", "encryption",
                     "cyber threat", "security operations", "siem", "zero-day", "cyber attack",
-                    "cve", "forensics", "security audit", "compliance", "ransomware", 
-                    "threat hunting", "security architecture", "identity management", "pki", 
-                    "security governance", "risk assessment", "vulnerability management", "soc",
-                    "security policies", "data protection", "privacy", "gdpr", "hipaa", "pci compliance"
+                    "cve", "forensics", "security audit", "information security", 
+                    "compliance", "ransomware", "threat hunting", "security architecture", 
+                    "identity management", "pki", "security governance", "risk assessment", 
+                    "vulnerability management", "soc"
                 ]
             },
             
             "Cloud Engineering": {
                 "strong": [
                     "cloud", "aws", "azure", "gcp", "cloud engineer", "cloud computing",
-                    "s3", "ec2", "terraform", "cloudwatch", "cloudtrail", "iam", "rds",
-                    "cloud architect", "cloud infrastructure"
+                    "s3", "ec2", "terraform", "cloudwatch", "cloudtrail", "iam", "rds"
                 ],
                 "weak": [
-                    "cloud security", "cloud formation", "load balancer", "auto scaling", 
-                    "cloud storage", "cloud native", "cloud migration", "eks", "aks", "elb", 
-                    "lambda", "azure functions", "cloud functions", "serverless", "containers", 
-                    "cloud architecture", "multi-cloud", "hybrid cloud", "cloud cost optimization",
-                    "docker", "kubernetes", "microservices", "saas", "paas", "iaas", "cdn",
-                    "cloud monitoring", "disaster recovery", "backup solutions", "cloud networking"
+                    "cloud infrastructure", "cloud security", "cloud formation", 
+                    "load balancer", "auto scaling", "cloud storage", "cloud native", 
+                    "cloud migration", "eks", "aks", "elb", "lambda", "azure functions", 
+                    "cloud functions", "serverless", "containers", "cloud architecture", 
+                    "multi-cloud", "hybrid cloud", "cloud cost optimization"
                 ]
             },
             
             "DevOps/Infrastructure": {
                 "strong": [
                     "devops", "docker", "kubernetes", "ci/cd", "jenkins", "ansible",
-                    "terraform", "prometheus", "grafana", "argocd", "helm", "devops engineer",
-                    "infrastructure engineer", "platform engineer"
+                    "terraform", "prometheus", "grafana", "argocd", "helm"
                 ],
                 "weak": [
                     "infrastructure as code", "monitoring", "deployment", "automation", 
@@ -418,8 +393,7 @@ class DatabaseManager:
                     "log aggregation", "observability", "splunk", "gitlab ci", 
                     "github actions", "azure devops", "puppet", "chef", "vagrant",
                     "infrastructure monitoring", "alerting", "incident management", 
-                    "chaos engineering", "configuration management", "container orchestration",
-                    "service mesh", "istio", "consul", "vault", "packer", "nomad"
+                    "chaos engineering"
                 ]
             },
             
@@ -427,326 +401,288 @@ class DatabaseManager:
                 "strong": [
                     "qa", "quality assurance", "testing", "test automation", "selenium", 
                     "cypress", "jest", "mocha", "junit", "testng", "postman", "jmeter", 
-                    "appium", "qa engineer", "test engineer", "sdet"
+                    "appium"
                 ],
                 "weak": [
                     "test cases", "test planning", "bug tracking", "regression testing", 
                     "performance testing", "load testing", "stress testing", "api testing", 
                     "ui testing", "unit testing", "integration testing", "system testing", 
-                    "acceptance testing", "test driven development", "tdd",
-                    "behavior driven development", "bdd", "cucumber", "test management", 
-                    "defect management", "test strategy", "qa processes", "manual testing",
-                    "automated testing", "functional testing", "non-functional testing",
-                    "usability testing", "security testing", "compatibility testing"
+                    "acceptance testing", "test driven development", 
+                    "behavior driven development", "cucumber", "test management", 
+                    "defect management"
                 ]
             },
             
             "Game Development": {
                 "strong": [
                     "game development", "unity", "unreal engine", "c#", "c++", 
-                    "game design", "game programming", "game developer", "game engineer"
+                    "game design", "game programming"
                 ],
                 "weak": [
                     "3d modeling", "animation", "shader programming", "physics engine",
                     "game mechanics", "level design", "game testing", "multiplayer", 
                     "networking", "mobile games", "console games", "pc games", "vr games", 
                     "ar games", "game optimization", "performance profiling", 
-                    "game analytics", "monetization", "gameplay", "ui/ux for games",
-                    "game assets", "texture mapping", "lighting", "rendering", "audio programming"
+                    "game analytics", "monetization"
                 ]
             },
             
             "Blockchain Development": {
                 "strong": [
                     "blockchain", "cryptocurrency", "smart contracts", "solidity", 
-                    "ethereum", "bitcoin", "web3", "dapp", "blockchain developer",
-                    "crypto developer", "defi developer"
+                    "ethereum", "bitcoin", "web3", "dapp"
                 ],
                 "weak": [
                     "defi", "nft", "consensus algorithms", "cryptography", 
                     "distributed ledger", "mining", "staking", "tokenomics", "metamask", 
                     "truffle", "hardhat", "ipfs", "polygon", "binance smart chain",
-                    "hyperledger", "chainlink", "oracles", "dao", "yield farming",
-                    "decentralized applications", "peer-to-peer", "hash functions", "merkle trees"
+                    "hyperledger", "chainlink", "oracles", "dao", "yield farming"
                 ]
             },
             
             "Embedded Systems": {
                 "strong": [
                     "embedded systems", "microcontroller", "firmware", "c programming", 
-                    "assembly", "arduino", "raspberry pi", "arm", "pic", "embedded engineer",
-                    "embedded developer", "firmware engineer"
+                    "assembly", "arduino", "raspberry pi", "arm", "pic"
                 ],
                 "weak": [
                     "real-time systems", "rtos", "embedded c", "hardware programming", 
                     "sensor integration", "iot devices", "low-level programming", 
                     "device drivers", "bootloader", "embedded linux", "fpga", "verilog", 
-                    "vhdl", "pcb design", "circuit design", "interrupt handling",
-                    "memory management", "power optimization", "hardware abstraction layer"
+                    "vhdl", "pcb design", "circuit design"
                 ]
             },
             
             "System Architecture": {
                 "strong": [
                     "system architecture", "solution architect", "enterprise architecture", 
-                    "microservices", "distributed systems", "system design", "software architect",
-                    "technical architect", "architecture design"
+                    "microservices", "distributed systems", "system design"
                 ],
                 "weak": [
                     "scalability", "high availability", "fault tolerance", 
                     "architecture patterns", "design patterns", "load balancing",
                     "caching strategies", "database sharding", "event-driven architecture", 
                     "message queues", "api design", "service mesh", "containerization", 
-                    "orchestration", "cloud architecture", "monolithic architecture",
-                    "service oriented architecture", "event sourcing", "cqrs", "circuit breaker"
+                    "orchestration", "cloud architecture"
                 ]
             },
             
             "Database Management": {
                 "strong": [
                     "database administrator", "dba", "database design", "sql optimization",
-                    "mysql", "postgresql", "oracle", "sql server", "mongodb", "database engineer"
+                    "mysql", "postgresql", "oracle", "sql server", "mongodb"
                 ],
                 "weak": [
                     "database performance", "backup and recovery", "replication", 
                     "clustering", "data modeling", "normalization", "indexing", 
                     "stored procedures", "triggers", "database security", "cassandra", 
-                    "redis", "elasticsearch", "data warehouse", "etl", "olap", "oltp",
-                    "query optimization", "database tuning", "partitioning", "sharding",
-                    "acid properties", "transactions", "concurrency control"
+                    "redis", "elasticsearch", "data warehouse", "etl", "olap"
                 ]
             },
             
             "Networking": {
                 "strong": [
                     "network engineer", "network administration", "cisco", "routing", 
-                    "switching", "tcp/ip", "network architect", "network specialist"
+                    "switching", "tcp/ip"
                 ],
                 "weak": [
                     "dns", "dhcp", "vpn", "firewall", "network security",
                     "network monitoring", "network troubleshooting", "wan", "lan", "vlan",
                     "bgp", "ospf", "mpls", "sd-wan", "network automation", 
-                    "network protocols", "subnetting", "vlsm", "qos", "bandwidth management",
-                    "network design", "topology", "redundancy", "failover"
+                    "network protocols"
                 ]
             },
             
             "Site Reliability Engineering": {
                 "strong": [
-                    "sre", "site reliability", "system reliability", "incident management",
-                    "site reliability engineer", "platform reliability"
+                    "sre", "site reliability", "system reliability", "incident management"
                 ],
                 "weak": [
                     "post-mortem", "error budgets", "sli", "slo", "monitoring", "alerting",
                     "capacity planning", "performance optimization", "chaos engineering",
                     "disaster recovery", "high availability", "fault tolerance", 
-                    "observability", "on-call", "escalation", "runbooks", "automation",
-                    "service level objectives", "mean time to recovery", "uptime"
+                    "observability"
                 ]
             },
             
             "Product Management": {
                 "strong": [
-                    "product manager", "product management", "product strategy", "roadmap",
-                    "product owner", "product lead"
+                    "product manager", "product management", "product strategy", "roadmap"
                 ],
                 "weak": [
                     "user stories", "requirements gathering", "stakeholder management", 
                     "agile", "scrum", "kanban", "product analytics", "a/b testing", 
                     "user research", "market research", "competitive analysis", 
                     "go-to-market", "product launch", "feature prioritization", 
-                    "backlog management", "kpi", "metrics", "product vision", "customer feedback",
-                    "product lifecycle", "market analysis", "pricing strategy", "product positioning"
+                    "backlog management", "kpi", "metrics"
                 ]
             },
             
             "Project Management": {
                 "strong": [
                     "project manager", "project management", "pmp", "scrum master",
-                    "jira", "confluence", "ms project", "project lead", "program manager"
+                    "jira", "confluence", "ms project"
                 ],
                 "weak": [
                     "agile", "kanban", "waterfall", "risk management", "resource planning", 
                     "timeline", "milestone", "deliverables", "stakeholder communication", 
                     "budget management", "team coordination", "project planning", 
                     "project execution", "project closure", "change management", 
-                    "quality assurance", "project scheduling", "gantt charts", "critical path",
-                    "scope management", "procurement", "vendor management"
+                    "quality assurance"
                 ]
             },
             
             "Business Analysis": {
                 "strong": [
-                    "business analyst", "requirements analysis", "process improvement",
-                    "system analyst", "ba", "business systems analyst"
+                    "business analyst", "requirements analysis", "process improvement"
                 ],
                 "weak": [
                     "workflow", "business process", "stakeholder analysis", "gap analysis", 
                     "use cases", "functional requirements", "non-functional requirements", 
                     "documentation", "process mapping", "business rules", 
                     "acceptance criteria", "user acceptance testing", "change management", 
-                    "business intelligence", "data analysis", "reporting", "business modeling",
-                    "requirements elicitation", "traceability", "impact analysis"
+                    "business intelligence", "data analysis", "reporting"
                 ]
             },
             
             "Technical Writing": {
                 "strong": [
-                    "technical writer", "documentation", "api documentation", "user manuals",
-                    "technical communication", "content developer"
+                    "technical writer", "documentation", "api documentation", "user manuals"
                 ],
                 "weak": [
-                    "content strategy", "information architecture", "style guide", 
-                    "editing", "proofreading", "markdown", "confluence", "gitbook", 
-                    "sphinx", "doxygen", "technical blogging", "knowledge base",
-                    "help documentation", "user guides", "tutorials", "release notes",
-                    "technical specifications", "process documentation"
+                    "technical communication", "content strategy", "information architecture",
+                    "style guide", "editing", "proofreading", "markdown", "confluence",
+                    "gitbook", "sphinx", "doxygen", "technical blogging", "knowledge base"
                 ]
             },
             
             "Digital Marketing": {
                 "strong": [
                     "digital marketing", "seo", "sem", "social media marketing", 
-                    "google ads", "facebook ads", "digital marketer", "marketing specialist"
+                    "google ads", "facebook ads"
                 ],
                 "weak": [
                     "content marketing", "email marketing", "ppc", "analytics",
                     "conversion optimization", "marketing automation", "lead generation",
                     "brand management", "influencer marketing", "affiliate marketing", 
-                    "growth hacking", "marketing campaigns", "customer acquisition",
-                    "retention marketing", "marketing metrics", "roi", "ctr", "cpc"
+                    "growth hacking"
                 ]
             },
             
             "E-commerce": {
                 "strong": [
-                    "e-commerce", "online retail", "shopify", "magento", "woocommerce",
-                    "ecommerce developer", "online store", "digital commerce"
+                    "e-commerce", "online retail", "shopify", "magento", "woocommerce"
                 ],
                 "weak": [
                     "payment gateway", "inventory management", "order management", 
                     "shipping", "customer service", "marketplace", "dropshipping", 
                     "conversion rate optimization", "product catalog", "shopping cart", 
-                    "checkout optimization", "amazon fba", "online payments",
-                    "merchant services", "omnichannel", "customer experience", "sales funnel"
+                    "checkout optimization", "amazon fba"
                 ]
             },
             
             "Fintech": {
                 "strong": [
                     "fintech", "financial technology", "payment processing", 
-                    "banking software", "trading systems", "fintech developer"
+                    "banking software", "trading systems"
                 ],
                 "weak": [
                     "risk management", "compliance", "regulatory", "kyc", "aml", 
                     "blockchain finance", "cryptocurrency", "robo-advisor", "insurtech",
                     "lending platform", "credit scoring", "fraud detection", 
-                    "financial analytics", "algorithmic trading", "portfolio management",
-                    "financial modeling", "derivatives", "capital markets"
+                    "financial analytics"
                 ]
             },
             
             "Healthcare Tech": {
                 "strong": [
                     "healthcare technology", "healthtech", "medical software", "ehr", "emr",
-                    "telemedicine", "health tech developer", "medical systems"
+                    "telemedicine"
                 ],
                 "weak": [
                     "medical devices", "hipaa", "healthcare analytics", "clinical trials", 
                     "medical imaging", "bioinformatics", "health informatics", 
                     "patient management", "healthcare compliance", "medical ai", 
-                    "digital health", "clinical decision support", "patient data",
-                    "medical records", "pharmacy systems", "laboratory systems"
+                    "digital health"
                 ]
             },
             
             "EdTech": {
                 "strong": [
                     "edtech", "educational technology", "e-learning", "lms", 
-                    "learning management", "education software", "edtech developer"
+                    "learning management"
                 ],
                 "weak": [
                     "online education", "educational software", "student information system",
                     "assessment tools", "educational analytics", "adaptive learning", 
                     "gamification", "virtual classroom", "educational content", 
-                    "curriculum development", "learning platforms", "mooc",
-                    "instructional design", "learning outcomes", "student engagement"
+                    "curriculum development"
                 ]
             },
             
             "IoT Development": {
                 "strong": [
-                    "iot", "internet of things", "connected devices", "mqtt", "coap",
-                    "iot developer", "iot engineer", "smart devices"
+                    "iot", "internet of things", "connected devices", "mqtt", "coap"
                 ],
                 "weak": [
                     "sensor networks", "edge computing", "zigbee", "bluetooth", "wifi",
                     "embedded systems", "device management", "iot platform", 
                     "industrial iot", "smart home", "smart city", "wearables", 
-                    "asset tracking", "predictive maintenance", "telemetry",
-                    "device connectivity", "sensor data", "actuators", "gateway devices"
+                    "asset tracking", "predictive maintenance"
                 ]
             },
             
             "AR/VR Development": {
                 "strong": [
                     "ar", "vr", "augmented reality", "virtual reality", "mixed reality", 
-                    "xr", "unity 3d", "unreal engine", "oculus", "hololens",
-                    "ar developer", "vr developer", "xr developer"
+                    "xr", "unity 3d", "unreal engine", "oculus", "hololens"
                 ],
                 "weak": [
                     "arkit", "arcore", "3d modeling", "spatial computing", 
                     "immersive experience", "360 video", "haptic feedback", 
-                    "motion tracking", "computer vision", "3d graphics",
-                    "stereoscopic rendering", "head tracking", "gesture recognition",
-                    "spatial mapping", "immersive interfaces", "vr applications"
+                    "motion tracking", "computer vision", "3d graphics"
                 ]
             },
             
             "Technical Sales": {
                 "strong": [
-                    "technical sales", "sales engineer", "solution selling", "pre-sales",
-                    "technical sales engineer", "sales consultant"
+                    "technical sales", "sales engineer", "solution selling", "pre-sales"
                 ],
                 "weak": [
                     "technical consulting", "customer success", "account management",
                     "product demonstration", "technical presentation", "proposal writing",
-                    "client relationship", "revenue generation", "sales process", "crm",
-                    "lead qualification", "technical expertise", "customer requirements",
-                    "solution design", "competitive positioning", "contract negotiation"
+                    "client relationship", "revenue generation", "sales process", "crm"
                 ]
             },
             
             "Agile Coaching": {
                 "strong": [
-                    "agile coach", "scrum master", "agile transformation", "agile consultant"
+                    "agile coach", "scrum master", "agile transformation"
                 ],
                 "weak": [
                     "team facilitation", "retrospectives", "sprint planning", 
                     "daily standups", "agile ceremonies", "continuous improvement", 
                     "change management", "team dynamics", "agile metrics", "coaching", 
-                    "mentoring", "organizational change", "scaled agile", "safe",
-                    "lean principles", "kanban", "agile practices", "servant leadership"
+                    "mentoring", "organizational change"
                 ]
             },
             
             "Software Engineering": {
                 "strong": [
                     "software engineer", "web developer", "developer", "programmer",
-                    "git", "version control", "software developer", "coding"
+                    "git", "version control"
                 ],
                 "weak": [
                     "object oriented", "design patterns", "agile", "scrum", "unit testing", 
                     "integration testing", "debugging", "code review", "system design",
                     "tdd", "bdd", "pair programming", "refactoring", "uml", 
                     "dev environment", "ide", "algorithms", "data structures", 
-                    "software architecture", "clean code", "solid principles",
-                    "continuous integration", "continuous deployment", "documentation"
+                    "software architecture", "clean code"
                 ]
             }
         }
 
-        # Step 1: Compute weighted keyword matches with enhanced logic
+        # Step 1: Compute weighted keyword matches with strong/weak separation
         for domain, keywords in domain_keywords.items():
             # Count strong and weak hits in title and description
             strong_title_hits = sum(1 for kw in keywords["strong"] if kw in title)
@@ -754,9 +690,9 @@ class DatabaseManager:
             weak_title_hits = sum(1 for kw in keywords["weak"] if kw in title)
             weak_desc_hits = sum(1 for kw in keywords["weak"] if kw in desc)
             
-            # Enhanced weight calculation (6x for title strong, 2x for desc strong, 3x for title weak, 1x for desc weak)
-            total_strong_hits = (6 * strong_title_hits + 2 * strong_desc_hits)
-            total_weak_hits = (3 * weak_title_hits + 1 * weak_desc_hits)
+            # Calculate total strong and weak hits (4x weight for title, 1x for description)
+            total_strong_hits = (4 * strong_title_hits + 1 * strong_desc_hits)
+            total_weak_hits = (4 * weak_title_hits + 1 * weak_desc_hits)
             
             # Apply minimum total hits threshold
             total_hits = total_strong_hits + total_weak_hits
@@ -767,112 +703,62 @@ class DatabaseManager:
                 domain_scores[domain] = (total_strong_hits * STRONG_HIT_WEIGHT + 
                                        total_weak_hits * WEAK_HIT_WEIGHT) * DOMAIN_WEIGHTS[domain]
 
-        # Step 2: Enhanced Full Stack Detection with aggressive scoring
-        frontend_keywords = domain_keywords["Frontend Development"]
-        backend_keywords = domain_keywords["Backend Development"]
+        # Step 2: Enhanced Full Stack Detection with configurable boosts
+        frontend_strong_hits = sum(1 for kw in domain_keywords["Frontend Development"]["strong"] if kw in title or kw in desc)
+        frontend_weak_hits = sum(1 for kw in domain_keywords["Frontend Development"]["weak"] if kw in title or kw in desc)
+        backend_strong_hits = sum(1 for kw in domain_keywords["Backend Development"]["strong"] if kw in title or kw in desc)
+        backend_weak_hits = sum(1 for kw in domain_keywords["Backend Development"]["weak"] if kw in title or kw in desc)
         
-        frontend_strong_hits = sum(1 for kw in frontend_keywords["strong"] if kw in title or kw in desc)
-        frontend_weak_hits = sum(1 for kw in frontend_keywords["weak"] if kw in title or kw in desc)
-        backend_strong_hits = sum(1 for kw in backend_keywords["strong"] if kw in title or kw in desc)
-        backend_weak_hits = sum(1 for kw in backend_keywords["weak"] if kw in title or kw in desc)
-        
-        # Check for explicit full-stack mentions
-        fullstack_explicit = any(term in title for term in [
-            "full stack", "fullstack", "full-stack", "mern", "mean", "mevn", "lamp"
-        ])
-        fullstack_mentioned = any(term in title or term in desc for term in [
-            "full stack", "fullstack", "full-stack", "frontend and backend", "end-to-end development"
-        ])
+        fullstack_mentioned = any(term in title or term in desc for term in ["full stack", "fullstack", "full-stack"])
 
-        # Aggressive Full Stack Detection Logic
-        if fullstack_explicit:
+        # Apply Full Stack boosts based on requirements
+        if "full stack developer" in title:
             domain_scores["Full Stack Development"] += FULLSTACK_TITLE_BOOST
         elif fullstack_mentioned:
             domain_scores["Full Stack Development"] += FULLSTACK_MENTION_BOOST
 
-        # Boost for combined frontend+backend skills
         total_frontend_hits = frontend_strong_hits + frontend_weak_hits
         total_backend_hits = backend_strong_hits + backend_weak_hits
-        
-        if total_frontend_hits >= 3 and total_backend_hits >= 3:
-            domain_scores["Full Stack Development"] += FULLSTACK_COMBO_BOOST
-        elif total_frontend_hits >= 2 and total_backend_hits >= 2:
+        if total_frontend_hits >= 4 and total_backend_hits >= 4:
             domain_scores["Full Stack Development"] += FULLSTACK_HITS_THRESHOLD_BOOST
 
-        # Additional full-stack indicators
-        web_dev_indicators = sum(1 for term in [
-            "web development", "web application", "web app", "website", "web stack",
-            "javascript", "html", "css", "react", "node", "express", "database"
-        ] if term in title or term in desc)
-        
-        if web_dev_indicators >= 4:
-            domain_scores["Full Stack Development"] += 25
-
-        # Check for technology stack combinations that indicate full-stack
-        tech_stacks = [
-            ["react", "node"], ["angular", "express"], ["vue", "node"],
-            ["javascript", "python"], ["typescript", "node"], ["react", "python"],
-            ["html", "css", "javascript"], ["frontend", "backend"], ["client", "server"]
-        ]
-        
-        for stack in tech_stacks:
-            if all(tech in title + " " + desc for tech in stack):
-                domain_scores["Full Stack Development"] += 20
-
-        # Step 3: Domain-specific boosts with expanded coverage
+        # Step 3: Domain-specific boosts (kept from original logic)
         domain_boosts = {
-            "AI/Machine Learning": ["ai", "ml", "machine learning", "artificial intelligence", "neural", "deep learning"],
-            "Cybersecurity": ["security", "cyber", "infosec", "penetration", "ethical hacking"],
-            "Cloud Engineering": ["cloud", "aws", "azure", "gcp", "serverless", "containerization"],
-            "Mobile Development": ["mobile", "android", "ios", "app", "flutter", "react native"],
-            "Game Development": ["game", "unity", "unreal", "gaming", "3d"],
-            "Blockchain Development": ["blockchain", "crypto", "web3", "defi", "smart contract"],
-            "IoT Development": ["iot", "embedded", "sensor", "arduino", "raspberry"],
-            "AR/VR Development": ["ar", "vr", "augmented", "virtual reality", "mixed reality"],
-            "DevOps/Infrastructure": ["devops", "docker", "kubernetes", "ci/cd", "terraform"],
-            "Data Science": ["data science", "analytics", "big data", "tableau", "power bi"]
+            "AI/Machine Learning": ["ai", "ml", "machine learning", "artificial intelligence"],
+            "Cybersecurity": ["security", "cyber", "infosec"],
+            "Cloud Engineering": ["cloud", "aws", "azure", "gcp"],
+            "Mobile Development": ["mobile", "android", "ios", "app"],
+            "Game Development": ["game", "unity", "unreal"],
+            "Blockchain Development": ["blockchain", "crypto", "web3", "defi"],
+            "IoT Development": ["iot", "embedded", "sensor"],
+            "AR/VR Development": ["ar", "vr", "augmented", "virtual reality"]
         }
 
         for domain, boost_terms in domain_boosts.items():
-            title_matches = sum(1 for term in boost_terms if term in title)
-            desc_matches = sum(1 for term in boost_terms if term in desc)
-            if title_matches > 0:
-                domain_scores[domain] += 12 * title_matches
-            if desc_matches > 0:
-                domain_scores[domain] += 4 * desc_matches
+            if any(term in title for term in boost_terms):
+                domain_scores[domain] += 8
+            if any(term in desc for term in boost_terms):
+                domain_scores[domain] += 3
 
-        # Step 4: Penalty for very short descriptions (but less aggressive)
-        if len(desc.split()) < 5:
-            for domain in list(domain_scores.keys()):
-                if domain != "Full Stack Development":  # Protect full-stack from penalties
-                    domain_scores[domain] = max(0, domain_scores[domain] * 0.8)
+        # Step 4: Filter short/noisy descriptions (kept from original logic)
+        if len(desc.split()) < 8:
+            for domain in domain_scores:
+                strong_desc_hits = sum(1 for kw in domain_keywords[domain]["strong"] if kw in desc)
+                weak_desc_hits = sum(1 for kw in domain_keywords[domain]["weak"] if kw in desc)
+                desc_penalty = ((strong_desc_hits * STRONG_HIT_WEIGHT + weak_desc_hits * WEAK_HIT_WEIGHT) * 
+                              DOMAIN_WEIGHTS[domain] * 0.5)
+                domain_scores[domain] = max(0, domain_scores[domain] - desc_penalty)
 
-        # Step 5: Special handling for ambiguous cases - favor full-stack when both frontend and backend are present
-        if (domain_scores.get("Frontend Development", 0) > 0 and 
-            domain_scores.get("Backend Development", 0) > 0 and
-            domain_scores.get("Full Stack Development", 0) > 0):
-            # Boost full-stack significantly when both frontend and backend are detected
-            combined_score = (domain_scores["Frontend Development"] + domain_scores["Backend Development"]) * 0.8
-            domain_scores["Full Stack Development"] = max(domain_scores["Full Stack Development"], combined_score)
-
-        # Step 6: Choose top domain with enhanced fallback logic
+        # Step 5: Choose top domain with fallback logic
         if domain_scores:
             top_domain = max(domain_scores, key=domain_scores.get)
             top_score = domain_scores[top_domain]
             
-            # Lower threshold for full-stack detection
-            if top_domain == "Full Stack Development" and top_score >= 15:
-                return top_domain
-            elif top_score >= FALLBACK_THRESHOLD_SCORE:
+            # Apply fallback threshold - if top score is below threshold, fallback to Software Engineering
+            if top_score >= FALLBACK_THRESHOLD_SCORE:
                 return top_domain
 
-        # Enhanced fallback logic - check for web development indicators
-        web_indicators = ["web", "html", "css", "javascript", "website", "browser", "http", "url"]
-        web_score = sum(1 for indicator in web_indicators if indicator in title or indicator in desc)
-        if web_score >= 2:
-            return "Full Stack Development"
-
-        # Final fallback to general domain
+        # Fallback to general domain
         return "Software Engineering"
 
     def get_domain_similarity(self, resume_domain: str, job_domain: str) -> float:
@@ -920,28 +806,20 @@ class DatabaseManager:
         resume_domain = normalization.get(resume_domain, resume_domain)
         job_domain = normalization.get(job_domain, job_domain)
 
-        # Perfect match
-        if resume_domain == job_domain:
-            return 1.0
-
-        # Enhanced similarity mapping with higher scores for full-stack relationships
+        # Comprehensive similarity mapping with detailed relationships
         similarity_map = {
-            # Full Stack relationships - Higher scores
-            ("full stack development", "frontend development"): 0.95,
-            ("full stack development", "backend development"): 0.95,
-            ("full stack development", "ui/ux design"): 0.80,
-            ("full stack development", "mobile development"): 0.75,
-            ("full stack development", "software engineering"): 0.90,
-            ("full stack development", "web development"): 0.98,
-            ("full stack development", "cloud engineering"): 0.70,
-            ("full stack development", "devops/infrastructure"): 0.65,
+            # Full Stack relationships
+            ("full stack development", "frontend development"): 0.85,
+            ("full stack development", "backend development"): 0.85,
+            ("full stack development", "ui/ux design"): 0.70,
+            ("full stack development", "mobile development"): 0.65,
+            ("full stack development", "software engineering"): 0.80,
             
             # Frontend relationships
             ("frontend development", "ui/ux design"): 0.90,
             ("frontend development", "mobile development"): 0.70,
             ("frontend development", "software engineering"): 0.75,
-            ("frontend development", "backend development"): 0.65,
-            ("frontend development", "full stack development"): 0.95,
+            ("frontend development", "backend development"): 0.60,
             
             # Backend relationships
             ("backend development", "database management"): 0.80,
@@ -949,7 +827,6 @@ class DatabaseManager:
             ("backend development", "devops/infrastructure"): 0.70,
             ("backend development", "system architecture"): 0.85,
             ("backend development", "software engineering"): 0.80,
-            ("backend development", "full stack development"): 0.95,
             
             # Data & AI relationships
             ("data science", "ai/machine learning"): 0.95,
@@ -974,7 +851,6 @@ class DatabaseManager:
             ("mobile development", "ui/ux design"): 0.75,
             ("mobile development", "software engineering"): 0.70,
             ("mobile development", "game development"): 0.60,
-            ("mobile development", "full stack development"): 0.75,
             
             # Quality & Testing relationships
             ("quality assurance", "software engineering"): 0.75,
@@ -1004,7 +880,6 @@ class DatabaseManager:
             ("system architecture", "software engineering"): 0.85,
             ("system architecture", "cloud engineering"): 0.80,
             ("system architecture", "backend development"): 0.85,
-            ("system architecture", "full stack development"): 0.75,
             
             # Networking relationships
             ("networking", "cybersecurity"): 0.80,
@@ -1015,10 +890,9 @@ class DatabaseManager:
             ("fintech", "software engineering"): 0.70,
             ("fintech", "backend development"): 0.75,
             ("fintech", "cybersecurity"): 0.70,
-            ("fintech", "full stack development"): 0.75,
             ("healthcare tech", "software engineering"): 0.70,
             ("edtech", "software engineering"): 0.70,
-            ("e-commerce", "full stack development"): 0.85,
+            ("e-commerce", "full stack development"): 0.80,
             ("e-commerce", "backend development"): 0.75,
             
             # Sales & Communication relationships
@@ -1026,14 +900,18 @@ class DatabaseManager:
             ("technical writing", "business analysis"): 0.60,
             ("digital marketing", "business analysis"): 0.55,
             
-            # General software relationships - Enhanced for full-stack
-            ("software engineering", "full stack development"): 0.90,
+            # General software relationships
+            ("software engineering", "full stack development"): 0.80,
             ("software engineering", "frontend development"): 0.75,
             ("software engineering", "backend development"): 0.80,
             ("software engineering", "mobile development"): 0.70,
             ("software engineering", "game development"): 0.70,
             ("software engineering", "quality assurance"): 0.75,
         }
+
+        # Perfect match
+        if resume_domain == job_domain:
+            return 1.0
 
         # Check similarity map (bidirectional)
         similarity = (similarity_map.get((resume_domain, job_domain)) or 
@@ -1066,22 +944,20 @@ class DatabaseManager:
             "ui/ux design", "ar/vr development"
         }
 
-        # Same category bonus with higher scores
+        # Same category bonus
         categories = [tech_domains, data_domains, infrastructure_domains, management_domains, design_domains]
         for category in categories:
             if resume_domain in category and job_domain in category:
-                if category == tech_domains:
-                    return 0.60  # Higher for tech domains
                 return 0.50  # Moderate similarity for same category
         
         # Cross-category relationships
         if ((resume_domain in tech_domains and job_domain in infrastructure_domains) or
             (resume_domain in infrastructure_domains and job_domain in tech_domains)):
-            return 0.50  # Increased from 0.45
+            return 0.45
         
         if ((resume_domain in data_domains and job_domain in tech_domains) or
             (resume_domain in tech_domains and job_domain in data_domains)):
-            return 0.45  # Increased from 0.40
+            return 0.40
 
         # Default low similarity for unrelated domains
         return 0.25
@@ -1114,7 +990,7 @@ class DatabaseManager:
                 """, final_data + (local_time,))
                 conn.commit()
                 candidate_id = cursor.lastrowid
-                logger.info(f"Inserted candidate with ID: {candidate_id}, Domain: {detected_domain}")
+                logger.info(f"Inserted candidate with ID: {candidate_id}")
                 return candidate_id
 
         except Exception as e:
@@ -1547,21 +1423,6 @@ def close_all_connections():
 
 if __name__ == "__main__":
     # Example usage and testing
-    print("Enhanced Database Manager initialized successfully!")
+    print("Database Manager initialized successfully!")
     stats = get_database_stats()
     print(f"Database Statistics: {stats}")
-    
-    # Test full-stack detection
-    test_cases = [
-        ("Full Stack Developer", "React, Node.js, MongoDB, Express.js, HTML, CSS, JavaScript"),
-        ("Software Engineer", "Frontend React, Backend Node.js, Database MySQL, API development"),
-        ("Web Developer", "HTML, CSS, JavaScript, Python, Django, PostgreSQL"),
-        ("Frontend Developer", "React, Angular, Vue.js, HTML, CSS, JavaScript, Responsive design"),
-        ("Backend Developer", "Node.js, Express, MongoDB, API development, Authentication")
-    ]
-    
-    print("\nTesting Enhanced Full Stack Detection:")
-    for title, desc in test_cases:
-        detected = detect_domain_from_title_and_description(title, desc)
-        print(f"Title: '{title}' | Description: '{desc[:50]}...' | Detected: '{detected}'")
-

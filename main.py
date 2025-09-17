@@ -1285,7 +1285,7 @@ def safe_extract_text(uploaded_file):
 
         # If nothing readable found
         if not text_list or all(len(t.strip()) == 0 for t in text_list):
-            st.warning("⚠️ This file doesn’t look like a resume or contains no readable text.")
+            st.warning("⚠️ This file doesn't look like a resume or contains no readable text.")
             return None
 
         return "\n".join(text_list)
@@ -2351,116 +2351,169 @@ if uploaded_files and job_description:
         if uploaded_file.name in st.session_state.processed_files:
             continue
 
-        # ✅ Placeholder for cinematic scanning animation
+        # ✅ Improved optimized scanner animation with better performance
         scanner_placeholder = st.empty()
 
-        HERO_HTML_SCANNER = f"""
+        # ✅ IMPROVED: More efficient CSS animations with GPU acceleration
+        OPTIMIZED_SCANNER_HTML = f"""
         <style>
-        .scanner-container {{ 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100%;   /* instead of 100vh */
-            padding: 20px;
-            flex-direction: column; 
-            background: #0b0c10;
+        .scanner-overlay {{
             position: fixed;
             top: 0; left: 0;
-            width: 100%; 
+            width: 100vw; height: 100vh;
+            background: linear-gradient(135deg, #0b0c10 0%, #1a1c29 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             z-index: 9999;
+            will-change: transform, opacity;
         }}
-        .resume-doc {{ 
-            width: 300px;   /* reduced size */
-            height: 360px;  /* reduced size */
-            background: linear-gradient(180deg, #f9f9f9, #e3e3e3); 
-            border-radius: 18px; 
-            position: relative; 
-            overflow: hidden; 
-            box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 25px rgba(56,189,248,0.35);
-            padding-top: 60px;
+        
+        .scanner-doc {{
+            width: 280px;
+            height: 340px;
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 191, 255, 0.3);
+            transform: translateZ(0);
+            will-change: transform;
+            animation: docFloat 3s ease-in-out infinite alternate;
+        }}
+        
+        @keyframes docFloat {{
+            0% {{ transform: translateY(0px) scale(1); }}
+            100% {{ transform: translateY(-8px) scale(1.02); }}
+        }}
+        
+        .doc-header {{
+            padding: 20px;
             text-align: center;
-            transform: scale(1);
+            border-bottom: 2px solid #e9ecef;
         }}
-        .resume-doc::before {{
-            content: "👤";
-            font-size: 40px;
-            display: block;
-            margin-bottom: 10px;
-        }}
-        .job-title {{
+        
+        .doc-avatar {{
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 20px;
+            color: white;
+        }}
+        
+        .doc-title {{
+            font-size: 16px;
             font-weight: bold;
-            color: #333;
-            font-family: 'Orbitron', sans-serif;
-            animation: pulseTitle 1.8s ease-in-out infinite;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            font-family: 'Segoe UI', sans-serif;
         }}
-        @keyframes pulseTitle {{
-            0%, 100% {{ color: #333; text-shadow: none; }}
-            50% {{ color: #38bdf8; text-shadow: 0 0 10px #38bdf8; }}
+        
+        .doc-content {{
+            padding: 15px;
+            font-size: 12px;
+            color: #6c757d;
+            line-height: 1.4;
         }}
-        .resume-body {{
+        
+        .scan-line {{
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 4px;
+            background: linear-gradient(90deg, transparent, rgba(0,191,255,0.8), transparent);
+            animation: scanMove 2.5s ease-in-out infinite;
+            box-shadow: 0 0 20px rgba(0,191,255,0.6);
+            transform: translateZ(0);
+            will-change: transform;
+        }}
+        
+        @keyframes scanMove {{
+            0% {{ top: 0; opacity: 1; }}
+            50% {{ opacity: 0.8; }}
+            100% {{ top: 340px; opacity: 1; }}
+        }}
+        
+        .scanner-text {{
+            margin-top: 30px;
+            font-family: 'Orbitron', 'Segoe UI', sans-serif;
+            font-weight: 600;
+            font-size: 18px;
+            color: #00bfff;
+            text-shadow: 0 0 10px rgba(0,191,255,0.5);
+            animation: textPulse 2s ease-in-out infinite;
+        }}
+        
+        @keyframes textPulse {{
+            0%, 100% {{ opacity: 1; transform: scale(1); }}
+            50% {{ opacity: 0.8; transform: scale(1.05); }}
+        }}
+        
+        .progress-bar {{
+            width: 200px;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
             margin-top: 20px;
-            font-size: 13px;
-            color: #444;
-            line-height: 1.4em;
-            text-align: left;
-            padding: 0 15px;
+            overflow: hidden;
         }}
-        .scanner-line {{ 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 18px; 
-            background: rgba(56,189,248,0.7); 
-            animation: scan 3s linear infinite; 
-            box-shadow: 0 0 18px rgba(56,189,248,0.8), 0 0 25px rgba(56,189,248,0.6);
+        
+        .progress-fill {{
+            height: 100%;
+            background: linear-gradient(90deg, #00bfff, #1e90ff);
+            border-radius: 2px;
+            animation: progressFill 3s ease-in-out infinite;
+            transform: translateX(-100%);
         }}
-        @keyframes scan {{ 
-            0% {{ top: 0; }} 
-            100% {{ top: 360px; }}  /* match new doc height */
+        
+        @keyframes progressFill {{
+            0% {{ transform: translateX(-100%); }}
+            100% {{ transform: translateX(0); }}
         }}
-        .scan-text {{ 
-            margin-top: 25px; 
-            font-family: 'Orbitron', sans-serif; 
-            font-weight: 700; 
-            font-size: 20px; 
-            color: #38bdf8; 
-            text-shadow: 0 0 10px rgba(56,189,248,0.7), 0 0 20px rgba(56,189,248,0.4);
-        }}
-        /* ✅ Responsive for small screens */
-        @media (max-width: 480px) {{
-            .resume-doc {{
-                width: 240px;
-                height: 300px;
-            }}
-            .job-title {{ font-size: 16px; }}
-            .scan-text {{ font-size: 16px; }}
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {{
+            .scanner-doc {{ width: 240px; height: 300px; }}
+            .scanner-text {{ font-size: 16px; }}
         }}
         </style>
-        <div class="scanner-container">
-            <div class="resume-doc">
-                <div class="scanner-line"></div>
-                <div class="job-title">{job_title}</div>
-                <div class="resume-body">
-                    • Scanning candidate information...<br>
-                    • Extracting skills and experience...<br>
-                    • Matching keywords with JD...<br>
-                    • Evaluating ATS score...
+        
+        <div class="scanner-overlay">
+            <div class="scanner-doc">
+                <div class="scan-line"></div>
+                <div class="doc-header">
+                    <div class="doc-avatar">👤</div>
+                    <div class="doc-title">{job_title}</div>
+                </div>
+                <div class="doc-content">
+                    • Analyzing candidate profile...<br>
+                    • Extracting key skills...<br>
+                    • Matching with job requirements...<br>
+                    • Calculating ATS compatibility...<br>
+                    • Checking for bias patterns...
                 </div>
             </div>
-            <div class="scan-text">Scanning Resume...</div>
+            <div class="scanner-text">Scanning Resume...</div>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
         </div>
         """
-        scanner_placeholder.markdown(HERO_HTML_SCANNER, unsafe_allow_html=True)
+        
+        scanner_placeholder.markdown(OPTIMIZED_SCANNER_HTML, unsafe_allow_html=True)
 
         # ✅ Save uploaded file
         file_path = os.path.join(working_dir, uploaded_file.name)
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
-        # ✅ Simulate scanning delay
-        time.sleep(8)
+        # ✅ Reduced delay for better UX
+        time.sleep(4)
 
         # ✅ Extract text from PDF
         text = extract_text_from_pdf(file_path)
@@ -2564,74 +2617,103 @@ if uploaded_files and job_description:
 
         st.session_state.processed_files.add(uploaded_file.name)
 
-        # ✅ Show full-screen success overlay
+        # ✅ IMPROVED: Smoother success animation with better transitions
         SUCCESS_HTML = """
         <style>
-        .success-fullpage {
+        .success-overlay {
             position: fixed;
-            top:0; left:0;
-            width:100%; height:100%;
-            background:#0b0c10;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            flex-direction:column;
-            z-index:9999;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: linear-gradient(135deg, #0b0c10 0%, #1a1c29 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            animation: fadeIn 0.5s ease-out;
         }
-        .scope {
-            width: 160px;
-            height: 160px;
-            border: 2px solid #38bdf8;
+        
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        
+        .success-circle {
+            width: 140px;
+            height: 140px;
+            border: 3px solid #00bfff;
             border-radius: 50%;
             position: relative;
-            background: radial-gradient(circle, rgba(56,189,248,0.1) 30%, rgba(0,0,0,0.85) 100%);
-            box-shadow: 0 0 12px rgba(56,189,248,0.5), inset 0 0 12px rgba(56,189,248,0.5);
-            overflow: hidden;
-            animation: pulseScope 2s infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle, rgba(0,191,255,0.1) 0%, rgba(0,191,255,0.05) 50%, transparent 100%);
+            animation: successPulse 2s ease-in-out infinite;
         }
-        @keyframes pulseScope {
-            0%,100% { box-shadow: 0 0 12px rgba(56,189,248,0.5), inset 0 0 12px rgba(56,189,248,0.5); }
-            50% { box-shadow: 0 0 22px rgba(56,189,248,0.9), inset 0 0 18px rgba(56,189,248,0.9); }
+        
+        @keyframes successPulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(0,191,255,0.3);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 0 30px rgba(0,191,255,0.6);
+            }
         }
-        .scope-line {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            width: 1px;
-            height: 100%;
-            background: rgba(56,189,248,0.7);
-            transform-origin: bottom center;
-            animation: rotateLine 1.5s linear infinite;
+        
+        .success-checkmark {
+            font-size: 48px;
+            color: #00ff7f;
+            animation: checkmarkPop 0.8s ease-out;
         }
-        @keyframes rotateLine {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        
+        @keyframes checkmarkPop {
+            0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+            50% { transform: scale(1.2) rotate(-10deg); opacity: 0.8; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
         }
-        .scope-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
-            font-size: 16px;
-            color: #38bdf8;
-            text-shadow: 0 0 8px #38bdf8;
-            text-align:center;
+        
+        .success-text {
+            margin-top: 25px;
+            font-family: 'Orbitron', 'Segoe UI', sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            color: #00bfff;
+            text-shadow: 0 0 10px rgba(0,191,255,0.5);
+            animation: textSlideUp 0.8s ease-out 0.3s both;
+        }
+        
+        @keyframes textSlideUp {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        
+        .success-subtitle {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #8e9aaf;
+            animation: textSlideUp 0.8s ease-out 0.5s both;
         }
         </style>
-        <div class="success-fullpage">
-            <div class="scope">
-                <div class="scope-line"></div>
-                <div class="scope-text">Scanned<br>Successfully</div>
+        
+        <div class="success-overlay">
+            <div class="success-circle">
+                <div class="success-checkmark">✓</div>
             </div>
+            <div class="success-text">Scan Complete!</div>
+            <div class="success-subtitle">Resume analysis ready</div>
         </div>
         """
+        
+        # Clear scanner and show success animation
         scanner_placeholder.empty()
-        st.markdown(SUCCESS_HTML, unsafe_allow_html=True)
+        success_placeholder = st.empty()
+        success_placeholder.markdown(SUCCESS_HTML, unsafe_allow_html=True)
 
-        # ⏳ Short pause, then auto rerun
-        time.sleep(6)
+        # ⏳ Shorter delay for better UX, then clear and rerun
+        time.sleep(3)
+        success_placeholder.empty()
         st.rerun()
 
 

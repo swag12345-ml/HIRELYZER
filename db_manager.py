@@ -9,7 +9,7 @@ from datetime import datetime
 import pytz
 from collections import defaultdict
 from contextlib import contextmanager
-from typing import Optional, List, Tuple, Dict, Any
+from typing import Optional, List, Tuple, Dit, Any
 import logging
 from threading import Lock
 import os
@@ -1195,3 +1195,4 @@ if __name__ == "__main__":
     print("Database Manager initialized successfully!")
     stats = get_database_stats()
     print(f"Database Statistics: {stats}")
+

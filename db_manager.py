@@ -110,7 +110,7 @@ class DatabaseManager:
     def detect_domain_from_title_and_description(self, job_title: str, job_description: str) -> str:
         """
         Enhanced Domain Detection with 25+ Professional Domains
-        Optimized for better performance with cached keyword lookups and confidence thresholding
+        Optimized for better performance with cached keyword lookups
         """
         title = job_title.lower().strip()
         desc = job_description.lower().strip()
@@ -210,18 +210,14 @@ class DatabaseManager:
                 "ensemble methods", "gradient boosting", "random forest", "svm", "clustering", "pca"
             ],
             
-            # IMPROVED UI/UX Design keywords - removed generic terms, kept specific ones
             "UI/UX Design": [
-                "figma", "adobe xd", "sketch", "wireframe", "prototyping", 
-                "user interface", "user experience", "usability testing", 
-                "interaction design", "design system", "visual design", 
-                "responsive design", "material design", "user research", 
-                "usability", "accessibility", "human-centered design", 
-                "affinity diagram", "journey mapping", "heuristic evaluation",
-                "persona", "mobile-first", "ux audit", "design tokens", "design thinking",
-                "information architecture", "card sorting", "tree testing", 
-                "user testing", "a/b testing design", "design sprint", "atomic design", 
-                "design ops", "brand design"
+                "ui", "ux", "figma", "designer", "user interface", "user experience",
+                "adobe xd", "sketch", "wireframe", "prototyping", "interaction design",
+                "user research", "usability", "design system", "visual design", "accessibility",
+                "human-centered design", "affinity diagram", "journey mapping", "heuristic evaluation",
+                "persona", "responsive design", "mobile-first", "ux audit", "design tokens", "design thinking",
+                "information architecture", "card sorting", "tree testing", "user testing", "a/b testing design",
+                "design sprint", "atomic design", "material design", "design ops", "brand design"
             ],
             
             "Mobile Development": [
@@ -502,21 +498,12 @@ class DatabaseManager:
                 desc_hits = sum(1 for kw in keywords[domain] if kw in desc)
                 domain_scores[domain] = max(0, domain_scores[domain] - (desc_hits * WEIGHTS[domain] * 0.5))
 
-        # Step 5: Choose top domain with confidence threshold
+        # Step 5: Choose top domain
         if domain_scores:
             top_domain = max(domain_scores, key=domain_scores.get)
-            top_score = domain_scores[top_domain]
-            
-            # Apply confidence threshold - if top score < 15, fallback to Software Engineering
-            if top_score >= 15:
-                logger.info(f"Domain detected: {top_domain} with score: {top_score}")
+            if domain_scores[top_domain] > 0:
                 return top_domain
-            else:
-                logger.info(f"Low confidence detection ({top_score} < 15), falling back to Software Engineering")
-                return "Software Engineering"
 
-        # Guaranteed fallback
-        logger.info("No domain detected, falling back to Software Engineering")
         return "Software Engineering"
 
     def get_domain_similarity(self, resume_domain: str, job_domain: str) -> float:

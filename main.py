@@ -7339,7 +7339,8 @@ with tab4:
                             if st.button("Submit Answer & Get Feedback"):
                                 if answer.strip():
                                     # Evaluate answer
-                                    score, feedback = evaluate_interview_answer(answer)
+                                    score, feedback = evaluate_interview_answer(answer, question)
+
                                     
                                     # Store answer and score
                                     st.session_state.dynamic_interview_answers.append(answer)
@@ -7352,7 +7353,8 @@ with tab4:
                             # Show feedback after answer submitted
                             score = st.session_state.dynamic_interview_scores[st.session_state.current_dynamic_interview_question]
                             answer_text = st.session_state.dynamic_interview_answers[st.session_state.current_dynamic_interview_question]
-                            _, feedback = evaluate_interview_answer(answer_text)
+                            _, feedback = evaluate_interview_answer(answer_text, st.session_state.current_interview_question_text)
+
                             
                             st.markdown(f"""
                             <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%); 
@@ -7440,8 +7442,6 @@ with tab4:
                         st.session_state.dynamic_answer_submitted = False
                         st.session_state.current_interview_question_text = ""
                         st.rerun()
-
-    # Section 6: Achievements 🏅 (unchanged)
    
 if tab5:
 	with tab5:

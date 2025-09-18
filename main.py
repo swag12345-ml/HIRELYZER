@@ -5639,7 +5639,7 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
-def evaluate_interview_answer(answer: str, question: str):
+def evaluate_interview_answer(answer: str):
     """
     Uses an LLM to evaluate an interview answer.
     Returns (score out of 10, feedback string, suggestions list).
@@ -5650,39 +5650,29 @@ def evaluate_interview_answer(answer: str, question: str):
 
     # Empty check
     if not answer.strip():
-        return 0, "⚠️ No answer provided.", ["Please provide a complete answer to the question."]
+        return 0, "⚠️ No answer provided.", []
 
-    # 🔹 Enhanced LLM Prompt for better evaluation
+    # 🔹 LLM Prompt for enhanced evaluation
     prompt = f"""
-    You are an expert technical interview evaluator for professional job interviews.
+    You are an expert technical interview evaluator.
 
     ### Task:
-    Evaluate the following candidate's answer to an interview question and provide detailed feedback.
-
-    ### Interview Question:
-    {question}
-
-    ### Candidate Answer:
-    {answer}
+    Evaluate the following candidate's answer and provide a numeric score, feedback, and improvement suggestions.
 
     ### Evaluation Criteria:
     1. Clarity & Structure (25%)
     2. Relevance to the Question (25%)
-    3. Technical Depth & Accuracy (25%)
+    3. Technical Depth (25%)
     4. Communication Skills (25%)
 
-    ### Output Format (STRICT):
+    ### Output Format:
     Score: <number between 1 and 10>
-    Feedback: <constructive feedback in 2-3 sentences explaining the score>
-    Suggestion1: <specific improvement suggestion>
-    Suggestion2: <another specific improvement suggestion>
+    Feedback: <constructive feedback in 2-3 sentences>
+    Suggestions: <2 specific improvement suggestions, separated by |>
 
-    ### Guidelines:
-    - Score 1-3: Poor answer, major issues
-    - Score 4-6: Average answer, needs improvement
-    - Score 7-8: Good answer, minor improvements needed
-    - Score 9-10: Excellent answer, interview-ready
-
+    ---
+    Candidate Answer:
+    {answer}
     ---
     """
 
@@ -5695,25 +5685,13 @@ def evaluate_interview_answer(answer: str, question: str):
         score = int(score_match.group(1)) if score_match else 5  # fallback
 
         # Extract Feedback
-        feedback_match = re.search(r"Feedback:\s*(.+?)(?=Suggestion1:|$)", response, re.DOTALL)
-        feedback = feedback_match.group(1).strip() if feedback_match else "Good attempt, but can be improved with more detail."
+        feedback_match = re.search(r"Feedback:\s*(.+?)(?=Suggestions:|$)", response, re.DOTALL)
+        feedback = feedback_match.group(1).strip() if feedback_match else "Good attempt, but can be clearer."
 
         # Extract Suggestions
-        suggestions = []
-        suggestion1_match = re.search(r"Suggestion1:\s*(.+?)(?=Suggestion2:|$)", response, re.DOTALL)
-        suggestion2_match = re.search(r"Suggestion2:\s*(.+?)$", response, re.DOTALL)
-        
-        if suggestion1_match:
-            suggestions.append(suggestion1_match.group(1).strip())
-        if suggestion2_match:
-            suggestions.append(suggestion2_match.group(1).strip())
-        
-        # Fallback suggestions if none found
-        if not suggestions:
-            suggestions = [
-                "Provide more specific examples to support your answer.",
-                "Structure your response with clear beginning, middle, and end."
-            ]
+        suggestions_match = re.search(r"Suggestions:\s*(.+)", response, re.DOTALL)
+        suggestions_text = suggestions_match.group(1).strip() if suggestions_match else "Practice more|Be more specific"
+        suggestions = [s.strip() for s in suggestions_text.split('|')][:2]  # Limit to 2 suggestions
 
         # Keep score in range
         score = max(1, min(score, 10))
@@ -5721,50 +5699,44 @@ def evaluate_interview_answer(answer: str, question: str):
     except Exception as e:
         score = 5
         feedback = f"⚠️ Evaluation fallback due to error: {e}"
-        suggestions = ["Please try again.", "Ensure your answer is clear and complete."]
+        suggestions = ["Practice more", "Be more specific"]
 
     return score, feedback, suggestions
 
-def generate_ai_interview_questions(domain: str, role: str, num_questions: int = 8):
+def generate_ai_interview_questions(job_role: str, num_questions: int = 8):
     """
-    Generate AI-powered interview questions based on job role using LLM.
-    Returns list of realistic professional interview questions.
+    Generate AI-powered interview questions for a specific job role.
+    Returns list of questions (behavioral + technical + conceptual, NO coding).
     """
     from llm_manager import call_llm
     import streamlit as st
     import re
 
     prompt = f"""
-    You are an expert technical recruiter and interview specialist.
+    You are an expert HR interviewer and technical recruiter.
 
     ### Task:
-    Generate {num_questions} realistic professional interview questions for the role of "{role}" in the "{domain}" domain.
+    Generate {num_questions} realistic professional interview questions for a {job_role} position.
 
     ### Requirements:
-    - Mix of behavioral, technical conceptual, and situational questions
+    - Mix of behavioral, technical, and conceptual questions
     - NO coding/whiteboard questions
     - Questions should be realistic and commonly asked
-    - Focus on experience, problem-solving, and role-specific knowledge
-    - Each question should be professional and interview-appropriate
+    - Focus on experience, problem-solving, and knowledge
+    - Make questions specific to {job_role} role
 
     ### Question Types to Include:
-    - Behavioral questions (Tell me about a time...)
-    - Technical conceptual questions (Explain how...)
-    - Situational questions (How would you handle...)
-    - Experience-based questions (Describe your experience with...)
+    - Behavioral: "Tell me about a time..." or "How do you handle..."
+    - Technical: Knowledge-based questions about tools, concepts, best practices
+    - Conceptual: "How would you approach..." or "What's your understanding of..."
 
     ### Output Format:
-    Question1: <question text>
-    Question2: <question text>
-    Question3: <question text>
-    [continue for all {num_questions} questions]
+    Question 1: <question text>
+    Question 2: <question text>
+    Question 3: <question text>
+    ...
 
-    ### Example for Software Engineer:
-    Question1: Tell me about a time you had to debug a complex technical issue under pressure.
-    Question2: How do you stay updated with new technologies and industry trends?
-    Question3: Describe your approach to code reviews and collaboration with team members.
-
-    Generate questions for: {role} in {domain}
+    Generate exactly {num_questions} questions for {job_role}.
     """
 
     try:
@@ -5772,42 +5744,44 @@ def generate_ai_interview_questions(domain: str, role: str, num_questions: int =
         
         # Extract questions using regex
         questions = []
-        question_matches = re.findall(r"Question\d+:\s*(.+?)(?=Question\d+:|$)", response, re.DOTALL)
+        question_matches = re.findall(r"Question \d+:\s*(.+?)(?=Question \d+:|$)", response, re.DOTALL)
         
         for match in question_matches:
             question = match.strip()
             if question and len(question) > 10:  # Basic validation
                 questions.append(question)
         
-        # Fallback questions if extraction fails
-        if len(questions) < 3:
+        # Fallback questions if AI generation fails
+        if len(questions) < num_questions:
             fallback_questions = [
-                f"Tell me about your experience and interest in the {role} position.",
-                f"How do you stay updated with trends and best practices in {domain}?",
-                f"Describe a challenging project you worked on and how you overcame obstacles.",
+                f"Tell me about your experience with {job_role} responsibilities.",
+                f"How do you stay updated with the latest trends in {job_role}?",
+                f"Describe a challenging project you worked on as a {job_role}.",
                 f"How do you prioritize tasks when working on multiple projects?",
-                f"Tell me about a time you had to learn a new technology or skill quickly.",
-                f"How do you handle feedback and criticism of your work?",
-                f"Describe your approach to problem-solving in {domain}.",
-                f"What interests you most about working as a {role}?"
+                f"What tools and technologies do you consider essential for {job_role}?",
+                f"How do you handle feedback and criticism in your work?",
+                f"Describe your approach to problem-solving in {job_role}.",
+                f"What motivates you to work in the {job_role} field?"
             ]
-            questions = fallback_questions[:num_questions]
+            
+            # Add fallback questions to reach desired count
+            while len(questions) < num_questions and len(fallback_questions) > 0:
+                questions.append(fallback_questions.pop(0))
         
-        return questions[:num_questions]  # Ensure we return exactly the requested number
+        return questions[:num_questions]  # Ensure exact count
         
     except Exception as e:
-        # Fallback questions in case of error
-        fallback_questions = [
-            f"Why are you interested in the {role} position?",
-            f"Tell me about your relevant experience in {domain}.",
-            f"How do you handle challenging situations at work?",
-            f"Describe a project you're proud of and your role in it.",
-            f"How do you stay motivated and continue learning?",
-            f"Tell me about a time you worked effectively in a team.",
-            f"How do you prioritize your work when facing multiple deadlines?",
-            f"What are your career goals in {domain}?"
-        ]
-        return fallback_questions[:num_questions]
+        # Complete fallback
+        return [
+            f"Tell me about your experience with {job_role} responsibilities.",
+            f"How do you stay updated with the latest trends in {job_role}?",
+            f"Describe a challenging project you worked on as a {job_role}.",
+            f"How do you prioritize tasks when working on multiple projects?",
+            f"What tools and technologies do you consider essential for {job_role}?",
+            f"How do you handle feedback and criticism in your work?",
+            f"Describe your approach to problem-solving in {job_role}.",
+            f"What motivates you to work in the {job_role} field?"
+        ][:num_questions]
 
 import streamlit as st
 import plotly.graph_objects as go
@@ -5815,7 +5789,7 @@ from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_co
 import time
 
 with tab4:
-    # Inject CSS styles (keeping existing styles plus new timer styles)
+    # Inject CSS styles (keeping existing styles)
     st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -6198,43 +6172,39 @@ with tab4:
             margin: 20px 0;
         }
 
-        /* NEW: Timer styles */
+        /* Timer styling */
         .timer-container {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            background: linear-gradient(135deg, rgba(255, 69, 0, 0.1) 0%, rgba(255, 140, 0, 0.1) 100%);
+            border: 2px solid rgba(255, 69, 0, 0.3);
             border-radius: 15px;
-            padding: 15px 20px;
+            padding: 15px;
             margin: 15px 0;
             text-align: center;
-            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
         }
 
         .timer-display {
             font-size: 24px;
             font-weight: bold;
-            color: white;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            color: #ff4500;
+            text-shadow: 0 0 10px rgba(255, 69, 0, 0.5);
         }
 
-        .timer-warning {
-            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
-            animation: pulse-warning 1s ease-in-out infinite;
+        .timer-expired {
+            background: linear-gradient(135deg, rgba(255, 0, 0, 0.2) 0%, rgba(139, 0, 0, 0.2) 100%);
+            border-color: rgba(255, 0, 0, 0.5);
         }
 
-        .timer-critical {
-            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
-            animation: pulse-critical 0.5s ease-in-out infinite;
+        .timer-expired .timer-display {
+            color: #ff0000;
+            animation: blink 1s infinite;
         }
 
-        @keyframes pulse-warning {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.5; }
         }
 
-        @keyframes pulse-critical {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.08); }
-        }
-
+        /* Feedback styling */
         .feedback-container {
             background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%);
             border: 1px solid rgba(0, 195, 255, 0.3);
@@ -6257,24 +6227,20 @@ with tab4:
         }
 
         .suggestions-list {
-            background: rgba(0, 195, 255, 0.05);
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 10px;
+            color: #ffffff;
+            margin-left: 20px;
         }
 
-        .suggestion-item {
-            color: #ffffff;
-            margin: 8px 0;
-            padding-left: 20px;
+        .suggestions-list li {
+            margin-bottom: 8px;
+            list-style-type: none;
             position: relative;
         }
 
-        .suggestion-item::before {
+        .suggestions-list li::before {
             content: "💡";
             position: absolute;
-            left: 0;
-            top: 0;
+            left: -25px;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -7061,294 +7027,277 @@ with tab4:
     # Section 4: COMPLETELY REWRITTEN AI Interview Coach 🤖
     elif page == "AI Interview Coach 🤖":
         st.subheader("🤖 AI Interview Coach")
-        st.markdown("Practice realistic professional interview questions with our AI coach. Get instant feedback and improve your interview skills!")
+        st.markdown("Practice with AI-generated interview questions tailored to your target role. Get real-time feedback and improve your interview skills!")
         
-        # Domain and Role selection
-        st.markdown('<div class="role-selector">', unsafe_allow_html=True)
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            selected_domain = st.selectbox(
-                "Select Career Domain",
-                options=list(COURSES_BY_CATEGORY.keys()),
-                key="ai_interview_domain_selection"
+        # Initialize session state for the new interview system
+        if 'ai_interview_started' not in st.session_state:
+            st.session_state.ai_interview_started = False
+        if 'ai_interview_questions' not in st.session_state:
+            st.session_state.ai_interview_questions = []
+        if 'current_question_index' not in st.session_state:
+            st.session_state.current_question_index = 0
+        if 'ai_interview_answers' not in st.session_state:
+            st.session_state.ai_interview_answers = []
+        if 'ai_interview_scores' not in st.session_state:
+            st.session_state.ai_interview_scores = []
+        if 'ai_interview_feedback' not in st.session_state:
+            st.session_state.ai_interview_feedback = []
+        if 'ai_interview_suggestions' not in st.session_state:
+            st.session_state.ai_interview_suggestions = []
+        if 'timer_start_time' not in st.session_state:
+            st.session_state.timer_start_time = None
+        if 'timer_expired' not in st.session_state:
+            st.session_state.timer_expired = False
+        if 'answer_submitted' not in st.session_state:
+            st.session_state.answer_submitted = False
+        if 'interview_completed' not in st.session_state:
+            st.session_state.interview_completed = False
+        if 'selected_job_role' not in st.session_state:
+            st.session_state.selected_job_role = ""
+
+        # Interview Setup Phase
+        if not st.session_state.ai_interview_started:
+            st.markdown('<div class="role-selector">', unsafe_allow_html=True)
+            
+            # Job role input
+            job_role = st.text_input(
+                "Enter your target job role:",
+                placeholder="e.g., Frontend Developer, Data Scientist, Product Manager",
+                key="job_role_input"
             )
-        
-        with col2:
-            if selected_domain:
-                roles = list(COURSES_BY_CATEGORY[selected_domain].keys())
-                selected_role = st.selectbox(
-                    "Select Target Role",
-                    options=roles,
-                    key="ai_interview_role_selection"
-                )
-            else:
-                selected_role = None
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        if selected_domain and selected_role:
-            # Initialize AI interview state
-            if 'ai_interview_questions' not in st.session_state:
-                st.session_state.ai_interview_questions = []
-            if 'current_ai_question_index' not in st.session_state:
-                st.session_state.current_ai_question_index = 0
-            if 'ai_interview_answers' not in st.session_state:
-                st.session_state.ai_interview_answers = []
-            if 'ai_interview_scores' not in st.session_state:
-                st.session_state.ai_interview_scores = []
-            if 'ai_interview_feedback' not in st.session_state:
-                st.session_state.ai_interview_feedback = []
-            if 'ai_interview_suggestions' not in st.session_state:
-                st.session_state.ai_interview_suggestions = []
-            if 'ai_interview_completed' not in st.session_state:
-                st.session_state.ai_interview_completed = False
-            if 'ai_interview_started' not in st.session_state:
-                st.session_state.ai_interview_started = False
-            if 'ai_answer_submitted' not in st.session_state:
-                st.session_state.ai_answer_submitted = False
-            if 'timer_start_time' not in st.session_state:
-                st.session_state.timer_start_time = None
-            if 'timer_expired' not in st.session_state:
-                st.session_state.timer_expired = False
-            if 'ai_interview_domain' not in st.session_state or st.session_state.ai_interview_domain != selected_domain:
-                # Reset when domain/role changes
-                st.session_state.ai_interview_domain = selected_domain
-                st.session_state.ai_interview_role = selected_role
-                st.session_state.ai_interview_started = False
-                st.session_state.ai_interview_completed = False
-                st.session_state.ai_interview_questions = []
-                st.session_state.current_ai_question_index = 0
-                st.session_state.ai_interview_answers = []
-                st.session_state.ai_interview_scores = []
-                st.session_state.ai_interview_feedback = []
-                st.session_state.ai_interview_suggestions = []
-                st.session_state.ai_answer_submitted = False
-                st.session_state.timer_start_time = None
-                st.session_state.timer_expired = False
-                
-            # Start interview setup
-            if not st.session_state.ai_interview_started:
-                st.markdown(f"### 🎯 Practice Interview for: {selected_role}")
-                st.markdown(f"**Domain:** {selected_domain}")
-                
-                col1, col2 = st.columns(2)
-                with col1:
-                    num_questions = st.slider("Number of questions:", 3, 10, 8, key="ai_num_questions")
-                with col2:
-                    timer_duration = st.selectbox(
-                        "Time per question (seconds):",
-                        options=[60, 90, 120, 180],
-                        index=1,  # Default to 90 seconds
-                        key="ai_timer_duration"
-                    )
-                
-                st.markdown("""
-                <div style="background: rgba(0, 195, 255, 0.1); padding: 15px; border-radius: 10px; margin: 15px 0;">
-                    <h4 style="color: #00c3ff; margin: 0 0 10px 0;">🎯 What to Expect:</h4>
-                    <ul style="color: #ffffff; margin: 0;">
-                        <li>AI-generated realistic interview questions</li>
-                        <li>Timer for each question (you choose the duration)</li>
-                        <li>Instant AI feedback with scores out of 10</li>
-                        <li>Specific improvement suggestions</li>
-                        <li>One question at a time for focused practice</li>
-                    </ul>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                if st.button("🚀 Start AI Interview Practice", key="start_ai_interview"):
-                    with st.spinner("🤖 Generating personalized interview questions..."):
+            
+            # Number of questions
+            num_questions = st.slider(
+                "Number of interview questions:",
+                min_value=5,
+                max_value=12,
+                value=8,
+                key="num_questions_slider"
+            )
+            
+            # Timer duration
+            timer_duration = st.selectbox(
+                "Time per question:",
+                options=[60, 90, 120, 180],
+                format_func=lambda x: f"{x} seconds",
+                index=1,  # Default to 90 seconds
+                key="timer_duration_select"
+            )
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            if job_role.strip():
+                if st.button("🚀 Generate AI Interview Questions & Start Practice", type="primary"):
+                    with st.spinner("🤖 AI is generating personalized interview questions..."):
                         # Generate AI questions
-                        questions = generate_ai_interview_questions(selected_domain, selected_role, num_questions)
+                        questions = generate_ai_interview_questions(job_role.strip(), num_questions)
                         
-                        if questions and len(questions) >= 3:
+                        if questions:
+                            # Initialize interview session
                             st.session_state.ai_interview_questions = questions
-                            st.session_state.current_ai_question_index = 0
+                            st.session_state.selected_job_role = job_role.strip()
+                            st.session_state.timer_duration = timer_duration
+                            st.session_state.current_question_index = 0
                             st.session_state.ai_interview_answers = []
                             st.session_state.ai_interview_scores = []
                             st.session_state.ai_interview_feedback = []
                             st.session_state.ai_interview_suggestions = []
-                            st.session_state.ai_interview_completed = False
                             st.session_state.ai_interview_started = True
-                            st.session_state.ai_answer_submitted = False
                             st.session_state.timer_start_time = time.time()
                             st.session_state.timer_expired = False
-                            st.session_state.timer_duration = timer_duration
-                            st.success("✅ Interview questions generated! Starting your practice session...")
+                            st.session_state.answer_submitted = False
+                            st.session_state.interview_completed = False
                             st.rerun()
                         else:
                             st.error("❌ Failed to generate questions. Please try again.")
-            
-            # Interview in progress
-            elif st.session_state.ai_interview_started and not st.session_state.ai_interview_completed:
-                if st.session_state.current_ai_question_index < len(st.session_state.ai_interview_questions):
-                    current_question = st.session_state.ai_interview_questions[st.session_state.current_ai_question_index]
+            else:
+                st.info("👆 Please enter a job role to get started!")
+
+        # Interview In Progress Phase
+        elif st.session_state.ai_interview_started and not st.session_state.interview_completed:
+            if st.session_state.current_question_index < len(st.session_state.ai_interview_questions):
+                current_question = st.session_state.ai_interview_questions[st.session_state.current_question_index]
+                
+                # Display question card
+                st.markdown(f"""
+                <div class="quiz-card">
+                    <h3 style="color: #00c3ff;">Question {st.session_state.current_question_index + 1} of {len(st.session_state.ai_interview_questions)}</h3>
+                    <h4 style="color: #ffffff; margin: 15px 0;">Role: {st.session_state.selected_job_role}</h4>
+                    <p style="font-size: 18px; color: #ffffff; margin: 15px 0; line-height: 1.5;">{current_question}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Timer Display
+                if st.session_state.timer_start_time and not st.session_state.answer_submitted:
+                    elapsed_time = time.time() - st.session_state.timer_start_time
+                    remaining_time = max(0, st.session_state.timer_duration - elapsed_time)
                     
-                    # Timer logic
-                    if st.session_state.timer_start_time and not st.session_state.timer_expired:
-                        elapsed_time = time.time() - st.session_state.timer_start_time
-                        remaining_time = max(0, st.session_state.timer_duration - elapsed_time)
-                        
-                        if remaining_time <= 0:
-                            st.session_state.timer_expired = True
-                            remaining_time = 0
-                        
-                        # Timer display with color coding
-                        timer_class = "timer-container"
-                        if remaining_time <= 30:
-                            timer_class += " timer-critical"
-                        elif remaining_time <= 60:
-                            timer_class += " timer-warning"
-                        
+                    if remaining_time > 0:
                         minutes = int(remaining_time // 60)
                         seconds = int(remaining_time % 60)
+                        timer_class = "timer-container"
+                        if remaining_time <= 30:  # Warning when 30 seconds left
+                            timer_class += " timer-expired"
                         
                         st.markdown(f"""
                         <div class="{timer_class}">
-                            <div class="timer-display">
-                                ⏰ Time Remaining: {minutes:02d}:{seconds:02d}
-                            </div>
+                            <div class="timer-display">⏰ {minutes:02d}:{seconds:02d}</div>
+                            <p style="color: #666; margin: 5px 0;">Time remaining</p>
                         </div>
                         """, unsafe_allow_html=True)
                         
-                        # Auto-refresh every second if timer is running
-                        if remaining_time > 0 and not st.session_state.ai_answer_submitted:
-                            time.sleep(1)
-                            st.rerun()
-                    
-                    # Question display
-                    st.markdown(f"""
-                    <div class="quiz-card">
-                        <h3 style="color: #00c3ff;">Question {st.session_state.current_ai_question_index + 1} of {len(st.session_state.ai_interview_questions)}</h3>
-                        <h4 style="color: #ffffff; margin: 15px 0;">Role: {selected_role}</h4>
-                        <p style="font-size: 18px; color: #ffffff; margin: 15px 0; line-height: 1.5;">{current_question}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    # Answer input (disabled if timer expired)
-                    answer_disabled = st.session_state.timer_expired and not st.session_state.ai_answer_submitted
-                    
-                    answer = st.text_area(
-                        "Your answer:",
-                        placeholder="Type your detailed answer here..." if not answer_disabled else "Time's up! Please submit to continue.",
-                        height=150,
-                        disabled=answer_disabled,
-                        key=f"ai_interview_answer_{st.session_state.current_ai_question_index}"
-                    )
-                    
-                    # Submit answer button
-                    if not st.session_state.ai_answer_submitted:
-                        submit_disabled = False
-                        submit_text = "Submit Answer & Get AI Feedback"
-                        
-                        if st.session_state.timer_expired:
-                            submit_text = "⏰ Time's Up - Submit Answer"
-                        
-                        if st.button(submit_text, disabled=submit_disabled, key="submit_ai_answer"):
-                            if answer.strip() or st.session_state.timer_expired:
+                        # Auto-refresh every second
+                        time.sleep(1)
+                        st.rerun()
+                    else:
+                        # Timer expired
+                        st.session_state.timer_expired = True
+                        st.markdown("""
+                        <div class="timer-container timer-expired">
+                            <div class="timer-display">⏰ TIME'S UP!</div>
+                            <p style="color: #ff0000; margin: 5px 0;">Please submit your answer</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                
+                # Answer input
+                answer_disabled = st.session_state.answer_submitted
+                answer = st.text_area(
+                    "Your answer:",
+                    placeholder="Type your detailed answer here... Be specific and provide examples where possible.",
+                    height=150,
+                    disabled=answer_disabled,
+                    key=f"ai_answer_{st.session_state.current_question_index}"
+                )
+                
+                # Submit button
+                if not st.session_state.answer_submitted:
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        if st.button("📝 Submit Answer & Get AI Feedback", type="primary"):
+                            if answer.strip():
                                 with st.spinner("🤖 AI is evaluating your answer..."):
-                                    # Evaluate answer with AI
-                                    score, feedback, suggestions = evaluate_interview_answer(answer, current_question)
+                                    # Evaluate answer with enhanced feedback
+                                    score, feedback, suggestions = evaluate_interview_answer(answer)
                                     
                                     # Store results
                                     st.session_state.ai_interview_answers.append(answer)
                                     st.session_state.ai_interview_scores.append(score)
                                     st.session_state.ai_interview_feedback.append(feedback)
                                     st.session_state.ai_interview_suggestions.append(suggestions)
-                                    st.session_state.ai_answer_submitted = True
+                                    st.session_state.answer_submitted = True
                                     st.rerun()
                             else:
-                                st.warning("⚠️ Please provide an answer before proceeding.")
-                    else:
-                        # Show AI feedback after answer submitted
-                        score = st.session_state.ai_interview_scores[st.session_state.current_ai_question_index]
-                        feedback = st.session_state.ai_interview_feedback[st.session_state.current_ai_question_index]
-                        suggestions = st.session_state.ai_interview_suggestions[st.session_state.current_ai_question_index]
-                        
-                        st.markdown(f"""
-                        <div class="feedback-container">
-                            <h4 style="color: #00c3ff; margin: 0 0 15px 0;">🤖 AI Feedback:</h4>
-                            <div class="feedback-score">📊 Score: {score}/10</div>
-                            <div class="feedback-text">{feedback}</div>
-                            <div class="suggestions-list">
-                                <h5 style="color: #00c3ff; margin: 15px 0 10px 0;">💡 Suggestions for Improvement:</h5>
-                        """, unsafe_allow_html=True)
-                        
-                        for suggestion in suggestions:
-                            st.markdown(f'<div class="suggestion-item">{suggestion}</div>', unsafe_allow_html=True)
-                        
-                        st.markdown("</div></div>", unsafe_allow_html=True)
-                        
-                        # Continue/Complete button
-                        if st.session_state.current_ai_question_index < len(st.session_state.ai_interview_questions) - 1:
-                            if st.button("Continue to Next Question ➡️", key="next_ai_question"):
-                                st.session_state.current_ai_question_index += 1
-                                st.session_state.ai_answer_submitted = False
-                                st.session_state.timer_start_time = time.time()
-                                st.session_state.timer_expired = False
-                                st.rerun()
-                        else:
-                            if st.button("Complete AI Interview 🏁", key="complete_ai_interview"):
-                                st.session_state.ai_interview_completed = True
-                                st.rerun()
-                                
-                        # Progress bar
-                        progress = (st.session_state.current_ai_question_index + 1) / len(st.session_state.ai_interview_questions)
-                        st.progress(progress)
-            
-            # Interview completed with results and course recommendations
-            elif st.session_state.ai_interview_completed:
-                # Calculate average score
-                avg_score = sum(st.session_state.ai_interview_scores) / len(st.session_state.ai_interview_scores)
+                                st.warning("⚠️ Please provide an answer before submitting.")
+                    
+                    with col2:
+                        if st.button("⏭️ Skip Question"):
+                            # Skip with default values
+                            st.session_state.ai_interview_answers.append("(Skipped)")
+                            st.session_state.ai_interview_scores.append(0)
+                            st.session_state.ai_interview_feedback.append("Question was skipped.")
+                            st.session_state.ai_interview_suggestions.append(["Practice more", "Don't skip questions"])
+                            st.session_state.answer_submitted = True
+                            st.rerun()
                 
-                # Get badge
-                badge_emoji, badge_title = get_badge_for_score("interview", avg_score)
-                
-                st.markdown(f"""
-                <div class="badge-container">
-                    <h2 style="margin: 0; color: #333;">🎉 AI Interview Practice Complete!</h2>
-                    <div style="margin: 20px 0;">
-                        <div class="score-display">{avg_score:.1f}/10.0</div>
-                        <h3 style="color: #333; margin: 10px 0;">{badge_emoji} {badge_title}</h3>
+                # Show feedback after submission
+                if st.session_state.answer_submitted:
+                    score = st.session_state.ai_interview_scores[st.session_state.current_question_index]
+                    feedback = st.session_state.ai_interview_feedback[st.session_state.current_question_index]
+                    suggestions = st.session_state.ai_interview_suggestions[st.session_state.current_question_index]
+                    
+                    st.markdown(f"""
+                    <div class="feedback-container">
+                        <div class="feedback-score">📊 Score: {score}/10</div>
+                        <div class="feedback-text">💬 <strong>Feedback:</strong> {feedback}</div>
+                        <div style="color: #00c3ff; font-weight: 600; margin-bottom: 10px;">💡 Suggestions for Improvement:</div>
+                        <ul class="suggestions-list">
+                            {"".join([f"<li>{suggestion}</li>" for suggestion in suggestions])}
+                        </ul>
                     </div>
-                    <p style="color: #666;">Role: {selected_role} in {selected_domain}</p>
-                    <p style="color: #666;">Questions Answered: {len(st.session_state.ai_interview_scores)}</p>
+                    """, unsafe_allow_html=True)
+                    
+                    # Next question or complete button
+                    if st.session_state.current_question_index < len(st.session_state.ai_interview_questions) - 1:
+                        if st.button("➡️ Next Question", type="primary"):
+                            st.session_state.current_question_index += 1
+                            st.session_state.timer_start_time = time.time()
+                            st.session_state.timer_expired = False
+                            st.session_state.answer_submitted = False
+                            st.rerun()
+                    else:
+                        if st.button("🏁 Complete Interview", type="primary"):
+                            st.session_state.interview_completed = True
+                            st.rerun()
+                
+                # Progress bar
+                progress = (st.session_state.current_question_index + 1) / len(st.session_state.ai_interview_questions)
+                st.progress(progress)
+
+        # Interview Completed Phase
+        elif st.session_state.interview_completed:
+            # Calculate results
+            valid_scores = [score for score in st.session_state.ai_interview_scores if score > 0]
+            avg_score = sum(valid_scores) / len(valid_scores) if valid_scores else 0
+            
+            # Get badge
+            badge_emoji, badge_title = get_badge_for_score("interview", avg_score)
+            
+            # Results display
+            st.markdown(f"""
+            <div class="badge-container">
+                <h2 style="margin: 0; color: #333;">🎉 AI Interview Practice Complete!</h2>
+                <div style="margin: 20px 0;">
+                    <div class="score-display">{avg_score:.1f}/10</div>
+                    <h3 style="color: #333; margin: 10px 0;">{badge_emoji} {badge_title}</h3>
                 </div>
-                """, unsafe_allow_html=True)
-                
-                # Show detailed results
-                st.subheader("📊 Detailed AI Feedback:")
-                for i, (score, answer, feedback, suggestions) in enumerate(zip(
-                    st.session_state.ai_interview_scores, 
-                    st.session_state.ai_interview_answers,
-                    st.session_state.ai_interview_feedback,
-                    st.session_state.ai_interview_suggestions
-                )):
-                    with st.expander(f"Question {i+1}: Score {score}/10"):
-                        st.write(f"**Question:** {st.session_state.ai_interview_questions[i]}")
-                        st.write(f"**Your Answer:** {answer[:300]}{'...' if len(answer) > 300 else ''}")
-                        st.write(f"**AI Score:** {score}/10")
-                        st.write(f"**AI Feedback:** {feedback}")
-                        st.write("**Improvement Suggestions:**")
+                <p style="color: #666;">Role: {st.session_state.selected_job_role}</p>
+                <p style="color: #666;">Questions Completed: {len(st.session_state.ai_interview_answers)}</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Detailed results
+            st.subheader("📊 Detailed Interview Results")
+            
+            for i, (question, answer, score, feedback, suggestions) in enumerate(zip(
+                st.session_state.ai_interview_questions,
+                st.session_state.ai_interview_answers,
+                st.session_state.ai_interview_scores,
+                st.session_state.ai_interview_feedback,
+                st.session_state.ai_interview_suggestions
+            )):
+                with st.expander(f"Question {i+1}: Score {score}/10 {'⭐' if score >= 8 else '👍' if score >= 6 else '💪'}"):
+                    st.markdown(f"**Question:** {question}")
+                    st.markdown(f"**Your Answer:** {answer}")
+                    st.markdown(f"**Score:** {score}/10")
+                    st.markdown(f"**Feedback:** {feedback}")
+                    if suggestions:
+                        st.markdown("**Suggestions:**")
                         for suggestion in suggestions:
-                            st.write(f"• {suggestion}")
-                
-                # Course recommendations
-                st.markdown("---")
-                st.subheader("📚 Recommended Courses for Your Career Growth")
-                st.markdown(f"Based on your AI interview practice for **{selected_role}** in **{selected_domain}**, here are our course recommendations:")
-                
-                courses = get_courses_for_role(selected_domain, selected_role)
-                if courses:
-                    display_courses_by_difficulty(courses, selected_role)
-                else:
-                    st.info("No specific courses found for this role. Explore our course categories to find relevant learning resources!")
-                
-                # Restart button
-                if st.button("🔄 Practice for Different Role", key="restart_ai_interview"):
-                    # Reset all AI interview state
-                    for key in list(st.session_state.keys()):
-                        if key.startswith('ai_interview') or key.startswith('timer_'):
+                            st.markdown(f"• {suggestion}")
+            
+            # Action buttons
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("🔄 Practice Again with Same Role", type="primary"):
+                    # Reset for same role
+                    st.session_state.ai_interview_started = False
+                    st.session_state.interview_completed = False
+                    st.session_state.current_question_index = 0
+                    st.session_state.ai_interview_answers = []
+                    st.session_state.ai_interview_scores = []
+                    st.session_state.ai_interview_feedback = []
+                    st.session_state.ai_interview_suggestions = []
+                    st.session_state.answer_submitted = False
+                    st.rerun()
+            
+            with col2:
+                if st.button("🎯 Practice Different Role"):
+                    # Complete reset
+                    for key in ['ai_interview_started', 'ai_interview_questions', 'current_question_index',
+                               'ai_interview_answers', 'ai_interview_scores', 'ai_interview_feedback',
+                               'ai_interview_suggestions', 'timer_start_time', 'timer_expired',
+                               'answer_submitted', 'interview_completed', 'selected_job_role']:
+                        if key in st.session_state:
                             del st.session_state[key]
                     st.rerun()
 

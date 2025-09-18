@@ -3,7 +3,7 @@ Enhanced Database Manager for Resume Analysis System
 Optimized for large-scale user structures with improved performance and reliability
 """
 
-import sqlite3
+import sqlite
 import pandas as pd
 from datetime import datetime
 import pytz
@@ -1182,3 +1182,4 @@ if __name__ == "__main__":
     print("Database Manager initialized successfully!")
     stats = get_database_stats()
     print(f"Database Statistics: {stats}")
+

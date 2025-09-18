@@ -110,7 +110,7 @@ class DatabaseManager:
     def detect_domain_from_title_and_description(self, job_title: str, job_description: str) -> str:
         """
         Enhanced Domain Detection with 25+ Professional Domains
-        Optimized for better performance with cached keyword lookups and confidence thresholding
+        Optimized for better performance with cached keyword lookups
         """
         title = job_title.lower().strip()
         desc = job_description.lower().strip()
@@ -210,18 +210,14 @@ class DatabaseManager:
                 "ensemble methods", "gradient boosting", "random forest", "svm", "clustering", "pca"
             ],
             
-            # IMPROVED UI/UX Design keywords - removed generic terms, kept specific ones
             "UI/UX Design": [
-                "figma", "adobe xd", "sketch", "wireframe", "prototyping", 
-                "user interface", "user experience", "usability testing", 
-                "interaction design", "design system", "visual design", 
-                "responsive design", "material design", "user research", 
-                "usability", "accessibility", "human-centered design", 
-                "affinity diagram", "journey mapping", "heuristic evaluation",
-                "persona", "mobile-first", "ux audit", "design tokens", "design thinking",
-                "information architecture", "card sorting", "tree testing", 
-                "user testing", "a/b testing design", "design sprint", "atomic design", 
-                "design ops", "brand design"
+                "ui", "ux", "figma", "designer", "user interface", "user experience",
+                "adobe xd", "sketch", "wireframe", "prototyping", "interaction design",
+                "user research", "usability", "design system", "visual design", "accessibility",
+                "human-centered design", "affinity diagram", "journey mapping", "heuristic evaluation",
+                "persona", "responsive design", "mobile-first", "ux audit", "design tokens", "design thinking",
+                "information architecture", "card sorting", "tree testing", "user testing", "a/b testing design",
+                "design sprint", "atomic design", "material design", "design ops", "brand design"
             ],
             
             "Mobile Development": [
@@ -496,38 +492,18 @@ class DatabaseManager:
             if any(term in desc for term in boost_terms):
                 domain_scores[domain] += 3
 
-        # Step 4: Filter short/noisy descriptions with improved handling
+        # Step 4: Filter short/noisy descriptions
         if len(desc.split()) < 8:
-            # Check for strong keywords that should skip the penalty
-            strong_keywords = ["full stack developer", "mobile developer", "android developer", "ios developer"]
-            has_strong_keywords = any(keyword in title or keyword in desc for keyword in strong_keywords)
-            
-            if not has_strong_keywords:
-                for domain in domain_scores:
-                    desc_hits = sum(1 for kw in keywords[domain] if kw in desc)
-                    domain_scores[domain] = max(0, domain_scores[domain] - (desc_hits * WEIGHTS[domain] * 0.5))
+            for domain in domain_scores:
+                desc_hits = sum(1 for kw in keywords[domain] if kw in desc)
+                domain_scores[domain] = max(0, domain_scores[domain] - (desc_hits * WEIGHTS[domain] * 0.5))
 
-        # Step 5: Choose top domain with confidence threshold
+        # Step 5: Choose top domain
         if domain_scores:
             top_domain = max(domain_scores, key=domain_scores.get)
-            top_score = domain_scores[top_domain]
-            
-            # Apply confidence threshold - if top score < 8, fallback to Software Engineering
-            if top_score >= 8:
-                # Add explicit keyword overrides at the very end
-                if "full stack developer" in title:
-                    return "Full Stack Development"
-                if "mobile developer" in title or "android developer" in title or "ios developer" in title:
-                    return "Mobile Development"
-                
-                logger.info(f"Domain detected: {top_domain} with score: {top_score}")
+            if domain_scores[top_domain] > 0:
                 return top_domain
-            else:
-                logger.info(f"Low confidence detection ({top_score} < 8), falling back to Software Engineering")
-                return "Software Engineering"
 
-        # Guaranteed fallback
-        logger.info("No domain detected, falling back to Software Engineering")
         return "Software Engineering"
 
     def get_domain_similarity(self, resume_domain: str, job_domain: str) -> float:

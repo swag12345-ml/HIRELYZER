@@ -5639,9 +5639,9 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
-def evaluate_interview_answer(question: str, answer: str):
+def evaluate_interview_answer(answer: str):
     """
-    Uses an LLM to evaluate an interview answer based on the given question.
+    Uses an LLM to evaluate an interview answer.
     Returns (score out of 5, feedback string).
     """
     from llm_manager import call_llm
@@ -5657,24 +5657,22 @@ def evaluate_interview_answer(question: str, answer: str):
     You are an expert technical interview evaluator.
 
     ### Task:
-    Evaluate the following candidate's answer **in the context of the interview question** 
-    and provide a numeric score + feedback.
-
-    ### Interview Question:
-    {question}
-
-    ### Candidate Answer:
-    {answer}
+    Evaluate the following candidate's answer and provide a numeric score + feedback.
 
     ### Evaluation Criteria:
     1. Clarity & Structure
     2. Relevance to the Question
-    3. Technical Depth (specific to the domain of the question)
+    3. Technical Depth
     4. Communication Skills
 
     ### Output Format:
     Score: <number between 1 and 5>
     Feedback: <short constructive feedback in 1–2 sentences>
+
+    ---
+    Candidate Answer:
+    {answer}
+    ---
     """
 
     try:
@@ -5697,7 +5695,6 @@ def evaluate_interview_answer(question: str, answer: str):
         feedback = f"⚠️ Evaluation fallback due to error: {e}"
 
     return score, feedback
-
 
 import streamlit as st
 import plotly.graph_objects as go

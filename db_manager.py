@@ -3,7 +3,7 @@ Enhanced Database Manager for Resume Analysis System
 Optimized for large-scale user structures with improved performance and reliability
 """
 
-import sqlite
+import sqlite3
 import pandas as pd
 from datetime import datetime
 import pytz
@@ -496,34 +496,23 @@ class DatabaseManager:
             if any(term in desc for term in boost_terms):
                 domain_scores[domain] += 3
 
-        # Step 4: Filter short/noisy descriptions with improved handling
+        # Step 4: Filter short/noisy descriptions
         if len(desc.split()) < 8:
-            # Check for strong keywords that should skip the penalty
-            strong_keywords = ["full stack developer", "mobile developer", "android developer", "ios developer"]
-            has_strong_keywords = any(keyword in title or keyword in desc for keyword in strong_keywords)
-            
-            if not has_strong_keywords:
-                for domain in domain_scores:
-                    desc_hits = sum(1 for kw in keywords[domain] if kw in desc)
-                    domain_scores[domain] = max(0, domain_scores[domain] - (desc_hits * WEIGHTS[domain] * 0.5))
+            for domain in domain_scores:
+                desc_hits = sum(1 for kw in keywords[domain] if kw in desc)
+                domain_scores[domain] = max(0, domain_scores[domain] - (desc_hits * WEIGHTS[domain] * 0.5))
 
         # Step 5: Choose top domain with confidence threshold
         if domain_scores:
             top_domain = max(domain_scores, key=domain_scores.get)
             top_score = domain_scores[top_domain]
             
-            # Apply confidence threshold - if top score < 8, fallback to Software Engineering
-            if top_score >= 8:
-                # Add explicit keyword overrides at the very end
-                if "full stack developer" in title:
-                    return "Full Stack Development"
-                if "mobile developer" in title or "android developer" in title or "ios developer" in title:
-                    return "Mobile Development"
-                
+            # Apply confidence threshold - if top score < 15, fallback to Software Engineering
+            if top_score >= 15:
                 logger.info(f"Domain detected: {top_domain} with score: {top_score}")
                 return top_domain
             else:
-                logger.info(f"Low confidence detection ({top_score} < 8), falling back to Software Engineering")
+                logger.info(f"Low confidence detection ({top_score} < 15), falling back to Software Engineering")
                 return "Software Engineering"
 
         # Guaranteed fallback
@@ -1206,4 +1195,3 @@ if __name__ == "__main__":
     print("Database Manager initialized successfully!")
     stats = get_database_stats()
     print(f"Database Statistics: {stats}")
-

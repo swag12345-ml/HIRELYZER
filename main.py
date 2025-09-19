@@ -7249,7 +7249,6 @@ Generate {num_questions} unique {interview_type} interview questions for the rol
                     st.session_state.ai_answer_submitted = False
                     st.session_state.ai_question_start_time = None
                     st.rerun()
-   
 if tab5:
 	with tab5:
 		import sqlite3

@@ -6590,77 +6590,43 @@ with tab4:
         return questions
 
     def generate_interview_questions_with_llm(domain, role, interview_type, num_questions):
-        """Generate interview questions using ONLY LLM (no fallback)"""
+        """Generate interview questions using LLM"""
         try:
-            # ENHANCED STRONGER PROMPT as requested
-            prompt = f"""You are a world-class senior technical recruiter and interview expert with 15+ years of experience.
+            # Create the prompt using the specified format
+            prompt = f"""You are an expert interviewer.
+Generate {num_questions} unique {interview_type} interview questions for the role of {role} in {domain}.
+- Keep each question concise (max 1 sentence).
+- Avoid duplicates.
+- Output as plain text, one question per line."""
 
-**CRITICAL REQUIREMENTS:**
-- Generate EXACTLY {num_questions} unique, challenging {interview_type} interview questions
-- Target role: {role} in {domain}
-- Questions MUST be realistic, industry-standard, and role-specific
-- Each question should test different competencies and skills
-- Vary difficulty levels from entry-level to senior-level appropriately
-- NO generic questions - make them SPECIFIC to the role and domain
-- Keep questions concise (1-2 sentences max)
-- Questions should allow for detailed, technical answers
-- Include both theoretical knowledge and practical experience questions
-
-**OUTPUT FORMAT:**
-Return ONLY the questions, one per line, no numbering, no bullets, no extra text.
-
-**QUESTION TYPES FOR {interview_type.upper()}:**
-{f"- Technical depth questions about {domain} technologies and methodologies" if interview_type in ["technical", "mixed"] else ""}
-{f"- Problem-solving scenarios specific to {role}" if interview_type in ["technical", "mixed"] else ""}
-{f"- System design and architecture questions" if interview_type in ["technical", "mixed"] and "engineer" in role.lower() else ""}
-{f"- Coding and implementation questions" if interview_type in ["technical", "mixed"] and "developer" in role.lower() else ""}
-{f"- Leadership and teamwork scenarios" if interview_type in ["behavioral", "mixed"] else ""}
-{f"- Conflict resolution and communication examples" if interview_type in ["behavioral", "mixed"] else ""}
-{f"- Project management and prioritization situations" if interview_type in ["behavioral", "mixed"] else ""}
-{f"- Career growth and learning experiences" if interview_type in ["behavioral", "mixed"] else ""}
-
-Generate the questions now:"""
-
-            # Call LLM with stronger prompt
+            # Call LLM
             response = call_llm(prompt, session=st.session_state)
             
             # Parse response into list of questions
             questions = [q.strip() for q in response.strip().split('\n') if q.strip()]
             
-            # Remove any numbering or bullet points more aggressively
+            # Remove any numbering or bullet points
             import re
             cleaned_questions = []
             for q in questions:
-                # Remove common prefixes like "1.", "- ", "* ", "Q1:", etc.
-                cleaned_q = re.sub(r'^[\d\-\*\.\)\]\s]*[Q]?[\d]*[\.\)\:\-\s]*', '', q).strip()
-                # Remove trailing punctuation if it's just a period or colon
-                cleaned_q = re.sub(r'^["\']*|["\']*$', '', cleaned_q).strip()
-                
-                if cleaned_q and len(cleaned_q) > 15 and '?' in cleaned_q:  # Ensure meaningful questions
+                # Remove common prefixes like "1.", "- ", "* ", etc.
+                cleaned_q = re.sub(r'^[\d\-\*\.\s]+', '', q).strip()
+                if cleaned_q and len(cleaned_q) > 10:  # Ensure meaningful questions
                     cleaned_questions.append(cleaned_q)
             
-            # Ensure we have the exact number requested
-            if len(cleaned_questions) >= num_questions:
-                return cleaned_questions[:num_questions]
-            else:
-                # If we don't have enough questions, try once more with a simpler prompt
-                simplified_prompt = f"""Generate {num_questions} interview questions for a {role} in {domain}. 
-                Make them {interview_type} questions. 
-                Output only the questions, one per line."""
-                
-                retry_response = call_llm(simplified_prompt, session=st.session_state)
-                retry_questions = [q.strip() for q in retry_response.strip().split('\n') if q.strip() and '?' in q]
-                
-                if retry_questions:
-                    return retry_questions[:num_questions]
-                else:
-                    # If still failing, raise an exception to show error to user
-                    raise Exception("LLM failed to generate proper interview questions")
+            return cleaned_questions[:num_questions]  # Ensure we don't exceed requested count
             
         except Exception as e:
-            st.error(f"❌ Failed to generate interview questions using LLM: {str(e)}")
-            st.error("Please check your LLM connection and try again.")
-            return None  # Return None instead of fallback questions
+            st.error(f"Error generating questions with LLM: {e}")
+            # Fallback to static questions
+            fallback_questions = [
+                f"What interests you most about the {role} position?",
+                f"How would you approach a challenging {interview_type} problem?",
+                f"What skills do you think are most important for a {role}?",
+                f"How do you stay updated with trends in {domain}?",
+                f"Tell me about your experience relevant to {role}."
+            ]
+            return fallback_questions[:num_questions]
 
     # Badge system for gamification
     BADGE_CONFIG = {
@@ -7001,7 +6967,7 @@ Generate the questions now:"""
                     st.markdown(f"**{title}**")
                     st.video(url)
 
-    # Section 4: ENHANCED AI Interview Coach 🤖 with LLM-ONLY Questions and Timer
+    # Section 4: ENHANCED AI Interview Coach 🤖 with LLM Questions and Timer
     elif page == "AI Interview Coach 🤖":
         st.subheader("🤖 AI Interview Coach")
         st.markdown("Practice role-specific interview questions with our AI coach. Get instant feedback on your answers and discover recommended courses!")
@@ -7080,8 +7046,8 @@ Generate the questions now:"""
                 num_questions = st.slider("Number of questions:", 3, 8, 5, key="ai_num_questions")
                 
                 if st.button("🚀 Start Interview Practice"):
-                    with st.spinner("🤖 Generating personalized interview questions with AI..."):
-                        # Generate questions using LLM ONLY
+                    with st.spinner("Generating personalized interview questions..."):
+                        # Generate questions using LLM
                         generated_questions = generate_interview_questions_with_llm(
                             selected_domain, selected_role, interview_type, num_questions
                         )
@@ -7096,12 +7062,11 @@ Generate the questions now:"""
                             st.session_state.ai_answer_submitted = False
                             st.session_state.ai_question_start_time = time.time()
                             st.session_state.ai_timer_duration = timer_duration
-                            st.success(f"✅ Generated {len(generated_questions)} AI-powered questions!")
+                            st.success(f"Generated {len(generated_questions)} questions!")
                             time.sleep(1)  # Brief pause to show success message
                             st.rerun()
                         else:
-                            st.error("❌ Failed to generate questions. Please check your LLM connection and try again.")
-                            st.info("💡 Make sure your LLM service is properly configured and accessible.")
+                            st.error("Failed to generate questions. Please try again.")
             
             # Interview in progress
             elif st.session_state.ai_interview_started and not st.session_state.ai_interview_completed:
@@ -7118,7 +7083,7 @@ Generate the questions now:"""
                     # Display question
                     st.markdown(f"""
                     <div class="quiz-card">
-                        <h3 style="color: #00c3ff;">🤖 AI-Generated Question {st.session_state.current_ai_question + 1} of {len(st.session_state.ai_interview_questions)}</h3>
+                        <h3 style="color: #00c3ff;">Question {st.session_state.current_ai_question + 1} of {len(st.session_state.ai_interview_questions)}</h3>
                         <h4 style="color: #ffffff; margin: 15px 0;">Role: {selected_role}</h4>
                         <p style="font-size: 18px; color: #ffffff; margin: 15px 0;">{question}</p>
                     </div>
@@ -7126,36 +7091,13 @@ Generate the questions now:"""
                     
                     # Timer display (only if answer not submitted)
                     if not st.session_state.ai_answer_submitted:
-                        # Create a placeholder for the timer
-                        timer_placeholder = st.empty()
-                        
-                        # Real-time timer update
-                        with timer_placeholder.container():
-                            progress = time_left / st.session_state.ai_timer_duration
-                            minutes = time_left // 60
-                            seconds = time_left % 60
-                            timer_class = "timer-urgent" if time_left <= 30 else ""
-                            
-                            st.markdown(f"""
-                            <div class="timer-container">
-                                <p class="timer-text {timer_class}">⏱️ Time Remaining: {minutes:02d}:{seconds:02d}</p>
-                            </div>
-                            """, unsafe_allow_html=True)
-                            
-                            st.progress(progress)
-                        
-                        # Auto-refresh every second if time is running
-                        if time_left > 0:
-                            time.sleep(1)
-                            st.rerun()
-                        
-                        timer_expired = time_left <= 0
+                        timer_expired = display_timer(time_left, st.session_state.ai_timer_duration)
                         
                         # Auto-submit if timer expires
                         if timer_expired and not st.session_state.ai_answer_submitted:
                             current_answer = st.session_state.get(f"ai_answer_{st.session_state.current_ai_question}", "").strip()
                             if not current_answer:
-                                current_answer = "⚠️ No Answer Provided - Time Expired"
+                                current_answer = "⚠️ No Answer"
                             
                             # Auto-submit
                             score, feedback = evaluate_interview_answer(current_answer, question)
@@ -7168,9 +7110,9 @@ Generate the questions now:"""
                     # Add refresh button and previous answers review
                     col1, col2, col3 = st.columns([2, 1, 1])
                     with col2:
-                        if st.button("🔄 Generate New Question"):
-                            # Generate a new question using LLM
-                            with st.spinner("🤖 Generating new AI question..."):
+                        if st.button("🔄 Refresh Question"):
+                            # Generate a new question
+                            with st.spinner("Generating new question..."):
                                 new_questions = generate_interview_questions_with_llm(
                                     selected_domain, selected_role, "mixed", 1
                                 )
@@ -7178,10 +7120,7 @@ Generate the questions now:"""
                                     st.session_state.ai_interview_questions[st.session_state.current_ai_question] = new_questions[0]
                                     # Reset timer
                                     st.session_state.ai_question_start_time = time.time()
-                                    st.success("✅ New AI question generated!")
                                     st.rerun()
-                                else:
-                                    st.error("❌ Failed to generate new question")
                     
                     with col3:
                         if st.session_state.ai_interview_answers:  # Only show if there are previous answers
@@ -7204,10 +7143,10 @@ Generate the questions now:"""
                         )
                         
                         # Submit answer button
-                        if st.button("Submit Answer & Get AI Feedback"):
+                        if st.button("Submit Answer & Get Feedback"):
                             if answer.strip():
-                                # Evaluate answer using LLM
-                                with st.spinner("🤖 AI is evaluating your answer..."):
+                                # Evaluate answer
+                                with st.spinner("Evaluating your answer..."):
                                     score, feedback = evaluate_interview_answer(answer, question)
                                 
                                 # Store answer and score
@@ -7226,7 +7165,7 @@ Generate the questions now:"""
                         st.markdown(f"""
                         <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%); 
                                     border: 1px solid rgba(0, 195, 255, 0.3); border-radius: 10px; padding: 15px; margin: 15px 0;">
-                            <h4 style="color: #00c3ff;">🤖 AI Feedback:</h4>
+                            <h4 style="color: #00c3ff;">Feedback:</h4>
                             <p style="color: #ffffff;">📊 Score: {score:.1f}/5.0</p>
                             <p style="color: #ffffff;">💬 {feedback}</p>
                         </div>
@@ -7267,31 +7206,30 @@ Generate the questions now:"""
                 
                 st.markdown(f"""
                 <div class="badge-container">
-                    <h2 style="margin: 0; color: #333;">🎉 AI Interview Practice Complete!</h2>
+                    <h2 style="margin: 0; color: #333;">🎉 Interview Practice Complete!</h2>
                     <div style="margin: 20px 0;">
                         <div class="score-display">{avg_score:.1f}/5.0</div>
                         <h3 style="color: #333; margin: 10px 0;">{badge_emoji} {badge_title}</h3>
                     </div>
                     <p style="color: #666;">Role: {selected_role} in {selected_domain}</p>
-                    <p style="color: #666;">✨ All questions generated by AI • No template fallbacks used</p>
                 </div>
                 """, unsafe_allow_html=True)
                 
                 # Show detailed results
                 st.subheader("📊 Detailed Results:")
                 for i, (score, answer) in enumerate(zip(st.session_state.ai_interview_scores, st.session_state.ai_interview_answers)):
-                    with st.expander(f"🤖 AI Question {i+1}: Score {score:.1f}/5.0"):
+                    with st.expander(f"Question {i+1}: Score {score:.1f}/5.0"):
                         st.write(f"**Question:** {st.session_state.ai_interview_questions[i]}")
                         st.write(f"**Your Answer:** {answer}")
                         st.write(f"**Score:** {score:.1f}/5.0")
                         # Get feedback again
                         _, feedback = evaluate_interview_answer(answer, st.session_state.ai_interview_questions[i])
-                        st.write(f"**AI Feedback:** {feedback}")
+                        st.write(f"**Feedback:** {feedback}")
                 
                 # Display recommended courses by difficulty
                 st.markdown("---")
                 st.subheader("📚 Recommended Courses for Your Career Growth")
-                st.markdown(f"Based on your AI interview practice for **{selected_role}** in **{selected_domain}**, here are our course recommendations organized by difficulty level:")
+                st.markdown(f"Based on your interview practice for **{selected_role}** in **{selected_domain}**, here are our course recommendations organized by difficulty level:")
                 
                 courses = get_courses_for_role(selected_domain, selected_role)
                 if courses:

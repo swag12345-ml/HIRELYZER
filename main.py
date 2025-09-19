@@ -6814,6 +6814,26 @@ Generate {num_questions} unique {interview_type} interview questions for the rol
         
         return time_left <= 0
 
+    def display_stable_timer(time_left, total_time):
+        """Display stable countdown timer without auto-refresh"""
+        progress = max(0, time_left / total_time)
+        
+        # Timer display
+        minutes = max(0, time_left) // 60
+        seconds = max(0, time_left) % 60
+        timer_class = "timer-urgent" if time_left <= 30 else ""
+        
+        st.markdown(f"""
+        <div class="timer-container {timer_class}">
+            <p class="timer-text">⏱️ Time Remaining: {minutes:02d}:{seconds:02d}</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Progress bar
+        st.progress(progress)
+        
+        return time_left <= 0
+
     # UPDATED SECTIONS
 
     # Section 1: UPDATED Courses by Role with Index-based Difficulty
@@ -7148,24 +7168,30 @@ Generate {num_questions} unique {interview_type} interview questions for the rol
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # FIXED: Stable Timer (no auto-refresh, only updates on user interaction)
-                    if not st.session_state.ai_answer_submitted:
-                        timer_expired = display_stable_timer(time_left, st.session_state.ai_timer_duration)
+                        # Use auto-refresh to update timer every second
+                        st_autorefresh(interval=1000, key="timer_refresh")
+                        display_stable_timer(time_left, st.session_state.ai_timer_duration)
+                    elif not st.session_state.ai_answer_submitted and time_left <= 0:
+                        # Time expired - auto submit
+                        current_answer = st.session_state.get(f"ai_draft_answer_{st.session_state.current_ai_question}", "").strip()
+                        if not current_answer:
+                            current_answer = "⚠️ No answer provided - time expired"
                         
-                        # Check for timeout but don't force immediate rerun
-                        if timer_expired:
-                            current_answer = st.session_state.get(f"ai_draft_answer_{current_question}", "").strip()
-                            if not current_answer:
-                                current_answer = "⚠️ No answer provided - time expired"
-                            
-                            # Auto-submit
-                            score, feedback = evaluate_interview_answer(current_answer, question)
-                            st.session_state.ai_interview_answers.append(current_answer)
-                            st.session_state.ai_interview_scores.append(score)
-                            st.session_state.ai_answer_submitted = True
-                            st.warning("⏰ Time's up! Answer auto-submitted.")
-                            
-                            # Don't immediately rerun - let user click to continue
+                        # Auto-submit
+                        score, feedback = evaluate_interview_answer(current_answer, question)
+                        st.session_state.ai_interview_answers.append(current_answer)
+                        st.session_state.ai_interview_scores.append(score)
+                        st.session_state.ai_answer_submitted = True
+                        st.error("⏰ Time's up! Answer auto-submitted.")
+                        st.rerun()
+                    elif st.session_state.ai_answer_submitted:
+                        # Show final timer state
+                        st.markdown("""
+                        <div class="timer-container">
+                            <p class="timer-text">⏱️ Time Complete</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        st.progress(1.0)
                     
                     # FIXED: Previous Answers Review - Full Width Below Question
                     if st.session_state.ai_interview_answers:  # Only show if there are previous answers
@@ -7190,6 +7216,10 @@ Generate {num_questions} unique {interview_type} interview questions for the rol
                     
                     # FIXED: Answer input with persistent text (bound to session state)
                     if not st.session_state.ai_answer_submitted:
+                        # Initialize draft answer if not exists
+                        if f"ai_draft_answer_{st.session_state.current_ai_question}" not in st.session_state:
+                            st.session_state[f"ai_draft_answer_{st.session_state.current_ai_question}"] = ""
+                        
                         st.markdown('<div class="answer-input-container">', unsafe_allow_html=True)
                         
                         # FIXED: Bind to session state for persistence
@@ -7197,7 +7227,7 @@ Generate {num_questions} unique {interview_type} interview questions for the rol
                             "Your answer:",
                             placeholder="Type your detailed answer here...",
                             height=150,
-                            key=f"ai_draft_answer_{current_question}",
+                            key=f"ai_draft_answer_{st.session_state.current_ai_question}",
                             help="Your answer is automatically saved as you type. Timer updates when you interact with the page."
                         )
                         
@@ -7205,7 +7235,8 @@ Generate {num_questions} unique {interview_type} interview questions for the rol
                         
                         # Submit answer button
                         col1, col2, col3 = st.columns([1, 2, 1])
-                        with col2:
+                            current_answer = st.session_state.get(f"ai_draft_answer_{st.session_state.current_ai_question}", "").strip()
+                            if current_answer:
                             if st.button("Submit Answer & Get Feedback", key="submit_answer_btn", type="primary", use_container_width=True):
                                 if answer.strip():
                                     # Evaluate answer
@@ -7233,11 +7264,16 @@ Generate {num_questions} unique {interview_type} interview questions for the rol
                                     if new_questions:
                                         st.session_state.ai_interview_questions[current_question] = new_questions[0]
                                         # Reset timer and clear current answer
+                                        
+                                        # Initialize draft answers for all questions
+                                        for i in range(len(generated_questions)):
+                                            st.session_state[f"ai_draft_answer_{i}"] = ""
+                                        
                                         st.session_state.ai_question_start_time = time.time()
-                                        st.session_state[f"ai_draft_answer_{current_question}"] = ""
+                                    score, feedback = evaluate_interview_answer(current_answer, question)
                                         st.rerun()
                         
-                        with col2:
+                                st.session_state.ai_interview_answers.append(current_answer)
                             # Update timer display manually
                             if st.button("🔄 Update Timer", key="update_timer_btn"):
                                 st.rerun()

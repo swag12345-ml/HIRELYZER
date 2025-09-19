@@ -5639,9 +5639,9 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
-def evaluate_interview_answer(answer: str):
+def evaluate_interview_answer(answer: str, question: str = None):
     """
-    Uses an LLM to evaluate an interview answer.
+    Uses an LLM to strictly evaluate an interview answer.
     Returns (score out of 5, feedback string).
     """
     from llm_manager import call_llm
@@ -5652,27 +5652,31 @@ def evaluate_interview_answer(answer: str):
     if not answer.strip():
         return 0, "⚠️ No answer provided."
 
-    # 🔹 LLM Prompt
+    # 🔹 LLM Prompt (STRICTER)
     prompt = f"""
     You are an expert technical interview evaluator.
 
     ### Task:
-    Evaluate the following candidate's answer and provide a numeric score + feedback.
+    Evaluate the candidate's answer to the question below. 
+    Be STRICT. Only give high scores if the answer is technically correct, relevant, and detailed.
 
-    ### Evaluation Criteria:
-    1. Clarity & Structure
-    2. Relevance to the Question
-    3. Technical Depth
-    4. Communication Skills
+    ### Question:
+    {question if question else "N/A"}
+
+    ### Candidate Answer:
+    {answer}
+
+    ### Strict Scoring Rubric:
+    - 5 = Exceptional: Fully correct, highly relevant, clear, detailed, technically accurate.
+    - 4 = Good: Mostly correct and relevant, but missing some depth/clarity.
+    - 3 = Average: Partially correct OR generic, but somewhat relevant.
+    - 2 = Weak: Mostly irrelevant, shallow, or major gaps in correctness.
+    - 1 = Poor: Completely irrelevant, incoherent, or very wrong.
+    - 0 = No answer / total nonsense.
 
     ### Output Format:
-    Score: <number between 1 and 5>
-    Feedback: <short constructive feedback in 1–2 sentences>
-
-    ---
-    Candidate Answer:
-    {answer}
-    ---
+    Score: <number between 0 and 5>
+    Feedback: <constructive feedback in 1–2 sentences>
     """
 
     try:
@@ -5681,20 +5685,21 @@ def evaluate_interview_answer(answer: str):
 
         # Extract Score
         score_match = re.search(r"Score:\s*(\d+)", response)
-        score = int(score_match.group(1)) if score_match else 3  # fallback
+        score = int(score_match.group(1)) if score_match else 1  # stricter fallback
 
         # Extract Feedback
         feedback_match = re.search(r"Feedback:\s*(.+)", response)
-        feedback = feedback_match.group(1).strip() if feedback_match else "Good attempt, but can be clearer."
+        feedback = feedback_match.group(1).strip() if feedback_match else "Answer was unclear or irrelevant."
 
-        # Keep score in range
-        score = max(1, min(score, 5))
+        # ✅ Keep score in 0–5 range
+        score = max(0, min(score, 5))
 
     except Exception as e:
-        score = 3
+        score = 1
         feedback = f"⚠️ Evaluation fallback due to error: {e}"
 
     return score, feedback
+
 
 import streamlit as st
 import plotly.graph_objects as go
@@ -7334,7 +7339,8 @@ with tab4:
                             if st.button("Submit Answer & Get Feedback"):
                                 if answer.strip():
                                     # Evaluate answer
-                                    score, feedback = evaluate_interview_answer(answer)
+                                    score, feedback = evaluate_interview_answer(answer, question)
+
                                     
                                     # Store answer and score
                                     st.session_state.dynamic_interview_answers.append(answer)
@@ -7347,7 +7353,8 @@ with tab4:
                             # Show feedback after answer submitted
                             score = st.session_state.dynamic_interview_scores[st.session_state.current_dynamic_interview_question]
                             answer_text = st.session_state.dynamic_interview_answers[st.session_state.current_dynamic_interview_question]
-                            _, feedback = evaluate_interview_answer(answer_text)
+                            _, feedback = evaluate_interview_answer(answer_text, st.session_state.current_interview_question_text)
+
                             
                             st.markdown(f"""
                             <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%); 

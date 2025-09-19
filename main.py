@@ -5704,9 +5704,9 @@ def evaluate_interview_answer(answer: str, question: str = None):
 import streamlit as st
 import plotly.graph_objects as go
 import time
-from streamlit_autorefresh import st_autorefresh
 from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
 from llm_manager import call_llm
+from streamlit_autorefresh import st_autorefresh
 
 with tab4:
     # Inject CSS styles (keeping existing styles)
@@ -5976,14 +5976,14 @@ with tab4:
             border-radius: 10px;
         }
 
-        /* Quiz card styling */
+        /* New styles for quiz and interview sections */
         .quiz-card {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             border: 2px solid #00c3ff;
             border-radius: 15px;
-            padding: 25px;
-            margin: 20px 0;
-            box-shadow: 0 8px 32px rgba(0, 195, 255, 0.15);
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 4px 20px rgba(0, 195, 255, 0.15);
         }
 
         .badge-container {
@@ -6111,12 +6111,11 @@ with tab4:
 
         .timer-urgent {
             animation: pulse-red 1s ease-in-out infinite;
-            border-color: #dc3545;
-            background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.15) 100%);
+            border-color: #ff4444 !important;
         }
 
         .timer-urgent .timer-text {
-            color: #dc3545;
+            color: #ff4444 !important;
         }
 
         @keyframes pulse-red {
@@ -6124,49 +6123,39 @@ with tab4:
             50% { opacity: 0.7; }
         }
 
-        /* Previous answers container - UPDATED */
+        /* Previous answers container */
         .previous-answers-container {
             background: linear-gradient(135deg, rgba(0, 195, 255, 0.05) 0%, rgba(0, 195, 255, 0.1) 100%);
             border: 1px solid rgba(0, 195, 255, 0.2);
             border-radius: 12px;
             padding: 20px;
-            margin: 20px 0;
-            width: 100%;
+            margin: 15px 0;
         }
 
-        .previous-answers-container h4 {
-            color: #00c3ff;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .answer-item {
-            margin-bottom: 20px;
-            padding: 15px;
+        .previous-answer-item {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
             border-left: 3px solid #00c3ff;
         }
 
-        .answer-item h5 {
+        .previous-question {
             color: #00c3ff;
-            margin-bottom: 8px;
             font-weight: 600;
+            margin-bottom: 8px;
         }
 
-        .answer-item p {
+        .previous-answer {
             color: #ffffff;
-            margin-bottom: 0;
             line-height: 1.5;
+            margin-bottom: 8px;
         }
 
-        /* Action buttons container */
-        .action-buttons-container {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin: 20px 0;
-            flex-wrap: wrap;
+        .previous-score {
+            color: #ffc107;
+            font-weight: 500;
+            font-size: 14px;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -6784,27 +6773,6 @@ Generate {num_questions} unique {interview_type} interview questions for the rol
                         </div>
                     """, unsafe_allow_html=True)
 
-    # FIXED: Timer function with auto-refresh
-    def display_timer(time_left, total_time):
-        """Display countdown timer with progress bar and auto-refresh"""
-        progress = time_left / total_time
-        
-        # Timer display
-        minutes = time_left // 60
-        seconds = time_left % 60
-        timer_class = "timer-urgent" if time_left <= 30 else ""
-        
-        st.markdown(f"""
-        <div class="timer-container {timer_class}">
-            <p class="timer-text">⏱️ Time Remaining: {minutes:02d}:{seconds:02d}</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Progress bar
-        st.progress(progress)
-        
-        return time_left <= 0
-
     # UPDATED SECTIONS
 
     # Section 1: UPDATED Courses by Role with Index-based Difficulty
@@ -7010,7 +6978,7 @@ Generate {num_questions} unique {interview_type} interview questions for the rol
                     st.markdown(f"**{title}**")
                     st.video(url)
 
-    # Section 4: FIXED AI Interview Coach 🤖 with Live Timer and Better UX
+    # Section 4: FIXED AI Interview Coach 🤖 with Smart Timer
     elif page == "AI Interview Coach 🤖":
         st.subheader("🤖 AI Interview Coach")
         st.markdown("Practice role-specific interview questions with our AI coach. Get instant feedback on your answers and discover recommended courses!")
@@ -7106,12 +7074,12 @@ Generate {num_questions} unique {interview_type} interview questions for the rol
                             st.session_state.ai_question_start_time = time.time()
                             st.session_state.ai_timer_duration = timer_duration
                             st.success(f"Generated {len(generated_questions)} questions!")
-                            time.sleep(0.5)  # Brief pause to show success message
+                            time.sleep(1)  # Brief pause to show success message
                             st.rerun()
                         else:
                             st.error("Failed to generate questions. Please try again.")
             
-            # Interview in progress with FIXED timer and UX improvements
+            # Interview in progress
             elif st.session_state.ai_interview_started and not st.session_state.ai_interview_completed:
                 if st.session_state.current_ai_question < len(st.session_state.ai_interview_questions):
                     question = st.session_state.ai_interview_questions[st.session_state.current_ai_question]
@@ -7123,41 +7091,55 @@ Generate {num_questions} unique {interview_type} interview questions for the rol
                     else:
                         time_left = st.session_state.ai_timer_duration
                     
-                    # Display question in quiz card
+                    # SMART AUTO-REFRESH: Only refresh when timer is active and answer not submitted
+                    if not st.session_state.ai_answer_submitted and time_left > 0:
+                        # Auto-refresh every 1 second to update timer
+                        st_autorefresh(interval=1000, key="interview_timer_refresh")
+                    
+                    # Display question
                     st.markdown(f"""
                     <div class="quiz-card">
                         <h3 style="color: #00c3ff;">Question {st.session_state.current_ai_question + 1} of {len(st.session_state.ai_interview_questions)}</h3>
                         <h4 style="color: #ffffff; margin: 15px 0;">Role: {selected_role}</h4>
-                        <p style="font-size: 18px; color: #ffffff; margin: 15px 0; line-height: 1.6;">{question}</p>
+                        <p style="font-size: 18px; color: #ffffff; margin: 15px 0;">{question}</p>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # FIXED: Timer with auto-refresh (only if answer not submitted)
-                    if not st.session_state.ai_answer_submitted and time_left > 0:
-                        # Add auto-refresh to update timer live
-                        st_autorefresh(interval=1000, key="interview_timer_refresh")
-                        timer_expired = display_timer(time_left, st.session_state.ai_timer_duration)
+                    # Timer display (only if answer not submitted)
+                    if not st.session_state.ai_answer_submitted:
+                        # Timer display with progress bar
+                        progress = time_left / st.session_state.ai_timer_duration
+                        minutes = time_left // 60
+                        seconds = time_left % 60
+                        timer_class = "timer-urgent" if time_left <= 30 else ""
+                        
+                        st.markdown(f"""
+                        <div class="timer-container {timer_class}">
+                            <p class="timer-text">⏱️ Time Remaining: {minutes:02d}:{seconds:02d}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Progress bar
+                        st.progress(progress)
                         
                         # Auto-submit if timer expires
-                        if timer_expired:
+                        if time_left <= 0:
                             current_answer = st.session_state.get(f"ai_answer_{st.session_state.current_ai_question}", "").strip()
                             if not current_answer:
-                                current_answer = "⚠️ No answer provided - time expired"
+                                current_answer = "⚠️ No Answer Provided - Time Expired"
                             
-                            # Auto-submit without causing infinite rerun
+                            # Auto-submit
                             score, feedback = evaluate_interview_answer(current_answer, question)
                             st.session_state.ai_interview_answers.append(current_answer)
                             st.session_state.ai_interview_scores.append(score)
                             st.session_state.ai_answer_submitted = True
                             st.warning("⏰ Time's up! Answer auto-submitted.")
-                            time.sleep(1)  # Brief delay before rerun
                             st.rerun()
                     
-                    # Action buttons in centered container
-                    st.markdown('<div class="action-buttons-container">', unsafe_allow_html=True)
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        if st.button("🔄 Refresh Question", key="refresh_btn"):
+                    # Action buttons row
+                    col1, col2 = st.columns([3, 1])
+                    with col2:
+                        if st.button("🔄 New Question", help="Generate a different question"):
                             # Generate a new question
                             with st.spinner("Generating new question..."):
                                 new_questions = generate_interview_questions_with_llm(
@@ -7168,44 +7150,41 @@ Generate {num_questions} unique {interview_type} interview questions for the rol
                                     # Reset timer
                                     st.session_state.ai_question_start_time = time.time()
                                     st.rerun()
-                    st.markdown('</div>', unsafe_allow_html=True)
                     
-                    # FIXED: Previous Answers Review - Full Width Below Question
-                    if st.session_state.ai_interview_answers:  # Only show if there are previous answers
+                    # Previous answers review (FULL WIDTH BELOW QUESTION)
+                    if st.session_state.ai_interview_answers:
                         with st.expander("📖 Review Previous Answers", expanded=False):
                             st.markdown('<div class="previous-answers-container">', unsafe_allow_html=True)
-                            for i, (prev_q, prev_a, prev_score) in enumerate(zip(
+                            for i, (prev_q, prev_a) in enumerate(zip(
                                 st.session_state.ai_interview_questions[:len(st.session_state.ai_interview_answers)],
-                                st.session_state.ai_interview_answers,
-                                st.session_state.ai_interview_scores
+                                st.session_state.ai_interview_answers
                             )):
+                                score = st.session_state.ai_interview_scores[i] if i < len(st.session_state.ai_interview_scores) else 0
                                 st.markdown(f"""
-                                <div class="answer-item">
-                                    <h5>Q{i+1}:</h5>
-                                    <p><strong>{prev_q}</strong></p>
-                                    <h5>A{i+1}: (Score: {prev_score:.1f}/5.0)</h5>
-                                    <p>{prev_a}</p>
+                                <div class="previous-answer-item">
+                                    <div class="previous-question">**Q{i+1}:** {prev_q}</div>
+                                    <div class="previous-answer">**A{i+1}:** {prev_a}</div>
+                                    <div class="previous-score">📊 Score: {score:.1f}/5.0</div>
                                 </div>
                                 """, unsafe_allow_html=True)
-                                if i < len(st.session_state.ai_interview_answers) - 1:
-                                    st.markdown("---")
                             st.markdown('</div>', unsafe_allow_html=True)
                     
                     # Answer input (only if not submitted)
                     if not st.session_state.ai_answer_submitted:
+                        st.markdown("### Your Answer:")
                         answer = st.text_area(
-                            "Your answer:",
-                            placeholder="Type your detailed answer here...",
+                            "Type your detailed answer here:",
+                            placeholder="Provide a comprehensive answer to the interview question above. Take your time to think through your response...",
                             height=150,
                             key=f"ai_answer_{st.session_state.current_ai_question}",
-                            help="Take your time to provide a thoughtful response. The timer will auto-submit when it reaches zero."
+                            label_visibility="collapsed"
                         )
                         
                         # Submit answer button
-                        if st.button("Submit Answer & Get Feedback", key="submit_answer_btn", type="primary"):
+                        if st.button("✅ Submit Answer & Get Feedback", type="primary"):
                             if answer.strip():
                                 # Evaluate answer
-                                with st.spinner("Evaluating your answer..."):
+                                with st.spinner("🤖 AI is evaluating your answer..."):
                                     score, feedback = evaluate_interview_answer(answer, question)
                                 
                                 # Store answer and score
@@ -7214,7 +7193,7 @@ Generate {num_questions} unique {interview_type} interview questions for the rol
                                 st.session_state.ai_answer_submitted = True
                                 st.rerun()
                             else:
-                                st.warning("Please provide an answer before proceeding.")
+                                st.warning("⚠️ Please provide an answer before proceeding.")
                     else:
                         # Show feedback after answer submitted
                         score = st.session_state.ai_interview_scores[st.session_state.current_ai_question]
@@ -7223,28 +7202,29 @@ Generate {num_questions} unique {interview_type} interview questions for the rol
                         
                         st.markdown(f"""
                         <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%); 
-                                    border: 1px solid rgba(0, 195, 255, 0.3); border-radius: 10px; padding: 20px; margin: 20px 0;">
-                            <h4 style="color: #00c3ff; margin-bottom: 15px;">📋 Feedback:</h4>
-                            <p style="color: #ffffff; font-size: 16px; margin-bottom: 10px;">📊 Score: <strong>{score:.1f}/5.0</strong></p>
+                                    border: 1px solid rgba(0, 195, 255, 0.3); border-radius: 10px; padding: 20px; margin: 15px 0;">
+                            <h4 style="color: #00c3ff; margin-bottom: 15px;">🤖 AI Feedback:</h4>
+                            <p style="color: #ffffff; font-size: 16px; margin-bottom: 10px;">📊 <strong>Score: {score:.1f}/5.0</strong></p>
                             <p style="color: #ffffff; line-height: 1.6;">💬 {feedback}</p>
                         </div>
                         """, unsafe_allow_html=True)
                         
                         # Continue/Complete button
                         if st.session_state.current_ai_question < len(st.session_state.ai_interview_questions) - 1:
-                            if st.button("Continue to Next Question ➡️", type="primary"):
+                            if st.button("➡️ Continue to Next Question", type="primary"):
                                 st.session_state.current_ai_question += 1
                                 st.session_state.ai_answer_submitted = False
                                 st.session_state.ai_question_start_time = time.time()  # Reset timer
                                 st.rerun()
                         else:
-                            if st.button("Complete Interview 🏁", type="primary"):
+                            if st.button("🏁 Complete Interview", type="primary"):
                                 st.session_state.ai_interview_completed = True
                                 st.rerun()
                             
                     # Progress bar
                     progress = (st.session_state.current_ai_question + (1 if st.session_state.ai_answer_submitted else 0)) / len(st.session_state.ai_interview_questions)
-                    st.progress(progress, text=f"Progress: {int(progress * 100)}% Complete")
+                    st.markdown(f"**Progress:** {int(progress * 100)}% Complete")
+                    st.progress(progress)
             
             # Interview completed + Course Recommendations
             elif st.session_state.ai_interview_completed:
@@ -7298,16 +7278,15 @@ Generate {num_questions} unique {interview_type} interview questions for the rol
                     st.info("No specific courses found for this role. Explore our course categories to find relevant learning resources!")
                 
                 # Restart button
-                if st.button("🔄 Practice for Different Role", key="restart_btn"):
-                    # Clear all interview state
-                    keys_to_clear = [
-                        'ai_interview_started', 'ai_interview_completed', 'ai_interview_questions',
-                        'current_ai_question', 'ai_interview_answers', 'ai_interview_scores',
-                        'ai_answer_submitted', 'ai_question_start_time'
-                    ]
-                    for key in keys_to_clear:
-                        if key in st.session_state:
-                            del st.session_state[key]
+                if st.button("🔄 Practice for Different Role"):
+                    st.session_state.ai_interview_started = False
+                    st.session_state.ai_interview_completed = False
+                    st.session_state.ai_interview_questions = []
+                    st.session_state.current_ai_question = 0
+                    st.session_state.ai_interview_answers = []
+                    st.session_state.ai_interview_scores = []
+                    st.session_state.ai_answer_submitted = False
+                    st.session_state.ai_question_start_time = None
                     st.rerun()
                       
 if tab5:

@@ -5704,8 +5704,8 @@ def evaluate_interview_answer(answer: str, question: str = None):
 import streamlit as st
 import plotly.graph_objects as go
 import time
-import threading
 from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
+from llm_manager import call_llm
 
 with tab4:
     # Inject CSS styles (keeping existing styles)
@@ -6091,32 +6091,36 @@ with tab4:
             margin: 20px 0;
         }
 
-        /* Timer styling */
+        /* Timer styles */
         .timer-container {
             background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 215, 0, 0.1) 100%);
             border: 2px solid rgba(255, 193, 7, 0.3);
-            border-radius: 15px;
+            border-radius: 10px;
             padding: 15px;
             margin: 15px 0;
             text-align: center;
         }
 
         .timer-text {
-            font-size: 24px;
-            font-weight: bold;
-            color: #FFD700;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            color: #ffc107;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
         }
 
-        .timer-warning {
-            color: #ff4444 !important;
-            text-shadow: 0 0 15px rgba(255, 68, 68, 0.8);
+        .timer-urgent {
+            animation: pulse-red 1s ease-in-out infinite;
         }
 
-        /* Review answers styling */
-        .review-container {
-            background: linear-gradient(135deg, rgba(75, 0, 130, 0.1) 0%, rgba(106, 90, 205, 0.1) 100%);
-            border: 1px solid rgba(106, 90, 205, 0.3);
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Previous answers container */
+        .previous-answers-container {
+            background: linear-gradient(135deg, rgba(0, 195, 255, 0.05) 0%, rgba(0, 195, 255, 0.1) 100%);
+            border: 1px solid rgba(0, 195, 255, 0.2);
             border-radius: 12px;
             padding: 15px;
             margin: 15px 0;
@@ -6152,7 +6156,7 @@ with tab4:
 
     page = st.radio(
         label="Select Learning Option",
-        options=["Courses by Role", "Resume Videos", "Interview Videos",  "AI Interview Coach 🤖"],
+        options=["Courses by Role", "Resume Videos", "Interview Videos", "AI Interview Coach 🤖"],
         horizontal=True,
         key="page_selection",
         label_visibility="collapsed"
@@ -6168,64 +6172,6 @@ with tab4:
             return "Intermediate"
         else:
             return "Advanced"
-
-    # NEW: AI-Generated Questions Function
-    def generate_ai_interview_questions(domain, role, interview_type, num_questions):
-        """Generate interview questions using LLM based on domain, role, and type"""
-        from llm_manager import call_llm
-        
-        prompt = f"""
-You are an expert interviewer.
-Generate {num_questions} unique {interview_type} interview questions for the role of {role} in {domain}.
-- Keep each question concise (max 1 sentence).
-- Avoid duplicates.
-- Output as plain text, one question per line.
-
-Example format:
-Question 1: How would you approach...
-Question 2: Explain the difference between...
-Question 3: Tell me about a time when...
-"""
-
-        try:
-            response = call_llm(prompt, session=st.session_state).strip()
-            # Parse the response to extract questions
-            questions = []
-            lines = response.split('\n')
-            for line in lines:
-                line = line.strip()
-                if line and ('Question' in line or len(line) > 20):
-                    # Remove question numbering if present
-                    if line.startswith('Question'):
-                        colon_index = line.find(':')
-                        if colon_index != -1:
-                            line = line[colon_index + 1:].strip()
-                    questions.append(line)
-            
-            # Ensure we have the requested number of questions
-            if len(questions) < num_questions:
-                # Add fallback questions if needed
-                fallback_questions = [
-                    f"What interests you most about working as a {role}?",
-                    f"How do you stay updated with trends in {domain}?",
-                    f"Describe a challenging project you've worked on.",
-                    f"How do you approach problem-solving in your work?",
-                    f"What are your career goals in {domain}?"
-                ]
-                while len(questions) < num_questions and fallback_questions:
-                    questions.append(fallback_questions.pop(0))
-            
-            return questions[:num_questions]
-            
-        except Exception as e:
-            # Fallback questions in case of error
-            return [
-                f"What interests you most about working as a {role}?",
-                f"How do you handle challenging situations in {domain}?",
-                f"Describe your experience with relevant technologies.",
-                f"How do you approach continuous learning?",
-                f"What are your career goals in this field?"
-            ][:num_questions]
 
     # Helper functions for dynamic question generation
     def generate_career_quiz_questions(domain, role):
@@ -6292,6 +6238,66 @@ Question 3: Tell me about a time when...
                             "Building robust error handling and monitoring"
                         ]
                     }
+                ],
+                "Full Stack Developer": [
+                    {
+                        "question": "What full-stack aspect appeals to you most?",
+                        "options": [
+                            "Building end-to-end features from UI to database",
+                            "Managing the entire application development lifecycle",
+                            "Working with both frontend and backend technologies",
+                            "Understanding how all system components interact"
+                        ]
+                    },
+                    {
+                        "question": "Which tech stack interests you most?",
+                        "options": [
+                            "MERN (MongoDB, Express, React, Node.js)",
+                            "MEAN (MongoDB, Express, Angular, Node.js)",
+                            "Django + React/Vue for Python development",
+                            "Ruby on Rails with modern frontend frameworks"
+                        ]
+                    }
+                ],
+                "Mobile App Developer": [
+                    {
+                        "question": "What type of mobile development interests you?",
+                        "options": [
+                            "Native iOS development with Swift",
+                            "Native Android development with Kotlin/Java",
+                            "Cross-platform development with React Native",
+                            "Hybrid app development with Flutter"
+                        ]
+                    },
+                    {
+                        "question": "Which mobile development aspect excites you most?",
+                        "options": [
+                            "Creating intuitive mobile user experiences",
+                            "Integrating with device hardware and sensors",
+                            "Optimizing app performance and battery usage",
+                            "Publishing apps to App Store and Google Play"
+                        ]
+                    }
+                ],
+                "Game Developer": [
+                    {
+                        "question": "What type of game development interests you?",
+                        "options": [
+                            "3D game development with Unity or Unreal Engine",
+                            "2D indie game development and pixel art",
+                            "Mobile gaming and casual game mechanics",
+                            "VR/AR game development and immersive experiences"
+                        ]
+                    },
+                    {
+                        "question": "Which game development aspect excites you most?",
+                        "options": [
+                            "Game design and player experience",
+                            "Graphics programming and visual effects",
+                            "Game physics and realistic simulations",
+                            "Multiplayer networking and real-time systems"
+                        ]
+                    }
                 ]
             },
             "Data Science and Analytics": {
@@ -6312,6 +6318,243 @@ Question 3: Tell me about a time when...
                             "Deep learning and neural networks",
                             "Feature engineering and data preprocessing",
                             "Time series analysis and forecasting"
+                        ]
+                    },
+                    {
+                        "question": "Which tools do you enjoy working with most?",
+                        "options": [
+                            "Python with pandas, scikit-learn, and TensorFlow",
+                            "R for statistical computing and analysis",
+                            "SQL for database querying and data manipulation",
+                            "Jupyter notebooks for exploratory data analysis"
+                        ]
+                    }
+                ],
+                "Data Analyst": [
+                    {
+                        "question": "Which type of analysis interests you most?",
+                        "options": [
+                            "Business intelligence and performance dashboards",
+                            "Customer behavior analysis and segmentation",
+                            "Financial analysis and risk assessment",
+                            "Market research and competitive analysis"
+                        ]
+                    },
+                    {
+                        "question": "What's your preferred way to present insights?",
+                        "options": [
+                            "Interactive dashboards with Tableau or Power BI",
+                            "Statistical reports with clear recommendations",
+                            "Data visualizations and infographics",
+                            "Executive summaries and business presentations"
+                        ]
+                    }
+                ],
+                "Machine Learning Engineer": [
+                    {
+                        "question": "Which ML engineering task excites you most?",
+                        "options": [
+                            "Deploying models to production at scale",
+                            "Building ML pipelines and automation systems",
+                            "Optimizing model performance and efficiency",
+                            "Implementing MLOps and model monitoring"
+                        ]
+                    },
+                    {
+                        "question": "What type of ML problems interest you?",
+                        "options": [
+                            "Computer vision and image processing",
+                            "Natural language processing and text analysis",
+                            "Recommendation systems and personalization",
+                            "Reinforcement learning and autonomous systems"
+                        ]
+                    }
+                ]
+            },
+            "Cloud Computing and DevOps": {
+                "Cloud Architect": [
+                    {
+                        "question": "Which cloud architecture aspect interests you most?",
+                        "options": [
+                            "Designing scalable, fault-tolerant systems",
+                            "Multi-cloud and hybrid cloud strategies",
+                            "Cloud security and compliance frameworks",
+                            "Cost optimization and resource management"
+                        ]
+                    },
+                    {
+                        "question": "What type of cloud solutions excite you?",
+                        "options": [
+                            "Serverless architectures and event-driven systems",
+                            "Container orchestration with Kubernetes",
+                            "Data lakes and analytics platforms",
+                            "AI/ML platforms and managed services"
+                        ]
+                    }
+                ],
+                "DevOps Engineer": [
+                    {
+                        "question": "Which DevOps practice interests you most?",
+                        "options": [
+                            "Building CI/CD pipelines and automation",
+                            "Infrastructure as Code with Terraform/CloudFormation",
+                            "Container orchestration and microservices",
+                            "Monitoring, logging, and observability"
+                        ]
+                    },
+                    {
+                        "question": "What type of automation excites you?",
+                        "options": [
+                            "Deployment automation and release management",
+                            "Infrastructure provisioning and configuration",
+                            "Testing automation and quality gates",
+                            "Incident response and self-healing systems"
+                        ]
+                    }
+                ],
+                "Site Reliability Engineer": [
+                    {
+                        "question": "Which SRE responsibility interests you most?",
+                        "options": [
+                            "Maintaining system reliability and uptime",
+                            "Performance optimization and capacity planning",
+                            "Incident management and post-mortem analysis",
+                            "Service level objectives and error budgets"
+                        ]
+                    },
+                    {
+                        "question": "What aspect of system reliability excites you?",
+                        "options": [
+                            "Building robust monitoring and alerting systems",
+                            "Designing disaster recovery and backup strategies",
+                            "Automating operational tasks and runbooks",
+                            "Analyzing system performance and bottlenecks"
+                        ]
+                    }
+                ]
+            },
+            "Cybersecurity": {
+                "Security Analyst": [
+                    {
+                        "question": "Which security area interests you most?",
+                        "options": [
+                            "Threat detection and incident response",
+                            "Vulnerability assessment and risk management",
+                            "Security monitoring and SIEM analysis",
+                            "Compliance and security policy development"
+                        ]
+                    },
+                    {
+                        "question": "What type of security challenges excite you?",
+                        "options": [
+                            "Investigating security breaches and forensics",
+                            "Analyzing malware and attack patterns",
+                            "Network security and firewall management",
+                            "Identity and access management systems"
+                        ]
+                    }
+                ],
+                "Penetration Tester": [
+                    {
+                        "question": "Which penetration testing approach interests you?",
+                        "options": [
+                            "Web application security testing",
+                            "Network penetration testing and infrastructure",
+                            "Social engineering and phishing simulations",
+                            "Mobile application security testing"
+                        ]
+                    },
+                    {
+                        "question": "What aspect of ethical hacking excites you?",
+                        "options": [
+                            "Finding vulnerabilities before malicious actors",
+                            "Using creative techniques to bypass security",
+                            "Helping organizations improve their defenses",
+                            "Staying updated on latest attack methods"
+                        ]
+                    }
+                ]
+            },
+            "UI/UX Design": {
+                "UI Designer": [
+                    {
+                        "question": "Which UI design aspect interests you most?",
+                        "options": [
+                            "Creating visually stunning interface designs",
+                            "Designing consistent design systems and components",
+                            "Working with typography, colors, and visual hierarchy",
+                            "Prototyping interactions and micro-animations"
+                        ]
+                    },
+                    {
+                        "question": "What type of design work excites you?",
+                        "options": [
+                            "Mobile app interface design",
+                            "Web application and dashboard design",
+                            "Icon design and visual asset creation",
+                            "Brand identity and visual design systems"
+                        ]
+                    }
+                ],
+                "UX Designer": [
+                    {
+                        "question": "Which UX design activity interests you most?",
+                        "options": [
+                            "User research and persona development",
+                            "Information architecture and user flows",
+                            "Wireframing and prototype development",
+                            "Usability testing and design validation"
+                        ]
+                    },
+                    {
+                        "question": "What aspect of user experience excites you?",
+                        "options": [
+                            "Solving complex user problems with simple solutions",
+                            "Understanding user behavior and psychology",
+                            "Designing accessible and inclusive experiences",
+                            "Measuring and optimizing user engagement"
+                        ]
+                    }
+                ]
+            },
+            "Project Management": {
+                "Project Manager": [
+                    {
+                        "question": "Which project management aspect interests you most?",
+                        "options": [
+                            "Planning and scheduling project timelines",
+                            "Coordinating teams and stakeholder communication",
+                            "Risk management and problem-solving",
+                            "Budget management and resource allocation"
+                        ]
+                    },
+                    {
+                        "question": "What type of projects excite you?",
+                        "options": [
+                            "Large-scale software development projects",
+                            "Cross-functional digital transformation initiatives",
+                            "Product launches and go-to-market strategies",
+                            "Process improvement and organizational change"
+                        ]
+                    }
+                ],
+                "Product Manager": [
+                    {
+                        "question": "Which product management activity interests you most?",
+                        "options": [
+                            "Product strategy and roadmap development",
+                            "User research and market analysis",
+                            "Feature prioritization and requirement gathering",
+                            "Go-to-market strategy and product launches"
+                        ]
+                    },
+                    {
+                        "question": "What aspect of product development excites you?",
+                        "options": [
+                            "Identifying user needs and pain points",
+                            "Defining product vision and strategy",
+                            "Working with engineering and design teams",
+                            "Analyzing product metrics and user feedback"
                         ]
                     }
                 ]
@@ -6345,6 +6588,45 @@ Question 3: Tell me about a time when...
             ]
         
         return questions
+
+    def generate_interview_questions_with_llm(domain, role, interview_type, num_questions):
+        """Generate interview questions using LLM"""
+        try:
+            # Create the prompt using the specified format
+            prompt = f"""You are an expert interviewer.
+Generate {num_questions} unique {interview_type} interview questions for the role of {role} in {domain}.
+- Keep each question concise (max 1 sentence).
+- Avoid duplicates.
+- Output as plain text, one question per line."""
+
+            # Call LLM
+            response = call_llm(prompt, session=st.session_state)
+            
+            # Parse response into list of questions
+            questions = [q.strip() for q in response.strip().split('\n') if q.strip()]
+            
+            # Remove any numbering or bullet points
+            import re
+            cleaned_questions = []
+            for q in questions:
+                # Remove common prefixes like "1.", "- ", "* ", etc.
+                cleaned_q = re.sub(r'^[\d\-\*\.\s]+', '', q).strip()
+                if cleaned_q and len(cleaned_q) > 10:  # Ensure meaningful questions
+                    cleaned_questions.append(cleaned_q)
+            
+            return cleaned_questions[:num_questions]  # Ensure we don't exceed requested count
+            
+        except Exception as e:
+            st.error(f"Error generating questions with LLM: {e}")
+            # Fallback to static questions
+            fallback_questions = [
+                f"What interests you most about the {role} position?",
+                f"How would you approach a challenging {interview_type} problem?",
+                f"What skills do you think are most important for a {role}?",
+                f"How do you stay updated with trends in {domain}?",
+                f"Tell me about your experience relevant to {role}."
+            ]
+            return fallback_questions[:num_questions]
 
     # Badge system for gamification
     BADGE_CONFIG = {
@@ -6458,6 +6740,27 @@ Question 3: Tell me about a time when...
                             </a>
                         </div>
                     """, unsafe_allow_html=True)
+
+    # Timer function
+    def display_timer(time_left, total_time):
+        """Display countdown timer with progress bar"""
+        progress = time_left / total_time
+        
+        # Timer display
+        minutes = time_left // 60
+        seconds = time_left % 60
+        timer_class = "timer-urgent" if time_left <= 30 else ""
+        
+        st.markdown(f"""
+        <div class="timer-container">
+            <p class="timer-text {timer_class}">⏱️ Time Remaining: {minutes:02d}:{seconds:02d}</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Progress bar
+        st.progress(progress)
+        
+        return time_left <= 0
 
     # UPDATED SECTIONS
 
@@ -6664,7 +6967,7 @@ Question 3: Tell me about a time when...
                     st.markdown(f"**{title}**")
                     st.video(url)
 
-    # Section 4: ENHANCED AI Interview Coach 🤖 with Timer and AI-Generated Questions
+    # Section 4: ENHANCED AI Interview Coach 🤖 with LLM Questions and Timer
     elif page == "AI Interview Coach 🤖":
         st.subheader("🤖 AI Interview Coach")
         st.markdown("Practice role-specific interview questions with our AI coach. Get instant feedback on your answers and discover recommended courses!")
@@ -6697,29 +7000,25 @@ Question 3: Tell me about a time when...
             # Initialize interview state
             if 'ai_interview_questions' not in st.session_state:
                 st.session_state.ai_interview_questions = []
-            if 'current_ai_interview_question' not in st.session_state:
-                st.session_state.current_ai_interview_question = 0
+            if 'current_ai_question' not in st.session_state:
+                st.session_state.current_ai_question = 0
             if 'ai_interview_answers' not in st.session_state:
                 st.session_state.ai_interview_answers = []
             if 'ai_interview_scores' not in st.session_state:
                 st.session_state.ai_interview_scores = []
-            if 'ai_interview_feedbacks' not in st.session_state:
-                st.session_state.ai_interview_feedbacks = []
             if 'ai_interview_completed' not in st.session_state:
                 st.session_state.ai_interview_completed = False
             if 'ai_interview_started' not in st.session_state:
                 st.session_state.ai_interview_started = False
             if 'ai_answer_submitted' not in st.session_state:
                 st.session_state.ai_answer_submitted = False
-            if 'timer_seconds' not in st.session_state:
-                st.session_state.timer_seconds = 120
-            if 'timer_active' not in st.session_state:
-                st.session_state.timer_active = False
-            if 'timer_start_time' not in st.session_state:
-                st.session_state.timer_start_time = None
-            if 'interview_domain' not in st.session_state or st.session_state.interview_domain != selected_domain:
-                st.session_state.interview_domain = selected_domain
-                st.session_state.interview_role = selected_role
+            if 'ai_question_start_time' not in st.session_state:
+                st.session_state.ai_question_start_time = None
+            if 'ai_timer_duration' not in st.session_state:
+                st.session_state.ai_timer_duration = 120  # Default 120 seconds
+            if 'ai_domain' not in st.session_state or st.session_state.ai_domain != selected_domain:
+                st.session_state.ai_domain = selected_domain
+                st.session_state.ai_role = selected_role
                 st.session_state.ai_interview_started = False
                 st.session_state.ai_interview_completed = False
                 
@@ -6727,8 +7026,7 @@ Question 3: Tell me about a time when...
             if not st.session_state.ai_interview_started:
                 st.markdown(f"### Practice interview for: {selected_role}")
                 
-                col1, col2, col3 = st.columns(3)
-                
+                col1, col2 = st.columns(2)
                 with col1:
                     interview_type = st.selectbox(
                         "Interview Type",
@@ -6738,166 +7036,131 @@ Question 3: Tell me about a time when...
                     )
                 
                 with col2:
-                    num_questions = st.slider("Number of questions:", 3, 8, 5)
-                
-                with col3:
                     timer_duration = st.selectbox(
-                        "Timer per question:",
+                        "Timer per Question (seconds)",
                         options=[60, 90, 120, 180, 300],
-                        index=2,
-                        format_func=lambda x: f"{x//60}m {x%60}s" if x >= 60 else f"{x}s",
-                        key="timer_duration_select"
+                        index=2,  # Default to 120 seconds
+                        key="ai_timer_duration_select"
                     )
                 
+                num_questions = st.slider("Number of questions:", 3, 8, 5, key="ai_num_questions")
+                
                 if st.button("🚀 Start Interview Practice"):
-                    # Generate AI questions
-                    with st.spinner("🤖 Generating personalized interview questions..."):
-                        questions = generate_ai_interview_questions(
+                    with st.spinner("Generating personalized interview questions..."):
+                        # Generate questions using LLM
+                        generated_questions = generate_interview_questions_with_llm(
                             selected_domain, selected_role, interview_type, num_questions
                         )
                         
-                        st.session_state.ai_interview_questions = questions
-                        st.session_state.current_ai_interview_question = 0
-                        st.session_state.ai_interview_answers = []
-                        st.session_state.ai_interview_scores = []
-                        st.session_state.ai_interview_feedbacks = []
-                        st.session_state.ai_interview_completed = False
-                        st.session_state.ai_interview_started = True
-                        st.session_state.ai_answer_submitted = False
-                        st.session_state.timer_seconds = timer_duration
-                        st.session_state.timer_active = False
-                        st.session_state.timer_start_time = None
-                        st.rerun()
+                        if generated_questions:
+                            st.session_state.ai_interview_questions = generated_questions
+                            st.session_state.current_ai_question = 0
+                            st.session_state.ai_interview_answers = []
+                            st.session_state.ai_interview_scores = []
+                            st.session_state.ai_interview_completed = False
+                            st.session_state.ai_interview_started = True
+                            st.session_state.ai_answer_submitted = False
+                            st.session_state.ai_question_start_time = time.time()
+                            st.session_state.ai_timer_duration = timer_duration
+                            st.success(f"Generated {len(generated_questions)} questions!")
+                            time.sleep(1)  # Brief pause to show success message
+                            st.rerun()
+                        else:
+                            st.error("Failed to generate questions. Please try again.")
             
             # Interview in progress
             elif st.session_state.ai_interview_started and not st.session_state.ai_interview_completed:
-                if st.session_state.current_ai_interview_question < len(st.session_state.ai_interview_questions):
-                    question = st.session_state.ai_interview_questions[st.session_state.current_ai_interview_question]
+                if st.session_state.current_ai_question < len(st.session_state.ai_interview_questions):
+                    question = st.session_state.ai_interview_questions[st.session_state.current_ai_question]
+                    
+                    # Calculate time left
+                    if st.session_state.ai_question_start_time:
+                        time_elapsed = time.time() - st.session_state.ai_question_start_time
+                        time_left = max(0, int(st.session_state.ai_timer_duration - time_elapsed))
+                    else:
+                        time_left = st.session_state.ai_timer_duration
                     
                     # Display question
                     st.markdown(f"""
                     <div class="quiz-card">
-                        <h3 style="color: #00c3ff;">Question {st.session_state.current_ai_interview_question + 1} of {len(st.session_state.ai_interview_questions)}</h3>
+                        <h3 style="color: #00c3ff;">Question {st.session_state.current_ai_question + 1} of {len(st.session_state.ai_interview_questions)}</h3>
                         <h4 style="color: #ffffff; margin: 15px 0;">Role: {selected_role}</h4>
                         <p style="font-size: 18px; color: #ffffff; margin: 15px 0;">{question}</p>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Timer display and logic
+                    # Timer display (only if answer not submitted)
                     if not st.session_state.ai_answer_submitted:
-                        if not st.session_state.timer_active:
-                            if st.button("⏰ Start Timer"):
-                                st.session_state.timer_active = True
-                                st.session_state.timer_start_time = time.time()
-                                st.rerun()
-                        else:
-                            # Calculate remaining time
-                            elapsed_time = time.time() - st.session_state.timer_start_time
-                            remaining_time = max(0, st.session_state.timer_seconds - int(elapsed_time))
+                        timer_expired = display_timer(time_left, st.session_state.ai_timer_duration)
+                        
+                        # Auto-submit if timer expires
+                        if timer_expired and not st.session_state.ai_answer_submitted:
+                            current_answer = st.session_state.get(f"ai_answer_{st.session_state.current_ai_question}", "").strip()
+                            if not current_answer:
+                                current_answer = "⚠️ No Answer"
                             
-                            # Timer display
-                            minutes = remaining_time // 60
-                            seconds = remaining_time % 60
-                            timer_class = "timer-warning" if remaining_time <= 30 else ""
-                            
-                            st.markdown(f"""
-                            <div class="timer-container">
-                                <div class="timer-text {timer_class}">
-                                    ⏱️ Time Remaining: {minutes:02d}:{seconds:02d}
-                                </div>
-                            </div>
-                            """, unsafe_allow_html=True)
-                            
-                            # Progress bar for timer
-                            progress = (st.session_state.timer_seconds - remaining_time) / st.session_state.timer_seconds
-                            st.progress(progress)
-                            
-                            # Auto-submit when timer expires
-                            if remaining_time <= 0:
-                                current_answer = st.session_state.get(f"ai_interview_answer_{st.session_state.current_ai_interview_question}", "")
-                                if not current_answer.strip():
-                                    current_answer = "⚠️ No Answer"
-                                
-                                # Evaluate answer
-                                score, feedback = evaluate_interview_answer(current_answer, question)
-                                
-                                # Store answer and score
-                                st.session_state.ai_interview_answers.append(current_answer)
-                                st.session_state.ai_interview_scores.append(score)
-                                st.session_state.ai_interview_feedbacks.append(feedback)
-                                st.session_state.ai_answer_submitted = True
-                                st.session_state.timer_active = False
-                                st.warning("⏰ Time's up! Your answer has been automatically submitted.")
-                                st.rerun()
-                            
-                            # Refresh timer display
-                            if remaining_time > 0:
-                                time.sleep(1)
-                                st.rerun()
+                            # Auto-submit
+                            score, feedback = evaluate_interview_answer(current_answer, question)
+                            st.session_state.ai_interview_answers.append(current_answer)
+                            st.session_state.ai_interview_scores.append(score)
+                            st.session_state.ai_answer_submitted = True
+                            st.warning("⏰ Time's up! Answer auto-submitted.")
+                            st.rerun()
                     
-                    # Add refresh button for new question
-                    col1, col2 = st.columns([3, 1])
+                    # Add refresh button and previous answers review
+                    col1, col2, col3 = st.columns([2, 1, 1])
                     with col2:
-                        if st.button("🔄 Refresh Interview Question"):
+                        if st.button("🔄 Refresh Question"):
                             # Generate a new question
-                            with st.spinner("🤖 Generating new question..."):
-                                new_questions = generate_ai_interview_questions(
+                            with st.spinner("Generating new question..."):
+                                new_questions = generate_interview_questions_with_llm(
                                     selected_domain, selected_role, "mixed", 1
                                 )
                                 if new_questions:
-                                    st.session_state.ai_interview_questions[st.session_state.current_ai_interview_question] = new_questions[0]
-                                    st.session_state.timer_active = False
-                                    st.session_state.timer_start_time = None
+                                    st.session_state.ai_interview_questions[st.session_state.current_ai_question] = new_questions[0]
+                                    # Reset timer
+                                    st.session_state.ai_question_start_time = time.time()
                                     st.rerun()
                     
-                    # Previous answers review
-                    if st.session_state.ai_interview_answers:
-                        with st.expander("📖 Review Previous Answers"):
-                            st.markdown('<div class="review-container">', unsafe_allow_html=True)
-                            for i, (prev_q, prev_a, prev_score) in enumerate(zip(
-                                st.session_state.ai_interview_questions[:len(st.session_state.ai_interview_answers)],
-                                st.session_state.ai_interview_answers,
-                                st.session_state.ai_interview_scores
-                            )):
-                                st.markdown(f"""
-                                **Question {i+1}:** {prev_q}
-                                
-                                **Your Answer:** {prev_a}
-                                
-                                **Score:** {prev_score:.1f}/5.0
-                                
-                                ---
-                                """)
-                            st.markdown('</div>', unsafe_allow_html=True)
+                    with col3:
+                        if st.session_state.ai_interview_answers:  # Only show if there are previous answers
+                            with st.expander("📖 Review Previous"):
+                                for i, (prev_q, prev_a) in enumerate(zip(
+                                    st.session_state.ai_interview_questions[:len(st.session_state.ai_interview_answers)],
+                                    st.session_state.ai_interview_answers
+                                )):
+                                    st.markdown(f"**Q{i+1}:** {prev_q[:80]}...")
+                                    st.markdown(f"**A{i+1}:** {prev_a[:100]}...")
+                                    st.markdown("---")
                     
-                    # Answer input
+                    # Answer input (only if not submitted)
                     if not st.session_state.ai_answer_submitted:
                         answer = st.text_area(
                             "Your answer:",
                             placeholder="Type your detailed answer here...",
                             height=150,
-                            key=f"ai_interview_answer_{st.session_state.current_ai_interview_question}"
+                            key=f"ai_answer_{st.session_state.current_ai_question}"
                         )
                         
                         # Submit answer button
                         if st.button("Submit Answer & Get Feedback"):
                             if answer.strip():
                                 # Evaluate answer
-                                score, feedback = evaluate_interview_answer(answer, question)
+                                with st.spinner("Evaluating your answer..."):
+                                    score, feedback = evaluate_interview_answer(answer, question)
                                 
                                 # Store answer and score
                                 st.session_state.ai_interview_answers.append(answer)
                                 st.session_state.ai_interview_scores.append(score)
-                                st.session_state.ai_interview_feedbacks.append(feedback)
                                 st.session_state.ai_answer_submitted = True
-                                st.session_state.timer_active = False
                                 st.rerun()
                             else:
                                 st.warning("Please provide an answer before proceeding.")
                     else:
                         # Show feedback after answer submitted
-                        score = st.session_state.ai_interview_scores[st.session_state.current_ai_interview_question]
-                        feedback = st.session_state.ai_interview_feedbacks[st.session_state.current_ai_interview_question]
+                        score = st.session_state.ai_interview_scores[st.session_state.current_ai_question]
+                        answer_text = st.session_state.ai_interview_answers[st.session_state.current_ai_question]
+                        _, feedback = evaluate_interview_answer(answer_text, question)
                         
                         st.markdown(f"""
                         <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%); 
@@ -6909,20 +7172,19 @@ Question 3: Tell me about a time when...
                         """, unsafe_allow_html=True)
                         
                         # Continue/Complete button
-                        if st.session_state.current_ai_interview_question < len(st.session_state.ai_interview_questions) - 1:
+                        if st.session_state.current_ai_question < len(st.session_state.ai_interview_questions) - 1:
                             if st.button("Continue to Next Question ➡️"):
-                                st.session_state.current_ai_interview_question += 1
+                                st.session_state.current_ai_question += 1
                                 st.session_state.ai_answer_submitted = False
-                                st.session_state.timer_active = False
-                                st.session_state.timer_start_time = None
+                                st.session_state.ai_question_start_time = time.time()  # Reset timer
                                 st.rerun()
                         else:
                             if st.button("Complete Interview 🏁"):
                                 st.session_state.ai_interview_completed = True
                                 st.rerun()
-                    
-                    # Progress bar for questions
-                    progress = (st.session_state.current_ai_interview_question + 1) / len(st.session_state.ai_interview_questions)
+                            
+                    # Progress bar
+                    progress = (st.session_state.current_ai_question + (1 if st.session_state.ai_answer_submitted else 0)) / len(st.session_state.ai_interview_questions)
                     st.progress(progress)
             
             # Interview completed + Course Recommendations
@@ -6955,15 +7217,13 @@ Question 3: Tell me about a time when...
                 
                 # Show detailed results
                 st.subheader("📊 Detailed Results:")
-                for i, (score, answer, feedback) in enumerate(zip(
-                    st.session_state.ai_interview_scores, 
-                    st.session_state.ai_interview_answers,
-                    st.session_state.ai_interview_feedbacks
-                )):
+                for i, (score, answer) in enumerate(zip(st.session_state.ai_interview_scores, st.session_state.ai_interview_answers)):
                     with st.expander(f"Question {i+1}: Score {score:.1f}/5.0"):
                         st.write(f"**Question:** {st.session_state.ai_interview_questions[i]}")
                         st.write(f"**Your Answer:** {answer}")
                         st.write(f"**Score:** {score:.1f}/5.0")
+                        # Get feedback again
+                        _, feedback = evaluate_interview_answer(answer, st.session_state.ai_interview_questions[i])
                         st.write(f"**Feedback:** {feedback}")
                 
                 # Display recommended courses by difficulty
@@ -6973,6 +7233,7 @@ Question 3: Tell me about a time when...
                 
                 courses = get_courses_for_role(selected_domain, selected_role)
                 if courses:
+                    # Display courses grouped by difficulty using the new index-based function
                     display_courses_by_difficulty(courses, selected_role)
                 else:
                     st.info("No specific courses found for this role. Explore our course categories to find relevant learning resources!")
@@ -6982,13 +7243,11 @@ Question 3: Tell me about a time when...
                     st.session_state.ai_interview_started = False
                     st.session_state.ai_interview_completed = False
                     st.session_state.ai_interview_questions = []
-                    st.session_state.current_ai_interview_question = 0
+                    st.session_state.current_ai_question = 0
                     st.session_state.ai_interview_answers = []
                     st.session_state.ai_interview_scores = []
-                    st.session_state.ai_interview_feedbacks = []
                     st.session_state.ai_answer_submitted = False
-                    st.session_state.timer_active = False
-                    st.session_state.timer_start_time = None
+                    st.session_state.ai_question_start_time = None
                     st.rerun()
 if tab5:
 	with tab5:

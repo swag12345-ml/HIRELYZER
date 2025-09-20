@@ -4131,76 +4131,86 @@ def render_template_default(session_state, profile_img_html=""):
     return html_content
 
 def render_template_modern(session_state, profile_img_html=""):
-    """Modern minimal template with clean design, pill-style tags for enhanced visual appeal"""
+    """Modern minimal template with clean design, professional pill tags, and consistent styling"""
     
-    # Process lists into pill tags instead of plain lists
+    # Enhanced Skills with professional pill styling
     skills_list = [s.strip() for s in session_state['skills'].split(',') if s.strip()]
-    languages_list = [l.strip() for l in session_state['languages'].split(',') if l.strip()]
-    interests_list = [i.strip() for i in session_state['interests'].split(',') if i.strip()]
-    softskills_list = [s.strip() for s in session_state['Softskills'].split(',') if s.strip()]
+    skills_html = "".join([
+        f"""
+        <span style='
+            display: inline-block;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            color: #334155;
+            padding: 8px 16px;
+            margin: 4px 6px 4px 0;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            box-shadow: 0 2px 4px rgba(100, 116, 139, 0.15);
+        '>{skill}</span>
+        """
+        for skill in skills_list
+    ])
     
-    # Create pill-style tags for skills section
-    skills_pills = "".join([
-        f"""<span style="
+    # Enhanced Languages with pill styling
+    languages_list = [l.strip() for l in session_state['languages'].split(',') if l.strip()]
+    languages_html = "".join([
+        f"""
+        <span style='
             display: inline-block;
             background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
             color: #0c4a6e;
             padding: 8px 16px;
             margin: 4px 6px 4px 0;
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 13px;
             font-weight: 600;
-            box-shadow: 0 2px 4px rgba(8, 145, 178, 0.1);
-            border: 1px solid rgba(14, 165, 233, 0.2);
-        ">{skill}</span>""" for skill in skills_list
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            box-shadow: 0 2px 4px rgba(14, 165, 233, 0.15);
+        '>{lang}</span>
+        """
+        for lang in languages_list
     ])
     
-    # Create pill-style tags for languages
-    languages_pills = "".join([
-        f"""<span style="
+    # Enhanced Interests with pill styling
+    interests_list = [i.strip() for i in session_state['interests'].split(',') if i.strip()]
+    interests_html = "".join([
+        f"""
+        <span style='
             display: inline-block;
             background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
             color: #14532d;
             padding: 8px 16px;
             margin: 4px 6px 4px 0;
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 13px;
             font-weight: 600;
-            box-shadow: 0 2px 4px rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.2);
-        ">{lang}</span>""" for lang in languages_list
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            box-shadow: 0 2px 4px rgba(34, 197, 94, 0.15);
+        '>{interest}</span>
+        """
+        for interest in interests_list
     ])
     
-    # Create pill-style tags for interests
-    interests_pills = "".join([
-        f"""<span style="
+    # Enhanced Soft Skills with pill styling
+    softskills_list = [s.strip() for s in session_state['Softskills'].split(',') if s.strip()]
+    softskills_html = "".join([
+        f"""
+        <span style='
             display: inline-block;
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            color: #92400e;
+            background: linear-gradient(135deg, #fef7f0 0%, #fed7aa 100%);
+            color: #7c2d12;
             padding: 8px 16px;
             margin: 4px 6px 4px 0;
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 13px;
             font-weight: 600;
-            box-shadow: 0 2px 4px rgba(245, 158, 11, 0.1);
-            border: 1px solid rgba(245, 158, 11, 0.2);
-        ">{interest}</span>""" for interest in interests_list
-    ])
-    
-    # Create pill-style tags for soft skills
-    softskills_pills = "".join([
-        f"""<span style="
-            display: inline-block;
-            background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
-            color: #be185d;
-            padding: 8px 16px;
-            margin: 4px 6px 4px 0;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            box-shadow: 0 2px 4px rgba(236, 72, 153, 0.1);
-            border: 1px solid rgba(236, 72, 153, 0.2);
-        ">{skill}</span>""" for skill in softskills_list
+            border: 1px solid rgba(251, 146, 60, 0.3);
+            box-shadow: 0 2px 4px rgba(251, 146, 60, 0.15);
+        '>{skill}</span>
+        """
+        for skill in softskills_list
     ])
     
     html_content = f"""
@@ -4218,50 +4228,37 @@ def render_template_modern(session_state, profile_img_html=""):
         }}
         
         body {{
-            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
             line-height: 1.6;
-            color: #374151;
+            color: #1f2937;
             background: #ffffff;
             max-width: 900px;
             margin: 0 auto;
-            padding: 40px 20px;
+            padding: 40px 30px;
         }}
         
         .header {{
             text-align: center;
             margin-bottom: 50px;
-            padding: 40px 0;
-            position: relative;
-        }}
-        
-        .header::after {{
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px;
-            height: 3px;
-            background: linear-gradient(90deg, #3b82f6, #06b6d4);
-            border-radius: 2px;
-        }}
-        
-        .profile-image-container {{
-            margin-bottom: 25px;
+            padding: 30px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 4px 16px rgba(100, 116, 139, 0.1);
         }}
         
         .header h1 {{
-            font-size: 2.75rem;
+            font-size: 2.8rem;
             font-weight: 700;
-            color: #1f2937;
+            color: #1e293b;
             margin-bottom: 12px;
-            letter-spacing: -0.025em;
+            letter-spacing: -0.5px;
         }}
         
         .header h2 {{
-            font-size: 1.35rem;
+            font-size: 1.4rem;
             font-weight: 500;
-            color: #6b7280;
+            color: #475569;
             margin-bottom: 25px;
         }}
         
@@ -4271,7 +4268,8 @@ def render_template_modern(session_state, profile_img_html=""):
             flex-wrap: wrap;
             gap: 25px;
             font-size: 0.95rem;
-            color: #4b5563;
+            color: #64748b;
+            margin-top: 20px;
         }}
         
         .contact-info a {{
@@ -4290,12 +4288,14 @@ def render_template_modern(session_state, profile_img_html=""):
         }}
         
         .section h3 {{
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 700;
-            color: #1f2937;
+            color: #1e293b;
             margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             position: relative;
-            padding-bottom: 10px;
+            padding-bottom: 8px;
         }}
         
         .section h3::after {{
@@ -4304,39 +4304,30 @@ def render_template_modern(session_state, profile_img_html=""):
             bottom: 0;
             left: 0;
             width: 50px;
-            height: 2px;
-            background: linear-gradient(90deg, #3b82f6, #06b6d4);
-            border-radius: 1px;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            border-radius: 2px;
         }}
         
         .summary {{
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             line-height: 1.8;
-            color: #4b5563;
+            color: #374151;
+            text-align: justify;
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            padding: 30px;
+            padding: 25px;
             border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            position: relative;
-        }}
-        
-        .summary::before {{
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #3b82f6, #06b6d4);
-            border-radius: 12px 12px 0 0;
+            border-left: 4px solid #3b82f6;
+            box-shadow: 0 2px 8px rgba(100, 116, 139, 0.1);
         }}
         
         .experience-item, .education-item, .project-item {{
             margin-bottom: 30px;
             padding: 25px;
-            background: linear-gradient(135deg, #fafbfc 0%, #f4f6f8 100%);
+            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
             border-radius: 12px;
-            border: 1px solid #e5e7eb;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 2px 8px rgba(100, 116, 139, 0.08);
             position: relative;
         }}
         
@@ -4346,39 +4337,40 @@ def render_template_modern(session_state, profile_img_html=""):
             top: 0;
             left: 0;
             right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #6b7280, #9ca3af);
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
             border-radius: 12px 12px 0 0;
         }}
         
         .item-header {{
             display: flex;
             justify-content: space-between;
-            align-items: baseline;
+            align-items: flex-start;
             margin-bottom: 8px;
-            flex-wrap: wrap;
-            gap: 10px;
+            gap: 15px;
         }}
         
         .item-title {{
             font-weight: 700;
-            color: #1f2937;
+            color: #1e293b;
             font-size: 1.2rem;
+            flex: 1;
         }}
         
         .item-duration {{
-            color: #6b7280;
-            font-size: 0.95rem;
+            color: #64748b;
+            font-size: 0.9rem;
             font-weight: 600;
-            background: linear-gradient(135deg, #f9fafb, #f3f4f6);
-            padding: 6px 14px;
-            border-radius: 16px;
-            border: 1px solid #d1d5db;
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            padding: 6px 12px;
+            border-radius: 12px;
+            white-space: nowrap;
+            border: 1px solid rgba(148, 163, 184, 0.2);
         }}
         
         .item-subtitle {{
             color: #3b82f6;
-            font-size: 1.05rem;
+            font-size: 1rem;
             margin-bottom: 12px;
             font-weight: 600;
         }}
@@ -4386,14 +4378,11 @@ def render_template_modern(session_state, profile_img_html=""):
         .item-description {{
             color: #4b5563;
             line-height: 1.7;
-            font-size: 1rem;
+            font-size: 0.95rem;
         }}
         
-        .pills-container {{
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 15px;
+        .skills-container {{
+            margin-bottom: 15px;
         }}
         
         .links a {{
@@ -4404,20 +4393,29 @@ def render_template_modern(session_state, profile_img_html=""):
             margin-bottom: 8px;
             font-weight: 500;
             padding: 8px 16px;
-            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
             border-radius: 8px;
-            border: 1px solid #bfdbfe;
+            border: 1px solid rgba(59, 130, 246, 0.2);
             transition: all 0.2s ease;
         }}
         
         .links a:hover {{
             background: linear-gradient(135deg, #dbeafe, #bfdbfe);
             transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
         }}
         
-        @media (max-width: 768px) {{
+        @media (max-width: 600px) {{
             body {{
                 padding: 20px 15px;
+            }}
+            
+            .header {{
+                padding: 20px;
+            }}
+            
+            .header h1 {{
+                font-size: 2.2rem;
             }}
             
             .contact-info {{
@@ -4429,49 +4427,42 @@ def render_template_modern(session_state, profile_img_html=""):
             .item-header {{
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 8px;
             }}
             
-            .header h1 {{
-                font-size: 2.2rem;
-            }}
-            
-            .experience-item, .education-item, .project-item {{
-                padding: 20px;
+            .item-duration {{
+                margin-top: 5px;
             }}
         }}
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="profile-image-container">
-            {profile_img_html}
-        </div>
+        {profile_img_html}
         <h1>{session_state['name']}</h1>
         <h2>{session_state['job_title']}</h2>
         <div class="contact-info">
             <span>📍 {session_state['location']}</span>
             <span>📞 {session_state['phone']}</span>
-            <a href="mailto:{session_state['email']}">✉️ {session_state['email']}</a>
+            <a href="mailto:{session_state['email']}">📧 {session_state['email']}</a>
             <a href="{session_state['linkedin']}" target="_blank">🔗 LinkedIn</a>
             <a href="{session_state['portfolio']}" target="_blank">🌐 Portfolio</a>
         </div>
     </div>
 
     <div class="section">
-        <h3>Professional Summary</h3>
+        <h3>Summary</h3>
         <div class="summary">{session_state['summary'].replace(chr(10), '<br>')}</div>
     </div>
 
     <div class="section">
-        <h3>Work Experience</h3>
+        <h3>Experience</h3>
         {"".join([f'''
         <div class="experience-item">
             <div class="item-header">
                 <div class="item-title">{exp.get('title', '')}</div>
-                <div class="item-duration">{exp.get('duration', '')}</div>
+                <div class="item-duration">📅 {exp.get('duration', '')}</div>
             </div>
-            <div class="item-subtitle">{exp.get('company', '')}</div>
+            <div class="item-subtitle">🏢 {exp.get('company', '')}</div>
             <div class="item-description">{exp.get('description', '').replace(chr(10), '<br>')}</div>
         </div>
         ''' for exp in session_state.experience_entries if exp.get('company') or exp.get('title')])}
@@ -4483,9 +4474,9 @@ def render_template_modern(session_state, profile_img_html=""):
         <div class="education-item">
             <div class="item-header">
                 <div class="item-title">{edu.get('degree', '')}</div>
-                <div class="item-duration">{edu.get('year', '')}</div>
+                <div class="item-duration">📅 {edu.get('year', '')}</div>
             </div>
-            <div class="item-subtitle">{edu.get('institution', '')}</div>
+            <div class="item-subtitle">🎓 {edu.get('institution', '')}</div>
             <div class="item-description">{edu.get('details', '')}</div>
         </div>
         ''' for edu in session_state.education_entries if edu.get('institution') or edu.get('degree')])}
@@ -4497,39 +4488,39 @@ def render_template_modern(session_state, profile_img_html=""):
         <div class="project-item">
             <div class="item-header">
                 <div class="item-title">{proj.get('title', '')}</div>
-                <div class="item-duration">{proj.get('duration', '')}</div>
+                <div class="item-duration">⏱️ {proj.get('duration', '')}</div>
             </div>
-            <div class="item-subtitle">Technologies: {proj.get('tech', '')}</div>
+            <div class="item-subtitle">🛠️ Technologies: {proj.get('tech', '')}</div>
             <div class="item-description">{proj.get('description', '').replace(chr(10), '<br>')}</div>
         </div>
         ''' for proj in session_state.project_entries if proj.get('title')])}
     </div>
 
     <div class="section">
-        <h3>Technical Skills</h3>
-        <div class="pills-container">
-            {skills_pills}
+        <h3>Skills</h3>
+        <div class="skills-container">
+            {skills_html}
         </div>
     </div>
 
     <div class="section">
         <h3>Languages</h3>
-        <div class="pills-container">
-            {languages_pills}
+        <div class="skills-container">
+            {languages_html}
         </div>
     </div>
 
     <div class="section">
-        <h3>Professional Interests</h3>
-        <div class="pills-container">
-            {interests_pills}
+        <h3>Interests</h3>
+        <div class="skills-container">
+            {interests_html}
         </div>
     </div>
 
     <div class="section">
-        <h3>Core Competencies</h3>
-        <div class="pills-container">
-            {softskills_pills}
+        <h3>Soft Skills</h3>
+        <div class="skills-container">
+            {softskills_html}
         </div>
     </div>
 
@@ -4544,12 +4535,12 @@ def render_template_modern(session_state, profile_img_html=""):
 
     {f'''
     <div class="section">
-        <h3>Professional Certifications</h3>
+        <h3>Certificates</h3>
         {"".join([f'''
         <div class="project-item">
             <div class="item-header">
-                <div class="item-title"><a href="{cert['link']}" target="_blank" style="color: #1f2937; text-decoration: none;">{cert['name']}</a></div>
-                <div class="item-duration">{cert.get('duration', '')}</div>
+                <div class="item-title"><a href="{cert['link']}" target="_blank" style="color: #1e293b; text-decoration: none;">📜 {cert['name']}</a></div>
+                <div class="item-duration">📅 {cert.get('duration', '')}</div>
             </div>
             <div class="item-description">{cert.get('description', '')}</div>
         </div>
@@ -4564,86 +4555,87 @@ def render_template_modern(session_state, profile_img_html=""):
     return html_content
 
 def render_template_sidebar(session_state, profile_img_html=""):
-    """Enhanced elegant sidebar template with improved styling, pill tags, and better visual hierarchy"""
+    """Elegant sidebar template with fully aligned dark sidebar and professional pill-style tags"""
     
-    # Process lists for pill-style tags
+    # Enhanced Skills with professional pill styling for sidebar
     skills_list = [s.strip() for s in session_state['skills'].split(',') if s.strip()]
+    skills_html = "".join([
+        f"""
+        <div style='
+            display: inline-block;
+            background: rgba(52, 152, 219, 0.15);
+            color: #e2e8f0;
+            padding: 8px 14px;
+            margin: 6px 6px 6px 0;
+            border-radius: 15px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            box-shadow: 0 2px 6px rgba(52, 152, 219, 0.2);
+        '>{skill}</div>
+        """
+        for skill in skills_list
+    ])
+    
+    # Enhanced Languages with pill styling
     languages_list = [l.strip() for l in session_state['languages'].split(',') if l.strip()]
+    languages_html = "".join([
+        f"""
+        <div style='
+            display: inline-block;
+            background: rgba(46, 204, 113, 0.15);
+            color: #d1fae5;
+            padding: 8px 14px;
+            margin: 6px 6px 6px 0;
+            border-radius: 15px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid rgba(46, 204, 113, 0.3);
+            box-shadow: 0 2px 6px rgba(46, 204, 113, 0.2);
+        '>{lang}</div>
+        """
+        for lang in languages_list
+    ])
+    
+    # Enhanced Interests with pill styling
     interests_list = [i.strip() for i in session_state['interests'].split(',') if i.strip()]
+    interests_html = "".join([
+        f"""
+        <div style='
+            display: inline-block;
+            background: rgba(155, 89, 182, 0.15);
+            color: #e9d5ff;
+            padding: 8px 14px;
+            margin: 6px 6px 6px 0;
+            border-radius: 15px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid rgba(155, 89, 182, 0.3);
+            box-shadow: 0 2px 6px rgba(155, 89, 182, 0.2);
+        '>{interest}</div>
+        """
+        for interest in interests_list
+    ])
+    
+    # Enhanced Soft Skills with pill styling
     softskills_list = [s.strip() for s in session_state['Softskills'].split(',') if s.strip()]
-    
-    # Create pill-style tags for sidebar sections
-    skills_pills = "".join([
-        f"""<div style="
+    softskills_html = "".join([
+        f"""
+        <div style='
             display: inline-block;
-            background: rgba(56, 189, 248, 0.15);
-            color: #e0f2fe;
-            padding: 8px 16px;
-            margin: 5px 8px 5px 0;
-            border-radius: 18px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            box-shadow: 0 2px 4px rgba(56, 189, 248, 0.1);
-        ">{skill}</div>""" for skill in skills_list
-    ])
-    
-    languages_pills = "".join([
-        f"""<div style="
-            display: inline-block;
-            background: rgba(34, 197, 94, 0.15);
-            color: #dcfce7;
-            padding: 8px 16px;
-            margin: 5px 8px 5px 0;
-            border-radius: 18px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            box-shadow: 0 2px 4px rgba(34, 197, 94, 0.1);
-        ">{lang}</div>""" for lang in languages_list
-    ])
-    
-    interests_pills = "".join([
-        f"""<div style="
-            display: inline-block;
-            background: rgba(245, 158, 11, 0.15);
+            background: rgba(241, 196, 15, 0.15);
             color: #fef3c7;
-            padding: 8px 16px;
-            margin: 5px 8px 5px 0;
-            border-radius: 18px;
-            font-size: 0.85rem;
+            padding: 8px 14px;
+            margin: 6px 6px 6px 0;
+            border-radius: 15px;
+            font-size: 13px;
             font-weight: 600;
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            box-shadow: 0 2px 4px rgba(245, 158, 11, 0.1);
-        ">{interest}</div>""" for interest in interests_list
+            border: 1px solid rgba(241, 196, 15, 0.3);
+            box-shadow: 0 2px 6px rgba(241, 196, 15, 0.2);
+        '>{skill}</div>
+        """
+        for skill in softskills_list
     ])
-    
-    softskills_pills = "".join([
-        f"""<div style="
-            display: inline-block;
-            background: rgba(168, 85, 247, 0.15);
-            color: #f3e8ff;
-            padding: 8px 16px;
-            margin: 5px 8px 5px 0;
-            border-radius: 18px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            border: 1px solid rgba(168, 85, 247, 0.3);
-            box-shadow: 0 2px 4px rgba(168, 85, 247, 0.1);
-        ">{skill}</div>""" for skill in softskills_list
-    ])
-    
-    # Enhanced profile image styling
-    enhanced_profile_img = ""
-    if profile_img_html:
-        # Extract the img tag and enhance it
-        import re
-        img_match = re.search(r'<img[^>]*>', profile_img_html)
-        if img_match:
-            enhanced_profile_img = img_match.group(0).replace(
-                'style="',
-                'style="width: 160px; height: 160px; border-radius: 50%; object-fit: cover; object-position: center; border: 4px solid #38bdf8; box-shadow: 0 8px 32px rgba(56, 189, 248, 0.3), 0 0 0 8px rgba(56, 189, 248, 0.1); margin-bottom: 20px; '
-            )
     
     html_content = f"""
 <!DOCTYPE html>
@@ -4660,7 +4652,7 @@ def render_template_sidebar(session_state, profile_img_html=""):
         }}
         
         body {{
-            font-family: 'Inter', 'Segoe UI', sans-serif;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
             line-height: 1.6;
             color: #333;
             background: #f8fafc;
@@ -4672,15 +4664,17 @@ def render_template_sidebar(session_state, profile_img_html=""):
             max-width: 1200px;
             margin: 0 auto;
             background: white;
-            box-shadow: 0 0 30px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
         }}
         
         .sidebar {{
             width: 350px;
-            background: linear-gradient(180deg, #1e293b 0%, #334155 100%);
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
             color: white;
-            padding: 40px 30px;
+            padding: 0;
             position: relative;
+            display: flex;
+            flex-direction: column;
         }}
         
         .sidebar::before {{
@@ -4690,101 +4684,97 @@ def render_template_sidebar(session_state, profile_img_html=""):
             right: 0;
             width: 4px;
             height: 100%;
-            background: linear-gradient(180deg, #38bdf8, #06b6d4);
+            background: linear-gradient(180deg, #3b82f6, #1d4ed8);
         }}
         
         .main-content {{
             flex: 1;
-            padding: 40px 50px;
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            padding: 0;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
         }}
         
         .profile-section {{
             text-align: center;
-            margin-bottom: 45px;
-            position: relative;
+            padding: 40px 30px;
+            background: linear-gradient(135deg, #1e293b 0%, #2563eb 100%);
+            border-bottom: 3px solid #3b82f6;
         }}
         
-        .profile-section::after {{
-            content: '';
-            position: absolute;
-            bottom: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 60px;
-            height: 3px;
-            background: linear-gradient(90deg, #38bdf8, #06b6d4);
-            border-radius: 2px;
+        .profile-image-container {{
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: center;
         }}
         
         .profile-section h1 {{
-            font-size: 1.95rem;
+            font-size: 2rem;
             margin-bottom: 12px;
-            color: #f8fafc;
+            color: #ffffff;
             font-weight: 700;
-            letter-spacing: -0.025em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }}
         
         .profile-section h2 {{
             font-size: 1.1rem;
             color: #cbd5e1;
-            margin-bottom: 25px;
+            margin-bottom: 0;
             font-weight: 500;
         }}
         
+        .sidebar-content {{
+            padding: 30px;
+            flex: 1;
+        }}
+        
         .contact-section {{
-            margin-bottom: 40px;
+            margin-bottom: 35px;
         }}
         
         .contact-item {{
             display: flex;
             align-items: center;
-            margin-bottom: 18px;
-            padding: 12px;
-            background: rgba(56, 189, 248, 0.1);
-            border-radius: 10px;
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }}
         
-        .contact-item:hover {{
-            background: rgba(56, 189, 248, 0.15);
-            transform: translateX(5px);
+        .contact-item:last-child {{
+            border-bottom: none;
         }}
         
         .contact-icon {{
             margin-right: 15px;
+            color: #3b82f6;
             font-size: 1.1rem;
-            color: #38bdf8;
             width: 20px;
-            text-align: center;
         }}
         
-        .contact-item span, .contact-item a {{
+        .contact-item a {{
             color: #e2e8f0;
             text-decoration: none;
-            font-weight: 500;
-            font-size: 0.9rem;
-        }}
-        
-        .contact-item a:hover {{
-            color: #38bdf8;
             transition: color 0.3s ease;
         }}
         
+        .contact-item a:hover {{
+            color: #3b82f6;
+        }}
+        
         .sidebar-section {{
-            margin-bottom: 40px;
+            margin-bottom: 35px;
         }}
         
         .sidebar-section h3 {{
             font-size: 1.2rem;
             margin-bottom: 20px;
-            color: #38bdf8;
+            color: #ffffff;
             text-transform: uppercase;
             letter-spacing: 1px;
             font-weight: 700;
             position: relative;
-            padding-bottom: 10px;
+            padding-bottom: 8px;
         }}
         
         .sidebar-section h3::after {{
@@ -4794,23 +4784,23 @@ def render_template_sidebar(session_state, profile_img_html=""):
             left: 0;
             width: 40px;
             height: 2px;
-            background: linear-gradient(90deg, #38bdf8, #06b6d4);
-            border-radius: 1px;
+            background: #3b82f6;
+            border-radius: 2px;
         }}
         
         .main-section {{
-            margin-bottom: 40px;
+            padding: 40px;
         }}
         
         .main-section h3 {{
-            font-size: 1.65rem;
+            font-size: 1.5rem;
             color: #1e293b;
             margin-bottom: 25px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             font-weight: 700;
             position: relative;
-            padding-bottom: 15px;
+            padding-bottom: 10px;
         }}
         
         .main-section h3::after {{
@@ -4820,41 +4810,31 @@ def render_template_sidebar(session_state, profile_img_html=""):
             left: 0;
             width: 60px;
             height: 3px;
-            background: linear-gradient(90deg, #3b82f6, #06b6d4);
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
             border-radius: 2px;
         }}
         
         .summary {{
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             line-height: 1.8;
             color: #4b5563;
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            text-align: justify;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             padding: 30px;
-            border-radius: 15px;
-            border: 1px solid #bae6fd;
-            position: relative;
-            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.05);
-        }}
-        
-        .summary::before {{
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #3b82f6, #06b6d4);
-            border-radius: 15px 15px 0 0;
+            border-radius: 12px;
+            border-left: 4px solid #3b82f6;
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.1);
+            margin-bottom: 30px;
         }}
         
         .content-item {{
             margin-bottom: 30px;
-            padding: 30px;
+            padding: 25px;
             background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-            border-radius: 15px;
-            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.08);
             position: relative;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }}
         
         .content-item::before {{
@@ -4864,8 +4844,8 @@ def render_template_sidebar(session_state, profile_img_html=""):
             left: 0;
             right: 0;
             height: 4px;
-            background: linear-gradient(90deg, #6b7280, #9ca3af);
-            border-radius: 15px 15px 0 0;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            border-radius: 12px 12px 0 0;
         }}
         
         .content-item:last-child {{
@@ -4875,51 +4855,60 @@ def render_template_sidebar(session_state, profile_img_html=""):
         .item-header {{
             display: flex;
             justify-content: space-between;
-            align-items: baseline;
+            align-items: flex-start;
             margin-bottom: 12px;
-            flex-wrap: wrap;
             gap: 15px;
         }}
         
         .item-title {{
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: #1e293b;
+            flex: 1;
         }}
         
         .item-duration {{
-            color: #6b7280;
-            font-size: 0.95rem;
+            color: #64748b;
+            font-size: 0.9rem;
             font-weight: 600;
             background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
-            padding: 8px 16px;
+            padding: 8px 15px;
             border-radius: 20px;
-            border: 1px solid #cbd5e1;
+            white-space: nowrap;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 2px 4px rgba(100, 116, 139, 0.1);
         }}
         
         .item-company {{
             color: #3b82f6;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             margin-bottom: 15px;
-            font-weight: 700;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }}
+        
+        .item-company::before {{
+            content: '🏢';
+            margin-right: 8px;
         }}
         
         .item-description {{
             color: #4b5563;
             line-height: 1.7;
-            font-size: 1rem;
+            font-size: 0.95rem;
         }}
         
         .project-tech {{
             background: linear-gradient(135deg, #dbeafe, #bfdbfe);
             color: #1e40af;
-            padding: 10px 18px;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            margin-bottom: 15px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
             display: inline-block;
             font-weight: 600;
-            border: 1px solid #93c5fd;
+            border: 1px solid rgba(59, 130, 246, 0.2);
         }}
         
         @media (max-width: 768px) {{
@@ -4934,15 +4923,10 @@ def render_template_sidebar(session_state, profile_img_html=""):
             .item-header {{
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 8px;
             }}
             
-            .main-content {{
-                padding: 30px 25px;
-            }}
-            
-            .sidebar {{
-                padding: 30px 25px;
+            .item-duration {{
+                margin-top: 8px;
             }}
         }}
     </style>
@@ -4951,52 +4935,56 @@ def render_template_sidebar(session_state, profile_img_html=""):
     <div class="resume-container">
         <div class="sidebar">
             <div class="profile-section">
-                {enhanced_profile_img}
+                <div class="profile-image-container">
+                    {profile_img_html}
+                </div>
                 <h1>{session_state['name']}</h1>
                 <h2>{session_state['job_title']}</h2>
             </div>
             
-            <div class="contact-section">
-                <div class="contact-item">
-                    <div class="contact-icon">📍</div>
-                    <span>{session_state['location']}</span>
+            <div class="sidebar-content">
+                <div class="contact-section">
+                    <div class="contact-item">
+                        <span class="contact-icon">📍</span>
+                        <span>{session_state['location']}</span>
+                    </div>
+                    <div class="contact-item">
+                        <span class="contact-icon">📞</span>
+                        <span>{session_state['phone']}</span>
+                    </div>
+                    <div class="contact-item">
+                        <span class="contact-icon">✉️</span>
+                        <a href="mailto:{session_state['email']}">{session_state['email']}</a>
+                    </div>
+                    <div class="contact-item">
+                        <span class="contact-icon">🔗</span>
+                        <a href="{session_state['linkedin']}" target="_blank">LinkedIn</a>
+                    </div>
+                    <div class="contact-item">
+                        <span class="contact-icon">🌐</span>
+                        <a href="{session_state['portfolio']}" target="_blank">Portfolio</a>
+                    </div>
                 </div>
-                <div class="contact-item">
-                    <div class="contact-icon">📞</div>
-                    <span>{session_state['phone']}</span>
+                
+                <div class="sidebar-section">
+                    <h3>Skills</h3>
+                    <div>{skills_html}</div>
                 </div>
-                <div class="contact-item">
-                    <div class="contact-icon">✉️</div>
-                    <a href="mailto:{session_state['email']}">{session_state['email']}</a>
+                
+                <div class="sidebar-section">
+                    <h3>Languages</h3>
+                    <div>{languages_html}</div>
                 </div>
-                <div class="contact-item">
-                    <div class="contact-icon">🔗</div>
-                    <a href="{session_state['linkedin']}" target="_blank">LinkedIn Profile</a>
+                
+                <div class="sidebar-section">
+                    <h3>Interests</h3>
+                    <div>{interests_html}</div>
                 </div>
-                <div class="contact-item">
-                    <div class="contact-icon">🌐</div>
-                    <a href="{session_state['portfolio']}" target="_blank">Portfolio Website</a>
+                
+                <div class="sidebar-section">
+                    <h3>Soft Skills</h3>
+                    <div>{softskills_html}</div>
                 </div>
-            </div>
-            
-            <div class="sidebar-section">
-                <h3>Technical Skills</h3>
-                <div>{skills_pills}</div>
-            </div>
-            
-            <div class="sidebar-section">
-                <h3>Languages</h3>
-                <div>{languages_pills}</div>
-            </div>
-            
-            <div class="sidebar-section">
-                <h3>Interests</h3>
-                <div>{interests_pills}</div>
-            </div>
-            
-            <div class="sidebar-section">
-                <h3>Core Competencies</h3>
-                <div>{softskills_pills}</div>
             </div>
         </div>
         
@@ -5004,71 +4992,61 @@ def render_template_sidebar(session_state, profile_img_html=""):
             <div class="main-section">
                 <h3>Professional Summary</h3>
                 <div class="summary">{session_state['summary'].replace(chr(10), '<br>')}</div>
-            </div>
-            
-            <div class="main-section">
-                <h3>Professional Experience</h3>
+                
+                <h3>Experience</h3>
                 {"".join([f'''
                 <div class="content-item">
                     <div class="item-header">
                         <div class="item-title">{exp.get('title', '')}</div>
-                        <div class="item-duration">{exp.get('duration', '')}</div>
+                        <div class="item-duration">📅 {exp.get('duration', '')}</div>
                     </div>
                     <div class="item-company">{exp.get('company', '')}</div>
                     <div class="item-description">{exp.get('description', '').replace(chr(10), '<br>')}</div>
                 </div>
                 ''' for exp in session_state.experience_entries if exp.get('company') or exp.get('title')])}
-            </div>
-            
-            <div class="main-section">
-                <h3>Education & Qualifications</h3>
+                
+                <h3>Education</h3>
                 {"".join([f'''
                 <div class="content-item">
                     <div class="item-header">
                         <div class="item-title">{edu.get('degree', '')}</div>
-                        <div class="item-duration">{edu.get('year', '')}</div>
+                        <div class="item-duration">📅 {edu.get('year', '')}</div>
                     </div>
-                    <div class="item-company">{edu.get('institution', '')}</div>
+                    <div class="item-company">🎓 {edu.get('institution', '')}</div>
                     <div class="item-description">{edu.get('details', '')}</div>
                 </div>
                 ''' for edu in session_state.education_entries if edu.get('institution') or edu.get('degree')])}
-            </div>
-            
-            <div class="main-section">
-                <h3>Key Projects</h3>
+                
+                <h3>Projects</h3>
                 {"".join([f'''
                 <div class="content-item">
                     <div class="item-header">
                         <div class="item-title">{proj.get('title', '')}</div>
-                        <div class="item-duration">{proj.get('duration', '')}</div>
+                        <div class="item-duration">⏱️ {proj.get('duration', '')}</div>
                     </div>
-                    <div class="project-tech">Technologies: {proj.get('tech', '')}</div>
+                    <div class="project-tech">🛠️ {proj.get('tech', '')}</div>
                     <div class="item-description">{proj.get('description', '').replace(chr(10), '<br>')}</div>
                 </div>
                 ''' for proj in session_state.project_entries if proj.get('title')])}
-            </div>
-            
-            {f'''
-            <div class="main-section">
-                <h3>Project Portfolio</h3>
-                {"".join([f'''<div class="content-item" style="padding: 20px;"><a href="{link}" target="_blank" style="color: #3b82f6; text-decoration: none; font-weight: 600; font-size: 1.1rem;">🔗 Project Repository {i+1}</a></div>''' for i, link in enumerate(session_state.project_links)])}
-            </div>
-            ''' if session_state.project_links else ''}
-            
-            {f'''
-            <div class="main-section">
-                <h3>Professional Certifications</h3>
+                
+                {f'''
+                <h3>Project Links</h3>
+                {"".join([f'<div class="content-item"><a href="{link}" target="_blank" style="color: #3b82f6; text-decoration: none; font-weight: 600;">🔗 Project {i+1}</a></div>' for i, link in enumerate(session_state.project_links)])}
+                ''' if session_state.project_links else ''}
+                
+                {f'''
+                <h3>Certificates</h3>
                 {"".join([f'''
                 <div class="content-item">
                     <div class="item-header">
-                        <div class="item-title"><a href="{cert['link']}" target="_blank" style="color: #1e293b; text-decoration: none;">{cert['name']}</a></div>
-                        <div class="item-duration">{cert.get('duration', '')}</div>
+                        <div class="item-title"><a href="{cert['link']}" target="_blank" style="color: #1e293b; text-decoration: none;">📜 {cert['name']}</a></div>
+                        <div class="item-duration">📅 {cert.get('duration', '')}</div>
                     </div>
                     <div class="item-description">{cert.get('description', '')}</div>
                 </div>
                 ''' for cert in session_state.certificate_links if cert.get('name')])}
+                ''' if any(cert.get('name') for cert in session_state.certificate_links) else ''}
             </div>
-            ''' if any(cert.get('name') for cert in session_state.certificate_links) else ''}
         </div>
     </div>
 </body>

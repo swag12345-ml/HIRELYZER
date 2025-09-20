@@ -3130,6 +3130,1733 @@ with tab1:
 
 
 
+from xhtml2pdf import pisa
+from io import BytesIO
+
+def html_to_pdf_bytes(html_string):
+    styled_html = f"""
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            @page {{
+                size: 400mm 297mm;  /* Original custom large page size */
+                margin-top: 10mm;
+                margin-bottom: 10mm;
+                margin-left: 10mm;
+                margin-right: 10mm;
+            }}
+            body {{
+                font-size: 14pt;
+                font-family: "Segoe UI", "Helvetica", sans-serif;
+                line-height: 1.5;
+                color: #000;
+            }}
+            h1, h2, h3 {{
+                color: #2f4f6f;
+            }}
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 15px;
+            }}
+            td {{
+                padding: 4px;
+                vertical-align: top;
+                border: 1px solid #ccc;
+            }}
+            .section-title {{
+                background-color: #e0e0e0;
+                font-weight: bold;
+                padding: 6px;
+                margin-top: 10px;
+            }}
+            .box {{
+                padding: 8px;
+                margin-top: 6px;
+                background-color: #f9f9f9;
+                border-left: 4px solid #999;  /* More elegant than full border */
+            }}
+            ul {{
+                margin: 0.5em 0;
+                padding-left: 1.5em;
+            }}
+            li {{
+                margin-bottom: 5px;
+            }}
+        </style>
+    </head>
+    <body>
+        {html_string}
+    </body>
+    </html>
+    """
+
+    pdf_io = BytesIO()
+    pisa.CreatePDF(styled_html, dest=pdf_io)
+    pdf_io.seek(0)
+    return pdf_io
+
+def render_template_default(session_state, profile_img_html=""):
+    """Default professional template - keeps the exact same design as before"""
+    
+    # Enhanced SKILLS with professional, muted colors
+    skills_html = "".join(
+        f"""
+        <div style='display:inline-block; 
+                    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+                    color: #334155; 
+                    padding: 10px 18px; 
+                    margin: 8px 8px 8px 0; 
+                    border-radius: 25px; 
+                    font-size: 14px; 
+                    font-weight: 600;
+                    box-shadow: 0 2px 8px rgba(148, 163, 184, 0.2);
+                    transition: all 0.3s ease;
+                    text-shadow: none;
+                    border: 1px solid rgba(148, 163, 184, 0.3);'>
+            {s.strip()}
+        </div>
+        """
+        for s in session_state['skills'].split(',')
+        if s.strip()
+    )
+
+    # Enhanced LANGUAGES with soft, professional design
+    languages_html = "".join(
+        f"""
+        <div style='display:inline-block; 
+                    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+                    color: #475569; 
+                    padding: 10px 18px; 
+                    margin: 8px 8px 8px 0; 
+                    border-radius: 25px; 
+                    font-size: 14px; 
+                    font-weight: 600;
+                    box-shadow: 0 2px 8px rgba(100, 116, 139, 0.15);
+                    transition: all 0.3s ease;
+                    text-shadow: none;
+                    border: 1px solid rgba(148, 163, 184, 0.3);'>
+            {lang.strip()}
+        </div>
+        """
+        for lang in session_state['languages'].split(',')
+        if lang.strip()
+    )
+
+    # Enhanced INTERESTS with subtle colors
+    interests_html = "".join(
+        f"""
+        <div style='display:inline-block; 
+                    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+                    color: #0f172a; 
+                    padding: 10px 18px; 
+                    margin: 8px 8px 8px 0; 
+                    border-radius: 25px; 
+                    font-size: 14px; 
+                    font-weight: 600;
+                    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.1);
+                    transition: all 0.3s ease;
+                    text-shadow: none;
+                    border: 1px solid rgba(186, 230, 253, 0.5);'>
+            {interest.strip()}
+        </div>
+        """
+        for interest in session_state['interests'].split(',')
+        if interest.strip()
+    )
+
+    # Enhanced SOFT SKILLS with warm but professional styling
+    Softskills_html = "".join(
+        f"""
+        <div style='display:inline-block; 
+                    background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%);
+                    color: #451a03; 
+                    padding: 10px 20px; 
+                    margin: 8px 8px 8px 0; 
+                    border-radius: 25px; 
+                    font-size: 14px; 
+                    font-family: "Segoe UI", sans-serif; 
+                    font-weight: 600;
+                    box-shadow: 0 2px 8px rgba(217, 119, 6, 0.1);
+                    transition: all 0.3s ease;
+                    border: 1px solid rgba(254, 215, 170, 0.6);'>
+            {skill.strip().title()}
+        </div>
+        """
+        for skill in session_state['Softskills'].split(',')
+        if skill.strip()
+    )
+
+    # Enhanced EXPERIENCE with professional, subtle design
+    experience_html = ""
+    for exp in session_state.experience_entries:
+        if exp["company"] or exp["title"]:
+            # Handle paragraphs and single line breaks
+            description_lines = [line.strip() for line in exp["description"].strip().split("\n\n")]
+            description_html = "".join(
+                f"<div style='margin-bottom: 10px; line-height: 1.6;'>{line.replace(chr(10), '<br>')}</div>"
+                for line in description_lines if line
+            )
+
+            experience_html += f"""
+            <div style='
+                margin-bottom: 24px;
+                padding: 20px;
+                border-radius: 12px;
+                background: linear-gradient(145deg, #fafafa 0%, #f4f4f5 100%);
+                box-shadow: 
+                    0 4px 12px rgba(0, 0, 0, 0.05),
+                    0 1px 3px rgba(0, 0, 0, 0.1);
+                font-family: "Inter", "Segoe UI", sans-serif;
+                color: #374151;
+                line-height: 1.6;
+                border: 1px solid rgba(229, 231, 235, 0.8);
+                position: relative;
+                overflow: hidden;
+            '>
+                <!-- Subtle accent bar -->
+                <div style='
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 3px;
+                    background: linear-gradient(90deg, #6b7280, #9ca3af);
+                '></div>
+                
+                <!-- Header Card -->
+                <div style='
+                    background: rgba(255, 255, 255, 0.8);
+                    border-radius: 8px;
+                    padding: 14px 18px;
+                    margin-bottom: 12px;
+                    border: 1px solid rgba(229, 231, 235, 0.6);
+                '>
+                    <div style='
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        font-weight: 700;
+                        font-size: 18px;
+                        margin-bottom: 6px;
+                        color: #1f2937;
+                        width: 100%;
+                    '>
+                        <div style='display: flex; align-items: center;'>
+                            <div style='
+                                width: 6px; 
+                                height: 6px; 
+                                background: #6b7280;
+                                border-radius: 50%; 
+                                margin-right: 12px;
+                            '></div>
+                            <span>{exp['company']}</span>
+                        </div>
+                        <div style='
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 6px;
+                            background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+                            color: #374151;
+                            padding: 5px 14px;
+                            border-radius: 16px;
+                            font-size: 14px;
+                            font-weight: 600;
+                            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                            border: 1px solid rgba(209, 213, 219, 0.5);
+                        '>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+                            </svg>
+                            <span>{exp['duration']}</span>
+                        </div>
+                    </div>
+
+                    <div style='
+                        display: flex;
+                        align-items: center;
+                        font-size: 16px;
+                        font-weight: 600;
+                        color: #4b5563;
+                    '>
+                        <div style='
+                            width: 4px; 
+                            height: 4px; 
+                            background: #6b7280;
+                            border-radius: 50%; 
+                            margin-right: 10px;
+                        '></div>
+                        <span>{exp['title']}</span>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div style='
+                    font-size: 15px;
+                    font-weight: 500;
+                    color: #374151;
+                    line-height: 1.7;
+                    padding-left: 8px;
+                '>
+                    <div style='
+                        border-left: 2px solid #d1d5db;
+                        padding-left: 16px;
+                        margin-left: 8px;
+                    '>
+                        {description_html}
+                    </div>
+                </div>
+            </div>
+            """
+
+    # Convert experience to list if multiple lines
+    # Escape HTML and convert line breaks
+    summary_html = session_state['summary'].replace('\n', '<br>')
+
+    # Enhanced EDUCATION with professional styling
+    education_html = ""
+    for edu in session_state.education_entries:
+        if edu.get("institution") or edu.get("details"):
+            degree_text = ""
+            if edu.get("degree"):
+                degree_val = edu["degree"]
+                if isinstance(degree_val, list):
+                    degree_val = ", ".join(degree_val)
+                degree_text = f"""
+                <div style='
+                    display: flex; 
+                    align-items: center; 
+                    font-size: 15px; 
+                    color: #374151; 
+                    margin-bottom: 8px;
+                    font-weight: 600;
+                '>
+                    <div style='
+                        width: 4px; 
+                        height: 4px; 
+                        background: #6b7280;
+                        border-radius: 50%; 
+                        margin-right: 10px;
+                    '></div>
+                    <b>{degree_val}</b>
+                </div>
+                """
+
+            # Education Card
+            education_html += f"""
+            <div style='
+                margin-bottom: 26px;
+                padding: 22px 26px;
+                border-radius: 12px;
+                background: linear-gradient(145deg, #f9fafb 0%, #f3f4f6 100%);
+                box-shadow: 
+                    0 4px 12px rgba(0, 0, 0, 0.06),
+                    0 1px 3px rgba(0, 0, 0, 0.08);
+                font-family: "Inter", "Segoe UI", sans-serif;
+                color: #1f2937;
+                line-height: 1.6;
+                border: 1px solid #e5e7eb;
+                position: relative;
+                overflow: hidden;
+            '>
+                <!-- Subtle accent bar -->
+                <div style='
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 3px;
+                    background: linear-gradient(90deg, #6b7280, #9ca3af);
+                '></div>
+
+                <div style='
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    font-size: 18px;
+                    font-weight: 700;
+                    margin-bottom: 12px;
+                    width: 100%;
+                    color: #111827;
+                '>
+                    <div style='display: flex; align-items: center;'>
+                        <div style='
+                            width: 6px; 
+                            height: 6px; 
+                            background: #6b7280;
+                            border-radius: 50%; 
+                            margin-right: 12px;
+                        '></div>
+                        <span>{edu.get('institution', '')}</span>
+                    </div>
+                    <div style='
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        background: rgba(255, 255, 255, 0.7);
+                        color: #374151;
+                        padding: 6px 16px;
+                        border-radius: 16px;
+                        font-weight: 600;
+                        font-size: 14px;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                        border: 1px solid #d1d5db;
+                    '>
+                        <!-- Inline SVG Calendar Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" 
+                            fill="none" viewBox="0 0 24 24" 
+                            stroke="currentColor" width="16" height="16">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 
+                                2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        {edu.get('year', '')}
+                    </div>
+                </div>
+                {degree_text}
+                <div style='
+                    font-size: 14px; 
+                    font-style: italic;
+                    color: #374151;
+                    line-height: 1.6;
+                    padding-left: 18px;
+                    border-left: 2px solid #9ca3af;
+                '>
+                    {edu.get('details', '')}
+                </div>
+            </div>
+            """
+
+    # Enhanced PROJECTS with professional card design
+    projects_html = ""
+    for proj in session_state.project_entries:
+        if proj.get("title") or proj.get("description"):
+            tech_val = proj.get("tech")
+            if isinstance(tech_val, list):
+                tech_val = ", ".join(tech_val)
+            tech_text = f"""
+            <div style='
+                display: flex; 
+                align-items: center; 
+                font-size: 14px; 
+                color: #374151; 
+                margin-bottom: 12px;
+                font-weight: 600;
+                background: rgba(255, 255, 255, 0.7);
+                padding: 8px 16px;
+                border-radius: 8px;
+                border: 1px solid rgba(229, 231, 235, 0.6);
+            '>
+                <div style='
+                    width: 4px; 
+                    height: 4px; 
+                    background: #6b7280;
+                    border-radius: 50%; 
+                    margin-right: 10px;
+                '></div>
+                <b>Technologies:</b>&nbsp;&nbsp;{tech_val if tech_val else ''}
+            </div>
+            """ if tech_val else ""
+
+            description_items = ""
+            if proj.get("description"):
+                description_lines = [line.strip() for line in proj["description"].splitlines() if line.strip()]
+                description_items = "".join(f"<li style='margin-bottom: 6px; line-height: 1.6;'>{line}</li>" for line in description_lines)
+
+            projects_html += f"""
+            <div style='
+                margin-bottom: 30px;
+                padding: 26px;
+                border-radius: 12px;
+                background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+                box-shadow: 
+                    0 4px 12px rgba(100, 116, 139, 0.1),
+                    0 1px 3px rgba(0, 0, 0, 0.1);
+                font-family: "Inter", "Segoe UI", sans-serif;
+                color: #334155;
+                line-height: 1.7;
+                border: 1px solid rgba(203, 213, 225, 0.5);
+                position: relative;
+                overflow: hidden;
+            '>
+                <!-- Subtle accent bar -->
+                <div style='
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 3px;
+                    background: linear-gradient(90deg, #64748b, #94a3b8);
+                '></div>
+
+                <div style='
+                    font-size: 19px;
+                    font-weight: 700;
+                    margin-bottom: 16px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    color: #1e293b;
+                    width: 100%;
+                '>
+                    <div style='display: flex; align-items: center;'>
+                        <div style='
+                            width: 6px; 
+                            height: 6px; 
+                            background: #64748b;
+                            border-radius: 50%; 
+                            margin-right: 12px;
+                        '></div>
+                        <span>{proj.get('title', '')}</span>
+                    </div>
+                    <div style='
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+                        color: #334155;
+                        padding: 8px 18px;
+                        border-radius: 16px;
+                        font-weight: 600;
+                        font-size: 14px;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                        border: 1px solid rgba(203, 213, 225, 0.6);
+                    '>
+                        <!-- Inline SVG Clock Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" 
+                            fill="none" viewBox="0 0 24 24" 
+                            stroke="currentColor" width="16" height="16">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 
+                                   9 9 0 0118 0z" />
+                        </svg>
+                        {proj.get('duration', '')}
+                    </div>
+                </div>
+                {tech_text}
+                <div style='
+                    font-size: 15px; 
+                    color: #334155;
+                    background: rgba(255, 255, 255, 0.6);
+                    padding: 18px;
+                    border-radius: 8px;
+                    border: 1px solid rgba(229, 231, 235, 0.6);
+                '>
+                    <div style='
+                        font-weight: 600; 
+                        margin-bottom: 12px;
+                        color: #1e293b;
+                        display: flex;
+                        align-items: center;
+                    '>
+                        <div style='
+                            width: 4px; 
+                            height: 4px; 
+                            background: #64748b;
+                            border-radius: 50%; 
+                            margin-right: 10px;
+                        '></div>
+                        Description:
+                    </div>
+                    <ul style='
+                        margin-top: 8px; 
+                        padding-left: 24px; 
+                        color: #334155;
+                        list-style-type: none;
+                    '>
+                        {description_items}
+                    </ul>
+                </div>
+            </div>
+            """
+
+    # Enhanced PROJECT LINKS with professional styling
+    project_links_html = ""
+    if session_state.project_links:
+        project_links_html = """
+        <div style='margin-bottom: 20px;'>
+            <h4 class='section-title' style='
+                color: #374151;
+                font-size: 20px;
+                margin-bottom: 8px;
+                display: flex;
+                align-items: center;
+                padding-bottom: 4px;
+            '>
+                <div style='
+                    width: 6px; 
+                    height: 6px; 
+                    background: #6b7280;
+                    border-radius: 50%; 
+                    margin-right: 12px;
+                '></div>
+                Project Links
+            </h4>
+        </div>
+        """ + "".join(
+            f"""
+            <div style='
+                background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+                padding: 14px 20px;
+                border-radius: 8px;
+                margin-bottom: 12px;
+                border: 1px solid rgba(209, 213, 219, 0.6);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            '>
+                <div style='
+                    width: 4px; 
+                    height: 4px; 
+                    background: #6b7280;
+                    border-radius: 50%; 
+                    display: inline-block;
+                    margin-right: 12px;
+                    vertical-align: middle;
+                '></div>
+                <a href="{link}" style='
+                    color: #374151; 
+                    font-weight: 600; 
+                    text-decoration: none;
+                    font-size: 15px;
+                '>🔗 Project {i+1}</a>
+            </div>
+            """
+            for i, link in enumerate(session_state.project_links)
+        )
+
+    # Enhanced CERTIFICATES with professional design
+    certificate_links_html = ""
+    if session_state.certificate_links:
+        certificate_links_html = """
+        <h4 class='section-title' style='
+            color: #374151;
+            font-size: 20px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+        '>
+            <div style='
+                width: 6px; 
+                height: 6px; 
+                background: #6b7280;
+                border-radius: 50%; 
+                margin-right: 12px;
+            '></div>
+            Certificates
+        </h4>
+        """
+        for cert in session_state.certificate_links:
+            if cert["name"] and cert["link"]:
+                description = cert.get('description', '').replace('\n', '<br>')
+                name = cert['name']
+                link = cert['link']
+                duration = cert.get('duration', '')
+
+                card_html = f"""
+                <div style='
+                    background: linear-gradient(145deg, #f9fafb 0%, #f3f4f6 100%);
+                    padding: 24px 28px;
+                    border-radius: 12px;
+                    margin-bottom: 26px;
+                    box-shadow: 
+                        0 4px 12px rgba(107, 114, 128, 0.08),
+                        0 1px 3px rgba(0, 0, 0, 0.08);
+                    font-family: "Inter", "Segoe UI", sans-serif;
+                    color: #374151;
+                    position: relative;
+                    line-height: 1.7;
+                    border: 1px solid rgba(209, 213, 219, 0.6);
+                    overflow: hidden;
+                '>
+                    <!-- Accent bar -->
+                    <div style='
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        height: 3px;
+                        background: linear-gradient(90deg, #6b7280, #9ca3af);
+                    '></div>
+
+                    <!-- Duration Badge -->
+                    <div style='
+                        position: absolute;
+                        top: 20px;
+                        right: 28px;
+                        font-size: 13px;
+                        font-weight: 600;
+                        color: #374151;
+                        background: linear-gradient(135deg, #ffffff, #f9fafb);
+                        padding: 8px 14px;
+                        border-radius: 16px;
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+                        border: 1px solid rgba(209, 213, 219, 0.6);
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                    '>
+                        <!-- Inline SVG clock icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" 
+                            fill="none" viewBox="0 0 24 24" 
+                            stroke="currentColor" width="14" height="14">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z"/>
+                        </svg>
+                        {duration}
+                    </div>
+
+                    <!-- Certificate Title -->
+                    <div style='
+                        font-size: 18px;
+                        font-weight: 700;
+                        color: #111827;
+                        margin-bottom: 12px;
+                        margin-right: 120px;
+                        display: flex;
+                        align-items: center;
+                    '>
+                        <div style='
+                            width: 6px; 
+                            height: 6px; 
+                            background: #6b7280;
+                            border-radius: 50%; 
+                            margin-right: 12px;
+                        '></div>
+                        <a href="{link}" target="_blank" style='
+                            color: #111827;
+                            text-decoration: none;
+                            transition: color 0.3s ease;
+                        '>{name}</a>
+                    </div>
+
+                    <!-- Description -->
+                    <div style='
+                        font-size: 15px;
+                        color: #374151;
+                        background: rgba(255, 255, 255, 0.8);
+                        padding: 16px;
+                        border-radius: 8px;
+                        border: 1px solid rgba(209, 213, 219, 0.6);
+                        line-height: 1.6;
+                    '>
+                        <div style='
+                            display: flex;
+                            align-items: flex-start;
+                            margin-bottom: 8px;
+                        '>
+                            <div style='
+                                width: 4px; 
+                                height: 4px; 
+                                background: #6b7280;
+                                border-radius: 50%; 
+                                margin-right: 12px;
+                                margin-top: 8px;
+                                flex-shrink: 0;
+                            '></div>
+                            <div>{description}</div>
+                        </div>
+                    </div>
+                </div>
+                """
+                certificate_links_html += card_html
+
+    # Main HTML content - exactly as before
+    html_content = f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{session_state['name']} - Professional Resume</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {{
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }}
+        
+        body {{
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: #1a202c;
+            background: #ffffff;
+            min-height: 100vh;
+        }}
+        
+        .resume-container {{
+            width: 100%;
+            min-height: 100vh;
+            background: #ffffff;
+        }}
+        
+        .resume-container::before {{
+            content: '';
+            display: block;
+            height: 4px;
+            background: linear-gradient(90deg, #6b7280, #9ca3af);
+        }}
+        
+        .header-section {{
+            background: #f8fafc;
+            padding: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+        }}
+        
+        .name-title {{
+            flex: 1;
+        }}
+        
+        .name-title h1 {{
+            font-size: 42px;
+            font-weight: 800;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }}
+        
+        .name-title h2 {{
+            font-size: 24px;
+            font-weight: 600;
+            color: #4a5568;
+            margin: 0;
+        }}
+        
+        .profile-image {{
+            flex-shrink: 0;
+            margin-left: 40px;
+        }}
+        
+        .main-content {{
+            display: flex;
+            min-height: 800px;
+        }}
+        
+        .sidebar {{
+            width: 350px;
+            background: #f7fafc;
+            padding: 40px 30px;
+            border-right: 1px solid #e2e8f0;
+        }}
+        
+        .main-section {{
+            flex: 1;
+            padding: 40px;
+            background: #ffffff;
+        }}
+        
+        .contact-info {{
+            margin-bottom: 40px;
+        }}
+        
+        .contact-item {{
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 8px 0;
+        }}
+        
+        .contact-icon {{
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            opacity: 0.8;
+        }}
+        
+        .contact-item span, .contact-item a {{
+            font-size: 14px;
+            color: #4a5568;
+            text-decoration: none;
+            font-weight: 500;
+        }}
+        
+        .contact-item a:hover {{
+            color: #6b7280;
+            transition: color 0.3s ease;
+        }}
+        
+        .section-title {{
+            font-size: 22px;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 35px 0 15px 0;
+        }}
+        
+        .section-content {{
+            margin-bottom: 30px;
+        }}
+        
+        .summary-text {{
+            font-size: 16px;
+            line-height: 1.8;
+            color: #4a5568;
+            background: #f8fafc;
+            padding: 25px;
+            border-radius: 8px;
+            border-left: 3px solid #9ca3af;
+        }}
+        
+        @media (max-width: 768px) {{
+            .main-content {{
+                flex-direction: column;
+            }}
+            
+            .sidebar {{
+                width: 100%;
+            }}
+            
+            .header-section {{
+                flex-direction: column;
+                text-align: center;
+            }}
+            
+            .profile-image {{
+                margin: 20px 0 0 0;
+            }}
+            
+            .name-title h1 {{
+                font-size: 32px;
+            }}
+        }}
+        
+        @media (max-width: 480px) {{
+            .header-section, .sidebar, .main-section {{
+                padding: 20px;
+            }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="resume-container">
+        <div class="header-section">
+            <div class="name-title">
+                <h1>{session_state['name']}</h1>
+                <h2>{session_state['job_title']}</h2>
+            </div>
+            <div class="profile-image">
+                {profile_img_html}
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span>{session_state['location']}</span>
+                    </div>
+                    <div class="contact-item">
+                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path>
+                        </svg>
+                        <span>{session_state['phone']}</span>
+                    </div>
+                    <div class="contact-item">
+                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                        </svg>
+                        <a href="mailto:{session_state['email']}">{session_state['email']}</a>
+                    </div>
+                    <div class="contact-item">
+                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                        </svg>
+                        <a href="{session_state['linkedin']}" target="_blank">LinkedIn</a>
+                    </div>
+                    <div class="contact-item">
+                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.498-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z" clip-rule="evenodd"></path>
+                        </svg>
+                        <a href="{session_state['portfolio']}" target="_blank">Portfolio</a>
+                    </div>
+                </div>
+
+                <div class="section-content">
+                    <h3 class="section-title">Skills</h3>
+                    <div>{skills_html}</div>
+                </div>
+
+                <div class="section-content">
+                    <h3 class="section-title">Languages</h3>
+                    <div>{languages_html}</div>
+                </div>
+
+                <div class="section-content">
+                    <h3 class="section-title">Interests</h3>
+                    <div>{interests_html}</div>
+                </div>
+
+                <div class="section-content">
+                    <h3 class="section-title">Soft Skills</h3>
+                    <div>{Softskills_html}</div>
+                </div>
+            </div>
+
+            <div class="main-section">
+                <div class="section-content">
+                    <h3 class="section-title">Professional Summary</h3>
+                    <div class="summary-text">{summary_html}</div>
+                </div>
+
+                <div class="section-content">
+                    <h3 class="section-title">Work Experience</h3>
+                    {experience_html}
+                </div>
+
+                <div class="section-content">
+                    <h3 class="section-title">Education</h3>
+                    {education_html}
+                </div>
+
+                <div class="section-content">
+                    <h3 class="section-title">Projects</h3>
+                    {projects_html}
+                </div>
+
+                <div class="section-content">
+                    {project_links_html}
+                </div>
+
+                <div class="section-content">
+                    {certificate_links_html}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+"""
+    
+    return html_content
+
+def render_template_modern(session_state, profile_img_html=""):
+    """Modern minimal template with clean design, headings, plain divs, and unordered lists"""
+    
+    # Simple skills list
+    skills_list = [s.strip() for s in session_state['skills'].split(',') if s.strip()]
+    languages_list = [l.strip() for l in session_state['languages'].split(',') if l.strip()]
+    interests_list = [i.strip() for i in session_state['interests'].split(',') if i.strip()]
+    softskills_list = [s.strip() for s in session_state['Softskills'].split(',') if s.strip()]
+    
+    html_content = f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{session_state['name']} - Modern Resume</title>
+    <style>
+        * {{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }}
+        
+        body {{
+            font-family: 'Helvetica', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #fff;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }}
+        
+        .header {{
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }}
+        
+        .header h1 {{
+            font-size: 2.5rem;
+            font-weight: 300;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }}
+        
+        .header h2 {{
+            font-size: 1.2rem;
+            font-weight: normal;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }}
+        
+        .contact-info {{
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 0.9rem;
+            color: #555;
+        }}
+        
+        .contact-info a {{
+            color: #3498db;
+            text-decoration: none;
+        }}
+        
+        .section {{
+            margin-bottom: 30px;
+        }}
+        
+        .section h3 {{
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #ecf0f1;
+            padding-bottom: 5px;
+        }}
+        
+        .summary {{
+            font-size: 1rem;
+            line-height: 1.7;
+            color: #555;
+            text-align: justify;
+        }}
+        
+        .experience-item, .education-item, .project-item {{
+            margin-bottom: 25px;
+        }}
+        
+        .item-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 5px;
+        }}
+        
+        .item-title {{
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }}
+        
+        .item-duration {{
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            font-style: italic;
+        }}
+        
+        .item-subtitle {{
+            color: #555;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }}
+        
+        .item-description {{
+            color: #666;
+            line-height: 1.6;
+        }}
+        
+        ul {{
+            padding-left: 20px;
+            margin-top: 10px;
+        }}
+        
+        li {{
+            margin-bottom: 5px;
+            color: #555;
+        }}
+        
+        .skills-grid {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }}
+        
+        .skill-tag {{
+            background: #ecf0f1;
+            color: #2c3e50;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+        }}
+        
+        .links a {{
+            display: inline-block;
+            color: #3498db;
+            text-decoration: none;
+            margin-right: 15px;
+            margin-bottom: 5px;
+        }}
+        
+        @media (max-width: 600px) {{
+            .contact-info {{
+                flex-direction: column;
+                align-items: center;
+                gap: 5px;
+            }}
+            
+            .item-header {{
+                flex-direction: column;
+                align-items: flex-start;
+            }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{session_state['name']}</h1>
+        <h2>{session_state['job_title']}</h2>
+        <div class="contact-info">
+            <span>{session_state['location']}</span>
+            <span>{session_state['phone']}</span>
+            <a href="mailto:{session_state['email']}">{session_state['email']}</a>
+            <a href="{session_state['linkedin']}" target="_blank">LinkedIn</a>
+            <a href="{session_state['portfolio']}" target="_blank">Portfolio</a>
+        </div>
+        {profile_img_html}
+    </div>
+
+    <div class="section">
+        <h3>Summary</h3>
+        <div class="summary">{session_state['summary'].replace(chr(10), '<br>')}</div>
+    </div>
+
+    <div class="section">
+        <h3>Experience</h3>
+        {"".join([f'''
+        <div class="experience-item">
+            <div class="item-header">
+                <div class="item-title">{exp.get('title', '')}</div>
+                <div class="item-duration">{exp.get('duration', '')}</div>
+            </div>
+            <div class="item-subtitle">{exp.get('company', '')}</div>
+            <div class="item-description">{exp.get('description', '').replace(chr(10), '<br>')}</div>
+        </div>
+        ''' for exp in session_state.experience_entries if exp.get('company') or exp.get('title')])}
+    </div>
+
+    <div class="section">
+        <h3>Education</h3>
+        {"".join([f'''
+        <div class="education-item">
+            <div class="item-header">
+                <div class="item-title">{edu.get('degree', '')}</div>
+                <div class="item-duration">{edu.get('year', '')}</div>
+            </div>
+            <div class="item-subtitle">{edu.get('institution', '')}</div>
+            <div class="item-description">{edu.get('details', '')}</div>
+        </div>
+        ''' for edu in session_state.education_entries if edu.get('institution') or edu.get('degree')])}
+    </div>
+
+    <div class="section">
+        <h3>Projects</h3>
+        {"".join([f'''
+        <div class="project-item">
+            <div class="item-header">
+                <div class="item-title">{proj.get('title', '')}</div>
+                <div class="item-duration">{proj.get('duration', '')}</div>
+            </div>
+            <div class="item-subtitle">Technologies: {proj.get('tech', '')}</div>
+            <div class="item-description">{proj.get('description', '').replace(chr(10), '<br>')}</div>
+        </div>
+        ''' for proj in session_state.project_entries if proj.get('title')])}
+    </div>
+
+    <div class="section">
+        <h3>Skills</h3>
+        <div class="skills-grid">
+            {"".join([f'<span class="skill-tag">{skill}</span>' for skill in skills_list])}
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>Languages</h3>
+        <ul>
+            {"".join([f'<li>{lang}</li>' for lang in languages_list])}
+        </ul>
+    </div>
+
+    <div class="section">
+        <h3>Interests</h3>
+        <ul>
+            {"".join([f'<li>{interest}</li>' for interest in interests_list])}
+        </ul>
+    </div>
+
+    <div class="section">
+        <h3>Soft Skills</h3>
+        <ul>
+            {"".join([f'<li>{skill}</li>' for skill in softskills_list])}
+        </ul>
+    </div>
+
+    {f'''
+    <div class="section">
+        <h3>Project Links</h3>
+        <div class="links">
+            {"".join([f'<a href="{link}" target="_blank">Project {i+1}</a>' for i, link in enumerate(session_state.project_links)])}
+        </div>
+    </div>
+    ''' if session_state.project_links else ''}
+
+    {f'''
+    <div class="section">
+        <h3>Certificates</h3>
+        {"".join([f'''
+        <div class="project-item">
+            <div class="item-header">
+                <div class="item-title"><a href="{cert['link']}" target="_blank">{cert['name']}</a></div>
+                <div class="item-duration">{cert.get('duration', '')}</div>
+            </div>
+            <div class="item-description">{cert.get('description', '')}</div>
+        </div>
+        ''' for cert in session_state.certificate_links if cert.get('name')])}
+    </div>
+    ''' if any(cert.get('name') for cert in session_state.certificate_links) else ''}
+
+</body>
+</html>
+"""
+    
+    return html_content
+
+def render_template_sidebar(session_state, profile_img_html=""):
+    """Elegant sidebar template - split layout with left sidebar for personal info + skills, right column for main content"""
+    
+    # Process lists
+    skills_list = [s.strip() for s in session_state['skills'].split(',') if s.strip()]
+    languages_list = [l.strip() for l in session_state['languages'].split(',') if l.strip()]
+    interests_list = [i.strip() for i in session_state['interests'].split(',') if i.strip()]
+    softskills_list = [s.strip() for s in session_state['Softskills'].split(',') if s.strip()]
+    
+    html_content = f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{session_state['name']} - Elegant Resume</title>
+    <style>
+        * {{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }}
+        
+        body {{
+            font-family: 'Georgia', serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f8f9fa;
+        }}
+        
+        .resume-container {{
+            display: flex;
+            min-height: 100vh;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }}
+        
+        .sidebar {{
+            width: 300px;
+            background: #2c3e50;
+            color: white;
+            padding: 40px 30px;
+        }}
+        
+        .main-content {{
+            flex: 1;
+            padding: 40px;
+            background: white;
+        }}
+        
+        .profile-section {{
+            text-align: center;
+            margin-bottom: 40px;
+        }}
+        
+        .profile-section h1 {{
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: #ecf0f1;
+        }}
+        
+        .profile-section h2 {{
+            font-size: 1rem;
+            color: #bdc3c7;
+            margin-bottom: 20px;
+            font-weight: normal;
+        }}
+        
+        .contact-item {{
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }}
+        
+        .contact-item::before {{
+            content: '●';
+            margin-right: 10px;
+            color: #3498db;
+        }}
+        
+        .contact-item a {{
+            color: #ecf0f1;
+            text-decoration: none;
+        }}
+        
+        .sidebar-section {{
+            margin-bottom: 35px;
+        }}
+        
+        .sidebar-section h3 {{
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #3498db;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #34495e;
+            padding-bottom: 5px;
+        }}
+        
+        .sidebar ul {{
+            list-style: none;
+        }}
+        
+        .sidebar li {{
+            margin-bottom: 8px;
+            padding-left: 15px;
+            position: relative;
+            font-size: 0.9rem;
+        }}
+        
+        .sidebar li::before {{
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: #3498db;
+        }}
+        
+        .skill-item {{
+            background: rgba(52, 152, 219, 0.2);
+            padding: 5px 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+            font-size: 0.85rem;
+        }}
+        
+        .main-section {{
+            margin-bottom: 35px;
+        }}
+        
+        .main-section h3 {{
+            font-size: 1.4rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }}
+        
+        .summary {{
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #555;
+            text-align: justify;
+            font-style: italic;
+            background: #f8f9fa;
+            padding: 20px;
+            border-left: 4px solid #3498db;
+        }}
+        
+        .content-item {{
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ecf0f1;
+        }}
+        
+        .content-item:last-child {{
+            border-bottom: none;
+        }}
+        
+        .item-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 8px;
+        }}
+        
+        .item-title {{
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }}
+        
+        .item-duration {{
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            font-style: italic;
+        }}
+        
+        .item-company {{
+            color: #3498db;
+            font-size: 1rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }}
+        
+        .item-description {{
+            color: #666;
+            line-height: 1.6;
+        }}
+        
+        .project-tech {{
+            background: #e8f4f8;
+            color: #2c3e50;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            display: inline-block;
+        }}
+        
+        @media (max-width: 768px) {{
+            .resume-container {{
+                flex-direction: column;
+            }}
+            
+            .sidebar {{
+                width: 100%;
+            }}
+            
+            .item-header {{
+                flex-direction: column;
+                align-items: flex-start;
+            }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="resume-container">
+        <div class="sidebar">
+            <div class="profile-section">
+                {profile_img_html}
+                <h1>{session_state['name']}</h1>
+                <h2>{session_state['job_title']}</h2>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>Contact</h3>
+                <div class="contact-item">📍 {session_state['location']}</div>
+                <div class="contact-item">📞 {session_state['phone']}</div>
+                <div class="contact-item"><a href="mailto:{session_state['email']}">✉️ {session_state['email']}</a></div>
+                <div class="contact-item"><a href="{session_state['linkedin']}" target="_blank">🔗 LinkedIn</a></div>
+                <div class="contact-item"><a href="{session_state['portfolio']}" target="_blank">🌐 Portfolio</a></div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>Skills</h3>
+                {"".join([f'<div class="skill-item">{skill}</div>' for skill in skills_list])}
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>Languages</h3>
+                <ul>
+                    {"".join([f'<li>{lang}</li>' for lang in languages_list])}
+                </ul>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>Interests</h3>
+                <ul>
+                    {"".join([f'<li>{interest}</li>' for interest in interests_list])}
+                </ul>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>Soft Skills</h3>
+                <ul>
+                    {"".join([f'<li>{skill}</li>' for skill in softskills_list])}
+                </ul>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="main-section">
+                <h3>Professional Summary</h3>
+                <div class="summary">{session_state['summary'].replace(chr(10), '<br>')}</div>
+            </div>
+            
+            <div class="main-section">
+                <h3>Experience</h3>
+                {"".join([f'''
+                <div class="content-item">
+                    <div class="item-header">
+                        <div class="item-title">{exp.get('title', '')}</div>
+                        <div class="item-duration">{exp.get('duration', '')}</div>
+                    </div>
+                    <div class="item-company">{exp.get('company', '')}</div>
+                    <div class="item-description">{exp.get('description', '').replace(chr(10), '<br>')}</div>
+                </div>
+                ''' for exp in session_state.experience_entries if exp.get('company') or exp.get('title')])}
+            </div>
+            
+            <div class="main-section">
+                <h3>Education</h3>
+                {"".join([f'''
+                <div class="content-item">
+                    <div class="item-header">
+                        <div class="item-title">{edu.get('degree', '')}</div>
+                        <div class="item-duration">{edu.get('year', '')}</div>
+                    </div>
+                    <div class="item-company">{edu.get('institution', '')}</div>
+                    <div class="item-description">{edu.get('details', '')}</div>
+                </div>
+                ''' for edu in session_state.education_entries if edu.get('institution') or edu.get('degree')])}
+            </div>
+            
+            <div class="main-section">
+                <h3>Projects</h3>
+                {"".join([f'''
+                <div class="content-item">
+                    <div class="item-header">
+                        <div class="item-title">{proj.get('title', '')}</div>
+                        <div class="item-duration">{proj.get('duration', '')}</div>
+                    </div>
+                    <div class="project-tech">Tech: {proj.get('tech', '')}</div>
+                    <div class="item-description">{proj.get('description', '').replace(chr(10), '<br>')}</div>
+                </div>
+                ''' for proj in session_state.project_entries if proj.get('title')])}
+            </div>
+            
+            {f'''
+            <div class="main-section">
+                <h3>Project Links</h3>
+                {"".join([f'<div class="content-item"><a href="{link}" target="_blank">🔗 Project {i+1}</a></div>' for i, link in enumerate(session_state.project_links)])}
+            </div>
+            ''' if session_state.project_links else ''}
+            
+            {f'''
+            <div class="main-section">
+                <h3>Certificates</h3>
+                {"".join([f'''
+                <div class="content-item">
+                    <div class="item-header">
+                        <div class="item-title"><a href="{cert['link']}" target="_blank">{cert['name']}</a></div>
+                        <div class="item-duration">{cert.get('duration', '')}</div>
+                    </div>
+                    <div class="item-description">{cert.get('description', '')}</div>
+                </div>
+                ''' for cert in session_state.certificate_links if cert.get('name')])}
+            </div>
+            ''' if any(cert.get('name') for cert in session_state.certificate_links) else ''}
+        </div>
+    </div>
+</body>
+</html>
+"""
+    
+    return html_content
+
+def generate_cover_letter_from_resume_builder():
+    import streamlit as st
+    from datetime import datetime
+    import re
+    from llm_manager import call_llm  # Ensure you import this
+
+    name = st.session_state.get("name", "")
+    job_title = st.session_state.get("job_title", "")
+    summary = st.session_state.get("summary", "")
+    skills = st.session_state.get("skills", "")
+    location = st.session_state.get("location", "")
+    today_date = datetime.today().strftime("%B %d, %Y")
+
+    # ✅ Input boxes for contact info
+    company = st.text_input("🏢 Target Company", placeholder="e.g., Google")
+    linkedin = st.text_input("🔗 LinkedIn URL", placeholder="e.g., https://linkedin.com/in/username")
+    email = st.text_input("📧 Email", placeholder="e.g., you@example.com")
+    mobile = st.text_input("📞 Mobile Number", placeholder="e.g., +91 9876543210")
+
+    # ✅ Button to prevent relooping
+    if st.button("✉️ Generate Cover Letter"):
+        # ✅ Validate input before generating
+        if not all([name, job_title, summary, skills, company, linkedin, email, mobile]):
+            st.warning("⚠️ Please fill in all fields including LinkedIn, email, and mobile.")
+            return
+
+        prompt = f"""
+You are a professional cover letter writer.
+
+Write a formal and compelling cover letter using the information below. 
+Format it as a real letter with:
+1. Date
+2. Recipient heading
+3. Proper salutation
+4. Three short paragraphs
+5. Professional closing
+
+Ensure you **only include the company name once** in the header or salutation, 
+and avoid repeating it redundantly in the body.
+
+### Heading Info:
+{today_date}
+Hiring Manager, {company}, {location}
+
+### Candidate Info:
+- Name: {name}
+- Job Title: {job_title}
+- Summary: {summary}
+- Skills: {skills}
+- Location: {location}
+
+### Instructions:
+- Do not use HTML tags. 
+- Return plain text only.
+"""
+
+        # ✅ Call LLM
+        cover_letter = call_llm(prompt, session=st.session_state).strip()
+
+        # ✅ Store plain text
+        st.session_state["cover_letter"] = cover_letter
+
+        # ✅ Build HTML wrapper for preview (safe)
+        cover_letter_html = f"""
+        <div style="font-family: Georgia, serif; font-size: 13pt; line-height: 1.6; 
+                    color: #000; background: #fff; padding: 25px; 
+                    border-radius: 8px; box-shadow: 0px 2px 6px rgba(0,0,0,0.1); 
+                    max-width: 800px; margin: auto;">
+            <div style="text-align:center; margin-bottom:15px;">
+                <div style="font-size:18pt; font-weight:bold; color:#003366;">{name}</div>
+                <div style="font-size:14pt; color:#555;">{job_title}</div>
+                <div style="font-size:10pt; margin-top:5px;">
+                    <a href="{linkedin}" style="color:#003366;">{linkedin}</a><br/>
+                    📧 {email} | 📞 {mobile}
+                </div>
+            </div>
+            <hr/>
+            <pre style="white-space: pre-wrap; font-family: Georgia, serif; font-size: 12pt; color:#000;">
+{cover_letter}
+            </pre>
+        </div>
+        """
+
+        st.session_state["cover_letter_html"] = cover_letter_html
+
+        # ✅ Show nicely in Streamlit
+        st.markdown(cover_letter_html, unsafe_allow_html=True)
+
+# Import necessary modules first
+import streamlit as st
+
+# Tab setup (assuming this is within a tab2 context)
 with tab2:
     st.session_state.active_tab = "Resume Builder"
 
@@ -3274,6 +5001,14 @@ with tab2:
         </style>
     """, unsafe_allow_html=True)
 
+    # 🎨 Template Selection
+    st.markdown("### 🎨 Choose Resume Template")
+    selected_template = st.selectbox(
+        "🎨 Choose Resume Template",
+        ["Default (Professional)", "Modern Minimal", "Elegant Sidebar"],
+        key="template_selector"
+    )
+
     # 📸 Upload profile photo
     uploaded_image = st.file_uploader("Upload a Profile Image", type=["png", "jpg", "jpeg"], key="profile_img_upload")
     profile_img_html = ""
@@ -3371,10 +5106,6 @@ with tab2:
                 elif mode == "Delete" and len(st.session_state.certificate_links) > 1:
                     st.session_state.certificate_links.pop()
 
-
-
-
-
     # ---------------- Resume Form ----------------
     with st.form("resume_form", clear_on_submit=False):
         st.markdown("### 👤 <u>Personal Information</u>", unsafe_allow_html=True)
@@ -3436,7 +5167,6 @@ with tab2:
                 cert["description"] = st.text_area("Description", value=cert.get("description", ""), key=f"cert_description_{idx}_{len(st.session_state.certificate_links)}")
 
         submitted = st.form_submit_button("📑 Generate Resume")
-
 
         if submitted:
             st.success("✅ Resume Generated Successfully! Scroll down to preview or download.")
@@ -3540,7 +5270,6 @@ with tab2:
             </div>
             """, unsafe_allow_html=True)
 
-
             if st.session_state.project_links:
                 st.markdown("<h4 style='color:#336699;'>Project Links</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
                 for i, link in enumerate(st.session_state.project_links):
@@ -3557,6 +5286,7 @@ with tab2:
                         </div>
                         <div style='margin-bottom:10px; font-size:14px;'>{cert['description']}</div>
                         """, unsafe_allow_html=True)
+
 import re
 
 with tab2:
@@ -3730,8 +5460,6 @@ with tab2:
                 ai_output = call_llm(enhance_prompt, session=st.session_state)
                 st.session_state["ai_output"] = ai_output
 
-
-
     # ------------------------- PARSE + RENDER -------------------------
     if "ai_output" in st.session_state:
         ai_output = st.session_state["ai_output"]
@@ -3858,1075 +5586,145 @@ with tab2:
                 for i, link in enumerate(st.session_state.project_links):
                     st.markdown(f"[🔗 Project {i+1}]({link})", unsafe_allow_html=True)
 
-# Enhanced SKILLS with modern pill design
-# Enhanced SKILLS with professional, muted colors
-# Enhanced SKILLS with professional, muted colors
-skills_html = "".join(
-    f"""
-    <div style='display:inline-block; 
-                background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
-                color: #334155; 
-                padding: 10px 18px; 
-                margin: 8px 8px 8px 0; 
-                border-radius: 25px; 
-                font-size: 14px; 
-                font-weight: 600;
-                box-shadow: 0 2px 8px rgba(148, 163, 184, 0.2);
-                transition: all 0.3s ease;
-                text-shadow: none;
-                border: 1px solid rgba(148, 163, 184, 0.3);'>
-        {s.strip()}
-    </div>
-    """
-    for s in st.session_state['skills'].split(',')
-    if s.strip()
-)
+    # Generate HTML content based on selected template
+    if submitted:
+        # Determine which template to use
+        if selected_template == "Default (Professional)":
+            html_content = render_template_default(st.session_state, profile_img_html)
+        elif selected_template == "Modern Minimal":
+            html_content = render_template_modern(st.session_state, profile_img_html)
+        elif selected_template == "Elegant Sidebar":
+            html_content = render_template_sidebar(st.session_state, profile_img_html)
+        else:
+            # Fallback to default
+            html_content = render_template_default(st.session_state, profile_img_html)
 
-# Enhanced LANGUAGES with soft, professional design
-languages_html = "".join(
-    f"""
-    <div style='display:inline-block; 
-                background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-                color: #475569; 
-                padding: 10px 18px; 
-                margin: 8px 8px 8px 0; 
-                border-radius: 25px; 
-                font-size: 14px; 
-                font-weight: 600;
-                box-shadow: 0 2px 8px rgba(100, 116, 139, 0.15);
-                transition: all 0.3s ease;
-                text-shadow: none;
-                border: 1px solid rgba(148, 163, 184, 0.3);'>
-        {lang.strip()}
-    </div>
-    """
-    for lang in st.session_state['languages'].split(',')
-    if lang.strip()
-)
-
-# Enhanced INTERESTS with subtle colors
-interests_html = "".join(
-    f"""
-    <div style='display:inline-block; 
-                background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-                color: #0f172a; 
-                padding: 10px 18px; 
-                margin: 8px 8px 8px 0; 
-                border-radius: 25px; 
-                font-size: 14px; 
-                font-weight: 600;
-                box-shadow: 0 2px 8px rgba(14, 165, 233, 0.1);
-                transition: all 0.3s ease;
-                text-shadow: none;
-                border: 1px solid rgba(186, 230, 253, 0.5);'>
-        {interest.strip()}
-    </div>
-    """
-    for interest in st.session_state['interests'].split(',')
-    if interest.strip()
-)
-
-# Enhanced SOFT SKILLS with warm but professional styling
-Softskills_html = "".join(
-    f"""
-    <div style='display:inline-block; 
-                background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%);
-                color: #451a03; 
-                padding: 10px 20px; 
-                margin: 8px 8px 8px 0; 
-                border-radius: 25px; 
-                font-size: 14px; 
-                font-family: "Segoe UI", sans-serif; 
-                font-weight: 600;
-                box-shadow: 0 2px 8px rgba(217, 119, 6, 0.1);
-                transition: all 0.3s ease;
-                border: 1px solid rgba(254, 215, 170, 0.6);'>
-        {skill.strip().title()}
-    </div>
-    """
-    for skill in st.session_state['Softskills'].split(',')
-    if skill.strip()
-)
-
-# Enhanced EXPERIENCE with professional, subtle design
-experience_html = ""
-for exp in st.session_state.experience_entries:
-    if exp["company"] or exp["title"]:
-        # Handle paragraphs and single line breaks
-        description_lines = [line.strip() for line in exp["description"].strip().split("\n\n")]
-        description_html = "".join(
-            f"<div style='margin-bottom: 10px; line-height: 1.6;'>{line.replace(chr(10), '<br>')}</div>"
-            for line in description_lines if line
-        )
-
-        experience_html += f"""
-        <div style='
-            margin-bottom: 24px;
-            padding: 20px;
-            border-radius: 12px;
-            background: linear-gradient(145deg, #fafafa 0%, #f4f4f5 100%);
-            box-shadow: 
-                0 4px 12px rgba(0, 0, 0, 0.05),
-                0 1px 3px rgba(0, 0, 0, 0.1);
-            font-family: "Inter", "Segoe UI", sans-serif;
-            color: #374151;
-            line-height: 1.6;
-            border: 1px solid rgba(229, 231, 235, 0.8);
-            position: relative;
-            overflow: hidden;
-        '>
-            <!-- Subtle accent bar -->
-            <div style='
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 3px;
-                background: linear-gradient(90deg, #6b7280, #9ca3af);
-            '></div>
-            
-            <!-- Header Card -->
-            <div style='
-                background: rgba(255, 255, 255, 0.8);
-                border-radius: 8px;
-                padding: 14px 18px;
-                margin-bottom: 12px;
-                border: 1px solid rgba(229, 231, 235, 0.6);
-            '>
-                <div style='
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    font-weight: 700;
-                    font-size: 18px;
-                    margin-bottom: 6px;
-                    color: #1f2937;
-                    width: 100%;
-                '>
-                    <div style='display: flex; align-items: center;'>
-                        <div style='
-                            width: 6px; 
-                            height: 6px; 
-                            background: #6b7280;
-                            border-radius: 50%; 
-                            margin-right: 12px;
-                        '></div>
-                        <span>{exp['company']}</span>
-                    </div>
-                    <div style='
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 6px;
-                        background: linear-gradient(135deg, #f9fafb, #f3f4f6);
-                        color: #374151;
-                        padding: 5px 14px;
-                        border-radius: 16px;
-                        font-size: 14px;
-                        font-weight: 600;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                        border: 1px solid rgba(209, 213, 219, 0.5);
-                    '>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
-                        </svg>
-                        <span>{exp['duration']}</span>
-                    </div>
-                </div>
-
-                <div style='
-                    display: flex;
-                    align-items: center;
-                    font-size: 16px;
-                    font-weight: 600;
-                    color: #4b5563;
-                '>
-                    <div style='
-                        width: 4px; 
-                        height: 4px; 
-                        background: #6b7280;
-                        border-radius: 50%; 
-                        margin-right: 10px;
-                    '></div>
-                    <span>{exp['title']}</span>
-                </div>
-            </div>
-
-            <!-- Description -->
-            <div style='
-                font-size: 15px;
-                font-weight: 500;
-                color: #374151;
-                line-height: 1.7;
-                padding-left: 8px;
-            '>
-                <div style='
-                    border-left: 2px solid #d1d5db;
-                    padding-left: 16px;
-                    margin-left: 8px;
-                '>
-                    {description_html}
-                </div>
-            </div>
-        </div>
-        """
-
-# Convert experience to list if multiple lines
-# Escape HTML and convert line breaks
-summary_html = st.session_state['summary'].replace('\n', '<br>')
-
-# Enhanced EDUCATION with professional styling
-education_html = ""
-for edu in st.session_state.education_entries:
-    if edu.get("institution") or edu.get("details"):
-        degree_text = ""
-        if edu.get("degree"):
-            degree_val = edu["degree"]
-            if isinstance(degree_val, list):
-                degree_val = ", ".join(degree_val)
-            degree_text = f"""
-            <div style='
-                display: flex; 
-                align-items: center; 
-                font-size: 15px; 
-                color: #374151; 
-                margin-bottom: 8px;
-                font-weight: 600;
-            '>
-                <div style='
-                    width: 4px; 
-                    height: 4px; 
-                    background: #6b7280;
-                    border-radius: 50%; 
-                    margin-right: 10px;
-                '></div>
-                <b>{degree_val}</b>
-            </div>
-            """
-
-        # Education Card
-        education_html += f"""
-        <div style='
-            margin-bottom: 26px;
-            padding: 22px 26px;
-            border-radius: 12px;
-            background: linear-gradient(145deg, #f9fafb 0%, #f3f4f6 100%);
-            box-shadow: 
-                0 4px 12px rgba(0, 0, 0, 0.06),
-                0 1px 3px rgba(0, 0, 0, 0.08);
-            font-family: "Inter", "Segoe UI", sans-serif;
-            color: #1f2937;
-            line-height: 1.6;
-            border: 1px solid #e5e7eb;
-            position: relative;
-            overflow: hidden;
-        '>
-            <!-- Subtle accent bar -->
-            <div style='
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 3px;
-                background: linear-gradient(90deg, #6b7280, #9ca3af);
-            '></div>
-
-            <div style='
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-size: 18px;
-                font-weight: 700;
-                margin-bottom: 12px;
-                width: 100%;
-                color: #111827;
-            '>
-                <div style='display: flex; align-items: center;'>
-                    <div style='
-                        width: 6px; 
-                        height: 6px; 
-                        background: #6b7280;
-                        border-radius: 50%; 
-                        margin-right: 12px;
-                    '></div>
-                    <span>{edu.get('institution', '')}</span>
-                </div>
-                <div style='
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    background: rgba(255, 255, 255, 0.7);
-                    color: #374151;
-                    padding: 6px 16px;
-                    border-radius: 16px;
-                    font-weight: 600;
-                    font-size: 14px;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                    border: 1px solid #d1d5db;
-                '>
-                    <!-- Inline SVG Calendar Icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" 
-                        fill="none" viewBox="0 0 24 24" 
-                        stroke="currentColor" width="16" height="16">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 
-                            2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    {edu.get('year', '')}
-                </div>
-            </div>
-            {degree_text}
-            <div style='
-                font-size: 14px; 
-                font-style: italic;
-                color: #374151;
-                line-height: 1.6;
-                padding-left: 18px;
-                border-left: 2px solid #9ca3af;
-            '>
-                {edu.get('details', '')}
-            </div>
-        </div>
-        """
-
-
-# Enhanced PROJECTS with professional card design
-projects_html = ""
-for proj in st.session_state.project_entries:
-    if proj.get("title") or proj.get("description"):
-        tech_val = proj.get("tech")
-        if isinstance(tech_val, list):
-            tech_val = ", ".join(tech_val)
-        tech_text = f"""
-        <div style='
-            display: flex; 
-            align-items: center; 
-            font-size: 14px; 
-            color: #374151; 
-            margin-bottom: 12px;
-            font-weight: 600;
-            background: rgba(255, 255, 255, 0.7);
-            padding: 8px 16px;
-            border-radius: 8px;
-            border: 1px solid rgba(229, 231, 235, 0.6);
-        '>
-            <div style='
-                width: 4px; 
-                height: 4px; 
-                background: #6b7280;
-                border-radius: 50%; 
-                margin-right: 10px;
-            '></div>
-            <b>Technologies:</b>&nbsp;&nbsp;{tech_val if tech_val else ''}
-        </div>
-        """ if tech_val else ""
-
-        description_items = ""
-        if proj.get("description"):
-            description_lines = [line.strip() for line in proj["description"].splitlines() if line.strip()]
-            description_items = "".join(f"<li style='margin-bottom: 6px; line-height: 1.6;'>{line}</li>" for line in description_lines)
-
-        projects_html += f"""
-        <div style='
-            margin-bottom: 30px;
-            padding: 26px;
-            border-radius: 12px;
-            background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
-            box-shadow: 
-                0 4px 12px rgba(100, 116, 139, 0.1),
-                0 1px 3px rgba(0, 0, 0, 0.1);
-            font-family: "Inter", "Segoe UI", sans-serif;
-            color: #334155;
-            line-height: 1.7;
-            border: 1px solid rgba(203, 213, 225, 0.5);
-            position: relative;
-            overflow: hidden;
-        '>
-            <!-- Subtle accent bar -->
-            <div style='
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 3px;
-                background: linear-gradient(90deg, #64748b, #94a3b8);
-            '></div>
-
-            <div style='
-                font-size: 19px;
-                font-weight: 700;
-                margin-bottom: 16px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                color: #1e293b;
-                width: 100%;
-            '>
-                <div style='display: flex; align-items: center;'>
-                    <div style='
-                        width: 6px; 
-                        height: 6px; 
-                        background: #64748b;
-                        border-radius: 50%; 
-                        margin-right: 12px;
-                    '></div>
-                    <span>{proj.get('title', '')}</span>
-                </div>
-                <div style='
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
-                    color: #334155;
-                    padding: 8px 18px;
-                    border-radius: 16px;
-                    font-weight: 600;
-                    font-size: 14px;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                    border: 1px solid rgba(203, 213, 225, 0.6);
-                '>
-                    <!-- Inline SVG Clock Icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" 
-                        fill="none" viewBox="0 0 24 24" 
-                        stroke="currentColor" width="16" height="16">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 
-                               9 9 0 0118 0z" />
-                    </svg>
-                    {proj.get('duration', '')}
-                </div>
-            </div>
-            {tech_text}
-            <div style='
-                font-size: 15px; 
-                color: #334155;
-                background: rgba(255, 255, 255, 0.6);
-                padding: 18px;
-                border-radius: 8px;
-                border: 1px solid rgba(229, 231, 235, 0.6);
-            '>
-                <div style='
-                    font-weight: 600; 
-                    margin-bottom: 12px;
-                    color: #1e293b;
-                    display: flex;
-                    align-items: center;
-                '>
-                    <div style='
-                        width: 4px; 
-                        height: 4px; 
-                        background: #64748b;
-                        border-radius: 50%; 
-                        margin-right: 10px;
-                    '></div>
-                    Description:
-                </div>
-                <ul style='
-                    margin-top: 8px; 
-                    padding-left: 24px; 
-                    color: #334155;
-                    list-style-type: none;
-                '>
-                    {description_items}
-                </ul>
-            </div>
-        </div>
-        """
-
-
-# Enhanced PROJECT LINKS with professional styling
-project_links_html = ""
-if st.session_state.project_links:
-    project_links_html = """
-    <div style='margin-bottom: 20px;'>
-        <h4 class='section-title' style='
-            color: #374151;
-            font-size: 20px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            padding-bottom: 4px;
-        '>
-            <div style='
-                width: 6px; 
-                height: 6px; 
-                background: #6b7280;
-                border-radius: 50%; 
-                margin-right: 12px;
-            '></div>
-            Project Links
-        </h4>
-    </div>
-    """ + "".join(
-        f"""
-        <div style='
-            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-            padding: 14px 20px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            border: 1px solid rgba(209, 213, 219, 0.6);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        '>
-            <div style='
-                width: 4px; 
-                height: 4px; 
-                background: #6b7280;
-                border-radius: 50%; 
-                display: inline-block;
-                margin-right: 12px;
-                vertical-align: middle;
-            '></div>
-            <a href="{link}" style='
-                color: #374151; 
-                font-weight: 600; 
-                text-decoration: none;
-                font-size: 15px;
-            '>🔗 Project {i+1}</a>
-        </div>
-        """
-        for i, link in enumerate(st.session_state.project_links)
-    )
-
-# Enhanced CERTIFICATES with professional design
-certificate_links_html = ""
-if st.session_state.certificate_links:
-    certificate_links_html = """
-    <h4 class='section-title' style='
-        color: #374151;
-        font-size: 20px;
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-    '>
-        <div style='
-            width: 6px; 
-            height: 6px; 
-            background: #6b7280;
-            border-radius: 50%; 
-            margin-right: 12px;
-        '></div>
-        Certificates
-    </h4>
-    """
-    for cert in st.session_state.certificate_links:
-        if cert["name"] and cert["link"]:
-            description = cert.get('description', '').replace('\n', '<br>')
-            name = cert['name']
-            link = cert['link']
-            duration = cert.get('duration', '')
-
-            card_html = f"""
-            <div style='
-                background: linear-gradient(145deg, #f9fafb 0%, #f3f4f6 100%);
-                padding: 24px 28px;
-                border-radius: 12px;
-                margin-bottom: 26px;
-                box-shadow: 
-                    0 4px 12px rgba(107, 114, 128, 0.08),
-                    0 1px 3px rgba(0, 0, 0, 0.08);
-                font-family: "Inter", "Segoe UI", sans-serif;
-                color: #374151;
-                position: relative;
-                line-height: 1.7;
-                border: 1px solid rgba(209, 213, 219, 0.6);
-                overflow: hidden;
-            '>
-                <!-- Accent bar -->
-                <div style='
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    height: 3px;
-                    background: linear-gradient(90deg, #6b7280, #9ca3af);
-                '></div>
-
-                <!-- Duration Badge -->
-                <div style='
-                    position: absolute;
-                    top: 20px;
-                    right: 28px;
-                    font-size: 13px;
-                    font-weight: 600;
-                    color: #374151;
-                    background: linear-gradient(135deg, #ffffff, #f9fafb);
-                    padding: 8px 14px;
-                    border-radius: 16px;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-                    border: 1px solid rgba(209, 213, 219, 0.6);
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                '>
-                    <!-- Inline SVG clock icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" 
-                        fill="none" viewBox="0 0 24 24" 
-                        stroke="currentColor" width="14" height="14">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                            d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z"/>
-                    </svg>
-                    {duration}
-                </div>
-
-                <!-- Certificate Title -->
-                <div style='
-                    font-size: 18px;
-                    font-weight: 700;
-                    color: #111827;
-                    margin-bottom: 12px;
-                    margin-right: 120px;
-                    display: flex;
-                    align-items: center;
-                '>
-                    <div style='
-                        width: 6px; 
-                        height: 6px; 
-                        background: #6b7280;
-                        border-radius: 50%; 
-                        margin-right: 12px;
-                    '></div>
-                    <a href="{link}" target="_blank" style='
-                        color: #111827;
-                        text-decoration: none;
-                        transition: color 0.3s ease;
-                    '>{name}</a>
-                </div>
-
-                <!-- Description -->
-                <div style='
-                    font-size: 15px;
-                    color: #374151;
-                    background: rgba(255, 255, 255, 0.8);
-                    padding: 16px;
-                    border-radius: 8px;
-                    border: 1px solid rgba(209, 213, 219, 0.6);
-                    line-height: 1.6;
-                '>
-                    <div style='
-                        display: flex;
-                        align-items: flex-start;
-                        margin-bottom: 8px;
-                    '>
-                        <div style='
-                            width: 4px; 
-                            height: 4px; 
-                            background: #6b7280;
-                            border-radius: 50%; 
-                            margin-right: 12px;
-                            margin-top: 8px;
-                            flex-shrink: 0;
-                        '></div>
-                        <div>{description}</div>
-                    </div>
-                </div>
-            </div>
-            """
-            certificate_links_html += card_html
-
-
-# The rest of your HTML content remains the same...
-# Just update the main header gradient to be more professional:
-
-html_content = f"""
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{st.session_state['name']} - Professional Resume</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * {{
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }}
-        
-        body {{
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            line-height: 1.6;
-            color: #1a202c;
-            background: #ffffff;
-            min-height: 100vh;
-        }}
-        
-        .resume-container {{
-            width: 100%;
-            min-height: 100vh;
-            background: #ffffff;
-        }}
-        
-        .resume-container::before {{
-            content: '';
-            display: block;
-            height: 4px;
-            background: linear-gradient(90deg, #6b7280, #9ca3af);
-        }}
-        
-        .header-section {{
-            background: #f8fafc;
-            padding: 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #e2e8f0;
-        }}
-        
-        .name-title {{
-            flex: 1;
-        }}
-        
-        .name-title h1 {{
-            font-size: 42px;
-            font-weight: 800;
-            color: #1a202c;
-            margin-bottom: 8px;
-        }}
-        
-        .name-title h2 {{
-            font-size: 24px;
-            font-weight: 600;
-            color: #4a5568;
-            margin: 0;
-        }}
-        
-        .profile-image {{
-            flex-shrink: 0;
-            margin-left: 40px;
-        }}
-        
-        .main-content {{
-            display: flex;
-            min-height: 800px;
-        }}
-        
-        .sidebar {{
-            width: 350px;
-            background: #f7fafc;
-            padding: 40px 30px;
-            border-right: 1px solid #e2e8f0;
-        }}
-        
-        .main-section {{
-            flex: 1;
-            padding: 40px;
-            background: #ffffff;
-        }}
-        
-        .contact-info {{
-            margin-bottom: 40px;
-        }}
-        
-        .contact-item {{
-            display: flex;
-            align-items: center;
-            margin-bottom: 12px;
-            padding: 8px 0;
-        }}
-        
-        .contact-icon {{
-            width: 20px;
-            height: 20px;
-            margin-right: 15px;
-            opacity: 0.8;
-        }}
-        
-        .contact-item span, .contact-item a {{
-            font-size: 14px;
-            color: #4a5568;
-            text-decoration: none;
-            font-weight: 500;
-        }}
-        
-        .contact-item a:hover {{
-            color: #6b7280;
-            transition: color 0.3s ease;
-        }}
-        
-        .section-title {{
-            font-size: 22px;
-            font-weight: 700;
-            color: #2d3748;
-            margin: 35px 0 15px 0;
-        }}
-        
-        .section-content {{
-            margin-bottom: 30px;
-        }}
-        
-        .summary-text {{
-            font-size: 16px;
-            line-height: 1.8;
-            color: #4a5568;
-            background: #f8fafc;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 3px solid #9ca3af;
-        }}
-        
-        @media (max-width: 768px) {{
-            .main-content {{
-                flex-direction: column;
-            }}
-            
-            .sidebar {{
-                width: 100%;
-            }}
-            
-            .header-section {{
-                flex-direction: column;
-                text-align: center;
-            }}
-            
-            .profile-image {{
-                margin: 20px 0 0 0;
-            }}
-            
-            .name-title h1 {{
-                font-size: 32px;
-            }}
-        }}
-        
-        @media (max-width: 480px) {{
-            .header-section, .sidebar, .main-section {{
-                padding: 20px;
-            }}
-        }}
-    </style>
-</head>
-<body>
-    <div class="resume-container">
-        <div class="header-section">
-            <div class="name-title">
-                <h1>{st.session_state['name']}</h1>
-                <h2>{st.session_state['job_title']}</h2>
-            </div>
-            <div class="profile-image">
-                {profile_img_html}
-            </div>
-        </div>
-
-        <div class="main-content">
-            <div class="sidebar">
-                <div class="contact-info">
-                    <div class="contact-item">
-                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
-                        </svg>
-                        <span>{st.session_state['location']}</span>
-                    </div>
-                    <div class="contact-item">
-                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path>
-                        </svg>
-                        <span>{st.session_state['phone']}</span>
-                    </div>
-                    <div class="contact-item">
-                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
-                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
-                        </svg>
-                        <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a>
-                    </div>
-                    <div class="contact-item">
-                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                        </svg>
-                        <a href="{st.session_state['linkedin']}" target="_blank">LinkedIn</a>
-                    </div>
-                    <div class="contact-item">
-                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.498-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z" clip-rule="evenodd"></path>
-                        </svg>
-                        <a href="{st.session_state['portfolio']}" target="_blank">Portfolio</a>
-                    </div>
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Skills</h3>
-                    <div>{skills_html}</div>
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Languages</h3>
-                    <div>{languages_html}</div>
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Interests</h3>
-                    <div>{interests_html}</div>
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Soft Skills</h3>
-                    <div>{Softskills_html}</div>
-                </div>
-            </div>
-
-            <div class="main-section">
-                <div class="section-content">
-                    <h3 class="section-title">Professional Summary</h3>
-                    <div class="summary-text">{summary_html}</div>
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Work Experience</h3>
-                    {experience_html}
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Education</h3>
-                    {education_html}
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Projects</h3>
-                    {projects_html}
-                </div>
-
-                <div class="section-content">
-                    {project_links_html}
-                </div>
-
-                <div class="section-content">
-                    {certificate_links_html}
-                </div>
-            </div>
-        </div>
-    </div>
-</body>
-</html>
-"""
-
-
-from io import BytesIO
-from docx import Document
-
-# Convert Resume HTML to bytes for download
-html_bytes = html_content.encode("utf-8")
-html_file = BytesIO(html_bytes)
-
-# Convert Resume HTML to PDF
-pdf_resume_bytes = html_to_pdf_bytes(html_content)
+        # Store the generated content
+        st.session_state["generated_html"] = html_content
 
 with tab2:
     # ==========================
     # 📥 Resume Download Header
     # ==========================
-    st.markdown(
-        """
-        <div style='text-align: center; margin-top: 20px; margin-bottom: 30px;'>
-            <h2 style='color: #2f4f6f; font-family: Arial, sans-serif; font-size: 24px;'>
-                📥 Download Your Resume
-            </h2>
-            <p style="color:#555; font-size:14px;">
-                Choose your preferred format below
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    col1, = st.columns(1)
-
-    # HTML Resume Download Button
-    with col1:
-        st.download_button(
-            label="⬇️ Download as Template",
-            data=html_file,
-            file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.html",
-            mime="text/html",
-            key="download_resume_html"
-        )
-
-    # PDF Resume Download Button
-    
-    # ✅ Extra Help Note
-    st.markdown("""
-    ✅ After downloading your HTML resume, you can 
-    <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color:#2f4f6f; text-decoration:none;">
-    convert it to PDF using Sejda's free online tool</a>.
-    """, unsafe_allow_html=True)
-
-    # ==========================
-    # 📩 Cover Letter Expander
-    # ==========================
-    with st.expander("📩 Generate Cover Letter from This Resume"):
-        generate_cover_letter_from_resume_builder()
-
-    # ==========================
-    # ✉️ Generated Cover Letter Downloads (NO PREVIEW HERE)
-    # ==========================
-    if "cover_letter" in st.session_state:
+    if "generated_html" in st.session_state:
         st.markdown(
             """
-            <div style="margin-top: 30px; margin-bottom: 20px;">
-                <h3 style="color: #003366;">✉️ Generated Cover Letter</h3>
+            <div style='text-align: center; margin-top: 20px; margin-bottom: 30px;'>
+                <h2 style='color: #2f4f6f; font-family: Arial, sans-serif; font-size: 24px;'>
+                    📥 Download Your Resume
+                </h2>
                 <p style="color:#555; font-size:14px;">
-                    You can download your generated cover letter in multiple formats.
+                    Choose your preferred format below
                 </p>
             </div>
             """,
             unsafe_allow_html=True
         )
 
-        # ✅ Use already-rendered HTML from session (don’t show again)
-        styled_cover_letter = st.session_state.get("cover_letter_html", "")
+        col1, = st.columns(1)
 
-        # ✅ Generate PDF from styled HTML
-        pdf_file = html_to_pdf_bytes(styled_cover_letter)
-
-        # ✅ DOCX Generator (preserves line breaks)
-        def create_docx_from_text(text, filename="cover_letter.docx"):
-            bio = BytesIO()
-            doc = Document()
-            doc.add_heading("Cover Letter", 0)
-
-            for line in text.split("\n"):
-                if line.strip():
-                    doc.add_paragraph(line)
-                else:
-                    doc.add_paragraph("")  # preserve empty lines
-
-            doc.save(bio)
-            bio.seek(0)
-            return bio
-
-        # ==========================
-        # 📥 Cover Letter Download Buttons
-        # ==========================
-        st.markdown("""
-        <div style="margin-top: 25px; margin-bottom: 15px;">
-            <strong>⬇️ Download Your Cover Letter:</strong>
-        </div>
-        """, unsafe_allow_html=True)
-
-        col1,col2 = st.columns(2)
+        # HTML Resume Download Button
         with col1:
+            html_bytes = st.session_state["generated_html"].encode("utf-8")
+            html_file = BytesIO(html_bytes)
+            
             st.download_button(
-                label="📥 Download Cover Letter (.docx)",
-                data=create_docx_from_text(st.session_state["cover_letter"]),
-                file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                key="download_coverletter_docx"
-            )
-        
-        with col2:
-            st.download_button(
-                label="📥 Download Cover Letter (Template)",
-                data=styled_cover_letter.encode("utf-8"),
-                file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.html",
+                label="⬇️ Download as Template",
+                data=html_file,
+                file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.html",
                 mime="text/html",
-                key="download_coverletter_html"
+                key="download_resume_html"
             )
 
-        # ✅ Helper note
+        # PDF Resume Download Button
+        pdf_resume_bytes = html_to_pdf_bytes(st.session_state["generated_html"])
+        
+        # ✅ Extra Help Note
         st.markdown("""
-        ✅ If the HTML cover letter doesn’t display properly, you can 
+        ✅ After downloading your HTML resume, you can 
         <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color:#2f4f6f; text-decoration:none;">
         convert it to PDF using Sejda's free online tool</a>.
         """, unsafe_allow_html=True)
 
+        # ==========================
+        # 📩 Cover Letter Expander
+        # ==========================
+        with st.expander("📩 Generate Cover Letter from This Resume"):
+            generate_cover_letter_from_resume_builder()
 
+        # ==========================
+        # ✉️ Generated Cover Letter Downloads (NO PREVIEW HERE)
+        # ==========================
+        if "cover_letter" in st.session_state:
+            st.markdown(
+                """
+                <div style="margin-top: 30px; margin-bottom: 20px;">
+                    <h3 style="color: #003366;">✉️ Generated Cover Letter</h3>
+                    <p style="color:#555; font-size:14px;">
+                        You can download your generated cover letter in multiple formats.
+                    </p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            # ✅ Use already-rendered HTML from session (don't show again)
+            styled_cover_letter = st.session_state.get("cover_letter_html", "")
+
+            # ✅ Generate PDF from styled HTML
+            pdf_file = html_to_pdf_bytes(styled_cover_letter)
+
+            # ✅ DOCX Generator (preserves line breaks)
+            def create_docx_from_text(text, filename="cover_letter.docx"):
+                from docx import Document
+                bio = BytesIO()
+                doc = Document()
+                doc.add_heading("Cover Letter", 0)
+
+                for line in text.split("\n"):
+                    if line.strip():
+                        doc.add_paragraph(line)
+                    else:
+                        doc.add_paragraph("")  # preserve empty lines
+
+                doc.save(bio)
+                bio.seek(0)
+                return bio
+
+            # ==========================
+            # 📥 Cover Letter Download Buttons
+            # ==========================
+            st.markdown("""
+            <div style="margin-top: 25px; margin-bottom: 15px;">
+                <strong>⬇️ Download Your Cover Letter:</strong>
+            </div>
+            """, unsafe_allow_html=True)
+
+            col1,col2 = st.columns(2)
+            with col1:
+                st.download_button(
+                    label="📥 Download Cover Letter (.docx)",
+                    data=create_docx_from_text(st.session_state["cover_letter"]),
+                    file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    key="download_coverletter_docx"
+                )
+            
+            with col2:
+                st.download_button(
+                    label="📥 Download Cover Letter (Template)",
+                    data=styled_cover_letter.encode("utf-8"),
+                    file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.html",
+                    mime="text/html",
+                    key="download_coverletter_html"
+                )
+
+            # ✅ Helper note
+            st.markdown("""
+            ✅ If the HTML cover letter doesn't display properly, you can 
+            <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color:#2f4f6f; text-decoration:none;">
+            convert it to PDF using Sejda's free online tool</a>.
+            """, unsafe_allow_html=True)
 
 
 

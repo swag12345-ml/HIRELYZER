@@ -4679,10 +4679,9 @@ def render_template_sidebar(session_state, profile_img_html=""):
         }}
         
         .resume-container {{
+            width: 100%;
             display: flex;
             min-height: 100vh;
-            max-width: 1000px;
-            margin: 0 auto;
             background: white;
             box-shadow: 0 0 30px rgba(0,0,0,0.1);
         }}

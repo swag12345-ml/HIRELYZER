@@ -4133,22 +4133,6 @@ def render_template_default(session_state, profile_img_html=""):
 def render_template_modern(session_state, profile_img_html=""):
     """Modern minimal template with clean design, pill-style tags for enhanced visual appeal"""
     
-    # Enhanced profile image styling - perfectly centered above name
-    centered_profile_img = ""
-    if profile_img_html:
-        # Extract the img tag and enhance it with perfect centering and circle styling
-        import re
-        img_match = re.search(r'<img[^>]*>', profile_img_html)
-        if img_match:
-            centered_profile_img = f"""
-            <div style="text-align: center; margin-bottom: 25px;">
-                {img_match.group(0).replace(
-                    'style="',
-                    'style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; object-position: center; border: 4px solid #e2e8f0; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05); display: block; margin: 0 auto; '
-                )}
-            </div>
-            """
-    
     # Process lists into pill tags instead of plain lists
     skills_list = [s.strip() for s in session_state['skills'].split(',') if s.strip()]
     languages_list = [l.strip() for l in session_state['languages'].split(',') if l.strip()]
@@ -4264,6 +4248,18 @@ def render_template_modern(session_state, profile_img_html=""):
         
         .profile-image-container {{
             margin-bottom: 25px;
+        }}
+        
+        .profile-image-container img {{
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            object-fit: cover;
+            object-position: center;
+            border: 4px solid #3b82f6;
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3), 0 0 0 8px rgba(59, 130, 246, 0.1);
+            display: block;
+            margin: 0 auto;
         }}
         
         .header h1 {{
@@ -4461,7 +4457,7 @@ def render_template_modern(session_state, profile_img_html=""):
 <body>
     <div class="header">
         <div class="profile-image-container">
-            {centered_profile_img}
+            {profile_img_html}
         </div>
         <h1>{session_state['name']}</h1>
         <h2>{session_state['job_title']}</h2>
@@ -4784,6 +4780,7 @@ def render_template_sidebar(session_state, profile_img_html=""):
             word-break: break-word;
             overflow-wrap: anywhere;
             max-width: 100%;
+            display: inline-block;
         }}
         
         .contact-item a:hover {{

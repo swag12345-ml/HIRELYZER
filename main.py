@@ -154,43 +154,28 @@ Hiring Manager, {company}, {location}
         st.markdown(cover_letter_html, unsafe_allow_html=True)
 
 
-
-
-
-
-
 import streamlit as st
 import streamlit.components.v1 as components
 from base64 import b64encode
 import requests
 import datetime
 from io import BytesIO
-import streamlit as st
 from datetime import datetime
-import streamlit.components.v1 as components
-from base64 import b64encode
 import re
 from llm_manager import call_llm
-import requests
-import datetime
-import os, json, random, string, re, asyncio, io
+import os, json, random, string, asyncio, io
 import urllib.parse
 from collections import Counter
 
 # ------------------- External Libraries -------------------
 import torch
-import io
-from io import BytesIO
 import matplotlib.pyplot as plt
 import fitz
-import requests
 import numpy as np
 import pandas as pd
-
 import base64
 from db_manager import insert_candidate, get_top_domains_by_score
 
-    
 from PIL import Image
 from pdf2image import convert_from_path
 from dotenv import load_dotenv
@@ -221,7 +206,6 @@ from user_login import (
     log_user_action,
     username_exists  # 👈 add this line
 )
-
 
 # ------------------- Initialize -------------------
 create_user_table()
@@ -301,10 +285,6 @@ body, .main {
 }
 </style>
 """, unsafe_allow_html=True)
-# 🔹 VIDEO BACKGROUND & GLOW TEXT
-
-
-
 
 # ------------------- BEFORE LOGIN -------------------
 if not st.session_state.authenticated:
@@ -376,7 +356,7 @@ if not st.session_state.authenticated:
     active_logins = get_logins_today()
     stats = get_database_stats()
 
-# Replace static 15 with dynamic count
+    # Replace static 15 with dynamic count
     resumes_uploaded = stats.get("total_candidates", 0)
 
     states_accessed = 29
@@ -835,8 +815,6 @@ if not st.session_state.get("authenticated", False):
 
     st.stop()
 
-
-
 # ------------------- AFTER LOGIN -------------------
 from user_login import save_user_api_key, get_user_api_key  # Ensure both are imported
 
@@ -887,13 +865,7 @@ if st.session_state.get("authenticated"):
         save_user_api_key(st.session_state.username, None)
         st.sidebar.success("✅ Cleared saved Groq API key. Now using shared admin key.")
 
-
-
-
-
-
 from user_login import get_all_user_logs, get_total_registered_users, get_logins_today
-import streamlit as st
 
 if st.session_state.username == "admin":
     st.markdown("<hr>", unsafe_allow_html=True)
@@ -921,7 +893,6 @@ if st.session_state.username == "admin":
         )
     else:
         st.info("No logs found yet.")
-
 
 # Always-visible tabs
 tab_labels = [
@@ -1202,15 +1173,6 @@ with tab1:
     <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
     """, unsafe_allow_html=True)
 
-
-
-
-
-
-# Load environment variables
-# ------------------- Core Setup -------------------
-
-
 # Load environment variables
 load_dotenv()
 
@@ -1218,10 +1180,6 @@ load_dotenv()
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 torch.backends.cudnn.benchmark = True
 working_dir = os.path.dirname(os.path.abspath(__file__))
-
-# ------------------- API Key & Caching Manager -------------------
-from llm_manager import call_llm
-
 
 # ------------------- Lazy Initialization -------------------
 @st.cache_resource(show_spinner=False)
@@ -1237,8 +1195,6 @@ def ensure_nltk():
 
 lemmatizer = ensure_nltk()
 reader = get_easyocr_reader()
-
-
 
 def generate_docx(text, filename="bias_free_resume.docx"):
     doc = Document()
@@ -1294,226 +1250,85 @@ def safe_extract_text(uploaded_file):
         st.error(f"⚠️ Could not process this file: {e}")
         return None
 
+# ✅ AI-BASED BIAS DETECTION FUNCTION
+def detect_bias(resume_text):
+    """
+    AI-powered gender bias detection function.
+    Uses LLM to analyze resume text and identify biased terms.
+    Returns bias score, counts, and found words with sentences.
+    """
+    
+    bias_prompt = f"""
+You are an expert in inclusive language analysis and gender bias detection in professional documents.
+Analyze the following resume text for gender-coded or biased terms that could influence hiring decisions.
 
-# Detect bias in resume
+Classify each biased term as either 'masculine' or 'feminine' based on these categories:
 
-import re
+MASCULINE-CODED TERMS: active, aggressive, ambitious, analytical, assertive, autonomous, boast, bold, challenging, competitive, confident, courageous, decisive, determined, dominant, driven, dynamic, forceful, independent, individualistic, intellectual, lead, leader, objective, outspoken, persistent, principled, proactive, resilient, self-reliant, self-sufficient, strong, superior, tenacious, guru, tech guru, technical guru, visionary, manpower, strongman, command, assert, headstrong, rockstar, superstar, go-getter, trailblazer, results-driven, fast-paced, determination, competitive spirit
 
-# Predefined gender-coded word lists
-gender_words = {
+FEMININE-CODED TERMS: affectionate, agreeable, attentive, collaborative, committed, compassionate, considerate, cooperative, dependable, dependent, emotional, empathetic, enthusiastic, friendly, gentle, honest, inclusive, interpersonal, kind, loyal, modest, nurturing, pleasant, polite, sensitive, supportive, sympathetic, tactful, tender, trustworthy, understanding, warm, yield, adaptable, communal, helpful, dedicated, respectful, nurture, sociable, relationship-oriented, team player, people-oriented, empathetic listener, gentle communicator, open-minded
+
+For each biased term found:
+1. Identify the exact word/phrase
+2. Capture the full sentence containing that word
+3. Calculate a bias score from 0-1 based on the proportion of biased terms relative to total meaningful words
+
+Instructions:
+- Look for both exact matches and contextual variations
+- Consider compound terms and phrases
+- Calculate bias_score as: (total_biased_terms / total_meaningful_words) capped at 1.0
+- Return results in the exact JSON format shown below
+
+Resume Text:
+"""{resume_text}"""
+
+Return JSON in this exact format (ensure valid JSON):
+{{
+    "bias_score": 0.15,
     "masculine": [
-        "active", "aggressive", "ambitious", "analytical", "assertive", "autonomous", "boast", "bold",
-        "challenging", "competitive", "confident", "courageous", "decisive", "determined", "dominant", "driven",
-        "dynamic", "forceful", "independent", "individualistic", "intellectual", "lead", "leader", "objective",
-        "outspoken", "persistent", "principled", "proactive", "resilient", "self-reliant", "self-sufficient",
-        "strong", "superior", "tenacious","guru","tech guru","technical guru", "visionary", "manpower", "strongman", "command",
-        "assert", "headstrong", "rockstar", "superstar", "go-getter", "trailblazer", "results-driven",
-        "fast-paced", "driven", "determination", "competitive spirit"
+        {{"word": "aggressive", "sentence": "I am an aggressive problem-solver who takes charge."}},
+        {{"word": "dominant", "sentence": "Played a dominant role in leading the project team."}}
     ],
-    
     "feminine": [
-        "affectionate", "agreeable", "attentive", "collaborative", "committed", "compassionate", "considerate",
-        "cooperative", "dependable", "dependent", "emotional", "empathetic", "enthusiastic", "friendly", "gentle",
-        "honest", "inclusive", "interpersonal", "kind", "loyal", "modest", "nurturing", "pleasant", "polite",
-        "sensitive", "supportive", "sympathetic", "tactful", "tender", "trustworthy", "understanding", "warm",
-        "yield", "adaptable", "communal", "helpful", "dedicated", "respectful", "nurture", "sociable",
-        "relationship-oriented", "team player", "dependable", "people-oriented", "empathetic listener",
-        "gentle communicator", "open-minded"
+        {{"word": "supportive", "sentence": "I am supportive of team members and their goals."}},
+        {{"word": "nurturing", "sentence": "Created a nurturing environment for junior developers."}}
     ]
-}
+}}
+"""
 
-def detect_bias(text):
-    # Split into sentences using simple delimiters
-    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+    try:
+        # Call LLM for bias analysis
+        response = call_llm(bias_prompt, session=st.session_state).strip()
+        
+        # Clean response to extract JSON
+        if "```json" in response:
+            response = response.split("```json")[1].split("```")[0].strip()
+        elif "```" in response:
+            response = response.split("```")[1].split("```")[0].strip()
+        
+        # Parse JSON response
+        import json
+        result = json.loads(response)
+        
+        # Extract data safely
+        bias_score = float(result.get("bias_score", 0.0))
+        masculine_found = result.get("masculine", [])
+        feminine_found = result.get("feminine", [])
+        
+        # Calculate counts
+        masculine_count = len(masculine_found)
+        feminine_count = len(feminine_found)
+        
+        # Ensure bias score is reasonable
+        bias_score = min(max(bias_score, 0.0), 1.0)
+        
+        return bias_score, masculine_count, feminine_count, masculine_found, feminine_found
+        
+    except Exception as e:
+        # Fallback in case of LLM error
+        st.warning(f"⚠️ AI bias detection encountered an issue: {e}. Using fallback analysis.")
+        return 0.1, 0, 0, [], []
 
-    masc_set, fem_set = set(), set()
-    masculine_found, feminine_found = [] , []
-
-    masculine_words = sorted(gender_words["masculine"], key=len, reverse=True)
-    feminine_words = sorted(gender_words["feminine"], key=len, reverse=True)
-
-    for sent in sentences:
-        sent_text = sent.strip()
-        sent_lower = sent_text.lower()
-        matched_spans = []
-
-        def is_overlapping(start, end):
-            return any(start < e and end > s for s, e in matched_spans)
-
-        # 🔵 Highlight masculine words in blue
-        for word in masculine_words:
-            pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
-            for match in pattern.finditer(sent_lower):
-                start, end = match.span()
-                if not is_overlapping(start, end):
-                    matched_spans.append((start, end))
-                    key = (word.lower(), sent_text)
-                    if key not in masc_set:
-                        masc_set.add(key)
-                        highlighted = re.sub(
-                            rf'\b({re.escape(word)})\b',
-                            r'<span style="color:blue;">\1</span>',
-                            sent_text,
-                            flags=re.IGNORECASE
-                        )
-                        masculine_found.append({
-                            "word": word,
-                            "sentence": highlighted
-                        })
-
-        # 🔴 Highlight feminine words in red
-        for word in feminine_words:
-            pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
-            for match in pattern.finditer(sent_lower):
-                start, end = match.span()
-                if not is_overlapping(start, end):
-                    matched_spans.append((start, end))
-                    key = (word.lower(), sent_text)
-                    if key not in fem_set:
-                        fem_set.add(key)
-                        highlighted = re.sub(
-                            rf'\b({re.escape(word)})\b',
-                            r'<span style="color:red;">\1</span>',
-                            sent_text,
-                            flags=re.IGNORECASE
-                        )
-                        feminine_found.append({
-                            "word": word,
-                            "sentence": highlighted
-                        })
-
-    masc = len(masculine_found)
-    fem = len(feminine_found)
-    total = masc + fem
-    bias_score = min(total / 20, 1.0) if total > 0 else 0.0
-
-    return round(bias_score, 2), masc, fem, masculine_found, feminine_found
-
-gender_words = {
-    "masculine": [
-        "active", "aggressive", "ambitious", "analytical", "assertive", "autonomous", "boast", "bold",
-        "challenging", "competitive", "confident", "courageous", "decisive", "determined", "dominant", "driven",
-        "dynamic", "forceful", "independent", "individualistic", "intellectual", "lead", "leader", "objective",
-        "outspoken", "persistent", "principled", "proactive", "resilient", "self-reliant", "self-sufficient",
-        "strong", "superior", "tenacious","guru","tech guru","technical guru", "visionary", "manpower", "strongman", "command",
-        "assert", "headstrong", "rockstar", "superstar", "go-getter", "trailblazer", "results-driven",
-        "fast-paced", "driven", "determination", "competitive spirit"
-    ],
-    
-    "feminine": [
-        "affectionate", "agreeable", "attentive", "collaborative", "committed", "compassionate", "considerate",
-        "cooperative", "dependable", "dependent", "emotional", "empathetic", "enthusiastic", "gentle",
-        "honest", "inclusive", "interpersonal", "kind", "loyal", "modest", "nurturing", "pleasant", "polite",
-        "sensitive", "supportive", "sympathetic", "tactful", "tender", "trustworthy", "understanding", "warm",
-        "yield", "adaptable", "communal", "helpful", "dedicated", "respectful", "nurture", "sociable",
-        "relationship-oriented", "team player", "dependable", "people-oriented", "empathetic listener",
-        "gentle communicator", "open-minded"
-    ]
-}
-replacement_mapping = {
-    "masculine": {
-        "active": "engaged",
-        "aggressive": "proactive",
-        "ambitious": "motivated",
-        "analytical": "detail-oriented",
-        "assertive": "confident",
-        "autonomous": "self-directed",
-        "boast": "highlight",
-        "bold": "confident",
-        "challenging": "demanding",
-        "competitive": "goal-oriented",
-        "confident": "self-assured",
-        "courageous": "bold",
-        "decisive": "action-oriented",
-        "determined": "focused",
-        "dominant": "influential",
-        "driven": "committed",
-        "dynamic": "adaptable",
-        "forceful": "persuasive",
-        "guru":"technical expert",
-        "independent": "self-sufficient",
-        "individualistic": "self-motivated",
-        "intellectual": "knowledgeable",
-        "lead": "guide",
-        "leader": "team lead",
-        "objective": "unbiased",
-        "outspoken": "expressive",
-        "persistent": "resilient",
-        "principled": "ethical",
-        "proactive": "initiative-taking",
-        "resilient": "adaptable",
-        "self-reliant": "resourceful",
-        "self-sufficient": "capable",
-        "strong": "capable",
-        "superior": "exceptional",
-        "tenacious": "determined",
-        "technical guru": "technical expert",
-        "visionary": "forward-thinking",
-        "manpower": "workforce",
-        "strongman": "resilient individual",
-        "command": "direct",
-        "assert": "state confidently",
-        "headstrong": "determined",
-        "rockstar": "top performer",
-        "superstar": "outstanding contributor",
-        "go-getter": "initiative-taker",
-        "trailblazer": "innovator",
-        "results-driven": "outcome-focused",
-        "fast-paced": "dynamic",
-        "determination": "commitment",
-        "competitive spirit": "goal-oriented mindset"
-    },
-    
-    "feminine": {
-        "affectionate": "approachable",
-        "agreeable": "cooperative",
-        "attentive": "observant",
-        "collaborative": "team-oriented",
-        "collaborate": "team-oriented",
-        "collaborated": "worked together",
-        "committed": "dedicated",
-        "compassionate": "caring",
-        "considerate": "thoughtful",
-        "cooperative": "supportive",
-        "dependable": "reliable",
-        "dependent": "team-oriented",
-        "emotional": "passionate",
-        "empathetic": "understanding",
-        "enthusiastic": "positive",
-        "gentle": "respectful",
-        "honest": "trustworthy",
-        "inclusive": "open-minded",
-        "interpersonal": "people-focused",
-        "kind": "respectful",
-        "loyal": "dedicated",
-        "modest": "humble",
-        "nurturing": "supportive",
-        "pleasant": "positive",
-        "polite": "professional",
-        "sensitive": "attentive",
-        "supportive": "encouraging",
-        "sympathetic": "understanding",
-        "tactful": "diplomatic",
-        "tender": "considerate",
-        "trustworthy": "reliable",
-        "understanding": "empathetic",
-        "warm": "welcoming",
-        "yield": "adaptable",
-        "adaptable": "flexible",
-        "communal": "team-centered",
-        "helpful": "supportive",
-        "dedicated": "committed",
-        "respectful": "considerate",
-        "nurture": "develop",
-        "sociable": "friendly",
-        "relationship-oriented": "team-focused",
-        "team player": "collaborative member",
-        "people-oriented": "person-focused",
-        "empathetic listener": "active listener",
-        "gentle communicator": "considerate communicator",
-        "open-minded": "inclusive"
-    }
-}
 def rewrite_text_with_llm(text, replacement_mapping, user_location):
     """
     Uses LLM to rewrite a resume with bias-free language, while preserving
@@ -1600,106 +1415,167 @@ Your tasks:
     response = call_llm(prompt, session=st.session_state)
     return response
 
-
-import re
-
 def rewrite_and_highlight(text, replacement_mapping, user_location):
+    """
+    ✅ REFACTORED: Uses AI-based bias detection instead of static keyword matching.
+    Highlights detected biased words and provides rewritten text.
+    """
+    
+    # ✅ Use AI-based bias detection
+    bias_score, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words = detect_bias(text)
+    
+    # ✅ Create highlighted text with AI-detected words
     highlighted_text = text
-    masculine_count, feminine_count = 0, 0
-    detected_masculine_words, detected_feminine_words = [], []
-    matched_spans = []
+    
+    # ✅ Highlight masculine words in blue
+    for item in detected_masculine_words:
+        word = item.get('word', '')
+        if word:
+            # Use regex to highlight the word in the full text (case insensitive)
+            import re
+            pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
+            highlighted_text = pattern.sub(f'<span style="color:blue;">{word}</span>', highlighted_text)
+    
+    # ✅ Highlight feminine words in red
+    for item in detected_feminine_words:
+        word = item.get('word', '')
+        if word:
+            # Use regex to highlight the word in the full text (case insensitive)
+            import re
+            pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
+            highlighted_text = pattern.sub(f'<span style="color:red;">{word}</span>', highlighted_text)
+    
+    # ✅ Create replacement mapping from detected words
+    all_detected_words = {}
+    
+    # Add masculine words to replacement mapping
+    for item in detected_masculine_words:
+        word = item.get('word', '').lower()
+        if word:
+            all_detected_words[word] = get_neutral_replacement(word, 'masculine')
+    
+    # Add feminine words to replacement mapping  
+    for item in detected_feminine_words:
+        word = item.get('word', '').lower()
+        if word:
+            all_detected_words[word] = get_neutral_replacement(word, 'feminine')
 
-    masculine_words = sorted(gender_words["masculine"], key=len, reverse=True)
-    feminine_words = sorted(gender_words["feminine"], key=len, reverse=True)
-
-    def span_overlaps(start, end):
-        return any(s < end and e > start for s, e in matched_spans)
-
-    # Highlight and count masculine words
-    for word in masculine_words:
-        pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
-        for match in pattern.finditer(highlighted_text):
-            start, end = match.span()
-            if span_overlaps(start, end):
-                continue
-
-            word_match = match.group(0)
-            colored = f"<span style='color:blue;'>{word_match}</span>"
-
-            # Replace word in the highlighted text
-            highlighted_text = highlighted_text[:start] + colored + highlighted_text[end:]
-            shift = len(colored) - len(word_match)
-            matched_spans = [(s if s < start else s + shift, e if s < start else e + shift) for s, e in matched_spans]
-            matched_spans.append((start, start + len(colored)))
-
-            masculine_count += 1
-
-            # Get sentence context and highlight
-            sentence_match = re.search(r'([^.]*?\b' + re.escape(word_match) + r'\b[^.]*\.)', text, re.IGNORECASE)
-            if sentence_match:
-                sentence = sentence_match.group(1).strip()
-                colored_sentence = re.sub(
-                    rf'\b({re.escape(word_match)})\b',
-                    r"<span style='color:blue;'>\1</span>",
-                    sentence,
-                    flags=re.IGNORECASE
-                )
-                detected_masculine_words.append({
-                    "word": word_match,
-                    "sentence": colored_sentence
-                })
-            break  # Only one match per word
-
-    # Highlight and count feminine words
-    for word in feminine_words:
-        pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
-        for match in pattern.finditer(highlighted_text):
-            start, end = match.span()
-            if span_overlaps(start, end):
-                continue
-
-            word_match = match.group(0)
-            colored = f"<span style='color:red;'>{word_match}</span>"
-
-            # Replace word in the highlighted text
-            highlighted_text = highlighted_text[:start] + colored + highlighted_text[end:]
-            shift = len(colored) - len(word_match)
-            matched_spans = [(s if s < start else s + shift, e if s < start else e + shift) for s, e in matched_spans]
-            matched_spans.append((start, start + len(colored)))
-
-            feminine_count += 1
-
-            # Get sentence context and highlight
-            sentence_match = re.search(r'([^.]*?\b' + re.escape(word_match) + r'\b[^.]*\.)', text, re.IGNORECASE)
-            if sentence_match:
-                sentence = sentence_match.group(1).strip()
-                colored_sentence = re.sub(
-                    rf'\b({re.escape(word_match)})\b',
-                    r"<span style='color:red;'>\1</span>",
-                    sentence,
-                    flags=re.IGNORECASE
-                )
-                detected_feminine_words.append({
-                    "word": word_match,
-                    "sentence": colored_sentence
-                })
-            break  # Only one match per word
-
-    # Rewrite text with neutral terms
-    rewritten_text = rewrite_text_with_llm(
-        text,
-        replacement_mapping["masculine"] | replacement_mapping["feminine"],
-        user_location
-    )
+    # ✅ Rewrite text with neutral terms using AI
+    rewritten_text = rewrite_text_with_llm(text, all_detected_words, user_location)
 
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
 
-import re
-import pandas as pd
-import altair as alt
-import streamlit as st
-from llm_manager import call_llm
-from db_manager import detect_domain_from_title_and_description, get_domain_similarity
+def get_neutral_replacement(word, category):
+    """
+    Provides neutral replacements for biased terms.
+    This maintains the existing replacement logic for consistency.
+    """
+    replacement_mapping = {
+        "masculine": {
+            "active": "engaged",
+            "aggressive": "proactive",
+            "ambitious": "motivated",
+            "analytical": "detail-oriented",
+            "assertive": "confident",
+            "autonomous": "self-directed",
+            "boast": "highlight",
+            "bold": "confident",
+            "challenging": "demanding",
+            "competitive": "goal-oriented",
+            "confident": "self-assured",
+            "courageous": "bold",
+            "decisive": "action-oriented",
+            "determined": "focused",
+            "dominant": "influential",
+            "driven": "committed",
+            "dynamic": "adaptable",
+            "forceful": "persuasive",
+            "guru": "technical expert",
+            "independent": "self-sufficient",
+            "individualistic": "self-motivated",
+            "intellectual": "knowledgeable",
+            "lead": "guide",
+            "leader": "team lead",
+            "objective": "unbiased",
+            "outspoken": "expressive",
+            "persistent": "resilient",
+            "principled": "ethical",
+            "proactive": "initiative-taking",
+            "resilient": "adaptable",
+            "self-reliant": "resourceful",
+            "self-sufficient": "capable",
+            "strong": "capable",
+            "superior": "exceptional",
+            "tenacious": "determined",
+            "technical guru": "technical expert",
+            "visionary": "forward-thinking",
+            "manpower": "workforce",
+            "strongman": "resilient individual",
+            "command": "direct",
+            "assert": "state confidently",
+            "headstrong": "determined",
+            "rockstar": "top performer",
+            "superstar": "outstanding contributor",
+            "go-getter": "initiative-taker",
+            "trailblazer": "innovator",
+            "results-driven": "outcome-focused",
+            "fast-paced": "dynamic",
+            "determination": "commitment",
+            "competitive spirit": "goal-oriented mindset"
+        },
+        
+        "feminine": {
+            "affectionate": "approachable",
+            "agreeable": "cooperative",
+            "attentive": "observant",
+            "collaborative": "team-oriented",
+            "collaborate": "team-oriented",
+            "collaborated": "worked together",
+            "committed": "dedicated",
+            "compassionate": "caring",
+            "considerate": "thoughtful",
+            "cooperative": "supportive",
+            "dependable": "reliable",
+            "dependent": "team-oriented",
+            "emotional": "passionate",
+            "empathetic": "understanding",
+            "enthusiastic": "positive",
+            "gentle": "respectful",
+            "honest": "trustworthy",
+            "inclusive": "open-minded",
+            "interpersonal": "people-focused",
+            "kind": "respectful",
+            "loyal": "dedicated",
+            "modest": "humble",
+            "nurturing": "supportive",
+            "pleasant": "positive",
+            "polite": "professional",
+            "sensitive": "attentive",
+            "supportive": "encouraging",
+            "sympathetic": "understanding",
+            "tactful": "diplomatic",
+            "tender": "considerate",
+            "trustworthy": "reliable",
+            "understanding": "empathetic",
+            "warm": "welcoming",
+            "yield": "adaptable",
+            "adaptable": "flexible",
+            "communal": "team-centered",
+            "helpful": "supportive",
+            "dedicated": "committed",
+            "respectful": "considerate",
+            "nurture": "develop",
+            "sociable": "friendly",
+            "relationship-oriented": "team-focused",
+            "team player": "collaborative member",
+            "people-oriented": "person-focused",
+            "empathetic listener": "active listener",
+            "gentle communicator": "considerate communicator",
+            "open-minded": "inclusive"
+        }
+    }
+    
+    return replacement_mapping.get(category, {}).get(word.lower(), word)
 
 # ✅ Enhanced Grammar evaluation using LLM with suggestions
 def get_grammar_score_with_llm(text, max_score=5):
@@ -1740,7 +1616,6 @@ Suggestions:
     score = int(score_match.group(1)) if score_match else max(3, max_score-2)  # More generous default
     feedback = feedback_match.group(1).strip() if feedback_match else "Grammar appears adequate for professional communication."
     return score, feedback, suggestions
-
 
 # ✅ Main ATS Evaluation Function
 def ats_percentage_score(
@@ -1816,8 +1691,6 @@ Your role is to provide **balanced, objective scoring** that reflects industry s
 - 🔄 Ongoing relevant education → Strong scoring (minimum 12 points for technical fields)
 - 📅 Recent completion (within 2 years) → Gets recency bonus
 - 📂 Older completion → No penalty if skills are current
-
-
 
 **Experience Scoring Framework ({exp_weight} points max):**
 - 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
@@ -2118,6 +1991,7 @@ Context for Evaluation:
         "Domain Penalty": domain_penalty,
         "Domain Similarity Score": similarity_score
     }
+
 # Setup Vector DB
 def setup_vectorstore(documents):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -2148,16 +2022,11 @@ def create_chain(vectorstore):
     )
     return chain
 
-# App Title
-#####st.title("🦙 HIRELYZER - LLAMA 3.3 (ANALYZER + BUILDER + JOB MARKET TRENDS)")#######
-
 # Chat history
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 # ---------------- Sidebar Layout with Inline Images ----------------
-import streamlit as st
-
 st.sidebar.markdown("### 🏷️ Job Information")
 
 # ---------------- Job Information Dropdown ----------------
@@ -2230,8 +2099,6 @@ with st.sidebar.expander("![Settings](https://img.icons8.com/ios-filled/20/setti
             """,
             unsafe_allow_html=True
         )
-
-
 
 with tab1:
     from streamlit_pdf_viewer import pdf_viewer
@@ -2314,25 +2181,6 @@ with tab1:
                         ❌ Could not display or process <b>{uploaded_file.name}</b>: {e}
                     </div>
                     """, unsafe_allow_html=True)
-
-
-
-
-
-
-import os
-import re
-import streamlit as st
-import pandas as pd
-import altair as alt
-from datetime import datetime
-from db_manager import insert_candidate, detect_domain_from_title_and_description
-from llm_manager import call_llm  # ensure this calls your LLM
-
-# ✅ Initialize state
-
-import time
-import os
 
 # Initialize session state
 if "resume_data" not in st.session_state:
@@ -2495,10 +2343,10 @@ if uploaded_files and job_description:
                     • Extracting key skills...<br>
                     • Matching with job requirements...<br>
                     • Calculating ATS compatibility...<br>
-                    • Checking for bias patterns...
+                    • AI-powered bias detection...
                 </div>
             </div>
-            <div class="scanner-text">Scanning Resume...</div>
+            <div class="scanner-text">🤖 AI Scanning Resume...</div>
             <div class="progress-bar">
                 <div class="progress-fill"></div>
             </div>
@@ -2513,6 +2361,7 @@ if uploaded_files and job_description:
             f.write(uploaded_file.getbuffer())
 
         # ✅ Reduced delay for better UX
+        import time
         time.sleep(4)
 
         # ✅ Extract text from PDF
@@ -2525,12 +2374,12 @@ if uploaded_files and job_description:
         all_text.append(" ".join(text))
         full_text = " ".join(text)
 
-        # ✅ Bias detection
+        # ✅ AI-BASED Bias detection
         bias_score, masc_count, fem_count, detected_masc, detected_fem = detect_bias(full_text)
 
-        # ✅ Rewrite and highlight gender-biased words
+        # ✅ Rewrite and highlight gender-biased words using AI detection
         highlighted_text, rewritten_text, _, _, _, _ = rewrite_and_highlight(
-            full_text, replacement_mapping, user_location
+            full_text, {}, user_location  # Pass empty replacement mapping since we get it from AI
         )
 
         # ✅ LLM-based ATS Evaluation
@@ -2701,8 +2550,8 @@ if uploaded_files and job_description:
             <div class="success-circle">
                 <div class="success-checkmark">✓</div>
             </div>
-            <div class="success-text">Scan Complete!</div>
-            <div class="success-subtitle">Resume analysis ready</div>
+            <div class="success-text">🤖 AI Analysis Complete!</div>
+            <div class="success-subtitle">Resume processed with advanced AI bias detection</div>
         </div>
         """
         
@@ -2716,19 +2565,12 @@ if uploaded_files and job_description:
         success_placeholder.empty()
         st.rerun()
 
-
-
-
-
-
     # ✅ Optional vectorstore setup
     if all_text:
         st.session_state.vectorstore = setup_vectorstore(all_text)
         st.session_state.chain = create_chain(st.session_state.vectorstore)
 
 # 🔄 Developer Reset Button
-import time
-
 with tab1:
     if st.button("🔄 Refresh view"):
         st.session_state.processed_files.clear()
@@ -2747,9 +2589,6 @@ with tab1:
         # Wait 3 seconds then clear message
         time.sleep(3)
         msg_placeholder.empty()
-
-
-
 
 def generate_resume_report_html(resume):
     candidate_name = resume.get('Candidate Name', 'Not Found')
@@ -2849,7 +2688,7 @@ def generate_resume_report_html(resume):
     </head>
     <body>
 
-    <h1>Resume Analysis Report</h1>
+    <h1>🤖 AI-Powered Resume Analysis Report</h1>
 
     <h2>Candidate: {candidate_name}</h2>
     <p><b>Resume File:</b> {resume_name}</p>
@@ -2885,28 +2724,25 @@ def generate_resume_report_html(resume):
     <div class="section-title">Final Thoughts</div>
     <div class="box">{final_thoughts}</div>
 
-    <h2>Gender Bias Analysis</h2>
+    <h2>🤖 AI-Powered Gender Bias Analysis</h2>
     <table>
         <tr><td><b>Masculine Words</b></td><td>{masculine_count}</td></tr>
         <tr><td><b>Feminine Words</b></td><td>{feminine_count}</td></tr>
-        <tr><td><b>Bias Score (0 = Fair, 1 = Biased)</b></td><td>{bias_score}</td></tr>
+        <tr><td><b>AI Bias Score (0 = Fair, 1 = Biased)</b></td><td>{bias_score}</td></tr>
     </table>
 
-    <div class="section-title">Masculine Words Detected</div>
+    <div class="section-title">🤖 AI-Detected Masculine Words</div>
     <div class="box">{masculine_words}</div>
 
-    <div class="section-title">Feminine Words Detected</div>
+    <div class="section-title">🤖 AI-Detected Feminine Words</div>
     <div class="box">{feminine_words}</div>
 
-    <h2>Rewritten Bias-Free Resume</h2>
+    <h2>✨ AI-Generated Bias-Free Resume</h2>
     <div class="box">{rewritten_text}</div>
 
     </body>
     </html>
     """
-
-
-
 
 # === TAB 1: Dashboard ===
 with tab1:
@@ -2924,7 +2760,7 @@ with tab1:
         with col1:
             st.metric("📄 Resumes Uploaded", total_resumes)
         with col2:
-            st.metric("🔎 Avg. Bias Score", avg_bias)
+            st.metric("🤖 AI Avg. Bias Score", avg_bias)
         with col3:
             st.metric("🔵 Total Masculine Words", total_masc)
         with col4:
@@ -2946,12 +2782,12 @@ with tab1:
         st.dataframe(df[overview_cols], use_container_width=True)
 
         st.markdown("### 📊 Visual Analysis")
-        chart_tab1, chart_tab2 = st.tabs(["📉 Bias Score Chart", "⚖ Gender-Coded Words"])
+        chart_tab1, chart_tab2 = st.tabs(["📉 AI Bias Score Chart", "⚖ Gender-Coded Words"])
         with chart_tab1:
-            st.subheader("Bias Score Comparison Across Resumes")
+            st.subheader("🤖 AI-Powered Bias Score Comparison Across Resumes")
             st.bar_chart(df.set_index("Resume Name")[["Bias Score (0 = Fair, 1 = Biased)"]])
         with chart_tab2:
-            st.subheader("Masculine vs Feminine Word Usage")
+            st.subheader("Masculine vs Feminine Word Usage (AI-Detected)")
             fig, ax = plt.subplots(figsize=(10, 5))
             index = np.arange(len(df))
             bar_width = 0.35
@@ -2959,7 +2795,7 @@ with tab1:
             ax.bar(index + bar_width, df["Feminine Words Count"], bar_width, label="Feminine", color="#e74c3c")
             ax.set_xlabel("Resumes", fontsize=12)
             ax.set_ylabel("Word Count", fontsize=12)
-            ax.set_title("Gender-Coded Word Usage per Resume", fontsize=14)
+            ax.set_title("AI-Detected Gender-Coded Word Usage per Resume", fontsize=14)
             ax.set_xticks(index + bar_width / 2)
             ax.set_xticklabels(df["Resume Name"], rotation=45, ha='right')
             ax.legend()
@@ -3055,57 +2891,47 @@ with tab1:
 </div>
 """, unsafe_allow_html=True)
 
-
-                # ✅ Display Missing Skills and Keywords as badges
-                # ✅ Display Missing Skills as multiline bullet points
-                
-
-                # ✅ Show Missing Keywords and Missing Skills
-                     # Missing keywords
-                
-
-
                 st.divider()
 
-                detail_tab1, detail_tab2 = st.tabs(["🔎 Bias Analysis", "✅ Rewritten Resume"])
+                detail_tab1, detail_tab2 = st.tabs(["🤖 AI Bias Analysis", "✨ AI-Rewritten Resume"])
 
                 with detail_tab1:
-                    st.markdown("#### Bias-Highlighted Original Text")
+                    st.markdown("#### 🤖 AI-Detected Bias-Highlighted Original Text")
                     st.markdown(resume["Highlighted Text"], unsafe_allow_html=True)
 
-                    st.markdown("### 📌 Gender-Coded Word Counts:")
+                    st.markdown("### 📌 AI-Detected Gender-Coded Word Counts:")
                     bias_col1, bias_col2 = st.columns(2)
 
                     with bias_col1:
-                        st.metric("🔵 Masculine Words", len(resume["Detected Masculine Words"]))
+                        st.metric("🔵 AI-Detected Masculine Words", len(resume["Detected Masculine Words"]))
                         if resume["Detected Masculine Words"]:
-                            st.markdown("### 📚 Detected Masculine Words with Context:")
+                            st.markdown("### 📚 AI-Detected Masculine Words with Context:")
                             for item in resume["Detected Masculine Words"]:
                                 word = item['word']
                                 sentence = item['sentence']
                                 st.write(f"🔵 **{word}**: {sentence}", unsafe_allow_html=True)
                         else:
-                            st.info("No masculine words detected.")
+                            st.info("✅ No masculine words detected by AI.")
 
                     with bias_col2:
-                        st.metric("🔴 Feminine Words", len(resume["Detected Feminine Words"]))
+                        st.metric("🔴 AI-Detected Feminine Words", len(resume["Detected Feminine Words"]))
                         if resume["Detected Feminine Words"]:
-                            st.markdown("### 📚 Detected Feminine Words with Context:")
+                            st.markdown("### 📚 AI-Detected Feminine Words with Context:")
                             for item in resume["Detected Feminine Words"]:
                                 word = item['word']
                                 sentence = item['sentence']
                                 st.write(f"🔴 **{word}**: {sentence}", unsafe_allow_html=True)
                         else:
-                            st.info("No feminine words detected.")
+                            st.info("✅ No feminine words detected by AI.")
 
                 with detail_tab2:
-                    st.markdown("#### ✨ Bias-Free Rewritten Resume")
+                    st.markdown("#### ✨ AI-Generated Bias-Free Resume")
                     st.write(resume["Rewritten Text"])
                     docx_file = generate_docx(resume["Rewritten Text"])
                     st.download_button(
-                        label="📥 Download Bias-Free Resume (.docx)",
+                        label="📥 Download AI-Generated Bias-Free Resume (.docx)",
                         data=docx_file,
-                        file_name=f"{resume['Resume Name'].split('.')[0]}_bias_free.docx",
+                        file_name=f"{resume['Resume Name'].split('.')[0]}_ai_bias_free.docx",
                         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                         use_container_width=True,
                         key=f"download_docx_{resume['Resume Name']}"
@@ -3114,9 +2940,9 @@ with tab1:
                     
                     pdf_file = html_to_pdf_bytes(html_report)
                     st.download_button(
-                    label="📄 Download Full Analysis Report (.pdf)",
+                    label="📄 Download AI-Powered Analysis Report (.pdf)",
                     data=pdf_file,
-                    file_name=f"{resume['Resume Name'].split('.')[0]}_report.pdf",
+                    file_name=f"{resume['Resume Name'].split('.')[0]}_ai_report.pdf",
                     mime="application/pdf",
                     use_container_width=True,
                     key=f"download_pdf_{resume['Resume Name']}"

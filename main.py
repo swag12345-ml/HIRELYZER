@@ -3126,10 +3126,6 @@ with tab1:
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
 
 # ---------------- Sidebar (ONLY in Tab 2) ----------------
-
-
-
-
 from xhtml2pdf import pisa
 from io import BytesIO
 
@@ -5725,7 +5721,6 @@ with tab2:
             <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color:#2f4f6f; text-decoration:none;">
             convert it to PDF using Sejda's free online tool</a>.
             """, unsafe_allow_html=True)
-
 
 from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
 

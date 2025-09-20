@@ -4133,6 +4133,22 @@ def render_template_default(session_state, profile_img_html=""):
 def render_template_modern(session_state, profile_img_html=""):
     """Modern minimal template with clean design, pill-style tags for enhanced visual appeal"""
     
+    # Enhanced profile image styling - perfectly centered above name
+    centered_profile_img = ""
+    if profile_img_html:
+        # Extract the img tag and enhance it with perfect centering and circle styling
+        import re
+        img_match = re.search(r'<img[^>]*>', profile_img_html)
+        if img_match:
+            centered_profile_img = f"""
+            <div style="text-align: center; margin-bottom: 25px;">
+                {img_match.group(0).replace(
+                    'style="',
+                    'style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; object-position: center; border: 4px solid #e2e8f0; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05); display: block; margin: 0 auto; '
+                )}
+            </div>
+            """
+    
     # Process lists into pill tags instead of plain lists
     skills_list = [s.strip() for s in session_state['skills'].split(',') if s.strip()]
     languages_list = [l.strip() for l in session_state['languages'].split(',') if l.strip()]
@@ -4445,7 +4461,7 @@ def render_template_modern(session_state, profile_img_html=""):
 <body>
     <div class="header">
         <div class="profile-image-container">
-            {profile_img_html}
+            {centered_profile_img}
         </div>
         <h1>{session_state['name']}</h1>
         <h2>{session_state['job_title']}</h2>
@@ -4669,7 +4685,7 @@ def render_template_sidebar(session_state, profile_img_html=""):
         .resume-container {{
             display: flex;
             min-height: 100vh;
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
             background: white;
             box-shadow: 0 0 30px rgba(0,0,0,0.1);
@@ -4765,6 +4781,9 @@ def render_template_sidebar(session_state, profile_img_html=""):
             text-decoration: none;
             font-weight: 500;
             font-size: 0.9rem;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            max-width: 100%;
         }}
         
         .contact-item a:hover {{

@@ -3129,9 +3129,36 @@ def html_to_pdf_bytes(html_string):
     pdf_io.seek(0)
     return pdf_io
 
-def render_template_default(session_state, profile_img_html=""):
-    """Default professional template - keeps the exact same design as before"""
+def render_template_default():
+    """Render the default professional template (original design)"""
+    import streamlit as st
     
+    # Get profile image HTML if available
+    profile_img_html = ""
+    if "encoded_profile_image" in st.session_state:
+        encoded_image = st.session_state["encoded_profile_image"]
+        profile_img_html = f"""
+        <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+            <img src="data:image/png;base64,{encoded_image}" alt="Profile Photo"
+                 style="
+                    width: 140px;
+                    height: 140px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    object-position: center;
+                    border: 4px solid rgba(255,255,255,0.6);
+                    box-shadow:
+                        0 0 0 3px #4da6ff,
+                        0 8px 25px rgba(77, 166, 255, 0.3),
+                        0 4px 15px rgba(0, 0, 0, 0.15);
+                    transition: transform 0.3s ease-in-out;
+                "
+                onmouseover="this.style.transform='scale(1.07)'"
+                onmouseout="this.style.transform='scale(1)'"
+             />
+        </div>
+        """
+
     # Enhanced SKILLS with professional, muted colors
     skills_html = "".join(
         f"""
@@ -3150,7 +3177,7 @@ def render_template_default(session_state, profile_img_html=""):
             {s.strip()}
         </div>
         """
-        for s in session_state['skills'].split(',')
+        for s in st.session_state['skills'].split(',')
         if s.strip()
     )
 
@@ -3172,7 +3199,7 @@ def render_template_default(session_state, profile_img_html=""):
             {lang.strip()}
         </div>
         """
-        for lang in session_state['languages'].split(',')
+        for lang in st.session_state['languages'].split(',')
         if lang.strip()
     )
 
@@ -3194,7 +3221,7 @@ def render_template_default(session_state, profile_img_html=""):
             {interest.strip()}
         </div>
         """
-        for interest in session_state['interests'].split(',')
+        for interest in st.session_state['interests'].split(',')
         if interest.strip()
     )
 
@@ -3216,13 +3243,13 @@ def render_template_default(session_state, profile_img_html=""):
             {skill.strip().title()}
         </div>
         """
-        for skill in session_state['Softskills'].split(',')
+        for skill in st.session_state['Softskills'].split(',')
         if skill.strip()
     )
 
     # Enhanced EXPERIENCE with professional, subtle design
     experience_html = ""
-    for exp in session_state.experience_entries:
+    for exp in st.session_state.experience_entries:
         if exp["company"] or exp["title"]:
             # Handle paragraphs and single line breaks
             description_lines = [line.strip() for line in exp["description"].strip().split("\n\n")]
@@ -3344,11 +3371,11 @@ def render_template_default(session_state, profile_img_html=""):
 
     # Convert experience to list if multiple lines
     # Escape HTML and convert line breaks
-    summary_html = session_state['summary'].replace('\n', '<br>')
+    summary_html = st.session_state['summary'].replace('\n', '<br>')
 
     # Enhanced EDUCATION with professional styling
     education_html = ""
-    for edu in session_state.education_entries:
+    for edu in st.session_state.education_entries:
         if edu.get("institution") or edu.get("details"):
             degree_text = ""
             if edu.get("degree"):
@@ -3462,7 +3489,7 @@ def render_template_default(session_state, profile_img_html=""):
 
     # Enhanced PROJECTS with professional card design
     projects_html = ""
-    for proj in session_state.project_entries:
+    for proj in st.session_state.project_entries:
         if proj.get("title") or proj.get("description"):
             tech_val = proj.get("tech")
             if isinstance(tech_val, list):
@@ -3605,7 +3632,7 @@ def render_template_default(session_state, profile_img_html=""):
 
     # Enhanced PROJECT LINKS with professional styling
     project_links_html = ""
-    if session_state.project_links:
+    if st.session_state.project_links:
         project_links_html = """
         <div style='margin-bottom: 20px;'>
             <h4 class='section-title' style='
@@ -3653,12 +3680,12 @@ def render_template_default(session_state, profile_img_html=""):
                 '>🔗 Project {i+1}</a>
             </div>
             """
-            for i, link in enumerate(session_state.project_links)
+            for i, link in enumerate(st.session_state.project_links)
         )
 
     # Enhanced CERTIFICATES with professional design
     certificate_links_html = ""
-    if session_state.certificate_links:
+    if st.session_state.certificate_links:
         certificate_links_html = """
         <h4 class='section-title' style='
             color: #374151;
@@ -3677,7 +3704,7 @@ def render_template_default(session_state, profile_img_html=""):
             Certificates
         </h4>
         """
-        for cert in session_state.certificate_links:
+        for cert in st.session_state.certificate_links:
             if cert["name"] and cert["link"]:
                 description = cert.get('description', '').replace('\n', '<br>')
                 name = cert['name']
@@ -3792,910 +3819,894 @@ def render_template_default(session_state, profile_img_html=""):
                 """
                 certificate_links_html += card_html
 
-    # Main HTML content - exactly as before
-    html_content = f"""
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{session_state['name']} - Professional Resume</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * {{
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }}
-        
-        body {{
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            line-height: 1.6;
-            color: #1a202c;
-            background: #ffffff;
-            min-height: 100vh;
-        }}
-        
-        .resume-container {{
-            width: 100%;
-            min-height: 100vh;
-            background: #ffffff;
-        }}
-        
-        .resume-container::before {{
-            content: '';
-            display: block;
-            height: 4px;
-            background: linear-gradient(90deg, #6b7280, #9ca3af);
-        }}
-        
-        .header-section {{
-            background: #f8fafc;
-            padding: 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #e2e8f0;
-        }}
-        
-        .name-title {{
-            flex: 1;
-        }}
-        
-        .name-title h1 {{
-            font-size: 42px;
-            font-weight: 800;
-            color: #1a202c;
-            margin-bottom: 8px;
-        }}
-        
-        .name-title h2 {{
-            font-size: 24px;
-            font-weight: 600;
-            color: #4a5568;
-            margin: 0;
-        }}
-        
-        .profile-image {{
-            flex-shrink: 0;
-            margin-left: 40px;
-        }}
-        
-        .main-content {{
-            display: flex;
-            min-height: 800px;
-        }}
-        
-        .sidebar {{
-            width: 350px;
-            background: #f7fafc;
-            padding: 40px 30px;
-            border-right: 1px solid #e2e8f0;
-        }}
-        
-        .main-section {{
-            flex: 1;
-            padding: 40px;
-            background: #ffffff;
-        }}
-        
-        .contact-info {{
-            margin-bottom: 40px;
-        }}
-        
-        .contact-item {{
-            display: flex;
-            align-items: center;
-            margin-bottom: 12px;
-            padding: 8px 0;
-        }}
-        
-        .contact-icon {{
-            width: 20px;
-            height: 20px;
-            margin-right: 15px;
-            opacity: 0.8;
-        }}
-        
-        .contact-item span, .contact-item a {{
-            font-size: 14px;
-            color: #4a5568;
-            text-decoration: none;
-            font-weight: 500;
-        }}
-        
-        .contact-item a:hover {{
-            color: #6b7280;
-            transition: color 0.3s ease;
-        }}
-        
-        .section-title {{
-            font-size: 22px;
-            font-weight: 700;
-            color: #2d3748;
-            margin: 35px 0 15px 0;
-        }}
-        
-        .section-content {{
-            margin-bottom: 30px;
-        }}
-        
-        .summary-text {{
-            font-size: 16px;
-            line-height: 1.8;
-            color: #4a5568;
-            background: #f8fafc;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 3px solid #9ca3af;
-        }}
-        
-        @media (max-width: 768px) {{
-            .main-content {{
-                flex-direction: column;
+    return f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{st.session_state['name']} - Professional Resume</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <style>
+            * {{
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
             }}
             
-            .sidebar {{
+            body {{
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                line-height: 1.6;
+                color: #1a202c;
+                background: #ffffff;
+                min-height: 100vh;
+            }}
+            
+            .resume-container {{
                 width: 100%;
+                min-height: 100vh;
+                background: #ffffff;
+            }}
+            
+            .resume-container::before {{
+                content: '';
+                display: block;
+                height: 4px;
+                background: linear-gradient(90deg, #6b7280, #9ca3af);
             }}
             
             .header-section {{
-                flex-direction: column;
-                text-align: center;
+                background: #f8fafc;
+                padding: 40px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 1px solid #e2e8f0;
             }}
             
-            .profile-image {{
-                margin: 20px 0 0 0;
+            .name-title {{
+                flex: 1;
             }}
             
             .name-title h1 {{
-                font-size: 32px;
-            }}
-        }}
-        
-        @media (max-width: 480px) {{
-            .header-section, .sidebar, .main-section {{
-                padding: 20px;
-            }}
-        }}
-    </style>
-</head>
-<body>
-    <div class="resume-container">
-        <div class="header-section">
-            <div class="name-title">
-                <h1>{session_state['name']}</h1>
-                <h2>{session_state['job_title']}</h2>
-            </div>
-            <div class="profile-image">
-                {profile_img_html}
-            </div>
-        </div>
-
-        <div class="main-content">
-            <div class="sidebar">
-                <div class="contact-info">
-                    <div class="contact-item">
-                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
-                        </svg>
-                        <span>{session_state['location']}</span>
-                    </div>
-                    <div class="contact-item">
-                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path>
-                        </svg>
-                        <span>{session_state['phone']}</span>
-                    </div>
-                    <div class="contact-item">
-                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
-                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
-                        </svg>
-                        <a href="mailto:{session_state['email']}">{session_state['email']}</a>
-                    </div>
-                    <div class="contact-item">
-                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                        </svg>
-                        <a href="{session_state['linkedin']}" target="_blank">LinkedIn</a>
-                    </div>
-                    <div class="contact-item">
-                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.498-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z" clip-rule="evenodd"></path>
-                        </svg>
-                        <a href="{session_state['portfolio']}" target="_blank">Portfolio</a>
-                    </div>
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Skills</h3>
-                    <div>{skills_html}</div>
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Languages</h3>
-                    <div>{languages_html}</div>
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Interests</h3>
-                    <div>{interests_html}</div>
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Soft Skills</h3>
-                    <div>{Softskills_html}</div>
-                </div>
-            </div>
-
-            <div class="main-section">
-                <div class="section-content">
-                    <h3 class="section-title">Professional Summary</h3>
-                    <div class="summary-text">{summary_html}</div>
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Work Experience</h3>
-                    {experience_html}
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Education</h3>
-                    {education_html}
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Projects</h3>
-                    {projects_html}
-                </div>
-
-                <div class="section-content">
-                    {project_links_html}
-                </div>
-
-                <div class="section-content">
-                    {certificate_links_html}
-                </div>
-            </div>
-        </div>
-    </div>
-</body>
-</html>
-"""
-    
-    return html_content
-
-def render_template_modern(session_state, profile_img_html=""):
-    """Modern minimal template with clean design, headings, plain divs, and unordered lists"""
-    
-    # Simple skills list
-    skills_list = [s.strip() for s in session_state['skills'].split(',') if s.strip()]
-    languages_list = [l.strip() for l in session_state['languages'].split(',') if l.strip()]
-    interests_list = [i.strip() for i in session_state['interests'].split(',') if i.strip()]
-    softskills_list = [s.strip() for s in session_state['Softskills'].split(',') if s.strip()]
-    
-    html_content = f"""
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{session_state['name']} - Modern Resume</title>
-    <style>
-        * {{
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }}
-        
-        body {{
-            font-family: 'Helvetica', Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: #fff;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }}
-        
-        .header {{
-            text-align: center;
-            margin-bottom: 40px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #f0f0f0;
-        }}
-        
-        .header h1 {{
-            font-size: 2.5rem;
-            font-weight: 300;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }}
-        
-        .header h2 {{
-            font-size: 1.2rem;
-            font-weight: normal;
-            color: #7f8c8d;
-            margin-bottom: 20px;
-        }}
-        
-        .contact-info {{
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 20px;
-            font-size: 0.9rem;
-            color: #555;
-        }}
-        
-        .contact-info a {{
-            color: #3498db;
-            text-decoration: none;
-        }}
-        
-        .section {{
-            margin-bottom: 30px;
-        }}
-        
-        .section h3 {{
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 1px solid #ecf0f1;
-            padding-bottom: 5px;
-        }}
-        
-        .summary {{
-            font-size: 1rem;
-            line-height: 1.7;
-            color: #555;
-            text-align: justify;
-        }}
-        
-        .experience-item, .education-item, .project-item {{
-            margin-bottom: 25px;
-        }}
-        
-        .item-header {{
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 5px;
-        }}
-        
-        .item-title {{
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 1.1rem;
-        }}
-        
-        .item-duration {{
-            color: #7f8c8d;
-            font-size: 0.9rem;
-            font-style: italic;
-        }}
-        
-        .item-subtitle {{
-            color: #555;
-            font-size: 0.95rem;
-            margin-bottom: 8px;
-        }}
-        
-        .item-description {{
-            color: #666;
-            line-height: 1.6;
-        }}
-        
-        ul {{
-            padding-left: 20px;
-            margin-top: 10px;
-        }}
-        
-        li {{
-            margin-bottom: 5px;
-            color: #555;
-        }}
-        
-        .skills-grid {{
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }}
-        
-        .skill-tag {{
-            background: #ecf0f1;
-            color: #2c3e50;
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 0.85rem;
-        }}
-        
-        .links a {{
-            display: inline-block;
-            color: #3498db;
-            text-decoration: none;
-            margin-right: 15px;
-            margin-bottom: 5px;
-        }}
-        
-        @media (max-width: 600px) {{
-            .contact-info {{
-                flex-direction: column;
-                align-items: center;
-                gap: 5px;
+                font-size: 42px;
+                font-weight: 800;
+                color: #1a202c;
+                margin-bottom: 8px;
             }}
             
-            .item-header {{
-                flex-direction: column;
-                align-items: flex-start;
+            .name-title h2 {{
+                font-size: 24px;
+                font-weight: 600;
+                color: #4a5568;
+                margin: 0;
             }}
-        }}
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>{session_state['name']}</h1>
-        <h2>{session_state['job_title']}</h2>
-        <div class="contact-info">
-            <span>{session_state['location']}</span>
-            <span>{session_state['phone']}</span>
-            <a href="mailto:{session_state['email']}">{session_state['email']}</a>
-            <a href="{session_state['linkedin']}" target="_blank">LinkedIn</a>
-            <a href="{session_state['portfolio']}" target="_blank">Portfolio</a>
-        </div>
-        {profile_img_html}
-    </div>
-
-    <div class="section">
-        <h3>Summary</h3>
-        <div class="summary">{session_state['summary'].replace(chr(10), '<br>')}</div>
-    </div>
-
-    <div class="section">
-        <h3>Experience</h3>
-        {"".join([f'''
-        <div class="experience-item">
-            <div class="item-header">
-                <div class="item-title">{exp.get('title', '')}</div>
-                <div class="item-duration">{exp.get('duration', '')}</div>
-            </div>
-            <div class="item-subtitle">{exp.get('company', '')}</div>
-            <div class="item-description">{exp.get('description', '').replace(chr(10), '<br>')}</div>
-        </div>
-        ''' for exp in session_state.experience_entries if exp.get('company') or exp.get('title')])}
-    </div>
-
-    <div class="section">
-        <h3>Education</h3>
-        {"".join([f'''
-        <div class="education-item">
-            <div class="item-header">
-                <div class="item-title">{edu.get('degree', '')}</div>
-                <div class="item-duration">{edu.get('year', '')}</div>
-            </div>
-            <div class="item-subtitle">{edu.get('institution', '')}</div>
-            <div class="item-description">{edu.get('details', '')}</div>
-        </div>
-        ''' for edu in session_state.education_entries if edu.get('institution') or edu.get('degree')])}
-    </div>
-
-    <div class="section">
-        <h3>Projects</h3>
-        {"".join([f'''
-        <div class="project-item">
-            <div class="item-header">
-                <div class="item-title">{proj.get('title', '')}</div>
-                <div class="item-duration">{proj.get('duration', '')}</div>
-            </div>
-            <div class="item-subtitle">Technologies: {proj.get('tech', '')}</div>
-            <div class="item-description">{proj.get('description', '').replace(chr(10), '<br>')}</div>
-        </div>
-        ''' for proj in session_state.project_entries if proj.get('title')])}
-    </div>
-
-    <div class="section">
-        <h3>Skills</h3>
-        <div class="skills-grid">
-            {"".join([f'<span class="skill-tag">{skill}</span>' for skill in skills_list])}
-        </div>
-    </div>
-
-    <div class="section">
-        <h3>Languages</h3>
-        <ul>
-            {"".join([f'<li>{lang}</li>' for lang in languages_list])}
-        </ul>
-    </div>
-
-    <div class="section">
-        <h3>Interests</h3>
-        <ul>
-            {"".join([f'<li>{interest}</li>' for interest in interests_list])}
-        </ul>
-    </div>
-
-    <div class="section">
-        <h3>Soft Skills</h3>
-        <ul>
-            {"".join([f'<li>{skill}</li>' for skill in softskills_list])}
-        </ul>
-    </div>
-
-    {f'''
-    <div class="section">
-        <h3>Project Links</h3>
-        <div class="links">
-            {"".join([f'<a href="{link}" target="_blank">Project {i+1}</a>' for i, link in enumerate(session_state.project_links)])}
-        </div>
-    </div>
-    ''' if session_state.project_links else ''}
-
-    {f'''
-    <div class="section">
-        <h3>Certificates</h3>
-        {"".join([f'''
-        <div class="project-item">
-            <div class="item-header">
-                <div class="item-title"><a href="{cert['link']}" target="_blank">{cert['name']}</a></div>
-                <div class="item-duration">{cert.get('duration', '')}</div>
-            </div>
-            <div class="item-description">{cert.get('description', '')}</div>
-        </div>
-        ''' for cert in session_state.certificate_links if cert.get('name')])}
-    </div>
-    ''' if any(cert.get('name') for cert in session_state.certificate_links) else ''}
-
-</body>
-</html>
-"""
-    
-    return html_content
-
-def render_template_sidebar(session_state, profile_img_html=""):
-    """Elegant sidebar template - split layout with left sidebar for personal info + skills, right column for main content"""
-    
-    # Process lists
-    skills_list = [s.strip() for s in session_state['skills'].split(',') if s.strip()]
-    languages_list = [l.strip() for l in session_state['languages'].split(',') if l.strip()]
-    interests_list = [i.strip() for i in session_state['interests'].split(',') if i.strip()]
-    softskills_list = [s.strip() for s in session_state['Softskills'].split(',') if s.strip()]
-    
-    html_content = f"""
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{session_state['name']} - Elegant Resume</title>
-    <style>
-        * {{
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }}
-        
-        body {{
-            font-family: 'Georgia', serif;
-            line-height: 1.6;
-            color: #333;
-            background: #f8f9fa;
-        }}
-        
-        .resume-container {{
-            display: flex;
-            min-height: 100vh;
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-        }}
-        
-        .sidebar {{
-            width: 300px;
-            background: #2c3e50;
-            color: white;
-            padding: 40px 30px;
-        }}
-        
-        .main-content {{
-            flex: 1;
-            padding: 40px;
-            background: white;
-        }}
-        
-        .profile-section {{
-            text-align: center;
-            margin-bottom: 40px;
-        }}
-        
-        .profile-section h1 {{
-            font-size: 1.8rem;
-            margin-bottom: 10px;
-            color: #ecf0f1;
-        }}
-        
-        .profile-section h2 {{
-            font-size: 1rem;
-            color: #bdc3c7;
-            margin-bottom: 20px;
-            font-weight: normal;
-        }}
-        
-        .contact-item {{
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-            font-size: 0.9rem;
-        }}
-        
-        .contact-item::before {{
-            content: '●';
-            margin-right: 10px;
-            color: #3498db;
-        }}
-        
-        .contact-item a {{
-            color: #ecf0f1;
-            text-decoration: none;
-        }}
-        
-        .sidebar-section {{
-            margin-bottom: 35px;
-        }}
-        
-        .sidebar-section h3 {{
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-            color: #3498db;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 1px solid #34495e;
-            padding-bottom: 5px;
-        }}
-        
-        .sidebar ul {{
-            list-style: none;
-        }}
-        
-        .sidebar li {{
-            margin-bottom: 8px;
-            padding-left: 15px;
-            position: relative;
-            font-size: 0.9rem;
-        }}
-        
-        .sidebar li::before {{
-            content: '▸';
-            position: absolute;
-            left: 0;
-            color: #3498db;
-        }}
-        
-        .skill-item {{
-            background: rgba(52, 152, 219, 0.2);
-            padding: 5px 10px;
-            margin: 5px 0;
-            border-radius: 3px;
-            font-size: 0.85rem;
-        }}
-        
-        .main-section {{
-            margin-bottom: 35px;
-        }}
-        
-        .main-section h3 {{
-            font-size: 1.4rem;
-            color: #2c3e50;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-        }}
-        
-        .summary {{
-            font-size: 1rem;
-            line-height: 1.8;
-            color: #555;
-            text-align: justify;
-            font-style: italic;
-            background: #f8f9fa;
-            padding: 20px;
-            border-left: 4px solid #3498db;
-        }}
-        
-        .content-item {{
-            margin-bottom: 25px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #ecf0f1;
-        }}
-        
-        .content-item:last-child {{
-            border-bottom: none;
-        }}
-        
-        .item-header {{
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 8px;
-        }}
-        
-        .item-title {{
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #2c3e50;
-        }}
-        
-        .item-duration {{
-            color: #7f8c8d;
-            font-size: 0.9rem;
-            font-style: italic;
-        }}
-        
-        .item-company {{
-            color: #3498db;
-            font-size: 1rem;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }}
-        
-        .item-description {{
-            color: #666;
-            line-height: 1.6;
-        }}
-        
-        .project-tech {{
-            background: #e8f4f8;
-            color: #2c3e50;
-            padding: 5px 10px;
-            border-radius: 3px;
-            font-size: 0.85rem;
-            margin-bottom: 8px;
-            display: inline-block;
-        }}
-        
-        @media (max-width: 768px) {{
-            .resume-container {{
-                flex-direction: column;
+            
+            .profile-image {{
+                flex-shrink: 0;
+                margin-left: 40px;
+            }}
+            
+            .main-content {{
+                display: flex;
+                min-height: 800px;
             }}
             
             .sidebar {{
-                width: 100%;
+                width: 350px;
+                background: #f7fafc;
+                padding: 40px 30px;
+                border-right: 1px solid #e2e8f0;
+            }}
+            
+            .main-section {{
+                flex: 1;
+                padding: 40px;
+                background: #ffffff;
+            }}
+            
+            .contact-info {{
+                margin-bottom: 40px;
+            }}
+            
+            .contact-item {{
+                display: flex;
+                align-items: center;
+                margin-bottom: 12px;
+                padding: 8px 0;
+            }}
+            
+            .contact-icon {{
+                width: 20px;
+                height: 20px;
+                margin-right: 15px;
+                opacity: 0.8;
+            }}
+            
+            .contact-item span, .contact-item a {{
+                font-size: 14px;
+                color: #4a5568;
+                text-decoration: none;
+                font-weight: 500;
+            }}
+            
+            .contact-item a:hover {{
+                color: #6b7280;
+                transition: color 0.3s ease;
+            }}
+            
+            .section-title {{
+                font-size: 22px;
+                font-weight: 700;
+                color: #2d3748;
+                margin: 35px 0 15px 0;
+            }}
+            
+            .section-content {{
+                margin-bottom: 30px;
+            }}
+            
+            .summary-text {{
+                font-size: 16px;
+                line-height: 1.8;
+                color: #4a5568;
+                background: #f8fafc;
+                padding: 25px;
+                border-radius: 8px;
+                border-left: 3px solid #9ca3af;
+            }}
+            
+            @media (max-width: 768px) {{
+                .main-content {{
+                    flex-direction: column;
+                }}
+                
+                .sidebar {{
+                    width: 100%;
+                }}
+                
+                .header-section {{
+                    flex-direction: column;
+                    text-align: center;
+                }}
+                
+                .profile-image {{
+                    margin: 20px 0 0 0;
+                }}
+                
+                .name-title h1 {{
+                    font-size: 32px;
+                }}
+            }}
+            
+            @media (max-width: 480px) {{
+                .header-section, .sidebar, .main-section {{
+                    padding: 20px;
+                }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="resume-container">
+            <div class="header-section">
+                <div class="name-title">
+                    <h1>{st.session_state['name']}</h1>
+                    <h2>{st.session_state['job_title']}</h2>
+                </div>
+                <div class="profile-image">
+                    {profile_img_html}
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="sidebar">
+                    <div class="contact-info">
+                        <div class="contact-item">
+                            <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span>{st.session_state['location']}</span>
+                        </div>
+                        <div class="contact-item">
+                            <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path>
+                            </svg>
+                            <span>{st.session_state['phone']}</span>
+                        </div>
+                        <div class="contact-item">
+                            <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                            </svg>
+                            <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a>
+                        </div>
+                        <div class="contact-item">
+                            <svg class="contact-icon" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                            </svg>
+                            <a href="{st.session_state['linkedin']}" target="_blank">LinkedIn</a>
+                        </div>
+                        <div class="contact-item">
+                            <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.498-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z" clip-rule="evenodd"></path>
+                            </svg>
+                            <a href="{st.session_state['portfolio']}" target="_blank">Portfolio</a>
+                        </div>
+                    </div>
+
+                    <div class="section-content">
+                        <h3 class="section-title">Skills</h3>
+                        <div>{skills_html}</div>
+                    </div>
+
+                    <div class="section-content">
+                        <h3 class="section-title">Languages</h3>
+                        <div>{languages_html}</div>
+                    </div>
+
+                    <div class="section-content">
+                        <h3 class="section-title">Interests</h3>
+                        <div>{interests_html}</div>
+                    </div>
+
+                    <div class="section-content">
+                        <h3 class="section-title">Soft Skills</h3>
+                        <div>{Softskills_html}</div>
+                    </div>
+                </div>
+
+                <div class="main-section">
+                    <div class="section-content">
+                        <h3 class="section-title">Professional Summary</h3>
+                        <div class="summary-text">{summary_html}</div>
+                    </div>
+
+                    <div class="section-content">
+                        <h3 class="section-title">Work Experience</h3>
+                        {experience_html}
+                    </div>
+
+                    <div class="section-content">
+                        <h3 class="section-title">Education</h3>
+                        {education_html}
+                    </div>
+
+                    <div class="section-content">
+                        <h3 class="section-title">Projects</h3>
+                        {projects_html}
+                    </div>
+
+                    <div class="section-content">
+                        {project_links_html}
+                    </div>
+
+                    <div class="section-content">
+                        {certificate_links_html}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+def render_template_modern():
+    """Render the modern minimal template - clean, simple design"""
+    import streamlit as st
+    
+    # Get profile image HTML if available
+    profile_img_html = ""
+    if "encoded_profile_image" in st.session_state:
+        encoded_image = st.session_state["encoded_profile_image"]
+        profile_img_html = f"""
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img src="data:image/png;base64,{encoded_image}" alt="Profile Photo"
+                 style="
+                    width: 120px;
+                    height: 120px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    border: 3px solid #e2e8f0;
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                 " />
+        </div>
+        """
+
+    return f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{st.session_state['name']} - Resume</title>
+        <style>
+            * {{
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }}
+            
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 40px 20px;
+                background: #fff;
+            }}
+            
+            .header {{
+                text-align: center;
+                margin-bottom: 40px;
+                padding-bottom: 30px;
+                border-bottom: 2px solid #f0f0f0;
+            }}
+            
+            .header h1 {{
+                font-size: 2.5em;
+                font-weight: 300;
+                color: #2c3e50;
+                margin-bottom: 8px;
+            }}
+            
+            .header h2 {{
+                font-size: 1.2em;
+                font-weight: 400;
+                color: #7f8c8d;
+                margin-bottom: 20px;
+            }}
+            
+            .contact {{
+                display: flex;
+                justify-content: center;
+                gap: 20px;
+                flex-wrap: wrap;
+                font-size: 0.9em;
+            }}
+            
+            .contact a {{
+                color: #3498db;
+                text-decoration: none;
+            }}
+            
+            .section {{
+                margin-bottom: 35px;
+            }}
+            
+            .section h3 {{
+                font-size: 1.4em;
+                font-weight: 500;
+                color: #2c3e50;
+                margin-bottom: 15px;
+                padding-bottom: 5px;
+                border-bottom: 1px solid #ecf0f1;
+            }}
+            
+            .summary {{
+                font-size: 1em;
+                line-height: 1.8;
+                color: #555;
+                background: #f8f9fa;
+                padding: 20px;
+                border-radius: 5px;
+                border-left: 4px solid #3498db;
+            }}
+            
+            .experience-item, .education-item, .project-item {{
+                margin-bottom: 25px;
+                padding: 20px;
+                background: #fafafa;
+                border-radius: 5px;
+                border-left: 3px solid #95a5a6;
             }}
             
             .item-header {{
-                flex-direction: column;
-                align-items: flex-start;
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                margin-bottom: 8px;
+                flex-wrap: wrap;
             }}
-        }}
-    </style>
-</head>
-<body>
-    <div class="resume-container">
-        <div class="sidebar">
-            <div class="profile-section">
-                {profile_img_html}
-                <h1>{session_state['name']}</h1>
-                <h2>{session_state['job_title']}</h2>
-            </div>
             
-            <div class="sidebar-section">
-                <h3>Contact</h3>
-                <div class="contact-item">📍 {session_state['location']}</div>
-                <div class="contact-item">📞 {session_state['phone']}</div>
-                <div class="contact-item"><a href="mailto:{session_state['email']}">✉️ {session_state['email']}</a></div>
-                <div class="contact-item"><a href="{session_state['linkedin']}" target="_blank">🔗 LinkedIn</a></div>
-                <div class="contact-item"><a href="{session_state['portfolio']}" target="_blank">🌐 Portfolio</a></div>
-            </div>
+            .item-title {{
+                font-weight: 600;
+                color: #2c3e50;
+                font-size: 1.1em;
+            }}
             
-            <div class="sidebar-section">
-                <h3>Skills</h3>
-                {"".join([f'<div class="skill-item">{skill}</div>' for skill in skills_list])}
-            </div>
+            .item-duration {{
+                color: #7f8c8d;
+                font-size: 0.9em;
+            }}
             
-            <div class="sidebar-section">
-                <h3>Languages</h3>
-                <ul>
-                    {"".join([f'<li>{lang}</li>' for lang in languages_list])}
-                </ul>
-            </div>
+            .item-subtitle {{
+                color: #555;
+                font-style: italic;
+                margin-bottom: 10px;
+            }}
             
-            <div class="sidebar-section">
-                <h3>Interests</h3>
-                <ul>
-                    {"".join([f'<li>{interest}</li>' for interest in interests_list])}
-                </ul>
-            </div>
+            .skills-list, .languages-list, .interests-list {{
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }}
             
-            <div class="sidebar-section">
-                <h3>Soft Skills</h3>
-                <ul>
-                    {"".join([f'<li>{skill}</li>' for skill in softskills_list])}
-                </ul>
+            .skills-list span, .languages-list span, .interests-list span {{
+                background: #ecf0f1;
+                padding: 6px 12px;
+                border-radius: 15px;
+                font-size: 0.9em;
+                color: #2c3e50;
+            }}
+            
+            ul {{
+                list-style-type: none;
+                padding-left: 0;
+            }}
+            
+            li {{
+                margin-bottom: 5px;
+                padding-left: 15px;
+                position: relative;
+            }}
+            
+            li:before {{
+                content: "•";
+                color: #3498db;
+                position: absolute;
+                left: 0;
+            }}
+            
+            @media (max-width: 600px) {{
+                .contact {{
+                    flex-direction: column;
+                    gap: 5px;
+                }}
+                
+                .item-header {{
+                    flex-direction: column;
+                    align-items: flex-start;
+                }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            {profile_img_html}
+            <h1>{st.session_state['name']}</h1>
+            <h2>{st.session_state['job_title']}</h2>
+            <div class="contact">
+                <span>📧 <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a></span>
+                <span>📞 {st.session_state['phone']}</span>
+                <span>📍 {st.session_state['location']}</span>
+                <span>🔗 <a href="{st.session_state['linkedin']}">LinkedIn</a></span>
+                <span>🌐 <a href="{st.session_state['portfolio']}">Portfolio</a></span>
             </div>
         </div>
+
+        <div class="section">
+            <h3>Summary</h3>
+            <div class="summary">{st.session_state['summary'].replace(chr(10), '<br>')}</div>
+        </div>
+
+        <div class="section">
+            <h3>Experience</h3>
+            {''.join(f'''
+            <div class="experience-item">
+                <div class="item-header">
+                    <div class="item-title">{exp["company"]}</div>
+                    <div class="item-duration">{exp["duration"]}</div>
+                </div>
+                <div class="item-subtitle">{exp["title"]}</div>
+                <div>{exp["description"].replace(chr(10), '<br>')}</div>
+            </div>
+            ''' for exp in st.session_state.experience_entries if exp["company"] or exp["title"])}
+        </div>
+
+        <div class="section">
+            <h3>Education</h3>
+            {''.join(f'''
+            <div class="education-item">
+                <div class="item-header">
+                    <div class="item-title">{edu["institution"]}</div>
+                    <div class="item-duration">{edu["year"]}</div>
+                </div>
+                <div class="item-subtitle">{edu["degree"]}</div>
+                <div>{edu["details"]}</div>
+            </div>
+            ''' for edu in st.session_state.education_entries if edu["institution"] or edu["degree"])}
+        </div>
+
+        <div class="section">
+            <h3>Projects</h3>
+            {''.join(f'''
+            <div class="project-item">
+                <div class="item-header">
+                    <div class="item-title">{proj["title"]}</div>
+                    <div class="item-duration">{proj["duration"]}</div>
+                </div>
+                <div class="item-subtitle">Tech: {proj["tech"]}</div>
+                <div>{proj["description"].replace(chr(10), '<br>')}</div>
+            </div>
+            ''' for proj in st.session_state.project_entries if proj["title"])}
+        </div>
+
+        <div class="section">
+            <h3>Skills</h3>
+            <div class="skills-list">
+                {''.join(f'<span>{skill.strip()}</span>' for skill in st.session_state['skills'].split(',') if skill.strip())}
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Languages</h3>
+            <div class="languages-list">
+                {''.join(f'<span>{lang.strip()}</span>' for lang in st.session_state['languages'].split(',') if lang.strip())}
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Interests</h3>
+            <div class="interests-list">
+                {''.join(f'<span>{interest.strip()}</span>' for interest in st.session_state['interests'].split(',') if interest.strip())}
+            </div>
+        </div>
+
+        {'<div class="section"><h3>Project Links</h3><ul>' + ''.join(f'<li><a href="{link}">Project {i+1}</a></li>' for i, link in enumerate(st.session_state.project_links)) + '</ul></div>' if st.session_state.project_links else ''}
         
-        <div class="main-content">
-            <div class="main-section">
-                <h3>Professional Summary</h3>
-                <div class="summary">{session_state['summary'].replace(chr(10), '<br>')}</div>
-            </div>
-            
-            <div class="main-section">
-                <h3>Experience</h3>
-                {"".join([f'''
-                <div class="content-item">
-                    <div class="item-header">
-                        <div class="item-title">{exp.get('title', '')}</div>
-                        <div class="item-duration">{exp.get('duration', '')}</div>
-                    </div>
-                    <div class="item-company">{exp.get('company', '')}</div>
-                    <div class="item-description">{exp.get('description', '').replace(chr(10), '<br>')}</div>
-                </div>
-                ''' for exp in session_state.experience_entries if exp.get('company') or exp.get('title')])}
-            </div>
-            
-            <div class="main-section">
-                <h3>Education</h3>
-                {"".join([f'''
-                <div class="content-item">
-                    <div class="item-header">
-                        <div class="item-title">{edu.get('degree', '')}</div>
-                        <div class="item-duration">{edu.get('year', '')}</div>
-                    </div>
-                    <div class="item-company">{edu.get('institution', '')}</div>
-                    <div class="item-description">{edu.get('details', '')}</div>
-                </div>
-                ''' for edu in session_state.education_entries if edu.get('institution') or edu.get('degree')])}
-            </div>
-            
-            <div class="main-section">
-                <h3>Projects</h3>
-                {"".join([f'''
-                <div class="content-item">
-                    <div class="item-header">
-                        <div class="item-title">{proj.get('title', '')}</div>
-                        <div class="item-duration">{proj.get('duration', '')}</div>
-                    </div>
-                    <div class="project-tech">Tech: {proj.get('tech', '')}</div>
-                    <div class="item-description">{proj.get('description', '').replace(chr(10), '<br>')}</div>
-                </div>
-                ''' for proj in session_state.project_entries if proj.get('title')])}
-            </div>
-            
-            {f'''
-            <div class="main-section">
-                <h3>Project Links</h3>
-                {"".join([f'<div class="content-item"><a href="{link}" target="_blank">🔗 Project {i+1}</a></div>' for i, link in enumerate(session_state.project_links)])}
-            </div>
-            ''' if session_state.project_links else ''}
-            
-            {f'''
-            <div class="main-section">
-                <h3>Certificates</h3>
-                {"".join([f'''
-                <div class="content-item">
-                    <div class="item-header">
-                        <div class="item-title"><a href="{cert['link']}" target="_blank">{cert['name']}</a></div>
-                        <div class="item-duration">{cert.get('duration', '')}</div>
-                    </div>
-                    <div class="item-description">{cert.get('description', '')}</div>
-                </div>
-                ''' for cert in session_state.certificate_links if cert.get('name')])}
-            </div>
-            ''' if any(cert.get('name') for cert in session_state.certificate_links) else ''}
-        </div>
-    </div>
-</body>
-</html>
-"""
+        {'<div class="section"><h3>Certificates</h3>' + ''.join(f'<div class="project-item"><div class="item-header"><div class="item-title"><a href="{cert["link"]}">{cert["name"]}</a></div><div class="item-duration">{cert["duration"]}</div></div><div>{cert["description"]}</div></div>' for cert in st.session_state.certificate_links if cert["name"]) + '</div>' if any(cert["name"] for cert in st.session_state.certificate_links) else ''}
+    </body>
+    </html>
+    """
+
+def render_template_sidebar():
+    """Render the elegant sidebar template - split layout"""
+    import streamlit as st
     
-    return html_content
+    # Get profile image HTML if available
+    profile_img_html = ""
+    if "encoded_profile_image" in st.session_state:
+        encoded_image = st.session_state["encoded_profile_image"]
+        profile_img_html = f"""
+        <div style="text-align: center; margin-bottom: 30px;">
+            <img src="data:image/png;base64,{encoded_image}" alt="Profile Photo"
+                 style="
+                    width: 150px;
+                    height: 150px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    border: 4px solid #fff;
+                    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+                 " />
+        </div>
+        """
+
+    return f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{st.session_state['name']} - Resume</title>
+        <style>
+            * {{
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }}
+            
+            body {{
+                font-family: 'Georgia', 'Times New Roman', serif;
+                line-height: 1.6;
+                color: #333;
+                background: #f8f9fa;
+            }}
+            
+            .container {{
+                display: flex;
+                min-height: 100vh;
+                max-width: 1200px;
+                margin: 0 auto;
+                background: #fff;
+                box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            }}
+            
+            .sidebar {{
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                width: 350px;
+                padding: 40px 30px;
+            }}
+            
+            .main-content {{
+                flex: 1;
+                padding: 40px;
+            }}
+            
+            .profile-section {{
+                text-align: center;
+                margin-bottom: 40px;
+            }}
+            
+            .profile-section h1 {{
+                font-size: 1.8em;
+                font-weight: bold;
+                margin-bottom: 8px;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            }}
+            
+            .profile-section h2 {{
+                font-size: 1.1em;
+                font-weight: 300;
+                margin-bottom: 20px;
+                opacity: 0.9;
+            }}
+            
+            .contact-info {{
+                margin-bottom: 35px;
+            }}
+            
+            .contact-info h3 {{
+                font-size: 1.2em;
+                margin-bottom: 15px;
+                padding-bottom: 8px;
+                border-bottom: 2px solid rgba(255,255,255,0.3);
+            }}
+            
+            .contact-item {{
+                margin-bottom: 10px;
+                font-size: 0.9em;
+            }}
+            
+            .contact-item a {{
+                color: #fff;
+                text-decoration: none;
+            }}
+            
+            .sidebar-section {{
+                margin-bottom: 35px;
+            }}
+            
+            .sidebar-section h3 {{
+                font-size: 1.2em;
+                margin-bottom: 15px;
+                padding-bottom: 8px;
+                border-bottom: 2px solid rgba(255,255,255,0.3);
+            }}
+            
+            .skill-item {{
+                background: rgba(255,255,255,0.2);
+                margin: 6px 0;
+                padding: 8px 12px;
+                border-radius: 20px;
+                font-size: 0.9em;
+                backdrop-filter: blur(10px);
+            }}
+            
+            .main-section {{
+                margin-bottom: 40px;
+            }}
+            
+            .main-section h2 {{
+                color: #2c3e50;
+                font-size: 1.6em;
+                margin-bottom: 20px;
+                padding-bottom: 10px;
+                border-bottom: 3px solid #667eea;
+                position: relative;
+            }}
+            
+            .main-section h2:after {{
+                content: '';
+                position: absolute;
+                bottom: -3px;
+                left: 0;
+                width: 60px;
+                height: 3px;
+                background: #764ba2;
+            }}
+            
+            .summary {{
+                background: #f8f9fa;
+                padding: 25px;
+                border-radius: 8px;
+                border-left: 5px solid #667eea;
+                font-size: 1.05em;
+                line-height: 1.8;
+                color: #555;
+            }}
+            
+            .experience-item, .education-item, .project-item {{
+                background: #fff;
+                border: 1px solid #e9ecef;
+                border-radius: 8px;
+                padding: 25px;
+                margin-bottom: 20px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+                transition: transform 0.3s ease;
+            }}
+            
+            .experience-item:hover, .education-item:hover, .project-item:hover {{
+                transform: translateY(-2px);
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            }}
+            
+            .item-header {{
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                margin-bottom: 12px;
+                flex-wrap: wrap;
+            }}
+            
+            .item-title {{
+                color: #2c3e50;
+                font-weight: bold;
+                font-size: 1.2em;
+            }}
+            
+            .item-duration {{
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                color: white;
+                padding: 4px 12px;
+                border-radius: 15px;
+                font-size: 0.85em;
+                font-weight: 500;
+            }}
+            
+            .item-subtitle {{
+                color: #6c757d;
+                font-style: italic;
+                margin-bottom: 12px;
+                font-size: 1.05em;
+            }}
+            
+            .item-description {{
+                line-height: 1.7;
+                color: #495057;
+            }}
+            
+            .certificates {{
+                background: #f8f9fa;
+                padding: 15px;
+                border-radius: 8px;
+                border-left: 4px solid #28a745;
+            }}
+            
+            .certificate-item {{
+                margin-bottom: 15px;
+                padding-bottom: 15px;
+                border-bottom: 1px solid #dee2e6;
+            }}
+            
+            .certificate-item:last-child {{
+                border-bottom: none;
+                margin-bottom: 0;
+                padding-bottom: 0;
+            }}
+            
+            .certificate-link {{
+                color: #667eea;
+                text-decoration: none;
+                font-weight: 600;
+            }}
+            
+            @media (max-width: 768px) {{
+                .container {{
+                    flex-direction: column;
+                }}
+                
+                .sidebar {{
+                    width: 100%;
+                }}
+                
+                .item-header {{
+                    flex-direction: column;
+                    align-items: flex-start;
+                }}
+                
+                .item-duration {{
+                    margin-top: 5px;
+                }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="sidebar">
+                <div class="profile-section">
+                    {profile_img_html}
+                    <h1>{st.session_state['name']}</h1>
+                    <h2>{st.session_state['job_title']}</h2>
+                </div>
+                
+                <div class="contact-info">
+                    <h3>Contact</h3>
+                    <div class="contact-item">📧 <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a></div>
+                    <div class="contact-item">📞 {st.session_state['phone']}</div>
+                    <div class="contact-item">📍 {st.session_state['location']}</div>
+                    <div class="contact-item">🔗 <a href="{st.session_state['linkedin']}">LinkedIn</a></div>
+                    <div class="contact-item">🌐 <a href="{st.session_state['portfolio']}">Portfolio</a></div>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3>Skills</h3>
+                    {''.join(f'<div class="skill-item">{skill.strip()}</div>' for skill in st.session_state['skills'].split(',') if skill.strip())}
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3>Languages</h3>
+                    {''.join(f'<div class="skill-item">{lang.strip()}</div>' for lang in st.session_state['languages'].split(',') if lang.strip())}
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3>Soft Skills</h3>
+                    {''.join(f'<div class="skill-item">{skill.strip()}</div>' for skill in st.session_state['Softskills'].split(',') if skill.strip())}
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3>Interests</h3>
+                    {''.join(f'<div class="skill-item">{interest.strip()}</div>' for interest in st.session_state['interests'].split(',') if interest.strip())}
+                </div>
+            </div>
+            
+            <div class="main-content">
+                <div class="main-section">
+                    <h2>Professional Summary</h2>
+                    <div class="summary">{st.session_state['summary'].replace(chr(10), '<br>')}</div>
+                </div>
+                
+                <div class="main-section">
+                    <h2>Work Experience</h2>
+                    {''.join(f'''
+                    <div class="experience-item">
+                        <div class="item-header">
+                            <div class="item-title">{exp["company"]}</div>
+                            <div class="item-duration">{exp["duration"]}</div>
+                        </div>
+                        <div class="item-subtitle">{exp["title"]}</div>
+                        <div class="item-description">{exp["description"].replace(chr(10), '<br>')}</div>
+                    </div>
+                    ''' for exp in st.session_state.experience_entries if exp["company"] or exp["title"])}
+                </div>
+                
+                <div class="main-section">
+                    <h2>Education</h2>
+                    {''.join(f'''
+                    <div class="education-item">
+                        <div class="item-header">
+                            <div class="item-title">{edu["institution"]}</div>
+                            <div class="item-duration">{edu["year"]}</div>
+                        </div>
+                        <div class="item-subtitle">{edu["degree"]}</div>
+                        <div class="item-description">{edu["details"]}</div>
+                    </div>
+                    ''' for edu in st.session_state.education_entries if edu["institution"] or edu["degree"])}
+                </div>
+                
+                <div class="main-section">
+                    <h2>Projects</h2>
+                    {''.join(f'''
+                    <div class="project-item">
+                        <div class="item-header">
+                            <div class="item-title">{proj["title"]}</div>
+                            <div class="item-duration">{proj["duration"]}</div>
+                        </div>
+                        <div class="item-subtitle">Technologies: {proj["tech"]}</div>
+                        <div class="item-description">{proj["description"].replace(chr(10), '<br>')}</div>
+                    </div>
+                    ''' for proj in st.session_state.project_entries if proj["title"])}
+                </div>
+                
+                {'<div class="main-section"><h2>Project Links</h2><ul>' + ''.join(f'<li style="margin-bottom: 8px;"><a href="{link}" style="color: #667eea;">🔗 Project {i+1}</a></li>' for i, link in enumerate(st.session_state.project_links)) + '</ul></div>' if st.session_state.project_links else ''}
+                
+                {'<div class="main-section"><h2>Certificates</h2><div class="certificates">' + ''.join(f'<div class="certificate-item"><a href="{cert["link"]}" class="certificate-link">{cert["name"]}</a> <span style="color: #6c757d;">({cert["duration"]})</span><br><small style="color: #6c757d;">{cert["description"]}</small></div>' for cert in st.session_state.certificate_links if cert["name"]) + '</div></div>' if any(cert["name"] for cert in st.session_state.certificate_links) else ''}
+            </div>
+        </div>
+    </body>
+    </html>
+    """
 
 def generate_cover_letter_from_resume_builder():
     import streamlit as st
@@ -4785,10 +4796,12 @@ Hiring Manager, {company}, {location}
         # ✅ Show nicely in Streamlit
         st.markdown(cover_letter_html, unsafe_allow_html=True)
 
-# Import necessary modules first
+# Main application starts here
 import streamlit as st
 
-# Tab setup (assuming this is within a tab2 context)
+# Create two tabs
+tab1, tab2 = st.tabs(["🏠 Home", "📄 Resume Builder"])
+
 with tab2:
     st.session_state.active_tab = "Resume Builder"
 
@@ -4933,11 +4946,17 @@ with tab2:
         </style>
     """, unsafe_allow_html=True)
 
-    # 🎨 Template Selection
+    # ✨ NEW: Template Selection
     st.markdown("### 🎨 Choose Resume Template")
+    template_options = [
+        "Default (Professional)",
+        "Modern Minimal", 
+        "Elegant Sidebar"
+    ]
     selected_template = st.selectbox(
-        "🎨 Choose Resume Template",
-        ["Default (Professional)", "Modern Minimal", "Elegant Sidebar"],
+        "Select a template style:",
+        template_options,
+        index=0,
         key="template_selector"
     )
 
@@ -5125,99 +5144,143 @@ with tab2:
         st.markdown("## 🧾 <span style='color:#336699;'>Resume Preview</span>", unsafe_allow_html=True)
         st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
-        left, right = st.columns([1, 2])
+        # ✨ NEW: Render based on selected template
+        if selected_template == "Default (Professional)":
+            # Use the existing preview logic for default template
+            left, right = st.columns([1, 2])
 
-        with left:
-            st.markdown(f"""
-                <h2 style='color:#2f2f2f;margin-bottom:0;'>{st.session_state['name']}</h2>
-                <h4 style='margin-top:5px;color:#444;'>{st.session_state['job_title']}</h4>
-
-                <p style='font-size:14px;'>
-                📍 {st.session_state['location']}<br>
-                📞 {st.session_state['phone']}<br>
-                📧 <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a><br>
-                🔗 <a href="{st.session_state['linkedin']}" target="_blank">LinkedIn</a><br>
-                🌐 <a href="{st.session_state['portfolio']}" target="_blank">Portfolio</a>
-                </p>
-            """, unsafe_allow_html=True)
-
-            st.markdown("<h4 style='color:#336699;'>Skills</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for skill in [s.strip() for s in st.session_state["skills"].split(",") if s.strip()]:
-                st.markdown(f"<div style='margin-left:10px;'>• {skill}</div>", unsafe_allow_html=True)
-
-            st.markdown("<h4 style='color:#336699;'>Languages</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for lang in [l.strip() for l in st.session_state["languages"].split(",") if l.strip()]:
-               st.markdown(f"<div style='margin-left:10px;'>• {lang}</div>", unsafe_allow_html=True)
-
-            st.markdown("<h4 style='color:#336699;'>Interests</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for interest in [i.strip() for i in st.session_state["interests"].split(",") if i.strip()]:
-               st.markdown(f"<div style='margin-left:10px;'>• {interest}</div>", unsafe_allow_html=True)
-
-            st.markdown("<h4 style='color:#336699;'>Softskills</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for Softskills  in [i.strip() for i in st.session_state["Softskills"].split(",") if i.strip()]:
-               st.markdown(f"<div style='margin-left:10px;'>• {Softskills}</div>", unsafe_allow_html=True)   
-
-        with right:
-            st.markdown("<h4 style='color:#336699;'>Summary</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            summary_text = st.session_state['summary'].replace('\n', '<br>')
-            st.markdown(f"<p style='font-size:17px;'>{summary_text}</p>", unsafe_allow_html=True)
-
-            st.markdown("<h4 style='color:#336699;'>Experience</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for exp in st.session_state.experience_entries:
-                if exp["company"] or exp["title"]:
-                    st.markdown(f"""
-                    <div style='margin-bottom:15px; padding:10px; border-radius:8px;'>
-                        <div style='display:flex; justify-content:space-between;'>
-                            <b>🏢 {exp['company']}</b><span style='color:gray;'>📆  {exp['duration']}</span>
-                        </div>
-                        <div style='font-size:14px;'>💼 <i>{exp['title']}</i></div>
-                        <div style='font-size:17px;'>📝 {exp['description']}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-            st.markdown("<h4 style='color:#336699;'>🎓 Education</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for edu in st.session_state.education_entries:
-                if edu["institution"] or edu["degree"]:
-                    st.markdown(f"""
-                    <div style='margin-bottom: 15px; padding: 10px 15px;color: white; border-radius: 8px;'>
-                        <div style='display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;'>
-                            <span>🏫 {edu['institution']}</span>
-                            <span style='color: gray;'>📅 {edu['year']}</span>
-                        </div>
-                        <div style='font-size: 14px; margin-top: 5px;'>🎓 <i>{edu['degree']}</i></div>
-                        <div style='font-size: 14px;'>📄 {edu['details']}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-            st.markdown("<h4 style='color:#336699;'>Projects</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for proj in st.session_state.project_entries:
+            with left:
                 st.markdown(f"""
-                <div style='margin-bottom:15px; padding: 10px;'>
-                <strong style='font-size:16px;'>{proj['title']}</strong><br>
-                <span style='font-size:14px; word-wrap:break-word; overflow-wrap:break-word; white-space:normal;'>
-                   🛠️ <strong>Tech Stack:</strong> {proj['tech']}
-             </span><br>
-            <span style='font-size:14px;'>⏳ <strong>Duration:</strong> {proj['duration']}</span><br>
-            <span style='font-size:17px;'>📝 <strong>Description:</strong> {proj['description']}</span>
+                    <h2 style='color:#2f2f2f;margin-bottom:0;'>{st.session_state['name']}</h2>
+                    <h4 style='margin-top:5px;color:#444;'>{st.session_state['job_title']}</h4>
+
+                    <p style='font-size:14px;'>
+                    📍 {st.session_state['location']}<br>
+                    📞 {st.session_state['phone']}<br>
+                    📧 <a href="mailto:{st.session_state['email']}">{st.session_state['email']}</a><br>
+                    🔗 <a href="{st.session_state['linkedin']}" target="_blank">LinkedIn</a><br>
+                    🌐 <a href="{st.session_state['portfolio']}" target="_blank">Portfolio</a>
+                    </p>
+                """, unsafe_allow_html=True)
+
+                st.markdown("<h4 style='color:#336699;'>Skills</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+                for skill in [s.strip() for s in st.session_state["skills"].split(",") if s.strip()]:
+                    st.markdown(f"<div style='margin-left:10px;'>• {skill}</div>", unsafe_allow_html=True)
+
+                st.markdown("<h4 style='color:#336699;'>Languages</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+                for lang in [l.strip() for l in st.session_state["languages"].split(",") if l.strip()]:
+                   st.markdown(f"<div style='margin-left:10px;'>• {lang}</div>", unsafe_allow_html=True)
+
+                st.markdown("<h4 style='color:#336699;'>Interests</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+                for interest in [i.strip() for i in st.session_state["interests"].split(",") if i.strip()]:
+                   st.markdown(f"<div style='margin-left:10px;'>• {interest}</div>", unsafe_allow_html=True)
+
+                st.markdown("<h4 style='color:#336699;'>Softskills</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+                for Softskills  in [i.strip() for i in st.session_state["Softskills"].split(",") if i.strip()]:
+                   st.markdown(f"<div style='margin-left:10px;'>• {Softskills}</div>", unsafe_allow_html=True)   
+
+            with right:
+                st.markdown("<h4 style='color:#336699;'>Summary</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+                summary_text = st.session_state['summary'].replace('\n', '<br>')
+                st.markdown(f"<p style='font-size:17px;'>{summary_text}</p>", unsafe_allow_html=True)
+
+                st.markdown("<h4 style='color:#336699;'>Experience</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+                for exp in st.session_state.experience_entries:
+                    if exp["company"] or exp["title"]:
+                        st.markdown(f"""
+                        <div style='margin-bottom:15px; padding:10px; border-radius:8px;'>
+                            <div style='display:flex; justify-content:space-between;'>
+                                <b>🏢 {exp['company']}</b><span style='color:gray;'>📆  {exp['duration']}</span>
+                            </div>
+                            <div style='font-size:14px;'>💼 <i>{exp['title']}</i></div>
+                            <div style='font-size:17px;'>📝 {exp['description']}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                st.markdown("<h4 style='color:#336699;'>🎓 Education</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+                for edu in st.session_state.education_entries:
+                    if edu["institution"] or edu["degree"]:
+                        st.markdown(f"""
+                        <div style='margin-bottom: 15px; padding: 10px 15px;color: white; border-radius: 8px;'>
+                            <div style='display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;'>
+                                <span>🏫 {edu['institution']}</span>
+                                <span style='color: gray;'>📅 {edu['year']}</span>
+                            </div>
+                            <div style='font-size: 14px; margin-top: 5px;'>🎓 <i>{edu['degree']}</i></div>
+                            <div style='font-size: 14px;'>📄 {edu['details']}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                st.markdown("<h4 style='color:#336699;'>Projects</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+                for proj in st.session_state.project_entries:
+                    st.markdown(f"""
+                    <div style='margin-bottom:15px; padding: 10px;'>
+                    <strong style='font-size:16px;'>{proj['title']}</strong><br>
+                    <span style='font-size:14px; word-wrap:break-word; overflow-wrap:break-word; white-space:normal;'>
+                       🛠️ <strong>Tech Stack:</strong> {proj['tech']}
+                 </span><br>
+                <span style='font-size:14px;'>⏳ <strong>Duration:</strong> {proj['duration']}</span><br>
+                <span style='font-size:17px;'>📝 <strong>Description:</strong> {proj['description']}</span>
+                </div>
+                """, unsafe_allow_html=True)
+
+                if st.session_state.project_links:
+                    st.markdown("<h4 style='color:#336699;'>Project Links</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+                    for i, link in enumerate(st.session_state.project_links):
+                        st.markdown(f"[🔗 Project {i+1}]({link})", unsafe_allow_html=True)
+
+                if st.session_state.certificate_links:
+                    st.markdown("<h4 style='color:#336699;'>Certificates</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
+                    
+                    for cert in st.session_state.certificate_links:
+                        if cert["name"] and cert["link"]:
+                            st.markdown(f"""
+                            <div style='display:flex; justify-content:space-between;'>
+                                <a href="{cert['link']}" target="_blank"><b>📄 {cert['name']}</b></a><span style='color:gray;'>{cert['duration']}</span>
+                            </div>
+                            <div style='margin-bottom:10px; font-size:14px;'>{cert['description']}</div>
+                            """, unsafe_allow_html=True)
+
+        elif selected_template == "Modern Minimal":
+            st.info("📋 Modern Minimal template selected. This will be used for download.")
+            # Show simplified preview for Modern Minimal
+            st.markdown(f"""
+            <div style='text-align: center; margin-bottom: 20px; padding: 20px; background: #f8f9fa; border-radius: 10px;'>
+                <h2 style='color: #2c3e50; margin-bottom: 5px;'>{st.session_state['name']}</h2>
+                <h4 style='color: #7f8c8d;'>{st.session_state['job_title']}</h4>
+                <p style='color: #666;'>{st.session_state['email']} • {st.session_state['phone']} • {st.session_state['location']}</p>
             </div>
             """, unsafe_allow_html=True)
+            st.markdown(f"**Summary:** {st.session_state['summary']}")
+            st.markdown(f"**Skills:** {st.session_state['skills']}")
 
-            if st.session_state.project_links:
-                st.markdown("<h4 style='color:#336699;'>Project Links</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-                for i, link in enumerate(st.session_state.project_links):
-                    st.markdown(f"[🔗 Project {i+1}]({link})", unsafe_allow_html=True)
+        elif selected_template == "Elegant Sidebar":
+            st.info("🎨 Elegant Sidebar template selected. This will be used for download.")
+            # Show simplified preview for Sidebar template
+            col1, col2 = st.columns([1, 2])
+            with col1:
+                st.markdown(f"""
+                <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px;'>
+                    <h3 style='color: white; text-align: center;'>{st.session_state['name']}</h3>
+                    <p style='text-align: center;'>{st.session_state['job_title']}</p>
+                    <hr style='border-color: rgba(255,255,255,0.3);'>
+                    <p><strong>Contact:</strong><br>
+                    {st.session_state['email']}<br>
+                    {st.session_state['phone']}<br>
+                    {st.session_state['location']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            with col2:
+                st.markdown(f"**Summary:** {st.session_state['summary']}")
+                st.markdown(f"**Skills:** {st.session_state['skills']}")
 
-            if st.session_state.certificate_links:
-                st.markdown("<h4 style='color:#336699;'>Certificates</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-                
-                for cert in st.session_state.certificate_links:
-                    if cert["name"] and cert["link"]:
-                        st.markdown(f"""
-                        <div style='display:flex; justify-content:space-between;'>
-                            <a href="{cert['link']}" target="_blank"><b>📄 {cert['name']}</b></a><span style='color:gray;'>{cert['duration']}</span>
-                        </div>
-                        <div style='margin-bottom:10px; font-size:14px;'>{cert['description']}</div>
-                        """, unsafe_allow_html=True)
+    # Generate the appropriate HTML content based on selected template
+    if selected_template == "Default (Professional)":
+        html_content = render_template_default()
+    elif selected_template == "Modern Minimal":
+        html_content = render_template_modern()
+    elif selected_template == "Elegant Sidebar":
+        html_content = render_template_sidebar()
 
 import re
 
@@ -5389,6 +5452,7 @@ with tab2:
             """
 
             with st.spinner("🧠 Thinking..."):
+                from llm_manager import call_llm
                 ai_output = call_llm(enhance_prompt, session=st.session_state)
                 st.session_state["ai_output"] = ai_output
 
@@ -5518,146 +5582,129 @@ with tab2:
                 for i, link in enumerate(st.session_state.project_links):
                     st.markdown(f"[🔗 Project {i+1}]({link})", unsafe_allow_html=True)
 
-    # Generate HTML content based on selected template
-    if submitted:
-        # Determine which template to use
-        if selected_template == "Default (Professional)":
-            html_content = render_template_default(st.session_state, profile_img_html)
-        elif selected_template == "Modern Minimal":
-            html_content = render_template_modern(st.session_state, profile_img_html)
-        elif selected_template == "Elegant Sidebar":
-            html_content = render_template_sidebar(st.session_state, profile_img_html)
-        else:
-            # Fallback to default
-            html_content = render_template_default(st.session_state, profile_img_html)
-
-        # Store the generated content
-        st.session_state["generated_html"] = html_content
-
 with tab2:
+    # Convert Resume HTML to bytes for download
+    html_bytes = html_content.encode("utf-8")
+    html_file = BytesIO(html_bytes)
+
+    # Convert Resume HTML to PDF
+    pdf_resume_bytes = html_to_pdf_bytes(html_content)
+
     # ==========================
     # 📥 Resume Download Header
     # ==========================
-    if "generated_html" in st.session_state:
+    st.markdown(
+        """
+        <div style='text-align: center; margin-top: 20px; margin-bottom: 30px;'>
+            <h2 style='color: #2f4f6f; font-family: Arial, sans-serif; font-size: 24px;'>
+                📥 Download Your Resume
+            </h2>
+            <p style="color:#555; font-size:14px;">
+                Choose your preferred format below
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    col1, = st.columns(1)
+
+    # HTML Resume Download Button
+    with col1:
+        st.download_button(
+            label="⬇️ Download as Template",
+            data=html_file,
+            file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.html",
+            mime="text/html",
+            key="download_resume_html"
+        )
+
+    # ✅ Extra Help Note
+    st.markdown("""
+    ✅ After downloading your HTML resume, you can 
+    <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color:#2f4f6f; text-decoration:none;">
+    convert it to PDF using Sejda's free online tool</a>.
+    """, unsafe_allow_html=True)
+
+    # ==========================
+    # 📩 Cover Letter Expander
+    # ==========================
+    with st.expander("📩 Generate Cover Letter from This Resume"):
+        generate_cover_letter_from_resume_builder()
+
+    # ==========================
+    # ✉️ Generated Cover Letter Downloads (NO PREVIEW HERE)
+    # ==========================
+    if "cover_letter" in st.session_state:
         st.markdown(
             """
-            <div style='text-align: center; margin-top: 20px; margin-bottom: 30px;'>
-                <h2 style='color: #2f4f6f; font-family: Arial, sans-serif; font-size: 24px;'>
-                    📥 Download Your Resume
-                </h2>
+            <div style="margin-top: 30px; margin-bottom: 20px;">
+                <h3 style="color: #003366;">✉️ Generated Cover Letter</h3>
                 <p style="color:#555; font-size:14px;">
-                    Choose your preferred format below
+                    You can download your generated cover letter in multiple formats.
                 </p>
             </div>
             """,
             unsafe_allow_html=True
         )
 
-        col1, = st.columns(1)
+        # ✅ Use already-rendered HTML from session (don't show again)
+        styled_cover_letter = st.session_state.get("cover_letter_html", "")
 
-        # HTML Resume Download Button
+        # ✅ Generate PDF from styled HTML
+        pdf_file = html_to_pdf_bytes(styled_cover_letter)
+
+        # ✅ DOCX Generator (preserves line breaks)
+        def create_docx_from_text(text, filename="cover_letter.docx"):
+            from docx import Document
+            bio = BytesIO()
+            doc = Document()
+            doc.add_heading("Cover Letter", 0)
+
+            for line in text.split("\n"):
+                if line.strip():
+                    doc.add_paragraph(line)
+                else:
+                    doc.add_paragraph("")  # preserve empty lines
+
+            doc.save(bio)
+            bio.seek(0)
+            return bio
+
+        # ==========================
+        # 📥 Cover Letter Download Buttons
+        # ==========================
+        st.markdown("""
+        <div style="margin-top: 25px; margin-bottom: 15px;">
+            <strong>⬇️ Download Your Cover Letter:</strong>
+        </div>
+        """, unsafe_allow_html=True)
+
+        col1,col2 = st.columns(2)
         with col1:
-            html_bytes = st.session_state["generated_html"].encode("utf-8")
-            html_file = BytesIO(html_bytes)
-            
             st.download_button(
-                label="⬇️ Download as Template",
-                data=html_file,
-                file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.html",
+                label="📥 Download Cover Letter (.docx)",
+                data=create_docx_from_text(st.session_state["cover_letter"]),
+                file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                key="download_coverletter_docx"
+            )
+        
+        with col2:
+            st.download_button(
+                label="📥 Download Cover Letter (Template)",
+                data=styled_cover_letter.encode("utf-8"),
+                file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.html",
                 mime="text/html",
-                key="download_resume_html"
+                key="download_coverletter_html"
             )
 
-        # PDF Resume Download Button
-        pdf_resume_bytes = html_to_pdf_bytes(st.session_state["generated_html"])
-        
-        # ✅ Extra Help Note
+        # ✅ Helper note
         st.markdown("""
-        ✅ After downloading your HTML resume, you can 
+        ✅ If the HTML cover letter doesn't display properly, you can 
         <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color:#2f4f6f; text-decoration:none;">
         convert it to PDF using Sejda's free online tool</a>.
         """, unsafe_allow_html=True)
-
-        # ==========================
-        # 📩 Cover Letter Expander
-        # ==========================
-        with st.expander("📩 Generate Cover Letter from This Resume"):
-            generate_cover_letter_from_resume_builder()
-
-        # ==========================
-        # ✉️ Generated Cover Letter Downloads (NO PREVIEW HERE)
-        # ==========================
-        if "cover_letter" in st.session_state:
-            st.markdown(
-                """
-                <div style="margin-top: 30px; margin-bottom: 20px;">
-                    <h3 style="color: #003366;">✉️ Generated Cover Letter</h3>
-                    <p style="color:#555; font-size:14px;">
-                        You can download your generated cover letter in multiple formats.
-                    </p>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-            # ✅ Use already-rendered HTML from session (don't show again)
-            styled_cover_letter = st.session_state.get("cover_letter_html", "")
-
-            # ✅ Generate PDF from styled HTML
-            pdf_file = html_to_pdf_bytes(styled_cover_letter)
-
-            # ✅ DOCX Generator (preserves line breaks)
-            def create_docx_from_text(text, filename="cover_letter.docx"):
-                from docx import Document
-                bio = BytesIO()
-                doc = Document()
-                doc.add_heading("Cover Letter", 0)
-
-                for line in text.split("\n"):
-                    if line.strip():
-                        doc.add_paragraph(line)
-                    else:
-                        doc.add_paragraph("")  # preserve empty lines
-
-                doc.save(bio)
-                bio.seek(0)
-                return bio
-
-            # ==========================
-            # 📥 Cover Letter Download Buttons
-            # ==========================
-            st.markdown("""
-            <div style="margin-top: 25px; margin-bottom: 15px;">
-                <strong>⬇️ Download Your Cover Letter:</strong>
-            </div>
-            """, unsafe_allow_html=True)
-
-            col1,col2 = st.columns(2)
-            with col1:
-                st.download_button(
-                    label="📥 Download Cover Letter (.docx)",
-                    data=create_docx_from_text(st.session_state["cover_letter"]),
-                    file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    key="download_coverletter_docx"
-                )
-            
-            with col2:
-                st.download_button(
-                    label="📥 Download Cover Letter (Template)",
-                    data=styled_cover_letter.encode("utf-8"),
-                    file_name=f"{st.session_state['name'].replace(' ', '_')}_Cover_Letter.html",
-                    mime="text/html",
-                    key="download_coverletter_html"
-                )
-
-            # ✅ Helper note
-            st.markdown("""
-            ✅ If the HTML cover letter doesn't display properly, you can 
-            <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color:#2f4f6f; text-decoration:none;">
-            convert it to PDF using Sejda's free online tool</a>.
-            """, unsafe_allow_html=True)
-
 
 
 from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role

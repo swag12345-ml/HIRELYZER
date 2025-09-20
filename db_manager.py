@@ -109,136 +109,11 @@ class DatabaseManager:
 
     def detect_domain_from_title_and_description(self, job_title: str, job_description: str) -> str:
         """
-        Enhanced Domain Detection with improved confidence and fallback mechanisms
+        Enhanced Domain Detection with 25+ Professional Domains
+        Optimized for better performance with cached keyword lookups and confidence thresholding
         """
         title = job_title.lower().strip()
         desc = job_description.lower().strip()
-
-        # IMPROVEMENT 1: Handle sparse resumes early
-        title_words = len(title.split())
-        desc_words = len(desc.split())
-        is_sparse = title_words < 5 and desc_words < 8
-
-        # IMPROVEMENT 2: Direct title/domain mapping before keyword scoring
-        direct_domain_mapping = {
-            # Full Stack variations
-            "full stack developer": "Full Stack Development",
-            "fullstack developer": "Full Stack Development",
-            "full-stack developer": "Full Stack Development",
-            "full stack engineer": "Full Stack Development",
-            "fullstack engineer": "Full Stack Development",
-            
-            # Frontend variations
-            "frontend developer": "Frontend Development",
-            "front-end developer": "Frontend Development",
-            "front end developer": "Frontend Development",
-            "frontend engineer": "Frontend Development",
-            "ui developer": "Frontend Development",
-            "react developer": "Frontend Development",
-            "angular developer": "Frontend Development",
-            "vue developer": "Frontend Development",
-            
-            # Backend variations
-            "backend developer": "Backend Development",
-            "back-end developer": "Backend Development",
-            "back end developer": "Backend Development",
-            "backend engineer": "Backend Development",
-            "server side developer": "Backend Development",
-            "api developer": "Backend Development",
-            
-            # Data Science variations
-            "data scientist": "Data Science",
-            "data analyst": "Data Science",
-            "data engineer": "Data Science",
-            "business analyst": "Business Analysis",
-            "analytics engineer": "Data Science",
-            
-            # AI/ML variations
-            "ai engineer": "AI/Machine Learning",
-            "machine learning engineer": "AI/Machine Learning",
-            "ml engineer": "AI/Machine Learning",
-            "artificial intelligence engineer": "AI/Machine Learning",
-            "deep learning engineer": "AI/Machine Learning",
-            "nlp engineer": "AI/Machine Learning",
-            
-            # Security variations
-            "cybersecurity analyst": "Cybersecurity",
-            "security analyst": "Cybersecurity",
-            "information security analyst": "Cybersecurity",
-            "cyber security engineer": "Cybersecurity",
-            "security engineer": "Cybersecurity",
-            "penetration tester": "Cybersecurity",
-            "ethical hacker": "Cybersecurity",
-            
-            # Mobile variations
-            "mobile developer": "Mobile Development",
-            "android developer": "Mobile Development",
-            "ios developer": "Mobile Development",
-            "mobile app developer": "Mobile Development",
-            "flutter developer": "Mobile Development",
-            "react native developer": "Mobile Development",
-            
-            # Cloud variations
-            "cloud engineer": "Cloud Engineering",
-            "cloud architect": "Cloud Engineering",
-            "aws engineer": "Cloud Engineering",
-            "azure engineer": "Cloud Engineering",
-            "gcp engineer": "Cloud Engineering",
-            "cloud developer": "Cloud Engineering",
-            
-            # DevOps variations
-            "devops engineer": "DevOps/Infrastructure",
-            "devops specialist": "DevOps/Infrastructure",
-            "infrastructure engineer": "DevOps/Infrastructure",
-            "site reliability engineer": "Site Reliability Engineering",
-            "sre": "Site Reliability Engineering",
-            
-            # QA variations
-            "qa engineer": "Quality Assurance",
-            "quality assurance engineer": "Quality Assurance",
-            "test engineer": "Quality Assurance",
-            "automation engineer": "Quality Assurance",
-            "sdet": "Quality Assurance",
-            
-            # Design variations
-            "ui designer": "UI/UX Design",
-            "ux designer": "UI/UX Design",
-            "ui/ux designer": "UI/UX Design",
-            "product designer": "UI/UX Design",
-            "interaction designer": "UI/UX Design",
-            
-            # Management variations
-            "product manager": "Product Management",
-            "project manager": "Project Management",
-            "program manager": "Project Management",
-            "scrum master": "Agile Coaching",
-            "agile coach": "Agile Coaching",
-            
-            # Database variations
-            "database administrator": "Database Management",
-            "dba": "Database Management",
-            "database developer": "Database Management",
-            
-            # Other specializations
-            "game developer": "Game Development",
-            "blockchain developer": "Blockchain Development",
-            "embedded engineer": "Embedded Systems",
-            "network engineer": "Networking",
-            "system architect": "System Architecture",
-            "solution architect": "System Architecture",
-            "technical writer": "Technical Writing",
-            "sales engineer": "Technical Sales"
-        }
-        
-        # Check for direct domain matches in both title and description
-        combined_text = f"{title} {desc}"
-        for term, domain in direct_domain_mapping.items():
-            if term in title or term in desc:
-                # Give higher confidence to title matches
-                if term in title:
-                    return domain
-                elif not is_sparse:  # Only use description matches if not sparse
-                    return domain
 
         # Enhanced normalization with more synonyms
         replacements = {
@@ -335,14 +210,18 @@ class DatabaseManager:
                 "ensemble methods", "gradient boosting", "random forest", "svm", "clustering", "pca"
             ],
             
+            # IMPROVED UI/UX Design keywords - removed generic terms, kept specific ones
             "UI/UX Design": [
-                "ui", "ux", "figma", "designer", "user interface", "user experience",
-                "adobe xd", "sketch", "wireframe", "prototyping", "interaction design",
-                "user research", "usability", "design system", "visual design", "accessibility",
-                "human-centered design", "affinity diagram", "journey mapping", "heuristic evaluation",
-                "persona", "responsive design", "mobile-first", "ux audit", "design tokens", "design thinking",
-                "information architecture", "card sorting", "tree testing", "user testing", "a/b testing design",
-                "design sprint", "atomic design", "material design", "design ops", "brand design"
+                "figma", "adobe xd", "sketch", "wireframe", "prototyping", 
+                "user interface", "user experience", "usability testing", 
+                "interaction design", "design system", "visual design", 
+                "responsive design", "material design", "user research", 
+                "usability", "accessibility", "human-centered design", 
+                "affinity diagram", "journey mapping", "heuristic evaluation",
+                "persona", "mobile-first", "ux audit", "design tokens", "design thinking",
+                "information architecture", "card sorting", "tree testing", 
+                "user testing", "a/b testing design", "design sprint", "atomic design", 
+                "design ops", "brand design"
             ],
             
             "Mobile Development": [
@@ -617,28 +496,38 @@ class DatabaseManager:
             if any(term in desc for term in boost_terms):
                 domain_scores[domain] += 3
 
-        # Step 4: Filter short/noisy descriptions
+        # Step 4: Filter short/noisy descriptions with improved handling
         if len(desc.split()) < 8:
-            for domain in domain_scores:
-                desc_hits = sum(1 for kw in keywords[domain] if kw in desc)
-                domain_scores[domain] = max(0, domain_scores[domain] - (desc_hits * WEIGHTS[domain] * 0.5))
+            # Check for strong keywords that should skip the penalty
+            strong_keywords = ["full stack developer", "mobile developer", "android developer", "ios developer"]
+            has_strong_keywords = any(keyword in title or keyword in desc for keyword in strong_keywords)
+            
+            if not has_strong_keywords:
+                for domain in domain_scores:
+                    desc_hits = sum(1 for kw in keywords[domain] if kw in desc)
+                    domain_scores[domain] = max(0, domain_scores[domain] - (desc_hits * WEIGHTS[domain] * 0.5))
 
-        # Step 5: Choose top domain and apply confidence threshold
+        # Step 5: Choose top domain with confidence threshold
         if domain_scores:
             top_domain = max(domain_scores, key=domain_scores.get)
             top_score = domain_scores[top_domain]
             
-            # IMPROVEMENT 1: Apply confidence threshold for fallback
-            confidence_threshold = 10  # Tunable threshold
-            
-            if top_score <= confidence_threshold:
-                # Low confidence, fall back to Software Engineering
-                return "Software Engineering"
-            
-            if top_score > 0:
+            # Apply confidence threshold - if top score < 8, fallback to Software Engineering
+            if top_score >= 8:
+                # Add explicit keyword overrides at the very end
+                if "full stack developer" in title:
+                    return "Full Stack Development"
+                if "mobile developer" in title or "android developer" in title or "ios developer" in title:
+                    return "Mobile Development"
+                
+                logger.info(f"Domain detected: {top_domain} with score: {top_score}")
                 return top_domain
+            else:
+                logger.info(f"Low confidence detection ({top_score} < 8), falling back to Software Engineering")
+                return "Software Engineering"
 
-        # IMPROVEMENT 3: Default fallback for sparse resumes or no matches
+        # Guaranteed fallback
+        logger.info("No domain detected, falling back to Software Engineering")
         return "Software Engineering"
 
     def get_domain_similarity(self, resume_domain: str, job_domain: str) -> float:

@@ -121,18 +121,9 @@ class DatabaseManager:
             "ai engineer": "machine learning",
             "ml engineer": "machine learning",
             "software developer": "software engineer",
-            "programmer": "software engineer",
-            "coder": "software engineer",
-            "web developer": "software engineer",
             "frontend developer": "frontend",
-            "front-end developer": "frontend",
-            "front end developer": "frontend",
             "backend developer": "backend",
-            "back-end developer": "backend", 
-            "back end developer": "backend",
             "fullstack developer": "full stack",
-            "full-stack developer": "full stack",
-            "full stack developer": "full stack",
             "devops engineer": "devops",
             "cloud engineer": "cloud",
             "qa engineer": "quality assurance",
@@ -150,11 +141,7 @@ class DatabaseManager:
             "scrum master": "agile coaching",
             "technical writer": "technical writing",
             "sales engineer": "technical sales",
-            "solution architect": "system architecture",
-            "mobile developer": "mobile development",
-            "android developer": "mobile development",
-            "ios developer": "mobile development",
-            "react native developer": "mobile development"
+            "solution architect": "system architecture"
         }
         
         for old, new in replacements.items():
@@ -199,358 +186,280 @@ class DatabaseManager:
             "Software Engineering": 2,  # General fallback
         }
 
-        # Comprehensive and expanded keyword mapping for 30+ domains
+        # Comprehensive keyword mapping for 30+ domains
         keywords = {
             "Data Science": [
                 "data analyst", "data scientist", "data science", "eda", "pandas", "numpy",
-                "data analysis", "statistics", "data visualization", "matplotlib", "seaborn", "plotly",
-                "power bi", "tableau", "looker", "qlik", "kpi", "sql", "excel", "dashboards",
+                "data analysis", "statistics", "data visualization", "matplotlib", "seaborn",
+                "power bi", "tableau", "looker", "kpi", "sql", "excel", "dashboards",
                 "insights", "hypothesis testing", "a/b testing", "business intelligence", "data wrangling",
                 "feature engineering", "data storytelling", "exploratory analysis", "data mining",
                 "statistical modeling", "time series", "forecasting", "predictive analytics", "analytics engineer",
                 "r programming", "jupyter", "databricks", "spark", "hadoop", "etl", "data pipeline",
-                "data warehouse", "olap", "oltp", "dimensional modeling", "data governance",
-                "data cleaning", "data preprocessing", "statistical analysis", "regression analysis",
-                "correlation", "variance", "standard deviation", "confidence intervals", "p-values",
-                "data lakes", "big data", "apache spark", "snowflake", "redshift", "bigquery"
+                "data warehouse", "olap", "oltp", "dimensional modeling", "data governance"
             ],
             
             "AI/Machine Learning": [
-                "machine learning", "ml engineer", "deep learning", "neural network", "artificial intelligence",
-                "nlp", "natural language processing", "computer vision", "ai engineer", "scikit-learn", "tensorflow", "pytorch",
-                "llm", "large language model", "huggingface", "xgboost", "lightgbm", "classification", "regression",
-                "reinforcement learning", "transfer learning", "model training", "bert", "gpt", "chatgpt",
-                "yolo", "transformer", "autoencoder", "ai models", "fine-tuning", "zero-shot", "one-shot", "few-shot",
+                "machine learning", "ml engineer", "deep learning", "neural network",
+                "nlp", "computer vision", "ai engineer", "scikit-learn", "tensorflow", "pytorch",
+                "llm", "huggingface", "xgboost", "lightgbm", "classification", "regression",
+                "reinforcement learning", "transfer learning", "model training", "bert", "gpt",
+                "yolo", "transformer", "autoencoder", "ai models", "fine-tuning", "zero-shot", "one-shot",
                 "mistral", "llama", "openai", "langchain", "vector embeddings", "prompt engineering",
                 "mlops", "model deployment", "feature store", "model monitoring", "hyperparameter tuning",
-                "ensemble methods", "gradient boosting", "random forest", "svm", "support vector machine", "clustering", "pca",
-                "keras", "opencv", "spacy", "nltk", "gensim", "word2vec", "glove", "attention mechanism",
-                "generative ai", "gan", "diffusion models", "stable diffusion", "image generation", "text generation",
-                "recommendation systems", "collaborative filtering", "content-based filtering", "matrix factorization"
+                "ensemble methods", "gradient boosting", "random forest", "svm", "clustering", "pca"
             ],
             
+            # IMPROVED UI/UX Design keywords - removed generic terms, kept specific ones
             "UI/UX Design": [
-                "figma", "adobe xd", "sketch", "wireframe", "prototyping", "mockup", "design system",
-                "user interface", "user experience", "usability testing", "user testing", "ux research",
-                "interaction design", "visual design", "graphic design", "responsive design", 
-                "material design", "human interface guidelines", "user research", "personas", "user journey",
-                "usability", "accessibility", "wcag", "human-centered design", "design thinking",
-                "affinity diagram", "journey mapping", "heuristic evaluation", "card sorting",
-                "mobile-first", "ux audit", "design tokens", "atomic design", "design ops",
-                "information architecture", "tree testing", "a/b testing design", "design sprint", 
-                "brand design", "typography", "color theory", "layout design", "ui components",
-                "design patterns", "user flows", "site mapping", "content strategy", "design systems"
+                "figma", "adobe xd", "sketch", "wireframe", "prototyping", 
+                "user interface", "user experience", "usability testing", 
+                "interaction design", "design system", "visual design", 
+                "responsive design", "material design", "user research", 
+                "usability", "accessibility", "human-centered design", 
+                "affinity diagram", "journey mapping", "heuristic evaluation",
+                "persona", "mobile-first", "ux audit", "design tokens", "design thinking",
+                "information architecture", "card sorting", "tree testing", 
+                "user testing", "a/b testing design", "design sprint", "atomic design", 
+                "design ops", "brand design"
             ],
             
             "Mobile Development": [
-                "android", "ios", "flutter", "kotlin", "swift", "mobile app", "react native", "xamarin",
-                "mobile application", "play store", "app store", "firebase", "mobile sdk", "cordova",
+                "android", "ios", "flutter", "kotlin", "swift", "mobile app", "react native",
+                "mobile application", "play store", "app store", "firebase", "mobile sdk",
                 "xcode", "android studio", "cross-platform", "native mobile", "push notifications",
-                "in-app purchases", "mobile ui", "mobile ux", "apk", "ipa", "expo", "capacitor", "phonegap",
-                "ionic", "mobile testing", "app optimization", "mobile security", "app development",
-                "offline functionality", "mobile analytics", "app monetization", "mobile performance",
-                "objective-c", "java android", "android jetpack", "swiftui", "uikit", "core data",
-                "realm", "sqlite mobile", "mobile ci/cd", "app distribution", "mobile debugging",
-                "mobile frameworks", "hybrid apps", "progressive web apps", "pwa", "mobile first design"
+                "in-app purchases", "mobile ui", "mobile ux", "apk", "ipa", "expo", "capacitor", "cordova",
+                "xamarin", "ionic", "phonegap", "mobile testing", "app optimization", "mobile security",
+                "offline functionality", "mobile analytics", "app monetization", "mobile performance"
             ],
             
             "Frontend Development": [
-                "frontend", "front-end", "html", "css", "javascript", "react", "angular", "vue", "svelte",
-                "typescript", "next.js", "nuxt.js", "webpack", "vite", "bootstrap", "tailwind", "sass", "less", "es6",
-                "responsive design", "web accessibility", "dom", "jquery", "redux", "mobx", "vuex", "pinia",
-                "zustand", "framer motion", "storybook", "eslint", "prettier", "babel", "pwa",
-                "single page application", "spa", "csr", "ssr", "server-side rendering", "hydration", "component-based ui",
+                "frontend", "html", "css", "javascript", "react", "angular", "vue",
+                "typescript", "next.js", "webpack", "bootstrap", "tailwind", "sass", "es6",
+                "responsive design", "web accessibility", "dom", "jquery", "redux",
+                "vite", "zustand", "framer motion", "storybook", "eslint", "vitepress", "pwa",
+                "single page application", "csr", "ssr", "hydration", "component-based ui",
                 "web components", "micro frontends", "bundler", "transpiler", "polyfill", "css grid",
-                "flexbox", "css animations", "web performance", "lighthouse", "core web vitals", "seo",
-                "web assembly", "wasm", "graphql client", "apollo client", "relay", "state management",
-                "css preprocessor", "css modules", "styled components", "emotion", "material-ui", "chakra ui"
+                "flexbox", "css animations", "web performance", "lighthouse", "core web vitals"
             ],
             
             "Backend Development": [
-                "backend", "back-end", "server-side", "node.js", "django", "flask", "fastapi", "express", "api development",
-                "sql", "nosql", "mysql", "postgresql", "mongodb", "redis", "rest api", "restful",
-                "graphql", "java", "spring boot", "spring framework", "authentication", "authorization", "jwt", "oauth", "mvc",
-                "business logic", "orm", "database schema", "asp.net", "laravel", "php", "go", "golang", "rust",
-                "nest.js", "microservices", "websockets", "socket.io", "rabbitmq", "message broker", "cron jobs",
-                "elasticsearch", "kafka", "apache kafka", "grpc", "soap", "middleware", "caching", "memcached",
-                "load balancing", "rate limiting", "api gateway", "serverless", "lambda functions", "azure functions",
-                "database design", "stored procedures", "triggers", "indexing", "query optimization",
-                "api documentation", "swagger", "openapi", "postman", "insomnia", "database migrations"
+                "backend", "node.js", "django", "flask", "express", "api development",
+                "sql", "nosql", "server-side", "mysql", "postgresql", "mongodb", "rest api",
+                "graphql", "java", "spring boot", "authentication", "authorization", "mvc",
+                "business logic", "orm", "database schema", "asp.net", "laravel", "go", "fastapi",
+                "nest.js", "microservices", "websockets", "rabbitmq", "message broker", "cron jobs",
+                "redis", "elasticsearch", "kafka", "grpc", "soap", "middleware", "caching",
+                "load balancing", "rate limiting", "api gateway", "serverless", "lambda functions"
             ],
             
             "Full Stack Development": [
-                "full stack", "fullstack", "full-stack", "mern", "mean", "mevn", "lamp", "jamstack",
-                "frontend and backend", "end-to-end development", "full stack developer", "web development",
-                "api integration", "rest api", "graphql", "react + node", "react.js + express", "vue + node",
-                "monolith", "microservices", "serverless architecture", "integrated app", "complete solution",
+                "full stack", "fullstack", "mern", "mean", "mevn", "lamp", "jamstack",
+                "frontend and backend", "end-to-end development", "full stack developer",
+                "api integration", "rest api", "graphql", "react + node", "react.js + express",
+                "monolith", "microservices", "serverless architecture", "integrated app",
                 "web application", "cross-functional development", "component-based architecture",
                 "database design", "middleware", "mvc", "mvvm", "authentication", "authorization",
                 "session management", "cloud deployment", "responsive ui", "performance tuning",
                 "state management", "redux", "context api", "axios", "fetch api", "isomorphic",
-                "universal rendering", "headless cms", "api-first development", "javascript stack",
-                "python stack", "ruby on rails", "django + react", "laravel + vue", "spring + angular"
+                "universal rendering", "headless cms", "api-first development"
             ],
             
             "Cybersecurity": [
-                "cybersecurity", "cyber security", "information security", "infosec", "security analyst", "penetration testing", "pen test", "ethical hacking",
-                "owasp", "vulnerability", "vulnerability assessment", "threat analysis", "security audit", "red team", "blue team",
-                "incident response", "forensics", "digital forensics", "firewall", "ids", "ips", "intrusion detection", "malware", "encryption",
-                "cyber threat", "threat hunting", "security operations", "soc", "security operations center", "siem", "zero-day", "cyber attack",
-                "kali linux", "burp suite", "nmap", "wireshark", "metasploit", "cve", "security testing",
-                "compliance", "ransomware", "phishing", "social engineering", "risk assessment",
-                "security architecture", "identity management", "iam", "pki", "public key infrastructure",
-                "security governance", "vulnerability management", "patch management", "endpoint security",
-                "network security", "application security", "web application security", "secure coding"
+                "cybersecurity", "security analyst", "penetration testing", "ethical hacking",
+                "owasp", "vulnerability", "threat analysis", "infosec", "red team", "blue team",
+                "incident response", "firewall", "ids", "ips", "malware", "encryption",
+                "cyber threat", "security operations", "siem", "zero-day", "cyber attack",
+                "kali linux", "burp suite", "nmap", "wireshark", "cve", "forensics",
+                "security audit", "information security", "compliance", "ransomware",
+                "threat hunting", "security architecture", "identity management", "pki",
+                "security governance", "risk assessment", "vulnerability management", "soc"
             ],
             
             "Cloud Engineering": [
-                "cloud", "cloud computing", "aws", "amazon web services", "azure", "microsoft azure", "gcp", "google cloud platform", "cloud engineer",
-                "cloud infrastructure", "cloud security", "cloud architecture", "s3", "ec2", "lambda", "azure functions", "cloud functions",
+                "cloud", "aws", "azure", "gcp", "cloud engineer", "cloud computing",
+                "cloud infrastructure", "cloud security", "s3", "ec2", "cloud formation",
                 "load balancer", "auto scaling", "cloud storage", "cloud native", "cloud migration",
-                "eks", "aks", "gke", "kubernetes", "docker", "containers", "terraform", "cloudformation", "arm templates",
-                "cloudwatch", "azure monitor", "stackdriver", "cloudtrail", "iam", "rds", "cosmos db", "cloud sql", "elb",
-                "serverless", "faas", "paas", "iaas", "saas", "multi-cloud", "hybrid cloud", 
-                "cloud cost optimization", "cloud governance", "cloud compliance", "cloud backup", "disaster recovery",
-                "cdn", "content delivery network", "vpc", "virtual private cloud", "cloud networking"
+                "eks", "aks", "terraform", "cloudwatch", "cloudtrail", "iam", "rds", "elb",
+                "lambda", "azure functions", "cloud functions", "serverless", "containers",
+                "cloud architecture", "multi-cloud", "hybrid cloud", "cloud cost optimization"
             ],
             
             "DevOps/Infrastructure": [
-                "devops", "dev ops", "infrastructure", "docker", "kubernetes", "k8s", "ci/cd", "continuous integration", "continuous deployment",
-                "jenkins", "gitlab ci", "github actions", "azure devops", "ansible", "puppet", "chef", "vagrant",
-                "infrastructure as code", "iac", "terraform", "monitoring", "prometheus", "grafana", "elk stack",
-                "deployment", "automation", "pipeline", "build and release", "scripting", "orchestration",
-                "bash", "shell script", "powershell", "site reliability", "sre", "argocd", "helm", "fluxcd",
-                "aws cli", "azure cli", "gcloud", "linux administration", "log aggregation", "observability", "splunk",
-                "infrastructure monitoring", "alerting", "incident management", "chaos engineering", "configuration management",
-                "containerization", "microservices", "service mesh", "istio", "consul", "vault", "secrets management"
+                "devops", "docker", "kubernetes", "ci/cd", "jenkins", "ansible",
+                "infrastructure as code", "terraform", "monitoring", "prometheus", "grafana",
+                "deployment", "automation", "pipeline", "build and release", "scripting",
+                "bash", "shell script", "site reliability", "sre", "argocd", "helm", "fluxcd",
+                "aws cli", "linux administration", "log aggregation", "observability", "splunk",
+                "gitlab ci", "github actions", "azure devops", "puppet", "chef", "vagrant",
+                "infrastructure monitoring", "alerting", "incident management", "chaos engineering"
             ],
             
             "Quality Assurance": [
-                "qa", "quality assurance", "testing", "software testing", "test automation", "automated testing", "selenium", "cypress", "playwright",
-                "test cases", "test planning", "test strategy", "bug tracking", "defect management", "regression testing", "performance testing",
-                "load testing", "stress testing", "api testing", "ui testing", "unit testing", "integration testing",
-                "integration testing", "system testing", "acceptance testing", "user acceptance testing", "uat", "test driven development", "tdd",
-                "behavior driven development", "bdd", "cucumber", "gherkin", "jest", "mocha", "jasmine", "junit", "testng",
-                "postman", "insomnia", "jmeter", "k6", "appium", "test management", "test execution",
-                "manual testing", "exploratory testing", "black box testing", "white box testing", "gray box testing",
-                "accessibility testing", "usability testing", "security testing", "compatibility testing"
+                "qa", "quality assurance", "testing", "test automation", "selenium", "cypress",
+                "test cases", "test planning", "bug tracking", "regression testing", "performance testing",
+                "load testing", "stress testing", "api testing", "ui testing", "unit testing",
+                "integration testing", "system testing", "acceptance testing", "test driven development",
+                "behavior driven development", "cucumber", "jest", "mocha", "junit", "testng",
+                "postman", "jmeter", "appium", "test management", "defect management"
             ],
             
             "Game Development": [
-                "game development", "game programming", "unity", "unity3d", "unreal engine", "unreal", "c#", "c++", "game design",
-                "3d modeling", "animation", "rigging", "shader programming", "shaders", "physics engine", "game physics",
-                "game mechanics", "gameplay", "level design", "game testing", "multiplayer", "networking", "game networking",
-                "mobile games", "console games", "pc games", "vr games", "ar games", "steam", "playstation", "xbox",
-                "game optimization", "performance profiling", "game analytics", "monetization", "in-app purchases",
-                "blender", "maya", "3ds max", "substance painter", "texture art", "concept art", "game art",
-                "godot", "cocos2d", "construct", "gamemaker", "rpg maker", "indie games", "aaa games"
+                "game development", "unity", "unreal engine", "c#", "c++", "game design",
+                "game programming", "3d modeling", "animation", "shader programming", "physics engine",
+                "game mechanics", "level design", "game testing", "multiplayer", "networking",
+                "mobile games", "console games", "pc games", "vr games", "ar games",
+                "game optimization", "performance profiling", "game analytics", "monetization"
             ],
             
             "Blockchain Development": [
-                "blockchain", "cryptocurrency", "crypto", "smart contracts", "solidity", "ethereum", "web3",
-                "bitcoin", "btc", "defi", "decentralized finance", "nft", "non-fungible token", "dapp", "decentralized app", "consensus algorithms",
-                "cryptography", "distributed ledger", "mining", "staking", "tokenomics", "token economics",
-                "metamask", "truffle", "hardhat", "ganache", "ipfs", "polygon", "matic", "binance smart chain", "bsc",
-                "hyperledger", "chainlink", "oracles", "dao", "decentralized autonomous organization", "yield farming", "liquidity mining",
-                "layer 2", "rollups", "sidechains", "atomic swaps", "cross-chain", "interoperability",
-                "rust blockchain", "go blockchain", "vyper", "web3.js", "ethers.js", "wallet integration"
+                "blockchain", "cryptocurrency", "smart contracts", "solidity", "ethereum",
+                "bitcoin", "defi", "nft", "web3", "dapp", "consensus algorithms",
+                "cryptography", "distributed ledger", "mining", "staking", "tokenomics",
+                "metamask", "truffle", "hardhat", "ipfs", "polygon", "binance smart chain",
+                "hyperledger", "chainlink", "oracles", "dao", "yield farming"
             ],
             
             "Embedded Systems": [
-                "embedded systems", "embedded programming", "microcontroller", "mcu", "firmware", "c programming", "embedded c", "assembly",
-                "real-time systems", "rtos", "freertos", "arduino", "raspberry pi", "arm", "cortex", "pic", "avr",
-                "hardware programming", "sensor integration", "iot devices", "internet of things",
-                "low-level programming", "device drivers", "bootloader", "embedded linux", "yocto",
-                "fpga", "verilog", "vhdl", "pcb design", "circuit design", "schematic design",
-                "i2c", "spi", "uart", "can bus", "modbus", "gpio", "adc", "pwm", "timers", "interrupts",
-                "power management", "battery optimization", "wireless communication", "bluetooth", "wifi", "lora"
+                "embedded systems", "microcontroller", "firmware", "c programming", "assembly",
+                "real-time systems", "rtos", "arduino", "raspberry pi", "arm", "pic",
+                "embedded c", "hardware programming", "sensor integration", "iot devices",
+                "low-level programming", "device drivers", "bootloader", "embedded linux",
+                "fpga", "verilog", "vhdl", "pcb design", "circuit design"
             ],
             
             "System Architecture": [
-                "system architecture", "solution architect", "software architect", "enterprise architecture", "microservices",
-                "distributed systems", "scalability", "high availability", "fault tolerance", "reliability",
-                "system design", "architecture patterns", "design patterns", "architectural design", "load balancing",
+                "system architecture", "solution architect", "enterprise architecture", "microservices",
+                "distributed systems", "scalability", "high availability", "fault tolerance",
+                "system design", "architecture patterns", "design patterns", "load balancing",
                 "caching strategies", "database sharding", "event-driven architecture", "message queues",
-                "api design", "service mesh", "containerization", "orchestration", "cloud architecture",
-                "monolithic architecture", "modular architecture", "layered architecture", "hexagonal architecture",
-                "clean architecture", "domain-driven design", "ddd", "cqrs", "event sourcing",
-                "performance optimization", "capacity planning", "disaster recovery", "backup strategies"
+                "api design", "service mesh", "containerization", "orchestration", "cloud architecture"
             ],
             
             "Database Management": [
-                "database administrator", "dba", "database management", "database design", "sql optimization", "query optimization",
-                "database performance", "backup and recovery", "replication", "clustering", "sharding",
-                "data modeling", "er modeling", "normalization", "denormalization", "indexing", "stored procedures", "triggers",
-                "database security", "mysql", "postgresql", "postgres", "oracle", "sql server", "mongodb", "cassandra",
-                "redis", "elasticsearch", "data warehouse", "etl", "extract transform load", "olap", "oltp",
-                "mariadb", "sqlite", "neo4j", "graph database", "time series database", "influxdb",
-                "database migration", "schema design", "database tuning", "connection pooling", "transaction management"
+                "database administrator", "dba", "database design", "sql optimization",
+                "database performance", "backup and recovery", "replication", "clustering",
+                "data modeling", "normalization", "indexing", "stored procedures", "triggers",
+                "database security", "mysql", "postgresql", "oracle", "sql server", "mongodb",
+                "cassandra", "redis", "elasticsearch", "data warehouse", "etl", "olap"
             ],
             
             "Networking": [
-                "network engineer", "network administration", "networking", "cisco", "juniper", "routing", "switching",
-                "tcp/ip", "dns", "dhcp", "vpn", "firewall", "network security", "network protocols",
-                "network monitoring", "network troubleshooting", "wan", "lan", "vlan", "subnet", "subnetting",
-                "bgp", "ospf", "eigrp", "rip", "mpls", "sd-wan", "network automation", "ccna", "ccnp", "ccie",
-                "packet analysis", "wireshark", "network design", "bandwidth management", "qos", "quality of service",
-                "load balancing", "network optimization", "wireless networking", "wifi", "802.11", "ethernet"
+                "network engineer", "network administration", "cisco", "routing", "switching",
+                "tcp/ip", "dns", "dhcp", "vpn", "firewall", "network security",
+                "network monitoring", "network troubleshooting", "wan", "lan", "vlan",
+                "bgp", "ospf", "mpls", "sd-wan", "network automation", "network protocols"
             ],
             
             "Site Reliability Engineering": [
-                "sre", "site reliability", "site reliability engineering", "system reliability", "incident management",
-                "post-mortem", "postmortem", "error budgets", "sli", "service level indicator", "slo", "service level objective", "monitoring", "alerting",
-                "capacity planning", "performance optimization", "chaos engineering", "fault injection",
-                "disaster recovery", "high availability", "fault tolerance", "observability", "reliability",
-                "on-call", "incident response", "root cause analysis", "mttr", "mean time to recovery",
-                "automation", "toil reduction", "reliability engineering", "production support"
+                "sre", "site reliability", "system reliability", "incident management",
+                "post-mortem", "error budgets", "sli", "slo", "monitoring", "alerting",
+                "capacity planning", "performance optimization", "chaos engineering",
+                "disaster recovery", "high availability", "fault tolerance", "observability"
             ],
             
             "Product Management": [
-                "product manager", "product management", "product strategy", "product roadmap", "roadmap",
-                "user stories", "requirements gathering", "stakeholder management", "product owner", "agile", "scrum",
-                "scrum", "kanban", "product analytics", "metrics", "kpi", "a/b testing", "user research",
-                "market research", "competitive analysis", "go-to-market", "gtm", "product launch", "product marketing",
-                "feature prioritization", "backlog management", "product metrics", "user feedback",
-                "product vision", "product discovery", "customer development", "lean startup", "mvp", "minimum viable product",
-                "product-market fit", "user experience", "customer journey", "retention", "churn", "growth"
+                "product manager", "product management", "product strategy", "roadmap",
+                "user stories", "requirements gathering", "stakeholder management", "agile",
+                "scrum", "kanban", "product analytics", "a/b testing", "user research",
+                "market research", "competitive analysis", "go-to-market", "product launch",
+                "feature prioritization", "backlog management", "kpi", "metrics"
             ],
             
             "Project Management": [
-                "project manager", "project management", "pmp", "project management professional", "agile", "scrum master",
-                "kanban", "waterfall", "risk management", "resource planning", "timeline", "gantt chart",
-                "milestone", "deliverables", "stakeholder communication", "budget management", "cost management",
-                "team coordination", "project planning", "project execution", "project closure", "project monitoring",
-                "change management", "quality assurance", "jira", "confluence", "ms project", "microsoft project",
-                "prince2", "lean", "six sigma", "critical path", "work breakdown structure", "wbs"
+                "project manager", "project management", "pmp", "agile", "scrum master",
+                "kanban", "waterfall", "risk management", "resource planning", "timeline",
+                "milestone", "deliverables", "stakeholder communication", "budget management",
+                "team coordination", "project planning", "project execution", "project closure",
+                "change management", "quality assurance", "jira", "confluence", "ms project"
             ],
             
             "Business Analysis": [
-                "business analyst", "business analysis", "requirements analysis", "business requirements", "process improvement", "workflow",
-                "business process", "stakeholder analysis", "gap analysis", "use cases", "user stories",
-                "functional requirements", "non-functional requirements", "documentation", "business documentation",
+                "business analyst", "requirements analysis", "process improvement", "workflow",
+                "business process", "stakeholder analysis", "gap analysis", "use cases",
+                "functional requirements", "non-functional requirements", "documentation",
                 "process mapping", "business rules", "acceptance criteria", "user acceptance testing",
-                "change management", "business intelligence", "data analysis", "reporting", "dashboard creation",
-                "process optimization", "lean", "six sigma", "continuous improvement", "as-is", "to-be",
-                "business case", "cost-benefit analysis", "roi", "return on investment", "feasibility study"
+                "change management", "business intelligence", "data analysis", "reporting"
             ],
             
             "Technical Writing": [
-                "technical writer", "technical writing", "documentation", "api documentation", "user manuals", "user guides",
-                "technical communication", "content strategy", "information architecture", "technical documentation",
-                "style guide", "editing", "proofreading", "copy editing", "markdown", "confluence", "notion",
-                "gitbook", "sphinx", "doxygen", "technical blogging", "knowledge base", "help documentation",
-                "instruction manuals", "process documentation", "software documentation", "developer documentation",
-                "release notes", "change logs", "troubleshooting guides", "faq", "tutorial writing"
+                "technical writer", "documentation", "api documentation", "user manuals",
+                "technical communication", "content strategy", "information architecture",
+                "style guide", "editing", "proofreading", "markdown", "confluence",
+                "gitbook", "sphinx", "doxygen", "technical blogging", "knowledge base"
             ],
             
             "Digital Marketing": [
-                "digital marketing", "seo", "search engine optimization", "sem", "search engine marketing", "social media marketing", "smm", "content marketing",
-                "email marketing", "ppc", "pay per click", "google ads", "facebook ads", "instagram ads", "linkedin ads", "analytics",
-                "conversion optimization", "cro", "marketing automation", "lead generation", "demand generation",
-                "brand management", "influencer marketing", "affiliate marketing", "growth hacking", "growth marketing",
-                "google analytics", "facebook pixel", "marketing funnel", "customer acquisition", "marketing attribution",
-                "remarketing", "retargeting", "marketing campaigns", "digital advertising", "online marketing"
+                "digital marketing", "seo", "sem", "social media marketing", "content marketing",
+                "email marketing", "ppc", "google ads", "facebook ads", "analytics",
+                "conversion optimization", "marketing automation", "lead generation",
+                "brand management", "influencer marketing", "affiliate marketing", "growth hacking"
             ],
             
             "E-commerce": [
-                "e-commerce", "ecommerce", "online retail", "online store", "shopify", "magento", "woocommerce", "bigcommerce",
-                "payment gateway", "payment processing", "inventory management", "order management", "shipping", "fulfillment",
-                "customer service", "marketplace", "amazon", "ebay", "etsy", "dropshipping", "conversion rate optimization",
-                "product catalog", "shopping cart", "checkout optimization", "amazon fba", "fulfillment by amazon",
-                "product photography", "product listings", "seo for ecommerce", "email marketing", "abandoned cart",
-                "customer retention", "loyalty programs", "subscription commerce", "multi-channel selling"
+                "e-commerce", "online retail", "shopify", "magento", "woocommerce",
+                "payment gateway", "inventory management", "order management", "shipping",
+                "customer service", "marketplace", "dropshipping", "conversion rate optimization",
+                "product catalog", "shopping cart", "checkout optimization", "amazon fba"
             ],
             
             "Fintech": [
-                "fintech", "financial technology", "payment processing", "digital payments", "banking software", "neobank",
-                "trading systems", "algorithmic trading", "risk management", "compliance", "regulatory", "kyc", "know your customer",
-                "aml", "anti-money laundering", "blockchain finance", "cryptocurrency", "digital wallet", "mobile payments",
-                "robo-advisor", "wealth management", "insurtech", "regtech", "lending platform", "peer-to-peer lending",
-                "credit scoring", "fraud detection", "financial analytics", "open banking", "api banking",
-                "financial modeling", "quantitative finance", "high-frequency trading", "financial reporting"
+                "fintech", "financial technology", "payment processing", "banking software",
+                "trading systems", "risk management", "compliance", "regulatory", "kyc",
+                "aml", "blockchain finance", "cryptocurrency", "robo-advisor", "insurtech",
+                "lending platform", "credit scoring", "fraud detection", "financial analytics"
             ],
             
             "Healthcare Tech": [
-                "healthcare technology", "healthtech", "health tech", "medical software", "ehr", "electronic health records", "emr", "electronic medical records",
-                "telemedicine", "telehealth", "medical devices", "hipaa", "healthcare analytics", "health informatics",
-                "clinical trials", "medical imaging", "radiology", "bioinformatics", "genomics", "digital health",
-                "patient management", "healthcare compliance", "medical ai", "clinical decision support",
-                "mhealth", "mobile health", "wearables", "remote patient monitoring", "health data",
-                "medical billing", "revenue cycle management", "laboratory information systems", "pharmacy systems"
+                "healthcare technology", "healthtech", "medical software", "ehr", "emr",
+                "telemedicine", "medical devices", "hipaa", "healthcare analytics",
+                "clinical trials", "medical imaging", "bioinformatics", "health informatics",
+                "patient management", "healthcare compliance", "medical ai", "digital health"
             ],
             
             "EdTech": [
-                "edtech", "educational technology", "e-learning", "online learning", "lms", "learning management system", "learning management",
-                "online education", "educational software", "student information system", "sis", "learning platform",
-                "assessment tools", "educational analytics", "learning analytics", "adaptive learning", "personalized learning", "gamification",
-                "virtual classroom", "educational content", "curriculum development", "instructional design",
-                "mooc", "massive open online course", "microlearning", "blended learning", "distance learning",
-                "educational apps", "learning apps", "student engagement", "educational games", "simulation-based learning"
+                "edtech", "educational technology", "e-learning", "lms", "learning management",
+                "online education", "educational software", "student information system",
+                "assessment tools", "educational analytics", "adaptive learning", "gamification",
+                "virtual classroom", "educational content", "curriculum development"
             ],
             
             "IoT Development": [
-                "iot", "internet of things", "connected devices", "smart devices", "sensor networks", "sensor data",
-                "edge computing", "fog computing", "mqtt", "coap", "zigbee", "bluetooth", "ble", "wifi", "lora", "lorawan",
-                "embedded systems", "device management", "iot platform", "industrial iot", "iiot", "industry 4.0",
-                "smart home", "home automation", "smart city", "smart grid", "wearables", "asset tracking", "predictive maintenance",
-                "remote monitoring", "telemetry", "m2m", "machine to machine", "wireless communication", "sensor fusion",
-                "real-time data", "time series data", "device connectivity", "iot security", "firmware over-the-air"
+                "iot", "internet of things", "connected devices", "sensor networks",
+                "edge computing", "mqtt", "coap", "zigbee", "bluetooth", "wifi",
+                "embedded systems", "device management", "iot platform", "industrial iot",
+                "smart home", "smart city", "wearables", "asset tracking", "predictive maintenance"
             ],
             
             "AR/VR Development": [
-                "ar", "vr", "augmented reality", "virtual reality", "mixed reality", "mr", "xr", "extended reality",
-                "unity 3d", "unreal engine", "oculus", "meta quest", "hololens", "magic leap", "arkit", "arcore",
-                "3d modeling", "spatial computing", "immersive experience", "360 video", "stereoscopic",
-                "haptic feedback", "motion tracking", "hand tracking", "eye tracking", "computer vision", "3d graphics", "webxr",
-                "volumetric capture", "photogrammetry", "3d scanning", "virtual environments", "immersive storytelling",
-                "vr training", "ar visualization", "spatial anchors", "occlusion", "slam", "simultaneous localization and mapping"
+                "ar", "vr", "augmented reality", "virtual reality", "mixed reality", "xr",
+                "unity 3d", "unreal engine", "oculus", "hololens", "arkit", "arcore",
+                "3d modeling", "spatial computing", "immersive experience", "360 video",
+                "haptic feedback", "motion tracking", "computer vision", "3d graphics"
             ],
             
             "Technical Sales": [
-                "technical sales", "sales engineer", "solution selling", "consultative selling", "pre-sales", "pre sales",
-                "technical consulting", "customer success", "account management", "enterprise sales",
-                "product demonstration", "technical presentation", "proposal writing", "rfp", "request for proposal",
-                "client relationship", "revenue generation", "sales process", "crm", "customer relationship management",
-                "lead qualification", "sales funnel", "pipeline management", "quota attainment", "b2b sales",
-                "enterprise software sales", "saas sales", "solution architecture", "technical expertise"
+                "technical sales", "sales engineer", "solution selling", "pre-sales",
+                "technical consulting", "customer success", "account management",
+                "product demonstration", "technical presentation", "proposal writing",
+                "client relationship", "revenue generation", "sales process", "crm"
             ],
             
             "Agile Coaching": [
-                "agile coach", "agile coaching", "scrum master", "agile transformation", "team facilitation", "agile trainer",
-                "retrospectives", "sprint planning", "daily standups", "scrum ceremonies", "agile ceremonies",
-                "continuous improvement", "kaizen", "change management", "team dynamics", "servant leadership",
-                "agile metrics", "velocity", "burn down", "coaching", "mentoring", "organizational change",
-                "scaled agile", "safe", "less", "kanban coaching", "lean coaching", "agile mindset",
-                "team building", "conflict resolution", "facilitation", "agile practices", "agile frameworks"
+                "agile coach", "scrum master", "agile transformation", "team facilitation",
+                "retrospectives", "sprint planning", "daily standups", "agile ceremonies",
+                "continuous improvement", "change management", "team dynamics",
+                "agile metrics", "coaching", "mentoring", "organizational change"
             ],
             
             "Software Engineering": [
-                "software engineer", "software developer", "web developer", "developer", "programmer", "coder",
-                "object oriented", "oop", "design patterns", "solid principles", "agile", "scrum", "git", "version control",
-                "unit testing", "integration testing", "debugging", "code review", "system design", "software architecture",
-                "tdd", "test driven development", "bdd", "behavior driven development", "pair programming", "refactoring", "uml", "dev environment", "ide",
-                "algorithms", "data structures", "clean code", "software craftsmanship", "continuous integration",
-                "software development", "full-stack", "backend", "frontend", "api development", "database design",
-                "performance optimization", "scalability", "maintainability", "code quality", "technical debt"
+                "software engineer", "web developer", "developer", "programmer",
+                "object oriented", "design patterns", "agile", "scrum", "git", "version control",
+                "unit testing", "integration testing", "debugging", "code review", "system design",
+                "tdd", "bdd", "pair programming", "refactoring", "uml", "dev environment", "ide",
+                "algorithms", "data structures", "software architecture", "clean code"
             ]
         }
-
-        # Explicit overrides - check these first before any other logic
-        explicit_overrides = {
-            "full stack developer": "Full Stack Development",
-            "fullstack developer": "Full Stack Development", 
-            "full-stack developer": "Full Stack Development",
-            "mobile developer": "Mobile Development",
-            "android developer": "Mobile Development",
-            "ios developer": "Mobile Development",
-            "react native developer": "Mobile Development"
-        }
-        
-        # Check explicit overrides first
-        for override_term, override_domain in explicit_overrides.items():
-            if override_term in title or override_term in desc:
-                logger.info(f"Explicit override detected: {override_term} -> {override_domain}")
-                return override_domain
 
         # Step 1: Compute weighted keyword matches (4x for title, 1x for desc)
         for domain, kws in keywords.items():
@@ -587,73 +496,28 @@ class DatabaseManager:
             if any(term in desc for term in boost_terms):
                 domain_scores[domain] += 3
 
-        # Step 4: Check for strong keywords in title regardless of description length
-        strong_keywords_mapping = {
-            "data scientist": "Data Science",
-            "data analyst": "Data Science", 
-            "ml engineer": "AI/Machine Learning",
-            "ai engineer": "AI/Machine Learning",
-            "frontend developer": "Frontend Development",
-            "frontend engineer": "Frontend Development",
-            "backend developer": "Backend Development", 
-            "backend engineer": "Backend Development",
-            "cloud engineer": "Cloud Engineering",
-            "devops engineer": "DevOps/Infrastructure",
-            "security analyst": "Cybersecurity",
-            "mobile developer": "Mobile Development",
-            "android developer": "Mobile Development", 
-            "ios developer": "Mobile Development",
-            "game developer": "Game Development",
-            "blockchain developer": "Blockchain Development",
-            "ui/ux designer": "UI/UX Design",
-            "ux designer": "UI/UX Design",
-            "ui designer": "UI/UX Design",
-            "product manager": "Product Management",
-            "project manager": "Project Management"
-        }
-
-        strong_keyword_detected = None
-        for keyword, domain in strong_keywords_mapping.items():
-            if keyword in title:
-                strong_keyword_detected = domain
-                break
-
-        # Step 5: Filter short/noisy descriptions with improved handling
-        desc_word_count = len(desc.split())
-        if desc_word_count < 8:
-            # If we have a strong keyword in title, use that regardless of short description
-            if strong_keyword_detected:
-                logger.info(f"Strong keyword detected in title despite short description: {strong_keyword_detected}")
-                return strong_keyword_detected
-            
-            # Otherwise, reduce scores from description but keep title scores
+        # Step 4: Filter short/noisy descriptions
+        if len(desc.split()) < 8:
             for domain in domain_scores:
                 desc_hits = sum(1 for kw in keywords[domain] if kw in desc)
                 domain_scores[domain] = max(0, domain_scores[domain] - (desc_hits * WEIGHTS[domain] * 0.5))
 
-        # Step 6: Choose top domain with improved confidence threshold
+        # Step 5: Choose top domain with confidence threshold
         if domain_scores:
             top_domain = max(domain_scores, key=domain_scores.get)
             top_score = domain_scores[top_domain]
             
-            # Apply new confidence threshold logic
-            if top_score >= 8:
+            # Apply confidence threshold - if top score < 15, fallback to Software Engineering
+            if top_score >= 15:
                 logger.info(f"Domain detected: {top_domain} with score: {top_score}")
                 return top_domain
-            elif desc_word_count < 8 and not strong_keyword_detected:
-                logger.info(f"Short description ({desc_word_count} words) and no strong keywords, returning General")
-                return "General"
             else:
-                logger.info(f"Low confidence detection ({top_score} < 8), returning Uncategorized")
-                return "Uncategorized"
+                logger.info(f"Low confidence detection ({top_score} < 15), falling back to Software Engineering")
+                return "Software Engineering"
 
-        # Final fallback
-        if desc_word_count < 8:
-            logger.info("No domain detected with short description, returning General")
-            return "General"
-        else:
-            logger.info("No domain detected, returning Uncategorized")
-            return "Uncategorized"
+        # Guaranteed fallback
+        logger.info("No domain detected, falling back to Software Engineering")
+        return "Software Engineering"
 
     def get_domain_similarity(self, resume_domain: str, job_domain: str) -> float:
         """Enhanced similarity scoring with comprehensive domain relationships"""

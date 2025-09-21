@@ -1,45 +1,217 @@
-# =============================================================================
-# OPTIMIZED STREAMLIT RESUME ANALYZER - PERFORMANCE ENHANCED
-# Key Optimizations:
-# 1. Lazy imports for heavy libraries
-# 2. Cached resources and expensive operations  
-# 3. Consolidated imports
-# 4. Cached image/icon requests
-# 5. One-time database initialization
-# =============================================================================
+from xhtml2pdf import pisa
+from io import BytesIO
+
+def html_to_pdf_bytes(html_string):
+    styled_html = f"""
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            @page {{
+                size: 400mm 297mm;  /* Original custom large page size */
+                margin-top: 10mm;
+                margin-bottom: 10mm;
+                margin-left: 10mm;
+                margin-right: 10mm;
+            }}
+            body {{
+                font-size: 14pt;
+                font-family: "Segoe UI", "Helvetica", sans-serif;
+                line-height: 1.5;
+                color: #000;
+            }}
+            h1, h2, h3 {{
+                color: #2f4f6f;
+            }}
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 15px;
+            }}
+            td {{
+                padding: 4px;
+                vertical-align: top;
+                border: 1px solid #ccc;
+            }}
+            .section-title {{
+                background-color: #e0e0e0;
+                font-weight: bold;
+                padding: 6px;
+                margin-top: 10px;
+            }}
+            .box {{
+                padding: 8px;
+                margin-top: 6px;
+                background-color: #f9f9f9;
+                border-left: 4px solid #999;  /* More elegant than full border */
+            }}
+            ul {{
+                margin: 0.5em 0;
+                padding-left: 1.5em;
+            }}
+            li {{
+                margin-bottom: 5px;
+            }}
+        </style>
+    </head>
+    <body>
+        {html_string}
+    </body>
+    </html>
+    """
+
+    pdf_io = BytesIO()
+    pisa.CreatePDF(styled_html, dest=pdf_io)
+    pdf_io.seek(0)
+    return pdf_io
+
+def generate_cover_letter_from_resume_builder():
+    import streamlit as st
+    from datetime import datetime
+    import re
+    from llm_manager import call_llm  # Ensure you import this
+
+    name = st.session_state.get("name", "")
+    job_title = st.session_state.get("job_title", "")
+    summary = st.session_state.get("summary", "")
+    skills = st.session_state.get("skills", "")
+    location = st.session_state.get("location", "")
+    today_date = datetime.today().strftime("%B %d, %Y")
+
+    # ✅ Input boxes for contact info
+    company = st.text_input("🏢 Target Company", placeholder="e.g., Google")
+    linkedin = st.text_input("🔗 LinkedIn URL", placeholder="e.g., https://linkedin.com/in/username")
+    email = st.text_input("📧 Email", placeholder="e.g., you@example.com")
+    mobile = st.text_input("📞 Mobile Number", placeholder="e.g., +91 9876543210")
+
+    # ✅ Button to prevent relooping
+    if st.button("✉️ Generate Cover Letter"):
+        # ✅ Validate input before generating
+        if not all([name, job_title, summary, skills, company, linkedin, email, mobile]):
+            st.warning("⚠️ Please fill in all fields including LinkedIn, email, and mobile.")
+            return
+
+        prompt = f"""
+You are a professional cover letter writer.
+
+Write a formal and compelling cover letter using the information below. 
+Format it as a real letter with:
+1. Date
+2. Recipient heading
+3. Proper salutation
+4. Three short paragraphs
+5. Professional closing
+
+Ensure you **only include the company name once** in the header or salutation, 
+and avoid repeating it redundantly in the body.
+
+### Heading Info:
+{today_date}
+Hiring Manager, {company}, {location}
+
+### Candidate Info:
+- Name: {name}
+- Job Title: {job_title}
+- Summary: {summary}
+- Skills: {skills}
+- Location: {location}
+
+### Instructions:
+- Do not use HTML tags. 
+- Return plain text only.
+"""
+
+        # ✅ Call LLM
+        cover_letter = call_llm(prompt, session=st.session_state).strip()
+
+        # ✅ Store plain text
+        st.session_state["cover_letter"] = cover_letter
+
+        # ✅ Build HTML wrapper for preview (safe)
+        cover_letter_html = f"""
+        <div style="font-family: Georgia, serif; font-size: 13pt; line-height: 1.6; 
+                    color: #000; background: #fff; padding: 25px; 
+                    border-radius: 8px; box-shadow: 0px 2px 6px rgba(0,0,0,0.1); 
+                    max-width: 800px; margin: auto;">
+            <div style="text-align:center; margin-bottom:15px;">
+                <div style="font-size:18pt; font-weight:bold; color:#003366;">{name}</div>
+                <div style="font-size:14pt; color:#555;">{job_title}</div>
+                <div style="font-size:10pt; margin-top:5px;">
+                    <a href="{linkedin}" style="color:#003366;">{linkedin}</a><br/>
+                    📧 {email} | 📞 {mobile}
+                </div>
+            </div>
+            <hr/>
+            <pre style="white-space: pre-wrap; font-family: Georgia, serif; font-size: 12pt; color:#000;">
+{cover_letter}
+            </pre>
+        </div>
+        """
+
+        st.session_state["cover_letter_html"] = cover_letter_html
+
+        # ✅ Show nicely in Streamlit
+        st.markdown(cover_letter_html, unsafe_allow_html=True)
+
+
+
+
+
+
 
 import streamlit as st
 import streamlit.components.v1 as components
-import os
-import json
-import random
-import string
+from base64 import b64encode
+import requests
+import datetime
+from io import BytesIO
+import streamlit as st
+from datetime import datetime
+import streamlit.components.v1 as components
+from base64 import b64encode
 import re
-import asyncio
-import io
+from llm_manager import call_llm
+import requests
+import datetime
+import os, json, random, string, re, asyncio, io
 import urllib.parse
 from collections import Counter
-from datetime import datetime
-from base64 import b64encode
-from io import BytesIO
 
-# =============================================================================
-# CORE IMPORTS - Always needed
-# =============================================================================
+# ------------------- External Libraries -------------------
+import torch
+import io
+from io import BytesIO
+import matplotlib.pyplot as plt
+import fitz
 import requests
 import numpy as np
 import pandas as pd
-from PIL import Image
-from dotenv import load_dotenv
 
-# Database and user management imports
-from db_manager import (
-    insert_candidate, 
-    get_top_domains_by_score,
-    get_database_stats,
-    detect_domain_from_title_and_description, 
-    get_domain_similarity
-)
+import base64
+from db_manager import insert_candidate, get_top_domains_by_score
+
+    
+from PIL import Image
+from pdf2image import convert_from_path
+from dotenv import load_dotenv
+from nltk.stem import WordNetLemmatizer
+from docx import Document
+from docx.shared import Pt, RGBColor, Inches
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
+
+# ------------------- Langchain & Embeddings -------------------
+from langchain_text_splitters import CharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_groq import ChatGroq
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationalRetrievalChain
+from llm_manager import call_llm
+
+from pydantic import BaseModel
+from db_manager import get_database_stats
 from user_login import (
     create_user_table,
     add_user,
@@ -47,178 +219,23 @@ from user_login import (
     get_logins_today,
     get_total_registered_users,
     log_user_action,
-    username_exists,
-    save_user_api_key, 
-    get_user_api_key,
-    get_all_user_logs
+    username_exists  # 👈 add this line
 )
-from llm_manager import call_llm, load_groq_api_keys
 
-# =============================================================================
-# LAZY LOADING FUNCTIONS FOR HEAVY LIBRARIES
-# =============================================================================
 
-@st.cache_resource(show_spinner=False)
-def get_heavy_ml_imports():
-    """Lazy load ML and heavy processing libraries"""
-    import torch
-    from langchain_text_splitters import CharacterTextSplitter
-    from langchain_community.vectorstores import FAISS
-    from langchain_huggingface import HuggingFaceEmbeddings
-    from langchain_groq import ChatGroq
-    from langchain.memory import ConversationBufferMemory
-    from langchain.chains import ConversationalRetrievalChain
-    
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch.backends.cudnn.benchmark = True
-    
-    return {
-        'torch': torch,
-        'CharacterTextSplitter': CharacterTextSplitter,
-        'FAISS': FAISS,
-        'HuggingFaceEmbeddings': HuggingFaceEmbeddings,
-        'ChatGroq': ChatGroq,
-        'ConversationBufferMemory': ConversationBufferMemory,
-        'ConversationalRetrievalChain': ConversationalRetrievalChain,
-        'device': device
-    }
+# ------------------- Initialize -------------------
+create_user_table()
 
-@st.cache_resource(show_spinner=False)
-def get_pdf_processing_imports():
-    """Lazy load PDF processing libraries"""
-    import fitz  # PyMuPDF
-    from pdf2image import convert_from_path
-    import easyocr
-    
-    device_available = False
-    try:
-        import torch
-        device_available = torch.cuda.is_available()
-    except:
-        pass
-        
-    reader = easyocr.Reader(["en"], gpu=device_available)
-    return {
-        'fitz': fitz,
-        'convert_from_path': convert_from_path,
-        'reader': reader
-    }
+# ------------------- Initialize Session State -------------------
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+if "username" not in st.session_state:
+    st.session_state.username = None
+if "processed_files" not in st.session_state:
+    st.session_state.processed_files = set()
 
-@st.cache_resource(show_spinner=False) 
-def get_document_generation_imports():
-    """Lazy load document generation libraries"""
-    from docx import Document
-    from docx.shared import Pt, RGBColor, Inches
-    from docx.oxml import OxmlElement
-    from docx.oxml.ns import qn
-    from docx.opc.constants import RELATIONSHIP_TYPE as RT
-    from xhtml2pdf import pisa
-    
-    return {
-        'Document': Document,
-        'Pt': Pt,
-        'RGBColor': RGBColor,
-        'Inches': Inches,
-        'OxmlElement': OxmlElement,
-        'qn': qn,
-        'RT': RT,
-        'pisa': pisa
-    }
-
-@st.cache_resource(show_spinner=False)
-def get_nltk_components():
-    """Lazy load and setup NLTK components"""
-    import nltk
-    from nltk.stem import WordNetLemmatizer
-    
-    try:
-        nltk.data.find('corpora/wordnet')
-    except LookupError:
-        nltk.download('wordnet', quiet=True)
-    
-    return WordNetLemmatizer()
-
-@st.cache_resource(show_spinner=False) 
-def get_visualization_imports():
-    """Lazy load visualization libraries"""
-    import matplotlib.pyplot as plt
-    import altair as alt
-    return {'plt': plt, 'alt': alt}
-
-# =============================================================================
-# CACHED ICONS AND IMAGES
-# =============================================================================
-
-@st.cache_data(show_spinner=False, ttl=3600)
-def get_cached_icon(url):
-    """Cache icon requests to avoid repeated downloads"""
-    try:
-        response = requests.get(url, timeout=5)
-        return b64encode(response.content).decode()
-    except:
-        # Return a simple fallback icon
-        return ""
-
-@st.cache_data(show_spinner=False)
-def get_feature_icons():
-    """Pre-cache all feature icons"""
-    icons = {
-        "resume": get_cached_icon("https://img.icons8.com/fluency/48/resume.png"),
-        "builder": get_cached_icon("https://img.icons8.com/fluency/48/resume-website.png"), 
-        "job": get_cached_icon("https://img.icons8.com/fluency/48/job.png"),
-        "course": get_cached_icon("https://img.icons8.com/fluency/48/classroom.png"),
-        "dashboard": get_cached_icon("https://img.icons8.com/fluency/48/combo-chart.png"),
-        "user": get_cached_icon("https://cdn-icons-png.flaticon.com/512/3135/3135768.png"),
-        "silhouette": get_cached_icon("https://cdn-icons-png.flaticon.com/512/4140/4140047.png")
-    }
-    return icons
-
-# =============================================================================
-# INITIALIZE ENVIRONMENT
-# =============================================================================
-
-# Load environment variables once
-load_dotenv()
-working_dir = os.path.dirname(os.path.abspath(__file__))
-
-# Initialize database once
-@st.cache_resource
-def initialize_database():
-    """Initialize database tables once"""
-    create_user_table()
-    return True
-
-# Initialize database
-initialize_database()
-
-# =============================================================================
-# SESSION STATE INITIALIZATION
-# =============================================================================
-
-def initialize_session_state():
-    """Initialize session state variables"""
-    defaults = {
-        "authenticated": False,
-        "username": None,
-        "processed_files": set(),
-        "chat_history": [],
-        "resume_data": []
-    }
-    
-    for key, default_value in defaults.items():
-        if key not in st.session_state:
-            st.session_state[key] = default_value
-
-initialize_session_state()
-
-# =============================================================================
-# CSS STYLING
-# =============================================================================
-
-@st.cache_data
-def get_main_css():
-    """Cached CSS styling"""
-    return """
+# ------------------- CSS Styling -------------------
+st.markdown("""
 <style>
 body, .main {
     background-color: #0d1117;
@@ -283,40 +300,969 @@ body, .main {
     color: #c9d1d9;
 }
 </style>
-"""
+""", unsafe_allow_html=True)
+# 🔹 VIDEO BACKGROUND & GLOW TEXT
 
-# Apply CSS
-st.markdown(get_main_css(), unsafe_allow_html=True)
 
-# =============================================================================
-# PDF PROCESSING FUNCTIONS (WITH LAZY LOADING)
-# =============================================================================
 
+
+# ------------------- BEFORE LOGIN -------------------
+if not st.session_state.authenticated:
+
+    # -------- Sidebar --------
+    with st.sidebar:
+        st.markdown("<h1 style='color:#00BFFF;'>Smart Resume AI</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#c9d1d9;'>Transform your career with AI-powered resume analysis, job matching, and smart insights.</p>", unsafe_allow_html=True)
+
+        features = [
+            ("https://img.icons8.com/fluency/48/resume.png", "Resume Analyzer", "Get feedback, scores, and tips powered by AI along with the biased words detection and rewriting the resume in an inclusive way."),
+            ("https://img.icons8.com/fluency/48/resume-website.png", "Resume Builder", "Build modern, eye-catching resumes easily."),
+            ("https://img.icons8.com/fluency/48/job.png", "Job Search", "Find tailored job matches."),
+            ("https://img.icons8.com/fluency/48/classroom.png", "Course Suggestions", "Get upskilling recommendations based on your goals."),
+            ("https://img.icons8.com/fluency/48/combo-chart.png", "Interactive Dashboard", "Visualize trends, scores, and analytics."),
+        ]
+
+        for icon, title, desc in features:
+            st.markdown(f"""
+            <div class="feature-card">
+                <img src="{icon}" width="40"/>
+                <h3>{title}</h3>
+                <p>{desc}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # -------- Animated Cards --------
+    image_url = "https://cdn-icons-png.flaticon.com/512/3135/3135768.png"
+    response = requests.get(image_url)
+    img_base64 = b64encode(response.content).decode()
+
+    st.markdown(f"""
+    <style>
+    .animated-cards {{
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+      position: relative;
+      height: 300px;
+    }}
+    .animated-cards img {{
+      position: absolute;
+      width: 240px;
+      animation: splitCards 2.5s ease-in-out infinite alternate;
+      z-index: 1;
+    }}
+    .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
+    .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
+    .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
+    @keyframes splitCards {{
+      0% {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
+      100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
+    }}
+    .card-left {{ --x-offset: -80px; --rot: -5deg; }}
+    .card-center {{ --x-offset: 0px; --rot: 0deg; }}
+    .card-right {{ --x-offset: 80px; --rot: 5deg; }}
+    </style>
+    <div class="animated-cards">
+        <img class="card-left" src="data:image/png;base64,{img_base64}" />
+        <img class="card-center" src="data:image/png;base64,{img_base64}" />
+        <img class="card-right" src="data:image/png;base64,{img_base64}" />
+    </div>
+    """, unsafe_allow_html=True)
+
+    # -------- Counter Section (Updated Layout & Style with glassmorphism and shimmer) --------
+
+    # Fetch counters
+    total_users = get_total_registered_users()
+    active_logins = get_logins_today()
+    stats = get_database_stats()
+
+# Replace static 15 with dynamic count
+    resumes_uploaded = stats.get("total_candidates", 0)
+
+    states_accessed = 29
+
+    glassmorphism_counter_style = """
+    <style>
+    @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-5px); }
+    }
+
+    .counter-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 250px);
+        column-gap: 40px;
+        row-gap: 25px;
+        justify-content: center;
+        padding: 30px 10px;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .counter-box {
+        background: linear-gradient(135deg, 
+            rgba(0, 191, 255, 0.1) 0%, 
+            rgba(30, 144, 255, 0.05) 50%, 
+            rgba(0, 191, 255, 0.1) 100%);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(0, 191, 255, 0.2);
+        border-radius: 16px;
+        width: 100%;
+        height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    .counter-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(0, 191, 255, 0.3),
+            transparent
+        );
+        animation: shimmer 2s infinite;
+    }
+
+    .counter-box:hover {
+        transform: translateY(-8px) scale(1.02);
+        background: linear-gradient(135deg, 
+            rgba(0, 191, 255, 0.15) 0%, 
+            rgba(30, 144, 255, 0.08) 50%, 
+            rgba(0, 191, 255, 0.15) 100%);
+        border: 1px solid rgba(0, 191, 255, 0.4);
+        box-shadow: 
+            0 20px 40px rgba(0, 191, 255, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .counter-box:nth-child(1) { animation-delay: 0s; }
+    .counter-box:nth-child(2) { animation-delay: 0.5s; }
+    .counter-box:nth-child(3) { animation-delay: 1s; }
+    .counter-box:nth-child(4) { animation-delay: 1.5s; }
+
+    .counter-number {
+        font-size: 2.2em;
+        font-weight: bold;
+        color: #00BFFF;
+        margin: 0;
+        position: relative;
+        z-index: 2;
+        text-shadow: 0 0 20px rgba(0, 191, 255, 0.5);
+    }
+
+    .counter-label {
+        margin-top: 8px;
+        font-size: 1em;
+        color: #c9d1d9;
+        position: relative;
+        z-index: 2;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    </style>
+    """
+
+    st.markdown(glassmorphism_counter_style, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div class="counter-grid">
+        <div class="counter-box">
+            <div class="counter-number">{total_users}</div>
+            <div class="counter-label">Total Users</div>
+        </div>
+        <div class="counter-box">
+            <div class="counter-number">{states_accessed}</div>
+            <div class="counter-label">States Accessed</div>
+        </div>
+        <div class="counter-box">
+            <div class="counter-number">{resumes_uploaded}</div>
+            <div class="counter-label">Resumes Uploaded</div>
+        </div>
+        <div class="counter-box">
+            <div class="counter-number">{active_logins}</div>
+            <div class="counter-label">Active Sessions</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+if not st.session_state.get("authenticated", False):
+
+    # ✅ Futuristic silhouette
+    image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
+    response = requests.get(image_url)
+    img_base64 = b64encode(response.content).decode()
+
+    # ✅ Inject glassmorphism CSS with shimmer effects
+    st.markdown(f"""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+
+    @keyframes shimmer {{
+        0% {{ background-position: -200% 0; }}
+        100% {{ background-position: 200% 0; }}
+    }}
+    
+    @keyframes glassShimmer {{
+        0% {{ transform: translateX(-100%) skewX(-15deg); }}
+        100% {{ transform: translateX(200%) skewX(-15deg); }}
+    }}
+
+    /* ===== Card Shuffle Animation ===== */
+    .animated-cards {{
+      margin-top: 40px;
+      display: flex;
+      justify-content: center;
+      position: relative;
+      height: 260px;
+    }}
+    .animated-cards img {{
+      position: absolute;
+      width: 220px;
+      animation: splitCards 2.5s ease-in-out infinite alternate;
+      z-index: 1;
+      filter: drop-shadow(0 0 15px rgba(0,191,255,0.3));
+    }}
+    .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
+    .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
+    .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
+
+    @keyframes splitCards {{
+      0%   {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
+      100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
+    }}
+    .card-left   {{ --x-offset: -80px; --rot: -4deg; }}
+    .card-center {{ --x-offset: 0px;  --rot: 0deg;  }}
+    .card-right  {{ --x-offset: 80px;  --rot: 4deg;  }}
+
+    /* ===== Glassmorphism Login Card ===== */
+    .login-card {{
+      background: linear-gradient(135deg, 
+        rgba(0, 191, 255, 0.1) 0%, 
+        rgba(30, 144, 255, 0.05) 50%, 
+        rgba(0, 191, 255, 0.1) 100%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(0, 191, 255, 0.2);
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 
+        0 8px 32px rgba(0, 191, 255, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      font-family: 'Orbitron', sans-serif;
+      color: white;
+      margin-top: 20px;
+      opacity: 0;
+      transform: translateX(-120%);
+      animation: slideInLeft 1.2s ease-out forwards;
+      position: relative;
+      overflow: hidden;
+    }}
+    
+    .login-card::before {{
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(0, 191, 255, 0.2),
+        transparent
+      );
+      animation: glassShimmer 3s infinite;
+    }}
+    
+    @keyframes slideInLeft {{
+      0%   {{ transform: translateX(-120%); opacity: 0; }}
+      100% {{ transform: translateX(0); opacity: 1; }}
+    }}
+
+    .login-card h2 {{
+      text-align: center;
+      font-size: 1.6rem;
+      text-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
+      margin-bottom: 15px;
+      position: relative;
+      z-index: 2;
+    }}
+    .login-card h2 span {{ color: #00BFFF; }}
+
+    /* ===== Sliding Messages ===== */
+    .slide-message {{
+      position: relative;
+      overflow: hidden;
+      margin: 10px 0;
+      padding: 10px 15px;
+      border-radius: 12px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: slideIn 0.8s ease forwards;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }}
+    .slide-message svg {{
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }}
+    .success-msg {{ 
+      background: linear-gradient(135deg, rgba(0,255,127,0.15), rgba(0,255,127,0.05)); 
+      border: 1px solid rgba(0,255,127,0.3); 
+      color:#00FF7F; 
+    }}
+    .error-msg {{ 
+      background: linear-gradient(135deg, rgba(255,99,71,0.15), rgba(255,99,71,0.05)); 
+      border: 1px solid rgba(255,99,71,0.3); 
+      color:#FF6347; 
+    }}
+    .info-msg {{ 
+      background: linear-gradient(135deg, rgba(30,144,255,0.15), rgba(30,144,255,0.05)); 
+      border: 1px solid rgba(30,144,255,0.3); 
+      color:#1E90FF; 
+    }}
+    .warn-msg {{ 
+      background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,215,0,0.05)); 
+      border: 1px solid rgba(255,215,0,0.3); 
+      color:#FFD700; 
+    }}
+
+    @keyframes slideIn {{
+      0%   {{ transform: translateX(100%); opacity: 0; }}
+      100% {{ transform: translateX(0); opacity: 1; }}
+    }}
+
+    /* ===== Glassmorphism Buttons ===== */
+    .stButton>button {{
+      background: linear-gradient(135deg, 
+        rgba(0, 191, 255, 0.2) 0%, 
+        rgba(30, 144, 255, 0.1) 100%);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      color: white;
+      border: 1px solid rgba(0, 191, 255, 0.3);
+      border-radius: 12px;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: bold;
+      padding: 8px 20px;
+      box-shadow: 
+        0 4px 16px rgba(0, 191, 255, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }}
+    
+    .stButton>button::before {{
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+      );
+      transition: left 0.5s;
+    }}
+    
+    .stButton>button:hover {{
+      transform: translateY(-2px);
+      background: linear-gradient(135deg, 
+        rgba(0, 191, 255, 0.3) 0%, 
+        rgba(30, 144, 255, 0.15) 100%);
+      border: 1px solid rgba(0, 191, 255, 0.5);
+      box-shadow: 
+        0 8px 25px rgba(0, 191, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }}
+    
+    .stButton>button:hover::before {{
+      left: 100%;
+    }}
+
+    /* ===== Glassmorphism Input Fields ===== */
+    .stTextInput input {{
+      background: linear-gradient(135deg, 
+        rgba(0, 191, 255, 0.08) 0%, 
+        rgba(30, 144, 255, 0.04) 100%);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(0, 191, 255, 0.2);
+      border-radius: 10px;
+      padding: 10px;
+      color: #E0F7FF;
+      font-family: 'Orbitron', sans-serif;
+      box-shadow: 
+        0 4px 16px rgba(0, 191, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      transition: all 0.3s ease-in-out;
+    }}
+    .stTextInput input:focus {{
+      outline: none !important;
+      background: linear-gradient(135deg, 
+        rgba(0, 191, 255, 0.12) 0%, 
+        rgba(30, 144, 255, 0.06) 100%);
+      border: 1px solid rgba(0, 191, 255, 0.4);
+      box-shadow: 
+        0 8px 25px rgba(0, 191, 255, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transform: translateY(-1px);
+    }}
+    .stTextInput label {{
+      font-family: 'Orbitron', sans-serif;
+      color: #00BFFF !important;
+      text-shadow: 0 0 10px rgba(0, 191, 255, 0.3);
+    }}
+    </style>
+
+    <!-- Animated Cards -->
+    <div class="animated-cards">
+        <img class="card-left" src="data:image/png;base64,{img_base64}" />
+        <img class="card-center" src="data:image/png;base64,{img_base64}" />
+        <img class="card-right" src="data:image/png;base64,{img_base64}" />
+    </div>
+    """, unsafe_allow_html=True)
+
+    # -------- Login/Register Layout --------
+    left, center, right = st.columns([1, 2, 1])
+
+    with center:
+        st.markdown(
+            "<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>HIRELYZER</span></h2>",
+            unsafe_allow_html=True,
+        )
+
+        login_tab, register_tab = st.tabs(["Login", "Register"])
+
+        # ---------------- LOGIN TAB ----------------
+        with login_tab:
+            user = st.text_input("Username", key="login_user")
+            pwd = st.text_input("Password", type="password", key="login_pass")
+
+            if st.button("Login", key="login_btn"):
+                success, saved_key = verify_user(user.strip(), pwd.strip())
+                if success:
+                    st.session_state.authenticated = True
+                    st.session_state.username = user.strip()
+                    if saved_key:
+                        st.session_state["user_groq_key"] = saved_key
+                    log_user_action(user.strip(), "login")
+
+                    st.markdown("""<div class='slide-message success-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                        Login successful!
+                    </div>""", unsafe_allow_html=True)
+                    st.rerun()
+                else:
+                    st.markdown("""<div class='slide-message error-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                        Invalid credentials.
+                    </div>""", unsafe_allow_html=True)
+
+        # ---------------- REGISTER TAB ----------------
+        with register_tab:
+            new_user = st.text_input("Choose a Username", key="reg_user")
+            new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
+            st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
+
+            if new_user.strip():
+                if username_exists(new_user.strip()):
+                    st.markdown("""<div class='slide-message error-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                        Username already exists.
+                    </div>""", unsafe_allow_html=True)
+                else:
+                    st.markdown("""<div class='slide-message info-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
+                          <path d="M12 8h.01M12 12v4"/></svg>
+                        Username is available.
+                    </div>""", unsafe_allow_html=True)
+
+            if st.button("Register", key="register_btn"):
+                if new_user.strip() and new_pass.strip():
+                    success, message = add_user(new_user.strip(), new_pass.strip())
+                    if success:
+                        st.markdown(f"""<div class='slide-message success-msg'>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                            {message}
+                        </div>""", unsafe_allow_html=True)
+                        log_user_action(new_user.strip(), "register")
+                    else:
+                        st.markdown(f"""<div class='slide-message error-msg'>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                              stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                            {message}
+                        </div>""", unsafe_allow_html=True)
+                else:
+                    st.markdown("""<div class='slide-message warn-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
+                        </svg>
+                        Please fill in both fields.
+                    </div>""", unsafe_allow_html=True)
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.stop()
+
+
+
+# ------------------- AFTER LOGIN -------------------
+from user_login import save_user_api_key, get_user_api_key  # Ensure both are imported
+
+if st.session_state.get("authenticated"):
+    st.markdown(
+        f"<h2 style='color:#00BFFF;'>Welcome to HIRELYZER, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>",
+        unsafe_allow_html=True,
+    )
+
+    # 🔓 LOGOUT BUTTON
+    if st.button("🚪 Logout"):
+        log_user_action(st.session_state.get("username", "unknown"), "logout")
+
+        # ✅ Clear all session keys safely
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+
+        st.success("✅ Logged out successfully.")
+        st.rerun()  # Force rerun to prevent stale UI
+
+    # 🔑 GROQ API KEY SECTION (SIDEBAR)
+    st.sidebar.markdown("### 🔑 Groq API Key")
+
+    # ✅ Load saved key from DB
+    saved_key = get_user_api_key(st.session_state.username)
+    masked_preview = f"****{saved_key[-6:]}" if saved_key else ""
+
+    user_api_key_input = st.sidebar.text_input(
+        "Your Groq API Key (Optional)",
+        placeholder=masked_preview,
+        type="password"
+    )
+
+    # ✅ Save or reuse key
+    if user_api_key_input:
+        st.session_state["user_groq_key"] = user_api_key_input
+        save_user_api_key(st.session_state.username, user_api_key_input)
+        st.sidebar.success("✅ New key saved and in use.")
+    elif saved_key:
+        st.session_state["user_groq_key"] = saved_key
+        st.sidebar.info(f"ℹ️ Using your previously saved API key ({masked_preview})")
+    else:
+        st.sidebar.warning("⚠ Using shared admin key with possible usage limits")
+
+    # 🧹 Clear saved key
+    if st.sidebar.button("🗑️ Clear My API Key"):
+        st.session_state["user_groq_key"] = None
+        save_user_api_key(st.session_state.username, None)
+        st.sidebar.success("✅ Cleared saved Groq API key. Now using shared admin key.")
+
+
+
+
+
+
+from user_login import get_all_user_logs, get_total_registered_users, get_logins_today
+import streamlit as st
+
+if st.session_state.username == "admin":
+    st.markdown("<hr>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#00BFFF;'>📊 Admin Dashboard</h2>", unsafe_allow_html=True)
+
+    # Metrics row
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("👤 Total Registered Users", get_total_registered_users())
+    with col2:
+        st.metric("📅 Logins Today (IST)", get_logins_today())
+
+    # Removed API key usage section (no longer tracked)
+    # Activity log
+    st.markdown("<h3 style='color:#00BFFF;'>📋 Admin Activity Log</h3>", unsafe_allow_html=True)
+    logs = get_all_user_logs()
+    if logs:
+        st.dataframe(
+            {
+                "Username": [log[0] for log in logs],
+                "Action": [log[1] for log in logs],
+                "Timestamp": [log[2] for log in logs]
+            },
+            use_container_width=True
+        )
+    else:
+        st.info("No logs found yet.")
+
+
+# Always-visible tabs
+tab_labels = [
+    "📊 Dashboard",
+    "🧾 Resume Builder",
+    "💼 Job Search",
+    "📚 Course Recommendation"
+]
+
+# Add Admin tab only for admin user
+if st.session_state.username == "admin":
+    tab_labels.append("📁 Admin DB View")
+
+# Create tabs dynamically
+tabs = st.tabs(tab_labels)
+
+# Unpack first four (always exist)
+tab1, tab2, tab3, tab4 = tabs[:4]
+
+# Handle optional admin tab
+tab5 = tabs[4] if len(tabs) > 4 else None
+
+with tab1:
+    st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Orbitron', sans-serif;
+        background-color: #0b0c10;
+        color: #c5c6c7;
+        scroll-behavior: smooth;
+    }
+
+    /* ---------- SCROLLBAR ---------- */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #1f2833; }
+    ::-webkit-scrollbar-thumb { background: #00ffff; border-radius: 4px; }
+
+    /* ---------- BANNER ---------- */
+    .banner-container {
+        width: 100%;
+        height: 80px;
+        background: linear-gradient(90deg, #000428, #004e92);
+        border-bottom: 2px solid cyan;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        position: relative;
+        margin-bottom: 20px;
+        border-radius: 12px;
+        backdrop-filter: blur(14px);
+    }
+    .pulse-bar {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        font-size: 22px;
+        font-weight: bold;
+        color: #00ffff;
+        white-space: nowrap;
+        animation: glideIn 12s linear infinite;
+        text-shadow: 0 0 10px #00ffff;
+    }
+    .pulse-bar .bar {
+        width: 10px;
+        height: 30px;
+        margin-right: 10px;
+        background: #00ffff;
+        box-shadow: 0 0 8px cyan;
+        animation: pulse 1s ease-in-out infinite;
+    }
+    @keyframes glideIn {
+        0% { left: -50%; opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% { left: 110%; opacity: 0; }
+    }
+    @keyframes pulse {
+        0%, 100% { height: 20px; background-color: #00ffff; }
+        50% { height: 40px; background-color: #ff00ff; }
+    }
+
+    /* ---------- HEADER ---------- */
+    .header {
+        font-size: 28px;
+        font-weight: bold;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        padding: 20px 30px;  /* ✅ More spacing inside the bar */
+        color: #00ffff;
+        text-shadow: 0px 0px 10px #00ffff;
+        position: relative;
+        overflow: hidden;
+        border-radius: 14px;
+        background: rgba(10,20,40,0.35);
+        backdrop-filter: blur(14px);
+        border: 1px solid rgba(0,200,255,0.5);
+        box-shadow: 0 0 12px rgba(0,200,255,0.25);
+    }
+    .header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+            120deg,
+            rgba(255,255,255,0.18) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%
+        );
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
+    .header:hover::before { left: 100%; top: 100%; }
+
+    /* ---------- SHIMMER (COMMON) ---------- */
+    .shimmer::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+            120deg,
+            rgba(255,255,255,0.15) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%
+        );
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
+    .shimmer:hover::before { left: 100%; top: 100%; }
+
+    /* ---------- FILE UPLOADER ---------- */
+    .stFileUploader > div > div {
+        border: 1px solid rgba(0,200,255,0.5);
+        border-radius: 14px;
+        background: rgba(10,20,40,0.35);
+        backdrop-filter: blur(14px);
+        color: #cce6ff;
+        box-shadow: 0 0 12px rgba(0,200,255,0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    .stFileUploader > div > div::before {
+        content: "";
+        position: absolute; top: -50%; left: -50%;
+        width: 200%; height: 200%;
+        background: linear-gradient(120deg,
+            rgba(255,255,255,0.15) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%);
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
+    .stFileUploader > div > div:hover::before { left: 100%; top: 100%; }
+
+    /* ---------- BUTTONS ---------- */
+    .stButton > button {
+        position: relative;
+        overflow: hidden;
+        background: rgba(10,20,40,0.35);
+        border: 1px solid rgba(0,200,255,0.6);
+        color: #e6f7ff;
+        border-radius: 14px;
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: 500;
+        text-transform: uppercase;
+        backdrop-filter: blur(16px);
+        box-shadow: 0 0 12px rgba(0,200,255,0.35),
+                    inset 0 0 20px rgba(0,200,255,0.05);
+        transition: all 0.3s ease-in-out;
+    }
+    .stButton > button::before {
+        content: "";
+        position: absolute; top: -50%; left: -50%;
+        width: 200%; height: 200%;
+        background: linear-gradient(120deg,
+            rgba(255,255,255,0.15) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%);
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
+    .stButton > button:hover::before { left: 100%; top: 100%; }
+
+    /* ---------- INPUTS ---------- */
+    .stTextInput > div > input,
+    .stTextArea > div > textarea {
+        position: relative;
+        overflow: hidden;
+        background: rgba(10,20,40,0.35);
+        border: 1px solid rgba(0,200,255,0.6);
+        border-radius: 14px;
+        color: #e6f7ff;
+        padding: 10px;
+        backdrop-filter: blur(16px);
+        box-shadow: 0 0 12px rgba(0,200,255,0.3),
+                    inset 0 0 15px rgba(0,200,255,0.05);
+        transition: all 0.3s ease-in-out;
+    }
+
+    /* ---------- CHAT MESSAGES ---------- */
+    .stChatMessage {
+        position: relative;
+        overflow: hidden;
+        font-size: 18px;
+        background: rgba(10,20,40,0.35);
+        border: 1px solid rgba(0,200,255,0.5);
+        border-radius: 14px;
+        padding: 14px;
+        color: #e6f7ff;
+        text-shadow: 0 0 6px rgba(0,200,255,0.7);
+        box-shadow: 0 0 12px rgba(0,200,255,0.3),
+                    inset 0 0 15px rgba(0,200,255,0.05);
+    }
+    .stChatMessage::before {
+        content: "";
+        position: absolute; top: -50%; left: -50%;
+        width: 200%; height: 200%;
+        background: linear-gradient(120deg,
+            rgba(255,255,255,0.15) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%);
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
+    .stChatMessage:hover::before { left: 100%; top: 100%; }
+
+    /* ---------- METRICS ---------- */
+    .stMetric {
+        position: relative;
+        overflow: hidden;
+        background-color: rgba(10,20,40,0.35);
+        border: 1px solid rgba(0,200,255,0.6);
+        border-radius: 14px;
+        padding: 15px;
+        box-shadow: 0 0 12px rgba(0,200,255,0.35),
+                    inset 0 0 20px rgba(0,200,255,0.05);
+        text-align: center;
+    }
+    .stMetric::before {
+        content: "";
+        position: absolute; top: -50%; left: -50%;
+        width: 200%; height: 200%;
+        background: linear-gradient(120deg,
+            rgba(255,255,255,0.15) 0%,
+            rgba(255,255,255,0.05) 40%,
+            transparent 60%);
+        transform: rotate(25deg);
+        transition: all 0.6s;
+    }
+    .stMetric:hover::before { left: 100%; top: 100%; }
+
+    /* ---------- MOBILE ---------- */
+    @media (max-width: 768px) {
+        .pulse-bar { font-size: 16px; }
+        .header { font-size: 20px; }
+    }
+    </style>
+
+    <!-- Banner -->
+    <div class="banner-container">
+        <div class="pulse-bar">
+            <div class="bar"></div>
+            <div>HIRELYZER - Elevate Your Resume Analysis</div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
+    """, unsafe_allow_html=True)
+
+
+
+
+
+
+# Load environment variables
+# ------------------- Core Setup -------------------
+
+
+# Load environment variables
+load_dotenv()
+
+# Detect Device
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+torch.backends.cudnn.benchmark = True
+working_dir = os.path.dirname(os.path.abspath(__file__))
+
+# ------------------- API Key & Caching Manager -------------------
+from llm_manager import call_llm
+
+
+# ------------------- Lazy Initialization -------------------
+@st.cache_resource(show_spinner=False)
+def get_easyocr_reader():
+    import easyocr
+    return easyocr.Reader(["en"], gpu=torch.cuda.is_available())
+
+@st.cache_data(show_spinner=False)
+def ensure_nltk():
+    import nltk
+    nltk.download('wordnet', quiet=True)
+    return WordNetLemmatizer()
+
+lemmatizer = ensure_nltk()
+reader = get_easyocr_reader()
+
+
+
+def generate_docx(text, filename="bias_free_resume.docx"):
+    doc = Document()
+    doc.add_heading('Bias-Free Resume', 0)
+    doc.add_paragraph(text)
+    
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer
+
+# Extract text from PDF
 def extract_text_from_pdf(file_path):
-    """Extract text from PDF with lazy loading"""
     try:
-        pdf_imports = get_pdf_processing_imports()
-        fitz = pdf_imports['fitz']
-        
         doc = fitz.open(file_path)
         text_list = [page.get_text("text") for page in doc if page.get_text("text").strip()]
         doc.close()
-        
-        if not text_list:
-            return extract_text_from_images(file_path)
-        return text_list
-        
+        return text_list if text_list else extract_text_from_images(file_path)
     except Exception as e:
         st.error(f"⚠ Error extracting text: {e}")
         return []
 
 def extract_text_from_images(pdf_path):
-    """Extract text from PDF images with lazy loading"""
     try:
-        pdf_imports = get_pdf_processing_imports()
-        convert_from_path = pdf_imports['convert_from_path']
-        reader = pdf_imports['reader']
-        
         images = convert_from_path(pdf_path, dpi=150, first_page=1, last_page=5)
         return ["\n".join(reader.readtext(np.array(img), detail=0)) for img in images]
     except Exception as e:
@@ -324,14 +1270,20 @@ def extract_text_from_images(pdf_path):
         return []
 
 def safe_extract_text(uploaded_file):
-    """Safely extract text from uploaded file"""
+    """
+    Safely extracts text from uploaded file.
+    Prevents app crash if file is not a resume or unreadable.
+    """
     try:
+        # Save uploaded file to a temp location
         temp_path = f"/tmp/{uploaded_file.name}"
         with open(temp_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
+        # Try PDF text extraction
         text_list = extract_text_from_pdf(temp_path)
 
+        # If nothing readable found
         if not text_list or all(len(t.strip()) == 0 for t in text_list):
             st.warning("⚠️ This file doesn't look like a resume or contains no readable text.")
             return None
@@ -342,173 +1294,40 @@ def safe_extract_text(uploaded_file):
         st.error(f"⚠️ Could not process this file: {e}")
         return None
 
-# =============================================================================
-# DOCUMENT GENERATION FUNCTIONS (WITH LAZY LOADING)
-# =============================================================================
 
-def html_to_pdf_bytes(html_string):
-    """Convert HTML to PDF with lazy loading"""
-    doc_imports = get_document_generation_imports()
-    pisa = doc_imports['pisa']
+# Detect bias in resume
+
+import re
+
+# Predefined gender-coded word lists
+gender_words = {
+    "masculine": [
+        "active", "aggressive", "ambitious", "analytical", "assertive", "autonomous", "boast", "bold",
+        "challenging", "competitive", "confident", "courageous", "decisive", "determined", "dominant", "driven",
+        "dynamic", "forceful", "independent", "individualistic", "intellectual", "lead", "leader", "objective",
+        "outspoken", "persistent", "principled", "proactive", "resilient", "self-reliant", "self-sufficient",
+        "strong", "superior", "tenacious","guru","tech guru","technical guru", "visionary", "manpower", "strongman", "command",
+        "assert", "headstrong", "rockstar", "superstar", "go-getter", "trailblazer", "results-driven",
+        "fast-paced", "driven", "determination", "competitive spirit"
+    ],
     
-    styled_html = f"""
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <style>
-            @page {{
-                size: 400mm 297mm;
-                margin-top: 10mm;
-                margin-bottom: 10mm;
-                margin-left: 10mm;
-                margin-right: 10mm;
-            }}
-            body {{
-                font-size: 14pt;
-                font-family: "Segoe UI", "Helvetica", sans-serif;
-                line-height: 1.5;
-                color: #000;
-            }}
-            h1, h2, h3 {{
-                color: #2f4f6f;
-            }}
-            table {{
-                width: 100%;
-                border-collapse: collapse;
-                margin-bottom: 15px;
-            }}
-            td {{
-                padding: 4px;
-                vertical-align: top;
-                border: 1px solid #ccc;
-            }}
-            .section-title {{
-                background-color: #e0e0e0;
-                font-weight: bold;
-                padding: 6px;
-                margin-top: 10px;
-            }}
-            .box {{
-                padding: 8px;
-                margin-top: 6px;
-                background-color: #f9f9f9;
-                border-left: 4px solid #999;
-            }}
-            ul {{
-                margin: 0.5em 0;
-                padding-left: 1.5em;
-            }}
-            li {{
-                margin-bottom: 5px;
-            }}
-        </style>
-    </head>
-    <body>
-        {html_string}
-    </body>
-    </html>
-    """
-
-    pdf_io = BytesIO()
-    pisa.CreatePDF(styled_html, dest=pdf_io)
-    pdf_io.seek(0)
-    return pdf_io
-
-def generate_docx(text, filename="bias_free_resume.docx"):
-    """Generate DOCX with lazy loading"""
-    doc_imports = get_document_generation_imports()
-    Document = doc_imports['Document']
-    
-    doc = Document()
-    doc.add_heading('Bias-Free Resume', 0)
-    doc.add_paragraph(text)
-    
-    buffer = BytesIO()
-    doc.save(buffer)
-    buffer.seek(0)
-    return buffer
-
-# =============================================================================
-# BIAS DETECTION AND ANALYSIS
-# =============================================================================
-
-@st.cache_data
-def get_gender_words():
-    """Cached gender word lists"""
-    return {
-        "masculine": [
-            "active", "aggressive", "ambitious", "analytical", "assertive", "autonomous", "boast", "bold",
-            "challenging", "competitive", "confident", "courageous", "decisive", "determined", "dominant", "driven",
-            "dynamic", "forceful", "independent", "individualistic", "intellectual", "lead", "leader", "objective",
-            "outspoken", "persistent", "principled", "proactive", "resilient", "self-reliant", "self-sufficient",
-            "strong", "superior", "tenacious","guru","tech guru","technical guru", "visionary", "manpower", "strongman", "command",
-            "assert", "headstrong", "rockstar", "superstar", "go-getter", "trailblazer", "results-driven",
-            "fast-paced", "driven", "determination", "competitive spirit"
-        ],
-        
-        "feminine": [
-            "affectionate", "agreeable", "attentive", "collaborative", "committed", "compassionate", "considerate",
-            "cooperative", "dependable", "dependent", "emotional", "empathetic", "enthusiastic", "gentle",
-            "honest", "inclusive", "interpersonal", "kind", "loyal", "modest", "nurturing", "pleasant", "polite",
-            "sensitive", "supportive", "sympathetic", "tactful", "tender", "trustworthy", "understanding", "warm",
-            "yield", "adaptable", "communal", "helpful", "dedicated", "respectful", "nurture", "sociable",
-            "relationship-oriented", "team player", "dependable", "people-oriented", "empathetic listener",
-            "gentle communicator", "open-minded"
-        ]
-    }
-
-@st.cache_data
-def get_replacement_mapping():
-    """Cached replacement mapping for bias-free language"""
-    return {
-        "masculine": {
-            "active": "engaged", "aggressive": "proactive", "ambitious": "motivated",
-            "analytical": "detail-oriented", "assertive": "confident", "autonomous": "self-directed",
-            "boast": "highlight", "bold": "confident", "challenging": "demanding",
-            "competitive": "goal-oriented", "confident": "self-assured", "courageous": "bold",
-            "decisive": "action-oriented", "determined": "focused", "dominant": "influential",
-            "driven": "committed", "dynamic": "adaptable", "forceful": "persuasive",
-            "guru":"technical expert", "independent": "self-sufficient", "individualistic": "self-motivated",
-            "intellectual": "knowledgeable", "lead": "guide", "leader": "team lead",
-            "objective": "unbiased", "outspoken": "expressive", "persistent": "resilient",
-            "principled": "ethical", "proactive": "initiative-taking", "resilient": "adaptable",
-            "self-reliant": "resourceful", "self-sufficient": "capable", "strong": "capable",
-            "superior": "exceptional", "tenacious": "determined", "technical guru": "technical expert",
-            "visionary": "forward-thinking", "manpower": "workforce", "strongman": "resilient individual",
-            "command": "direct", "assert": "state confidently", "headstrong": "determined",
-            "rockstar": "top performer", "superstar": "outstanding contributor",
-            "go-getter": "initiative-taker", "trailblazer": "innovator", "results-driven": "outcome-focused",
-            "fast-paced": "dynamic", "determination": "commitment", "competitive spirit": "goal-oriented mindset"
-        },
-        
-        "feminine": {
-            "affectionate": "approachable", "agreeable": "cooperative", "attentive": "observant",
-            "collaborative": "team-oriented", "collaborate": "team-oriented", "collaborated": "worked together",
-            "committed": "dedicated", "compassionate": "caring", "considerate": "thoughtful",
-            "cooperative": "supportive", "dependable": "reliable", "dependent": "team-oriented",
-            "emotional": "passionate", "empathetic": "understanding", "enthusiastic": "positive",
-            "gentle": "respectful", "honest": "trustworthy", "inclusive": "open-minded",
-            "interpersonal": "people-focused", "kind": "respectful", "loyal": "dedicated",
-            "modest": "humble", "nurturing": "supportive", "pleasant": "positive",
-            "polite": "professional", "sensitive": "attentive", "supportive": "encouraging",
-            "sympathetic": "understanding", "tactful": "diplomatic", "tender": "considerate",
-            "trustworthy": "reliable", "understanding": "empathetic", "warm": "welcoming",
-            "yield": "adaptable", "adaptable": "flexible", "communal": "team-centered",
-            "helpful": "supportive", "dedicated": "committed", "respectful": "considerate",
-            "nurture": "develop", "sociable": "friendly", "relationship-oriented": "team-focused",
-            "team player": "collaborative member", "people-oriented": "person-focused",
-            "empathetic listener": "active listener", "gentle communicator": "considerate communicator",
-            "open-minded": "inclusive"
-        }
-    }
+    "feminine": [
+        "affectionate", "agreeable", "attentive", "collaborative", "committed", "compassionate", "considerate",
+        "cooperative", "dependable", "dependent", "emotional", "empathetic", "enthusiastic", "friendly", "gentle",
+        "honest", "inclusive", "interpersonal", "kind", "loyal", "modest", "nurturing", "pleasant", "polite",
+        "sensitive", "supportive", "sympathetic", "tactful", "tender", "trustworthy", "understanding", "warm",
+        "yield", "adaptable", "communal", "helpful", "dedicated", "respectful", "nurture", "sociable",
+        "relationship-oriented", "team player", "dependable", "people-oriented", "empathetic listener",
+        "gentle communicator", "open-minded"
+    ]
+}
 
 def detect_bias(text):
-    """Detect gender bias in text"""
-    gender_words = get_gender_words()
+    # Split into sentences using simple delimiters
     sentences = re.split(r'(?<=[.!?])\s+', text.strip())
 
     masc_set, fem_set = set(), set()
-    masculine_found, feminine_found = [], []
+    masculine_found, feminine_found = [] , []
 
     masculine_words = sorted(gender_words["masculine"], key=len, reverse=True)
     feminine_words = sorted(gender_words["feminine"], key=len, reverse=True)
@@ -521,7 +1340,7 @@ def detect_bias(text):
         def is_overlapping(start, end):
             return any(start < e and end > s for s, e in matched_spans)
 
-        # Check masculine words
+        # 🔵 Highlight masculine words in blue
         for word in masculine_words:
             pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
             for match in pattern.finditer(sent_lower):
@@ -542,7 +1361,7 @@ def detect_bias(text):
                             "sentence": highlighted
                         })
 
-        # Check feminine words
+        # 🔴 Highlight feminine words in red
         for word in feminine_words:
             pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
             for match in pattern.finditer(sent_lower):
@@ -570,12 +1389,144 @@ def detect_bias(text):
 
     return round(bias_score, 2), masc, fem, masculine_found, feminine_found
 
+gender_words = {
+    "masculine": [
+        "active", "aggressive", "ambitious", "analytical", "assertive", "autonomous", "boast", "bold",
+        "challenging", "competitive", "confident", "courageous", "decisive", "determined", "dominant", "driven",
+        "dynamic", "forceful", "independent", "individualistic", "intellectual", "lead", "leader", "objective",
+        "outspoken", "persistent", "principled", "proactive", "resilient", "self-reliant", "self-sufficient",
+        "strong", "superior", "tenacious","guru","tech guru","technical guru", "visionary", "manpower", "strongman", "command",
+        "assert", "headstrong", "rockstar", "superstar", "go-getter", "trailblazer", "results-driven",
+        "fast-paced", "driven", "determination", "competitive spirit"
+    ],
+    
+    "feminine": [
+        "affectionate", "agreeable", "attentive", "collaborative", "committed", "compassionate", "considerate",
+        "cooperative", "dependable", "dependent", "emotional", "empathetic", "enthusiastic", "gentle",
+        "honest", "inclusive", "interpersonal", "kind", "loyal", "modest", "nurturing", "pleasant", "polite",
+        "sensitive", "supportive", "sympathetic", "tactful", "tender", "trustworthy", "understanding", "warm",
+        "yield", "adaptable", "communal", "helpful", "dedicated", "respectful", "nurture", "sociable",
+        "relationship-oriented", "team player", "dependable", "people-oriented", "empathetic listener",
+        "gentle communicator", "open-minded"
+    ]
+}
+replacement_mapping = {
+    "masculine": {
+        "active": "engaged",
+        "aggressive": "proactive",
+        "ambitious": "motivated",
+        "analytical": "detail-oriented",
+        "assertive": "confident",
+        "autonomous": "self-directed",
+        "boast": "highlight",
+        "bold": "confident",
+        "challenging": "demanding",
+        "competitive": "goal-oriented",
+        "confident": "self-assured",
+        "courageous": "bold",
+        "decisive": "action-oriented",
+        "determined": "focused",
+        "dominant": "influential",
+        "driven": "committed",
+        "dynamic": "adaptable",
+        "forceful": "persuasive",
+        "guru":"technical expert",
+        "independent": "self-sufficient",
+        "individualistic": "self-motivated",
+        "intellectual": "knowledgeable",
+        "lead": "guide",
+        "leader": "team lead",
+        "objective": "unbiased",
+        "outspoken": "expressive",
+        "persistent": "resilient",
+        "principled": "ethical",
+        "proactive": "initiative-taking",
+        "resilient": "adaptable",
+        "self-reliant": "resourceful",
+        "self-sufficient": "capable",
+        "strong": "capable",
+        "superior": "exceptional",
+        "tenacious": "determined",
+        "technical guru": "technical expert",
+        "visionary": "forward-thinking",
+        "manpower": "workforce",
+        "strongman": "resilient individual",
+        "command": "direct",
+        "assert": "state confidently",
+        "headstrong": "determined",
+        "rockstar": "top performer",
+        "superstar": "outstanding contributor",
+        "go-getter": "initiative-taker",
+        "trailblazer": "innovator",
+        "results-driven": "outcome-focused",
+        "fast-paced": "dynamic",
+        "determination": "commitment",
+        "competitive spirit": "goal-oriented mindset"
+    },
+    
+    "feminine": {
+        "affectionate": "approachable",
+        "agreeable": "cooperative",
+        "attentive": "observant",
+        "collaborative": "team-oriented",
+        "collaborate": "team-oriented",
+        "collaborated": "worked together",
+        "committed": "dedicated",
+        "compassionate": "caring",
+        "considerate": "thoughtful",
+        "cooperative": "supportive",
+        "dependable": "reliable",
+        "dependent": "team-oriented",
+        "emotional": "passionate",
+        "empathetic": "understanding",
+        "enthusiastic": "positive",
+        "gentle": "respectful",
+        "honest": "trustworthy",
+        "inclusive": "open-minded",
+        "interpersonal": "people-focused",
+        "kind": "respectful",
+        "loyal": "dedicated",
+        "modest": "humble",
+        "nurturing": "supportive",
+        "pleasant": "positive",
+        "polite": "professional",
+        "sensitive": "attentive",
+        "supportive": "encouraging",
+        "sympathetic": "understanding",
+        "tactful": "diplomatic",
+        "tender": "considerate",
+        "trustworthy": "reliable",
+        "understanding": "empathetic",
+        "warm": "welcoming",
+        "yield": "adaptable",
+        "adaptable": "flexible",
+        "communal": "team-centered",
+        "helpful": "supportive",
+        "dedicated": "committed",
+        "respectful": "considerate",
+        "nurture": "develop",
+        "sociable": "friendly",
+        "relationship-oriented": "team-focused",
+        "team player": "collaborative member",
+        "people-oriented": "person-focused",
+        "empathetic listener": "active listener",
+        "gentle communicator": "considerate communicator",
+        "open-minded": "inclusive"
+    }
+}
 def rewrite_text_with_llm(text, replacement_mapping, user_location):
-    """Rewrite text with LLM using cached replacement mapping"""
+    """
+    Uses LLM to rewrite a resume with bias-free language, while preserving
+    the original content length. Enhances grammar, structure, and clarity.
+    Ensures structured formatting and includes relevant links and job suggestions.
+    """
+
+    # Create a clear mapping in bullet format
     formatted_mapping = "\n".join(
         [f'- "{key}" → "{value}"' for key, value in replacement_mapping.items()]
     )
 
+    # Prompt for LLM
     prompt = f"""
 You are an expert resume editor and career advisor.
 
@@ -613,7 +1564,7 @@ Your tasks:
 {formatted_mapping}
 
 4. 💼 Suggest **5 relevant job titles** suited for this candidate based in **{user_location}**. For each:
-   - Provide a detailed reason for relevance.
+   - Provide a detailed  reason for relevance.
    - Attach a direct LinkedIn job search URL.
 
 ---
@@ -645,13 +1596,14 @@ Your tasks:
 🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%205&location={user_location})
 """
 
+    # Call the LLM of your choice
     response = call_llm(prompt, session=st.session_state)
     return response
 
+
+import re
+
 def rewrite_and_highlight(text, replacement_mapping, user_location):
-    """Rewrite and highlight text with cached components"""
-    gender_words = get_gender_words()
-    
     highlighted_text = text
     masculine_count, feminine_count = 0, 0
     detected_masculine_words, detected_feminine_words = [], []
@@ -663,7 +1615,7 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
     def span_overlaps(start, end):
         return any(s < end and e > start for s, e in matched_spans)
 
-    # Process masculine words (existing logic preserved)
+    # Highlight and count masculine words
     for word in masculine_words:
         pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
         for match in pattern.finditer(highlighted_text):
@@ -674,6 +1626,7 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
             word_match = match.group(0)
             colored = f"<span style='color:blue;'>{word_match}</span>"
 
+            # Replace word in the highlighted text
             highlighted_text = highlighted_text[:start] + colored + highlighted_text[end:]
             shift = len(colored) - len(word_match)
             matched_spans = [(s if s < start else s + shift, e if s < start else e + shift) for s, e in matched_spans]
@@ -681,6 +1634,7 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
 
             masculine_count += 1
 
+            # Get sentence context and highlight
             sentence_match = re.search(r'([^.]*?\b' + re.escape(word_match) + r'\b[^.]*\.)', text, re.IGNORECASE)
             if sentence_match:
                 sentence = sentence_match.group(1).strip()
@@ -694,9 +1648,9 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
                     "word": word_match,
                     "sentence": colored_sentence
                 })
-            break
+            break  # Only one match per word
 
-    # Process feminine words (existing logic preserved)
+    # Highlight and count feminine words
     for word in feminine_words:
         pattern = re.compile(rf'\b{re.escape(word)}\b', re.IGNORECASE)
         for match in pattern.finditer(highlighted_text):
@@ -707,6 +1661,7 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
             word_match = match.group(0)
             colored = f"<span style='color:red;'>{word_match}</span>"
 
+            # Replace word in the highlighted text
             highlighted_text = highlighted_text[:start] + colored + highlighted_text[end:]
             shift = len(colored) - len(word_match)
             matched_spans = [(s if s < start else s + shift, e if s < start else e + shift) for s, e in matched_spans]
@@ -714,6 +1669,7 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
 
             feminine_count += 1
 
+            # Get sentence context and highlight
             sentence_match = re.search(r'([^.]*?\b' + re.escape(word_match) + r'\b[^.]*\.)', text, re.IGNORECASE)
             if sentence_match:
                 sentence = sentence_match.group(1).strip()
@@ -727,24 +1683,26 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
                     "word": word_match,
                     "sentence": colored_sentence
                 })
-            break
+            break  # Only one match per word
 
-    # Rewrite text with LLM
-    replacement_mapping_combined = get_replacement_mapping()
+    # Rewrite text with neutral terms
     rewritten_text = rewrite_text_with_llm(
         text,
-        replacement_mapping_combined["masculine"] | replacement_mapping_combined["feminine"],
+        replacement_mapping["masculine"] | replacement_mapping["feminine"],
         user_location
     )
 
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
 
-# =============================================================================
-# ATS EVALUATION WITH LAZY LOADING
-# =============================================================================
+import re
+import pandas as pd
+import altair as alt
+import streamlit as st
+from llm_manager import call_llm
+from db_manager import detect_domain_from_title_and_description, get_domain_similarity
 
+# ✅ Enhanced Grammar evaluation using LLM with suggestions
 def get_grammar_score_with_llm(text, max_score=5):
-    """Enhanced grammar evaluation using LLM"""
     grammar_prompt = f"""
 You are a grammar and tone evaluator AI. Analyze the following resume text and:
 
@@ -779,10 +1737,12 @@ Suggestions:
     feedback_match = re.search(r"Feedback:\s*(.+)", response)
     suggestions = re.findall(r"- (.+)", response)
 
-    score = int(score_match.group(1)) if score_match else max(3, max_score-2)
+    score = int(score_match.group(1)) if score_match else max(3, max_score-2)  # More generous default
     feedback = feedback_match.group(1).strip() if feedback_match else "Grammar appears adequate for professional communication."
     return score, feedback, suggestions
 
+
+# ✅ Main ATS Evaluation Function
 def ats_percentage_score(
     resume_text,
     job_description,
@@ -794,34 +1754,34 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    """Enhanced ATS evaluation with lazy loading"""
-    
-    # Grammar evaluation
+    import datetime
+
+    # ✅ Grammar evaluation
     grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(
         resume_text, max_score=lang_weight
     )
 
-    # Domain similarity detection  
+    # ✅ Domain similarity detection
     resume_domain = detect_domain_from_title_and_description("Unknown", resume_text)
     job_domain = detect_domain_from_title_and_description(job_title, job_description)
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
-    # Balanced domain penalty
+    # ✅ Balanced domain penalty
     MAX_DOMAIN_PENALTY = 15
     domain_penalty = round((1 - similarity_score) * MAX_DOMAIN_PENALTY)
 
-    # Optional profile score note
+    # ✅ Optional profile score note
     logic_score_note = (
         f"\n\nOptional Note: The system also calculated a logic-based profile score of {logic_profile_score}/100 "
         f"based on resume length, experience, and skills."
         if logic_profile_score else ""
     )
 
-    # Current date for evaluation context
-    current_year = datetime.now().year
-    current_month = datetime.now().month
+    # ✅ FIXED: Improved date parsing logic for year-only ranges
+    current_year = datetime.datetime.now().year
+    current_month = datetime.datetime.now().month
     
-    # Comprehensive ATS evaluation prompt (preserved original logic)
+    # ✅ Refined education scoring prompt (STANDARDIZED & STRICT)
     prompt = f"""
 You are a professional ATS evaluator specializing in **technical roles** (AI/ML, Blockchain, Cloud, Data, Software, Cybersecurity). 
 Your role is to provide **balanced, objective scoring** that reflects industry standards and recognizes candidate potential while maintaining professional standards.
@@ -856,6 +1816,8 @@ Your role is to provide **balanced, objective scoring** that reflects industry s
 - 🔄 Ongoing relevant education → Strong scoring (minimum 12 points for technical fields)
 - 📅 Recent completion (within 2 years) → Gets recency bonus
 - 📂 Older completion → No penalty if skills are current
+
+
 
 **Experience Scoring Framework ({exp_weight} points max):**
 - 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
@@ -1001,7 +1963,7 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - **EXPERIENCE MATCHING**: Look for similar roles, projects, or responsibilities even if not exact title matches
 
 Context for Evaluation:
-- Current Date: {datetime.now().strftime('%B %Y')} (Year: {current_year}, Month: {current_month})
+- Current Date: {datetime.datetime.now().strftime('%B %Y')} (Year: {current_year}, Month: {current_month})
 - Grammar Score: {grammar_score} / {lang_weight}
 - Grammar Feedback: {grammar_feedback}  
 - Resume Domain: {resume_domain}
@@ -1044,13 +2006,13 @@ Context for Evaluation:
     skills_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
     keyword_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis)
 
-    # Apply minimum scores to avoid harsh penalties
-    edu_score = max(edu_score, int(edu_weight * 0.15))
-    exp_score = max(exp_score, int(exp_weight * 0.15))  
-    skills_score = max(skills_score, int(skills_weight * 0.15))
-    keyword_score = max(keyword_score, int(keyword_weight * 0.10))
+    # ✅ IMPROVED: More generous minimum scores to avoid harsh penalties
+    edu_score = max(edu_score, int(edu_weight * 0.15))  # Minimum 15% of weight
+    exp_score = max(exp_score, int(exp_weight * 0.15))  # Minimum 15% of weight  
+    skills_score = max(skills_score, int(skills_weight * 0.15))  # Minimum 15% of weight
+    keyword_score = max(keyword_score, int(keyword_weight * 0.10))  # Minimum 10% of weight
 
-    # Extract missing items
+    # Extract missing items with better parsing - now called "opportunities"
     missing_keywords_section = extract_section(r"\*\*Keyword Enhancement Opportunities:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)
     missing_skills_section = extract_section(r"\*\*Skills Gaps \(Opportunities for Growth\):\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
     
@@ -1060,10 +2022,12 @@ Context for Evaluation:
     if not missing_skills_section.strip():
         missing_skills_section = extract_section(r"\*\*Missing Critical Skills:\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
     
+    # Improved extraction - handle multiple formats and get all items
     def extract_list_items(text):
         if not text.strip():
             return "None identified"
         
+        # Find all bullet points with various formats
         items = []
         lines = text.strip().split('\n')
         
@@ -1073,11 +2037,11 @@ Context for Evaluation:
                 continue
                 
             # Remove various bullet point formats
-            cleaned_line = re.sub(r'^[-•*]\s*', '', line)
-            cleaned_line = re.sub(r'^\d+\.\s*', '', cleaned_line)
+            cleaned_line = re.sub(r'^[-•*]\s*', '', line)  # Remove -, •, * bullets
+            cleaned_line = re.sub(r'^\d+\.\s*', '', cleaned_line)  # Remove numbered lists
             cleaned_line = cleaned_line.strip()
             
-            if cleaned_line and len(cleaned_line) > 2:
+            if cleaned_line and len(cleaned_line) > 2:  # Avoid empty or very short items
                 items.append(cleaned_line)
         
         return ', '.join(items) if items else "None identified"
@@ -1085,27 +2049,27 @@ Context for Evaluation:
     missing_keywords = extract_list_items(missing_keywords_section)
     missing_skills = extract_list_items(missing_skills_section)
 
-    # More balanced total score calculation
+    # ✅ IMPROVED: More balanced total score calculation
     total_score = edu_score + exp_score + skills_score + grammar_score + keyword_score
     
     # Apply domain penalty more gently
-    total_score = max(total_score - domain_penalty, int(total_score * 0.7))
+    total_score = max(total_score - domain_penalty, int(total_score * 0.7))  # Never go below 70% of pre-penalty score
     
-    # Score caps and minimum
+    # ✅ IMPROVED: More generous score caps and bonus for well-rounded candidates
     total_score = min(total_score, 100)
-    total_score = max(total_score, 15)
+    total_score = max(total_score, 15)  # Minimum score of 15 to avoid completely crushing candidates
 
-    # More encouraging score formatting
+    # ✅ IMPROVED: More encouraging score formatting with better thresholds
     formatted_score = (
-        "🌟 Exceptional Match" if total_score >= 85 else
-        "✅ Strong Match" if total_score >= 70 else
-        "🟡 Good Potential" if total_score >= 55 else
-        "⚠️ Fair Match" if total_score >= 40 else
-        "🔄 Needs Development" if total_score >= 25 else
+        "🌟 Exceptional Match" if total_score >= 85 else  # Lowered from 90
+        "✅ Strong Match" if total_score >= 70 else       # Lowered from 75
+        "🟡 Good Potential" if total_score >= 55 else    # Lowered from 60
+        "⚠️ Fair Match" if total_score >= 40 else        # Lowered from 45
+        "🔄 Needs Development" if total_score >= 25 else # New category
         "❌ Poor Match"
     )
 
-    # Format suggestions nicely
+    # ✅ Format suggestions nicely
     suggestions_html = ""
     if grammar_suggestions:
         suggestions_html = "<ul>" + "".join([f"<li>{s}</li>" for s in grammar_suggestions]) + "</ul>"
@@ -1154,140 +2118,640 @@ Context for Evaluation:
         "Domain Penalty": domain_penalty,
         "Domain Similarity Score": similarity_score
     }
-
-# =============================================================================
-# VECTORSTORE AND CHAIN SETUP (CACHED)
-# =============================================================================
-
-@st.cache_resource(show_spinner=False)
+# Setup Vector DB
 def setup_vectorstore(documents):
-    """Setup vectorstore with caching"""
-    ml_imports = get_heavy_ml_imports()
-    
-    embeddings = ml_imports['HuggingFaceEmbeddings'](model_name="sentence-transformers/all-MiniLM-L6-v2")
-    if ml_imports['device'] == "cuda":
-        embeddings.model = embeddings.model.to(ml_imports['torch'].device("cuda"))
-    
-    text_splitter = ml_imports['CharacterTextSplitter'](chunk_size=500, chunk_overlap=100)
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    if DEVICE == "cuda":
+        embeddings.model = embeddings.model.to(torch.device("cuda"))
+    text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=100)
     doc_chunks = text_splitter.split_text("\n".join(documents))
-    
-    return ml_imports['FAISS'].from_texts(doc_chunks, embeddings)
+    return FAISS.from_texts(doc_chunks, embeddings)
+
+# Create Conversational Chain
+from llm_manager import load_groq_api_keys
 
 def create_chain(vectorstore):
-    """Create conversational chain with rotation"""
-    ml_imports = get_heavy_ml_imports()
-    
-    # Get a rotated admin key
+    # 🔁 Get a rotated admin key
     keys = load_groq_api_keys()
     index = st.session_state.get("key_index", 0)
     groq_api_key = keys[index % len(keys)]
     st.session_state["key_index"] = index + 1
 
-    # Create the ChatGroq object
-    llm = ml_imports['ChatGroq'](model="llama-3.3-70b-versatile", temperature=0, groq_api_key=groq_api_key)
+    # ✅ Create the ChatGroq object
+    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0, groq_api_key=groq_api_key)
 
-    # Build the chain
-    chain = ml_imports['ConversationalRetrievalChain'].from_llm(
+    # ✅ Build the chain
+    chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=vectorstore.as_retriever(),
         return_source_documents=True
     )
     return chain
 
-# =============================================================================
-# COVER LETTER GENERATION
-# =============================================================================
+# App Title
+#####st.title("🦙 HIRELYZER - LLAMA 3.3 (ANALYZER + BUILDER + JOB MARKET TRENDS)")#######
 
-def generate_cover_letter_from_resume_builder():
-    """Generate cover letter with cached components"""
-    name = st.session_state.get("name", "")
-    job_title = st.session_state.get("job_title", "")
-    summary = st.session_state.get("summary", "")
-    skills = st.session_state.get("skills", "")
-    location = st.session_state.get("location", "")
-    today_date = datetime.today().strftime("%B %d, %Y")
+# Chat history
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
-    # Input boxes for contact info
-    company = st.text_input("🏢 Target Company", placeholder="e.g., Google")
-    linkedin = st.text_input("🔗 LinkedIn URL", placeholder="e.g., https://linkedin.com/in/username")
-    email = st.text_input("📧 Email", placeholder="e.g., you@example.com")
-    mobile = st.text_input("📞 Mobile Number", placeholder="e.g., +91 9876543210")
+# ---------------- Sidebar Layout with Inline Images ----------------
+import streamlit as st
 
-    # Button to prevent relooping
-    if st.button("✉️ Generate Cover Letter"):
-        # Validate input before generating
-        if not all([name, job_title, summary, skills, company, linkedin, email, mobile]):
-            st.warning("⚠️ Please fill in all fields including LinkedIn, email, and mobile.")
-            return
+st.sidebar.markdown("### 🏷️ Job Information")
 
-        prompt = f"""
-You are a professional cover letter writer.
+# ---------------- Job Information Dropdown ----------------
+with st.sidebar.expander("![Job](https://img.icons8.com/ios-filled/20/briefcase.png) Enter Job Details", expanded=False):
+    job_title = st.text_input(
+        "![Job](https://img.icons8.com/ios-filled/20/briefcase.png) Job Title"
+    )
 
-Write a formal and compelling cover letter using the information below. 
-Format it as a real letter with:
-1. Date
-2. Recipient heading
-3. Proper salutation
-4. Three short paragraphs
-5. Professional closing
+    user_location = st.text_input(
+        "![Location](https://img.icons8.com/ios-filled/20/marker.png) Preferred Job Location (City, Country)"
+    )
 
-Ensure you **only include the company name once** in the header or salutation, 
-and avoid repeating it redundantly in the body.
+    job_description = st.text_area(
+        "![Description](https://img.icons8.com/ios-filled/20/document.png) Paste Job Description",
+        height=200
+    )
 
-### Heading Info:
-{today_date}
-Hiring Manager, {company}, {location}
+    if job_description.strip() == "":
+        st.warning("Please enter a job description to evaluate the resumes.")
 
-### Candidate Info:
-- Name: {name}
-- Job Title: {job_title}
-- Summary: {summary}
-- Skills: {skills}
-- Location: {location}
+# ---------------- Advanced Weights Dropdown ----------------
+with st.sidebar.expander("![Settings](https://img.icons8.com/ios-filled/20/settings.png) Customize ATS Scoring Weights", expanded=False):
+    edu_weight = st.slider("![Education](https://img.icons8.com/ios-filled/20/graduation-cap.png) Education Weight", 0, 50, 20)
+    exp_weight = st.slider("![Experience](https://img.icons8.com/ios-filled/20/portfolio.png) Experience Weight", 0, 50, 35)
+    skills_weight = st.slider("![Skills](https://img.icons8.com/ios-filled/20/gear.png) Skills Match Weight", 0, 50, 30)
+    lang_weight = st.slider("![Language](https://img.icons8.com/ios-filled/20/language.png) Language Quality Weight", 0, 10, 5)
+    keyword_weight = st.slider("![Keyword](https://img.icons8.com/ios-filled/20/key.png) Keyword Match Weight", 0, 20, 10)
 
-### Instructions:
-- Do not use HTML tags. 
-- Return plain text only.
-"""
+    total_weight = edu_weight + exp_weight + skills_weight + lang_weight + keyword_weight
 
-        # Call LLM
-        cover_letter = call_llm(prompt, session=st.session_state).strip()
+    # ---------------- Inline SVG Validation ----------------
+    if total_weight != 100:
+        st.markdown(
+            f"""
+            <div style="display:flex;align-items:center;gap:6px;
+                        border:1px solid #fca5a5;
+                        background:#fee2e2;
+                        padding:8px;
+                        border-radius:6px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="red" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10
+                             10-4.48 10-10S17.52 2 12 2zm0 15
+                             c-.83 0-1.5.67-1.5 1.5S11.17 20
+                             12 20s1.5-.67 1.5-1.5S12.83 17
+                             12 17zm1-4V7h-2v6h2z"/>
+                </svg>
+                <span style="color:#b91c1c;font-weight:500;">
+                    Total = {total_weight}. Please make it exactly 100.
+                </span>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    else:
+        st.markdown(
+            f"""
+            <div style="display:flex;align-items:center;gap:6px;
+                        border:1px solid #86efac;
+                        background:#dcfce7;
+                        padding:8px;
+                        border-radius:6px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="green" viewBox="0 0 24 24">
+                    <path d="M9 16.2l-3.5-3.5-1.4 1.4L9
+                             19 20.3 7.7l-1.4-1.4z"/>
+                </svg>
+                <span style="color:#166534;font-weight:500;">
+                    Total weight = 100
+                </span>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-        # Store plain text
-        st.session_state["cover_letter"] = cover_letter
 
-        # Build HTML wrapper for preview
-        cover_letter_html = f"""
-        <div style="font-family: Georgia, serif; font-size: 13pt; line-height: 1.6; 
-                    color: #000; background: #fff; padding: 25px; 
-                    border-radius: 8px; box-shadow: 0px 2px 6px rgba(0,0,0,0.1); 
-                    max-width: 800px; margin: auto;">
-            <div style="text-align:center; margin-bottom:15px;">
-                <div style="font-size:18pt; font-weight:bold; color:#003366;">{name}</div>
-                <div style="font-size:14pt; color:#555;">{job_title}</div>
-                <div style="font-size:10pt; margin-top:5px;">
-                    <a href="{linkedin}" style="color:#003366;">{linkedin}</a><br/>
-                    📧 {email} | 📞 {mobile}
+
+with tab1:
+    from streamlit_pdf_viewer import pdf_viewer
+
+    # 🎨 CSS for sliding success message
+    st.markdown("""
+    <style>
+    .slide-message {
+      position: relative;
+      overflow: hidden;
+      margin: 10px 0;
+      padding: 10px 15px;
+      border-radius: 10px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: slideIn 0.8s ease forwards;
+    }
+    .slide-message svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+    .success-msg { background: rgba(0,255,127,0.12); border-left: 5px solid #00FF7F; color:#00FF7F; }
+    .error-msg   { background: rgba(255,99,71,0.12);  border-left: 5px solid #FF6347; color:#FF6347; }
+    .warn-msg    { background: rgba(255,215,0,0.12); border-left: 5px solid #FFD700; color:#FFD700; }
+
+    @keyframes slideIn {
+      0%   { transform: translateX(100%); opacity: 0; }
+      100% { transform: translateX(0); opacity: 1; }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    uploaded_files = st.file_uploader(
+        "📄 Upload PDF Resumes",
+        type=["pdf"],
+        accept_multiple_files=True,
+        help="Upload one or more resumes in PDF format (max 200MB each)."
+    )
+
+    if uploaded_files:
+        for uploaded_file in uploaded_files:
+            with st.container():
+                st.subheader(f"📄 Original Resume Preview: {uploaded_file.name}")
+
+                try:
+                    # ✅ Show PDF preview safely
+                    pdf_viewer(
+                        uploaded_file.read(),
+                        key=f"pdf_viewer_{uploaded_file.name}"
+                    )
+
+                    # Reset pointer so file can be read again later
+                    uploaded_file.seek(0)
+
+                    # ✅ Extract text safely
+                    resume_text = safe_extract_text(uploaded_file)
+
+                    if resume_text:
+                        st.markdown(f"""
+                        <div class='slide-message success-msg'>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                            ✅ Successfully processed <b>{uploaded_file.name}</b>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        # 🔹 Continue with ATS scoring, bias detection, etc. here
+                    else:
+                        st.markdown(f"""
+                        <div class='slide-message warn-msg'>
+                            ⚠️ <b>{uploaded_file.name}</b> does not contain valid resume text.
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                except Exception as e:
+                    st.markdown(f"""
+                    <div class='slide-message error-msg'>
+                        ❌ Could not display or process <b>{uploaded_file.name}</b>: {e}
+                    </div>
+                    """, unsafe_allow_html=True)
+
+
+
+
+
+
+import os
+import re
+import streamlit as st
+import pandas as pd
+import altair as alt
+from datetime import datetime
+from db_manager import insert_candidate, detect_domain_from_title_and_description
+from llm_manager import call_llm  # ensure this calls your LLM
+
+# ✅ Initialize state
+
+import time
+import os
+
+# Initialize session state
+if "resume_data" not in st.session_state:
+    st.session_state.resume_data = []
+
+if "processed_files" not in st.session_state:
+    st.session_state.processed_files = set()
+
+resume_data = st.session_state.resume_data
+
+# ✏️ Resume Evaluation Logic
+if uploaded_files and job_description:
+    all_text = []
+
+    for uploaded_file in uploaded_files:
+        if uploaded_file.name in st.session_state.processed_files:
+            continue
+
+        # ✅ Improved optimized scanner animation with better performance
+        scanner_placeholder = st.empty()
+
+        # ✅ IMPROVED: More efficient CSS animations with GPU acceleration
+        OPTIMIZED_SCANNER_HTML = f"""
+        <style>
+        .scanner-overlay {{
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: linear-gradient(135deg, #0b0c10 0%, #1a1c29 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            will-change: transform, opacity;
+        }}
+        
+        .scanner-doc {{
+            width: 280px;
+            height: 340px;
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 191, 255, 0.3);
+            transform: translateZ(0);
+            will-change: transform;
+            animation: docFloat 3s ease-in-out infinite alternate;
+        }}
+        
+        @keyframes docFloat {{
+            0% {{ transform: translateY(0px) scale(1); }}
+            100% {{ transform: translateY(-8px) scale(1.02); }}
+        }}
+        
+        .doc-header {{
+            padding: 20px;
+            text-align: center;
+            border-bottom: 2px solid #e9ecef;
+        }}
+        
+        .doc-avatar {{
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+        }}
+        
+        .doc-title {{
+            font-size: 16px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            font-family: 'Segoe UI', sans-serif;
+        }}
+        
+        .doc-content {{
+            padding: 15px;
+            font-size: 12px;
+            color: #6c757d;
+            line-height: 1.4;
+        }}
+        
+        .scan-line {{
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 4px;
+            background: linear-gradient(90deg, transparent, rgba(0,191,255,0.8), transparent);
+            animation: scanMove 2.5s ease-in-out infinite;
+            box-shadow: 0 0 20px rgba(0,191,255,0.6);
+            transform: translateZ(0);
+            will-change: transform;
+        }}
+        
+        @keyframes scanMove {{
+            0% {{ top: 0; opacity: 1; }}
+            50% {{ opacity: 0.8; }}
+            100% {{ top: 340px; opacity: 1; }}
+        }}
+        
+        .scanner-text {{
+            margin-top: 30px;
+            font-family: 'Orbitron', 'Segoe UI', sans-serif;
+            font-weight: 600;
+            font-size: 18px;
+            color: #00bfff;
+            text-shadow: 0 0 10px rgba(0,191,255,0.5);
+            animation: textPulse 2s ease-in-out infinite;
+        }}
+        
+        @keyframes textPulse {{
+            0%, 100% {{ opacity: 1; transform: scale(1); }}
+            50% {{ opacity: 0.8; transform: scale(1.05); }}
+        }}
+        
+        .progress-bar {{
+            width: 200px;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            margin-top: 20px;
+            overflow: hidden;
+        }}
+        
+        .progress-fill {{
+            height: 100%;
+            background: linear-gradient(90deg, #00bfff, #1e90ff);
+            border-radius: 2px;
+            animation: progressFill 3s ease-in-out infinite;
+            transform: translateX(-100%);
+        }}
+        
+        @keyframes progressFill {{
+            0% {{ transform: translateX(-100%); }}
+            100% {{ transform: translateX(0); }}
+        }}
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {{
+            .scanner-doc {{ width: 240px; height: 300px; }}
+            .scanner-text {{ font-size: 16px; }}
+        }}
+        </style>
+        
+        <div class="scanner-overlay">
+            <div class="scanner-doc">
+                <div class="scan-line"></div>
+                <div class="doc-header">
+                    <div class="doc-avatar">👤</div>
+                    <div class="doc-title">{job_title}</div>
+                </div>
+                <div class="doc-content">
+                    • Analyzing candidate profile...<br>
+                    • Extracting key skills...<br>
+                    • Matching with job requirements...<br>
+                    • Calculating ATS compatibility...<br>
+                    • Checking for bias patterns...
                 </div>
             </div>
-            <hr/>
-            <pre style="white-space: pre-wrap; font-family: Georgia, serif; font-size: 12pt; color:#000;">
-{cover_letter}
-            </pre>
+            <div class="scanner-text">Scanning Resume...</div>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
         </div>
         """
+        
+        scanner_placeholder.markdown(OPTIMIZED_SCANNER_HTML, unsafe_allow_html=True)
 
-        st.session_state["cover_letter_html"] = cover_letter_html
+        # ✅ Save uploaded file
+        file_path = os.path.join(working_dir, uploaded_file.name)
+        with open(file_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
 
-        # Show nicely in Streamlit
-        st.markdown(cover_letter_html, unsafe_allow_html=True)
+        # ✅ Reduced delay for better UX
+        time.sleep(4)
 
-# =============================================================================
-# REPORT GENERATION
-# =============================================================================
+        # ✅ Extract text from PDF
+        text = extract_text_from_pdf(file_path)
+        if not text:
+            st.warning(f"⚠️ Could not extract text from {uploaded_file.name}. Skipping.")
+            scanner_placeholder.empty()
+            continue
+
+        all_text.append(" ".join(text))
+        full_text = " ".join(text)
+
+        # ✅ Bias detection
+        bias_score, masc_count, fem_count, detected_masc, detected_fem = detect_bias(full_text)
+
+        # ✅ Rewrite and highlight gender-biased words
+        highlighted_text, rewritten_text, _, _, _, _ = rewrite_and_highlight(
+            full_text, replacement_mapping, user_location
+        )
+
+        # ✅ LLM-based ATS Evaluation
+        ats_result, ats_scores = ats_percentage_score(
+            resume_text=full_text,
+            job_description=job_description,
+            logic_profile_score=None,
+            edu_weight=edu_weight,
+            exp_weight=exp_weight,
+            skills_weight=skills_weight,
+            lang_weight=lang_weight,
+            keyword_weight=keyword_weight
+        )
+
+        # ✅ Extract structured ATS values
+        candidate_name = ats_scores.get("Candidate Name", "Not Found")
+        ats_score = ats_scores.get("ATS Match %", 0)
+        edu_score = ats_scores.get("Education Score", 0)
+        exp_score = ats_scores.get("Experience Score", 0)
+        skills_score = ats_scores.get("Skills Score", 0)
+        lang_score = ats_scores.get("Language Score", 0)
+        keyword_score = ats_scores.get("Keyword Score", 0)
+        formatted_score = ats_scores.get("Formatted Score", "N/A")
+        fit_summary = ats_scores.get("Final Thoughts", "N/A")
+        language_analysis_full = ats_scores.get("Language Analysis", "N/A")
+
+        missing_keywords_raw = ats_scores.get("Missing Keywords", "N/A")
+        missing_skills_raw = ats_scores.get("Missing Skills", "N/A")
+        missing_keywords = [kw.strip() for kw in missing_keywords_raw.split(",") if kw.strip()] if missing_keywords_raw != "N/A" else []
+        missing_skills = [sk.strip() for sk in missing_skills_raw.split(",") if sk.strip()] if missing_skills_raw != "N/A" else []
+
+        domain = detect_domain_from_title_and_description(job_title, job_description)
+
+        bias_flag = "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair"
+        ats_flag = "⚠️ Low ATS" if ats_score < 50 else "✅ Good ATS"
+
+        # ✅ Store everything in session state
+        st.session_state.resume_data.append({
+            "Resume Name": uploaded_file.name,
+            "Candidate Name": candidate_name,
+            "ATS Report": ats_result,
+            "ATS Match %": ats_score,
+            "Formatted Score": formatted_score,
+            "Education Score": edu_score,
+            "Experience Score": exp_score,
+            "Skills Score": skills_score,
+            "Language Score": lang_score,
+            "Keyword Score": keyword_score,
+            "Education Analysis": ats_scores.get("Education Analysis", ""),
+            "Experience Analysis": ats_scores.get("Experience Analysis", ""),
+            "Skills Analysis": ats_scores.get("Skills Analysis", ""),
+            "Language Analysis": language_analysis_full,
+            "Keyword Analysis": ats_scores.get("Keyword Analysis", ""),
+            "Final Thoughts": fit_summary,
+            "Missing Keywords": missing_keywords,
+            "Missing Skills": missing_skills,
+            "Bias Score (0 = Fair, 1 = Biased)": bias_score,
+            "Bias Status": bias_flag,
+            "Masculine Words": masc_count,
+            "Feminine Words": fem_count,
+            "Detected Masculine Words": detected_masc,
+            "Detected Feminine Words": detected_fem,
+            "Text Preview": full_text[:300] + "...",
+            "Highlighted Text": highlighted_text,
+            "Rewritten Text": rewritten_text,
+            "Domain": domain
+        })
+
+        insert_candidate(
+            (
+                uploaded_file.name,
+                candidate_name,
+                ats_score,
+                edu_score,
+                exp_score,
+                skills_score,
+                lang_score,
+                keyword_score,
+                bias_score
+            ),
+            job_title=job_title,
+            job_description=job_description
+        )
+
+        st.session_state.processed_files.add(uploaded_file.name)
+
+        # ✅ IMPROVED: Smoother success animation with better transitions
+        SUCCESS_HTML = """
+        <style>
+        .success-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: linear-gradient(135deg, #0b0c10 0%, #1a1c29 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        
+        .success-circle {
+            width: 140px;
+            height: 140px;
+            border: 3px solid #00bfff;
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle, rgba(0,191,255,0.1) 0%, rgba(0,191,255,0.05) 50%, transparent 100%);
+            animation: successPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes successPulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(0,191,255,0.3);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 0 30px rgba(0,191,255,0.6);
+            }
+        }
+        
+        .success-checkmark {
+            font-size: 48px;
+            color: #00ff7f;
+            animation: checkmarkPop 0.8s ease-out;
+        }
+        
+        @keyframes checkmarkPop {
+            0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+            50% { transform: scale(1.2) rotate(-10deg); opacity: 0.8; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        
+        .success-text {
+            margin-top: 25px;
+            font-family: 'Orbitron', 'Segoe UI', sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            color: #00bfff;
+            text-shadow: 0 0 10px rgba(0,191,255,0.5);
+            animation: textSlideUp 0.8s ease-out 0.3s both;
+        }
+        
+        @keyframes textSlideUp {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        
+        .success-subtitle {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #8e9aaf;
+            animation: textSlideUp 0.8s ease-out 0.5s both;
+        }
+        </style>
+        
+        <div class="success-overlay">
+            <div class="success-circle">
+                <div class="success-checkmark">✓</div>
+            </div>
+            <div class="success-text">Scan Complete!</div>
+            <div class="success-subtitle">Resume analysis ready</div>
+        </div>
+        """
+        
+        # Clear scanner and show success animation
+        scanner_placeholder.empty()
+        success_placeholder = st.empty()
+        success_placeholder.markdown(SUCCESS_HTML, unsafe_allow_html=True)
+
+        # ⏳ Shorter delay for better UX, then clear and rerun
+        time.sleep(3)
+        success_placeholder.empty()
+        st.rerun()
+
+
+
+
+
+
+    # ✅ Optional vectorstore setup
+    if all_text:
+        st.session_state.vectorstore = setup_vectorstore(all_text)
+        st.session_state.chain = create_chain(st.session_state.vectorstore)
+
+# 🔄 Developer Reset Button
+import time
+
+with tab1:
+    if st.button("🔄 Refresh view"):
+        st.session_state.processed_files.clear()
+        st.session_state.resume_data.clear()
+
+        # Temporary placeholder for sliding success message
+        msg_placeholder = st.empty()
+        msg_placeholder.markdown("""
+        <div class='slide-message success-msg'>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+            ✅ Cleared uploaded resume history. You can re-upload now.
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Wait 3 seconds then clear message
+        time.sleep(3)
+        msg_placeholder.empty()
+
+
+
 
 def generate_resume_report_html(resume):
-    """Generate HTML report for PDF conversion"""
     candidate_name = resume.get('Candidate Name', 'Not Found')
     resume_name = resume.get('Resume Name', 'Unknown')
     rewritten_text = resume.get('Rewritten Text', '').replace("\n", "<br/>")
@@ -1441,1362 +2905,15 @@ def generate_resume_report_html(resume):
     </html>
     """
 
-# =============================================================================
-# MAIN APPLICATION LAYOUT
-# =============================================================================
 
-# BEFORE LOGIN SECTION
-if not st.session_state.authenticated:
-    # Sidebar with cached icons
-    with st.sidebar:
-        st.markdown("<h1 style='color:#00BFFF;'>Smart Resume AI</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='color:#c9d1d9;'>Transform your career with AI-powered resume analysis, job matching, and smart insights.</p>", unsafe_allow_html=True)
 
-        # Use cached icons
-        icons = get_feature_icons()
-        
-        features = [
-            (icons["resume"], "Resume Analyzer", "Get feedback, scores, and tips powered by AI along with the biased words detection and rewriting the resume in an inclusive way."),
-            (icons["builder"], "Resume Builder", "Build modern, eye-catching resumes easily."),
-            (icons["job"], "Job Search", "Find tailored job matches."),
-            (icons["course"], "Course Suggestions", "Get upskilling recommendations based on your goals."),
-            (icons["dashboard"], "Interactive Dashboard", "Visualize trends, scores, and analytics."),
-        ]
 
-        for icon_b64, title, desc in features:
-            if icon_b64:  # Only show if icon loaded successfully
-                st.markdown(f"""
-                <div class="feature-card">
-                    <img src="data:image/png;base64,{icon_b64}" width="40"/>
-                    <h3>{title}</h3>
-                    <p>{desc}</p>
-                </div>
-                """, unsafe_allow_html=True)
-
-    # Animated Cards with cached icon
-    icons = get_feature_icons()
-    if icons["user"]:
-        st.markdown(f"""
-        <style>
-        .animated-cards {{
-          margin-top: 30px;
-          display: flex;
-          justify-content: center;
-          position: relative;
-          height: 300px;
-        }}
-        .animated-cards img {{
-          position: absolute;
-          width: 240px;
-          animation: splitCards 2.5s ease-in-out infinite alternate;
-          z-index: 1;
-        }}
-        .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
-        .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
-        .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
-        @keyframes splitCards {{
-          0% {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
-          100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
-        }}
-        .card-left {{ --x-offset: -80px; --rot: -5deg; }}
-        .card-center {{ --x-offset: 0px; --rot: 0deg; }}
-        .card-right {{ --x-offset: 80px; --rot: 5deg; }}
-        </style>
-        <div class="animated-cards">
-            <img class="card-left" src="data:image/png;base64,{icons['user']}" />
-            <img class="card-center" src="data:image/png;base64,{icons['user']}" />
-            <img class="card-right" src="data:image/png;base64,{icons['user']}" />
-        </div>
-        """, unsafe_allow_html=True)
-
-    # Counter Section with cached data
-    total_users = get_total_registered_users()
-    active_logins = get_logins_today()
-    stats = get_database_stats()
-    resumes_uploaded = stats.get("total_candidates", 0)
-    states_accessed = 29
-
-    glassmorphism_counter_style = """
-    <style>
-    @keyframes shimmer {
-        0% { background-position: -200% 0; }
-        100% { background-position: 200% 0; }
-    }
-    
-    @keyframes float {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-5px); }
-    }
-
-    .counter-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 250px);
-        column-gap: 40px;
-        row-gap: 25px;
-        justify-content: center;
-        padding: 30px 10px;
-        max-width: 600px;
-        margin: 0 auto;
-    }
-
-    .counter-box {
-        background: linear-gradient(135deg, 
-            rgba(0, 191, 255, 0.1) 0%, 
-            rgba(30, 144, 255, 0.05) 50%, 
-            rgba(0, 191, 255, 0.1) 100%);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border: 1px solid rgba(0, 191, 255, 0.2);
-        border-radius: 16px;
-        width: 100%;
-        height: 120px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        position: relative;
-        overflow: hidden;
-        transition: all 0.3s ease;
-        animation: float 3s ease-in-out infinite;
-    }
-
-    .counter-box::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(0, 191, 255, 0.3),
-            transparent
-        );
-        animation: shimmer 2s infinite;
-    }
-
-    .counter-box:hover {
-        transform: translateY(-8px) scale(1.02);
-        background: linear-gradient(135deg, 
-            rgba(0, 191, 255, 0.15) 0%, 
-            rgba(30, 144, 255, 0.08) 50%, 
-            rgba(0, 191, 255, 0.15) 100%);
-        border: 1px solid rgba(0, 191, 255, 0.4);
-        box-shadow: 
-            0 20px 40px rgba(0, 191, 255, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    }
-
-    .counter-box:nth-child(1) { animation-delay: 0s; }
-    .counter-box:nth-child(2) { animation-delay: 0.5s; }
-    .counter-box:nth-child(3) { animation-delay: 1s; }
-    .counter-box:nth-child(4) { animation-delay: 1.5s; }
-
-    .counter-number {
-        font-size: 2.2em;
-        font-weight: bold;
-        color: #00BFFF;
-        margin: 0;
-        position: relative;
-        z-index: 2;
-        text-shadow: 0 0 20px rgba(0, 191, 255, 0.5);
-    }
-
-    .counter-label {
-        margin-top: 8px;
-        font-size: 1em;
-        color: #c9d1d9;
-        position: relative;
-        z-index: 2;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    }
-    </style>
-    """
-
-    st.markdown(glassmorphism_counter_style, unsafe_allow_html=True)
-
-    st.markdown(f"""
-    <div class="counter-grid">
-        <div class="counter-box">
-            <div class="counter-number">{total_users}</div>
-            <div class="counter-label">Total Users</div>
-        </div>
-        <div class="counter-box">
-            <div class="counter-number">{states_accessed}</div>
-            <div class="counter-label">States Accessed</div>
-        </div>
-        <div class="counter-box">
-            <div class="counter-number">{resumes_uploaded}</div>
-            <div class="counter-label">Resumes Uploaded</div>
-        </div>
-        <div class="counter-box">
-            <div class="counter-number">{active_logins}</div>
-            <div class="counter-label">Active Sessions</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-# LOGIN INTERFACE (if not authenticated)
-if not st.session_state.get("authenticated", False):
-
-    # Cached silhouette icon
-    icons = get_feature_icons()
-    
-    # Enhanced glassmorphism CSS
-    st.markdown(f"""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
-
-    @keyframes shimmer {{
-        0% {{ background-position: -200% 0; }}
-        100% {{ background-position: 200% 0; }}
-    }}
-    
-    @keyframes glassShimmer {{
-        0% {{ transform: translateX(-100%) skewX(-15deg); }}
-        100% {{ transform: translateX(200%) skewX(-15deg); }}
-    }}
-
-    .animated-cards {{
-      margin-top: 40px;
-      display: flex;
-      justify-content: center;
-      position: relative;
-      height: 260px;
-    }}
-    .animated-cards img {{
-      position: absolute;
-      width: 220px;
-      animation: splitCards 2.5s ease-in-out infinite alternate;
-      z-index: 1;
-      filter: drop-shadow(0 0 15px rgba(0,191,255,0.3));
-    }}
-    .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
-    .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
-    .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
-
-    @keyframes splitCards {{
-      0%   {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
-      100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
-    }}
-    .card-left   {{ --x-offset: -80px; --rot: -4deg; }}
-    .card-center {{ --x-offset: 0px;  --rot: 0deg;  }}
-    .card-right  {{ --x-offset: 80px;  --rot: 4deg;  }}
-
-    .login-card {{
-      background: linear-gradient(135deg, 
-        rgba(0, 191, 255, 0.1) 0%, 
-        rgba(30, 144, 255, 0.05) 50%, 
-        rgba(0, 191, 255, 0.1) 100%);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(0, 191, 255, 0.2);
-      border-radius: 20px;
-      padding: 25px;
-      box-shadow: 
-        0 8px 32px rgba(0, 191, 255, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      font-family: 'Orbitron', sans-serif;
-      color: white;
-      margin-top: 20px;
-      opacity: 0;
-      transform: translateX(-120%);
-      animation: slideInLeft 1.2s ease-out forwards;
-      position: relative;
-      overflow: hidden;
-    }}
-    
-    .login-card::before {{
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(0, 191, 255, 0.2),
-        transparent
-      );
-      animation: glassShimmer 3s infinite;
-    }}
-    
-    @keyframes slideInLeft {{
-      0%   {{ transform: translateX(-120%); opacity: 0; }}
-      100% {{ transform: translateX(0); opacity: 1; }}
-    }}
-
-    .login-card h2 {{
-      text-align: center;
-      font-size: 1.6rem;
-      text-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
-      margin-bottom: 15px;
-      position: relative;
-      z-index: 2;
-    }}
-    .login-card h2 span {{ color: #00BFFF; }}
-
-    .slide-message {{
-      position: relative;
-      overflow: hidden;
-      margin: 10px 0;
-      padding: 10px 15px;
-      border-radius: 12px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      animation: slideIn 0.8s ease forwards;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }}
-    .slide-message svg {{
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-    }}
-    .success-msg {{ 
-      background: linear-gradient(135deg, rgba(0,255,127,0.15), rgba(0,255,127,0.05)); 
-      border: 1px solid rgba(0,255,127,0.3); 
-      color:#00FF7F; 
-    }}
-    .error-msg {{ 
-      background: linear-gradient(135deg, rgba(255,99,71,0.15), rgba(255,99,71,0.05)); 
-      border: 1px solid rgba(255,99,71,0.3); 
-      color:#FF6347; 
-    }}
-    .info-msg {{ 
-      background: linear-gradient(135deg, rgba(30,144,255,0.15), rgba(30,144,255,0.05)); 
-      border: 1px solid rgba(30,144,255,0.3); 
-      color:#1E90FF; 
-    }}
-    .warn-msg {{ 
-      background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,215,0,0.05)); 
-      border: 1px solid rgba(255,215,0,0.3); 
-      color:#FFD700; 
-    }}
-
-    @keyframes slideIn {{
-      0%   {{ transform: translateX(100%); opacity: 0; }}
-      100% {{ transform: translateX(0); opacity: 1; }}
-    }}
-
-    .stButton>button {{
-      background: linear-gradient(135deg, 
-        rgba(0, 191, 255, 0.2) 0%, 
-        rgba(30, 144, 255, 0.1) 100%);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      color: white;
-      border: 1px solid rgba(0, 191, 255, 0.3);
-      border-radius: 12px;
-      font-family: 'Orbitron', sans-serif;
-      font-weight: bold;
-      padding: 8px 20px;
-      box-shadow: 
-        0 4px 16px rgba(0, 191, 255, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }}
-    
-    .stButton>button::before {{
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.2),
-        transparent
-      );
-      transition: left 0.5s;
-    }}
-    
-    .stButton>button:hover {{
-      transform: translateY(-2px);
-      background: linear-gradient(135deg, 
-        rgba(0, 191, 255, 0.3) 0%, 
-        rgba(30, 144, 255, 0.15) 100%);
-      border: 1px solid rgba(0, 191, 255, 0.5);
-      box-shadow: 
-        0 8px 25px rgba(0, 191, 255, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    }}
-    
-    .stButton>button:hover::before {{
-      left: 100%;
-    }}
-
-    .stTextInput input {{
-      background: linear-gradient(135deg, 
-        rgba(0, 191, 255, 0.08) 0%, 
-        rgba(30, 144, 255, 0.04) 100%);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border: 1px solid rgba(0, 191, 255, 0.2);
-      border-radius: 10px;
-      padding: 10px;
-      color: #E0F7FF;
-      font-family: 'Orbitron', sans-serif;
-      box-shadow: 
-        0 4px 16px rgba(0, 191, 255, 0.05),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
-      transition: all 0.3s ease-in-out;
-    }}
-    .stTextInput input:focus {{
-      outline: none !important;
-      background: linear-gradient(135deg, 
-        rgba(0, 191, 255, 0.12) 0%, 
-        rgba(30, 144, 255, 0.06) 100%);
-      border: 1px solid rgba(0, 191, 255, 0.4);
-      box-shadow: 
-        0 8px 25px rgba(0, 191, 255, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      transform: translateY(-1px);
-    }}
-    .stTextInput label {{
-      font-family: 'Orbitron', sans-serif;
-      color: #00BFFF !important;
-      text-shadow: 0 0 10px rgba(0, 191, 255, 0.3);
-    }}
-    </style>
-
-    <!-- Animated Cards -->
-    <div class="animated-cards">
-        <img class="card-left" src="data:image/png;base64,{icons['silhouette']}" />
-        <img class="card-center" src="data:image/png;base64,{icons['silhouette']}" />
-        <img class="card-right" src="data:image/png;base64,{icons['silhouette']}" />
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Login/Register Layout
-    left, center, right = st.columns([1, 2, 1])
-
-    with center:
-        st.markdown(
-            "<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>HIRELYZER</span></h2>",
-            unsafe_allow_html=True,
-        )
-
-        login_tab, register_tab = st.tabs(["Login", "Register"])
-
-        # LOGIN TAB
-        with login_tab:
-            user = st.text_input("Username", key="login_user")
-            pwd = st.text_input("Password", type="password", key="login_pass")
-
-            if st.button("Login", key="login_btn"):
-                success, saved_key = verify_user(user.strip(), pwd.strip())
-                if success:
-                    st.session_state.authenticated = True
-                    st.session_state.username = user.strip()
-                    if saved_key:
-                        st.session_state["user_groq_key"] = saved_key
-                    log_user_action(user.strip(), "login")
-
-                    st.markdown("""<div class='slide-message success-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                        Login successful!
-                    </div>""", unsafe_allow_html=True)
-                    st.rerun()
-                else:
-                    st.markdown("""<div class='slide-message error-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                        Invalid credentials.
-                    </div>""", unsafe_allow_html=True)
-
-        # REGISTER TAB
-        with register_tab:
-            new_user = st.text_input("Choose a Username", key="reg_user")
-            new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
-            st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
-
-            if new_user.strip():
-                if username_exists(new_user.strip()):
-                    st.markdown("""<div class='slide-message error-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                        Username already exists.
-                    </div>""", unsafe_allow_html=True)
-                else:
-                    st.markdown("""<div class='slide-message info-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
-                          <path d="M12 8h.01M12 12v4"/></svg>
-                        Username is available.
-                    </div>""", unsafe_allow_html=True)
-
-            if st.button("Register", key="register_btn"):
-                if new_user.strip() and new_pass.strip():
-                    success, message = add_user(new_user.strip(), new_pass.strip())
-                    if success:
-                        st.markdown(f"""<div class='slide-message success-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                            {message}
-                        </div>""", unsafe_allow_html=True)
-                        log_user_action(new_user.strip(), "register")
-                    else:
-                        st.markdown(f"""<div class='slide-message error-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                            {message}
-                        </div>""", unsafe_allow_html=True)
-                else:
-                    st.markdown("""<div class='slide-message warn-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24">
-                          <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
-                        </svg>
-                        Please fill in both fields.
-                    </div>""", unsafe_allow_html=True)
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    st.stop()
-
-# =============================================================================
-# AFTER LOGIN SECTION
-# =============================================================================
-
-if st.session_state.get("authenticated"):
-    st.markdown(
-        f"<h2 style='color:#00BFFF;'>Welcome to HIRELYZER, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>",
-        unsafe_allow_html=True,
-    )
-
-    # LOGOUT BUTTON
-    if st.button("🚪 Logout"):
-        log_user_action(st.session_state.get("username", "unknown"), "logout")
-
-        # Clear all session keys safely
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
-
-        st.success("✅ Logged out successfully.")
-        st.rerun()
-
-    # GROQ API KEY SECTION (SIDEBAR)
-    st.sidebar.markdown("### 🔑 Groq API Key")
-
-    # Load saved key from DB
-    saved_key = get_user_api_key(st.session_state.username)
-    masked_preview = f"****{saved_key[-6:]}" if saved_key else ""
-
-    user_api_key_input = st.sidebar.text_input(
-        "Your Groq API Key (Optional)",
-        placeholder=masked_preview,
-        type="password"
-    )
-
-    # Save or reuse key
-    if user_api_key_input:
-        st.session_state["user_groq_key"] = user_api_key_input
-        save_user_api_key(st.session_state.username, user_api_key_input)
-        st.sidebar.success("✅ New key saved and in use.")
-    elif saved_key:
-        st.session_state["user_groq_key"] = saved_key
-        st.sidebar.info(f"ℹ️ Using your previously saved API key ({masked_preview})")
-    else:
-        st.sidebar.warning("⚠ Using shared admin key with possible usage limits")
-
-    # Clear saved key
-    if st.sidebar.button("🗑️ Clear My API Key"):
-        st.session_state["user_groq_key"] = None
-        save_user_api_key(st.session_state.username, None)
-        st.sidebar.success("✅ Cleared saved Groq API key. Now using shared admin key.")
-
-# ADMIN DASHBOARD
-if st.session_state.username == "admin":
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown("<h2 style='color:#00BFFF;'>📊 Admin Dashboard</h2>", unsafe_allow_html=True)
-
-    # Metrics row
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("👤 Total Registered Users", get_total_registered_users())
-    with col2:
-        st.metric("📅 Logins Today (IST)", get_logins_today())
-
-    # Activity log
-    st.markdown("<h3 style='color:#00BFFF;'>📋 Admin Activity Log</h3>", unsafe_allow_html=True)
-    logs = get_all_user_logs()
-    if logs:
-        st.dataframe(
-            {
-                "Username": [log[0] for log in logs],
-                "Action": [log[1] for log in logs],
-                "Timestamp": [log[2] for log in logs]
-            },
-            use_container_width=True
-        )
-    else:
-        st.info("No logs found yet.")
-
-# DYNAMIC TABS
-tab_labels = [
-    "📊 Dashboard",
-    "🧾 Resume Builder", 
-    "💼 Job Search",
-    "📚 Course Recommendation"
-]
-
-# Add Admin tab only for admin user
-if st.session_state.username == "admin":
-    tab_labels.append("📁 Admin DB View")
-
-# Create tabs dynamically
-tabs = st.tabs(tab_labels)
-
-# Unpack first four (always exist)
-tab1, tab2, tab3, tab4 = tabs[:4]
-
-# Handle optional admin tab
-tab5 = tabs[4] if len(tabs) > 4 else None
-
-# =============================================================================
-# TAB 1: DASHBOARD (MAIN RESUME ANALYSIS)
-# =============================================================================
-
+# === TAB 1: Dashboard ===
 with tab1:
-    # Apply dashboard CSS styling
-    st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
-
-    html, body, [class*="css"] {
-        font-family: 'Orbitron', sans-serif;
-        background-color: #0b0c10;
-        color: #c5c6c7;
-        scroll-behavior: smooth;
-    }
-
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: #1f2833; }
-    ::-webkit-scrollbar-thumb { background: #00ffff; border-radius: 4px; }
-
-    .banner-container {
-        width: 100%;
-        height: 80px;
-        background: linear-gradient(90deg, #000428, #004e92);
-        border-bottom: 2px solid cyan;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        position: relative;
-        margin-bottom: 20px;
-        border-radius: 12px;
-        backdrop-filter: blur(14px);
-    }
-    .pulse-bar {
-        position: absolute;
-        display: flex;
-        align-items: center;
-        font-size: 22px;
-        font-weight: bold;
-        color: #00ffff;
-        white-space: nowrap;
-        animation: glideIn 12s linear infinite;
-        text-shadow: 0 0 10px #00ffff;
-    }
-    .pulse-bar .bar {
-        width: 10px;
-        height: 30px;
-        margin-right: 10px;
-        background: #00ffff;
-        box-shadow: 0 0 8px cyan;
-        animation: pulse 1s ease-in-out infinite;
-    }
-    @keyframes glideIn {
-        0% { left: -50%; opacity: 0; }
-        10% { opacity: 1; }
-        90% { opacity: 1; }
-        100% { left: 110%; opacity: 0; }
-    }
-    @keyframes pulse {
-        0%, 100% { height: 20px; background-color: #00ffff; }
-        50% { height: 40px; background-color: #ff00ff; }
-    }
-
-    .header {
-        font-size: 28px;
-        font-weight: bold;
-        text-align: center;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        padding: 20px 30px;
-        color: #00ffff;
-        text-shadow: 0px 0px 10px #00ffff;
-        position: relative;
-        overflow: hidden;
-        border-radius: 14px;
-        background: rgba(10,20,40,0.35);
-        backdrop-filter: blur(14px);
-        border: 1px solid rgba(0,200,255,0.5);
-        box-shadow: 0 0 12px rgba(0,200,255,0.25);
-    }
-    .header::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(
-            120deg,
-            rgba(255,255,255,0.18) 0%,
-            rgba(255,255,255,0.05) 40%,
-            transparent 60%
-        );
-        transform: rotate(25deg);
-        transition: all 0.6s;
-    }
-    .header:hover::before { left: 100%; top: 100%; }
-
-    .shimmer::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(
-            120deg,
-            rgba(255,255,255,0.15) 0%,
-            rgba(255,255,255,0.05) 40%,
-            transparent 60%
-        );
-        transform: rotate(25deg);
-        transition: all 0.6s;
-    }
-    .shimmer:hover::before { left: 100%; top: 100%; }
-
-    .stFileUploader > div > div {
-        border: 1px solid rgba(0,200,255,0.5);
-        border-radius: 14px;
-        background: rgba(10,20,40,0.35);
-        backdrop-filter: blur(14px);
-        color: #cce6ff;
-        box-shadow: 0 0 12px rgba(0,200,255,0.3);
-        position: relative;
-        overflow: hidden;
-    }
-    .stFileUploader > div > div::before {
-        content: "";
-        position: absolute; top: -50%; left: -50%;
-        width: 200%; height: 200%;
-        background: linear-gradient(120deg,
-            rgba(255,255,255,0.15) 0%,
-            rgba(255,255,255,0.05) 40%,
-            transparent 60%);
-        transform: rotate(25deg);
-        transition: all 0.6s;
-    }
-    .stFileUploader > div > div:hover::before { left: 100%; top: 100%; }
-
-    .stButton > button {
-        position: relative;
-        overflow: hidden;
-        background: rgba(10,20,40,0.35);
-        border: 1px solid rgba(0,200,255,0.6);
-        color: #e6f7ff;
-        border-radius: 14px;
-        padding: 10px 20px;
-        font-size: 16px;
-        font-weight: 500;
-        text-transform: uppercase;
-        backdrop-filter: blur(16px);
-        box-shadow: 0 0 12px rgba(0,200,255,0.35),
-                    inset 0 0 20px rgba(0,200,255,0.05);
-        transition: all 0.3s ease-in-out;
-    }
-    .stButton > button::before {
-        content: "";
-        position: absolute; top: -50%; left: -50%;
-        width: 200%; height: 200%;
-        background: linear-gradient(120deg,
-            rgba(255,255,255,0.15) 0%,
-            rgba(255,255,255,0.05) 40%,
-            transparent 60%);
-        transform: rotate(25deg);
-        transition: all 0.6s;
-    }
-    .stButton > button:hover::before { left: 100%; top: 100%; }
-
-    .stTextInput > div > input,
-    .stTextArea > div > textarea {
-        position: relative;
-        overflow: hidden;
-        background: rgba(10,20,40,0.35);
-        border: 1px solid rgba(0,200,255,0.6);
-        border-radius: 14px;
-        color: #e6f7ff;
-        padding: 10px;
-        backdrop-filter: blur(16px);
-        box-shadow: 0 0 12px rgba(0,200,255,0.3),
-                    inset 0 0 15px rgba(0,200,255,0.05);
-        transition: all 0.3s ease-in-out;
-    }
-
-    .stChatMessage {
-        position: relative;
-        overflow: hidden;
-        font-size: 18px;
-        background: rgba(10,20,40,0.35);
-        border: 1px solid rgba(0,200,255,0.5);
-        border-radius: 14px;
-        padding: 14px;
-        color: #e6f7ff;
-        text-shadow: 0 0 6px rgba(0,200,255,0.7);
-        box-shadow: 0 0 12px rgba(0,200,255,0.3),
-                    inset 0 0 15px rgba(0,200,255,0.05);
-    }
-    .stChatMessage::before {
-        content: "";
-        position: absolute; top: -50%; left: -50%;
-        width: 200%; height: 200%;
-        background: linear-gradient(120deg,
-            rgba(255,255,255,0.15) 0%,
-            rgba(255,255,255,0.05) 40%,
-            transparent 60%);
-        transform: rotate(25deg);
-        transition: all 0.6s;
-    }
-    .stChatMessage:hover::before { left: 100%; top: 100%; }
-
-    .stMetric {
-        position: relative;
-        overflow: hidden;
-        background-color: rgba(10,20,40,0.35);
-        border: 1px solid rgba(0,200,255,0.6);
-        border-radius: 14px;
-        padding: 15px;
-        box-shadow: 0 0 12px rgba(0,200,255,0.35),
-                    inset 0 0 20px rgba(0,200,255,0.05);
-        text-align: center;
-    }
-    .stMetric::before {
-        content: "";
-        position: absolute; top: -50%; left: -50%;
-        width: 200%; height: 200%;
-        background: linear-gradient(120deg,
-            rgba(255,255,255,0.15) 0%,
-            rgba(255,255,255,0.05) 40%,
-            transparent 60%);
-        transform: rotate(25deg);
-        transition: all 0.6s;
-    }
-    .stMetric:hover::before { left: 100%; top: 100%; }
-
-    @media (max-width: 768px) {
-        .pulse-bar { font-size: 16px; }
-        .header { font-size: 20px; }
-    }
-    </style>
-
-    <!-- Banner -->
-    <div class="banner-container">
-        <div class="pulse-bar">
-            <div class="bar"></div>
-            <div>HIRELYZER - Elevate Your Resume Analysis</div>
-        </div>
-    </div>
-
-    <!-- Header -->
-    <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
-    """, unsafe_allow_html=True)
-
-    # CSS for sliding success message
-    st.markdown("""
-    <style>
-    .slide-message {
-      position: relative;
-      overflow: hidden;
-      margin: 10px 0;
-      padding: 10px 15px;
-      border-radius: 10px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      animation: slideIn 0.8s ease forwards;
-    }
-    .slide-message svg {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-    }
-    .success-msg { background: rgba(0,255,127,0.12); border-left: 5px solid #00FF7F; color:#00FF7F; }
-    .error-msg   { background: rgba(255,99,71,0.12);  border-left: 5px solid #FF6347; color:#FF6347; }
-    .warn-msg    { background: rgba(255,215,0,0.12); border-left: 5px solid #FFD700; color:#FFD700; }
-
-    @keyframes slideIn {
-      0%   { transform: translateX(100%); opacity: 0; }
-      100% { transform: translateX(0); opacity: 1; }
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    uploaded_files = st.file_uploader(
-        "📄 Upload PDF Resumes",
-        type=["pdf"],
-        accept_multiple_files=True,
-        help="Upload one or more resumes in PDF format (max 200MB each)."
-    )
-
-    if uploaded_files:
-        for uploaded_file in uploaded_files:
-            with st.container():
-                st.subheader(f"📄 Original Resume Preview: {uploaded_file.name}")
-
-                try:
-                    # Show PDF preview using streamlit-pdf-viewer if available
-                    try:
-                        from streamlit_pdf_viewer import pdf_viewer
-                        pdf_viewer(
-                            uploaded_file.read(),
-                            key=f"pdf_viewer_{uploaded_file.name}"
-                        )
-                        uploaded_file.seek(0)  # Reset pointer
-                    except ImportError:
-                        st.info("PDF viewer not available. Processing resume...")
-
-                    # Extract text safely
-                    resume_text = safe_extract_text(uploaded_file)
-
-                    if resume_text:
-                        st.markdown(f"""
-                        <div class='slide-message success-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                            ✅ Successfully processed <b>{uploaded_file.name}</b>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    else:
-                        st.markdown(f"""
-                        <div class='slide-message warn-msg'>
-                            ⚠️ <b>{uploaded_file.name}</b> does not contain valid resume text.
-                        </div>
-                        """, unsafe_allow_html=True)
-
-                except Exception as e:
-                    st.markdown(f"""
-                    <div class='slide-message error-msg'>
-                        ❌ Could not display or process <b>{uploaded_file.name}</b>: {e}
-                    </div>
-                    """, unsafe_allow_html=True)
-
-    # Resume evaluation logic (preserved existing logic but with improved performance)
-    if uploaded_files and job_description:
-        all_text = []
-
-        for uploaded_file in uploaded_files:
-            if uploaded_file.name in st.session_state.processed_files:
-                continue
-
-            # Optimized scanner animation
-            scanner_placeholder = st.empty()
-            
-            OPTIMIZED_SCANNER_HTML = f"""
-            <style>
-            .scanner-overlay {{
-                position: fixed;
-                top: 0; left: 0;
-                width: 100vw; height: 100vh;
-                background: linear-gradient(135deg, #0b0c10 0%, #1a1c29 100%);
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                z-index: 9999;
-                will-change: transform, opacity;
-            }}
-            
-            .scanner-doc {{
-                width: 280px;
-                height: 340px;
-                background: linear-gradient(145deg, #f8f9fa, #e9ecef);
-                border-radius: 16px;
-                position: relative;
-                overflow: hidden;
-                box-shadow: 0 20px 40px rgba(0, 191, 255, 0.3);
-                transform: translateZ(0);
-                will-change: transform;
-                animation: docFloat 3s ease-in-out infinite alternate;
-            }}
-            
-            @keyframes docFloat {{
-                0% {{ transform: translateY(0px) scale(1); }}
-                100% {{ transform: translateY(-8px) scale(1.02); }}
-            }}
-            
-            .doc-header {{
-                padding: 20px;
-                text-align: center;
-                border-bottom: 2px solid #e9ecef;
-            }}
-            
-            .doc-avatar {{
-                width: 50px;
-                height: 50px;
-                background: linear-gradient(135deg, #667eea, #764ba2);
-                border-radius: 50%;
-                margin: 0 auto 10px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 20px;
-                color: white;
-            }}
-            
-            .doc-title {{
-                font-size: 16px;
-                font-weight: bold;
-                color: #2c3e50;
-                margin-bottom: 5px;
-                font-family: 'Segoe UI', sans-serif;
-            }}
-            
-            .doc-content {{
-                padding: 15px;
-                font-size: 12px;
-                color: #6c757d;
-                line-height: 1.4;
-            }}
-            
-            .scan-line {{
-                position: absolute;
-                top: 0; left: 0;
-                width: 100%; height: 4px;
-                background: linear-gradient(90deg, transparent, rgba(0,191,255,0.8), transparent);
-                animation: scanMove 2.5s ease-in-out infinite;
-                box-shadow: 0 0 20px rgba(0,191,255,0.6);
-                transform: translateZ(0);
-                will-change: transform;
-            }}
-            
-            @keyframes scanMove {{
-                0% {{ top: 0; opacity: 1; }}
-                50% {{ opacity: 0.8; }}
-                100% {{ top: 340px; opacity: 1; }}
-            }}
-            
-            .scanner-text {{
-                margin-top: 30px;
-                font-family: 'Orbitron', 'Segoe UI', sans-serif;
-                font-weight: 600;
-                font-size: 18px;
-                color: #00bfff;
-                text-shadow: 0 0 10px rgba(0,191,255,0.5);
-                animation: textPulse 2s ease-in-out infinite;
-            }}
-            
-            @keyframes textPulse {{
-                0%, 100% {{ opacity: 1; transform: scale(1); }}
-                50% {{ opacity: 0.8; transform: scale(1.05); }}
-            }}
-            
-            .progress-bar {{
-                width: 200px;
-                height: 4px;
-                background: rgba(255,255,255,0.2);
-                border-radius: 2px;
-                margin-top: 20px;
-                overflow: hidden;
-            }}
-            
-            .progress-fill {{
-                height: 100%;
-                background: linear-gradient(90deg, #00bfff, #1e90ff);
-                border-radius: 2px;
-                animation: progressFill 3s ease-in-out infinite;
-                transform: translateX(-100%);
-            }}
-            
-            @keyframes progressFill {{
-                0% {{ transform: translateX(-100%); }}
-                100% {{ transform: translateX(0); }}
-            }}
-            
-            @media (max-width: 768px) {{
-                .scanner-doc {{ width: 240px; height: 300px; }}
-                .scanner-text {{ font-size: 16px; }}
-            }}
-            </style>
-            
-            <div class="scanner-overlay">
-                <div class="scanner-doc">
-                    <div class="scan-line"></div>
-                    <div class="doc-header">
-                        <div class="doc-avatar">👤</div>
-                        <div class="doc-title">{job_title}</div>
-                    </div>
-                    <div class="doc-content">
-                        • Analyzing candidate profile...<br>
-                        • Extracting key skills...<br>
-                        • Matching with job requirements...<br>
-                        • Calculating ATS compatibility...<br>
-                        • Checking for bias patterns...
-                    </div>
-                </div>
-                <div class="scanner-text">Scanning Resume...</div>
-                <div class="progress-bar">
-                    <div class="progress-fill"></div>
-                </div>
-            </div>
-            """
-            
-            scanner_placeholder.markdown(OPTIMIZED_SCANNER_HTML, unsafe_allow_html=True)
-
-            # Save uploaded file
-            file_path = os.path.join(working_dir, uploaded_file.name)
-            with open(file_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())
-
-            # Reduced delay for better UX
-            import time
-            time.sleep(4)
-
-            # Extract text from PDF
-            text = extract_text_from_pdf(file_path)
-            if not text:
-                st.warning(f"⚠️ Could not extract text from {uploaded_file.name}. Skipping.")
-                scanner_placeholder.empty()
-                continue
-
-            all_text.append(" ".join(text))
-            full_text = " ".join(text)
-
-            # Bias detection
-            bias_score, masc_count, fem_count, detected_masc, detected_fem = detect_bias(full_text)
-
-            # Rewrite and highlight gender-biased words
-            replacement_mapping = get_replacement_mapping()
-            highlighted_text, rewritten_text, _, _, _, _ = rewrite_and_highlight(
-                full_text, replacement_mapping, user_location
-            )
-
-            # LLM-based ATS Evaluation
-            ats_result, ats_scores = ats_percentage_score(
-                resume_text=full_text,
-                job_description=job_description,
-                logic_profile_score=None,
-                edu_weight=edu_weight,
-                exp_weight=exp_weight,
-                skills_weight=skills_weight,
-                lang_weight=lang_weight,
-                keyword_weight=keyword_weight
-            )
-
-            # Extract structured ATS values
-            candidate_name = ats_scores.get("Candidate Name", "Not Found")
-            ats_score = ats_scores.get("ATS Match %", 0)
-            edu_score = ats_scores.get("Education Score", 0)
-            exp_score = ats_scores.get("Experience Score", 0)
-            skills_score = ats_scores.get("Skills Score", 0)
-            lang_score = ats_scores.get("Language Score", 0)
-            keyword_score = ats_scores.get("Keyword Score", 0)
-            formatted_score = ats_scores.get("Formatted Score", "N/A")
-            fit_summary = ats_scores.get("Final Thoughts", "N/A")
-            language_analysis_full = ats_scores.get("Language Analysis", "N/A")
-
-            missing_keywords_raw = ats_scores.get("Missing Keywords", "N/A")
-            missing_skills_raw = ats_scores.get("Missing Skills", "N/A")
-            missing_keywords = [kw.strip() for kw in missing_keywords_raw.split(",") if kw.strip()] if missing_keywords_raw != "N/A" else []
-            missing_skills = [sk.strip() for sk in missing_skills_raw.split(",") if sk.strip()] if missing_skills_raw != "N/A" else []
-
-            domain = detect_domain_from_title_and_description(job_title, job_description)
-
-            bias_flag = "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair"
-            ats_flag = "⚠️ Low ATS" if ats_score < 50 else "✅ Good ATS"
-
-            # Store everything in session state
-            st.session_state.resume_data.append({
-                "Resume Name": uploaded_file.name,
-                "Candidate Name": candidate_name,
-                "ATS Report": ats_result,
-                "ATS Match %": ats_score,
-                "Formatted Score": formatted_score,
-                "Education Score": edu_score,
-                "Experience Score": exp_score,
-                "Skills Score": skills_score,
-                "Language Score": lang_score,
-                "Keyword Score": keyword_score,
-                "Education Analysis": ats_scores.get("Education Analysis", ""),
-                "Experience Analysis": ats_scores.get("Experience Analysis", ""),
-                "Skills Analysis": ats_scores.get("Skills Analysis", ""),
-                "Language Analysis": language_analysis_full,
-                "Keyword Analysis": ats_scores.get("Keyword Analysis", ""),
-                "Final Thoughts": fit_summary,
-                "Missing Keywords": missing_keywords,
-                "Missing Skills": missing_skills,
-                "Bias Score (0 = Fair, 1 = Biased)": bias_score,
-                "Bias Status": bias_flag,
-                "Masculine Words": masc_count,
-                "Feminine Words": fem_count,
-                "Detected Masculine Words": detected_masc,
-                "Detected Feminine Words": detected_fem,
-                "Text Preview": full_text[:300] + "...",
-                "Highlighted Text": highlighted_text,
-                "Rewritten Text": rewritten_text,
-                "Domain": domain
-            })
-
-            insert_candidate(
-                (
-                    uploaded_file.name,
-                    candidate_name,
-                    ats_score,
-                    edu_score,
-                    exp_score,
-                    skills_score,
-                    lang_score,
-                    keyword_score,
-                    bias_score
-                ),
-                job_title=job_title,
-                job_description=job_description
-            )
-
-            st.session_state.processed_files.add(uploaded_file.name)
-
-            # Success animation
-            SUCCESS_HTML = """
-            <style>
-            .success-overlay {
-                position: fixed;
-                top: 0; left: 0;
-                width: 100vw; height: 100vh;
-                background: linear-gradient(135deg, #0b0c10 0%, #1a1c29 100%);
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                z-index: 9999;
-                animation: fadeIn 0.5s ease-out;
-            }
-            
-            @keyframes fadeIn {
-                0% { opacity: 0; }
-                100% { opacity: 1; }
-            }
-            
-            .success-circle {
-                width: 140px;
-                height: 140px;
-                border: 3px solid #00bfff;
-                border-radius: 50%;
-                position: relative;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: radial-gradient(circle, rgba(0,191,255,0.1) 0%, rgba(0,191,255,0.05) 50%, transparent 100%);
-                animation: successPulse 2s ease-in-out infinite;
-            }
-            
-            @keyframes successPulse {
-                0%, 100% { 
-                    transform: scale(1);
-                    box-shadow: 0 0 20px rgba(0,191,255,0.3);
-                }
-                50% { 
-                    transform: scale(1.05);
-                    box-shadow: 0 0 30px rgba(0,191,255,0.6);
-                }
-            }
-            
-            .success-checkmark {
-                font-size: 48px;
-                color: #00ff7f;
-                animation: checkmarkPop 0.8s ease-out;
-            }
-            
-            @keyframes checkmarkPop {
-                0% { transform: scale(0) rotate(-45deg); opacity: 0; }
-                50% { transform: scale(1.2) rotate(-10deg); opacity: 0.8; }
-                100% { transform: scale(1) rotate(0deg); opacity: 1; }
-            }
-            
-            .success-text {
-                margin-top: 25px;
-                font-family: 'Orbitron', 'Segoe UI', sans-serif;
-                font-size: 20px;
-                font-weight: 600;
-                color: #00bfff;
-                text-shadow: 0 0 10px rgba(0,191,255,0.5);
-                animation: textSlideUp 0.8s ease-out 0.3s both;
-            }
-            
-            @keyframes textSlideUp {
-                0% { transform: translateY(20px); opacity: 0; }
-                100% { transform: translateY(0); opacity: 1; }
-            }
-            
-            .success-subtitle {
-                margin-top: 10px;
-                font-size: 14px;
-                color: #8e9aaf;
-                animation: textSlideUp 0.8s ease-out 0.5s both;
-            }
-            </style>
-            
-            <div class="success-overlay">
-                <div class="success-circle">
-                    <div class="success-checkmark">✓</div>
-                </div>
-                <div class="success-text">Scan Complete!</div>
-                <div class="success-subtitle">Resume analysis ready</div>
-            </div>
-            """
-            
-            # Clear scanner and show success animation
-            scanner_placeholder.empty()
-            success_placeholder = st.empty()
-            success_placeholder.markdown(SUCCESS_HTML, unsafe_allow_html=True)
-
-            # Shorter delay for better UX, then clear and rerun
-            time.sleep(3)
-            success_placeholder.empty()
-            st.rerun()
-
-    # Optional vectorstore setup with lazy loading
-    if all_text:
-        st.session_state.vectorstore = setup_vectorstore(all_text)
-        st.session_state.chain = create_chain(st.session_state.vectorstore)
-
-    # Developer Reset Button
-    if st.button("🔄 Refresh view"):
-        st.session_state.processed_files.clear()
-        st.session_state.resume_data.clear()
-
-        msg_placeholder = st.empty()
-        msg_placeholder.markdown("""
-        <div class='slide-message success-msg'>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-            ✅ Cleared uploaded resume history. You can re-upload now.
-        </div>
-        """, unsafe_allow_html=True)
-
-        import time
-        time.sleep(3)
-        msg_placeholder.empty()
-
-    # Resume Dashboard (preserved existing functionality)
     resume_data = st.session_state.get("resume_data", [])
 
     if resume_data:
-        # Calculate total counts safely
+        # ✅ Calculate total counts safely
         total_masc = sum(len(r.get("Detected Masculine Words", [])) for r in resume_data)
         total_fem = sum(len(r.get("Detected Feminine Words", [])) for r in resume_data)
         avg_bias = round(np.mean([r.get("Bias Score (0 = Fair, 1 = Biased)", 0) for r in resume_data]), 2)
@@ -2816,7 +2933,7 @@ with tab1:
         st.markdown("### 🗂️ Resumes Overview")
         df = pd.DataFrame(resume_data)
 
-        # Add calculated count columns safely
+        # ✅ Add calculated count columns safely
         df["Masculine Words Count"] = df["Detected Masculine Words"].apply(lambda x: len(x) if isinstance(x, list) else 0)
         df["Feminine Words Count"] = df["Detected Feminine Words"].apply(lambda x: len(x) if isinstance(x, list) else 0)
 
@@ -2830,18 +2947,11 @@ with tab1:
 
         st.markdown("### 📊 Visual Analysis")
         chart_tab1, chart_tab2 = st.tabs(["📉 Bias Score Chart", "⚖ Gender-Coded Words"])
-        
         with chart_tab1:
             st.subheader("Bias Score Comparison Across Resumes")
             st.bar_chart(df.set_index("Resume Name")[["Bias Score (0 = Fair, 1 = Biased)"]])
-        
         with chart_tab2:
             st.subheader("Masculine vs Feminine Word Usage")
-            
-            # Use cached visualization imports
-            viz_imports = get_visualization_imports()
-            plt = viz_imports['plt']
-            
             fig, ax = plt.subplots(figsize=(10, 5))
             index = np.arange(len(df))
             bar_width = 0.35
@@ -2859,6 +2969,8 @@ with tab1:
         for resume in resume_data:
             candidate_name = resume.get("Candidate Name", "Not Found")
             resume_name = resume.get("Resume Name", "Unknown")
+            missing_keywords = resume.get("Missing Keywords", [])
+            missing_skills = resume.get("Missing Skills", [])
 
             with st.expander(f"📄 {resume_name} | {candidate_name}"):
                 st.markdown(f"### 📊 ATS Evaluation for: **{candidate_name}**")
@@ -2889,11 +3001,8 @@ with tab1:
                     st.markdown("### 📋 ATS Evaluation Report")
                     st.markdown(resume["ATS Report"], unsafe_allow_html=True)
 
-                # ATS Chart with cached visualization imports
+                # ATS Chart
                 st.markdown("### 📊 ATS Score Breakdown Chart")
-                viz_imports = get_visualization_imports()
-                alt = viz_imports['alt']
-                
                 ats_df = pd.DataFrame({
                     'Component': ['Education', 'Experience', 'Skills', 'Language', 'Keywords'],
                     'Score': [
@@ -2916,7 +3025,7 @@ with tab1:
                 )
                 st.altair_chart(ats_chart, use_container_width=True)
 
-                # Detailed ATS Analysis Cards (preserved existing logic)
+                # 🔷 Detailed ATS Analysis Cards
                 st.markdown("### 🔍 Detailed ATS Section Analyses")
                 for section_title, key in [
                     ("🏫 Education Analysis", "Education Analysis"),
@@ -2945,6 +3054,16 @@ with tab1:
 {analysis_html}
 </div>
 """, unsafe_allow_html=True)
+
+
+                # ✅ Display Missing Skills and Keywords as badges
+                # ✅ Display Missing Skills as multiline bullet points
+                
+
+                # ✅ Show Missing Keywords and Missing Skills
+                     # Missing keywords
+                
+
 
                 st.divider()
 
@@ -2982,8 +3101,6 @@ with tab1:
                 with detail_tab2:
                     st.markdown("#### ✨ Bias-Free Rewritten Resume")
                     st.write(resume["Rewritten Text"])
-                    
-                    # Download buttons with lazy loading
                     docx_file = generate_docx(resume["Rewritten Text"])
                     st.download_button(
                         label="📥 Download Bias-Free Resume (.docx)",
@@ -2993,91 +3110,20 @@ with tab1:
                         use_container_width=True,
                         key=f"download_docx_{resume['Resume Name']}"
                     )
-                    
                     html_report = generate_resume_report_html(resume)
+                    
                     pdf_file = html_to_pdf_bytes(html_report)
                     st.download_button(
-                        label="📄 Download Full Analysis Report (.pdf)",
-                        data=pdf_file,
-                        file_name=f"{resume['Resume Name'].split('.')[0]}_report.pdf",
-                        mime="application/pdf",
-                        use_container_width=True,
-                        key=f"download_pdf_{resume['Resume Name']}"
-                    )
+                    label="📄 Download Full Analysis Report (.pdf)",
+                    data=pdf_file,
+                    file_name=f"{resume['Resume Name'].split('.')[0]}_report.pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                    key=f"download_pdf_{resume['Resume Name']}"
+                    )               
 
-    else:
+    else:           
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
-
-    # Sidebar with job information (preserved existing logic)
-    st.sidebar.markdown("### 🏷️ Job Information")
-
-    with st.sidebar.expander("![Job](https://img.icons8.com/ios-filled/20/briefcase.png) Enter Job Details", expanded=False):
-        job_title = st.text_input(
-            "![Job](https://img.icons8.com/ios-filled/20/briefcase.png) Job Title"
-        )
-
-        user_location = st.text_input(
-            "![Location](https://img.icons8.com/ios-filled/20/marker.png) Preferred Job Location (City, Country)"
-        )
-
-        job_description = st.text_area(
-            "![Description](https://img.icons8.com/ios-filled/20/document.png) Paste Job Description",
-            height=200
-        )
-
-        if job_description.strip() == "":
-            st.warning("Please enter a job description to evaluate the resumes.")
-
-    with st.sidebar.expander("![Settings](https://img.icons8.com/ios-filled/20/settings.png) Customize ATS Scoring Weights", expanded=False):
-        edu_weight = st.slider("![Education](https://img.icons8.com/ios-filled/20/graduation-cap.png) Education Weight", 0, 50, 20)
-        exp_weight = st.slider("![Experience](https://img.icons8.com/ios-filled/20/portfolio.png) Experience Weight", 0, 50, 35)
-        skills_weight = st.slider("![Skills](https://img.icons8.com/ios-filled/20/gear.png) Skills Match Weight", 0, 50, 30)
-        lang_weight = st.slider("![Language](https://img.icons8.com/ios-filled/20/language.png) Language Quality Weight", 0, 10, 5)
-        keyword_weight = st.slider("![Keyword](https://img.icons8.com/ios-filled/20/key.png) Keyword Match Weight", 0, 20, 10)
-
-        total_weight = edu_weight + exp_weight + skills_weight + lang_weight + keyword_weight
-
-        if total_weight != 100:
-            st.markdown(
-                f"""
-                <div style="display:flex;align-items:center;gap:6px;
-                            border:1px solid #fca5a5;
-                            background:#fee2e2;
-                            padding:8px;
-                            border-radius:6px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="red" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10
-                                 10-4.48 10-10S17.52 2 12 2zm0 15
-                                 c-.83 0-1.5.67-1.5 1.5S11.17 20
-                                 12 20s1.5-.67 1.5-1.5S12.83 17
-                                 12 17zm1-4V7h-2v6h2z"/>
-                    </svg>
-                    <span style="color:#b91c1c;font-weight:500;">
-                        Total = {total_weight}. Please make it exactly 100.
-                    </span>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-        else:
-            st.markdown(
-                f"""
-                <div style="display:flex;align-items:center;gap:6px;
-                            border:1px solid #86efac;
-                            background:#dcfce7;
-                            padding:8px;
-                            border-radius:6px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="green" viewBox="0 0 24 24">
-                        <path d="M9 16.2l-3.5-3.5-1.4 1.4L9
-                                 19 20.3 7.7l-1.4-1.4z"/>
-                    </svg>
-                    <span style="color:#166534;font-weight:500;">
-                        Total weight = 100
-                    </span>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
 
 # ---------------- Sidebar (ONLY in Tab 2) ----------------
 from xhtml2pdf import pisa

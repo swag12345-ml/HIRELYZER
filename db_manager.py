@@ -13,8 +13,6 @@ from typing import Optional, List, Tuple, Dict, Any
 import logging
 from threading import Lock
 import os
-import re
-import string
 
 
 logging.basicConfig(level=logging.INFO)
@@ -109,37 +107,13 @@ class DatabaseManager:
                     else:
                         conn.close()
 
-    def _normalize_text(self, text: str) -> str:
-        """Clean and normalize text for better keyword matching"""
-        if not text:
-            return ""
-        
-        # Convert to lowercase
-        text = text.lower()
-        
-        # Remove punctuation and symbols, but keep spaces between words
-        # Replace punctuation with spaces to avoid merging words
-        text = re.sub(r'[^\w\s]', ' ', text)
-        
-        # Collapse multiple spaces into single spaces
-        text = re.sub(r'\s+', ' ', text)
-        
-        # Strip leading/trailing whitespace
-        text = text.strip()
-        
-        return text
-
     def detect_domain_from_title_and_description(self, job_title: str, job_description: str) -> str:
         """
-        Enhanced Domain Detection with improved normalization and smart fallback logic
+        Enhanced Domain Detection with 25+ Professional Domains
+        Optimized for better performance with cached keyword lookups
         """
-        # Step 1: Clean and normalize input text
-        title = self._normalize_text(job_title)
-        desc = self._normalize_text(job_description)
-        
-        # Early check for weak resumes/jobs
-        desc_word_count = len(desc.split()) if desc else 0
-        is_short_description = desc_word_count < 15
+        title = job_title.lower().strip()
+        desc = job_description.lower().strip()
 
         # Enhanced normalization with more synonyms
         replacements = {
@@ -483,19 +457,13 @@ class DatabaseManager:
             ]
         }
 
-        # Step 2: Compute weighted keyword matches (4x for title, 1x for desc)
+        # Step 1: Compute weighted keyword matches (4x for title, 1x for desc)
         for domain, kws in keywords.items():
             title_hits = sum(1 for kw in kws if kw in title)
             desc_hits = sum(1 for kw in kws if kw in desc)
             domain_scores[domain] = (4 * title_hits + 1 * desc_hits) * WEIGHTS[domain]
 
-        # Step 3: Normalize scores by description length to balance long vs short resumes
-        if desc_word_count > 0:
-            length_factor = desc_word_count ** 0.3
-            for domain in domain_scores:
-                domain_scores[domain] = domain_scores[domain] / length_factor
-
-        # Step 4: Enhanced Full Stack Detection
+        # Step 2: Enhanced Full Stack Detection
         frontend_hits = sum(1 for kw in keywords["Frontend Development"] if kw in title or kw in desc)
         backend_hits = sum(1 for kw in keywords["Backend Development"] if kw in title or kw in desc)
         fullstack_mentioned = any(term in title or term in desc for term in ["full stack", "fullstack", "full-stack"])
@@ -506,7 +474,7 @@ class DatabaseManager:
         if frontend_hits >= 4 and backend_hits >= 4:
             domain_scores["Full Stack Development"] += 12
 
-        # Step 5: Domain-specific boosts
+        # Step 3: Domain-specific boosts
         domain_boosts = {
             "AI/Machine Learning": ["ai", "ml", "machine learning", "artificial intelligence"],
             "Cybersecurity": ["security", "cyber", "infosec"],
@@ -524,35 +492,18 @@ class DatabaseManager:
             if any(term in desc for term in boost_terms):
                 domain_scores[domain] += 3
 
-        # Step 6: Filter short/noisy descriptions
+        # Step 4: Filter short/noisy descriptions
         if len(desc.split()) < 8:
             for domain in domain_scores:
                 desc_hits = sum(1 for kw in keywords[domain] if kw in desc)
                 domain_scores[domain] = max(0, domain_scores[domain] - (desc_hits * WEIGHTS[domain] * 0.5))
 
-        # Step 7: Smart fallback logic and tie handling
+        # Step 5: Choose top domain
         if domain_scores:
-            # Sort domains by score to find top candidates
-            sorted_domains = sorted(domain_scores.items(), key=lambda x: x[1], reverse=True)
-            
-            if len(sorted_domains) >= 2:
-                top_domain, top_score = sorted_domains[0]
-                second_domain, second_score = sorted_domains[1]
-                
-                # Handle ties: if top 2 domains are very close (difference < 5), fallback
-                if abs(top_score - second_score) < 5:
-                    return "Software Engineering"
-                
-                # Smart fallback: only use top domain if it's not weak
-                if top_score > 10 and not is_short_description:
-                    return top_domain
-            elif len(sorted_domains) == 1:
-                top_domain, top_score = sorted_domains[0]
-                # Smart fallback: only use top domain if it's not weak
-                if top_score > 10 and not is_short_description:
-                    return top_domain
+            top_domain = max(domain_scores, key=domain_scores.get)
+            if domain_scores[top_domain] > 0:
+                return top_domain
 
-        # Fallback to Software Engineering for weak resumes/jobs
         return "Software Engineering"
 
     def get_domain_similarity(self, resume_domain: str, job_domain: str) -> float:

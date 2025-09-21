@@ -1,5 +1,73 @@
-from xhtml2pdf import pisa
+# Standard library imports
+import os
+import json
+import random
+import string
+import re
+import asyncio
+import io
+import urllib.parse
+import base64
 from io import BytesIO
+from collections import Counter
+from datetime import datetime
+import time
+
+# Third-party library imports
+import streamlit as st
+import streamlit.components.v1 as components
+from base64 import b64encode
+import requests
+import fitz
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import altair as alt
+from PIL import Image
+from pdf2image import convert_from_path
+from dotenv import load_dotenv
+from nltk.stem import WordNetLemmatizer
+from docx import Document
+from docx.shared import Pt, RGBColor, Inches
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
+from xhtml2pdf import pisa
+from pydantic import BaseModel
+from streamlit_pdf_viewer import pdf_viewer
+
+# Heavy libraries - loaded with caching
+import torch
+
+# Langchain & Embeddings
+from langchain_text_splitters import CharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_groq import ChatGroq
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationalRetrievalChain
+
+# Local project imports
+from llm_manager import call_llm, load_groq_api_keys
+from db_manager import (
+    insert_candidate, 
+    get_top_domains_by_score,
+    get_database_stats,
+    detect_domain_from_title_and_description, 
+    get_domain_similarity
+)
+from user_login import (
+    create_user_table,
+    add_user,
+    verify_user,
+    get_logins_today,
+    get_total_registered_users,
+    log_user_action,
+    username_exists,
+    save_user_api_key, 
+    get_user_api_key,
+    get_all_user_logs
+)
 
 def html_to_pdf_bytes(html_string):
     styled_html = f"""
@@ -66,11 +134,6 @@ def html_to_pdf_bytes(html_string):
     return pdf_io
 
 def generate_cover_letter_from_resume_builder():
-    import streamlit as st
-    from datetime import datetime
-    import re
-    from llm_manager import call_llm  # Ensure you import this
-
     name = st.session_state.get("name", "")
     job_title = st.session_state.get("job_title", "")
     summary = st.session_state.get("summary", "")
@@ -153,76 +216,6 @@ Hiring Manager, {company}, {location}
         # ✅ Show nicely in Streamlit
         st.markdown(cover_letter_html, unsafe_allow_html=True)
 
-
-
-
-
-
-
-import streamlit as st
-import streamlit.components.v1 as components
-from base64 import b64encode
-import requests
-import datetime
-from io import BytesIO
-import streamlit as st
-from datetime import datetime
-import streamlit.components.v1 as components
-from base64 import b64encode
-import re
-from llm_manager import call_llm
-import requests
-import datetime
-import os, json, random, string, re, asyncio, io
-import urllib.parse
-from collections import Counter
-
-# ------------------- External Libraries -------------------
-import torch
-import io
-from io import BytesIO
-import matplotlib.pyplot as plt
-import fitz
-import requests
-import numpy as np
-import pandas as pd
-
-import base64
-from db_manager import insert_candidate, get_top_domains_by_score
-
-    
-from PIL import Image
-from pdf2image import convert_from_path
-from dotenv import load_dotenv
-from nltk.stem import WordNetLemmatizer
-from docx import Document
-from docx.shared import Pt, RGBColor, Inches
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
-from docx.opc.constants import RELATIONSHIP_TYPE as RT
-
-# ------------------- Langchain & Embeddings -------------------
-from langchain_text_splitters import CharacterTextSplitter
-from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_groq import ChatGroq
-from langchain.memory import ConversationBufferMemory
-from langchain.chains import ConversationalRetrievalChain
-from llm_manager import call_llm
-
-from pydantic import BaseModel
-from db_manager import get_database_stats
-from user_login import (
-    create_user_table,
-    add_user,
-    verify_user,
-    get_logins_today,
-    get_total_registered_users,
-    log_user_action,
-    username_exists  # 👈 add this line
-)
-
-
 # ------------------- Initialize -------------------
 create_user_table()
 
@@ -302,9 +295,6 @@ body, .main {
 </style>
 """, unsafe_allow_html=True)
 # 🔹 VIDEO BACKGROUND & GLOW TEXT
-
-
-
 
 # ------------------- BEFORE LOGIN -------------------
 if not st.session_state.authenticated:
@@ -835,11 +825,7 @@ if not st.session_state.get("authenticated", False):
 
     st.stop()
 
-
-
 # ------------------- AFTER LOGIN -------------------
-from user_login import save_user_api_key, get_user_api_key  # Ensure both are imported
-
 if st.session_state.get("authenticated"):
     st.markdown(
         f"<h2 style='color:#00BFFF;'>Welcome to HIRELYZER, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>",
@@ -887,14 +873,6 @@ if st.session_state.get("authenticated"):
         save_user_api_key(st.session_state.username, None)
         st.sidebar.success("✅ Cleared saved Groq API key. Now using shared admin key.")
 
-
-
-
-
-
-from user_login import get_all_user_logs, get_total_registered_users, get_logins_today
-import streamlit as st
-
 if st.session_state.username == "admin":
     st.markdown("<hr>", unsafe_allow_html=True)
     st.markdown("<h2 style='color:#00BFFF;'>📊 Admin Dashboard</h2>", unsafe_allow_html=True)
@@ -921,7 +899,6 @@ if st.session_state.username == "admin":
         )
     else:
         st.info("No logs found yet.")
-
 
 # Always-visible tabs
 tab_labels = [
@@ -1202,15 +1179,6 @@ with tab1:
     <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
     """, unsafe_allow_html=True)
 
-
-
-
-
-
-# Load environment variables
-# ------------------- Core Setup -------------------
-
-
 # Load environment variables
 load_dotenv()
 
@@ -1218,10 +1186,6 @@ load_dotenv()
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 torch.backends.cudnn.benchmark = True
 working_dir = os.path.dirname(os.path.abspath(__file__))
-
-# ------------------- API Key & Caching Manager -------------------
-from llm_manager import call_llm
-
 
 # ------------------- Lazy Initialization -------------------
 @st.cache_resource(show_spinner=False)
@@ -1237,8 +1201,6 @@ def ensure_nltk():
 
 lemmatizer = ensure_nltk()
 reader = get_easyocr_reader()
-
-
 
 def generate_docx(text, filename="bias_free_resume.docx"):
     doc = Document()
@@ -1294,11 +1256,7 @@ def safe_extract_text(uploaded_file):
         st.error(f"⚠️ Could not process this file: {e}")
         return None
 
-
 # Detect bias in resume
-
-import re
-
 # Predefined gender-coded word lists
 gender_words = {
     "masculine": [
@@ -1389,27 +1347,6 @@ def detect_bias(text):
 
     return round(bias_score, 2), masc, fem, masculine_found, feminine_found
 
-gender_words = {
-    "masculine": [
-        "active", "aggressive", "ambitious", "analytical", "assertive", "autonomous", "boast", "bold",
-        "challenging", "competitive", "confident", "courageous", "decisive", "determined", "dominant", "driven",
-        "dynamic", "forceful", "independent", "individualistic", "intellectual", "lead", "leader", "objective",
-        "outspoken", "persistent", "principled", "proactive", "resilient", "self-reliant", "self-sufficient",
-        "strong", "superior", "tenacious","guru","tech guru","technical guru", "visionary", "manpower", "strongman", "command",
-        "assert", "headstrong", "rockstar", "superstar", "go-getter", "trailblazer", "results-driven",
-        "fast-paced", "driven", "determination", "competitive spirit"
-    ],
-    
-    "feminine": [
-        "affectionate", "agreeable", "attentive", "collaborative", "committed", "compassionate", "considerate",
-        "cooperative", "dependable", "dependent", "emotional", "empathetic", "enthusiastic", "gentle",
-        "honest", "inclusive", "interpersonal", "kind", "loyal", "modest", "nurturing", "pleasant", "polite",
-        "sensitive", "supportive", "sympathetic", "tactful", "tender", "trustworthy", "understanding", "warm",
-        "yield", "adaptable", "communal", "helpful", "dedicated", "respectful", "nurture", "sociable",
-        "relationship-oriented", "team player", "dependable", "people-oriented", "empathetic listener",
-        "gentle communicator", "open-minded"
-    ]
-}
 replacement_mapping = {
     "masculine": {
         "active": "engaged",
@@ -1514,6 +1451,7 @@ replacement_mapping = {
         "open-minded": "inclusive"
     }
 }
+
 def rewrite_text_with_llm(text, replacement_mapping, user_location):
     """
     Uses LLM to rewrite a resume with bias-free language, while preserving
@@ -1599,9 +1537,6 @@ Your tasks:
     # Call the LLM of your choice
     response = call_llm(prompt, session=st.session_state)
     return response
-
-
-import re
 
 def rewrite_and_highlight(text, replacement_mapping, user_location):
     highlighted_text = text
@@ -1694,13 +1629,6 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
 
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
 
-import re
-import pandas as pd
-import altair as alt
-import streamlit as st
-from llm_manager import call_llm
-from db_manager import detect_domain_from_title_and_description, get_domain_similarity
-
 # ✅ Enhanced Grammar evaluation using LLM with suggestions
 def get_grammar_score_with_llm(text, max_score=5):
     grammar_prompt = f"""
@@ -1741,7 +1669,6 @@ Suggestions:
     feedback = feedback_match.group(1).strip() if feedback_match else "Grammar appears adequate for professional communication."
     return score, feedback, suggestions
 
-
 # ✅ Main ATS Evaluation Function
 def ats_percentage_score(
     resume_text,
@@ -1754,7 +1681,8 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    import datetime
+    current_year = datetime.now().year
+    current_month = datetime.now().month
 
     # ✅ Grammar evaluation
     grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(
@@ -1778,9 +1706,6 @@ def ats_percentage_score(
     )
 
     # ✅ FIXED: Improved date parsing logic for year-only ranges
-    current_year = datetime.datetime.now().year
-    current_month = datetime.datetime.now().month
-    
     # ✅ Refined education scoring prompt (STANDARDIZED & STRICT)
     prompt = f"""
 You are a professional ATS evaluator specializing in **technical roles** (AI/ML, Blockchain, Cloud, Data, Software, Cybersecurity). 
@@ -1816,8 +1741,6 @@ Your role is to provide **balanced, objective scoring** that reflects industry s
 - 🔄 Ongoing relevant education → Strong scoring (minimum 12 points for technical fields)
 - 📅 Recent completion (within 2 years) → Gets recency bonus
 - 📂 Older completion → No penalty if skills are current
-
-
 
 **Experience Scoring Framework ({exp_weight} points max):**
 - 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
@@ -1963,7 +1886,7 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - **EXPERIENCE MATCHING**: Look for similar roles, projects, or responsibilities even if not exact title matches
 
 Context for Evaluation:
-- Current Date: {datetime.datetime.now().strftime('%B %Y')} (Year: {current_year}, Month: {current_month})
+- Current Date: {datetime.now().strftime('%B %Y')} (Year: {current_year}, Month: {current_month})
 - Grammar Score: {grammar_score} / {lang_weight}
 - Grammar Feedback: {grammar_feedback}  
 - Resume Domain: {resume_domain}
@@ -2118,6 +2041,7 @@ Context for Evaluation:
         "Domain Penalty": domain_penalty,
         "Domain Similarity Score": similarity_score
     }
+
 # Setup Vector DB
 def setup_vectorstore(documents):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -2128,8 +2052,6 @@ def setup_vectorstore(documents):
     return FAISS.from_texts(doc_chunks, embeddings)
 
 # Create Conversational Chain
-from llm_manager import load_groq_api_keys
-
 def create_chain(vectorstore):
     # 🔁 Get a rotated admin key
     keys = load_groq_api_keys()
@@ -2148,16 +2070,11 @@ def create_chain(vectorstore):
     )
     return chain
 
-# App Title
-#####st.title("🦙 HIRELYZER - LLAMA 3.3 (ANALYZER + BUILDER + JOB MARKET TRENDS)")#######
-
 # Chat history
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 # ---------------- Sidebar Layout with Inline Images ----------------
-import streamlit as st
-
 st.sidebar.markdown("### 🏷️ Job Information")
 
 # ---------------- Job Information Dropdown ----------------
@@ -2231,11 +2148,7 @@ with st.sidebar.expander("![Settings](https://img.icons8.com/ios-filled/20/setti
             unsafe_allow_html=True
         )
 
-
-
 with tab1:
-    from streamlit_pdf_viewer import pdf_viewer
-
     # 🎨 CSS for sliding success message
     st.markdown("""
     <style>
@@ -2315,25 +2228,7 @@ with tab1:
                     </div>
                     """, unsafe_allow_html=True)
 
-
-
-
-
-
-import os
-import re
-import streamlit as st
-import pandas as pd
-import altair as alt
-from datetime import datetime
-from db_manager import insert_candidate, detect_domain_from_title_and_description
-from llm_manager import call_llm  # ensure this calls your LLM
-
 # ✅ Initialize state
-
-import time
-import os
-
 # Initialize session state
 if "resume_data" not in st.session_state:
     st.session_state.resume_data = []
@@ -2716,19 +2611,12 @@ if uploaded_files and job_description:
         success_placeholder.empty()
         st.rerun()
 
-
-
-
-
-
     # ✅ Optional vectorstore setup
     if all_text:
         st.session_state.vectorstore = setup_vectorstore(all_text)
         st.session_state.chain = create_chain(st.session_state.vectorstore)
 
 # 🔄 Developer Reset Button
-import time
-
 with tab1:
     if st.button("🔄 Refresh view"):
         st.session_state.processed_files.clear()
@@ -2747,9 +2635,6 @@ with tab1:
         # Wait 3 seconds then clear message
         time.sleep(3)
         msg_placeholder.empty()
-
-
-
 
 def generate_resume_report_html(resume):
     candidate_name = resume.get('Candidate Name', 'Not Found')
@@ -2905,9 +2790,6 @@ def generate_resume_report_html(resume):
     </html>
     """
 
-
-
-
 # === TAB 1: Dashboard ===
 with tab1:
     resume_data = st.session_state.get("resume_data", [])
@@ -3054,16 +2936,6 @@ with tab1:
 {analysis_html}
 </div>
 """, unsafe_allow_html=True)
-
-
-                # ✅ Display Missing Skills and Keywords as badges
-                # ✅ Display Missing Skills as multiline bullet points
-                
-
-                # ✅ Show Missing Keywords and Missing Skills
-                     # Missing keywords
-                
-
 
                 st.divider()
 

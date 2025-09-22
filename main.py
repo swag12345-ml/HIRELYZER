@@ -1726,24 +1726,26 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 - MCA (Master of Computer Applications)
 - BE CS / BTech CS / BTech Computer Science
 
-→ **ASSIGN BASE SCORE of 10-12 points** out of {edu_weight} max points as foundation
+→ **ASSIGN MINIMUM 15-16 points** out of {edu_weight} max points as foundation
 → **DO NOT penalize** for ongoing status - pursuing counts equally as completed
 → **IGNORE institution ranking** - all relevant degrees count equally
 → **THEN ADD points for certifications, projects, MOOCs, hackathons, bootcamps** up to max {edu_weight}
-→ **ENCOURAGE BUILDING**: Base degree + additional credentials = higher scores possible
+→ **ENCOURAGE BUILDING**: Relevant degree (15-16 base) + additional credentials = higher scores possible
 
 **Standard Education Scoring Framework:**
 - 18-{edu_weight}: Outstanding (relevant degree + exceptional certifications/projects + cutting-edge skills + strong portfolio)
 - 15-17: Excellent (relevant degree + solid certifications/bootcamps/hackathons + good project portfolio)
 - 12-14: Very Good (relevant degree + some additional credentials OR strong self-taught skills with evidence)
 - 10-12: **BASE SCORE** (priority degrees listed above - this is your foundation, build from here)
+- 15-17: **MINIMUM FOR PRIORITY DEGREES** (BSc/MSc CS/Maths, MCA, BE/BTech CS - this is your foundation, build from here)
+- 12-14: Very Good (somewhat related technical degree + additional credentials OR strong self-taught skills with evidence)
 - 9-11: Good (somewhat related education with transferable knowledge; currently pursuing counts positively)
 - 6-8: Fair (different degree but clear transition via MOOCs, projects, hackathons, or certs)
 - 3-5: Basic (unrelated degree but evidence of self-learning and interest in tech)
 - 0-2: Insufficient (no relevant education, no certifications, no evidence of learning)
 
 **SCORING METHODOLOGY FOR PRIORITY DEGREES:**
-1. **START** with base 10-12 points if priority degree detected
+1. **START** with minimum 15-16 points if priority degree detected
 2. **ADD** points for each additional qualifier:
    - Strong certifications (AWS, Google Cloud, Microsoft, etc.): +1-2 points
    - Relevant MOOCs/online courses (Coursera, edX, Udacity): +1-2 points
@@ -1771,6 +1773,8 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 **SCORING IMPACT:**
 - ✅ Completed relevant education → Full scoring potential (base + additional credentials up to max points)
 - 🔄 Ongoing relevant education → **BASE 10-12 points for priority degrees + additional credentials**
+- ✅ Completed relevant education → Full scoring potential (minimum 15-16 + additional credentials up to max points)
+- 🔄 Ongoing relevant education → **MINIMUM 15-16 points for priority degrees + additional credentials**
 - 📅 Recent completion (within 2 years) → Gets recency bonus
 - 📂 Older completion → No penalty if skills are current
 
@@ -1821,11 +1825,13 @@ Follow this exact structure and be **specific with evidence while highlighting s
 
 **Scoring Rationale:**
 - Degree Level & Relevance: <Check if degree qualifies for base 10-12 points - BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS>
+- Degree Level & Relevance: <Check if degree qualifies for minimum 15-16 points - BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS>
 - Institution Quality: <Be fair - institution ranking doesn't matter for priority degrees>
 - Recency: <Apply FIXED rules above - be precise about completed vs ongoing; ongoing status not penalized>
 - Additional Credentials: <Value all forms of learning - certifications, bootcamps, online courses, projects>
 - Growth Indicators: <Evidence of continuous learning and skill development>
 - **Score Justification:** <Apply base 10-12 points if relevant degree detected, then add points for additional credentials; focus on building upon foundation>
+- **Score Justification:** <Apply minimum 15-16 points if relevant degree detected, then add points for additional credentials up to max; focus on building upon foundation>
 
 ### 💼 Experience Analysis  
 **Score:** <0–{exp_weight}> / {exp_weight}
@@ -1917,6 +1923,7 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - **PRIORITY RANKING**: Focus on must-have vs nice-to-have requirements from job description
 - **EXPERIENCE MATCHING**: Look for similar roles, projects, or responsibilities even if not exact title matches
 - **EDUCATION PRIORITY**: Apply base 10-12 points for BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS degrees, then build with additional credentials
+- **EDUCATION PRIORITY**: Apply minimum 15-16 points for BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS degrees, then build with additional credentials
 
 Context for Evaluation:
 - Current Date: {datetime.datetime.now().strftime('%B %Y')} (Year: {current_year}, Month: {current_month})

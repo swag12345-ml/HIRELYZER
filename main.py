@@ -4011,7 +4011,7 @@ def render_template_modern(session_state, profile_img_html=""):
     interests_list = [i.strip() for i in session_state['interests'].split(',') if i.strip()]
     softskills_list = [s.strip() for s in session_state['Softskills'].split(',') if s.strip()]
     
-    # Create pill-style tags for skills section
+    # Create pill-style tags for skills section - using the unified style
     skills_pills = "".join([
         f"""<span style="
             display: inline-block;
@@ -4027,51 +4027,51 @@ def render_template_modern(session_state, profile_img_html=""):
         ">{skill}</span>""" for skill in skills_list
     ])
     
-    # Create pill-style tags for languages
+    # Create pill-style tags for languages - using the unified style
     languages_pills = "".join([
         f"""<span style="
             display: inline-block;
-            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-            color: #14532d;
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+            color: #0c4a6e;
             padding: 8px 16px;
             margin: 4px 6px 4px 0;
             border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 600;
-            box-shadow: 0 2px 4px rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.2);
+            box-shadow: 0 2px 4px rgba(8, 145, 178, 0.1);
+            border: 1px solid rgba(14, 165, 233, 0.2);
         ">{lang}</span>""" for lang in languages_list
     ])
     
-    # Create pill-style tags for interests
+    # Create pill-style tags for interests - using the unified style
     interests_pills = "".join([
         f"""<span style="
             display: inline-block;
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            color: #92400e;
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+            color: #0c4a6e;
             padding: 8px 16px;
             margin: 4px 6px 4px 0;
             border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 600;
-            box-shadow: 0 2px 4px rgba(245, 158, 11, 0.1);
-            border: 1px solid rgba(245, 158, 11, 0.2);
+            box-shadow: 0 2px 4px rgba(8, 145, 178, 0.1);
+            border: 1px solid rgba(14, 165, 233, 0.2);
         ">{interest}</span>""" for interest in interests_list
     ])
     
-    # Create pill-style tags for soft skills
+    # Create pill-style tags for soft skills - using the unified style
     softskills_pills = "".join([
         f"""<span style="
             display: inline-block;
-            background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
-            color: #be185d;
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+            color: #0c4a6e;
             padding: 8px 16px;
             margin: 4px 6px 4px 0;
             border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 600;
-            box-shadow: 0 2px 4px rgba(236, 72, 153, 0.1);
-            border: 1px solid rgba(236, 72, 153, 0.2);
+            box-shadow: 0 2px 4px rgba(8, 145, 178, 0.1);
+            border: 1px solid rgba(14, 165, 233, 0.2);
         ">{skill}</span>""" for skill in softskills_list
     ])
     
@@ -4180,13 +4180,15 @@ def render_template_modern(session_state, profile_img_html=""):
             margin-bottom: 20px;
             position: relative;
             padding-bottom: 10px;
+            text-align: center;
         }}
         
         .section h3::after {{
             content: '';
             position: absolute;
             bottom: 0;
-            left: 0;
+            left: 50%;
+            transform: translateX(-50%);
             width: 50px;
             height: 2px;
             background: linear-gradient(90deg, #3b82f6, #06b6d4);

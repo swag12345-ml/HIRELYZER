@@ -1708,6 +1708,39 @@ def ats_percentage_score(
     current_year = datetime.datetime.now().year
     current_month = datetime.datetime.now().month
     
+    # ✅ FIXED: Education completion detection with proper integer parsing
+    def determine_education_status(education_text, end_year_str):
+        """
+        Determine if education is completed or ongoing based on end year and keywords.
+        Returns 'completed' or 'ongoing'.
+        """
+        try:
+            end_year = int(end_year_str.strip())
+        except (ValueError, AttributeError):
+            # If we can't parse the year, default to ongoing
+            return "ongoing"
+        
+        # Apply strict date rules first
+        if end_year < current_year:
+            education_status = "completed"
+        elif end_year == current_year:
+            education_status = "completed" if current_month >= 6 else "ongoing"
+        else:  # end_year > current_year
+            education_status = "ongoing"
+        
+        # Check for explicit keywords that might override numeric rules
+        education_lower = education_text.lower()
+        ongoing_keywords = ["pursuing", "present", "ongoing", "till date", "current", "now", "in progress", "currently enrolled"]
+        completed_keywords = ["graduated", "completed", "finished"]
+        
+        # Only override if we have strong keyword indicators
+        if any(keyword in education_lower for keyword in ongoing_keywords):
+            education_status = "ongoing"
+        elif any(keyword in education_lower for keyword in completed_keywords):
+            education_status = "completed"
+        
+        return education_status
+    
     # ✅ UPDATED: Enhanced education scoring prompt with minimum points rule
     prompt = f"""
 You are a professional ATS evaluator specializing in **technical roles** (AI/ML, Blockchain, Cloud, Data, Software, Cybersecurity). 
@@ -1730,16 +1763,23 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 → **DO NOT penalize** for ongoing status - pursuing counts equally as completed
 → If completed AND certifications/projects are strong, allow scoring up to 18-20 points
 
-**Strict Completion Status Rules:**
-- End year < {current_year} → ✅ Completed
-- End year == {current_year} AND current_month >= 6 → ✅ Completed  
-- End year == {current_year} AND current_month < 6 → 🔄 Ongoing
-- End year > {current_year} → 🔄 Ongoing
+**CRITICAL DATE PARSING RULES:**
+- If end year < {current_year} → ✅ ALWAYS Completed  
+- If end year == {current_year} AND current_month >= 6 → ✅ Likely Completed  
+- If end year == {current_year} AND current_month < 6 → 🔄 Possibly Ongoing (check for text indicators)  
+- If end year > {current_year} → 🔄 Ongoing  
 
-**Explicit Keyword Overrides (check for these indicators):**
-- "Now", "Present", "Ongoing", "Pursuing" → 🔄 Ongoing
-- "Graduated", "Completed" → ✅ Completed
-- **If conflict, apply date rules first**
+**EXPLICIT STATUS INDICATORS (override year logic):**
+- Words like "Now", "Present", "Current", "Till Date", "Ongoing" → 🔄 Ongoing
+- Words like "pursuing", "currently enrolled", "in progress" → 🔄 Ongoing  
+- Words like "Graduated", "Completed", "Finished" → ✅ Completed
+- **OVERRIDE RULE**: If end year < {current_year}, it is ✅ Completed no matter what the text says.
+
+**SCORING IMPACT:**
+- ✅ Completed relevant education → Full scoring potential (up to max points)
+- 🔄 Ongoing relevant education → **MINIMUM 15 points for priority degrees listed above**
+- 📅 Recent completion (within 2 years) → Gets recency bonus
+- 📂 Older completion → No penalty if skills are current
 
 **Standard Education Scoring Framework:**
 - 18-{edu_weight}: Outstanding (completed OR ongoing highly relevant degree + strong certifications/projects)
@@ -1911,7 +1951,6 @@ Context for Evaluation:
 
 {logic_score_note}
 """
-    
    
     ats_result = call_llm(prompt, session=st.session_state).strip()
 

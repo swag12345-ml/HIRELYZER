@@ -4011,7 +4011,7 @@ def render_template_modern(session_state, profile_img_html=""):
     interests_list = [i.strip() for i in session_state['interests'].split(',') if i.strip()]
     softskills_list = [s.strip() for s in session_state['Softskills'].split(',') if s.strip()]
     
-    # Create pill-style tags for skills section - using the unified style
+    # Create unified pill-style tags for all sections
     skills_pills = "".join([
         f"""<span style="
             display: inline-block;
@@ -4027,7 +4027,7 @@ def render_template_modern(session_state, profile_img_html=""):
         ">{skill}</span>""" for skill in skills_list
     ])
     
-    # Create pill-style tags for languages - using the unified style
+    # Create unified pill-style tags for languages
     languages_pills = "".join([
         f"""<span style="
             display: inline-block;
@@ -4043,7 +4043,7 @@ def render_template_modern(session_state, profile_img_html=""):
         ">{lang}</span>""" for lang in languages_list
     ])
     
-    # Create pill-style tags for interests - using the unified style
+    # Create unified pill-style tags for interests
     interests_pills = "".join([
         f"""<span style="
             display: inline-block;
@@ -4059,7 +4059,7 @@ def render_template_modern(session_state, profile_img_html=""):
         ">{interest}</span>""" for interest in interests_list
     ])
     
-    # Create pill-style tags for soft skills - using the unified style
+    # Create unified pill-style tags for soft skills
     softskills_pills = "".join([
         f"""<span style="
             display: inline-block;
@@ -4278,8 +4278,9 @@ def render_template_modern(session_state, profile_img_html=""):
         .pills-container {{
             display: flex;
             flex-wrap: wrap;
+            justify-content: center;
             gap: 8px;
-            margin-top: 15px;
+            margin-top: 10px;
         }}
         
         .links a {{

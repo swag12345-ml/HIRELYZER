@@ -1763,6 +1763,13 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 → **DO NOT penalize** for ongoing status - pursuing counts equally as completed
 → If completed AND certifications/projects are strong, allow scoring up to 18-20 points
 
+**CERTIFICATIONS & PROJECTS CREDIT:**
+- Strong certifications (Coursera, Udemy, edX, AWS, Google Cloud, Microsoft, etc.) must be explicitly credited with additional points
+- Hackathons, research papers, open-source contributions, internships count as evidence of applied learning
+- GitHub repositories, personal projects, and technical portfolios demonstrate practical skills
+- If candidate lacks formal degree but shows substantial certifications/projects, assign at least 12-15 points
+- Bootcamps, intensive programs, and specialized training programs should be valued appropriately
+
 **CRITICAL DATE PARSING RULES:**
 - If end year < {current_year} → ✅ ALWAYS Completed  
 - If end year == {current_year} AND current_month >= 6 → ✅ Likely Completed  
@@ -1791,6 +1798,12 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 - 0-2: Insufficient (no relevant education, no certifications, no evidence of learning)
 
 **Experience Scoring Framework ({exp_weight} points max):**
+**EXPANDED EXPERIENCE RECOGNITION:**
+- Treat internships, apprenticeships, research assistantships, freelance work, and academic projects as **valid experience evidence**
+- Give proportional credit for responsibilities, technical skills applied, and outcomes achieved
+- Part-time roles, contract work, and project-based experience count toward total experience
+- Teaching assistantships, tutoring, and mentoring roles demonstrate leadership and communication skills
+
 - 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
 - 28-31: Excellent (meets/exceeds years + strong domain fit + leadership + clear results)
 - 24-27: Very Good (adequate years + good domain fit + solid responsibilities + some results)
@@ -1824,6 +1837,10 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 - Emphasize **cutting-edge skills**: LLMs, Generative AI, Web3, Smart Contracts, DeFi, Cloud-Native tools, MLOps, Vector DBs.
 - Highlight both **industry experience** and **hands-on learning** (projects, MOOCs, certifications).
 - Be encouraging but factual: focus on **growth potential + adaptability**.
+- **ALWAYS highlight internships, projects, certifications, hackathons, and open-source contributions**
+- **If candidate has substantial projects/certifications but no formal degree, ensure fair scoring without penalty**
+- **Credit all forms of practical experience**: freelance work, research projects, teaching assistantships, volunteer tech work
+- **Value learning initiatives**: online courses, bootcamps, self-directed projects, technical blogs, conference participation
 
 **EVALUATION INSTRUCTIONS - BE ENCOURAGING BUT HONEST:**
 
@@ -1951,6 +1968,7 @@ Context for Evaluation:
 
 {logic_score_note}
 """
+   
    
     ats_result = call_llm(prompt, session=st.session_state).strip()
 

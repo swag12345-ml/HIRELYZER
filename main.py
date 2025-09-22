@@ -1681,8 +1681,7 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    current_year = datetime.now().year
-    current_month = datetime.now().month
+    import datetime
 
     # ✅ Grammar evaluation
     grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(
@@ -1706,6 +1705,9 @@ def ats_percentage_score(
     )
 
     # ✅ FIXED: Improved date parsing logic for year-only ranges
+    current_year = datetime.datetime.now().year
+    current_month = datetime.datetime.now().month
+    
     # ✅ Refined education scoring prompt (STANDARDIZED & STRICT)
     prompt = f"""
 You are a professional ATS evaluator specializing in **technical roles** (AI/ML, Blockchain, Cloud, Data, Software, Cybersecurity). 
@@ -1741,6 +1743,8 @@ Your role is to provide **balanced, objective scoring** that reflects industry s
 - 🔄 Ongoing relevant education → Strong scoring (minimum 12 points for technical fields)
 - 📅 Recent completion (within 2 years) → Gets recency bonus
 - 📂 Older completion → No penalty if skills are current
+
+
 
 **Experience Scoring Framework ({exp_weight} points max):**
 - 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
@@ -1886,7 +1890,7 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - **EXPERIENCE MATCHING**: Look for similar roles, projects, or responsibilities even if not exact title matches
 
 Context for Evaluation:
-- Current Date: {datetime.now().strftime('%B %Y')} (Year: {current_year}, Month: {current_month})
+- Current Date: {datetime.datetime.now().strftime('%B %Y')} (Year: {current_year}, Month: {current_month})
 - Grammar Score: {grammar_score} / {lang_weight}
 - Grammar Feedback: {grammar_feedback}  
 - Resume Domain: {resume_domain}

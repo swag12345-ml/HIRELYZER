@@ -1720,45 +1720,35 @@ Your role is to provide **balanced, objective scoring** that reflects industry s
 ⚡ **PRIORITY RULE - Minimum Points for Relevant Degrees:**
 If candidate is **currently pursuing OR has completed** any of these degrees:
 - BSc CS / BSc Computer Science
-- BSc Maths / BSc Mathematics  
+- BSc Mathematics / BSc Maths
 - MSc CS / MSc Computer Science
-- MSc Maths / MSc Mathematics
+- MSc Mathematics / MSc Maths
 - MCA (Master of Computer Applications)
-- BE CS / BTech CS / BTech Computer Science
+- BE CS / BTech CS / BTech IT
 
-→ **ASSIGN MINIMUM 15-16 points** out of {edu_weight} max points
+→ **ASSIGN MINIMUM 15 points** out of {edu_weight} max points
 → **DO NOT penalize** for ongoing status - pursuing counts equally as completed
-→ **IGNORE institution ranking** - all relevant degrees count equally
-→ Add extra points for certifications/projects without exceeding max weight
+→ If completed AND certifications/projects are strong, allow scoring up to 18-20 points
+
+**Strict Completion Status Rules:**
+- End year < {current_year} → ✅ Completed
+- End year == {current_year} AND current_month >= 6 → ✅ Completed  
+- End year == {current_year} AND current_month < 6 → 🔄 Ongoing
+- End year > {current_year} → 🔄 Ongoing
+
+**Explicit Keyword Overrides (check for these indicators):**
+- "Now", "Present", "Ongoing", "Pursuing" → 🔄 Ongoing
+- "Graduated", "Completed" → ✅ Completed
+- **If conflict, apply date rules first**
 
 **Standard Education Scoring Framework:**
-- 18-{edu_weight}: Outstanding (completed OR ongoing highly relevant degree in CS/AI/ML/Data Science/Stats/Engineering/Blockchain + strong certifications/projects; institution quality only boosts, never penalizes)
-- 15-17: Excellent (completed OR ongoing technical degree in related domain [IT, Software, ECE, Math, Physics] + solid certifications/bootcamps/hackathons; recency aligned with tech role)
-- 12-14: Very Good (related technical/quantitative degree OR strong online certifications/projects in AI/ML/Blockchain/Data/Cloud; GitHub repos add credit)
-- 9-11: Good (somewhat related education with transferable knowledge; currently pursuing counts positively)
-- 6-8: Fair (different degree but clear transition via MOOCs, projects, hackathons, or certs)
+- 18-{edu_weight}: Outstanding (completed OR ongoing highly relevant degree + strong certifications/projects)
+- 15-17: Excellent (priority degrees listed above OR related technical degree + solid credentials)
+- 12-14: Very Good (related technical/quantitative degree OR strong online certifications/projects)
+- 9-11: Good (somewhat related education with transferable knowledge)
+- 6-8: Fair (different degree but clear transition via MOOCs, projects, certifications)
 - 3-5: Basic (unrelated degree but evidence of self-learning and interest in tech)
 - 0-2: Insufficient (no relevant education, no certifications, no evidence of learning)
-
-⏳ **FIXED: Recency & Pursuing Rules (STRICT – STANDARDIZED, NO INTERPRETATION):**
-
-**CRITICAL DATE PARSING RULES:**
-- If end year < {current_year} → ✅ ALWAYS Completed  
-- If end year == {current_year} AND current_month >= 6 → ✅ Likely Completed  
-- If end year == {current_year} AND current_month < 6 → 🔄 Possibly Ongoing (check for text indicators)  
-- If end year > {current_year} → 🔄 Ongoing  
-
-**EXPLICIT STATUS INDICATORS (override year logic):**
-- Words like "Now", "Present", "Current", "Till Date", "Ongoing" → 🔄 Ongoing
-- Words like "pursuing", "currently enrolled", "in progress" → 🔄 Ongoing  
-- Words like "Graduated", "Completed", "Finished" → ✅ Completed
-- **OVERRIDE RULE**: If end year < {current_year}, it is ✅ Completed no matter what the text says.
-
-**SCORING IMPACT:**
-- ✅ Completed relevant education → Full scoring potential (up to max points)
-- 🔄 Ongoing relevant education → **MINIMUM 15-16 points for priority degrees listed above**
-- 📅 Recent completion (within 2 years) → Gets recency bonus
-- 📂 Older completion → No penalty if skills are current
 
 **Experience Scoring Framework ({exp_weight} points max):**
 - 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
@@ -1806,12 +1796,11 @@ Follow this exact structure and be **specific with evidence while highlighting s
 **Score:** <0–{edu_weight}> / {edu_weight}
 
 **Scoring Rationale:**
-- Degree Level & Relevance: <Check if degree qualifies for minimum 15-16 points rule - BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS>
-- Institution Quality: <Be fair - institution ranking doesn't matter for priority degrees>
-- Recency: <Apply FIXED rules above - be precise about completed vs ongoing; ongoing status not penalized>
+- Degree Level & Relevance: <Check if degree qualifies for minimum 15 points rule - BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS/IT>
+- Completion Status: <Apply strict date rules and keyword overrides>
 - Additional Credentials: <Value all forms of learning - certifications, bootcamps, online courses>
 - Growth Indicators: <Evidence of continuous learning and skill development>
-- **Score Justification:** <Apply minimum 15-16 points if relevant degree detected; focus on potential and learning ability>
+- **Score Justification:** <Apply minimum 15 points if relevant degree detected; pursuing status not penalized>
 
 ### 💼 Experience Analysis  
 **Score:** <0–{exp_weight}> / {exp_weight}
@@ -1902,7 +1891,7 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - **CONTEXT UNDERSTANDING**: Consider synonyms and related terms (e.g., "JavaScript" and "JS", "Machine Learning" and "ML")
 - **PRIORITY RANKING**: Focus on must-have vs nice-to-have requirements from job description
 - **EXPERIENCE MATCHING**: Look for similar roles, projects, or responsibilities even if not exact title matches
-- **EDUCATION PRIORITY**: Apply minimum 15-16 points rule for BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS degrees
+- **EDUCATION PRIORITY**: Apply minimum 15 points rule for BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS/IT degrees
 
 Context for Evaluation:
 - Current Date: {datetime.datetime.now().strftime('%B %Y')} (Year: {current_year}, Month: {current_month})
@@ -1923,6 +1912,7 @@ Context for Evaluation:
 {logic_score_note}
 """
     
+   
     ats_result = call_llm(prompt, session=st.session_state).strip()
 
     def extract_section(pattern, text, default="N/A"):

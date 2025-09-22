@@ -1708,7 +1708,7 @@ def ats_percentage_score(
     current_year = datetime.datetime.now().year
     current_month = datetime.datetime.now().month
     
-    # ✅ UPDATED: Enhanced education scoring prompt with minimum points rule
+    # ✅ UPDATED: Enhanced education scoring prompt with adjusted minimum points rule
     prompt = f"""
 You are a professional ATS evaluator specializing in **technical roles** (AI/ML, Blockchain, Cloud, Data, Software, Cybersecurity). 
 Your role is to provide **balanced, objective scoring** that reflects industry standards and recognizes candidate potential while maintaining professional standards.
@@ -1717,7 +1717,7 @@ Your role is to provide **balanced, objective scoring** that reflects industry s
 
 **Education Scoring Framework ({edu_weight} points max):**
 
-⚡ **PRIORITY RULE - Minimum Points for Relevant Degrees:**
+⚡ **PRIORITY RULE - Base Score for Relevant Degrees:**
 If candidate is **currently pursuing OR has completed** any of these degrees:
 - BSc CS / BSc Computer Science
 - BSc Maths / BSc Mathematics  
@@ -1726,34 +1726,33 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 - MCA (Master of Computer Applications)
 - BE CS / BTech CS / BTech Computer Science
 
-→ **ASSIGN MINIMUM 15-16 points** out of {edu_weight} max points
+→ **ASSIGN BASE SCORE of 10-12 points** out of {edu_weight} max points as foundation
 → **DO NOT penalize** for ongoing status - pursuing counts equally as completed
 → **IGNORE institution ranking** - all relevant degrees count equally
-→ Add extra points for certifications/projects without exceeding max weight
+→ **THEN ADD points for certifications, projects, MOOCs, hackathons, bootcamps** up to max {edu_weight}
+→ **ENCOURAGE BUILDING**: Base degree + additional credentials = higher scores possible
 
 **Standard Education Scoring Framework:**
-⚡ **PRIORITY RULE - Minimum Points for Relevant Degrees:**
-If candidate is **currently pursuing OR has completed** any of these degrees:
-- BSc CS / BSc Computer Science
-- BSc Maths / BSc Mathematics  
-- MSc CS / MSc Computer Science
-- MSc Maths / MSc Mathematics
-- MCA (Master of Computer Applications)
-- BE CS / BTech CS / BTech Computer Science
-
-→ **ASSIGN MINIMUM 15-16 points** out of {edu_weight} max points
-→ **DO NOT penalize** for ongoing status - pursuing counts equally as completed
-→ **IGNORE institution ranking** - all relevant degrees count equally
-→ Add extra points for certifications/projects without exceeding max weight
-
-**Standard Education Scoring Framework:**
-- 18-{edu_weight}: Outstanding (completed OR ongoing highly relevant degree in CS/AI/ML/Data Science/Stats/Engineering/Blockchain + strong certifications/projects; institution quality only boosts, never penalizes)
-- 15-17: Excellent (completed OR ongoing technical degree in related domain [IT, Software, ECE, Math, Physics] + solid certifications/bootcamps/hackathons; recency aligned with tech role)
-- 12-14: Very Good (related technical/quantitative degree OR strong online certifications/projects in AI/ML/Blockchain/Data/Cloud; GitHub repos add credit)
+- 18-{edu_weight}: Outstanding (relevant degree + exceptional certifications/projects + cutting-edge skills + strong portfolio)
+- 15-17: Excellent (relevant degree + solid certifications/bootcamps/hackathons + good project portfolio)
+- 12-14: Very Good (relevant degree + some additional credentials OR strong self-taught skills with evidence)
+- 10-12: **BASE SCORE** (priority degrees listed above - this is your foundation, build from here)
 - 9-11: Good (somewhat related education with transferable knowledge; currently pursuing counts positively)
 - 6-8: Fair (different degree but clear transition via MOOCs, projects, hackathons, or certs)
 - 3-5: Basic (unrelated degree but evidence of self-learning and interest in tech)
 - 0-2: Insufficient (no relevant education, no certifications, no evidence of learning)
+
+**SCORING METHODOLOGY FOR PRIORITY DEGREES:**
+1. **START** with base 10-12 points if priority degree detected
+2. **ADD** points for each additional qualifier:
+   - Strong certifications (AWS, Google Cloud, Microsoft, etc.): +1-2 points
+   - Relevant MOOCs/online courses (Coursera, edX, Udacity): +1-2 points
+   - Hackathons, coding competitions, Kaggle: +1-2 points
+   - Personal projects, GitHub portfolio: +1-2 points
+   - Bootcamps, specialized training: +1-2 points
+   - Research publications, thesis work: +1-3 points
+3. **CAP** at maximum {edu_weight} points total
+4. **REWARD** continuous learning and practical application
 
 ⏳ **FIXED: Recency & Pursuing Rules (STRICT – STANDARDIZED, NO INTERPRETATION):**
 
@@ -1770,8 +1769,8 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 - **OVERRIDE RULE**: If end year < {current_year}, it is ✅ Completed no matter what the text says.
 
 **SCORING IMPACT:**
-- ✅ Completed relevant education → Full scoring potential (up to max points)
-- 🔄 Ongoing relevant education → **MINIMUM 15-16 points for priority degrees listed above**
+- ✅ Completed relevant education → Full scoring potential (base + additional credentials up to max points)
+- 🔄 Ongoing relevant education → **BASE 10-12 points for priority degrees + additional credentials**
 - 📅 Recent completion (within 2 years) → Gets recency bonus
 - 📂 Older completion → No penalty if skills are current
 
@@ -1821,12 +1820,12 @@ Follow this exact structure and be **specific with evidence while highlighting s
 **Score:** <0–{edu_weight}> / {edu_weight}
 
 **Scoring Rationale:**
-- Degree Level & Relevance: <Check if degree qualifies for minimum 15-16 points rule - BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS>
+- Degree Level & Relevance: <Check if degree qualifies for base 10-12 points - BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS>
 - Institution Quality: <Be fair - institution ranking doesn't matter for priority degrees>
 - Recency: <Apply FIXED rules above - be precise about completed vs ongoing; ongoing status not penalized>
-- Additional Credentials: <Value all forms of learning - certifications, bootcamps, online courses>
+- Additional Credentials: <Value all forms of learning - certifications, bootcamps, online courses, projects>
 - Growth Indicators: <Evidence of continuous learning and skill development>
-- **Score Justification:** <Apply minimum 15-16 points if relevant degree detected; focus on potential and learning ability>
+- **Score Justification:** <Apply base 10-12 points if relevant degree detected, then add points for additional credentials; focus on building upon foundation>
 
 ### 💼 Experience Analysis  
 **Score:** <0–{exp_weight}> / {exp_weight}
@@ -1917,8 +1916,7 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - **CONTEXT UNDERSTANDING**: Consider synonyms and related terms (e.g., "JavaScript" and "JS", "Machine Learning" and "ML")
 - **PRIORITY RANKING**: Focus on must-have vs nice-to-have requirements from job description
 - **EXPERIENCE MATCHING**: Look for similar roles, projects, or responsibilities even if not exact title matches
-- **EDUCATION PRIORITY**: Apply minimum 15-16 points rule for BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS degrees
-- **EDUCATION PRIORITY**: Apply minimum 15-16 points rule for BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS degrees
+- **EDUCATION PRIORITY**: Apply base 10-12 points for BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS degrees, then build with additional credentials
 
 Context for Evaluation:
 - Current Date: {datetime.datetime.now().strftime('%B %Y')} (Year: {current_year}, Month: {current_month})

@@ -1681,8 +1681,7 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10
 ):
-    current_year = datetime.now().year
-    current_month = datetime.now().month
+    import datetime
 
     # ✅ Grammar evaluation
     grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(
@@ -1706,7 +1705,10 @@ def ats_percentage_score(
     )
 
     # ✅ FIXED: Improved date parsing logic for year-only ranges
-    # ✅ Refined education scoring prompt (STANDARDIZED & STRICT)
+    current_year = datetime.datetime.now().year
+    current_month = datetime.datetime.now().month
+    
+    # ✅ UPDATED: Enhanced education scoring prompt with minimum points rule
     prompt = f"""
 You are a professional ATS evaluator specializing in **technical roles** (AI/ML, Blockchain, Cloud, Data, Software, Cybersecurity). 
 Your role is to provide **balanced, objective scoring** that reflects industry standards and recognizes candidate potential while maintaining professional standards.
@@ -1714,8 +1716,39 @@ Your role is to provide **balanced, objective scoring** that reflects industry s
 🎯 **BALANCED SCORING GUIDELINES - Tech-Focused (AI/ML/Blockchain/Software/Data):**
 
 **Education Scoring Framework ({edu_weight} points max):**
+
+⚡ **PRIORITY RULE - Minimum Points for Relevant Degrees:**
+If candidate is **currently pursuing OR has completed** any of these degrees:
+- BSc CS / BSc Computer Science
+- BSc Maths / BSc Mathematics  
+- MSc CS / MSc Computer Science
+- MSc Maths / MSc Mathematics
+- MCA (Master of Computer Applications)
+- BE CS / BTech CS / BTech Computer Science
+
+→ **ASSIGN MINIMUM 15-16 points** out of {edu_weight} max points
+→ **DO NOT penalize** for ongoing status - pursuing counts equally as completed
+→ **IGNORE institution ranking** - all relevant degrees count equally
+→ Add extra points for certifications/projects without exceeding max weight
+
+**Standard Education Scoring Framework:**
+⚡ **PRIORITY RULE - Minimum Points for Relevant Degrees:**
+If candidate is **currently pursuing OR has completed** any of these degrees:
+- BSc CS / BSc Computer Science
+- BSc Maths / BSc Mathematics  
+- MSc CS / MSc Computer Science
+- MSc Maths / MSc Mathematics
+- MCA (Master of Computer Applications)
+- BE CS / BTech CS / BTech Computer Science
+
+→ **ASSIGN MINIMUM 15-16 points** out of {edu_weight} max points
+→ **DO NOT penalize** for ongoing status - pursuing counts equally as completed
+→ **IGNORE institution ranking** - all relevant degrees count equally
+→ Add extra points for certifications/projects without exceeding max weight
+
+**Standard Education Scoring Framework:**
 - 18-{edu_weight}: Outstanding (completed OR ongoing highly relevant degree in CS/AI/ML/Data Science/Stats/Engineering/Blockchain + strong certifications/projects; institution quality only boosts, never penalizes)
-- 15-17: Excellent (completed OR ongoing technical degree in a related domain [IT, Software, ECE, Math, Physics] + solid certifications/bootcamps/hackathons; recency aligned with tech role)
+- 15-17: Excellent (completed OR ongoing technical degree in related domain [IT, Software, ECE, Math, Physics] + solid certifications/bootcamps/hackathons; recency aligned with tech role)
 - 12-14: Very Good (related technical/quantitative degree OR strong online certifications/projects in AI/ML/Blockchain/Data/Cloud; GitHub repos add credit)
 - 9-11: Good (somewhat related education with transferable knowledge; currently pursuing counts positively)
 - 6-8: Fair (different degree but clear transition via MOOCs, projects, hackathons, or certs)
@@ -1738,7 +1771,7 @@ Your role is to provide **balanced, objective scoring** that reflects industry s
 
 **SCORING IMPACT:**
 - ✅ Completed relevant education → Full scoring potential (up to max points)
-- 🔄 Ongoing relevant education → Strong scoring (minimum 12 points for technical fields)
+- 🔄 Ongoing relevant education → **MINIMUM 15-16 points for priority degrees listed above**
 - 📅 Recent completion (within 2 years) → Gets recency bonus
 - 📂 Older completion → No penalty if skills are current
 
@@ -1788,12 +1821,12 @@ Follow this exact structure and be **specific with evidence while highlighting s
 **Score:** <0–{edu_weight}> / {edu_weight}
 
 **Scoring Rationale:**
-- Degree Level & Relevance: <Explain alignment, consider transferable knowledge>
-- Institution Quality: <Be fair - not everyone attends top schools>
-- Recency: <Apply FIXED rules above - be precise about completed vs ongoing>
+- Degree Level & Relevance: <Check if degree qualifies for minimum 15-16 points rule - BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS>
+- Institution Quality: <Be fair - institution ranking doesn't matter for priority degrees>
+- Recency: <Apply FIXED rules above - be precise about completed vs ongoing; ongoing status not penalized>
 - Additional Credentials: <Value all forms of learning - certifications, bootcamps, online courses>
 - Growth Indicators: <Evidence of continuous learning and skill development>
-- **Score Justification:** <Focus on potential and learning ability, not just perfect matches>
+- **Score Justification:** <Apply minimum 15-16 points if relevant degree detected; focus on potential and learning ability>
 
 ### 💼 Experience Analysis  
 **Score:** <0–{exp_weight}> / {exp_weight}
@@ -1884,9 +1917,11 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - **CONTEXT UNDERSTANDING**: Consider synonyms and related terms (e.g., "JavaScript" and "JS", "Machine Learning" and "ML")
 - **PRIORITY RANKING**: Focus on must-have vs nice-to-have requirements from job description
 - **EXPERIENCE MATCHING**: Look for similar roles, projects, or responsibilities even if not exact title matches
+- **EDUCATION PRIORITY**: Apply minimum 15-16 points rule for BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS degrees
+- **EDUCATION PRIORITY**: Apply minimum 15-16 points rule for BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS degrees
 
 Context for Evaluation:
-- Current Date: {datetime.now().strftime('%B %Y')} (Year: {current_year}, Month: {current_month})
+- Current Date: {datetime.datetime.now().strftime('%B %Y')} (Year: {current_year}, Month: {current_month})
 - Grammar Score: {grammar_score} / {lang_weight}
 - Grammar Feedback: {grammar_feedback}  
 - Resume Domain: {resume_domain}

@@ -4261,6 +4261,10 @@ def render_template_modern(session_state, profile_img_html=""):
             border-radius: 1px;
         }}
         
+        .project-links {{
+            text-align: center;
+        }}
+        
         .summary {{
             font-size: 1.1rem;
             line-height: 1.8;
@@ -4489,7 +4493,7 @@ def render_template_modern(session_state, profile_img_html=""):
     {f'''
     <div class="section">
         <h3>Project Links</h3>
-        <div class="links">
+        <div class="links project-links">
             {"".join([f'<a href="{link}" target="_blank">🔗 Project {i+1}</a>' for i, link in enumerate(session_state.project_links)])}
         </div>
     </div>

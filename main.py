@@ -1720,7 +1720,7 @@ def ats_percentage_score(
             # If we can't parse the year, default to ongoing
             return "ongoing"
         
-        # Apply 2025 cutoff rule
+        # Apply 2025 cutoff rule (HARDCODED - NOT dynamic)
         if end_year < 2025:
             education_status = "completed"
         elif end_year == 2025:
@@ -1734,6 +1734,10 @@ def ats_percentage_score(
         completed_keywords = ["graduated", "completed", "finished"]
         
         # Override rule: If end year < 2025, always completed regardless of text
+        if end_year < 2025:
+            return "completed"
+        
+        # For years >= 2025, check keywords
         if end_year < 2025:
             return "completed"
         
@@ -1768,14 +1772,14 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 → If completed with strong academic performance, allow scoring up to 18-20 points
 
 **CRITICAL DATE PARSING RULES:**
-- If end year < 2025 → ✅ ALWAYS Completed  
+- If end year < 2025 → ✅ ALWAYS Completed (HARDCODED CUTOFF)
 - If end year == 2025 → ✅ Completed
 - If end year > 2025 → 🔄 Ongoing  
 
 **EXPLICIT STATUS INDICATORS (override year logic for years >= 2025):**
 - Words like "pursuing", "currently enrolled", "in progress" → 🔄 Ongoing  
 - Words like "Graduated", "Completed", "Finished" → ✅ Completed
-- **OVERRIDE RULE**: If end year < 2025, it is ✅ Completed no matter what the text says.
+- **OVERRIDE RULE**: If end year < 2025, it is ✅ Completed no matter what the text says (2025 IS THE CUTOFF YEAR).
 
 **SCORING IMPACT:**
 - ✅ Completed relevant education → Full scoring potential (up to max points)

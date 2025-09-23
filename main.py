@@ -1797,12 +1797,6 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 - 0-2: Insufficient (no degree information or incomplete details)
 
 **Experience Scoring Framework ({exp_weight} points max):**
-**EXPANDED EXPERIENCE RECOGNITION:**
-- Treat internships, apprenticeships, research assistantships, freelance work, and academic projects as **valid experience evidence**
-- Give proportional credit for responsibilities, technical skills applied, and outcomes achieved
-- Part-time roles, contract work, and project-based experience count toward total experience
-- Teaching assistantships, tutoring, and mentoring roles demonstrate leadership and communication skills
-- **Credit certifications, hackathons, and projects here, not in education section**
 
 - 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
 - 28-31: Excellent (meets/exceeds years + strong domain fit + leadership + clear results)
@@ -1837,10 +1831,6 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 - Emphasize **cutting-edge skills**: LLMs, Generative AI, Web3, Smart Contracts, DeFi, Cloud-Native tools, MLOps, Vector DBs.
 - Highlight both **industry experience** and **hands-on learning** (projects, MOOCs, certifications).
 - Be encouraging but factual: focus on **growth potential + adaptability**.
-- **ALWAYS highlight internships, projects, certifications, hackathons, and open-source contributions** in experience/skills
-- **If candidate has substantial projects/certifications but no formal degree, ensure fair scoring in experience/skills sections**
-- **Credit all forms of practical experience**: freelance work, research projects, teaching assistantships, volunteer tech work
-- **Value learning initiatives**: online courses, bootcamps, self-directed projects, technical blogs, conference participation
 
 **EVALUATION INSTRUCTIONS - BE ENCOURAGING BUT HONEST:**
 
@@ -1853,10 +1843,12 @@ Follow this exact structure and be **specific with evidence while highlighting s
 **Score:** <0–{edu_weight}> / {edu_weight}
 
 **Scoring Rationale:**
-- Degree Level & Relevance: <Check if degree qualifies for minimum 15 points rule - BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS/IT>
-- Completion Status: <Apply 2025 cutoff rule and keyword overrides>
-- Academic Foundation: <Assess degree relevance to technical roles>
-- **Score Justification:** <Apply minimum 15 points if relevant degree detected; pursuing status not penalized; score based only on degree relevance>
+- Degree Level & Relevance: <Explain alignment, consider transferable knowledge>
+- Institution Quality: <Be fair - not everyone attends top schools>
+- Recency: <Apply FIXED rules above - be precise about completed vs ongoing>
+- Additional Credentials: <Value all forms of learning - certifications, bootcamps, online courses>
+- Growth Indicators: <Evidence of continuous learning and skill development>
+- **Score Justification:** <Focus on potential and learning ability, not just perfect matches>
 
 ### 💼 Experience Analysis  
 **Score:** <0–{exp_weight}> / {exp_weight}

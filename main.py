@@ -1965,7 +1965,6 @@ Context for Evaluation:
 
 {logic_score_note}
 """
-
    
    
     ats_result = call_llm(prompt, session=st.session_state).strip()

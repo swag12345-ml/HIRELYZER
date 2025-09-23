@@ -1704,52 +1704,11 @@ def ats_percentage_score(
         if logic_profile_score else ""
     )
 
-    # ✅ FIXED: Stable education scoring with 2025 cutoff
+    # ✅ FIXED: Improved date parsing logic for year-only ranges
     current_year = datetime.datetime.now().year
     current_month = datetime.datetime.now().month
     
-    # ✅ FIXED: Education completion detection with 2025 cutoff
-    def determine_education_status(education_text, end_year_str):
-        """
-        Determine if education is completed or ongoing based on 2025 cutoff and keywords.
-        Returns 'completed' or 'ongoing'.
-        """
-        try:
-            end_year = int(end_year_str.strip())
-        except (ValueError, AttributeError):
-            # If we can't parse the year, default to ongoing
-            return "ongoing"
-        
-        # Apply 2025 cutoff rule (HARDCODED - NOT dynamic)
-        if end_year < 2025:
-            education_status = "completed"
-        elif end_year == 2025:
-            education_status = "completed"
-        else:  # end_year > 2025
-            education_status = "ongoing"
-        
-        # Check for explicit keywords that might override numeric rules
-        education_lower = education_text.lower()
-        ongoing_keywords = ["pursuing", "present", "ongoing", "currently enrolled", "in progress"]
-        completed_keywords = ["graduated", "completed", "finished"]
-        
-        # Override rule: If end year < 2025, always completed regardless of text
-        if end_year < 2025:
-            return "completed"
-        
-        # For years >= 2025, check keywords
-        if end_year < 2025:
-            return "completed"
-        
-        # For years >= 2025, check keywords
-        if any(keyword in education_lower for keyword in ongoing_keywords):
-            education_status = "ongoing"
-        elif any(keyword in education_lower for keyword in completed_keywords):
-            education_status = "completed"
-        
-        return education_status
-    
-    # ✅ UPDATED: Stable education scoring with priority degrees minimum
+    # ✅ Refined education scoring prompt (STANDARDIZED & STRICT)
     prompt = f"""
 You are a professional ATS evaluator specializing in **technical roles** (AI/ML, Blockchain, Cloud, Data, Software, Cybersecurity). 
 Your role is to provide **balanced, objective scoring** that reflects industry standards and recognizes candidate potential while maintaining professional standards.
@@ -1757,53 +1716,37 @@ Your role is to provide **balanced, objective scoring** that reflects industry s
 🎯 **BALANCED SCORING GUIDELINES - Tech-Focused (AI/ML/Blockchain/Software/Data):**
 
 **Education Scoring Framework ({edu_weight} points max):**
+- 18-{edu_weight}: Outstanding (completed OR ongoing highly relevant degree in CS/AI/ML/Data Science/Stats/Engineering/Blockchain + strong certifications/projects; institution quality only boosts, never penalizes)
+- 15-17: Excellent (completed OR ongoing technical degree in a related domain [IT, Software, ECE, Math, Physics] + solid certifications/bootcamps/hackathons; recency aligned with tech role)
+- 12-14: Very Good (related technical/quantitative degree OR strong online certifications/projects in AI/ML/Blockchain/Data/Cloud; GitHub repos add credit)
+- 9-11: Good (somewhat related education with transferable knowledge; currently pursuing counts positively)
+- 6-8: Fair (different degree but clear transition via MOOCs, projects, hackathons, or certs)
+- 3-5: Basic (unrelated degree but evidence of self-learning and interest in tech)
+- 0-2: Insufficient (no relevant education, no certifications, no evidence of learning)
 
-⚡ **PRIORITY RULE - Minimum Points for Relevant Degrees:**
-If candidate is **currently pursuing OR has completed** any of these degrees:
-- BSc CS / BSc Computer Science
-- BSc Mathematics / BSc Maths
-- MSc CS / MSc Computer Science
-- MSc Mathematics / MSc Maths
-- MCA (Master of Computer Applications)
-- BE CS / BTech CS / BTech IT
-
-→ **ASSIGN MINIMUM 15 points** out of {edu_weight} max points
-→ **DO NOT penalize** for ongoing status - pursuing counts equally as completed
-→ If completed with strong academic performance, allow scoring up to 18-20 points
+⏳ **FIXED: Recency & Pursuing Rules (STRICT – STANDARDIZED, NO INTERPRETATION):**
 
 **CRITICAL DATE PARSING RULES:**
-- If end year < 2025 → ✅ ALWAYS Completed (HARDCODED CUTOFF)
-- If end year == 2025 → ✅ Completed
-- If end year > 2025 → 🔄 Ongoing  
+- If end year < {current_year} → ✅ ALWAYS Completed  
+- If end year == {current_year} AND current_month >= 6 → ✅ Likely Completed  
+- If end year == {current_year} AND current_month < 6 → 🔄 Possibly Ongoing (check for text indicators)  
+- If end year > {current_year} → 🔄 Ongoing  
 
-**EXPLICIT STATUS INDICATORS (override year logic for years >= 2025):**
+**EXPLICIT STATUS INDICATORS (override year logic):**
+- Words like "Now", "Present", "Current", "Till Date", "Ongoing" → 🔄 Ongoing
 - Words like "pursuing", "currently enrolled", "in progress" → 🔄 Ongoing  
 - Words like "Graduated", "Completed", "Finished" → ✅ Completed
-- **OVERRIDE RULE**: If end year < 2025, it is ✅ Completed no matter what the text says (2025 IS THE CUTOFF YEAR).
+- **OVERRIDE RULE**: If end year < {current_year}, it is ✅ Completed no matter what the text says.
 
 **SCORING IMPACT:**
 - ✅ Completed relevant education → Full scoring potential (up to max points)
-- 🔄 Ongoing relevant education → **MINIMUM 15 points for priority degrees listed above**
-- Education score is based ONLY on degree relevance and completion status
-- DO NOT add points for certifications/projects in education - these belong in skills/experience sections
+- 🔄 Ongoing relevant education → Strong scoring (minimum 12 points for technical fields)
+- 📅 Recent completion (within 2 years) → Gets recency bonus
+- 📂 Older completion → No penalty if skills are current
 
-**Stable Education Scoring Framework (Independent of Job Description):**
-- 18-{edu_weight}: Outstanding (completed highly relevant degree with excellent academic performance)
-- 15-17: Excellent (priority degrees listed above - completed or ongoing)
-- 12-14: Very Good (related technical/quantitative degree)
-- 9-11: Good (somewhat related education with transferable knowledge)
-- 6-8: Fair (different degree but shows analytical/technical foundation)
-- 3-5: Basic (unrelated degree)
-- 0-2: Insufficient (no degree information or incomplete details)
+
 
 **Experience Scoring Framework ({exp_weight} points max):**
-**EXPANDED EXPERIENCE RECOGNITION:**
-- Treat internships, apprenticeships, research assistantships, freelance work, and academic projects as **valid experience evidence**
-- Give proportional credit for responsibilities, technical skills applied, and outcomes achieved
-- Part-time roles, contract work, and project-based experience count toward total experience
-- Teaching assistantships, tutoring, and mentoring roles demonstrate leadership and communication skills
-- **Credit certifications, hackathons, and projects here, not in education section**
-
 - 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
 - 28-31: Excellent (meets/exceeds years + strong domain fit + leadership + clear results)
 - 24-27: Very Good (adequate years + good domain fit + solid responsibilities + some results)
@@ -1833,14 +1776,10 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 - 0: Poor (<20% critical terms)
 
 **EVALUATION INSTRUCTIONS (Tech-Focused):**
-- Always credit **projects, GitHub repos, hackathons, Kaggle competitions, blockchain DApps, cloud deployments, AI model training, open-source contributions** in EXPERIENCE and SKILLS sections.
+- Always credit **projects, GitHub repos, hackathons, Kaggle competitions, blockchain DApps, cloud deployments, AI model training, open-source contributions**.
 - Emphasize **cutting-edge skills**: LLMs, Generative AI, Web3, Smart Contracts, DeFi, Cloud-Native tools, MLOps, Vector DBs.
 - Highlight both **industry experience** and **hands-on learning** (projects, MOOCs, certifications).
 - Be encouraging but factual: focus on **growth potential + adaptability**.
-- **ALWAYS highlight internships, projects, certifications, hackathons, and open-source contributions** in experience/skills
-- **If candidate has substantial projects/certifications but no formal degree, ensure fair scoring in experience/skills sections**
-- **Credit all forms of practical experience**: freelance work, research projects, teaching assistantships, volunteer tech work
-- **Value learning initiatives**: online courses, bootcamps, self-directed projects, technical blogs, conference participation
 
 **EVALUATION INSTRUCTIONS - BE ENCOURAGING BUT HONEST:**
 
@@ -1853,10 +1792,12 @@ Follow this exact structure and be **specific with evidence while highlighting s
 **Score:** <0–{edu_weight}> / {edu_weight}
 
 **Scoring Rationale:**
-- Degree Level & Relevance: <Check if degree qualifies for minimum 15 points rule - BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS/IT>
-- Completion Status: <Apply 2025 cutoff rule and keyword overrides>
-- Academic Foundation: <Assess degree relevance to technical roles>
-- **Score Justification:** <Apply minimum 15 points if relevant degree detected; pursuing status not penalized; score based only on degree relevance>
+- Degree Level & Relevance: <Explain alignment, consider transferable knowledge>
+- Institution Quality: <Be fair - not everyone attends top schools>
+- Recency: <Apply FIXED rules above - be precise about completed vs ongoing>
+- Additional Credentials: <Value all forms of learning - certifications, bootcamps, online courses>
+- Growth Indicators: <Evidence of continuous learning and skill development>
+- **Score Justification:** <Focus on potential and learning ability, not just perfect matches>
 
 ### 💼 Experience Analysis  
 **Score:** <0–{exp_weight}> / {exp_weight}
@@ -1869,7 +1810,6 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - Quantified Achievements: <Value any metrics, even small improvements>
 - Technology/Tools Usage: <Credit learning new tools, adaptability>
 - Transferable Skills: <Highlight skills that apply across domains>
-- **Certifications & Projects**: <Credit all technical learning initiatives here>
 - **Score Justification:** <Emphasize growth potential and adaptability>
 
 ### 🛠 Skills Analysis
@@ -1881,7 +1821,6 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - Domain-Specific Expertise: <Consider related domain knowledge>
 - Skill Currency: <Value recent learning and adaptation>
 - Learning Ability: <Evidence of picking up new skills>
-- **Additional Credentials**: <Credit bootcamps, online courses, technical portfolios here>
 
 **Skills Gaps (Opportunities for Growth):**
 - <Skill 1 - frame as development opportunity>
@@ -1949,7 +1888,6 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - **CONTEXT UNDERSTANDING**: Consider synonyms and related terms (e.g., "JavaScript" and "JS", "Machine Learning" and "ML")
 - **PRIORITY RANKING**: Focus on must-have vs nice-to-have requirements from job description
 - **EXPERIENCE MATCHING**: Look for similar roles, projects, or responsibilities even if not exact title matches
-- **EDUCATION PRIORITY**: Apply minimum 15 points rule for BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS/IT degrees
 
 Context for Evaluation:
 - Current Date: {datetime.datetime.now().strftime('%B %Y')} (Year: {current_year}, Month: {current_month})

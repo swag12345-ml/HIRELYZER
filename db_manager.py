@@ -13,6 +13,7 @@ from typing import Optional, List, Tuple, Dict, Any
 import logging
 from threading import Lock
 import os
+from llm_manager import call_llm
 
 
 logging.basicConfig(level=logging.INFO)
@@ -106,6 +107,50 @@ class DatabaseManager:
                         self._connection_pool.append(conn)
                     else:
                         conn.close()
+
+    def detect_domain_llm(self, job_title: str, job_description: str, session=None) -> str:
+        """
+        LLM-based domain detection for job postings or resumes.
+        Uses Groq/OpenAI LLMs to classify into one professional domain.
+        Falls back to keyword-based detection if LLM fails.
+        """
+        prompt = f"""
+You are an expert career advisor.
+Given either a job posting (title + description) OR a candidate resume (summary, skills, experience, projects),
+classify the most relevant professional domain.
+
+Job Title: {job_title}
+Job / Resume Text: {job_description}
+
+Return ONLY one domain from this list (no explanation, no extra text):
+[Data Science, AI/Machine Learning, UI/UX Design, Mobile Development,
+Frontend Development, Backend Development, Full Stack Development, Cybersecurity,
+Cloud Engineering, DevOps/Infrastructure, Quality Assurance, Game Development,
+Blockchain Development, Embedded Systems, System Architecture, Database Management,
+Networking, Site Reliability Engineering, Product Management, Project Management,
+Business Analysis, Technical Writing, Digital Marketing, E-commerce, Fintech,
+Healthcare Tech, EdTech, IoT Development, AR/VR Development, Technical Sales,
+Agile Coaching, Software Engineering]
+"""
+        try:
+            result = call_llm(prompt, session=session).strip()
+            valid_domains = [
+                "Data Science", "AI/Machine Learning", "UI/UX Design", "Mobile Development",
+                "Frontend Development", "Backend Development", "Full Stack Development", "Cybersecurity",
+                "Cloud Engineering", "DevOps/Infrastructure", "Quality Assurance", "Game Development",
+                "Blockchain Development", "Embedded Systems", "System Architecture", "Database Management",
+                "Networking", "Site Reliability Engineering", "Product Management", "Project Management",
+                "Business Analysis", "Technical Writing", "Digital Marketing", "E-commerce", "Fintech",
+                "Healthcare Tech", "EdTech", "IoT Development", "AR/VR Development", "Technical Sales",
+                "Agile Coaching", "Software Engineering"
+            ]
+            if result not in valid_domains:
+                return "Software Engineering"  # fallback default
+            return result
+        except Exception as e:
+            logger.error(f"LLM domain detection failed: {e}")
+            # fallback to old keyword-based method
+            return self.detect_domain_from_title_and_description(job_title, job_description)
 
     def detect_domain_from_title_and_description(self, job_title: str, job_description: str) -> str:
         """

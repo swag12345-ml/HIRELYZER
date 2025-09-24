@@ -1691,13 +1691,13 @@ def ats_percentage_score(
 
     # ✅ Domain similarity detection using LLM
     resume_domain = db_manager.detect_domain_llm(
-        "Unknown",
-        resume_text,
+        "Unknown", 
+        resume_text, 
         session=st.session_state  # ✅ pass the Groq API key from session
     )
     job_domain = db_manager.detect_domain_llm(
-        job_title,
-        job_description,
+        job_title, 
+        job_description, 
         session=st.session_state  # ✅ pass the Groq API key from session
     )
     similarity_score = get_domain_similarity(resume_domain, job_domain)

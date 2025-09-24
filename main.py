@@ -50,6 +50,7 @@ from langchain.chains import ConversationalRetrievalChain
 # Local project imports
 from llm_manager import call_llm, load_groq_api_keys
 from db_manager import (
+    db_manager,
     insert_candidate, 
     get_top_domains_by_score,
     get_database_stats,
@@ -1688,9 +1689,17 @@ def ats_percentage_score(
         resume_text, max_score=lang_weight
     )
 
-    # ✅ Domain similarity detection
-    resume_domain = detect_domain_from_title_and_description("Unknown", resume_text)
-    job_domain = detect_domain_from_title_and_description(job_title, job_description)
+    # ✅ Domain similarity detection using LLM
+    resume_domain = db_manager.detect_domain_llm(
+        "Unknown",
+        resume_text,
+        session=st.session_state  # ✅ pass the Groq API key from session
+    )
+    job_domain = db_manager.detect_domain_llm(
+        job_title,
+        job_description,
+        session=st.session_state  # ✅ pass the Groq API key from session
+    )
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
     # ✅ Balanced domain penalty
@@ -2512,7 +2521,11 @@ if uploaded_files and job_description:
         missing_keywords = [kw.strip() for kw in missing_keywords_raw.split(",") if kw.strip()] if missing_keywords_raw != "N/A" else []
         missing_skills = [sk.strip() for sk in missing_skills_raw.split(",") if sk.strip()] if missing_skills_raw != "N/A" else []
 
-        domain = detect_domain_from_title_and_description(job_title, job_description)
+        domain = db_manager.detect_domain_llm(
+            job_title,
+            job_description,
+            session=st.session_state  # ✅ pass the Groq API key from session
+        )
 
         bias_flag = "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair"
         ats_flag = "⚠️ Low ATS" if ats_score < 50 else "✅ Good ATS"

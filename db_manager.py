@@ -149,6 +149,7 @@ Agile Coaching, Software Engineering]
             return result
         except Exception as e:
             logger.error(f"LLM domain detection failed: {e}")
+            
             # fallback to old keyword-based method
             return self.detect_domain_from_title_and_description(job_title, job_description)
 

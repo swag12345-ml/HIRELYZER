@@ -6229,8 +6229,56 @@ def init_job_search_db():
     except Exception as e:
         st.error(f"Database initialization error: {e}")
 
+def is_search_already_saved(username, role, location, platform, url):
+    """Check if a specific search is already saved for the user"""
+    if not username:
+        return False
+    
+    try:
+        conn = sqlite3.connect('resume_data.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT COUNT(*) FROM user_jobs 
+            WHERE username = ? AND role = ? AND location = ? AND platform = ? AND url = ?
+        ''', (username, role, location, platform, url))
+        
+        count = cursor.fetchone()[0]
+        conn.close()
+        
+        return count > 0
+    except Exception as e:
+        st.error(f"Error checking saved search: {e}")
+        return False
+
+def save_individual_job_search(username, role, location, platform, url):
+    """Save a single job search result to database for logged-in user"""
+    if not username:
+        return False
+    
+    # Check if already saved to prevent duplicates
+    if is_search_already_saved(username, role, location, platform, url):
+        return False
+    
+    try:
+        conn = sqlite3.connect('resume_data.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO user_jobs (username, role, location, platform, url, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (username, role, location, platform, url, datetime.datetime.now()))
+        
+        conn.commit()
+        conn.close()
+        return True
+        
+    except Exception as e:
+        st.error(f"Error saving job search: {e}")
+        return False
+
 def save_job_search(username, role, location, results):
-    """Save job search results to database for logged-in user"""
+    """Save job search results to database for logged-in user (existing function)"""
     if not username:
         return
     
@@ -6242,10 +6290,12 @@ def save_job_search(username, role, location, results):
             # Extract platform name from title
             platform = result["title"].split(":")[0].strip()
             
-            cursor.execute('''
-                INSERT INTO user_jobs (username, role, location, platform, url, timestamp)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (username, role, location, platform, result["link"], datetime.datetime.now()))
+            # Check if already saved to prevent duplicates
+            if not is_search_already_saved(username, role, location, platform, result["link"]):
+                cursor.execute('''
+                    INSERT INTO user_jobs (username, role, location, platform, url, timestamp)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (username, role, location, platform, result["link"], datetime.datetime.now()))
         
         conn.commit()
         conn.close()
@@ -6511,6 +6561,10 @@ def add_hyperlink(paragraph, url, text, color="0000FF", underline=True):
 # Initialize database
 init_job_search_db()
 
+# Initialize session state for success messages
+if 'success_message' not in st.session_state:
+    st.session_state.success_message = None
+
 # Your existing tab3 code with enhanced CSS styling
 with tab3:
     st.header("🔍 Job Search Across LinkedIn, Naukri, and FoundIt")
@@ -6535,17 +6589,39 @@ with tab3:
 
     search_clicked = st.button("🔎 Search Jobs")
 
+    # Display success message if it exists
+    if st.session_state.success_message:
+        st.markdown(f"""
+        <div class="success-toast" style="
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            font-weight: 600;
+            animation: slideIn 0.5s ease-out;
+            position: relative;
+            z-index: 1000;
+        ">
+            {st.session_state.success_message}
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Clear the message after displaying
+        st.session_state.success_message = None
+
     if search_clicked:
         if job_role.strip() and location.strip():
             results = search_jobs(job_role, location, experience_level, job_type, foundit_experience)
 
-            # Save search results if user is logged in
+            # Save search results if user is logged in (existing behavior)
             if hasattr(st.session_state, 'username') and st.session_state.username:
                 save_job_search(st.session_state.username, job_role, location, results)
 
             st.markdown("## 🎯 Job Search Results")
 
-            for job in results:
+            for idx, job in enumerate(results):
                 platform = job["title"].split(":")[0].strip().lower()
 
                 if platform == "linkedin":
@@ -6565,6 +6641,20 @@ with tab3:
                     btn_color = "#00c4cc"
                     platform_gradient = "linear-gradient(135deg, #00c4cc 0%, #26d0ce 100%)"
 
+                # Check if user is logged in and if search is already saved
+                is_logged_in = hasattr(st.session_state, 'username') and st.session_state.username
+                platform_name = job["title"].split(":")[0].strip()
+                already_saved = False
+                
+                if is_logged_in:
+                    already_saved = is_search_already_saved(
+                        st.session_state.username, 
+                        job_role, 
+                        location, 
+                        platform_name, 
+                        job["link"]
+                    )
+
                 st.markdown(f"""
 <div class="job-result-card" style="
     background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
@@ -6582,26 +6672,84 @@ with tab3:
     <div style="color: #ffffff; font-size: 18px; margin-bottom: 20px; font-weight: 500; z-index: 2; position: relative; line-height: 1.4;">
         {job['title'].split(':')[1].strip()}
     </div>
-    <a href="{job['link']}" target="_blank" style="text-decoration: none; z-index: 2; position: relative;">
-        <button class="job-button" style="
-            background: {platform_gradient};
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 4px 15px {btn_color}50;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        ">
-            <span style="position: relative; z-index: 2;">🚀 View Jobs on {platform.title()} →</span>
-        </button>
-    </a>
+    <div style="display: flex; gap: 15px; align-items: center; z-index: 2; position: relative;">
+        <a href="{job['link']}" target="_blank" style="text-decoration: none;">
+            <button class="job-button" style="
+                background: {platform_gradient};
+                color: white;
+                padding: 12px 20px;
+                border: none;
+                border-radius: 12px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                box-shadow: 0 4px 15px {btn_color}50;
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+            ">
+                <span style="position: relative; z-index: 2;">🚀 View Jobs on {platform.title()} →</span>
+            </button>
+        </a>
+    </div>
 </div>
 """, unsafe_allow_html=True)
+
+                # Add save button below the card
+                if is_logged_in:
+                    if already_saved:
+                        st.markdown(f"""
+                        <button class="save-button-disabled" style="
+                            background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);
+                            color: white;
+                            padding: 10px 18px;
+                            border: none;
+                            border-radius: 10px;
+                            font-size: 14px;
+                            font-weight: 600;
+                            cursor: not-allowed;
+                            box-shadow: 0 3px 12px rgba(107, 114, 128, 0.3);
+                            margin-left: 25px;
+                            margin-bottom: 10px;
+                            opacity: 0.7;
+                        ">
+                            ✔️ Already Saved
+                        </button>
+                        """, unsafe_allow_html=True)
+                    else:
+                        # Create unique key for each save button
+                        save_key = f"save_{idx}_{platform}_{job_role}_{location}".replace(" ", "_").replace(",", "")
+                        
+                        if st.button(f"💾 Save Search", key=save_key, help="Save this job search"):
+                            success = save_individual_job_search(
+                                st.session_state.username,
+                                job_role,
+                                location,
+                                platform_name,
+                                job["link"]
+                            )
+                            if success:
+                                st.session_state.success_message = "✅ Search saved successfully!"
+                                st.experimental_rerun()
+                else:
+                    st.markdown(f"""
+                    <button class="save-button-disabled" style="
+                        background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);
+                        color: white;
+                        padding: 10px 18px;
+                        border: none;
+                        border-radius: 10px;
+                        font-size: 14px;
+                        font-weight: 600;
+                        cursor: not-allowed;
+                        box-shadow: 0 3px 12px rgba(107, 114, 128, 0.3);
+                        margin-left: 25px;
+                        margin-bottom: 10px;
+                        opacity: 0.7;
+                    " title="Login required to save searches">
+                        💾 Save Search (Login Required)
+                    </button>
+                    """, unsafe_allow_html=True)
         else:
             st.warning("⚠️ Please enter both the Job Role and Location to perform the search.")
 
@@ -6738,7 +6886,7 @@ with tab3:
                         # Delete button
                         if st.button("🗑", key=f"delete_{search['id']}", help="Delete this search"):
                             delete_saved_job_search(search['id'])
-                            st.rerun()
+                            st.experimental_rerun()
             else:
                 # No results for the current filter
                 st.markdown(f"""
@@ -6778,6 +6926,18 @@ with tab3:
     /* Global Enhancements */
     .stApp {
         font-family: 'Inter', sans-serif;
+    }
+    
+    /* Success Toast Animation */
+    @keyframes slideIn {
+        0% {
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+        100% {
+            transform: translateY(0);
+            opacity: 1;
+        }
     }
     
     /* Advanced Glow Animation */
@@ -6902,6 +7062,28 @@ with tab3:
     .job-button:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+    
+    /* Save Button Styling */
+    .stButton > button {
+        background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+        color: white;
+        padding: 10px 18px;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 3px 12px rgba(16, 185, 129, 0.3);
+        transition: all 0.3s ease;
+        margin-left: 25px;
+        margin-bottom: 10px;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
     }
     
     /* Enhanced Pills */
@@ -7075,6 +7257,7 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
+
 def evaluate_interview_answer(answer: str, question: str = None):
     """
     Uses an LLM to strictly evaluate an interview answer.

@@ -6202,6 +6202,7 @@ import uuid
 import urllib.parse
 import sqlite3
 import datetime
+import pytz
 import streamlit as st
 
 # Database functions for job search history
@@ -6500,7 +6501,11 @@ with tab3:
             for search in saved_searches:
                 # Format timestamp
                 timestamp = datetime.datetime.strptime(search["timestamp"], "%Y-%m-%d %H:%M:%S.%f")
-                formatted_time = timestamp.strftime("%b %d, %Y at %I:%M %p")
+                # Convert to IST (Indian Standard Time)
+                utc_timestamp = pytz.utc.localize(timestamp)
+                ist_timezone = pytz.timezone('Asia/Kolkata')
+                ist_timestamp = utc_timestamp.astimezone(ist_timezone)
+                formatted_time = ist_timestamp.strftime("%b %d, %Y at %I:%M %p IST")
                 
                 # Platform styling
                 platform_lower = search["platform"].lower()

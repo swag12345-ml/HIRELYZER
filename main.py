@@ -6203,6 +6203,7 @@ import urllib.parse
 import sqlite3
 import datetime
 import streamlit as st
+from zoneinfo import ZoneInfo
 
 # Database functions for job search history
 def init_job_search_db():
@@ -6498,9 +6499,12 @@ with tab3:
         
         if saved_searches:
             for search in saved_searches:
-                # Format timestamp
+                # Format timestamp - Convert UTC to IST
                 timestamp = datetime.datetime.strptime(search["timestamp"], "%Y-%m-%d %H:%M:%S.%f")
-                formatted_time = timestamp.strftime("%b %d, %Y at %I:%M %p")
+                # Assume stored timestamp is in UTC, convert to IST
+                timestamp_utc = timestamp.replace(tzinfo=ZoneInfo('UTC'))
+                timestamp_ist = timestamp_utc.astimezone(ZoneInfo('Asia/Kolkata'))
+                formatted_time = timestamp_ist.strftime("%b %d, %Y at %I:%M %p IST")
                 
                 # Platform styling
                 platform_lower = search["platform"].lower()

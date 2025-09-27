@@ -6204,7 +6204,6 @@ import sqlite3
 import datetime
 import streamlit as st
 from zoneinfo import ZoneInfo
-import math
 
 # Database functions for job search history
 def init_job_search_db():
@@ -6229,38 +6228,6 @@ def init_job_search_db():
         conn.close()
     except Exception as e:
         st.error(f"Database initialization error: {e}")
-
-def prune_old_searches(username):
-    """Keep only the last 20 saved job searches per user"""
-    if not username:
-        return
-    
-    try:
-        conn = sqlite3.connect('resume_data.db')
-        cursor = conn.cursor()
-        
-        # Get count of searches for this user
-        cursor.execute('SELECT COUNT(*) FROM user_jobs WHERE username = ?', (username,))
-        count = cursor.fetchone()[0]
-        
-        if count > 20:
-            # Delete oldest searches, keeping only the last 20
-            cursor.execute('''
-                DELETE FROM user_jobs 
-                WHERE username = ? 
-                AND id NOT IN (
-                    SELECT id FROM user_jobs 
-                    WHERE username = ? 
-                    ORDER BY timestamp DESC 
-                    LIMIT 20
-                )
-            ''', (username, username))
-            
-            conn.commit()
-        
-        conn.close()
-    except Exception as e:
-        st.error(f"Error pruning old searches: {e}")
 
 def save_job_search(username, role, location, results):
     """Save job search results to database for logged-in user"""
@@ -6289,8 +6256,48 @@ def save_job_search(username, role, location, results):
     except Exception as e:
         st.error(f"Error saving job search: {e}")
 
-def get_saved_job_searches(username, limit=10, platform_filter="All", offset=0):
-    """Get saved job searches for a user with optional platform filter and pagination"""
+def prune_old_searches(username):
+    """Keep only the last 20 saved job searches per user"""
+    if not username:
+        return
+    
+    try:
+        conn = sqlite3.connect('resume_data.db')
+        cursor = conn.cursor()
+        
+        # Delete all but the most recent 20 searches for this user
+        cursor.execute('''
+            DELETE FROM user_jobs 
+            WHERE username = ? AND id NOT IN (
+                SELECT id FROM user_jobs 
+                WHERE username = ? 
+                ORDER BY timestamp DESC 
+                LIMIT 20
+            )
+        ''', (username, username))
+        
+        conn.commit()
+        conn.close()
+        
+    except Exception as e:
+        st.error(f"Error pruning old searches: {e}")
+
+def delete_saved_job_search(search_id):
+    """Delete a saved job search by its ID"""
+    try:
+        conn = sqlite3.connect('resume_data.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('DELETE FROM user_jobs WHERE id = ?', (search_id,))
+        
+        conn.commit()
+        conn.close()
+        
+    except Exception as e:
+        st.error(f"Error deleting job search: {e}")
+
+def get_saved_job_searches(username, limit=10, offset=0, platform_filter=None):
+    """Get saved job searches for a user with filtering and pagination"""
     if not username:
         return []
     
@@ -6298,27 +6305,24 @@ def get_saved_job_searches(username, limit=10, platform_filter="All", offset=0):
         conn = sqlite3.connect('resume_data.db')
         cursor = conn.cursor()
         
-        # Build query based on platform filter
-        if platform_filter == "All":
-            query = '''
-                SELECT id, role, location, platform, url, timestamp
-                FROM user_jobs
-                WHERE username = ?
-                ORDER BY timestamp DESC
-                LIMIT ? OFFSET ?
-            '''
-            params = (username, limit, offset)
-        else:
-            query = '''
+        # Build the query with optional platform filter
+        if platform_filter and platform_filter != "All":
+            cursor.execute('''
                 SELECT id, role, location, platform, url, timestamp
                 FROM user_jobs
                 WHERE username = ? AND platform = ?
                 ORDER BY timestamp DESC
                 LIMIT ? OFFSET ?
-            '''
-            params = (username, platform_filter, limit, offset)
+            ''', (username, platform_filter, limit, offset))
+        else:
+            cursor.execute('''
+                SELECT id, role, location, platform, url, timestamp
+                FROM user_jobs
+                WHERE username = ?
+                ORDER BY timestamp DESC
+                LIMIT ? OFFSET ?
+            ''', (username, limit, offset))
         
-        cursor.execute(query, params)
         results = cursor.fetchall()
         conn.close()
         
@@ -6337,7 +6341,7 @@ def get_saved_job_searches(username, limit=10, platform_filter="All", offset=0):
         st.error(f"Error fetching saved searches: {e}")
         return []
 
-def get_saved_searches_count(username, platform_filter="All"):
+def get_total_saved_searches_count(username, platform_filter=None):
     """Get total count of saved searches for pagination"""
     if not username:
         return 0
@@ -6346,35 +6350,21 @@ def get_saved_searches_count(username, platform_filter="All"):
         conn = sqlite3.connect('resume_data.db')
         cursor = conn.cursor()
         
-        if platform_filter == "All":
-            cursor.execute('SELECT COUNT(*) FROM user_jobs WHERE username = ?', (username,))
-        else:
+        if platform_filter and platform_filter != "All":
             cursor.execute('SELECT COUNT(*) FROM user_jobs WHERE username = ? AND platform = ?', (username, platform_filter))
+        else:
+            cursor.execute('SELECT COUNT(*) FROM user_jobs WHERE username = ?', (username,))
         
         count = cursor.fetchone()[0]
         conn.close()
+        
         return count
     except Exception as e:
         st.error(f"Error getting search count: {e}")
         return 0
 
-def delete_saved_job_search(search_id):
-    """Delete a saved job search by its ID"""
-    try:
-        conn = sqlite3.connect('resume_data.db')
-        cursor = conn.cursor()
-        
-        cursor.execute('DELETE FROM user_jobs WHERE id = ?', (search_id,))
-        conn.commit()
-        conn.close()
-        
-        return True
-    except Exception as e:
-        st.error(f"Error deleting job search: {e}")
-        return False
-
 def get_available_platforms(username):
-    """Get list of platforms that user has saved searches for"""
+    """Get list of platforms that the user has searched on"""
     if not username:
         return []
     
@@ -6383,6 +6373,7 @@ def get_available_platforms(username):
         cursor = conn.cursor()
         
         cursor.execute('SELECT DISTINCT platform FROM user_jobs WHERE username = ? ORDER BY platform', (username,))
+        
         platforms = [row[0] for row in cursor.fetchall()]
         conn.close()
         
@@ -6619,96 +6610,89 @@ with tab3:
 
     # Display saved job searches if user is logged in
     if hasattr(st.session_state, 'username') and st.session_state.username:
-        st.markdown("### 📌 Your Saved Job Searches")
-        
-        # Get available platforms for filter dropdown
+        # Get available platforms for filtering
         available_platforms = get_available_platforms(st.session_state.username)
         platform_options = ["All"] + available_platforms
         
-        # Initialize session state for filters if not exists
-        if 'platform_filter' not in st.session_state:
-            st.session_state.platform_filter = "All"
-        if 'current_page' not in st.session_state:
-            st.session_state.current_page = 1
+        # Get total count of searches
+        total_searches = get_total_saved_searches_count(st.session_state.username)
         
-        # Filter and pagination controls
-        if available_platforms:
-            col1, col2 = st.columns([2, 3])
+        st.markdown("### 📌 Your Saved Job Searches")
+        
+        if total_searches > 0:
+            # Controls for filtering and pagination
+            col1, col2 = st.columns([2, 1])
             
             with col1:
-                selected_platform = st.selectbox(
-                    "🔍 Filter by Platform:",
+                platform_filter = st.selectbox(
+                    "🔍 Filter by Platform",
                     platform_options,
-                    index=platform_options.index(st.session_state.platform_filter) if st.session_state.platform_filter in platform_options else 0,
-                    key="platform_filter_select"
+                    key="platform_filter"
                 )
-                
-                # Update session state if filter changed
-                if selected_platform != st.session_state.platform_filter:
-                    st.session_state.platform_filter = selected_platform
-                    st.session_state.current_page = 1  # Reset to first page when filter changes
-                    st.rerun()
-            
-            # Get total count for pagination
-            total_searches = get_saved_searches_count(st.session_state.username, st.session_state.platform_filter)
-            searches_per_page = 5
-            total_pages = math.ceil(total_searches / searches_per_page) if total_searches > 0 else 1
             
             with col2:
-                if total_pages > 1:
+                # Calculate pagination
+                searches_per_page = 5
+                filtered_count = get_total_saved_searches_count(st.session_state.username, platform_filter)
+                max_pages = max(1, (filtered_count + searches_per_page - 1) // searches_per_page)
+                
+                if max_pages > 1:
                     current_page = st.slider(
-                        f"📄 Page ({total_searches} total searches):",
+                        "📄 Page",
                         min_value=1,
-                        max_value=total_pages,
-                        value=st.session_state.current_page,
+                        max_value=max_pages,
+                        value=1,
                         key="page_slider"
                     )
+                else:
+                    current_page = 1
+            
+            # Calculate offset for pagination
+            offset = (current_page - 1) * searches_per_page
+            
+            # Get filtered and paginated results
+            saved_searches = get_saved_job_searches(
+                st.session_state.username, 
+                limit=searches_per_page, 
+                offset=offset,
+                platform_filter=platform_filter
+            )
+            
+            if saved_searches:
+                # Display search count info
+                if platform_filter != "All":
+                    st.markdown(f"**Showing {len(saved_searches)} of {filtered_count} searches for {platform_filter}**")
+                else:
+                    st.markdown(f"**Showing {len(saved_searches)} of {total_searches} searches**")
+                
+                for search in saved_searches:
+                    # Format timestamp - Convert UTC to IST
+                    timestamp = datetime.datetime.strptime(search["timestamp"], "%Y-%m-%d %H:%M:%S.%f")
+                    # Assume stored timestamp is in UTC, convert to IST
+                    timestamp_utc = timestamp.replace(tzinfo=ZoneInfo('UTC'))
+                    timestamp_ist = timestamp_utc.astimezone(ZoneInfo('Asia/Kolkata'))
+                    formatted_time = timestamp_ist.strftime("%b %d, %Y at %I:%M %p IST")
                     
-                    # Update session state if page changed
-                    if current_page != st.session_state.current_page:
-                        st.session_state.current_page = current_page
-                        st.rerun()
-                else:
-                    st.markdown(f"<div style='color: #888; font-size: 14px; margin-top: 25px;'>📄 Showing {total_searches} search{'es' if total_searches != 1 else ''}</div>", unsafe_allow_html=True)
-        
-        # Get saved searches with pagination
-        offset = (st.session_state.current_page - 1) * searches_per_page
-        saved_searches = get_saved_job_searches(
-            st.session_state.username, 
-            searches_per_page, 
-            st.session_state.platform_filter,
-            offset
-        )
-        
-        if saved_searches:
-            for search in saved_searches:
-                # Format timestamp - Convert UTC to IST
-                timestamp = datetime.datetime.strptime(search["timestamp"], "%Y-%m-%d %H:%M:%S.%f")
-                # Assume stored timestamp is in UTC, convert to IST
-                timestamp_utc = timestamp.replace(tzinfo=ZoneInfo('UTC'))
-                timestamp_ist = timestamp_utc.astimezone(ZoneInfo('Asia/Kolkata'))
-                formatted_time = timestamp_ist.strftime("%b %d, %Y at %I:%M %p IST")
-                
-                # Platform styling
-                platform_lower = search["platform"].lower()
-                if platform_lower == "linkedin":
-                    platform_color = "#0e76a8"
-                    platform_icon = "🔵"
-                elif platform_lower == "naukri":
-                    platform_color = "#ff5722"
-                    platform_icon = "🏢"
-                elif "foundit" in platform_lower:
-                    platform_color = "#7c4dff"
-                    platform_icon = "🌐"
-                else:
-                    platform_color = "#00c4cc"
-                    platform_icon = "📄"
-                
-                # Create columns for the card content and delete button
-                card_col, delete_col = st.columns([5, 1])
-                
-                with card_col:
-                    st.markdown(f"""
+                    # Platform styling
+                    platform_lower = search["platform"].lower()
+                    if platform_lower == "linkedin":
+                        platform_color = "#0e76a8"
+                        platform_icon = "🔵"
+                    elif platform_lower == "naukri":
+                        platform_color = "#ff5722"
+                        platform_icon = "🏢"
+                    elif "foundit" in platform_lower:
+                        platform_color = "#7c4dff"
+                        platform_icon = "🌐"
+                    else:
+                        platform_color = "#00c4cc"
+                        platform_icon = "📄"
+                    
+                    # Create columns for the card content and delete button
+                    card_col, delete_col = st.columns([10, 1])
+                    
+                    with card_col:
+                        st.markdown(f"""
 <div class="job-result-card" style="
     background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
     padding: 20px;
@@ -6749,22 +6733,30 @@ with tab3:
     </a>
 </div>
 """, unsafe_allow_html=True)
-                
-                with delete_col:
-                    # Delete button
-                    if st.button("🗑", key=f"delete_{search['id']}", help="Delete this search"):
-                        if delete_saved_job_search(search['id']):
-                            st.success("Search deleted successfully!")
-                            st.rerun()
-                        else:
-                            st.error("Failed to delete search.")
-        else:
-            if st.session_state.platform_filter == "All":
-                message = "No saved job searches yet. Start searching to see your history here!"
+                    
+                    with delete_col:
+                        # Delete button
+                        if st.button("🗑", key=f"delete_{search['id']}", help="Delete this search"):
+                            delete_saved_job_search(search['id'])
+                            st.experimental_rerun()
             else:
-                message = f"No saved searches found for {st.session_state.platform_filter}. Try a different filter or start searching!"
-            
-            st.markdown(f"""
+                # No results for the current filter
+                st.markdown(f"""
+<div style="
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+    color: #888;
+    border: 2px dashed #444;
+">
+    <div style="font-size: 24px; margin-bottom: 10px;">🔍</div>
+    <div>No saved searches found for {platform_filter if platform_filter != 'All' else 'this page'}.</div>
+</div>
+""", unsafe_allow_html=True)
+        else:
+            # No saved searches at all
+            st.markdown("""
 <div style="
     background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
     padding: 20px;
@@ -6774,7 +6766,7 @@ with tab3:
     border: 2px dashed #444;
 ">
     <div style="font-size: 24px; margin-bottom: 10px;">📭</div>
-    <div>{message}</div>
+    <div>No saved job searches yet. Start searching to see your history here!</div>
 </div>
 """, unsafe_allow_html=True)
 

@@ -6250,14 +6250,11 @@ def save_job_search(username, role, location, results):
         conn.commit()
         conn.close()
         
-        # Prune old searches after saving
-        prune_old_searches(username)
-        
     except Exception as e:
         st.error(f"Error saving job search: {e}")
 
 def prune_old_searches(username):
-    """Keep only the last 20 saved job searches per user"""
+    """Keep only the last 50 saved job searches per user (optional cleanup)"""
     if not username:
         return
     
@@ -6265,14 +6262,14 @@ def prune_old_searches(username):
         conn = sqlite3.connect('resume_data.db')
         cursor = conn.cursor()
         
-        # Delete all but the most recent 20 searches for this user
+        # Delete all but the most recent 50 searches for this user
         cursor.execute('''
             DELETE FROM user_jobs 
             WHERE username = ? AND id NOT IN (
                 SELECT id FROM user_jobs 
                 WHERE username = ? 
                 ORDER BY timestamp DESC 
-                LIMIT 20
+                LIMIT 50
             )
         ''', (username, username))
         
@@ -7078,7 +7075,6 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
-
 def evaluate_interview_answer(answer: str, question: str = None):
     """
     Uses an LLM to strictly evaluate an interview answer.

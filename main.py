@@ -6247,12 +6247,23 @@ def save_job_search(username, role, location, results):
                 VALUES (?, ?, ?, ?, ?, ?)
             ''', (username, role, location, platform, result["link"], datetime.datetime.now()))
         
+        # Keep only the latest 20 searches per user
+        cursor.execute('''
+            DELETE FROM user_jobs 
+            WHERE username = ? AND id NOT IN (
+                SELECT id FROM user_jobs 
+                WHERE username = ? 
+                ORDER BY timestamp DESC 
+                LIMIT 20
+            )
+        ''', (username, username))
+        
         conn.commit()
         conn.close()
     except Exception as e:
         st.error(f"Error saving job search: {e}")
 
-def get_saved_job_searches(username, limit=10):
+def get_saved_job_searches(username, limit=20):
     """Get saved job searches for a user"""
     if not username:
         return []
@@ -6262,7 +6273,7 @@ def get_saved_job_searches(username, limit=10):
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT role, location, platform, url, timestamp
+            SELECT id, role, location, platform, url, timestamp
             FROM user_jobs
             WHERE username = ?
             ORDER BY timestamp DESC
@@ -6274,17 +6285,36 @@ def get_saved_job_searches(username, limit=10):
         
         return [
             {
-                "role": row[0],
-                "location": row[1],
-                "platform": row[2],
-                "url": row[3],
-                "timestamp": row[4]
+                "id": row[0],
+                "role": row[1],
+                "location": row[2],
+                "platform": row[3],
+                "url": row[4],
+                "timestamp": row[5]
             }
             for row in results
         ]
     except Exception as e:
         st.error(f"Error fetching saved searches: {e}")
         return []
+
+def delete_saved_search(search_id, username):
+    """Delete a specific saved search"""
+    try:
+        conn = sqlite3.connect('resume_data.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            DELETE FROM user_jobs 
+            WHERE id = ? AND username = ?
+        ''', (search_id, username))
+        
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        st.error(f"Error deleting search: {e}")
+        return False
 
 def search_jobs(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
     # Encode values for query
@@ -6495,7 +6525,7 @@ with tab3:
     # Display saved job searches if user is logged in
     if hasattr(st.session_state, 'username') and st.session_state.username:
         st.markdown("### 📌 Your Saved Job Searches")
-        saved_searches = get_saved_job_searches(st.session_state.username, 10)
+        saved_searches = get_saved_job_searches(st.session_state.username, 20)
         
         if saved_searches:
             for search in saved_searches:
@@ -6522,7 +6552,11 @@ with tab3:
                     platform_color = "#00c4cc"
                     platform_icon = "📄"
                 
-                st.markdown(f"""
+                # Create columns for the card layout
+                col_card, col_menu = st.columns([10, 1])
+                
+                with col_card:
+                    st.markdown(f"""
 <div class="job-result-card" style="
     background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
     padding: 20px;
@@ -6546,23 +6580,30 @@ with tab3:
             {formatted_time}
         </div>
     </div>
-    <a href="{search['url']}" target="_blank" style="text-decoration: none;">
-        <button class="job-button" style="
-            background: linear-gradient(135deg, {platform_color} 0%, {platform_color}dd 100%);
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        ">
-            🔗 View Jobs →
-        </button>
-    </a>
 </div>
 """, unsafe_allow_html=True)
+                
+                with col_menu:
+                    # Create a unique key for each dropdown
+                    dropdown_key = f"dropdown_{search['id']}"
+                    
+                    # Dropdown menu for actions
+                    action = st.selectbox(
+                        "⋮",
+                        ["Select Action", "🔗 View Job", "❌ Delete Search"],
+                        key=dropdown_key,
+                        label_visibility="collapsed"
+                    )
+                    
+                    # Handle actions
+                    if action == "🔗 View Job":
+                        st.markdown(f'<meta http-equiv="refresh" content="0; url={search["url"]}">', unsafe_allow_html=True)
+                        st.markdown(f"[🔗 Opening job link...]({search['url']})")
+                    elif action == "❌ Delete Search":
+                        if delete_saved_search(search['id'], st.session_state.username):
+                            st.success("✅ Search deleted successfully! Please refresh the page to see the updated list.")
+                        else:
+                            st.error("❌ Failed to delete search. Please try again.")
         else:
             st.markdown("""
 <div style="
@@ -6574,7 +6615,7 @@ with tab3:
     border: 2px dashed #444;
 ">
     <div style="font-size: 24px; margin-bottom: 10px;">📭</div>
-    <div>No saved job searches yet. Start searching to see your history here!</div>
+    <div>No saved job searches yet. Start searching to see your history here! (Showing latest 20 searches)</div>
 </div>
 """, unsafe_allow_html=True)
 

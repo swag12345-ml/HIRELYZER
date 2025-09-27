@@ -6002,10 +6002,6 @@ with tab2:
 
 from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
 
-
-
-
-
 FEATURED_COMPANIES = {
     "tech": [
         {
@@ -6204,6 +6200,90 @@ def get_companies_by_industry(industry):
 # Sample job search function
 import uuid
 import urllib.parse
+import sqlite3
+import datetime
+import streamlit as st
+
+# Database functions for job search history
+def init_job_search_db():
+    """Initialize the job search database and create user_jobs table if not exists"""
+    try:
+        conn = sqlite3.connect('resume_data.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_jobs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL,
+                role TEXT NOT NULL,
+                location TEXT NOT NULL,
+                platform TEXT NOT NULL,
+                url TEXT NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        st.error(f"Database initialization error: {e}")
+
+def save_job_search(username, role, location, results):
+    """Save job search results to database for logged-in user"""
+    if not username:
+        return
+    
+    try:
+        conn = sqlite3.connect('resume_data.db')
+        cursor = conn.cursor()
+        
+        for result in results:
+            # Extract platform name from title
+            platform = result["title"].split(":")[0].strip()
+            
+            cursor.execute('''
+                INSERT INTO user_jobs (username, role, location, platform, url, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (username, role, location, platform, result["link"], datetime.datetime.now()))
+        
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        st.error(f"Error saving job search: {e}")
+
+def get_saved_job_searches(username, limit=10):
+    """Get saved job searches for a user"""
+    if not username:
+        return []
+    
+    try:
+        conn = sqlite3.connect('resume_data.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT role, location, platform, url, timestamp
+            FROM user_jobs
+            WHERE username = ?
+            ORDER BY timestamp DESC
+            LIMIT ?
+        ''', (username, limit))
+        
+        results = cursor.fetchall()
+        conn.close()
+        
+        return [
+            {
+                "role": row[0],
+                "location": row[1],
+                "platform": row[2],
+                "url": row[3],
+                "timestamp": row[4]
+            }
+            for row in results
+        ]
+    except Exception as e:
+        st.error(f"Error fetching saved searches: {e}")
+        return []
 
 def search_jobs(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
     # Encode values for query
@@ -6314,6 +6394,9 @@ def add_hyperlink(paragraph, url, text, color="0000FF", underline=True):
     paragraph._p.append(hyperlink)
     return hyperlink
 
+# Initialize database
+init_job_search_db()
+
 # Your existing tab3 code with enhanced CSS styling
 with tab3:
     st.header("🔍 Job Search Across LinkedIn, Naukri, and FoundIt")
@@ -6341,6 +6424,10 @@ with tab3:
     if search_clicked:
         if job_role.strip() and location.strip():
             results = search_jobs(job_role, location, experience_level, job_type, foundit_experience)
+
+            # Save search results if user is logged in
+            if hasattr(st.session_state, 'username') and st.session_state.username:
+                save_job_search(st.session_state.username, job_role, location, results)
 
             st.markdown("## 🎯 Job Search Results")
 
@@ -6403,6 +6490,88 @@ with tab3:
 """, unsafe_allow_html=True)
         else:
             st.warning("⚠️ Please enter both the Job Role and Location to perform the search.")
+
+    # Display saved job searches if user is logged in
+    if hasattr(st.session_state, 'username') and st.session_state.username:
+        st.markdown("### 📌 Your Saved Job Searches")
+        saved_searches = get_saved_job_searches(st.session_state.username, 10)
+        
+        if saved_searches:
+            for search in saved_searches:
+                # Format timestamp
+                timestamp = datetime.datetime.strptime(search["timestamp"], "%Y-%m-%d %H:%M:%S.%f")
+                formatted_time = timestamp.strftime("%b %d, %Y at %I:%M %p")
+                
+                # Platform styling
+                platform_lower = search["platform"].lower()
+                if platform_lower == "linkedin":
+                    platform_color = "#0e76a8"
+                    platform_icon = "🔵"
+                elif platform_lower == "naukri":
+                    platform_color = "#ff5722"
+                    platform_icon = "🏢"
+                elif "foundit" in platform_lower:
+                    platform_color = "#7c4dff"
+                    platform_icon = "🌐"
+                else:
+                    platform_color = "#00c4cc"
+                    platform_icon = "📄"
+                
+                st.markdown(f"""
+<div class="job-result-card" style="
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 15px;
+    border-left: 4px solid {platform_color};
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    position: relative;
+    overflow: hidden;
+">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+        <div>
+            <div style="color: #ffffff; font-size: 16px; font-weight: 600; margin-bottom: 5px;">
+                {platform_icon} {search['role']} in {search['location']}
+            </div>
+            <div style="color: {platform_color}; font-size: 14px; font-weight: 500;">
+                {search['platform']}
+            </div>
+        </div>
+        <div style="color: #888; font-size: 12px; text-align: right;">
+            {formatted_time}
+        </div>
+    </div>
+    <a href="{search['url']}" target="_blank" style="text-decoration: none;">
+        <button class="job-button" style="
+            background: linear-gradient(135deg, {platform_color} 0%, {platform_color}dd 100%);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        ">
+            🔗 View Jobs →
+        </button>
+    </a>
+</div>
+""", unsafe_allow_html=True)
+        else:
+            st.markdown("""
+<div style="
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+    color: #888;
+    border: 2px dashed #444;
+">
+    <div style="font-size: 24px; margin-bottom: 10px;">📭</div>
+    <div>No saved job searches yet. Start searching to see your history here!</div>
+</div>
+""", unsafe_allow_html=True)
 
     # Enhanced CSS with advanced animations and effects
     st.markdown("""

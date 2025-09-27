@@ -6539,6 +6539,10 @@ with tab3:
         if job_role.strip() and location.strip():
             results = search_jobs(job_role, location, experience_level, job_type, foundit_experience)
 
+            # Save search results if user is logged in
+            if hasattr(st.session_state, 'username') and st.session_state.username:
+                save_job_search(st.session_state.username, job_role, location, results)
+
             st.markdown("## 🎯 Job Search Results")
 
             for job in results:
@@ -6561,11 +6565,7 @@ with tab3:
                     btn_color = "#00c4cc"
                     platform_gradient = "linear-gradient(135deg, #00c4cc 0%, #26d0ce 100%)"
 
-                # Create columns for the job card content and save button
-                card_col, save_col = st.columns([8, 1])
-                
-                with card_col:
-                    st.markdown(f"""
+                st.markdown(f"""
 <div class="job-result-card" style="
     background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
     padding: 25px;
@@ -6602,20 +6602,6 @@ with tab3:
     </a>
 </div>
 """, unsafe_allow_html=True)
-
-                with save_col:
-                    # Save button for individual jobs
-                    if hasattr(st.session_state, 'username') and st.session_state.username:
-                        if st.button("💾 Save", key=f"save_{platform}_{job_role}_{location}"):
-                            # Check if user already has 20 saved jobs
-                            current_count = get_total_saved_searches_count(st.session_state.username)
-                            
-                            if current_count < 20:
-                                # Save only this single job result
-                                save_job_search(st.session_state.username, job_role, location, [job])
-                                st.toast("✅ Saved successfully!", icon="✅")
-                            else:
-                                st.toast("⚠️ Max 20 saved jobs reached.", icon="⚠️")
         else:
             st.warning("⚠️ Please enter both the Job Role and Location to perform the search.")
 
@@ -6749,10 +6735,9 @@ with tab3:
 """, unsafe_allow_html=True)
                     
                     with delete_col:
-                        # Delete button with toast message
+                        # Delete button
                         if st.button("🗑", key=f"delete_{search['id']}", help="Delete this search"):
                             delete_saved_job_search(search['id'])
-                            st.toast("🗑️ Deleted successfully!", icon="🗑️")
                             st.rerun()
             else:
                 # No results for the current filter

@@ -6659,11 +6659,14 @@ with tab3:
             )
             
             if saved_searches:
-                # Display search count info
+                # Calculate and display search count info
+                start_index = offset + 1
+                end_index = min(offset + len(saved_searches), filtered_count)
+                
                 if platform_filter != "All":
-                    st.markdown(f"**Showing {len(saved_searches)} of {filtered_count} searches for {platform_filter}**")
+                    st.markdown(f"**Showing {start_index}-{end_index} of {filtered_count} searches for {platform_filter}**")
                 else:
-                    st.markdown(f"**Showing {len(saved_searches)} of {total_searches} searches**")
+                    st.markdown(f"**Showing {start_index}-{end_index} of {filtered_count} searches**")
                 
                 for search in saved_searches:
                     # Format timestamp - Convert UTC to IST

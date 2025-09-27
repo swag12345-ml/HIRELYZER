@@ -6286,16 +6286,25 @@ def get_saved_job_searches(username, limit=10):
         st.error(f"Error fetching saved searches: {e}")
         return []
 
+import re
+
+def slugify(text):
+    """Convert text into a safe slug (lowercase, hyphenated, no special chars)."""
+    text = text.lower().strip()
+    text = re.sub(r"[^\w\s-]", "", text)  # remove special chars except letters/numbers/spaces
+    text = re.sub(r"\s+", "-", text)      # replace spaces with hyphens
+    return text
+
 def search_jobs(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
     # Encode values for query
     role_encoded = urllib.parse.quote_plus(job_role.strip())
     loc_encoded = urllib.parse.quote_plus(location.strip())
 
-    # Create role/city slugs for path
-    role_path = job_role.strip().lower().replace(" ", "-")
-    city = location.strip().split(",")[0].strip().lower()
-    city_path = city.replace(" ", "-")
-    city_query = city.replace(" ", "%20") + "%20and%20india"
+    # Create safe slugs
+    role_path = slugify(job_role)
+    city = location.strip().split(",")[0].strip()
+    city_path = slugify(city)
+    city_query = urllib.parse.quote_plus(f"{city} and india")
 
     # Experience mappings
     experience_range_map = {
@@ -6315,7 +6324,7 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         "Temporary": "T", "Volunteer": "V", "Internship": "I"
     }
 
-    # LinkedIn
+    # LinkedIn ✅ (safe by default)
     linkedin_url = f"https://www.linkedin.com/jobs/search/?keywords={role_encoded}&location={loc_encoded}"
     if experience_level in linkedin_exp_map:
         linkedin_url += f"&f_E={linkedin_exp_map[experience_level]}"
@@ -6330,35 +6339,43 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         experience_range = experience_range_map.get(experience_level, "")
         experience_exact = experience_exact_map.get(experience_level, "")
 
-    # ✅ Naukri (cleaned)
-    naukri_url = (
-        f"https://www.naukri.com/{role_path}-jobs-in-{city_path}-and-india"
-        f"?k={role_encoded}"
-        f"&l={city_query}"
-    )
+    # Naukri ✅ (fallback if slug fails)
+    if role_path and city_path:
+        naukri_url = (
+            f"https://www.naukri.com/{role_path}-jobs-in-{city_path}-and-india"
+            f"?k={role_encoded}&l={city_query}"
+        )
+    else:
+        naukri_url = f"https://www.naukri.com/{role_encoded}-jobs?k={role_encoded}&l={city_query}"
+
     if experience_exact:
         naukri_url += f"&experience={experience_exact}"
     naukri_url += "&nignbevent_src=jobsearchDeskGNB"
 
-    # ✅ FoundIt
+    # FoundIt ✅ (safe slug if possible, else /result)
     search_id = uuid.uuid4()
     child_search_id = uuid.uuid4()
-    foundit_url = (
-        f"https://www.foundit.in/search/{role_path}-jobs-in-{city_path}"
-        f"?query={role_encoded}"
-        f"&locations={loc_encoded}"
-        f"&experienceRanges={urllib.parse.quote_plus(experience_range)}"
-        f"&experience={experience_exact}"
-        f"&queryDerived=true"
-        f"&searchId={search_id}"
-        f"&child_search_id={child_search_id}"
-    )
+    if role_path and city_path:
+        foundit_url = (
+            f"https://www.foundit.in/search/{role_path}-jobs-in-{city_path}"
+            f"?query={role_encoded}&locations={loc_encoded}"
+        )
+    else:
+        foundit_url = f"https://www.foundit.in/search/result?query={role_encoded}&locations={loc_encoded}"
+
+    if experience_range:
+        foundit_url += f"&experienceRanges={urllib.parse.quote_plus(experience_range)}"
+    if experience_exact:
+        foundit_url += f"&experience={experience_exact}"
+
+    foundit_url += f"&queryDerived=true&searchId={search_id}&child_search_id={child_search_id}"
 
     return [
         {"title": f"LinkedIn: {job_role} jobs in {location}", "link": linkedin_url},
         {"title": f"Naukri: {job_role} jobs in {location}", "link": naukri_url},
         {"title": f"FoundIt (Monster): {job_role} jobs in {location}", "link": foundit_url}
     ]
+
 
 
 

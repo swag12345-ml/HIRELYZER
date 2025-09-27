@@ -1,5 +1,6 @@
 libgl1
 poppler-utils
 tesseract-ocr
-wkhtmltopdf
 default-jre
+libcairo2-dev
+pkg-config

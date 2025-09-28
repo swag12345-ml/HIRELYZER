@@ -6001,6 +6001,7 @@ with tab2:
             """, unsafe_allow_html=True)
 
 from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
+
 FEATURED_COMPANIES = {
     "tech": [
         {
@@ -6252,31 +6253,6 @@ def save_job_search(username, role, location, results):
     except Exception as e:
         st.error(f"Error saving job search: {e}")
 
-def save_single_job_search(username, role, location, job_result):
-    """Save a single job search result to database for logged-in user"""
-    if not username:
-        return False
-    
-    try:
-        conn = sqlite3.connect('resume_data.db')
-        cursor = conn.cursor()
-        
-        # Extract platform name from title
-        platform = job_result["title"].split(":")[0].strip()
-        
-        cursor.execute('''
-            INSERT INTO user_jobs (username, role, location, platform, url, timestamp)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (username, role, location, platform, job_result["link"], datetime.datetime.now()))
-        
-        conn.commit()
-        conn.close()
-        return True
-        
-    except Exception as e:
-        st.error(f"Error saving job search: {e}")
-        return False
-
 def prune_old_searches(username):
     """Keep only the last 50 saved job searches per user (optional cleanup)"""
     if not username:
@@ -6463,7 +6439,7 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         experience_range = experience_range_map.get(experience_level, "")
         experience_exact = experience_exact_map.get(experience_level, "")
 
-    # Naukri URL – no forced "and-india"
+    # Naukri URL – no forced “and-india”
     naukri_url = (
         f"https://www.naukri.com/{role_path_naukri}-jobs-in-{city_naukri}"
         f"?k={role_encoded}&l={city_query_naukri}"
@@ -6537,7 +6513,7 @@ def add_hyperlink(paragraph, url, text, color="0000FF", underline=True):
 # Initialize database
 init_job_search_db()
 
-# Your existing tab3 code with enhanced CSS styling and modified save functionality
+# Your existing tab3 code with enhanced CSS styling
 with tab3:
     st.header("🔍 Job Search Across LinkedIn, Naukri, and FoundIt")
 
@@ -6565,9 +6541,13 @@ with tab3:
         if job_role.strip() and location.strip():
             results = search_jobs(job_role, location, experience_level, job_type, foundit_experience)
 
+            # Save search results if user is logged in
+            if hasattr(st.session_state, 'username') and st.session_state.username:
+                save_job_search(st.session_state.username, job_role, location, results)
+
             st.markdown("## 🎯 Job Search Results")
 
-            for i, job in enumerate(results):
+            for job in results:
                 platform = job["title"].split(":")[0].strip().lower()
 
                 if platform == "linkedin":
@@ -6587,11 +6567,7 @@ with tab3:
                     btn_color = "#00c4cc"
                     platform_gradient = "linear-gradient(135deg, #00c4cc 0%, #26d0ce 100%)"
 
-                # Create columns for the main content and save button
-                main_col, save_col = st.columns([5, 1])
-                
-                with main_col:
-                    st.markdown(f"""
+                st.markdown(f"""
 <div class="job-result-card" style="
     background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
     padding: 25px;
@@ -6608,44 +6584,26 @@ with tab3:
     <div style="color: #ffffff; font-size: 18px; margin-bottom: 20px; font-weight: 500; z-index: 2; position: relative; line-height: 1.4;">
         {job['title'].split(':')[1].strip()}
     </div>
-    <div style="display: flex; gap: 15px; align-items: center; z-index: 2; position: relative;">
-        <a href="{job['link']}" target="_blank" style="text-decoration: none;">
-            <button class="job-button" style="
-                background: {platform_gradient};
-                color: white;
-                padding: 12px 20px;
-                border: none;
-                border-radius: 12px;
-                font-size: 16px;
-                font-weight: 600;
-                cursor: pointer;
-                box-shadow: 0 4px 15px {btn_color}50;
-                transition: all 0.3s ease;
-                position: relative;
-                overflow: hidden;
-            ">
-                <span style="position: relative; z-index: 2;">🚀 View Jobs on {platform.title()} →</span>
-            </button>
-        </a>
-    </div>
+    <a href="{job['link']}" target="_blank" style="text-decoration: none; z-index: 2; position: relative;">
+        <button class="job-button" style="
+            background: {platform_gradient};
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px {btn_color}50;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        ">
+            <span style="position: relative; z-index: 2;">🚀 View Jobs on {platform.title()} →</span>
+        </button>
+    </a>
 </div>
 """, unsafe_allow_html=True)
-                
-                with save_col:
-                    # Only show save button if user is logged in
-                    if hasattr(st.session_state, 'username') and st.session_state.username:
-                        if st.button("💾 Save Job", key=f"save_job_{i}", 
-                                   help=f"Save this {platform.title()} job search",
-                                   type="secondary"):
-                            success = save_single_job_search(
-                                st.session_state.username, 
-                                job_role, 
-                                location, 
-                                job
-                            )
-                            if success:
-                                st.success(f"Saved {platform.title()} job ✅")
-                                st.rerun()
         else:
             st.warning("⚠️ Please enter both the Job Role and Location to perform the search.")
 
@@ -6946,27 +6904,6 @@ with tab3:
     .job-button:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-    }
-    
-    /* Save Job Button Styling */
-    .stButton > button[data-baseweb="button"][kind="secondary"] {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 10px !important;
-        padding: 8px 16px !important;
-        font-size: 14px !important;
-        font-weight: 600 !important;
-        transition: all 0.3s ease !important;
-        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3) !important;
-        height: auto !important;
-        min-height: 40px !important;
-    }
-    
-    .stButton > button[data-baseweb="button"][kind="secondary"]:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4) !important;
-        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
     }
     
     /* Enhanced Pills */

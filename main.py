@@ -6229,30 +6229,29 @@ def init_job_search_db():
     except Exception as e:
         st.error(f"Database initialization error: {e}")
 
-def save_job_search(username, role, location, job_result):
-    """Save a single job search result to database for logged-in user"""
+def save_job_search(username, role, location, results):
+    """Save job search results to database for logged-in user"""
     if not username:
-        return False
+        return
     
     try:
         conn = sqlite3.connect('resume_data.db')
         cursor = conn.cursor()
         
-        # Extract platform name from title
-        platform = job_result["title"].split(":")[0].strip()
+        for result in results:
+            # Extract platform name from title
+            platform = result["title"].split(":")[0].strip()
+            
+            cursor.execute('''
+                INSERT INTO user_jobs (username, role, location, platform, url, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (username, role, location, platform, result["link"], datetime.datetime.now()))
         
-        cursor.execute('''
-            INSERT INTO user_jobs (username, role, location, platform, url, timestamp)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (username, role, location, platform, job_result["link"], datetime.datetime.now()))
-    
         conn.commit()
         conn.close()
-        return True
         
     except Exception as e:
         st.error(f"Error saving job search: {e}")
-        return False
 
 def prune_old_searches(username):
     """Keep only the last 50 saved job searches per user (optional cleanup)"""
@@ -6440,7 +6439,7 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         experience_range = experience_range_map.get(experience_level, "")
         experience_exact = experience_exact_map.get(experience_level, "")
 
-    # Naukri URL – no forced "and-india"
+    # Naukri URL – no forced “and-india”
     naukri_url = (
         f"https://www.naukri.com/{role_path_naukri}-jobs-in-{city_naukri}"
         f"?k={role_encoded}&l={city_query_naukri}"
@@ -6542,9 +6541,13 @@ with tab3:
         if job_role.strip() and location.strip():
             results = search_jobs(job_role, location, experience_level, job_type, foundit_experience)
 
+            # Save search results if user is logged in
+            if hasattr(st.session_state, 'username') and st.session_state.username:
+                save_job_search(st.session_state.username, job_role, location, results)
+
             st.markdown("## 🎯 Job Search Results")
 
-            for i, job in enumerate(results):
+            for job in results:
                 platform = job["title"].split(":")[0].strip().lower()
 
                 if platform == "linkedin":
@@ -6564,11 +6567,7 @@ with tab3:
                     btn_color = "#00c4cc"
                     platform_gradient = "linear-gradient(135deg, #00c4cc 0%, #26d0ce 100%)"
 
-                # Create columns for the card content and save button
-                card_col, save_col = st.columns([8, 2])
-                
-                with card_col:
-                    st.markdown(f"""
+                st.markdown(f"""
 <div class="job-result-card" style="
     background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
     padding: 25px;
@@ -6605,21 +6604,6 @@ with tab3:
     </a>
 </div>
 """, unsafe_allow_html=True)
-                
-                with save_col:
-                    # Save button for logged-in users
-                    if hasattr(st.session_state, 'username') and st.session_state.username:
-                        if st.button(
-                            "💾 Save Job", 
-                            key=f"save_job_{i}", 
-                            help="Save this job search to your collection",
-                            use_container_width=True
-                        ):
-                            success = save_job_search(st.session_state.username, job_role, location, job)
-                            if success:
-                                platform_name = job["title"].split(":")[0].strip()
-                                st.success(f"Saved {platform_name} job ✅")
-                                st.rerun()
         else:
             st.warning("⚠️ Please enter both the Job Role and Location to perform the search.")
 

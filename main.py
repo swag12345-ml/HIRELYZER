@@ -6001,7 +6001,6 @@ with tab2:
             """, unsafe_allow_html=True)
 
 from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
-
 FEATURED_COMPANIES = {
     "tech": [
         {

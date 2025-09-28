@@ -6383,7 +6383,7 @@ import re
 import urllib.parse
 import uuid
 
-def slugify(text):
+def slugify(text: str) -> str:
     """Convert text into a safe slug (lowercase, hyphenated, no special chars)."""
     text = text.lower().strip()
     text = re.sub(r"[^\w\s-]", "", text)
@@ -6395,14 +6395,16 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
     role_encoded = urllib.parse.quote_plus(job_role.strip())
     loc_encoded = urllib.parse.quote_plus(location.strip())
 
-    # Naukri slugs (simple replace)
+    # Slugs
     role_path_naukri = job_role.strip().lower().replace(" ", "-")
-    city_naukri = location.strip().split(",")[0].strip().lower().replace(" ", "-")
-    city_query_naukri = urllib.parse.quote_plus(f"{city_naukri} and india")
+    city_part = location.strip().split(",")[0].strip()
+    city_naukri = city_part.lower().replace(" ", "-")
+    # Only encode what the user entered for the query
+    city_query_naukri = urllib.parse.quote_plus(location.strip())
 
-    # FoundIt slugs (safe slug)
+    # FoundIt slugs
     role_path_foundit = slugify(job_role)
-    city_path_foundit = slugify(location.strip().split(",")[0].strip())
+    city_path_foundit = slugify(city_part)
 
     # Experience mappings
     experience_range_map = {
@@ -6422,7 +6424,7 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         "Temporary": "T", "Volunteer": "V", "Internship": "I"
     }
 
-    # LinkedIn
+    # LinkedIn URL
     linkedin_url = f"https://www.linkedin.com/jobs/search/?keywords={role_encoded}&location={loc_encoded}"
     if experience_level in linkedin_exp_map:
         linkedin_url += f"&f_E={linkedin_exp_map[experience_level]}"
@@ -6437,9 +6439,9 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         experience_range = experience_range_map.get(experience_level, "")
         experience_exact = experience_exact_map.get(experience_level, "")
 
-    # Naukri URL
+    # Naukri URL – no forced “and-india”
     naukri_url = (
-        f"https://www.naukri.com/{role_path_naukri}-jobs-in-{city_naukri}-and-india"
+        f"https://www.naukri.com/{role_path_naukri}-jobs-in-{city_naukri}"
         f"?k={role_encoded}&l={city_query_naukri}"
     )
     if experience_exact:

@@ -6768,7 +6768,7 @@ with tab3:
     </a>
 </div>
 """
-                st.markdown(job_card_html, unsafe_allow_html=True)
+                st.components.v1.html(job_card_html, height=500, scrolling=False)
         else:
             st.warning("⚠️ Please enter both the Job Role and Location to perform the search.")
 

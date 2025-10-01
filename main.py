@@ -1669,16 +1669,6 @@ Suggestions:
     feedback = feedback_match.group(1).strip() if feedback_match else "Grammar appears adequate for professional communication."
     return score, feedback, suggestions
 
-def scale_score(raw_score, old_max, new_max, min_fraction=0.15):
-    """
-    Rescale a raw score from an old maximum to a new maximum weight.
-    Ensures a minimum fraction of new_max is always assigned.
-    """
-    if raw_score is None:
-        return int(new_max * min_fraction)   # fallback minimum
-    scaled = int((raw_score / old_max) * new_max)
-    return max(scaled, int(new_max * min_fraction))
-
 # ✅ Main ATS Evaluation Function
 def ats_percentage_score(
     resume_text,
@@ -1785,9 +1775,9 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 - MCA (Master of Computer Applications)
 - BE CS / BTech CS / BTech IT
 
-→ **ASSIGN MINIMUM 15 points** out of {edu_weight} max points
+→ **ASSIGN MINIMUM {int(edu_weight * 0.75)} points** out of {edu_weight} max points
 → **DO NOT penalize** for ongoing status - pursuing counts equally as completed
-→ If completed with strong academic performance, allow scoring up to 18-20 points
+→ If completed with strong academic performance, allow scoring up to {int(edu_weight * 0.9)}-{edu_weight} points
 
 **CRITICAL DATE PARSING RULES:**
 - If end year < 2025 → ✅ ALWAYS Completed (HARDCODED CUTOFF)
@@ -1801,56 +1791,48 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 
 **SCORING IMPACT:**
 - ✅ Completed relevant education → Full scoring potential (up to max points)
-- 🔄 Ongoing relevant education → **MINIMUM 15 points for priority degrees listed above**
+- 🔄 Ongoing relevant education → **MINIMUM {int(edu_weight * 0.75)} points for priority degrees listed above**
 - Education score is based ONLY on degree relevance and completion status
 - DO NOT add points for certifications/projects in education - these belong in skills/experience sections
 
 **Stable Education Scoring Framework (Independent of Job Description):**
-- 18-20: Outstanding (completed highly relevant degree with excellent academic performance)
-- 15-17: Excellent (priority degrees listed above - completed or ongoing)
-- 12-14: Very Good (related technical/quantitative degree)
-- 9-11: Good (somewhat related education with transferable knowledge)
-- 6-8: Fair (different degree but shows analytical/technical foundation)
-- 3-5: Basic (unrelated degree)
-- 0-2: Insufficient (no degree information or incomplete details)
-
-NOTE: These scores will be rescaled to match the configured weight of {edu_weight} points.
+- {int(edu_weight * 0.90)}-{edu_weight}: Outstanding (completed highly relevant degree with excellent academic performance)
+- {int(edu_weight * 0.75)}-{int(edu_weight * 0.85)}: Excellent (priority degrees listed above - completed or ongoing)
+- {int(edu_weight * 0.60)}-{int(edu_weight * 0.70)}: Very Good (related technical/quantitative degree)
+- {int(edu_weight * 0.45)}-{int(edu_weight * 0.55)}: Good (somewhat related education with transferable knowledge)
+- {int(edu_weight * 0.30)}-{int(edu_weight * 0.40)}: Fair (different degree but shows analytical/technical foundation)
+- {int(edu_weight * 0.15)}-{int(edu_weight * 0.25)}: Basic (unrelated degree)
+- 0-{int(edu_weight * 0.10)}: Insufficient (no degree information or incomplete details)
 
 
 **Experience Scoring Framework ({exp_weight} points max):**
-- 32-35: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
-- 28-31: Excellent (meets/exceeds years + strong domain fit + leadership + clear results)
-- 24-27: Very Good (adequate years + good domain fit + solid responsibilities + some results)
-- 20-23: Good (reasonable years + relevant experience + decent responsibilities)
-- 15-19: Fair (some gaps in years OR domain but shows potential)
-- 10-14: Basic (limited experience but relevant skills/potential shown)
-- 5-9: Entry Level (minimal experience but shows promise)
-- 0-4: Insufficient (major gaps with no transferable skills)
-
-NOTE: These scores will be rescaled to match the configured weight of {exp_weight} points.
+- {int(exp_weight * 0.91)}-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
+- {int(exp_weight * 0.80)}-{int(exp_weight * 0.89)}: Excellent (meets/exceeds years + strong domain fit + leadership + clear results)
+- {int(exp_weight * 0.69)}-{int(exp_weight * 0.77)}: Very Good (adequate years + good domain fit + solid responsibilities + some results)
+- {int(exp_weight * 0.57)}-{int(exp_weight * 0.66)}: Good (reasonable years + relevant experience + decent responsibilities)
+- {int(exp_weight * 0.43)}-{int(exp_weight * 0.54)}: Fair (some gaps in years OR domain but shows potential)
+- {int(exp_weight * 0.29)}-{int(exp_weight * 0.40)}: Basic (limited experience but relevant skills/potential shown)
+- {int(exp_weight * 0.14)}-{int(exp_weight * 0.26)}: Entry Level (minimal experience but shows promise)
+- 0-{int(exp_weight * 0.11)}: Insufficient (major gaps with no transferable skills)
 
 **Skills Scoring Framework ({skills_weight} points max):**
-- 28-30: Outstanding (90%+ required skills + expert proficiency + recent usage)
-- 24-27: Excellent (80%+ required skills + advanced proficiency)
-- 20-23: Very Good (70%+ required skills + good proficiency)
-- 16-19: Good (60%+ required skills + adequate proficiency)
-- 12-15: Fair (50%+ required skills + basic proficiency OR strong learning ability)
-- 8-11: Basic (40%+ skills OR strong foundational skills with growth potential)
-- 4-7: Limited (30%+ skills but shows willingness to learn)
-- 0-3: Insufficient (<30% skills with no evidence of learning ability)
-
-NOTE: These scores will be rescaled to match the configured weight of {skills_weight} points.
+- {int(skills_weight * 0.93)}-{skills_weight}: Outstanding (90%+ required skills + expert proficiency + recent usage)
+- {int(skills_weight * 0.80)}-{int(skills_weight * 0.90)}: Excellent (80%+ required skills + advanced proficiency)
+- {int(skills_weight * 0.67)}-{int(skills_weight * 0.77)}: Very Good (70%+ required skills + good proficiency)
+- {int(skills_weight * 0.53)}-{int(skills_weight * 0.63)}: Good (60%+ required skills + adequate proficiency)
+- {int(skills_weight * 0.40)}-{int(skills_weight * 0.50)}: Fair (50%+ required skills + basic proficiency OR strong learning ability)
+- {int(skills_weight * 0.27)}-{int(skills_weight * 0.37)}: Basic (40%+ skills OR strong foundational skills with growth potential)
+- {int(skills_weight * 0.13)}-{int(skills_weight * 0.23)}: Limited (30%+ skills but shows willingness to learn)
+- 0-{int(skills_weight * 0.10)}: Insufficient (<30% skills with no evidence of learning ability)
 
 **Keyword Scoring Framework ({keyword_weight} points max):**
-- 9-10: Excellent optimization (85%+ critical terms + industry language)
-- 8: Very Good (75%+ critical terms + good industry awareness)
-- 6-7: Good (65%+ critical terms + adequate industry knowledge)
-- 4-5: Fair (50%+ critical terms + some industry understanding)
-- 2-3: Basic (35%+ critical terms + basic awareness)
-- 1: Limited (20%+ critical terms)
+- {int(keyword_weight * 0.90)}-{keyword_weight}: Excellent optimization (85%+ critical terms + industry language)
+- {int(keyword_weight * 0.80)}: Very Good (75%+ critical terms + good industry awareness)
+- {int(keyword_weight * 0.60)}-{int(keyword_weight * 0.70)}: Good (65%+ critical terms + adequate industry knowledge)
+- {int(keyword_weight * 0.40)}-{int(keyword_weight * 0.50)}: Fair (50%+ critical terms + some industry understanding)
+- {int(keyword_weight * 0.20)}-{int(keyword_weight * 0.30)}: Basic (35%+ critical terms + basic awareness)
+- {int(keyword_weight * 0.10)}: Limited (20%+ critical terms)
 - 0: Poor (<20% critical terms)
-
-NOTE: These scores will be rescaled to match the configured weight of {keyword_weight} points.
 
 **EVALUATION INSTRUCTIONS (Tech-Focused):**
 - Always credit **projects, GitHub repos, hackathons, Kaggle competitions, blockchain DApps, cloud deployments, AI model training, open-source contributions**.
@@ -2004,18 +1986,18 @@ Context for Evaluation:
     keyword_analysis = extract_section(r"### 🔑 Keyword Analysis(.*?)###", ats_result)
     final_thoughts = extract_section(r"### ✅ Final Assessment(.*)", ats_result)
 
-    # Extract scores with improved patterns
-    raw_edu_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis)
-    raw_exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)
-    raw_skills_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
-    raw_keyword_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis)
+    # Extract scores with improved patterns (LLM now scores directly using sidebar weights)
+    edu_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis)
+    exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)
+    skills_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
+    keyword_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis)
+    lang_score = grammar_score  # Grammar score already uses lang_weight
 
-    # ✅ Rescale scores from hardcoded maxes (20, 35, 30, 10) to sidebar weights
-    edu_score = scale_score(raw_edu_score, 20, edu_weight)
-    exp_score = scale_score(raw_exp_score, 35, exp_weight)
-    skills_score = scale_score(raw_skills_score, 30, skills_weight)
-    keyword_score = scale_score(raw_keyword_score, 10, keyword_weight)
-    lang_score = scale_score(grammar_score, 5, lang_weight)
+    # ✅ Apply minimum thresholds to avoid overly harsh penalties
+    edu_score = max(edu_score, int(edu_weight * 0.15))  # Minimum 15% of weight
+    exp_score = max(exp_score, int(exp_weight * 0.15))  # Minimum 15% of weight
+    skills_score = max(skills_score, int(skills_weight * 0.15))  # Minimum 15% of weight
+    keyword_score = max(keyword_score, int(keyword_weight * 0.10))  # Minimum 10% of weight
 
     # Extract missing items with better parsing - now called "opportunities"
     missing_keywords_section = extract_section(r"\*\*Keyword Enhancement Opportunities:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)

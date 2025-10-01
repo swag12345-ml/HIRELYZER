@@ -2160,11 +2160,27 @@ with st.sidebar.expander("![Job](https://img.icons8.com/ios-filled/20/briefcase.
 
 # ---------------- Advanced Weights Dropdown ----------------
 with st.sidebar.expander("![Settings](https://img.icons8.com/ios-filled/20/settings.png) Customize ATS Scoring Weights", expanded=False):
-    edu_weight = st.slider("![Education](https://img.icons8.com/ios-filled/20/graduation-cap.png) Education Weight", 0, 50, 20)
-    exp_weight = st.slider("![Experience](https://img.icons8.com/ios-filled/20/portfolio.png) Experience Weight", 0, 50, 35)
-    skills_weight = st.slider("![Skills](https://img.icons8.com/ios-filled/20/gear.png) Skills Match Weight", 0, 50, 30)
-    lang_weight = st.slider("![Language](https://img.icons8.com/ios-filled/20/language.png) Language Quality Weight", 0, 10, 5)
-    keyword_weight = st.slider("![Keyword](https://img.icons8.com/ios-filled/20/key.png) Keyword Match Weight", 0, 20, 10)
+    # Fixed / read-only sliders
+    edu_weight = st.slider(
+        "![Education](https://img.icons8.com/ios-filled/20/graduation-cap.png) Education Weight",
+        0, 50, 20, disabled=True
+    )
+    exp_weight = st.slider(
+        "![Experience](https://img.icons8.com/ios-filled/20/portfolio.png) Experience Weight",
+        0, 50, 35, disabled=True
+    )
+    skills_weight = st.slider(
+        "![Skills](https://img.icons8.com/ios-filled/20/gear.png) Skills Match Weight",
+        0, 50, 30, disabled=True
+    )
+    lang_weight = st.slider(
+        "![Language](https://img.icons8.com/ios-filled/20/language.png) Language Quality Weight",
+        0, 10, 5, disabled=True
+    )
+    keyword_weight = st.slider(
+        "![Keyword](https://img.icons8.com/ios-filled/20/key.png) Keyword Match Weight",
+        0, 20, 10, disabled=True
+    )
 
     total_weight = edu_weight + exp_weight + skills_weight + lang_weight + keyword_weight
 
@@ -2210,6 +2226,7 @@ with st.sidebar.expander("![Settings](https://img.icons8.com/ios-filled/20/setti
             """,
             unsafe_allow_html=True
         )
+
 
 with tab1:
     # 🎨 CSS for sliding success message

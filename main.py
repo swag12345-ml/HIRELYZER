@@ -1669,6 +1669,25 @@ Suggestions:
     feedback = feedback_match.group(1).strip() if feedback_match else "Grammar appears adequate for professional communication."
     return score, feedback, suggestions
 
+# ✅ Helper function to scale scores from old max to new max
+def scale_score(raw_score, old_max, new_max, min_fraction=0.15):
+    """
+    Rescale a score from old_max to new_max while maintaining minimum threshold.
+
+    Args:
+        raw_score: The score returned by the LLM (can be None)
+        old_max: The maximum score the LLM was instructed to use
+        new_max: The desired maximum score (from sidebar weight)
+        min_fraction: Minimum fraction of new_max to return (default 0.15 = 15%)
+
+    Returns:
+        Scaled score respecting the minimum threshold
+    """
+    if raw_score is None:
+        return int(new_max * min_fraction)  # fallback minimum
+    scaled = int((raw_score / old_max) * new_max)
+    return max(scaled, int(new_max * min_fraction))
+
 # ✅ Main ATS Evaluation Function
 def ats_percentage_score(
     resume_text,
@@ -1682,23 +1701,6 @@ def ats_percentage_score(
     keyword_weight=10
 ):
     import datetime
-
-    # ✅ Helper function to scale scores with minimum threshold
-    def scale_score(raw_score, old_max, new_max, min_fraction=0.15):
-        """
-        Scale a raw score from old_max to new_max, with a minimum threshold.
-        Args:
-            raw_score: The score to scale (can be None)
-            old_max: The original maximum value
-            new_max: The new maximum value (weight)
-            min_fraction: Minimum fraction of new_max to return (default 15%)
-        Returns:
-            Scaled score, at least min_fraction * new_max
-        """
-        if raw_score is None:
-            return int(new_max * min_fraction)   # fallback minimum
-        scaled = int((raw_score / old_max) * new_max)
-        return max(scaled, int(new_max * min_fraction))
 
     # ✅ Grammar evaluation
     grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(
@@ -1781,7 +1783,7 @@ Your role is to provide **balanced, objective scoring** that reflects industry s
 
 🎯 **BALANCED SCORING GUIDELINES - Tech-Focused (AI/ML/Blockchain/Software/Data):**
 
-**Education Scoring Framework ({edu_weight} points max):**
+**Education Scoring Framework (20 points max):**
 
 ⚡ **PRIORITY RULE - Minimum Points for Relevant Degrees:**
 If candidate is **currently pursuing OR has completed** any of these degrees:
@@ -1792,7 +1794,7 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 - MCA (Master of Computer Applications)
 - BE CS / BTech CS / BTech IT
 
-→ **ASSIGN MINIMUM 15 points** out of {edu_weight} max points
+→ **ASSIGN MINIMUM 15 points** out of 20 max points
 → **DO NOT penalize** for ongoing status - pursuing counts equally as completed
 → If completed with strong academic performance, allow scoring up to 18-20 points
 
@@ -1813,7 +1815,7 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 - DO NOT add points for certifications/projects in education - these belong in skills/experience sections
 
 **Stable Education Scoring Framework (Independent of Job Description):**
-- 18-{edu_weight}: Outstanding (completed highly relevant degree with excellent academic performance)
+- 18-20: Outstanding (completed highly relevant degree with excellent academic performance)
 - 15-17: Excellent (priority degrees listed above - completed or ongoing)
 - 12-14: Very Good (related technical/quantitative degree)
 - 9-11: Good (somewhat related education with transferable knowledge)
@@ -1822,8 +1824,8 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 - 0-2: Insufficient (no degree information or incomplete details)
 
 
-**Experience Scoring Framework ({exp_weight} points max):**
-- 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
+**Experience Scoring Framework (35 points max):**
+- 32-35: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
 - 28-31: Excellent (meets/exceeds years + strong domain fit + leadership + clear results)
 - 24-27: Very Good (adequate years + good domain fit + solid responsibilities + some results)
 - 20-23: Good (reasonable years + relevant experience + decent responsibilities)
@@ -1832,8 +1834,8 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 - 5-9: Entry Level (minimal experience but shows promise)
 - 0-4: Insufficient (major gaps with no transferable skills)
 
-**Skills Scoring Framework ({skills_weight} points max):**
-- 28-{skills_weight}: Outstanding (90%+ required skills + expert proficiency + recent usage)
+**Skills Scoring Framework (30 points max):**
+- 28-30: Outstanding (90%+ required skills + expert proficiency + recent usage)
 - 24-27: Excellent (80%+ required skills + advanced proficiency)
 - 20-23: Very Good (70%+ required skills + good proficiency)
 - 16-19: Good (60%+ required skills + adequate proficiency)
@@ -1842,8 +1844,8 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 - 4-7: Limited (30%+ skills but shows willingness to learn)
 - 0-3: Insufficient (<30% skills with no evidence of learning ability)
 
-**Keyword Scoring Framework ({keyword_weight} points max):**
-- 9-{keyword_weight}: Excellent optimization (85%+ critical terms + industry language)
+**Keyword Scoring Framework (10 points max):**
+- 9-10: Excellent optimization (85%+ critical terms + industry language)
 - 8: Very Good (75%+ critical terms + good industry awareness)
 - 6-7: Good (65%+ critical terms + adequate industry knowledge)
 - 4-5: Fair (50%+ critical terms + some industry understanding)
@@ -1865,7 +1867,7 @@ Follow this exact structure and be **specific with evidence while highlighting s
 <Extract full name clearly - check resume header, contact section, or first few lines>
 
 ### 🏫 Education Analysis
-**Score:** <0–{edu_weight}> / {edu_weight}
+**Score:** <0–20> / 20
 
 **Scoring Rationale:**
 - Degree Level & Relevance: <Check if degree qualifies for minimum 15 points rule - BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS/IT>
@@ -1874,8 +1876,8 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - **Score Justification:** <Apply minimum 15 points if relevant degree detected; pursuing status not penalized; score based only on degree relevance>
 
 
-### 💼 Experience Analysis  
-**Score:** <0–{exp_weight}> / {exp_weight}
+### 💼 Experience Analysis
+**Score:** <0–35> / 35
 
 **Experience Breakdown:**
 - Total Years: <X years - consider quality over quantity>
@@ -1888,7 +1890,7 @@ Follow this exact structure and be **specific with evidence while highlighting s
 - **Score Justification:** <Emphasize growth potential and adaptability>
 
 ### 🛠 Skills Analysis
-**Score:** <0–{skills_weight}> / {skills_weight}
+**Score:** <0–30> / 30
 
 **Skills Assessment:**
 - Technical Skills Present: <List with evidence, include learning in progress>
@@ -1912,7 +1914,7 @@ Follow this exact structure and be **specific with evidence while highlighting s
 **Assessment:** <Be constructive - focus on communication effectiveness>
 
 ### 🔑 Keyword Analysis
-**Score:** <0–{keyword_weight}> / {keyword_weight}
+**Score:** <0–10> / 10
 
 **Keyword Assessment:**
 - Industry Terminology: <Credit related industry knowledge>
@@ -2003,26 +2005,18 @@ Context for Evaluation:
     keyword_analysis = extract_section(r"### 🔑 Keyword Analysis(.*?)###", ats_result)
     final_thoughts = extract_section(r"### ✅ Final Assessment(.*)", ats_result)
 
-    # Extract raw scores from LLM output
+    # Extract raw scores from LLM (using hardcoded max values from prompts)
     raw_edu_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis)
     raw_exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)
     raw_skills_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
     raw_keyword_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis)
 
-    # ✅ Apply scaling to match custom weights from sidebar
-    # Assume LLM scores are based on: Education=20, Experience=35, Skills=30, Keywords=10, Language=5
+    # ✅ Rescale scores from LLM's hardcoded max to sidebar weights
     edu_score = scale_score(raw_edu_score, 20, edu_weight)
     exp_score = scale_score(raw_exp_score, 35, exp_weight)
     skills_score = scale_score(raw_skills_score, 30, skills_weight)
     keyword_score = scale_score(raw_keyword_score, 10, keyword_weight)
-    # grammar_score is already scaled by get_grammar_score_with_llm to lang_weight
-
-    # ✅ Extract one-line feedback/explanation from each section
-    edu_feedback = extract_section(r"\*\*Score Justification:\*\*(.*?)(?:\n\n|###|\Z)", edu_analysis, "Education assessment completed.")
-    exp_feedback = extract_section(r"\*\*Score Justification:\*\*(.*?)(?:\n\n|###|\Z)", exp_analysis, "Experience assessment completed.")
-    skills_feedback = extract_section(r"\*\*Score Justification:\*\*(.*?)(?:\n\n|###|\Z)", skills_analysis, "Skills assessment completed.")
-    keyword_feedback = extract_section(r"\*\*Score Justification:\*\*(.*?)(?:\n\n|###|\Z)", keyword_analysis, "Keyword assessment completed.")
-    lang_feedback = grammar_feedback  # Already extracted earlier
+    lang_score = scale_score(grammar_score, 5, lang_weight)
 
     # Extract missing items with better parsing - now called "opportunities"
     missing_keywords_section = extract_section(r"\*\*Keyword Enhancement Opportunities:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)
@@ -2061,8 +2055,8 @@ Context for Evaluation:
     missing_keywords = extract_list_items(missing_keywords_section)
     missing_skills = extract_list_items(missing_skills_section)
 
-    # ✅ IMPROVED: More balanced total score calculation
-    total_score = edu_score + exp_score + skills_score + grammar_score + keyword_score
+    # ✅ IMPROVED: More balanced total score calculation using rescaled scores
+    total_score = edu_score + exp_score + skills_score + lang_score + keyword_score
     
     # Apply domain penalty more gently
     total_score = max(total_score - domain_penalty, int(total_score * 0.7))  # Never go below 70% of pre-penalty score
@@ -2113,7 +2107,7 @@ Context for Evaluation:
         "Education Score": edu_score,
         "Experience Score": exp_score,
         "Skills Score": skills_score,
-        "Language Score": grammar_score,
+        "Language Score": lang_score,
         "Keyword Score": keyword_score,
         "ATS Match %": total_score,
         "Formatted Score": formatted_score,
@@ -2128,14 +2122,7 @@ Context for Evaluation:
         "Resume Domain": resume_domain,
         "Job Domain": job_domain,
         "Domain Penalty": domain_penalty,
-        "Domain Similarity Score": similarity_score,
-        # ✅ Add feedback fields for display in Streamlit
-        "Education Feedback": edu_feedback,
-        "Experience Feedback": exp_feedback,
-        "Skills Feedback": skills_feedback,
-        "Keyword Feedback": keyword_feedback,
-        "Language Feedback": lang_feedback,
-        "Grammar Suggestions": grammar_suggestions
+        "Domain Similarity Score": similarity_score
     }
 
 # Setup Vector DB

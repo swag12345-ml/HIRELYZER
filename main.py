@@ -6203,27 +6203,19 @@ import datetime
 import streamlit as st
 from zoneinfo import ZoneInfo
 import requests
-import re
 
 # RapidAPI Configuration
 RAPID_API_KEY = "f3dd6114b8mshe6ff78ae32a91f9p124901jsn4de9f1698693"
 RAPID_API_HOST = "jsearch.p.rapidapi.com"
 
-def clean_html(raw_html: str) -> str:
-    """Strip HTML tags from API descriptions."""
-    return re.sub(r"<.*?>", "", raw_html or "")
-
-def fetch_live_jobs(job_role, location, experience_level=None, job_type=None, remote_only=False, results=10):
+def fetch_live_jobs(job_role, location, results=10):
     """Fetch live jobs from RapidAPI JSearch"""
     url = f"https://{RAPID_API_HOST}/search"
     querystring = {
         "query": f"{job_role} in {location}",
         "page": "1",
-        "num_pages": "1",
-        "remote_jobs_only": str(remote_only).lower()
+        "num_pages": "1"
     }
-    if job_type:
-        querystring["employment_types"] = job_type.upper()
     headers = {
         "X-RapidAPI-Key": RAPID_API_KEY,
         "X-RapidAPI-Host": RAPID_API_HOST
@@ -6234,7 +6226,8 @@ def fetch_live_jobs(job_role, location, experience_level=None, job_type=None, re
             return response.json().get("data", [])[:results]
         else:
             return []
-    except Exception:
+    except Exception as e:
+        st.error(f"Error fetching live jobs: {e}")
         return []
 
 def unified_search(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
@@ -6242,7 +6235,7 @@ def unified_search(job_role, location, experience_level=None, job_type=None, fou
     results = []
 
     # 1️⃣ Fetch live jobs from RapidAPI JSearch
-    live_jobs = fetch_live_jobs(job_role, location, experience_level, job_type, results=5)
+    live_jobs = fetch_live_jobs(job_role, location, results=5)
     for job in live_jobs:
         results.append({
             "platform": "RapidAPI (Live)",
@@ -6254,7 +6247,7 @@ def unified_search(job_role, location, experience_level=None, job_type=None, fou
             "type": job.get("job_employment_type","N/A"),
             "remote": "Remote" if job.get("job_is_remote") else "On-site",
             "publisher": job.get("job_publisher","N/A"),
-            "description": clean_html(job.get("job_description",""))[:200] + "...",
+            "description": (job.get("job_description","")[:200] + "...") if job.get("job_description") else "No description available",
             "apply_link": job.get("job_apply_link", "#")
         })
 
@@ -6451,6 +6444,10 @@ def get_available_platforms(username):
     except Exception as e:
         st.error(f"Error fetching platforms: {e}")
         return []
+
+import re
+import urllib.parse
+import uuid
 
 def slugify(text: str) -> str:
     """Convert text into a safe slug (lowercase, hyphenated, no special chars)."""
@@ -7202,6 +7199,7 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
+
 
 def evaluate_interview_answer(answer: str, question: str = None):
     """

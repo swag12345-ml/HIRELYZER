@@ -6253,15 +6253,37 @@ def fetch_live_jobs(job_role, location, job_type=None, remote_only=False, result
     except Exception:
         return []
 
-def fetch_company_by_domain(domain: str):
-    """Fetch company information by domain using LinkedIn Data API"""
-    url = f"https://linkedin-data-api.p.rapidapi.com/get-company-by-domain?domain={domain}"
+# def fetch_company_by_domain(domain: str):
+#     """Fetch company information by domain using LinkedIn Data API"""
+#     url = f"https://linkedin-data-api.p.rapidapi.com/get-company-by-domain?domain={domain}"
+#     headers = {
+#         "X-RapidAPI-Key": RAPID_API_KEY,
+#         "X-RapidAPI-Host": "linkedin-data-api.p.rapidapi.com"
+#     }
+#     try:
+#         response = requests.get(url, headers=headers)
+#         if response.status_code == 200:
+#             return response.json()
+#         else:
+#             return None
+#     except Exception:
+#         return None
+
+def fetch_company_info(company_name: str, job_title: str = "software engineer"):
+    """Fetch company salary insights using JSearch API instead of LinkedIn API"""
+    url = "https://jsearch.p.rapidapi.com/company-job-salary"
+    querystring = {
+        "company": company_name,
+        "job_title": job_title,
+        "location_type": "ANY",
+        "years_of_experience": "ALL"
+    }
     headers = {
         "X-RapidAPI-Key": RAPID_API_KEY,
-        "X-RapidAPI-Host": "linkedin-data-api.p.rapidapi.com"
+        "X-RapidAPI-Host": "jsearch.p.rapidapi.com"
     }
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, params=querystring)
         if response.status_code == 200:
             return response.json()
         else:
@@ -7192,22 +7214,27 @@ with tab3:
     </style>
     """, unsafe_allow_html=True)
 
-    # ---------- Company Lookup by Domain ----------
-    with st.expander("🔎 Lookup Company by Domain"):
-        domain = st.text_input("Enter company domain", "apple.com")
+    # ---------- Company Lookup by Name ----------
+    with st.expander("🔎 Lookup Company by Name"):
+        company_name = st.text_input("Enter company name", "Apple")
+        job_title = st.text_input("Optional: Job Title", "Software Engineer")
+
         if st.button("Get Company Info"):
-            company_data = fetch_company_by_domain(domain)
-            if company_data:
+            company_data = fetch_company_info(company_name, job_title)
+            if company_data and "data" in company_data and len(company_data["data"]) > 0:
+                info = company_data["data"][0]
                 st.markdown(f"""
                 <div class="company-card">
-                    <h3 style="color:#00c4cc;">🏢 {company_data.get('name','Unknown')}</h3>
-                    <p><b>Industry:</b> {company_data.get('industry','N/A')}</p>
-                    <p><b>Website:</b> <a href="{company_data.get('website','')}" target="_blank">{company_data.get('website','')}</a></p>
-                    <p><b>Followers:</b> {company_data.get('followerCount','N/A')}</p>
+                    <h3 style="color:#00c4cc;">🏢 {company_name}</h3>
+                    <p><b>Job Title:</b> {info.get('job_title','N/A')}</p>
+                    <p><b>Estimated Salary:</b> {info.get('median_salary','N/A')}</p>
+                    <p><b>Min Salary:</b> {info.get('min_salary','N/A')}</p>
+                    <p><b>Max Salary:</b> {info.get('max_salary','N/A')}</p>
+                    <p><b>Location Type:</b> {info.get('location_type','N/A')}</p>
                 </div>
                 """, unsafe_allow_html=True)
             else:
-                st.error("Could not fetch company data. Please check the domain and try again.")
+                st.error("⚠️ Could not fetch company data. Try another name or job title.")
 
     # ---------- Featured Companies ----------
     st.markdown("### <div class='title-header'>🏢 Featured Companies</div>", unsafe_allow_html=True)

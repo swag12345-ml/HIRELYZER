@@ -6000,8 +6000,6 @@ with tab2:
             convert it to PDF using Sejda's free online tool</a>.
             """, unsafe_allow_html=True)
 
-from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
-
 FEATURED_COMPANIES = {
     "tech": [
         {
@@ -6656,6 +6654,16 @@ with tab3:
                     btn_color = "#00c4cc"
                     platform_gradient = "linear-gradient(135deg, #00c4cc 0%, #26d0ce 100%)"
 
+                # Clean all job fields to ensure no HTML tags appear
+                job_title = clean_html(str(job['title']))
+                job_company = clean_html(str(job['company']))
+                job_location = clean_html(str(job['location']))
+                job_salary = clean_html(str(job['salary']))
+                job_type = clean_html(str(job['type']))
+                job_remote = clean_html(str(job['remote']))
+                job_publisher = clean_html(str(job['publisher']))
+                job_description = clean_html(str(job['description']))
+
                 # Format date if available
                 formatted_date = "N/A"
                 if job["date"] != "N/A":
@@ -6684,39 +6692,39 @@ with tab3:
 
     <!-- Job Title -->
     <div style="color: #ffffff; font-size: 22px; margin-bottom: 10px; font-weight: 600; z-index: 2; position: relative; line-height: 1.4;">
-        {job['title']}
+        {job_title}
     </div>
 
     <!-- Company -->
     <div style="color: #aaaaaa; font-size: 16px; margin-bottom: 15px; z-index: 2; position: relative;">
-        🏢 <b>{job['company']}</b>
+        🏢 <b>{job_company}</b>
     </div>
 
     <!-- Job Details Grid -->
     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; z-index: 2; position: relative;">
         <div style="color: #cccccc; font-size: 14px;">
-            📍 <b>Location:</b> {job['location']}
+            📍 <b>Location:</b> {job_location}
         </div>
         <div style="color: #cccccc; font-size: 14px;">
-            💰 <b>Salary:</b> {job['salary']}
+            💰 <b>Salary:</b> {job_salary}
         </div>
         <div style="color: #cccccc; font-size: 14px;">
-            📋 <b>Type:</b> {job['type']}
+            📋 <b>Type:</b> {job_type}
         </div>
         <div style="color: #cccccc; font-size: 14px;">
-            🌍 <b>Mode:</b> {job['remote']}
+            🌍 <b>Mode:</b> {job_remote}
         </div>
         <div style="color: #cccccc; font-size: 14px;">
             📅 <b>Posted:</b> {formatted_date}
         </div>
         <div style="color: #cccccc; font-size: 14px;">
-            📰 <b>Source:</b> {job['publisher']}
+            📰 <b>Source:</b> {job_publisher}
         </div>
     </div>
 
     <!-- Description -->
     <div style="color: #999999; font-size: 14px; margin-bottom: 20px; line-height: 1.6; z-index: 2; position: relative;">
-        {job['description']}
+        {job_description}
     </div>
 
     <!-- Apply Button -->

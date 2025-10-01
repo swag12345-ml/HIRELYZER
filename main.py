@@ -1669,6 +1669,16 @@ Suggestions:
     feedback = feedback_match.group(1).strip() if feedback_match else "Grammar appears adequate for professional communication."
     return score, feedback, suggestions
 
+def scale_score(raw_score, old_max, new_max, min_fraction=0.15):
+    """
+    Rescale a raw score from an old maximum to a new maximum weight.
+    Ensures a minimum fraction of new_max is always assigned.
+    """
+    if raw_score is None:
+        return int(new_max * min_fraction)   # fallback minimum
+    scaled = int((raw_score / old_max) * new_max)
+    return max(scaled, int(new_max * min_fraction))
+
 # ✅ Main ATS Evaluation Function
 def ats_percentage_score(
     resume_text,
@@ -1796,7 +1806,7 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 - DO NOT add points for certifications/projects in education - these belong in skills/experience sections
 
 **Stable Education Scoring Framework (Independent of Job Description):**
-- 18-{edu_weight}: Outstanding (completed highly relevant degree with excellent academic performance)
+- 18-20: Outstanding (completed highly relevant degree with excellent academic performance)
 - 15-17: Excellent (priority degrees listed above - completed or ongoing)
 - 12-14: Very Good (related technical/quantitative degree)
 - 9-11: Good (somewhat related education with transferable knowledge)
@@ -1804,9 +1814,11 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 - 3-5: Basic (unrelated degree)
 - 0-2: Insufficient (no degree information or incomplete details)
 
+NOTE: These scores will be rescaled to match the configured weight of {edu_weight} points.
+
 
 **Experience Scoring Framework ({exp_weight} points max):**
-- 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
+- 32-35: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
 - 28-31: Excellent (meets/exceeds years + strong domain fit + leadership + clear results)
 - 24-27: Very Good (adequate years + good domain fit + solid responsibilities + some results)
 - 20-23: Good (reasonable years + relevant experience + decent responsibilities)
@@ -1815,8 +1827,10 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 - 5-9: Entry Level (minimal experience but shows promise)
 - 0-4: Insufficient (major gaps with no transferable skills)
 
+NOTE: These scores will be rescaled to match the configured weight of {exp_weight} points.
+
 **Skills Scoring Framework ({skills_weight} points max):**
-- 28-{skills_weight}: Outstanding (90%+ required skills + expert proficiency + recent usage)
+- 28-30: Outstanding (90%+ required skills + expert proficiency + recent usage)
 - 24-27: Excellent (80%+ required skills + advanced proficiency)
 - 20-23: Very Good (70%+ required skills + good proficiency)
 - 16-19: Good (60%+ required skills + adequate proficiency)
@@ -1825,14 +1839,18 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 - 4-7: Limited (30%+ skills but shows willingness to learn)
 - 0-3: Insufficient (<30% skills with no evidence of learning ability)
 
+NOTE: These scores will be rescaled to match the configured weight of {skills_weight} points.
+
 **Keyword Scoring Framework ({keyword_weight} points max):**
-- 9-{keyword_weight}: Excellent optimization (85%+ critical terms + industry language)
+- 9-10: Excellent optimization (85%+ critical terms + industry language)
 - 8: Very Good (75%+ critical terms + good industry awareness)
 - 6-7: Good (65%+ critical terms + adequate industry knowledge)
 - 4-5: Fair (50%+ critical terms + some industry understanding)
 - 2-3: Basic (35%+ critical terms + basic awareness)
 - 1: Limited (20%+ critical terms)
 - 0: Poor (<20% critical terms)
+
+NOTE: These scores will be rescaled to match the configured weight of {keyword_weight} points.
 
 **EVALUATION INSTRUCTIONS (Tech-Focused):**
 - Always credit **projects, GitHub repos, hackathons, Kaggle competitions, blockchain DApps, cloud deployments, AI model training, open-source contributions**.
@@ -1987,16 +2005,17 @@ Context for Evaluation:
     final_thoughts = extract_section(r"### ✅ Final Assessment(.*)", ats_result)
 
     # Extract scores with improved patterns
-    edu_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis)
-    exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)  
-    skills_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
-    keyword_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis)
+    raw_edu_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis)
+    raw_exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)
+    raw_skills_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
+    raw_keyword_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis)
 
-    # ✅ IMPROVED: More generous minimum scores to avoid harsh penalties
-    edu_score = max(edu_score, int(edu_weight * 0.15))  # Minimum 15% of weight
-    exp_score = max(exp_score, int(exp_weight * 0.15))  # Minimum 15% of weight  
-    skills_score = max(skills_score, int(skills_weight * 0.15))  # Minimum 15% of weight
-    keyword_score = max(keyword_score, int(keyword_weight * 0.10))  # Minimum 10% of weight
+    # ✅ Rescale scores from hardcoded maxes (20, 35, 30, 10) to sidebar weights
+    edu_score = scale_score(raw_edu_score, 20, edu_weight)
+    exp_score = scale_score(raw_exp_score, 35, exp_weight)
+    skills_score = scale_score(raw_skills_score, 30, skills_weight)
+    keyword_score = scale_score(raw_keyword_score, 10, keyword_weight)
+    lang_score = scale_score(grammar_score, 5, lang_weight)
 
     # Extract missing items with better parsing - now called "opportunities"
     missing_keywords_section = extract_section(r"\*\*Keyword Enhancement Opportunities:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)
@@ -2036,7 +2055,7 @@ Context for Evaluation:
     missing_skills = extract_list_items(missing_skills_section)
 
     # ✅ IMPROVED: More balanced total score calculation
-    total_score = edu_score + exp_score + skills_score + grammar_score + keyword_score
+    total_score = edu_score + exp_score + skills_score + lang_score + keyword_score
     
     # Apply domain penalty more gently
     total_score = max(total_score - domain_penalty, int(total_score * 0.7))  # Never go below 70% of pre-penalty score
@@ -2087,7 +2106,7 @@ Context for Evaluation:
         "Education Score": edu_score,
         "Experience Score": exp_score,
         "Skills Score": skills_score,
-        "Language Score": grammar_score,
+        "Language Score": lang_score,
         "Keyword Score": keyword_score,
         "ATS Match %": total_score,
         "Formatted Score": formatted_score,
@@ -2160,27 +2179,11 @@ with st.sidebar.expander("![Job](https://img.icons8.com/ios-filled/20/briefcase.
 
 # ---------------- Advanced Weights Dropdown ----------------
 with st.sidebar.expander("![Settings](https://img.icons8.com/ios-filled/20/settings.png) Customize ATS Scoring Weights", expanded=False):
-    # Fixed / read-only sliders
-    edu_weight = st.slider(
-        "![Education](https://img.icons8.com/ios-filled/20/graduation-cap.png) Education Weight",
-        0, 50, 20, disabled=True
-    )
-    exp_weight = st.slider(
-        "![Experience](https://img.icons8.com/ios-filled/20/portfolio.png) Experience Weight",
-        0, 50, 35, disabled=True
-    )
-    skills_weight = st.slider(
-        "![Skills](https://img.icons8.com/ios-filled/20/gear.png) Skills Match Weight",
-        0, 50, 30, disabled=True
-    )
-    lang_weight = st.slider(
-        "![Language](https://img.icons8.com/ios-filled/20/language.png) Language Quality Weight",
-        0, 10, 5, disabled=True
-    )
-    keyword_weight = st.slider(
-        "![Keyword](https://img.icons8.com/ios-filled/20/key.png) Keyword Match Weight",
-        0, 20, 10, disabled=True
-    )
+    edu_weight = st.slider("![Education](https://img.icons8.com/ios-filled/20/graduation-cap.png) Education Weight", 0, 50, 20)
+    exp_weight = st.slider("![Experience](https://img.icons8.com/ios-filled/20/portfolio.png) Experience Weight", 0, 50, 35)
+    skills_weight = st.slider("![Skills](https://img.icons8.com/ios-filled/20/gear.png) Skills Match Weight", 0, 50, 30)
+    lang_weight = st.slider("![Language](https://img.icons8.com/ios-filled/20/language.png) Language Quality Weight", 0, 10, 5)
+    keyword_weight = st.slider("![Keyword](https://img.icons8.com/ios-filled/20/key.png) Keyword Match Weight", 0, 20, 10)
 
     total_weight = edu_weight + exp_weight + skills_weight + lang_weight + keyword_weight
 
@@ -2226,7 +2229,6 @@ with st.sidebar.expander("![Settings](https://img.icons8.com/ios-filled/20/setti
             """,
             unsafe_allow_html=True
         )
-
 
 with tab1:
     # 🎨 CSS for sliding success message

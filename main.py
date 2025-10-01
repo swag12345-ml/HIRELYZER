@@ -6285,11 +6285,12 @@ def fetch_company_info(company_name: str, job_title: str = "software engineer"):
     try:
         response = requests.get(url, headers=headers, params=querystring)
         if response.status_code == 200:
-            return response.json()
+            data = response.json()
+            return data
         else:
-            return None
-    except Exception:
-        return None
+            return {"error": f"Status code: {response.status_code}", "response": response.text}
+    except Exception as e:
+        return {"error": str(e)}
 
 def unified_search(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
     results = []
@@ -7220,21 +7221,42 @@ with tab3:
         job_title = st.text_input("Optional: Job Title", "Software Engineer")
 
         if st.button("Get Company Info"):
-            company_data = fetch_company_info(company_name, job_title)
-            if company_data and "data" in company_data and len(company_data["data"]) > 0:
-                info = company_data["data"][0]
-                st.markdown(f"""
-                <div class="company-card">
-                    <h3 style="color:#00c4cc;">🏢 {company_name}</h3>
-                    <p><b>Job Title:</b> {info.get('job_title','N/A')}</p>
-                    <p><b>Estimated Salary:</b> {info.get('median_salary','N/A')}</p>
-                    <p><b>Min Salary:</b> {info.get('min_salary','N/A')}</p>
-                    <p><b>Max Salary:</b> {info.get('max_salary','N/A')}</p>
-                    <p><b>Location Type:</b> {info.get('location_type','N/A')}</p>
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.error("⚠️ Could not fetch company data. Try another name or job title.")
+            with st.spinner("Fetching company information..."):
+                company_data = fetch_company_info(company_name, job_title)
+
+                # Debug: Show raw response structure
+                if company_data:
+                    st.write("Debug - API Response Keys:", list(company_data.keys()))
+
+                    # Check for error
+                    if "error" in company_data:
+                        st.error(f"⚠️ API Error: {company_data.get('error', 'Unknown error')}")
+                        if "response" in company_data:
+                            with st.expander("See error details"):
+                                st.code(company_data["response"])
+                    # Check for data
+                    elif "data" in company_data and len(company_data["data"]) > 0:
+                        info = company_data["data"][0]
+                        st.markdown(f"""
+                        <div class="company-card">
+                            <h3 style="color:#00c4cc;">🏢 {company_name}</h3>
+                            <p><b>Job Title:</b> {info.get('job_title','N/A')}</p>
+                            <p><b>Estimated Salary:</b> {info.get('median_salary','N/A')}</p>
+                            <p><b>Min Salary:</b> {info.get('min_salary','N/A')}</p>
+                            <p><b>Max Salary:</b> {info.get('max_salary','N/A')}</p>
+                            <p><b>Location Type:</b> {info.get('location_type','N/A')}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                        # Show full data structure for debugging
+                        with st.expander("See full API response"):
+                            st.json(company_data)
+                    else:
+                        st.error("⚠️ No data found for this company and job title combination.")
+                        with st.expander("See API response"):
+                            st.json(company_data)
+                else:
+                    st.error("⚠️ Could not fetch company data. Try another name or job title.")
 
     # ---------- Featured Companies ----------
     st.markdown("### <div class='title-header'>🏢 Featured Companies</div>", unsafe_allow_html=True)
@@ -7289,6 +7311,7 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
+
 
 
 def evaluate_interview_answer(answer: str, question: str = None):

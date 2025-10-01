@@ -6203,19 +6203,42 @@ import datetime
 import streamlit as st
 from zoneinfo import ZoneInfo
 import requests
+import re
 
 # RapidAPI Configuration
 RAPID_API_KEY = "f3dd6114b8mshe6ff78ae32a91f9p124901jsn4de9f1698693"
 RAPID_API_HOST = "jsearch.p.rapidapi.com"
 
-def fetch_live_jobs(job_role, location, results=10):
-    """Fetch live jobs from RapidAPI JSearch"""
+def clean_html(raw_html: str) -> str:
+    """Remove HTML tags and comments from API descriptions."""
+    if not raw_html:
+        return ""
+    # Remove comments
+    raw_html = re.sub(r"<!--.*?-->", "", raw_html, flags=re.DOTALL)
+    # Remove all tags
+    return re.sub(r"<.*?>", "", raw_html).strip()
+
+def fetch_live_jobs(job_role, location, job_type=None, remote_only=False, results=10):
     url = f"https://{RAPID_API_HOST}/search"
     querystring = {
         "query": f"{job_role} in {location}",
         "page": "1",
-        "num_pages": "1"
+        "num_pages": "1",
+        "remote_jobs_only": str(remote_only).lower()
     }
+
+    # 🔹 Map UI dropdown values to RapidAPI accepted filters
+    type_map = {
+        "Full-time": "FULLTIME",
+        "Part-time": "PARTTIME",
+        "Contract": "CONTRACTOR",
+        "Internship": "INTERN",
+        "Temporary": "TEMPORARY",
+        "Volunteer": "VOLUNTEER"
+    }
+    if job_type and job_type in type_map:
+        querystring["employment_types"] = type_map[job_type]
+
     headers = {
         "X-RapidAPI-Key": RAPID_API_KEY,
         "X-RapidAPI-Host": RAPID_API_HOST
@@ -6226,28 +6249,26 @@ def fetch_live_jobs(job_role, location, results=10):
             return response.json().get("data", [])[:results]
         else:
             return []
-    except Exception as e:
-        st.error(f"Error fetching live jobs: {e}")
+    except Exception:
         return []
 
 def unified_search(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
-    """Unified search combining live jobs from RapidAPI and external platform links"""
     results = []
 
     # 1️⃣ Fetch live jobs from RapidAPI JSearch
-    live_jobs = fetch_live_jobs(job_role, location, results=5)
+    live_jobs = fetch_live_jobs(job_role, location, job_type=job_type, results=5)
     for job in live_jobs:
         results.append({
             "platform": "RapidAPI (Live)",
-            "title": job.get("job_title", "N/A"),
-            "company": job.get("employer_name", "Unknown"),
+            "title": clean_html(job.get("job_title", "N/A")),
+            "company": clean_html(job.get("employer_name", "Unknown")),
             "location": f"{job.get('job_city','')}, {job.get('job_country','')}",
             "salary": f"{job.get('job_min_salary','NA')} - {job.get('job_max_salary','NA')} {job.get('job_salary_currency','')}",
             "date": job.get("job_posted_at_datetime_utc", "N/A"),
             "type": job.get("job_employment_type","N/A"),
             "remote": "Remote" if job.get("job_is_remote") else "On-site",
-            "publisher": job.get("job_publisher","N/A"),
-            "description": (job.get("job_description","")[:200] + "...") if job.get("job_description") else "No description available",
+            "publisher": clean_html(job.get("job_publisher","N/A")),
+            "description": clean_html(job.get("job_description",""))[:200] + "...",
             "apply_link": job.get("job_apply_link", "#")
         })
 
@@ -6444,10 +6465,6 @@ def get_available_platforms(username):
     except Exception as e:
         st.error(f"Error fetching platforms: {e}")
         return []
-
-import re
-import urllib.parse
-import uuid
 
 def slugify(text: str) -> str:
     """Convert text into a safe slug (lowercase, hyphenated, no special chars)."""

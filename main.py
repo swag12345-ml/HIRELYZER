@@ -6000,6 +6000,8 @@ with tab2:
             convert it to PDF using Sejda's free online tool</a>.
             """, unsafe_allow_html=True)
 
+
+
 FEATURED_COMPANIES = {
     "tech": [
         {
@@ -6203,6 +6205,7 @@ from zoneinfo import ZoneInfo
 import requests
 import re
 
+
 # RapidAPI Configuration
 RAPID_API_KEY = "f3dd6114b8mshe6ff78ae32a91f9p124901jsn4de9f1698693"
 RAPID_API_HOST = "jsearch.p.rapidapi.com"
@@ -6249,6 +6252,22 @@ def fetch_live_jobs(job_role, location, job_type=None, remote_only=False, result
             return []
     except Exception:
         return []
+
+def fetch_company_by_domain(domain: str):
+    """Fetch company information by domain using LinkedIn Data API"""
+    url = f"https://linkedin-data-api.p.rapidapi.com/get-company-by-domain?domain={domain}"
+    headers = {
+        "X-RapidAPI-Key": RAPID_API_KEY,
+        "X-RapidAPI-Host": "linkedin-data-api.p.rapidapi.com"
+    }
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return None
+    except Exception:
+        return None
 
 def unified_search(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
     results = []
@@ -6673,7 +6692,8 @@ with tab3:
                     except:
                         formatted_date = job["date"]
 
-                st.markdown(f"""
+                # Create job card HTML
+                job_card_html = f"""
 <div class="job-result-card" style="
     background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
     padding: 25px;
@@ -6747,7 +6767,8 @@ with tab3:
         </button>
     </a>
 </div>
-""", unsafe_allow_html=True)
+"""
+                st.markdown(job_card_html, unsafe_allow_html=True)
         else:
             st.warning("⚠️ Please enter both the Job Role and Location to perform the search.")
 
@@ -7171,6 +7192,23 @@ with tab3:
     </style>
     """, unsafe_allow_html=True)
 
+    # ---------- Company Lookup by Domain ----------
+    with st.expander("🔎 Lookup Company by Domain"):
+        domain = st.text_input("Enter company domain", "apple.com")
+        if st.button("Get Company Info"):
+            company_data = fetch_company_by_domain(domain)
+            if company_data:
+                st.markdown(f"""
+                <div class="company-card">
+                    <h3 style="color:#00c4cc;">🏢 {company_data.get('name','Unknown')}</h3>
+                    <p><b>Industry:</b> {company_data.get('industry','N/A')}</p>
+                    <p><b>Website:</b> <a href="{company_data.get('website','')}" target="_blank">{company_data.get('website','')}</a></p>
+                    <p><b>Followers:</b> {company_data.get('followerCount','N/A')}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.error("Could not fetch company data. Please check the domain and try again.")
+
     # ---------- Featured Companies ----------
     st.markdown("### <div class='title-header'>🏢 Featured Companies</div>", unsafe_allow_html=True)
 
@@ -7224,7 +7262,6 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
-
 
 
 def evaluate_interview_answer(answer: str, question: str = None):

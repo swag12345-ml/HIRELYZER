@@ -6253,44 +6253,21 @@ def fetch_live_jobs(job_role, location, job_type=None, remote_only=False, result
     except Exception:
         return []
 
-# def fetch_company_by_domain(domain: str):
-#     """Fetch company information by domain using LinkedIn Data API"""
-#     url = f"https://linkedin-data-api.p.rapidapi.com/get-company-by-domain?domain={domain}"
-#     headers = {
-#         "X-RapidAPI-Key": RAPID_API_KEY,
-#         "X-RapidAPI-Host": "linkedin-data-api.p.rapidapi.com"
-#     }
-#     try:
-#         response = requests.get(url, headers=headers)
-#         if response.status_code == 200:
-#             return response.json()
-#         else:
-#             return None
-#     except Exception:
-#         return None
-
-def fetch_company_info(company_name: str, job_title: str = "software engineer"):
-    """Fetch company salary insights using JSearch API instead of LinkedIn API"""
-    url = "https://jsearch.p.rapidapi.com/company-job-salary"
-    querystring = {
-        "company": company_name,
-        "job_title": job_title,
-        "location_type": "ANY",
-        "years_of_experience": "ALL"
-    }
+def fetch_company_by_domain(domain: str):
+    """Fetch company information by domain using LinkedIn Data API"""
+    url = f"https://linkedin-data-api.p.rapidapi.com/get-company-by-domain?domain={domain}"
     headers = {
         "X-RapidAPI-Key": RAPID_API_KEY,
-        "X-RapidAPI-Host": "jsearch.p.rapidapi.com"
+        "X-RapidAPI-Host": "linkedin-data-api.p.rapidapi.com"
     }
     try:
-        response = requests.get(url, headers=headers, params=querystring)
+        response = requests.get(url, headers=headers)
         if response.status_code == 200:
-            data = response.json()
-            return data
+            return response.json()
         else:
-            return {"error": f"Status code: {response.status_code}", "response": response.text}
-    except Exception as e:
-        return {"error": str(e)}
+            return None
+    except Exception:
+        return None
 
 def unified_search(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
     results = []
@@ -7215,48 +7192,8 @@ with tab3:
     </style>
     """, unsafe_allow_html=True)
 
-    # ---------- Company Lookup by Name ----------
-    with st.expander("🔎 Lookup Company by Name"):
-        company_name = st.text_input("Enter company name", "Apple")
-        job_title = st.text_input("Optional: Job Title", "Software Engineer")
+    # ---------- Company Lookup by Domain ----------
 
-        if st.button("Get Company Info"):
-            with st.spinner("Fetching company information..."):
-                company_data = fetch_company_info(company_name, job_title)
-
-                # Debug: Show raw response structure
-                if company_data:
-                    st.write("Debug - API Response Keys:", list(company_data.keys()))
-
-                    # Check for error
-                    if "error" in company_data:
-                        st.error(f"⚠️ API Error: {company_data.get('error', 'Unknown error')}")
-                        if "response" in company_data:
-                            with st.expander("See error details"):
-                                st.code(company_data["response"])
-                    # Check for data
-                    elif "data" in company_data and len(company_data["data"]) > 0:
-                        info = company_data["data"][0]
-                        st.markdown(f"""
-                        <div class="company-card">
-                            <h3 style="color:#00c4cc;">🏢 {company_name}</h3>
-                            <p><b>Job Title:</b> {info.get('job_title','N/A')}</p>
-                            <p><b>Estimated Salary:</b> {info.get('median_salary','N/A')}</p>
-                            <p><b>Min Salary:</b> {info.get('min_salary','N/A')}</p>
-                            <p><b>Max Salary:</b> {info.get('max_salary','N/A')}</p>
-                            <p><b>Location Type:</b> {info.get('location_type','N/A')}</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-
-                        # Show full data structure for debugging
-                        with st.expander("See full API response"):
-                            st.json(company_data)
-                    else:
-                        st.error("⚠️ No data found for this company and job title combination.")
-                        with st.expander("See API response"):
-                            st.json(company_data)
-                else:
-                    st.error("⚠️ Could not fetch company data. Try another name or job title.")
 
     # ---------- Featured Companies ----------
     st.markdown("### <div class='title-header'>🏢 Featured Companies</div>", unsafe_allow_html=True)
@@ -7311,6 +7248,7 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
+
 
 
 

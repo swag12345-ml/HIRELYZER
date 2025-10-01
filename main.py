@@ -1,4 +1,3 @@
-# Standard library imports
 import os
 import json
 import random
@@ -1684,6 +1683,23 @@ def ats_percentage_score(
 ):
     import datetime
 
+    # ✅ Helper function to scale scores with minimum threshold
+    def scale_score(raw_score, old_max, new_max, min_fraction=0.15):
+        """
+        Scale a raw score from old_max to new_max, with a minimum threshold.
+        Args:
+            raw_score: The score to scale (can be None)
+            old_max: The original maximum value
+            new_max: The new maximum value (weight)
+            min_fraction: Minimum fraction of new_max to return (default 15%)
+        Returns:
+            Scaled score, at least min_fraction * new_max
+        """
+        if raw_score is None:
+            return int(new_max * min_fraction)   # fallback minimum
+        scaled = int((raw_score / old_max) * new_max)
+        return max(scaled, int(new_max * min_fraction))
+
     # ✅ Grammar evaluation
     grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(
         resume_text, max_score=lang_weight
@@ -1987,17 +2003,26 @@ Context for Evaluation:
     keyword_analysis = extract_section(r"### 🔑 Keyword Analysis(.*?)###", ats_result)
     final_thoughts = extract_section(r"### ✅ Final Assessment(.*)", ats_result)
 
-    # Extract scores with improved patterns
-    edu_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis)
-    exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)  
-    skills_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
-    keyword_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis)
+    # Extract raw scores from LLM output
+    raw_edu_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis)
+    raw_exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)
+    raw_skills_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
+    raw_keyword_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis)
 
-    # ✅ IMPROVED: More generous minimum scores to avoid harsh penalties
-    edu_score = max(edu_score, int(edu_weight * 0.15))  # Minimum 15% of weight
-    exp_score = max(exp_score, int(exp_weight * 0.15))  # Minimum 15% of weight  
-    skills_score = max(skills_score, int(skills_weight * 0.15))  # Minimum 15% of weight
-    keyword_score = max(keyword_score, int(keyword_weight * 0.10))  # Minimum 10% of weight
+    # ✅ Apply scaling to match custom weights from sidebar
+    # Assume LLM scores are based on: Education=20, Experience=35, Skills=30, Keywords=10, Language=5
+    edu_score = scale_score(raw_edu_score, 20, edu_weight)
+    exp_score = scale_score(raw_exp_score, 35, exp_weight)
+    skills_score = scale_score(raw_skills_score, 30, skills_weight)
+    keyword_score = scale_score(raw_keyword_score, 10, keyword_weight)
+    # grammar_score is already scaled by get_grammar_score_with_llm to lang_weight
+
+    # ✅ Extract one-line feedback/explanation from each section
+    edu_feedback = extract_section(r"\*\*Score Justification:\*\*(.*?)(?:\n\n|###|\Z)", edu_analysis, "Education assessment completed.")
+    exp_feedback = extract_section(r"\*\*Score Justification:\*\*(.*?)(?:\n\n|###|\Z)", exp_analysis, "Experience assessment completed.")
+    skills_feedback = extract_section(r"\*\*Score Justification:\*\*(.*?)(?:\n\n|###|\Z)", skills_analysis, "Skills assessment completed.")
+    keyword_feedback = extract_section(r"\*\*Score Justification:\*\*(.*?)(?:\n\n|###|\Z)", keyword_analysis, "Keyword assessment completed.")
+    lang_feedback = grammar_feedback  # Already extracted earlier
 
     # Extract missing items with better parsing - now called "opportunities"
     missing_keywords_section = extract_section(r"\*\*Keyword Enhancement Opportunities:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)
@@ -2103,7 +2128,14 @@ Context for Evaluation:
         "Resume Domain": resume_domain,
         "Job Domain": job_domain,
         "Domain Penalty": domain_penalty,
-        "Domain Similarity Score": similarity_score
+        "Domain Similarity Score": similarity_score,
+        # ✅ Add feedback fields for display in Streamlit
+        "Education Feedback": edu_feedback,
+        "Experience Feedback": exp_feedback,
+        "Skills Feedback": skills_feedback,
+        "Keyword Feedback": keyword_feedback,
+        "Language Feedback": lang_feedback,
+        "Grammar Suggestions": grammar_suggestions
     }
 
 # Setup Vector DB

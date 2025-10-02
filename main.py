@@ -7493,25 +7493,173 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
+# ============================================================================
+# DATABASE INITIALIZATION
+# ============================================================================
+def init_interview_db():
+    """Initialize interview_results table if not exists"""
+    conn = sqlite3.connect('resume_data.db')
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS interview_results (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            role TEXT,
+            domain TEXT,
+            avg_score REAL,
+            total_questions INTEGER,
+            completed_on TEXT,
+            feedback_summary TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+def log_user_action(username, action):
+    """Log user action to database"""
+    try:
+        conn = sqlite3.connect('resume_data.db')
+        c = conn.cursor()
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS user_actions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT,
+                action TEXT,
+                timestamp TEXT
+            )
+        ''')
+        ist = pytz.timezone('Asia/Kolkata')
+        timestamp = datetime.now(ist).strftime('%Y-%m-%d %H:%M:%S')
+        c.execute('INSERT INTO user_actions (username, action, timestamp) VALUES (?, ?, ?)',
+                  (username, action, timestamp))
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
+def save_interview_results_to_db(username, role, domain, avg_score, total_questions, feedback_summary):
+    """Save interview results to database"""
+    try:
+        init_interview_db()
+        conn = sqlite3.connect('resume_data.db')
+        c = conn.cursor()
+        ist = pytz.timezone('Asia/Kolkata')
+        completed_on = datetime.now(ist).strftime('%Y-%m-%d %H:%M:%S')
+
+        c.execute('''
+            INSERT INTO interview_results
+            (username, role, domain, avg_score, total_questions, completed_on, feedback_summary)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (username, role, domain, avg_score, total_questions, completed_on, feedback_summary))
+
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        st.error(f"Database error: {e}")
+        return False
+
+# ============================================================================
+# EVALUATION FUNCTION - ENHANCED WITH KNOWLEDGE, CLARITY, RELEVANCE
+# ============================================================================
+def evaluate_interview_answer_for_scores(answer, question, difficulty):
+    """
+    Evaluate interview answer and return Knowledge, Clarity, Relevance scores (0-10)
+    plus feedback and optional follow-up question for Hard mode
+    """
+    import re
+
+    if not answer.strip():
+        return {
+            'Knowledge': 1,
+            'Clarity': 1,
+            'Relevance': 1,
+            'Feedback': ['⚠️ No answer provided.', 'Please provide a complete answer.', 'Take time to think through your response.'],
+            'FollowUp': ''
+        }
+
+    prompt = f"""You are an expert technical interview evaluator.
+
+Question: {question}
+Answer: {answer}
+Difficulty: {difficulty}
+
+Evaluate the candidate's answer strictly. Return your evaluation in this EXACT format:
+
+Knowledge: <score 0-10>
+Clarity: <score 0-10>
+Relevance: <score 0-10>
+Feedback: <3 bullet points, each on a new line starting with ->>
+FollowUp: <one probing question if difficulty is Hard, otherwise leave blank>
+
+Scoring Guide:
+- Knowledge (0-10): Technical accuracy, depth, completeness
+- Clarity (0-10): Communication skill, structure, coherence
+- Relevance (0-10): How well the answer addresses the question
+
+{"For Hard difficulty, include one challenging follow-up probing question." if difficulty == "Hard" else ""}
+"""
+
+    try:
+        response = call_llm(prompt, session=st.session_state).strip()
+
+        # Parse scores
+        knowledge = int(re.search(r'Knowledge:\s*(\d+)', response).group(1)) if re.search(r'Knowledge:\s*(\d+)', response) else 5
+        clarity = int(re.search(r'Clarity:\s*(\d+)', response).group(1)) if re.search(r'Clarity:\s*(\d+)', response) else 5
+        relevance = int(re.search(r'Relevance:\s*(\d+)', response).group(1)) if re.search(r'Relevance:\s*(\d+)', response) else 5
+
+        # Clamp scores 1-10
+        knowledge = max(1, min(10, knowledge))
+        clarity = max(1, min(10, clarity))
+        relevance = max(1, min(10, relevance))
+
+        # Parse feedback
+        feedback_section = re.search(r'Feedback:(.*?)(?:FollowUp:|$)', response, re.DOTALL)
+        if feedback_section:
+            feedback_text = feedback_section.group(1).strip()
+            feedback_list = [line.strip().lstrip('->').strip()
+                           for line in feedback_text.split('\n')
+                           if line.strip() and line.strip().startswith('->')]
+            if len(feedback_list) < 3:
+                feedback_list = ['Good attempt', 'Consider adding more detail', 'Keep practicing']
+        else:
+            feedback_list = ['Good effort', 'Work on clarity', 'Practice more']
+
+        # Parse follow-up
+        followup_match = re.search(r'FollowUp:\s*(.+)', response, re.DOTALL)
+        followup = followup_match.group(1).strip() if followup_match else ''
+
+        return {
+            'Knowledge': knowledge,
+            'Clarity': clarity,
+            'Relevance': relevance,
+            'Feedback': feedback_list[:3],
+            'FollowUp': followup if difficulty == "Hard" else ''
+        }
+
+    except Exception as e:
+        return {
+            'Knowledge': 5,
+            'Clarity': 5,
+            'Relevance': 5,
+            'Feedback': ['Evaluation error occurred', 'Please try again', 'Review your answer'],
+            'FollowUp': ''
+        }
+
 def evaluate_interview_answer(answer: str, question: str = None):
     """
-    Uses an LLM to strictly evaluate an interview answer.
-    Returns (score out of 5, feedback string).
+    Legacy function - Uses old 0-5 scoring for backwards compatibility
     """
-    from llm_manager import call_llm
     import re
-    import streamlit as st
 
-    # Empty check
     if not answer.strip():
         return 0, "⚠️ No answer provided."
 
-    # 🔹 LLM Prompt (STRICTER)
     prompt = f"""
     You are an expert technical interview evaluator.
 
     ### Task:
-    Evaluate the candidate's answer to the question below. 
+    Evaluate the candidate's answer to the question below.
     Be STRICT. Only give high scores if the answer is technically correct, relevant, and detailed.
 
     ### Question:
@@ -7534,20 +7682,12 @@ def evaluate_interview_answer(answer: str, question: str = None):
     """
 
     try:
-        # Call LLM
         response = call_llm(prompt, session=st.session_state).strip()
-
-        # Extract Score
         score_match = re.search(r"Score:\s*(\d+)", response)
-        score = int(score_match.group(1)) if score_match else 1  # stricter fallback
-
-        # Extract Feedback
+        score = int(score_match.group(1)) if score_match else 1
         feedback_match = re.search(r"Feedback:\s*(.+)", response)
         feedback = feedback_match.group(1).strip() if feedback_match else "Answer was unclear or irrelevant."
-
-        # ✅ Keep score in 0–5 range
         score = max(0, min(score, 5))
-
     except Exception as e:
         score = 1
         feedback = f"⚠️ Evaluation fallback due to error: {e}"
@@ -7561,6 +7701,11 @@ from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_co
 from llm_manager import call_llm
 import time
 import threading
+import sqlite3
+from datetime import datetime
+import pytz
+from io import BytesIO
+from xhtml2pdf import pisa
 
 with tab4:
     # Inject CSS styles (keeping existing styles)
@@ -8432,6 +8577,212 @@ with tab4:
         
         return questions
 
+    # ============================================================================
+    # PDF GENERATION FUNCTIONS
+    # ============================================================================
+    def generate_interview_pdf_report(username, role, domain, questions, answers, evaluations, avg_scores, badge):
+        """Generate PDF report from interview results"""
+        ist = pytz.timezone('Asia/Kolkata')
+        report_date = datetime.now(ist).strftime('%Y-%m-%d %H:%M:%S IST')
+
+        # Build XHTML
+        xhtml = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{
+                    font-family: Arial, sans-serif;
+                    margin: 40px;
+                    color: #333;
+                }}
+                h1 {{
+                    color: #00c3ff;
+                    text-align: center;
+                    border-bottom: 3px solid #00c3ff;
+                    padding-bottom: 10px;
+                }}
+                h2 {{
+                    color: #0099cc;
+                    margin-top: 30px;
+                }}
+                .header-info {{
+                    background: #f0f8ff;
+                    padding: 15px;
+                    border-radius: 8px;
+                    margin: 20px 0;
+                }}
+                .question-block {{
+                    background: #f9f9f9;
+                    padding: 15px;
+                    margin: 20px 0;
+                    border-left: 4px solid #00c3ff;
+                }}
+                .scores {{
+                    margin: 10px 0;
+                }}
+                .score-item {{
+                    background: #e6f7ff;
+                    padding: 8px 15px;
+                    border-radius: 5px;
+                    display: inline-block;
+                    margin: 5px;
+                }}
+                .feedback {{
+                    background: #fffbe6;
+                    padding: 10px;
+                    margin: 10px 0;
+                    border-left: 3px solid #ffd700;
+                }}
+                .summary {{
+                    background: #f0f8ff;
+                    padding: 20px;
+                    margin: 20px 0;
+                    border-radius: 10px;
+                    text-align: center;
+                }}
+                .badge {{
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: #00c3ff;
+                    margin: 10px 0;
+                }}
+            </style>
+        </head>
+        <body>
+            <h1>AI Interview Coach - Performance Report</h1>
+
+            <div class="header-info">
+                <p><strong>Candidate:</strong> {username}</p>
+                <p><strong>Role:</strong> {role}</p>
+                <p><strong>Domain:</strong> {domain}</p>
+                <p><strong>Date:</strong> {report_date}</p>
+                <p><strong>Total Questions:</strong> {len(questions)}</p>
+            </div>
+
+            <h2>Interview Questions & Answers</h2>
+        """
+
+        # Add each question
+        for i, (q, ans, ev) in enumerate(zip(questions, answers, evaluations), 1):
+            xhtml += f"""
+            <div class="question-block">
+                <h3>Question {i}</h3>
+                <p><strong>Q:</strong> {q}</p>
+                <p><strong>Answer:</strong> {ans}</p>
+
+                <div class="scores">
+                    <div class="score-item">Knowledge: {ev['Knowledge']}/10</div>
+                    <div class="score-item">Clarity: {ev['Clarity']}/10</div>
+                    <div class="score-item">Relevance: {ev['Relevance']}/10</div>
+                </div>
+
+                <div class="feedback">
+                    <strong>Feedback:</strong>
+                    <ul>
+            """
+
+            for feedback_point in ev['Feedback']:
+                xhtml += f"<li>{feedback_point}</li>"
+
+            xhtml += """
+                    </ul>
+                </div>
+            """
+
+            if ev.get('FollowUp'):
+                xhtml += f"""
+                <div class="feedback">
+                    <strong>Follow-up Question:</strong> {ev['FollowUp']}
+                </div>
+                """
+
+            xhtml += "</div>"
+
+        # Add summary
+        xhtml += f"""
+            <div class="summary">
+                <h2>Overall Performance</h2>
+                <div class="badge">{badge}</div>
+                <p><strong>Average Knowledge:</strong> {avg_scores['Knowledge']:.1f}/10</p>
+                <p><strong>Average Clarity:</strong> {avg_scores['Clarity']:.1f}/10</p>
+                <p><strong>Average Relevance:</strong> {avg_scores['Relevance']:.1f}/10</p>
+                <p><strong>Overall Average:</strong> {avg_scores['Overall']:.1f}/10</p>
+            </div>
+
+            <p style="text-align: center; margin-top: 40px; color: #666;">
+                Generated by AI Interview Coach
+            </p>
+        </body>
+        </html>
+        """
+
+        return xhtml
+
+    def xhtml_to_pdf_bytes(xhtml):
+        """Convert XHTML to PDF bytes"""
+        pdf_out = BytesIO()
+        pisa_status = pisa.CreatePDF(xhtml, dest=pdf_out)
+        pdf_out.seek(0)
+        return pdf_out
+
+    def create_performance_radar_chart(avg_scores):
+        """Create radar chart for interview performance"""
+        categories = ['Knowledge', 'Clarity', 'Relevance']
+        values = [avg_scores['Knowledge'], avg_scores['Clarity'], avg_scores['Relevance']]
+
+        fig = go.Figure()
+
+        fig.add_trace(go.Scatterpolar(
+            r=values,
+            theta=categories,
+            fill='toself',
+            name='Performance',
+            line=dict(color='#00c3ff', width=3),
+            fillcolor='rgba(0, 195, 255, 0.3)',
+            marker=dict(size=10, color='#00c3ff')
+        ))
+
+        fig.update_layout(
+            polar=dict(
+                radialaxis=dict(
+                    visible=True,
+                    range=[0, 10],
+                    tickfont=dict(color='white', size=12),
+                    gridcolor='rgba(255, 255, 255, 0.3)'
+                ),
+                angularaxis=dict(
+                    tickfont=dict(color='white', size=14, family='Inter'),
+                    gridcolor='rgba(255, 255, 255, 0.3)'
+                ),
+                bgcolor='rgba(0, 0, 0, 0.1)'
+            ),
+            showlegend=False,
+            title=dict(
+                text="Interview Performance Analysis",
+                x=0.5,
+                font=dict(color='#00c3ff', size=20, family='Inter')
+            ),
+            paper_bgcolor='rgba(0, 0, 0, 0)',
+            plot_bgcolor='rgba(0, 0, 0, 0)',
+            font=dict(color='white', family='Inter'),
+            height=450
+        )
+
+        return fig
+
+    def get_interview_badge(avg_score):
+        """Return badge emoji and title based on average score (0-10)"""
+        if avg_score >= 8.5:
+            return "\ud83c\udfc6", "Interview Ready"
+        elif avg_score >= 7.0:
+            return "\ud83c\udf1f", "Excellent"
+        elif avg_score >= 5.0:
+            return "\ud83d\udc4d", "Good"
+        else:
+            return "\ud83d\udcaa", "Needs Practice"
+
     # UPDATED: AI-Generated Questions using LLM
     def generate_interview_questions_with_llm(domain, role, interview_type, num_questions):
         """Generate interview questions using LLM based on domain, role, and type"""
@@ -8846,31 +9197,40 @@ for the role of {role} in {domain}.
                 
             # Start interview setup
             if not st.session_state.dynamic_interview_started:
-                st.markdown(f"### Practice interview for: {selected_role}")
-                
-                col1, col2 = st.columns(2)
-                
+                st.markdown(f"### 🎯 Start Mock Interview for: {selected_role}")
+
+                col1, col2, col3 = st.columns(3)
+
                 with col1:
-                    interview_type = st.selectbox(
-                        "Interview Type",
-                        options=["technical", "behavioral", "mixed"],
-                        format_func=lambda x: x.title() + (" (Technical + Behavioral)" if x == "mixed" else ""),
-                        key="dynamic_interview_type_select"
+                    difficulty = st.selectbox(
+                        "Difficulty Level",
+                        options=["Easy", "Medium", "Hard"],
+                        key="interview_difficulty_select"
                     )
-                
+
                 with col2:
-                    num_questions = st.slider("Number of questions:", 3, 8, 5)
-                
-                # Timer setting
-                st.session_state.timer_seconds = st.slider("Time per question (seconds):", 60, 300, 120, step=30)
-                
-                if st.button("🚀 Start Interview Practice"):
+                    num_questions = st.slider("Number of questions:", 5, 10, 5)
+
+                with col3:
+                    timer_seconds = st.slider("Time per question (seconds):", 60, 300, 120, step=30)
+
+                # Store in session state
+                if 'interview_difficulty' not in st.session_state:
+                    st.session_state.interview_difficulty = difficulty
+                else:
+                    st.session_state.interview_difficulty = difficulty
+
+                st.session_state.timer_seconds = timer_seconds
+
+                st.info(f"💡 **{difficulty} Mode**: Questions will be tailored to your selected difficulty level. Hard mode includes follow-up probing questions!")
+
+                if st.button("🚀 Start Mock Interview"):
                     with st.spinner("Generating personalized questions using AI..."):
-                        # Generate questions using LLM
+                        # Generate questions using LLM with difficulty
                         selected_questions = generate_interview_questions_with_llm(
-                            selected_domain, 
-                            selected_role, 
-                            interview_type, 
+                            selected_domain,
+                            selected_role,
+                            difficulty,
                             num_questions
                         )
                         
@@ -8959,15 +9319,17 @@ for the role of {role} in {domain}.
                     if remaining_time <= 0 and not st.session_state.dynamic_answer_submitted:
                         if not answer.strip():
                             answer = "⚠️ No Answer"
-                        
-                        # Evaluate answer
-                        score, feedback = evaluate_interview_answer(answer, question)
-                        
-                        # Store answer and score
+
+                        # Evaluate answer with new scoring system
+                        evaluation = evaluate_interview_answer_for_scores(
+                            answer, question, st.session_state.interview_difficulty
+                        )
+
+                        # Store answer and evaluation
                         st.session_state.dynamic_interview_answers.append(answer)
-                        st.session_state.dynamic_interview_scores.append(score)
+                        st.session_state.dynamic_interview_scores.append(evaluation)
                         st.session_state.dynamic_answer_submitted = True
-                        
+
                         st.warning("⏰ Time's up! Answer auto-submitted.")
                         st.rerun()
                     
@@ -8976,31 +9338,41 @@ for the role of {role} in {domain}.
                         if st.button("Submit Answer & Get Feedback"):
                             if answer.strip():
                                 with st.spinner("Evaluating your answer..."):
-                                    # Evaluate answer
-                                    score, feedback = evaluate_interview_answer(answer, question)
-                                    
-                                    # Store answer and score
+                                    # Evaluate answer with new scoring system
+                                    evaluation = evaluate_interview_answer_for_scores(
+                                        answer, question, st.session_state.interview_difficulty
+                                    )
+
+                                    # Store answer and evaluation
                                     st.session_state.dynamic_interview_answers.append(answer)
-                                    st.session_state.dynamic_interview_scores.append(score)
+                                    st.session_state.dynamic_interview_scores.append(evaluation)
                                     st.session_state.dynamic_answer_submitted = True
                                     st.rerun()
                             else:
                                 st.warning("Please provide an answer before proceeding.")
-                    
+
                     # Show feedback after answer submitted
                     if st.session_state.dynamic_answer_submitted:
-                        score = st.session_state.dynamic_interview_scores[st.session_state.current_dynamic_interview_question]
-                        answer_text = st.session_state.dynamic_interview_answers[st.session_state.current_dynamic_interview_question]
-                        _, feedback = evaluate_interview_answer(answer_text, st.session_state.current_interview_question_text)
-                        
-                        st.markdown(f"""
-                        <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%); 
-                                    border: 1px solid rgba(0, 195, 255, 0.3); border-radius: 10px; padding: 15px; margin: 15px 0;">
-                            <h4 style="color: #00c3ff;">Feedback:</h4>
-                            <p style="color: #ffffff;">📊 Score: {score:.1f}/5.0</p>
-                            <p style="color: #ffffff;">💬 {feedback}</p>
-                        </div>
-                        """, unsafe_allow_html=True)
+                        evaluation = st.session_state.dynamic_interview_scores[st.session_state.current_dynamic_interview_question]
+
+                        st.markdown("### 📊 Evaluation Results")
+
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.markdown(f'<div style="background: linear-gradient(135deg, #4CAF50, #45a049); color: white; padding: 15px; border-radius: 10px; text-align: center;"><strong>Knowledge</strong><br><span style="font-size: 24px;">{evaluation["Knowledge"]}/10</span></div>', unsafe_allow_html=True)
+                        with col2:
+                            st.markdown(f'<div style="background: linear-gradient(135deg, #2196F3, #1976D2); color: white; padding: 15px; border-radius: 10px; text-align: center;"><strong>Clarity</strong><br><span style="font-size: 24px;">{evaluation["Clarity"]}/10</span></div>', unsafe_allow_html=True)
+                        with col3:
+                            st.markdown(f'<div style="background: linear-gradient(135deg, #FF9800, #f57c00); color: white; padding: 15px; border-radius: 10px; text-align: center;"><strong>Relevance</strong><br><span style="font-size: 24px;">{evaluation["Relevance"]}/10</span></div>', unsafe_allow_html=True)
+
+                        st.markdown("### 💡 Feedback")
+                        for i, feedback_point in enumerate(evaluation['Feedback'], 1):
+                            st.markdown(f"{i}. {feedback_point}")
+
+                        # Hard mode follow-up
+                        if evaluation.get('FollowUp') and st.session_state.interview_difficulty == "Hard":
+                            st.markdown("### 🔍 Follow-up Probing Question")
+                            st.info(evaluation['FollowUp'])
                         
                         # Continue/Complete button
                         if st.session_state.current_dynamic_interview_question < len(st.session_state.dynamic_interview_questions) - 1:
@@ -9025,12 +9397,13 @@ for the role of {role} in {domain}.
                     # Review Previous Answers during interview
                     if len(st.session_state.dynamic_interview_answers) > 0:
                         with st.expander("📖 Review Previous Answers"):
-                            for i, (prev_answer, prev_score) in enumerate(zip(st.session_state.dynamic_interview_answers, st.session_state.dynamic_interview_scores)):
+                            for i, (prev_answer, prev_eval) in enumerate(zip(st.session_state.dynamic_interview_answers, st.session_state.dynamic_interview_scores)):
                                 if i < st.session_state.current_dynamic_interview_question:
                                     prev_question = st.session_state.dynamic_interview_questions[i]
+                                    avg_prev_score = (prev_eval['Knowledge'] + prev_eval['Clarity'] + prev_eval['Relevance']) / 3
                                     st.markdown(f"**Question {i+1}:** {prev_question}")
                                     st.markdown(f"**Your Answer:** {prev_answer[:200]}...")
-                                    st.markdown(f"**Score:** {prev_score:.1f}/5.0")
+                                    st.markdown(f"**Scores:** K:{prev_eval['Knowledge']} | C:{prev_eval['Clarity']} | R:{prev_eval['Relevance']} | Avg:{avg_prev_score:.1f}/10")
                                     st.markdown("---")
                     
                     # Auto-refresh for timer
@@ -9040,42 +9413,113 @@ for the role of {role} in {domain}.
             
             # UNIFIED: Interview completed + Course Recommendations
             elif st.session_state.dynamic_interview_completed:
-                # Calculate average score
-                avg_score = sum(st.session_state.dynamic_interview_scores) / len(st.session_state.dynamic_interview_scores)
-                
-                # Store results for gamification
-                st.session_state.interview_result = {
-                    "avg_score": avg_score,
-                    "num_questions": len(st.session_state.dynamic_interview_questions),
-                    "scores": st.session_state.dynamic_interview_scores,
-                    "role": selected_role,
-                    "domain": selected_domain
+                # Calculate average scores from evaluations
+                evaluations = st.session_state.dynamic_interview_scores
+                avg_knowledge = sum(e['Knowledge'] for e in evaluations) / len(evaluations)
+                avg_clarity = sum(e['Clarity'] for e in evaluations) / len(evaluations)
+                avg_relevance = sum(e['Relevance'] for e in evaluations) / len(evaluations)
+                avg_overall = (avg_knowledge + avg_clarity + avg_relevance) / 3
+
+                avg_scores = {
+                    'Knowledge': avg_knowledge,
+                    'Clarity': avg_clarity,
+                    'Relevance': avg_relevance,
+                    'Overall': avg_overall
                 }
-                
+
                 # Get badge
-                badge_emoji, badge_title = get_badge_for_score("interview", avg_score)
-                
+                badge_emoji, badge_title = get_interview_badge(avg_overall)
+
+                # Display completion banner
                 st.markdown(f"""
-                <div class="badge-container">
-                    <h2 style="margin: 0; color: #333;">🎉 Interview Practice Complete!</h2>
-                    <div style="margin: 20px 0;">
-                        <div class="score-display">{avg_score:.1f}/5.0</div>
-                        <h3 style="color: #333; margin: 10px 0;">{badge_emoji} {badge_title}</h3>
-                    </div>
-                    <p style="color: #666;">Role: {selected_role} in {selected_domain}</p>
+                <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.2) 100%);
+                            border: 2px solid #00c3ff; border-radius: 15px; padding: 30px; text-align: center; margin: 20px 0;">
+                    <h1 style="color: #00c3ff; margin: 0;">🎉 Mock Interview Complete!</h1>
+                    <div style="font-size: 48px; margin: 20px 0;">{badge_emoji}</div>
+                    <h2 style="color: #ffffff; margin: 10px 0;">{badge_title}</h2>
+                    <p style="font-size: 32px; color: #00c3ff; font-weight: bold; margin: 15px 0;">
+                        Overall Score: {avg_overall:.1f}/10
+                    </p>
+                    <p style="color: #ffffff;">Role: {selected_role} | Domain: {selected_domain}</p>
                 </div>
                 """, unsafe_allow_html=True)
-                
+
+                # Display radar chart
+                st.markdown("### 📊 Performance Dashboard")
+                radar_fig = create_performance_radar_chart(avg_scores)
+                st.plotly_chart(radar_fig, use_container_width=True)
+
+                # Strengths & Weaknesses
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    st.markdown("### ✅ Strengths")
+                    scores_dict = {'Knowledge': avg_knowledge, 'Clarity': avg_clarity, 'Relevance': avg_relevance}
+                    max_score_area = max(scores_dict, key=scores_dict.get)
+                    st.success(f"Your {max_score_area} score is excellent ({scores_dict[max_score_area]:.1f}/10)")
+
+                    for area, score in sorted(scores_dict.items(), key=lambda x: x[1], reverse=True):
+                        if score >= 7.0:
+                            st.markdown(f"- {area}: {score:.1f}/10")
+
+                with col2:
+                    st.markdown("### 🎯 Areas to Improve")
+                    min_score_area = min(scores_dict, key=scores_dict.get)
+                    st.warning(f"Focus on improving your {min_score_area} ({scores_dict[min_score_area]:.1f}/10)")
+
+                    for area, score in sorted(scores_dict.items(), key=lambda x: x[1]):
+                        if score < 7.0:
+                            st.markdown(f"- {area}: {score:.1f}/10")
+
                 # Show detailed results
-                st.subheader("📊 Detailed Results:")
-                for i, (score, answer) in enumerate(zip(st.session_state.dynamic_interview_scores, st.session_state.dynamic_interview_answers)):
-                    with st.expander(f"Question {i+1}: Score {score:.1f}/5.0"):
+                st.markdown("---")
+                st.subheader("📝 Detailed Results")
+                for i, (evaluation, answer) in enumerate(zip(evaluations, st.session_state.dynamic_interview_answers)):
+                    avg_q_score = (evaluation['Knowledge'] + evaluation['Clarity'] + evaluation['Relevance']) / 3
+                    with st.expander(f"Question {i+1} - Avg: {avg_q_score:.1f}/10"):
                         st.write(f"**Question:** {st.session_state.dynamic_interview_questions[i]}")
                         st.write(f"**Your Answer:** {answer}")
-                        st.write(f"**Score:** {score:.1f}/5.0")
-                        # Re-generate feedback for review
-                        _, feedback = evaluate_interview_answer(answer, st.session_state.dynamic_interview_questions[i])
-                        st.write(f"**Feedback:** {feedback}")
+                        st.write(f"**Scores:** Knowledge: {evaluation['Knowledge']}/10 | Clarity: {evaluation['Clarity']}/10 | Relevance: {evaluation['Relevance']}/10")
+                        st.markdown("**Feedback:**")
+                        for feedback_point in evaluation['Feedback']:
+                            st.markdown(f"- {feedback_point}")
+                        if evaluation.get('FollowUp'):
+                            st.markdown(f"**Follow-up:** {evaluation['FollowUp']}")
+
+                # Save to database
+                username = st.session_state.get('username', 'Guest')
+                feedback_summary = f"{badge_title} - Focus on {min_score_area.lower()}"
+
+                if save_interview_results_to_db(username, selected_role, selected_domain,
+                                                 avg_overall, len(st.session_state.dynamic_interview_questions), feedback_summary):
+                    log_user_action(username, "completed_interview")
+
+                # PDF Download
+                st.markdown("---")
+                st.markdown("### 📄 Download Your Report")
+
+                if st.button("📥 Generate PDF Report", key='generate_pdf_btn'):
+                    with st.spinner("Generating PDF report..."):
+                        xhtml = generate_interview_pdf_report(
+                            username,
+                            selected_role,
+                            selected_domain,
+                            st.session_state.dynamic_interview_questions,
+                            st.session_state.dynamic_interview_answers,
+                            evaluations,
+                            avg_scores,
+                            f"{badge_emoji} {badge_title}"
+                        )
+
+                        pdf_bytes = xhtml_to_pdf_bytes(xhtml)
+
+                        st.download_button(
+                            label="📄 Download Interview Report",
+                            data=pdf_bytes,
+                            file_name=f"interview_report_{username}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                            mime="application/pdf",
+                            key='download_pdf_btn'
+                        )
                 
                 # UNIFIED: Display recommended courses by difficulty
                 st.markdown("---")
@@ -9090,7 +9534,8 @@ for the role of {role} in {domain}.
                     st.info("No specific courses found for this role. Explore our course categories to find relevant learning resources!")
                 
                 # Restart button
-                if st.button("🔄 Practice for Different Role"):
+                st.markdown("---")
+                if st.button("🔄 Practice Again", key='restart_interview_btn'):
                     st.session_state.dynamic_interview_started = False
                     st.session_state.dynamic_interview_completed = False
                     st.session_state.dynamic_interview_questions = []
@@ -9100,6 +9545,7 @@ for the role of {role} in {domain}.
                     st.session_state.dynamic_answer_submitted = False
                     st.session_state.current_interview_question_text = ""
                     st.session_state.question_timer_start = None
+                    st.session_state.interview_difficulty = 'Easy'
                     st.rerun()
         else:
             st.info("Please select both a career domain and target role to start the interview practice.")

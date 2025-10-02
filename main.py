@@ -6203,10 +6203,9 @@ from zoneinfo import ZoneInfo
 import requests
 import re
 
-
-# RapidAPI Configuration
-RAPID_API_KEY = "f3dd6114b8mshe6ff78ae32a91f9p124901jsn4de9f1698693"
-RAPID_API_HOST = "jsearch.p.rapidapi.com"
+# ✅ RapidAPI Configuration (from Streamlit secrets)
+RAPID_API_KEY = st.secrets["rapidapi"]["key"]
+RAPID_API_HOST = st.secrets["rapidapi"]["host"]
 
 def clean_html(raw_html: str) -> str:
     """Remove HTML tags and comments from API descriptions."""
@@ -6305,6 +6304,7 @@ def unified_search(job_role, location, experience_level=None, job_type=None, fou
         })
 
     return results
+
 
 # Database functions for job search history
 def init_job_search_db():

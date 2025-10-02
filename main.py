@@ -6000,7 +6000,6 @@ with tab2:
             convert it to PDF using Sejda's free online tool</a>.
             """, unsafe_allow_html=True)
 
-
 FEATURED_COMPANIES = {
     "tech": [
         {
@@ -6694,11 +6693,28 @@ with tab3:
 
                     # Create job card HTML
                     job_card_html = f"""
+<style>
+    @keyframes shimmer {{
+        0% {{ transform: translateX(-100%); }}
+        100% {{ transform: translateX(100%); }}
+    }}
+    .shimmer-overlay {{
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+        transform: translateX(-100%);
+        animation: shimmer 3s infinite;
+        z-index: 1;
+    }}
+</style>
 <div class="job-result-card" style="
     background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
     padding: 25px;
     border-radius: 20px;
-    margin-bottom: 25px;
+    margin-bottom: 15px;
     border-left: 6px solid {btn_color};
     box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px {btn_color}40;
     position: relative;
@@ -6743,7 +6759,7 @@ with tab3:
     </a>
 </div>
 """
-                    st.components.v1.html(job_card_html, height=300, scrolling=False)
+                    st.components.v1.html(job_card_html, height=280, scrolling=False)
             else:
                 st.warning("⚠️ Please enter both the Job Title and Location to perform the search.")
 
@@ -6756,6 +6772,9 @@ with tab3:
 
         with col2:
             rapid_location = st.text_input("📍 Location", placeholder="e.g., Mumbai", key="rapid_loc")
+
+        # Number of results
+        num_results = st.slider("📊 Number of Jobs to Fetch", min_value=5, max_value=50, value=10, step=5, key="rapid_num_results")
 
         # Advanced Filters
         with st.expander("🔧 Advanced Filters"):
@@ -6787,7 +6806,7 @@ with tab3:
                     rapid_location,
                     job_type=rapid_job_type if rapid_job_type else None,
                     remote_only=remote_only,
-                    results=10
+                    results=num_results
                 )
 
                 # Save search results if user is logged in
@@ -6825,11 +6844,28 @@ with tab3:
 
                         # Create job card HTML
                         job_card_html = f"""
+<style>
+    @keyframes shimmer {{
+        0% {{ transform: translateX(-100%); }}
+        100% {{ transform: translateX(100%); }}
+    }}
+    .shimmer-overlay {{
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+        transform: translateX(-100%);
+        animation: shimmer 3s infinite;
+        z-index: 1;
+    }}
+</style>
 <div class="job-result-card" style="
     background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
     padding: 25px;
     border-radius: 20px;
-    margin-bottom: 25px;
+    margin-bottom: 15px;
     border-left: 6px solid {btn_color};
     box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px {btn_color}40;
     position: relative;
@@ -6884,7 +6920,7 @@ with tab3:
     </a>
 </div>
 """
-                        st.components.v1.html(job_card_html, height=400, scrolling=False)
+                        st.components.v1.html(job_card_html, height=380, scrolling=False)
                 else:
                     st.info("No jobs found. Try adjusting your search criteria.")
             else:

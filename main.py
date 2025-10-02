@@ -6944,50 +6944,48 @@ with tab3:
                         btn_color = "#00ff88"
                         platform_gradient = "linear-gradient(135deg, #00ff88 0%, #00cc6f 100%)"
 
-                        # Custom HTML card with responsive design
+                        # Custom HTML card
                         job_card_html = f"""
 <div class="job-result-card" style="
     background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
-    padding: clamp(15px, 2vw, 20px);
+    padding: 25px;
     border-radius: 20px;
-    margin-bottom: 12px;
+    margin-bottom: 25px;
     border-left: 6px solid {btn_color};
     box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px {btn_color}40;
     position: relative;
     overflow: hidden;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    max-width: 100%;
-    box-sizing: border-box;
 ">
     <div class="shimmer-overlay"></div>
 
     <!-- Platform Badge -->
-    <div style="font-size: clamp(14px, 1.5vw, 16px); margin-bottom: 10px; color: {btn_color}; font-weight: bold;">
+    <div style="font-size: 18px; margin-bottom: 15px; color: {btn_color}; font-weight: bold;">
         ⚡ RapidAPI (Live)
     </div>
 
     <!-- Job Title -->
-    <div style="color: #ffffff; font-size: clamp(16px, 2vw, 20px); margin-bottom: 8px; font-weight: 600; line-height: 1.3; word-wrap: break-word;">
+    <div style="color: #ffffff; font-size: 22px; margin-bottom: 10px; font-weight: 600; line-height: 1.4;">
         {job_title}
     </div>
 
     <!-- Company -->
-    <div style="color: #aaaaaa; font-size: clamp(13px, 1.5vw, 15px); margin-bottom: 10px; word-wrap: break-word;">
+    <div style="color: #aaaaaa; font-size: 16px; margin-bottom: 15px;">
         🏢 <b>{job_company}</b>
     </div>
 
     <!-- Job Details Grid -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin-bottom: 10px;">
-        <div style="color: #cccccc; font-size: clamp(11px, 1.2vw, 13px); word-wrap: break-word;">📍 <b>Location:</b> {job_location}</div>
-        <div style="color: #cccccc; font-size: clamp(11px, 1.2vw, 13px); word-wrap: break-word;">💰 <b>Salary:</b> {job_salary}</div>
-        <div style="color: #cccccc; font-size: clamp(11px, 1.2vw, 13px);">📋 <b>Type:</b> {job_type}</div>
-        <div style="color: #cccccc; font-size: clamp(11px, 1.2vw, 13px);">🌍 <b>Mode:</b> {job_mode}</div>
-        <div style="color: #cccccc; font-size: clamp(11px, 1.2vw, 13px);">📅 <b>Posted:</b> {formatted_date}</div>
-        <div style="color: #cccccc; font-size: clamp(11px, 1.2vw, 13px); word-wrap: break-word;">📰 <b>Source:</b> {job_publisher}</div>
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px;">
+        <div style="color: #cccccc; font-size: 14px;">📍 <b>Location:</b> {job_location}</div>
+        <div style="color: #cccccc; font-size: 14px;">💰 <b>Salary:</b> {job_salary}</div>
+        <div style="color: #cccccc; font-size: 14px;">📋 <b>Type:</b> {job_type}</div>
+        <div style="color: #cccccc; font-size: 14px;">🌍 <b>Mode:</b> {job_mode}</div>
+        <div style="color: #cccccc; font-size: 14px;">📅 <b>Posted:</b> {formatted_date}</div>
+        <div style="color: #cccccc; font-size: 14px;">📰 <b>Source:</b> {job_publisher}</div>
     </div>
 
     <!-- Description -->
-    <div style="color: #999999; font-size: clamp(11px, 1.2vw, 13px); margin-bottom: 12px; line-height: 1.5; word-wrap: break-word;">
+    <div style="color: #999999; font-size: 14px; margin-bottom: 20px; line-height: 1.6;">
         {job_description}
     </div>
 
@@ -6996,23 +6994,21 @@ with tab3:
         <button class="job-button" style="
             background: {platform_gradient};
             color: white;
-            padding: clamp(8px, 1.2vw, 10px) clamp(16px, 2vw, 20px);
+            padding: 12px 24px;
             border: none;
             border-radius: 12px;
-            font-size: clamp(13px, 1.5vw, 15px);
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             box-shadow: 0 4px 15px {btn_color}50;
             transition: all 0.3s ease;
-            width: auto;
-            display: inline-block;
         ">
             🚀 Apply Now →
         </button>
     </a>
 </div>
 """
-                        st.components.v1.html(job_card_html, height=330, scrolling=False)
+                        st.components.v1.html(job_card_html, height=500, scrolling=False)
                 else:
                     st.info("No jobs found. Try adjusting your search criteria.")
             else:

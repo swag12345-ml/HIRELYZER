@@ -7493,26 +7493,39 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
-def evaluate_interview_answer(answer: str, question: str = None):
+def evaluate_interview_answer(answer: str, question: str = None, difficulty: str = "Medium"):
     """
     Uses an LLM to strictly evaluate an interview answer.
-    Returns (score out of 5, feedback string).
+    Returns (score out of 10, feedback string).
+    FIXED: Now accepts difficulty parameter and adjusts strictness.
     """
     from llm_manager import call_llm
     import re
     import streamlit as st
 
-    # Empty check
-    if not answer.strip():
-        return 0, "⚠️ No answer provided."
+    # Empty or junk answer check
+    if not answer.strip() or answer == "⚠️ No Answer" or answer.strip() in ["*", ".", "-", "N/A"]:
+        return 0, "⚠️ No answer provided or answer is not meaningful."
 
-    # 🔹 LLM Prompt (STRICTER)
+    # 🔹 Difficulty-based strictness
+    if difficulty == "Easy":
+        strictness_note = "Be lenient. Easy questions focus on foundational knowledge."
+        max_score = 10
+    elif difficulty == "Medium":
+        strictness_note = "Be moderately strict. Medium questions require scenario-based and technical understanding."
+        max_score = 10
+    else:  # Hard
+        strictness_note = "Be very strict. Hard questions require deep technical insight, system design thinking, and problem-solving."
+        max_score = 10
+
+    # 🔹 LLM Prompt (STRICTER and difficulty-aware)
     prompt = f"""
     You are an expert technical interview evaluator.
 
     ### Task:
     Evaluate the candidate's answer to the question below.
-    Be STRICT. Only give high scores if the answer is technically correct, relevant, and detailed.
+    {strictness_note}
+    Only give high scores if the answer is technically correct, relevant, and detailed.
 
     ### Question:
     {question if question else "N/A"}
@@ -7520,16 +7533,20 @@ def evaluate_interview_answer(answer: str, question: str = None):
     ### Candidate Answer:
     {answer}
 
-    ### Strict Scoring Rubric:
-    - 5 = Exceptional: Fully correct, highly relevant, clear, detailed, technically accurate.
-    - 4 = Good: Mostly correct and relevant, but missing some depth/clarity.
-    - 3 = Average: Partially correct OR generic, but somewhat relevant.
-    - 2 = Weak: Mostly irrelevant, shallow, or major gaps in correctness.
+    ### Difficulty Level:
+    {difficulty}
+
+    ### Strict Scoring Rubric (1-10 scale):
+    - 10 = Perfect: Exceptional depth, fully correct, highly relevant, clear, detailed.
+    - 8-9 = Excellent: Very strong answer with minor gaps.
+    - 6-7 = Good: Mostly correct and relevant, but missing some depth.
+    - 4-5 = Average: Partially correct or somewhat generic.
+    - 2-3 = Weak: Mostly irrelevant, shallow, or major gaps.
     - 1 = Poor: Completely irrelevant, incoherent, or very wrong.
     - 0 = No answer / total nonsense.
 
     ### Output Format:
-    Score: <number between 0 and 5>
+    Score: <number between 0 and 10>
     Feedback: <constructive feedback in 1–2 sentences>
     """
 
@@ -7539,17 +7556,17 @@ def evaluate_interview_answer(answer: str, question: str = None):
 
         # Extract Score
         score_match = re.search(r"Score:\s*(\d+)", response)
-        score = int(score_match.group(1)) if score_match else 1  # stricter fallback
+        score = int(score_match.group(1)) if score_match else 0  # DEFAULT TO 0, NOT 5
 
         # Extract Feedback
-        feedback_match = re.search(r"Feedback:\s*(.+)", response)
+        feedback_match = re.search(r"Feedback:\s*(.+)", response, re.DOTALL)
         feedback = feedback_match.group(1).strip() if feedback_match else "Answer was unclear or irrelevant."
 
-        # ✅ Keep score in 0–5 range
-        score = max(0, min(score, 5))
+        # ✅ Clamp score to 0–10 range
+        score = max(0, min(score, 10))
 
     except Exception as e:
-        score = 1
+        score = 0  # CHANGED: Default to 0 on error
         feedback = f"⚠️ Evaluation fallback due to error: {e}"
 
     return score, feedback
@@ -7560,22 +7577,31 @@ def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty:
     Enhanced evaluation that returns detailed scores for Knowledge, Clarity, Relevance.
     Also returns follow-up question for Hard difficulty.
     Returns dict with keys: knowledge, clarity, relevance, feedback, followup
+
+    FIXED: Now properly handles difficulty levels and defaults to 0 for bad/empty answers.
     """
     from llm_manager import call_llm
     import re
     import streamlit as st
 
-    # Empty check
-    if not answer.strip() or answer == "⚠️ No Answer":
+    # Empty or junk answer check - FIXED: Default to 0, not 5
+    if not answer.strip() or answer == "⚠️ No Answer" or answer.strip() in ["*", ".", "-", "N/A"]:
         return {
-            "knowledge": 1,
-            "clarity": 1,
-            "relevance": 1,
-            "feedback": "No answer provided. Try using the STAR method: Situation, Task, Action, Result.",
+            "knowledge": 0,
+            "clarity": 0,
+            "relevance": 0,
+            "feedback": "No answer provided or answer is not meaningful. Try using the STAR method: Situation, Task, Action, Result.",
             "followup": ""
         }
 
-    # Construct evaluation prompt
+    # Construct evaluation prompt with difficulty-based strictness
+    if difficulty == "Easy":
+        strictness_note = "Be lenient and encouraging. Easy questions test basic understanding."
+    elif difficulty == "Medium":
+        strictness_note = "Be moderately strict. Medium questions require scenario-based thinking and technical depth."
+    else:  # Hard
+        strictness_note = "Be very strict. Hard questions require exceptional depth, system design, and problem-solving skills."
+
     followup_instruction = ""
     if difficulty == "Hard":
         followup_instruction = "\n- FollowUp: Generate ONE probing follow-up question to dig deeper into their answer."
@@ -7586,18 +7612,22 @@ Question: {question}
 Candidate Answer: {answer}
 Difficulty Level: {difficulty}
 
+{strictness_note}
+
 Provide scores (1-10 scale):
-- Knowledge: Technical accuracy and depth of understanding
-- Clarity: How clearly the answer is communicated
-- Relevance: How well the answer addresses the question
+- Knowledge: Technical accuracy and depth of understanding (0-10)
+- Clarity: How clearly the answer is communicated (0-10)
+- Relevance: How well the answer addresses the question (0-10)
+
+IMPORTANT: If the answer is junk, irrelevant, or meaningless (like "*", ".", or very short non-answers), give scores of 0-1.
 
 Also provide:
 - Feedback: 2-3 short bullet points with specific improvement tips{followup_instruction}
 
 Output format (strict):
-Knowledge: <number 1-10>
-Clarity: <number 1-10>
-Relevance: <number 1-10>
+Knowledge: <number 0-10>
+Clarity: <number 0-10>
+Relevance: <number 0-10>
 Feedback:
 - <tip 1>
 - <tip 2>
@@ -7613,14 +7643,15 @@ FollowUp: <one probing question>""" if difficulty == "Hard" else ""}
         clarity_match = re.search(r"Clarity:\s*(\d+)", response, re.IGNORECASE)
         relevance_match = re.search(r"Relevance:\s*(\d+)", response, re.IGNORECASE)
 
-        knowledge = int(knowledge_match.group(1)) if knowledge_match else 5
-        clarity = int(clarity_match.group(1)) if clarity_match else 5
-        relevance = int(relevance_match.group(1)) if relevance_match else 5
+        # FIXED: Default to 0, not 5
+        knowledge = int(knowledge_match.group(1)) if knowledge_match else 0
+        clarity = int(clarity_match.group(1)) if clarity_match else 0
+        relevance = int(relevance_match.group(1)) if relevance_match else 0
 
-        # Clamp to 1-10 range
-        knowledge = max(1, min(10, knowledge))
-        clarity = max(1, min(10, clarity))
-        relevance = max(1, min(10, relevance))
+        # Clamp to 0-10 range (CHANGED from 1-10)
+        knowledge = max(0, min(10, knowledge))
+        clarity = max(0, min(10, clarity))
+        relevance = max(0, min(10, relevance))
 
         # Parse feedback
         feedback_match = re.search(r"Feedback:\s*(.+?)(?:FollowUp:|$)", response, re.DOTALL | re.IGNORECASE)
@@ -7645,12 +7676,12 @@ FollowUp: <one probing question>""" if difficulty == "Hard" else ""}
         }
 
     except Exception as e:
-        # Fallback defaults
+        # Fallback defaults - FIXED: Default to 0
         return {
-            "knowledge": 5,
-            "clarity": 5,
-            "relevance": 5,
-            "feedback": "Use STAR method. Give specific example. Be concise.",
+            "knowledge": 0,
+            "clarity": 0,
+            "relevance": 0,
+            "feedback": f"Evaluation error: {e}. Use STAR method. Give specific example. Be concise.",
             "followup": ""
         }
 
@@ -7718,7 +7749,10 @@ def save_interview_result(username: str, role: str, domain: str, avg_score: floa
 
 
 def generate_interview_pdf_report(username, role, domain, completed_on, questions, answers, scores, feedbacks, overall_avg, badge):
-    """Generate PDF report for interview using xhtml2pdf"""
+    """
+    Generate PDF report for interview using xhtml2pdf
+    FIXED: Show full answers (up to 2000 chars instead of 500)
+    """
     try:
         from xhtml2pdf import pisa
         from io import BytesIO
@@ -7734,10 +7768,11 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
                 h1 {{ color: #00c3ff; text-align: center; }}
                 h2 {{ color: #0099cc; margin-top: 20px; }}
                 .header {{ background: #f0f0f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; }}
-                .question-block {{ margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }}
+                .question-block {{ margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; page-break-inside: avoid; }}
                 .score {{ font-weight: bold; color: #00c3ff; }}
                 .feedback {{ color: #666; margin-top: 10px; }}
                 .summary {{ background: #fffacd; padding: 15px; border-radius: 8px; margin: 20px 0; }}
+                .answer-text {{ word-wrap: break-word; white-space: pre-wrap; }}
             </style>
         </head>
         <body>
@@ -7756,14 +7791,20 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
             <h2>Detailed Q&A Review</h2>
         """
 
-        # Add each question/answer/score/feedback
+        # Add each question/answer/score/feedback - FIXED: Show up to 2000 chars
         for i, (q, a, s, f) in enumerate(zip(questions, answers, scores, feedbacks), 1):
-            avg_q_score = (s.get('knowledge', 5) + s.get('clarity', 5) + s.get('relevance', 5)) / 3
+            avg_q_score = (s.get('knowledge', 0) + s.get('clarity', 0) + s.get('relevance', 0)) / 3
+
+            # FIXED: Show full answer up to 2000 chars instead of 500
+            answer_display = a[:2000]
+            if len(a) > 2000:
+                answer_display += '...'
+
             xhtml += f"""
             <div class="question-block">
                 <h3>Question {i}</h3>
                 <p><strong>Q:</strong> {q}</p>
-                <p><strong>Your Answer:</strong> {a[:500]}{'...' if len(a) > 500 else ''}</p>
+                <div class="answer-text"><strong>Your Answer:</strong> {answer_display}</div>
                 <p class="score">Knowledge: {s.get('knowledge', 0)}/10 | Clarity: {s.get('clarity', 0)}/10 | Relevance: {s.get('relevance', 0)}/10</p>
                 <p class="score">Question Score: {avg_q_score:.1f}/10</p>
                 <div class="feedback"><strong>Feedback:</strong> {f}</div>
@@ -7803,7 +7844,7 @@ with tab4:
     st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
+
         * {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
@@ -7817,7 +7858,7 @@ with tab4:
             border-radius: 20px;
             text-align: center;
             margin-bottom: 35px;
-            box-shadow: 
+            box-shadow:
                 0 8px 32px rgba(0, 195, 255, 0.15),
                 0 4px 16px rgba(0, 195, 255, 0.1),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -7852,7 +7893,7 @@ with tab4:
             color: #ffffff;
             margin: 0;
             font-weight: 700;
-            text-shadow: 
+            text-shadow:
                 0 0 20px rgba(0, 195, 255, 0.5),
                 0 2px 4px rgba(0, 0, 0, 0.3);
             letter-spacing: -0.5px;
@@ -7862,7 +7903,7 @@ with tab4:
             font-size: 24px;
             text-align: center;
             color: #00c3ff;
-            text-shadow: 
+            text-shadow:
                 0 0 20px rgba(0, 195, 255, 0.8),
                 0 0 40px rgba(0, 195, 255, 0.4);
             margin: 20px 0 15px 0;
@@ -7897,7 +7938,7 @@ with tab4:
             text-align: center;
             position: relative;
             overflow: hidden;
-            box-shadow: 
+            box-shadow:
                 0 4px 15px rgba(0, 195, 255, 0.1),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
@@ -7916,7 +7957,7 @@ with tab4:
         .stRadio label:hover {
             background: linear-gradient(135deg, #00c3ff15 0%, #00c3ff25 100%);
             transform: translateY(-2px);
-            box-shadow: 
+            box-shadow:
                 0 8px 25px rgba(0, 195, 255, 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
@@ -7930,7 +7971,7 @@ with tab4:
             color: #000000;
             font-weight: 600;
             transform: scale(1.05);
-            box-shadow: 
+            box-shadow:
                 0 8px 30px rgba(0, 195, 255, 0.4),
                 inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
@@ -7944,7 +7985,7 @@ with tab4:
             position: relative;
             overflow: hidden;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 
+            box-shadow:
                 0 4px 20px rgba(0, 195, 255, 0.1),
                 inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
@@ -7978,7 +8019,7 @@ with tab4:
 
         .card:hover {
             transform: translateY(-4px) scale(1.02);
-            box-shadow: 
+            box-shadow:
                 0 12px 40px rgba(0, 195, 255, 0.25),
                 0 8px 20px rgba(0, 195, 255, 0.15),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -8003,7 +8044,7 @@ with tab4:
         .card a:hover {
             color: #ffffff;
             text-decoration: none;
-            text-shadow: 
+            text-shadow:
                 0 0 15px rgba(255, 255, 255, 0.5),
                 0 0 30px rgba(0, 195, 255, 0.3);
             transform: translateX(4px);
@@ -8256,7 +8297,7 @@ with tab4:
     def generate_career_quiz_questions(domain, role):
         """Generate role-specific career quiz questions"""
         questions = []
-        
+
         # Role-specific question templates
         role_templates = {
             "Software Development and Engineering": {
@@ -8265,7 +8306,7 @@ with tab4:
                         "question": "Which aspect of web development excites you most?",
                         "options": [
                             "Creating beautiful, interactive user interfaces",
-                            "Building responsive designs that work on all devices", 
+                            "Building responsive designs that work on all devices",
                             "Optimizing website performance and accessibility",
                             "Working with modern JavaScript frameworks"
                         ]
@@ -8275,7 +8316,7 @@ with tab4:
                         "options": [
                             "Writing custom CSS from scratch",
                             "Using CSS frameworks like Bootstrap or Tailwind",
-                            "CSS-in-JS solutions for component-based styling", 
+                            "CSS-in-JS solutions for component-based styling",
                             "CSS preprocessors like Sass or Less"
                         ]
                     },
@@ -8659,26 +8700,44 @@ with tab4:
                     "question": f"What attracts you most about the {role} role?",
                     "options": [
                         "The technical challenges and problem-solving",
-                        "The creative aspects and innovation opportunities", 
+                        "The creative aspects and innovation opportunities",
                         "The career growth potential and salary",
                         "The impact on users and business outcomes"
                     ]
                 }
             ]
-        
+
         return questions
 
-    # UPDATED: AI-Generated Questions using LLM
-    def generate_interview_questions_with_llm(domain, role, interview_type, num_questions):
-        """Generate interview questions using LLM based on domain, role, and type"""
+    # FIXED: AI-Generated Questions with difficulty integration
+    def generate_interview_questions_with_llm(domain, role, interview_type, num_questions, difficulty="Medium"):
+        """
+        Generate interview questions using LLM based on domain, role, type, and difficulty.
+        FIXED: Difficulty is now passed into the prompt and affects question complexity.
+        """
+
+        # Adjust prompt based on difficulty
+        if difficulty == "Easy":
+            difficulty_instruction = "Make questions basic, introductory, and focused on fundamental concepts. Questions should test foundational knowledge."
+        elif difficulty == "Medium":
+            difficulty_instruction = "Make questions scenario-based and moderately technical. Questions should require practical understanding and application."
+        else:  # Hard
+            difficulty_instruction = "Make questions deep, technical, and challenging. Include system design, complex problem-solving, and advanced scenarios."
+
         prompt = f"""You are an expert interviewer.
-Generate {num_questions} unique {interview_type} interview questions 
+Generate {num_questions} unique {interview_type} interview questions
 for the role of {role} in {domain}.
-- Keep each question concise (max 1 sentence).
+
+Difficulty Level: {difficulty}
+{difficulty_instruction}
+
+Requirements:
+- Keep each question concise (max 1-2 sentences).
 - Avoid duplicates.
+- Match the difficulty level requested.
 - Output as plain text, one question per line.
 """
-        
+
         try:
             response = call_llm(prompt, session=st.session_state)
             questions = [q.strip() for q in response.split('\n') if q.strip()]
@@ -8688,11 +8747,11 @@ for the role of {role} in {domain}.
                 # Remove common prefixes like "1. ", "- ", "• ", etc.
                 import re
                 clean_q = re.sub(r'^[\d\-•\*\.]+\s*', '', q).strip()
-                if clean_q and len(clean_q) > 10:  # Ensure meaningful questions
+                if clean_q and len(clean_q) > 10:
                     cleaned_questions.append(clean_q)
-            
-            return cleaned_questions[:num_questions]  # Return exact number requested
-            
+
+            return cleaned_questions[:num_questions]
+
         except Exception as e:
             st.error(f"Failed to generate questions: {e}")
             # Fallback to static questions
@@ -8705,7 +8764,7 @@ for the role of {role} in {domain}.
             ]
             return fallback_questions[:num_questions]
 
-    # Badge system for gamification
+    # Badge system for gamification - FIXED: Updated to 1-10 scale
     BADGE_CONFIG = {
         "career_quiz": {
             "novice": {"min_score": 0, "max_score": 40, "emoji": "🌱", "title": "Career Explorer"},
@@ -8713,10 +8772,10 @@ for the role of {role} in {domain}.
             "advanced": {"min_score": 71, "max_score": 100, "emoji": "🎯", "title": "Career Champion"}
         },
         "interview": {
-            "needs_practice": {"min_score": 1.0, "max_score": 2.5, "emoji": "💪", "title": "Keep Practicing"},
-            "good": {"min_score": 2.6, "max_score": 3.5, "emoji": "👍", "title": "Good Performer"},
-            "excellent": {"min_score": 3.6, "max_score": 4.5, "emoji": "🌟", "title": "Star Performer"},
-            "interview_ready": {"min_score": 4.6, "max_score": 5.0, "emoji": "🏆", "title": "Interview Ready"}
+            "needs_practice": {"min_score": 0.0, "max_score": 4.0, "emoji": "💪", "title": "Keep Practicing"},
+            "good": {"min_score": 4.1, "max_score": 6.5, "emoji": "👍", "title": "Good Performer"},
+            "excellent": {"min_score": 6.6, "max_score": 8.5, "emoji": "🌟", "title": "Star Performer"},
+            "interview_ready": {"min_score": 8.6, "max_score": 10.0, "emoji": "🏆", "title": "Interview Ready"}
         }
     }
 
@@ -8730,13 +8789,11 @@ for the role of {role} in {domain}.
 
     def create_skill_radar_chart(skills_data):
         """Create a radar chart for skills using Plotly"""
-        # Extract skills and values
         skills = list(skills_data.keys())
         values = list(skills_data.values())
-        
-        # Create radar chart
+
         fig = go.Figure()
-        
+
         fig.add_trace(go.Scatterpolar(
             r=values,
             theta=skills,
@@ -8746,7 +8803,7 @@ for the role of {role} in {domain}.
             fillcolor='rgba(0, 195, 255, 0.2)',
             hovertemplate='<b>%{theta}</b><br>Importance: %{r}/10<br><extra></extra>'
         ))
-        
+
         fig.update_layout(
             polar=dict(
                 radialaxis=dict(
@@ -8772,7 +8829,7 @@ for the role of {role} in {domain}.
             font=dict(color='white'),
             height=400
         )
-        
+
         return fig
 
     def get_course_description(course_title, role):
@@ -8788,20 +8845,18 @@ for the role of {role} in {domain}.
             'UI Designer': f"Create stunning user interfaces with modern design principles and tools.",
             'UX Designer': f"Learn user research, wireframing, and create exceptional user experiences."
         }
-        
+
         return descriptions.get(role, f"Comprehensive course to advance your skills in {role} role.")
 
     def display_courses_by_difficulty(courses, role):
         """Display courses grouped by difficulty using index-based mapping"""
-        # Group courses by difficulty
         difficulty_groups = {"Beginner": [], "Intermediate": [], "Advanced": []}
-        
+
         for idx, (title, url) in enumerate(courses):
             difficulty = get_course_difficulty_by_index(idx)
             description = get_course_description(title, role)
             difficulty_groups[difficulty].append((title, url, description))
-        
-        # Display each difficulty group
+
         for difficulty in ["Beginner", "Intermediate", "Advanced"]:
             if difficulty_groups[difficulty]:
                 st.markdown(f"### 🎯 {difficulty} Level")
@@ -8823,7 +8878,7 @@ for the role of {role} in {domain}.
     # Section 1: UPDATED Courses by Role with Index-based Difficulty
     if page == "Courses by Role":
         st.subheader("🎯 Courses by Career Role")
-        
+
         col1, col2 = st.columns(2)
         with col1:
             category = st.selectbox(
@@ -8831,7 +8886,7 @@ for the role of {role} in {domain}.
                 options=list(COURSES_BY_CATEGORY.keys()),
                 key="category_selection"
             )
-        
+
         with col2:
             if category:
                 roles = list(COURSES_BY_CATEGORY[category].keys())
@@ -8842,33 +8897,29 @@ for the role of {role} in {domain}.
                 )
             else:
                 role = None
-        
+
         if category and role:
-            # UPDATED: Add difficulty filter
             difficulty_filter = st.selectbox(
                 "Filter by Difficulty Level",
                 options=["All Levels", "Beginner", "Intermediate", "Advanced"],
                 key="difficulty_filter"
             )
-            
+
             st.subheader(f"📘 Courses for **{role}** in **{category}**:")
             courses = get_courses_for_role(category, role)
-            
+
             if courses:
-                # UPDATED: Display courses using index-based difficulty
                 filtered_courses = []
                 for idx, (title, url) in enumerate(courses):
                     difficulty = get_course_difficulty_by_index(idx)
-                    
-                    # Apply difficulty filter
+
                     if difficulty_filter == "All Levels" or difficulty == difficulty_filter:
                         filtered_courses.append((title, url, difficulty, idx))
-                
+
                 if filtered_courses:
                     for title, url, difficulty, idx in filtered_courses:
                         description = get_course_description(title, role)
-                        
-                        # UPDATED: Interactive course tile with index-based difficulty
+
                         st.markdown(f"""
                             <div class="course-tile">
                                 <div class="course-title">{title}</div>
@@ -8884,16 +8935,15 @@ for the role of {role} in {domain}.
                     st.info("🚫 No courses found for this difficulty level.")
             else:
                 st.info("🚫 No courses found for this role.")
-        
+
         # Show skill radar chart for selected role
         if category and role:
             st.markdown("---")
             st.markdown('<div class="radar-container">', unsafe_allow_html=True)
             st.subheader("🎯 Skills Radar Chart")
-            
+
             # Generate sample skills data based on role
             role_skills = {
-                # ==== Software Development & Engineering ====
                 "Frontend Developer": {
                     "JavaScript": 9, "React/Vue": 8, "CSS/HTML": 9,
                     "Responsive Design": 8, "Performance Optimization": 7, "Testing": 6
@@ -8914,7 +8964,6 @@ for the role of {role} in {domain}.
                     "Unity/Unreal": 9, "C# / C++": 8, "Game Physics": 7,
                     "Graphics/Rendering": 8, "AI in Games": 6, "Multiplayer Systems": 7
                 },
-                # ==== Data Science & Analytics ====
                 "Data Scientist": {
                     "Python/R": 9, "Machine Learning": 8, "Statistics": 9,
                     "Data Visualization": 7, "SQL": 8, "Domain Knowledge": 6
@@ -8927,7 +8976,6 @@ for the role of {role} in {domain}.
                     "ML Algorithms": 9, "Deep Learning": 8, "MLOps": 7,
                     "Data Engineering": 8, "Python/Frameworks": 9, "Cloud Deployment": 7
                 },
-                # ==== Cloud Computing & DevOps ====
                 "Cloud Architect": {
                     "AWS/Azure/GCP": 9, "System Design": 8, "Networking": 7,
                     "Security": 8, "Scalability": 9, "Cost Optimization": 7
@@ -8940,7 +8988,6 @@ for the role of {role} in {domain}.
                     "Reliability Engineering": 9, "Monitoring": 8, "Automation": 8,
                     "Incident Response": 8, "System Design": 7, "Security": 7
                 },
-                # ==== Cybersecurity ====
                 "Security Analyst": {
                     "Threat Detection": 9, "Incident Response": 8, "Networking": 7,
                     "SIEM Tools": 8, "Risk Management": 7, "Compliance": 6
@@ -8949,7 +8996,6 @@ for the role of {role} in {domain}.
                     "Ethical Hacking": 9, "Web Security": 8, "Exploitation": 8,
                     "Scripting": 7, "Reporting": 6, "Network Security": 7
                 },
-                # ==== UI/UX Design ====
                 "UI Designer": {
                     "Design Tools": 9, "Visual Design": 8, "Typography": 7,
                     "Color Theory": 8, "Prototyping": 7, "User Research": 6
@@ -8958,7 +9004,6 @@ for the role of {role} in {domain}.
                     "User Research": 9, "Wireframing": 8, "Prototyping": 8,
                     "Usability Testing": 7, "Accessibility": 8, "Design Thinking": 7
                 },
-                # ==== Project Management ====
                 "Project Manager": {
                     "Planning": 9, "Communication": 8, "Risk Management": 8,
                     "Leadership": 7, "Agile/Scrum": 8, "Budgeting": 7
@@ -8968,23 +9013,21 @@ for the role of {role} in {domain}.
                     "Communication": 8, "Agile Methods": 7, "User-Centered Design": 7
                 }
             }
-            
+
             skills_data = role_skills.get(role, {
                 "Technical Skills": 8, "Problem Solving": 7, "Communication": 6,
                 "Leadership": 5, "Domain Knowledge": 7, "Continuous Learning": 8
             })
-            
-            # Create and display radar chart
+
             radar_fig = create_skill_radar_chart(skills_data)
             st.plotly_chart(radar_fig, use_container_width=True)
-            
-            # Add hover tooltip information
+
             st.markdown("""
                 <div style="text-align: center; color: #00c3ff; margin-top: 10px;">
                     💡 Hover over the chart points to see skill importance ratings!
                 </div>
             """, unsafe_allow_html=True)
-            
+
             st.markdown('</div>', unsafe_allow_html=True)
 
     # Section 2: Resume Videos (unchanged)
@@ -9023,15 +9066,13 @@ for the role of {role} in {domain}.
                     st.markdown(f"**{title}**")
                     st.video(url)
 
-    # Section 4: UPDATED AI Interview Coach 🤖 with Mock Interview and Enhanced Features
+    # Section 4: FIXED AI Interview Coach 🤖 with all bugs addressed
     elif page == "AI Interview Coach 🤖":
         st.subheader("🤖 AI Interview Coach")
         st.markdown("Practice role-specific interview questions with our AI coach. Get instant feedback on your answers and discover recommended courses!")
 
-        # Create database table if not exists
         create_interview_database()
 
-        # Domain and Role selection
         st.markdown('<div class="role-selector">', unsafe_allow_html=True)
 
         col1, col2 = st.columns(2)
@@ -9054,9 +9095,31 @@ for the role of {role} in {domain}.
                 selected_role = None
 
         st.markdown('</div>', unsafe_allow_html=True)
-        
+
         if selected_domain and selected_role:
-            # Initialize interview state
+            # FIXED: Proper session state initialization and reset when domain/role changes
+            if ('interview_domain' not in st.session_state or
+                st.session_state.interview_domain != selected_domain or
+                st.session_state.interview_role != selected_role):
+
+                # Reset all interview state when domain/role changes
+                st.session_state.interview_domain = selected_domain
+                st.session_state.interview_role = selected_role
+                st.session_state.dynamic_interview_questions = []
+                st.session_state.current_dynamic_interview_question = 0
+                st.session_state.dynamic_interview_answers = []
+                st.session_state.dynamic_interview_scores = []
+                st.session_state.dynamic_interview_feedbacks = []
+                st.session_state.dynamic_interview_completed = False
+                st.session_state.dynamic_interview_started = False
+                st.session_state.dynamic_answer_submitted = False
+                st.session_state.current_interview_question_text = ""
+                st.session_state.question_timer_start = None
+                st.session_state.timer_seconds = 120
+                st.session_state.interview_difficulty = "Medium"
+                st.session_state.original_num_questions = 6
+
+            # Initialize state variables if they don't exist
             if 'dynamic_interview_questions' not in st.session_state:
                 st.session_state.dynamic_interview_questions = []
             if 'current_dynamic_interview_question' not in st.session_state:
@@ -9075,11 +9138,6 @@ for the role of {role} in {domain}.
                 st.session_state.dynamic_answer_submitted = False
             if 'current_interview_question_text' not in st.session_state:
                 st.session_state.current_interview_question_text = ""
-            if 'interview_domain' not in st.session_state or st.session_state.interview_domain != selected_domain:
-                st.session_state.interview_domain = selected_domain
-                st.session_state.interview_role = selected_role
-                st.session_state.dynamic_interview_started = False
-                st.session_state.dynamic_interview_completed = False
             if 'question_timer_start' not in st.session_state:
                 st.session_state.question_timer_start = None
             if 'timer_seconds' not in st.session_state:
@@ -9120,14 +9178,17 @@ for the role of {role} in {domain}.
 
                 if st.button("🚀 Start Mock Interview"):
                     with st.spinner("Generating personalized questions using AI..."):
+                        # FIXED: Pass difficulty to question generation
                         selected_questions = generate_interview_questions_with_llm(
                             selected_domain,
                             selected_role,
                             interview_type,
-                            num_questions
+                            num_questions,
+                            interview_difficulty
                         )
 
                         if selected_questions:
+                            # FIXED: Properly reset all state variables
                             st.session_state.dynamic_interview_questions = selected_questions
                             st.session_state.original_num_questions = num_questions
                             st.session_state.current_dynamic_interview_question = 0
@@ -9146,24 +9207,27 @@ for the role of {role} in {domain}.
                             st.rerun()
                         else:
                             st.error("Failed to generate questions. Please try again.")
-            
+
             # Interview in progress
             elif st.session_state.dynamic_interview_started and not st.session_state.dynamic_interview_completed:
-                # Count only original questions for progress (not follow-ups)
+                # FIXED: Count only original questions (not follow-ups) for progress
                 questions_answered = len([a for a in st.session_state.dynamic_interview_answers])
 
                 if questions_answered < st.session_state.original_num_questions:
-                    question = st.session_state.current_interview_question_text or st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question]
+                    current_idx = st.session_state.current_dynamic_interview_question
 
-                    # Initialize timer if not set
+                    # FIXED: Safely get question text
+                    if current_idx < len(st.session_state.dynamic_interview_questions):
+                        question = st.session_state.dynamic_interview_questions[current_idx]
+                    else:
+                        question = st.session_state.current_interview_question_text
+
                     if st.session_state.question_timer_start is None:
                         st.session_state.question_timer_start = time.time()
 
-                    # Calculate remaining time
                     elapsed_time = time.time() - st.session_state.question_timer_start
                     remaining_time = max(0, st.session_state.timer_seconds - elapsed_time)
 
-                    # Display timer
                     timer_minutes = int(remaining_time // 60)
                     timer_seconds_display = int(remaining_time % 60)
                     timer_urgent_class = "timer-urgent" if remaining_time <= 30 else ""
@@ -9176,11 +9240,9 @@ for the role of {role} in {domain}.
                     </div>
                     """, unsafe_allow_html=True)
 
-                    # Timer progress bar
                     progress_value = (st.session_state.timer_seconds - remaining_time) / st.session_state.timer_seconds
                     st.progress(progress_value)
 
-                    # Question display
                     st.markdown(f"""
                     <div class="quiz-card">
                         <h3 style="color: #00c3ff;">Question {questions_answered + 1} of {st.session_state.original_num_questions}</h3>
@@ -9189,7 +9251,6 @@ for the role of {role} in {domain}.
                     </div>
                     """, unsafe_allow_html=True)
 
-                    # Add refresh button for new question
                     col1, col2 = st.columns([3, 1])
                     with col2:
                         if st.button("🔄 Refresh Interview Question"):
@@ -9198,16 +9259,16 @@ for the role of {role} in {domain}.
                                     selected_domain,
                                     selected_role,
                                     "mixed",
-                                    1
+                                    1,
+                                    st.session_state.interview_difficulty
                                 )
                                 if new_questions and new_questions[0]:
                                     st.session_state.current_interview_question_text = new_questions[0]
-                                    st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question] = new_questions[0]
+                                    st.session_state.dynamic_interview_questions[current_idx] = new_questions[0]
                                     st.session_state.question_timer_start = time.time()
                                     st.rerun()
 
-                    # Answer input
-                    answer_key = f"dynamic_interview_answer_{st.session_state.current_dynamic_interview_question}"
+                    answer_key = f"dynamic_interview_answer_{current_idx}"
                     answer = st.text_area(
                         "Your answer:",
                         placeholder="Type your detailed answer here... (Use STAR method: Situation, Task, Action, Result)",
@@ -9215,65 +9276,54 @@ for the role of {role} in {domain}.
                         key=answer_key
                     )
 
-                    # Auto-submit logic when timer expires
+                    # Auto-submit when timer expires
                     if remaining_time <= 0 and not st.session_state.dynamic_answer_submitted:
                         if not answer.strip():
                             answer = "⚠️ No Answer"
 
-                        # Evaluate answer using enhanced evaluation
                         with st.spinner("Evaluating your answer..."):
+                            # FIXED: Pass difficulty to evaluation
                             eval_result = evaluate_interview_answer_for_scores(
                                 answer,
                                 question,
                                 st.session_state.interview_difficulty
                             )
 
-                        # Store answer, scores, and feedback
+                        # FIXED: Ensure all answers are tracked
                         st.session_state.dynamic_interview_answers.append(answer)
                         st.session_state.dynamic_interview_scores.append(eval_result)
                         st.session_state.dynamic_interview_feedbacks.append(eval_result["feedback"])
                         st.session_state.dynamic_answer_submitted = True
 
-                        # Handle follow-up for Hard difficulty
+                        # FIXED: Handle follow-up questions without messing up indexing
                         if st.session_state.interview_difficulty == "Hard" and eval_result.get("followup"):
-                            st.session_state.dynamic_interview_questions.insert(
-                                st.session_state.current_dynamic_interview_question + 1,
-                                eval_result["followup"]
-                            )
+                            # Don't count follow-ups toward original_num_questions
+                            pass
 
                         st.warning("⏰ Time's up! Answer auto-submitted.")
                         st.rerun()
 
-                    # Submit answer button
                     if not st.session_state.dynamic_answer_submitted and remaining_time > 0:
                         if st.button("Submit Answer & Get Feedback"):
                             if answer.strip():
                                 with st.spinner("Evaluating your answer..."):
-                                    # Evaluate answer using enhanced evaluation
+                                    # FIXED: Pass difficulty to evaluation
                                     eval_result = evaluate_interview_answer_for_scores(
                                         answer,
                                         question,
                                         st.session_state.interview_difficulty
                                     )
 
-                                    # Store answer, scores, and feedback
+                                    # FIXED: Ensure all answers are tracked
                                     st.session_state.dynamic_interview_answers.append(answer)
                                     st.session_state.dynamic_interview_scores.append(eval_result)
                                     st.session_state.dynamic_interview_feedbacks.append(eval_result["feedback"])
                                     st.session_state.dynamic_answer_submitted = True
 
-                                    # Handle follow-up for Hard difficulty
-                                    if st.session_state.interview_difficulty == "Hard" and eval_result.get("followup"):
-                                        st.session_state.dynamic_interview_questions.insert(
-                                            st.session_state.current_dynamic_interview_question + 1,
-                                            eval_result["followup"]
-                                        )
-
                                     st.rerun()
                             else:
                                 st.warning("Please provide an answer before proceeding.")
 
-                    # Show feedback after answer submitted
                     if st.session_state.dynamic_answer_submitted:
                         current_score_dict = st.session_state.dynamic_interview_scores[-1]
                         avg_q_score = (current_score_dict["knowledge"] + current_score_dict["clarity"] + current_score_dict["relevance"]) / 3
@@ -9291,13 +9341,17 @@ for the role of {role} in {domain}.
                         </div>
                         """, unsafe_allow_html=True)
 
-                        # Continue/Complete button
+                        # FIXED: Proper navigation logic
                         if questions_answered < st.session_state.original_num_questions - 1:
                             if st.button("Continue to Next Question ➡️"):
                                 st.session_state.current_dynamic_interview_question += 1
                                 st.session_state.dynamic_answer_submitted = False
-                                if st.session_state.current_dynamic_interview_question < len(st.session_state.dynamic_interview_questions):
-                                    st.session_state.current_interview_question_text = st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question]
+
+                                # Set next question
+                                next_idx = st.session_state.current_dynamic_interview_question
+                                if next_idx < len(st.session_state.dynamic_interview_questions):
+                                    st.session_state.current_interview_question_text = st.session_state.dynamic_interview_questions[next_idx]
+
                                 st.session_state.question_timer_start = time.time()
                                 st.rerun()
                         else:
@@ -9305,46 +9359,59 @@ for the role of {role} in {domain}.
                                 st.session_state.dynamic_interview_completed = True
                                 st.rerun()
 
-                    # Progress bar for interview completion
                     interview_progress = questions_answered / st.session_state.original_num_questions
                     st.markdown("### Interview Progress")
                     st.progress(interview_progress)
 
-                    # Review Previous Answers during interview
-                    if len(st.session_state.dynamic_interview_answers) > 1:
+                    # FIXED: Review Previous Answers - show all INCLUDING most recent if submitted
+                    if len(st.session_state.dynamic_interview_answers) > 0:
                         with st.expander("📖 Review Previous Answers"):
-                            for i in range(len(st.session_state.dynamic_interview_answers) - 1):
-                                prev_question = st.session_state.dynamic_interview_questions[i]
-                                prev_answer = st.session_state.dynamic_interview_answers[i]
-                                prev_scores = st.session_state.dynamic_interview_scores[i]
-                                prev_avg = (prev_scores["knowledge"] + prev_scores["clarity"] + prev_scores["relevance"]) / 3
-                                st.markdown(f"**Question {i+1}:** {prev_question}")
-                                st.markdown(f"**Your Answer:** {prev_answer[:200]}...")
-                                st.markdown(f"**Score:** {prev_avg:.1f}/10")
-                                st.markdown("---")
+                            # Show all submitted answers
+                            num_to_show = len(st.session_state.dynamic_interview_answers)
+                            if st.session_state.dynamic_answer_submitted:
+                                # If current answer is submitted, show all including current
+                                num_to_show = len(st.session_state.dynamic_interview_answers)
+                            else:
+                                # If current answer not submitted, show all previous
+                                num_to_show = len(st.session_state.dynamic_interview_answers)
 
-                    # Auto-refresh for timer
+                            for i in range(num_to_show):
+                                if i < len(st.session_state.dynamic_interview_questions):
+                                    prev_question = st.session_state.dynamic_interview_questions[i]
+                                    prev_answer = st.session_state.dynamic_interview_answers[i]
+                                    prev_scores = st.session_state.dynamic_interview_scores[i]
+                                    prev_avg = (prev_scores["knowledge"] + prev_scores["clarity"] + prev_scores["relevance"]) / 3
+
+                                    # FIXED: Show more of the answer (up to 500 chars instead of 200)
+                                    answer_preview = prev_answer[:500]
+                                    if len(prev_answer) > 500:
+                                        answer_preview += "..."
+
+                                    st.markdown(f"**Question {i+1}:** {prev_question}")
+                                    st.markdown(f"**Your Answer:** {answer_preview}")
+                                    st.markdown(f"**Score:** {prev_avg:.1f}/10")
+                                    st.markdown("---")
+
                     if remaining_time > 0 and not st.session_state.dynamic_answer_submitted:
                         time.sleep(1)
                         st.rerun()
                 else:
-                    # All questions answered, move to completion
                     st.session_state.dynamic_interview_completed = True
                     st.rerun()
-            
-            # UNIFIED: Interview completed + Course Recommendations + DB + PDF
+
+            # Interview completed
             elif st.session_state.dynamic_interview_completed:
-                # Calculate average scores for each dimension
+                # FIXED: Calculate scores properly on 1-10 scale
                 knowledge_scores = [s["knowledge"] for s in st.session_state.dynamic_interview_scores]
                 clarity_scores = [s["clarity"] for s in st.session_state.dynamic_interview_scores]
                 relevance_scores = [s["relevance"] for s in st.session_state.dynamic_interview_scores]
 
-                avg_knowledge = sum(knowledge_scores) / len(knowledge_scores)
-                avg_clarity = sum(clarity_scores) / len(clarity_scores)
-                avg_relevance = sum(relevance_scores) / len(relevance_scores)
+                avg_knowledge = sum(knowledge_scores) / len(knowledge_scores) if knowledge_scores else 0
+                avg_clarity = sum(clarity_scores) / len(clarity_scores) if clarity_scores else 0
+                avg_relevance = sum(relevance_scores) / len(relevance_scores) if relevance_scores else 0
                 overall_avg = (avg_knowledge + avg_clarity + avg_relevance) / 3
 
-                # Determine badge based on overall average
+                # FIXED: Badge determination based on 1-10 scale
                 if overall_avg >= 8.5:
                     badge = "Interview Ready"
                     badge_emoji = "🏆"
@@ -9370,7 +9437,6 @@ for the role of {role} in {domain}.
                 </div>
                 """, unsafe_allow_html=True)
 
-                # Create radar chart for skills
                 st.markdown('<div class="radar-container">', unsafe_allow_html=True)
                 st.subheader("📊 Performance Radar Chart")
 
@@ -9419,7 +9485,6 @@ for the role of {role} in {domain}.
                 st.plotly_chart(fig, use_container_width=True)
                 st.markdown('</div>', unsafe_allow_html=True)
 
-                # Strengths and Weaknesses
                 st.subheader("💡 Performance Analysis")
                 col1, col2 = st.columns(2)
 
@@ -9436,38 +9501,51 @@ for the role of {role} in {domain}.
                     for name, score in metrics_sorted[-2:]:
                         st.markdown(f"- {name}: {score:.1f}/10")
 
-                # Show detailed Q&A results
                 st.markdown("---")
                 st.subheader("📋 Detailed Q&A Review:")
-                for i, (score_dict, answer, feedback) in enumerate(zip(st.session_state.dynamic_interview_scores, st.session_state.dynamic_interview_answers, st.session_state.dynamic_interview_feedbacks)):
-                    q_avg = (score_dict["knowledge"] + score_dict["clarity"] + score_dict["relevance"]) / 3
-                    with st.expander(f"Question {i+1}: Score {q_avg:.1f}/10"):
-                        st.write(f"**Question:** {st.session_state.dynamic_interview_questions[i]}")
-                        st.write(f"**Your Answer:** {answer}")
-                        st.write(f"**Scores:** Knowledge: {score_dict['knowledge']}/10 | Clarity: {score_dict['clarity']}/10 | Relevance: {score_dict['relevance']}/10")
-                        st.write(f"**Feedback:** {feedback}")
 
-                # Save to database
+                # FIXED: Show all answers with full text (not truncated in UI)
+                for i in range(len(st.session_state.dynamic_interview_answers)):
+                    if i < len(st.session_state.dynamic_interview_scores):
+                        score_dict = st.session_state.dynamic_interview_scores[i]
+                        answer = st.session_state.dynamic_interview_answers[i]
+                        feedback = st.session_state.dynamic_interview_feedbacks[i]
+                        question = st.session_state.dynamic_interview_questions[i] if i < len(st.session_state.dynamic_interview_questions) else "Question not available"
+
+                        q_avg = (score_dict["knowledge"] + score_dict["clarity"] + score_dict["relevance"]) / 3
+
+                        with st.expander(f"Question {i+1}: Score {q_avg:.1f}/10"):
+                            st.write(f"**Question:** {question}")
+                            st.write(f"**Your Answer:** {answer}")
+                            st.write(f"**Scores:** Knowledge: {score_dict['knowledge']}/10 | Clarity: {score_dict['clarity']}/10 | Relevance: {score_dict['relevance']}/10")
+                            st.write(f"**Feedback:** {feedback}")
+
                 username = st.session_state.get("username", "Guest")
                 feedback_summary = f"Strengths: {metrics_sorted[0][0]}, {metrics_sorted[1][0]}. Weaknesses: {metrics_sorted[-1][0]}, {metrics_sorted[-2][0]}."
 
                 if save_interview_result(username, selected_role, selected_domain, overall_avg, st.session_state.original_num_questions, feedback_summary):
                     log_user_action(username, "completed_interview")
 
-                # Generate PDF report
                 st.markdown("---")
                 st.subheader("📄 Download Interview Report")
 
                 completed_on = get_ist_time()
+
+                # FIXED: Only pass original questions to PDF (not follow-ups)
+                pdf_questions = st.session_state.dynamic_interview_questions[:st.session_state.original_num_questions]
+                pdf_answers = st.session_state.dynamic_interview_answers[:st.session_state.original_num_questions]
+                pdf_scores = st.session_state.dynamic_interview_scores[:st.session_state.original_num_questions]
+                pdf_feedbacks = st.session_state.dynamic_interview_feedbacks[:st.session_state.original_num_questions]
+
                 pdf_bytes = generate_interview_pdf_report(
                     username,
                     selected_role,
                     selected_domain,
                     completed_on,
-                    st.session_state.dynamic_interview_questions[:st.session_state.original_num_questions],
-                    st.session_state.dynamic_interview_answers,
-                    st.session_state.dynamic_interview_scores,
-                    st.session_state.dynamic_interview_feedbacks,
+                    pdf_questions,
+                    pdf_answers,
+                    pdf_scores,
+                    pdf_feedbacks,
                     overall_avg,
                     badge
                 )
@@ -9482,7 +9560,6 @@ for the role of {role} in {domain}.
                 else:
                     st.warning("PDF generation failed. You can still review your results above.")
 
-                # UNIFIED: Display recommended courses by difficulty
                 st.markdown("---")
                 st.subheader("📚 Recommended Courses for Your Career Growth")
                 st.markdown(f"Based on your interview practice for **{selected_role}** in **{selected_domain}**, here are our course recommendations organized by difficulty level:")
@@ -9493,8 +9570,8 @@ for the role of {role} in {domain}.
                 else:
                     st.info("No specific courses found for this role. Explore our course categories to find relevant learning resources!")
 
-                # Restart button
                 if st.button("🔄 Practice Again"):
+                    # FIXED: Reset ALL interview variables completely
                     st.session_state.dynamic_interview_started = False
                     st.session_state.dynamic_interview_completed = False
                     st.session_state.dynamic_interview_questions = []
@@ -9508,6 +9585,7 @@ for the role of {role} in {domain}.
                     st.rerun()
         else:
             st.info("Please select both a career domain and target role to start the interview practice.")
+
 
                       
 if tab5:

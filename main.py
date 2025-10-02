@@ -6865,7 +6865,7 @@ with tab3:
     background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
     padding: 20px;
     border-radius: 20px;
-    margin-bottom: 15px;
+    margin-bottom: 8px;
     border-left: 6px solid {btn_color};
     box-shadow: 0 4px 16px rgba(0,0,0,0.25);
     position: relative;
@@ -7021,9 +7021,9 @@ with tab3:
     background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
     padding: 20px;
     border-radius: 15px;
-    margin-bottom: 15px;
+    margin-bottom: 8px;
     border-left: 4px solid {platform_color};
-    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
     position: relative;
     overflow: hidden;
 ">
@@ -7165,7 +7165,7 @@ with tab3:
         color: #ffffff;
         border-radius: 20px;
         padding: 20px;
-        margin-bottom: 15px;
+        margin-bottom: 8px;
         box-shadow: 0 4px 16px rgba(0,0,0,0.25);
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         cursor: pointer;
@@ -7314,7 +7314,7 @@ with tab3:
     @media (max-width: 768px) {
         .company-card, .job-result-card {
             padding: 20px;
-            margin-bottom: 20px;
+            margin-bottom: 8px;
         }
 
         .title-header {

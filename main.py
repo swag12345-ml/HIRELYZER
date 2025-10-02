@@ -7555,7 +7555,7 @@ def evaluate_interview_answer(answer: str, question: str = None):
     return score, feedback
 
 
-def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty: str):
+def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty: str, role: str = "", domain: str = ""):
     """
     Enhanced evaluation that returns detailed scores for Knowledge, Clarity, Relevance.
     Also returns follow-up question for Hard difficulty.
@@ -7563,6 +7563,8 @@ def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty:
 
     FIXED: Now correctly handles junk answers with score = 0 or 1, not default 5
     FIXED: Adjusted evaluation strictness based on difficulty level
+    FIXED: Stricter junk answer filtering - checks word count and meaningful tokens
+    FIXED: Relevance check across domains to catch off-topic answers
     """
     from llm_manager import call_llm
     import re
@@ -7581,10 +7583,23 @@ def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty:
     # Check for obvious junk answers (single character, just symbols, etc.)
     if len(answer.strip()) == 1 or not any(c.isalnum() for c in answer):
         return {
-            "knowledge": 1,
-            "clarity": 1,
-            "relevance": 1,
+            "knowledge": 0,
+            "clarity": 0,
+            "relevance": 0,
             "feedback": "Answer appears incomplete or invalid. Please provide a meaningful response using the STAR method.",
+            "followup": ""
+        }
+
+    # STRICTER JUNK FILTERING: Check word count and meaningful tokens
+    words = answer.strip().split()
+    meaningful_words = [w for w in words if len(w) > 2 and any(c.isalpha() for c in w)]
+
+    if len(words) < 5 or len(meaningful_words) < 2:
+        return {
+            "knowledge": 0,
+            "clarity": 0,
+            "relevance": 0,
+            "feedback": "Answer too short or irrelevant. Please provide a detailed response with specific examples.",
             "followup": ""
         }
 
@@ -7599,18 +7614,28 @@ def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty:
     if difficulty == "Hard":
         followup_instruction = "\n- FollowUp: Generate ONE probing follow-up question to dig deeper into their answer."
 
+    # Build role/domain context for relevance checking
+    context_info = ""
+    if role and domain:
+        context_info = f"\nRole Context: {role} in {domain}"
+
     prompt = f"""You are an expert interview evaluator. Evaluate the candidate's answer strictly and constructively.
 
 Question: {question}
 Candidate Answer: {answer}
-Difficulty Level: {difficulty}
+Difficulty Level: {difficulty}{context_info}
 
 EVALUATION STRICTNESS: {strictness_instructions.get(difficulty, strictness_instructions["Medium"])}
 
 Provide scores (1-10 scale):
 - Knowledge: Technical accuracy and depth of understanding
 - Clarity: How clearly the answer is communicated
-- Relevance: How well the answer addresses the question
+- Relevance: How well the answer addresses the question and stays on-topic within the same domain/role
+
+CRITICAL RELEVANCE CHECK:
+- Does the answer directly address the question?
+- Does the answer stay within the topic domain (e.g., if this is a Data Science question, is the answer about Data Science or something unrelated like Cloud Computing)?
+- If the answer is from another domain or completely off-topic, score Relevance 0-2 and provide feedback: "Your answer is unrelated to the asked topic. Please focus on {role}/{domain}."
 
 IMPORTANT: If the answer is junk, irrelevant, or barely attempts to answer the question, give scores of 0-2. Do NOT give default mid-range scores to poor answers.
 
@@ -7641,10 +7666,23 @@ FollowUp: <one probing question>""" if difficulty == "Hard" else ""}
         clarity = int(clarity_match.group(1)) if clarity_match else 1
         relevance = int(relevance_match.group(1)) if relevance_match else 1
 
-        # Clamp to 1-10 range
+        # Clamp to 1-10 range first
         knowledge = max(1, min(10, knowledge))
         clarity = max(1, min(10, clarity))
         relevance = max(1, min(10, relevance))
+
+        # SCORING FIX PER DIFFICULTY: Apply minimum score clamping
+        if difficulty == "Easy":
+            # Easy: clamp scores 3-10
+            knowledge = max(3, knowledge)
+            clarity = max(3, clarity)
+            relevance = max(3, relevance)
+        elif difficulty == "Medium":
+            # Medium: clamp scores 2-10
+            knowledge = max(2, knowledge)
+            clarity = max(2, clarity)
+            relevance = max(2, relevance)
+        # Hard: keep 1-10 range (no additional clamping)
 
         # Parse feedback
         feedback_match = re.search(r"Feedback:\s*(.+?)(?:FollowUp:|$)", response, re.DOTALL | re.IGNORECASE)
@@ -7669,11 +7707,18 @@ FollowUp: <one probing question>""" if difficulty == "Hard" else ""}
         }
 
     except Exception as e:
-        # FIXED: Fallback defaults to 1 (not 5) to indicate error
+        # FIXED: Fallback defaults based on difficulty
+        if difficulty == "Easy":
+            fallback_score = 3
+        elif difficulty == "Medium":
+            fallback_score = 2
+        else:  # Hard
+            fallback_score = 1
+
         return {
-            "knowledge": 1,
-            "clarity": 1,
-            "relevance": 1,
+            "knowledge": fallback_score,
+            "clarity": fallback_score,
+            "relevance": fallback_score,
             "feedback": f"Evaluation error. Please provide a clear, detailed answer using the STAR method.",
             "followup": ""
         }
@@ -7741,11 +7786,12 @@ def save_interview_result(username: str, role: str, domain: str, avg_score: floa
         return False
 
 
-def generate_interview_pdf_report(username, role, domain, completed_on, questions, answers, scores, feedbacks, overall_avg, badge):
+def generate_interview_pdf_report(username, role, domain, completed_on, questions, answers, scores, feedbacks, overall_avg, badge, difficulty="Medium"):
     """
     Generate PDF report for interview using xhtml2pdf
 
     FIXED: Now shows full answers (up to 2000 chars) instead of truncating at 500
+    FIXED: Added follow-up questions for Hard difficulty interviews
     """
     try:
         from xhtml2pdf import pisa
@@ -7797,6 +7843,15 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
             # SHOW FULL ANSWER - NO TRUNCATION IN PDF
             answer_display = a_escaped
 
+            # Get follow-up question if exists (for Hard difficulty)
+            followup_text = ""
+            if difficulty == "Hard" and isinstance(s, dict) and s.get('followup'):
+                followup_escaped = s['followup'].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                followup_text = f"""<div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px;">
+                    <strong>Follow-up Question (for Hard interviews):</strong><br/>
+                    {followup_escaped}
+                </div>"""
+
             xhtml += f"""
             <div class="question-block">
                 <h3>Question {i}</h3>
@@ -7805,6 +7860,7 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
                 <p class="score">Knowledge: {s.get('knowledge', 0)}/10 | Clarity: {s.get('clarity', 0)}/10 | Relevance: {s.get('relevance', 0)}/10</p>
                 <p class="score">Question Score: {avg_q_score:.1f}/10</p>
                 <div class="feedback"><strong>Feedback:</strong><br/>{f_escaped}</div>
+                {followup_text}
             </div>
             """
 
@@ -8271,6 +8327,9 @@ with tab4:
             <div style="display: flex; justify-content: center; gap: 16px;">
     """, unsafe_allow_html=True)
 
+    # Check if page changed away from AI Interview Coach - stop interview if so
+    previous_page = st.session_state.get('previous_page_selection', None)
+
     page = st.radio(
         label="Select Learning Option",
         options=["Courses by Role", "Resume Videos", "Interview Videos",  "AI Interview Coach 🤖"],
@@ -8278,6 +8337,16 @@ with tab4:
         key="page_selection",
         label_visibility="collapsed"
     )
+
+    # STOP INTERVIEW ON TAB CHANGE
+    if previous_page == "AI Interview Coach 🤖" and page != "AI Interview Coach 🤖":
+        # User switched away from AI Interview Coach - reset interview state
+        if st.session_state.get('dynamic_interview_started', False) and not st.session_state.get('dynamic_interview_completed', False):
+            st.session_state.dynamic_interview_started = False
+            st.session_state.dynamic_interview_completed = True
+
+    # Update previous page for next comparison
+    st.session_state.previous_page_selection = page
 
     st.markdown("</div></div>", unsafe_allow_html=True)
 
@@ -8819,7 +8888,9 @@ Generate exactly {num_questions} questions now:
                 fallback_qs = self_generate_fallback_questions(role, domain, difficulty, fallback_needed)
                 cleaned_questions.extend(fallback_qs)
 
-            return cleaned_questions[:num_questions]  # Return exact number requested
+            # EXACT QUESTION COUNT: Enforce exact count
+            cleaned_questions = cleaned_questions[:num_questions]
+            return cleaned_questions
 
         except Exception as e:
             st.error(f"Failed to generate questions with LLM: {e}")
@@ -9276,6 +9347,9 @@ Generate exactly {num_questions} questions now:
 
                         if selected_questions:
                             # FIXED: Reset ALL interview state variables properly
+                            # EXACT QUESTION COUNT: Enforce exact number of questions
+                            selected_questions = selected_questions[:num_questions]
+
                             st.session_state.dynamic_interview_questions = selected_questions
                             st.session_state.original_num_questions = num_questions
                             st.session_state.current_dynamic_interview_question = 0
@@ -9306,7 +9380,7 @@ Generate exactly {num_questions} questions now:
                 if questions_answered < st.session_state.original_num_questions:
                     question = st.session_state.current_interview_question_text or st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question]
 
-                    # Initialize timer if not set
+                    # TIMER RESET: Reset timer every time a new question loads
                     if st.session_state.question_timer_start is None:
                         st.session_state.question_timer_start = time.time()
 
@@ -9354,16 +9428,19 @@ Generate exactly {num_questions} questions now:
                                 if new_questions and new_questions[0]:
                                     st.session_state.current_interview_question_text = new_questions[0]
                                     st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question] = new_questions[0]
+                                    # TIMER RESET: Reset timer when question refreshes
                                     st.session_state.question_timer_start = time.time()
                                     st.rerun()
 
-                    # Answer input
+                    # Answer input with character limit
                     answer_key = f"dynamic_interview_answer_{st.session_state.current_dynamic_interview_question}"
                     answer = st.text_area(
                         "Your answer:",
                         placeholder="Type your detailed answer here... (Use STAR method: Situation, Task, Action, Result)",
                         height=150,
-                        key=answer_key
+                        max_chars=2000,
+                        key=answer_key,
+                        help="Maximum 2000 characters"
                     )
 
                     # Auto-submit logic when timer expires
@@ -9371,12 +9448,14 @@ Generate exactly {num_questions} questions now:
                         if not answer.strip():
                             answer = "⚠️ No Answer"
 
-                        # Evaluate answer using enhanced evaluation
+                        # Evaluate answer using enhanced evaluation with role/domain context
                         with st.spinner("Evaluating your answer..."):
                             eval_result = evaluate_interview_answer_for_scores(
                                 answer,
                                 question,
-                                st.session_state.interview_difficulty
+                                st.session_state.interview_difficulty,
+                                role=selected_role,
+                                domain=selected_domain
                             )
 
                         # FIXED: Store answer, scores, and feedback - ensuring all are tracked properly
@@ -9403,11 +9482,13 @@ Generate exactly {num_questions} questions now:
                         if st.button("Submit Answer & Get Feedback"):
                             if answer.strip():
                                 with st.spinner("Evaluating your answer..."):
-                                    # Evaluate answer using enhanced evaluation
+                                    # Evaluate answer using enhanced evaluation with role/domain context
                                     eval_result = evaluate_interview_answer_for_scores(
                                         answer,
                                         question,
-                                        st.session_state.interview_difficulty
+                                        st.session_state.interview_difficulty,
+                                        role=selected_role,
+                                        domain=selected_domain
                                     )
 
                                     # FIXED: Store answer, scores, and feedback ensuring proper tracking
@@ -9464,6 +9545,7 @@ Generate exactly {num_questions} questions now:
                                 else:
                                     # Safety check - if we're out of questions but haven't answered all, generate one
                                     st.session_state.current_interview_question_text = f"Additional question for {selected_role}"
+                                # TIMER RESET: Reset timer for next question
                                 st.session_state.question_timer_start = time.time()
                                 st.rerun()
 
@@ -9667,7 +9749,8 @@ Generate exactly {num_questions} questions now:
                     st.session_state.dynamic_interview_scores[:num_complete],
                     st.session_state.dynamic_interview_feedbacks[:num_complete],
                     overall_avg,
-                    badge
+                    badge,
+                    difficulty=st.session_state.interview_difficulty
                 )
 
                 if pdf_bytes:
@@ -9710,7 +9793,6 @@ Generate exactly {num_questions} questions now:
                     st.rerun()
         else:
             st.info("Please select both a career domain and target role to start the interview practice.")
-
                       
 if tab5:
 	with tab5:

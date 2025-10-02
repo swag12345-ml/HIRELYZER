@@ -6488,6 +6488,166 @@ def slugify(text: str) -> str:
     text = re.sub(r"\s+", "-", text)
     return text
 
+def render_job_card(title, link, platform_name, brand_color, platform_gradient, company=None, location=None, salary=None, description=None):
+    """
+    Reusable function to render a modern job card with consistent styling.
+
+    Args:
+        title: Job title or role
+        link: Apply link URL
+        platform_name: Name of the platform (LinkedIn, Naukri, etc.)
+        brand_color: Platform brand color (hex)
+        platform_gradient: CSS gradient for platform
+        company: Company name (optional)
+        location: Job location (optional)
+        salary: Salary information (optional)
+        description: Job description (optional)
+
+    Returns:
+        tuple: (html_string, estimated_height)
+    """
+    # Platform icon mapping
+    icon_map = {
+        "LinkedIn": "🔵",
+        "Naukri": "🏢",
+        "FoundIt (Monster)": "🌐",
+        "RapidAPI (Live)": "⚡"
+    }
+    icon = icon_map.get(platform_name, "📄")
+
+    # Build metadata section and calculate height
+    metadata_html = ""
+    estimated_height = 180  # Base height (platform + title + button + padding)
+
+    if company:
+        metadata_html += f"""
+        <div style="color: #aaaaaa; font-size: 14px; margin-bottom: 8px; z-index: 2; position: relative;">
+            🏢 <b>{company}</b>
+        </div>
+        """
+        estimated_height += 30
+
+    if location:
+        metadata_html += f"""
+        <div style="color: #aaaaaa; font-size: 14px; margin-bottom: 8px; z-index: 2; position: relative;">
+            📍 {location}
+        </div>
+        """
+        estimated_height += 30
+
+    if salary and salary not in ["Check site", "N/A - N/A "]:
+        metadata_html += f"""
+        <div style="color: #aaaaaa; font-size: 14px; margin-bottom: 8px; z-index: 2; position: relative;">
+            💰 {salary}
+        </div>
+        """
+        estimated_height += 30
+
+    if description and description != "Open this platform to view full details.":
+        # Estimate height based on description length
+        desc_lines = len(description) // 60 + 1
+        estimated_height += (desc_lines * 22) + 15
+        metadata_html += f"""
+        <div style="color: #999999; font-size: 14px; margin-bottom: 15px; line-height: 1.6; z-index: 2; position: relative;">
+            {description}
+        </div>
+        """
+
+    # Create the job card HTML
+    job_card_html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+    * {{
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }}
+    body {{
+        background: transparent;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }}
+    @keyframes shimmer {{
+        0% {{ transform: translateX(-100%); }}
+        100% {{ transform: translateX(100%); }}
+    }}
+    .shimmer-overlay {{
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+        transform: translateX(-100%);
+        animation: shimmer 3s infinite;
+        z-index: 1;
+    }}
+    .job-result-card {{
+        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+        padding: 22px;
+        border-radius: 20px;
+        border-left: 6px solid {brand_color};
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px {brand_color}40;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }}
+    .job-result-card:hover {{
+        transform: translateY(-3px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 30px {brand_color}60;
+    }}
+    .job-button {{
+        background: {platform_gradient};
+        color: white;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 15px {brand_color}50;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        text-decoration: none;
+        display: inline-block;
+    }}
+    .job-button:hover {{
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px {brand_color}70;
+    }}
+</style>
+</head>
+<body>
+<div class="job-result-card">
+    <div class="shimmer-overlay"></div>
+
+    <!-- Platform Badge -->
+    <div style="font-size: 20px; margin-bottom: 12px; z-index: 2; position: relative; font-weight: bold; color: {brand_color};">
+        {icon} {platform_name}
+    </div>
+
+    <!-- Job Title -->
+    <div style="color: #ffffff; font-size: 18px; margin-bottom: 12px; font-weight: bold; z-index: 2; position: relative; line-height: 1.4;">
+        {title}
+    </div>
+
+    <!-- Metadata (company, location, salary, description) -->
+    {metadata_html}
+
+    <!-- Apply Button -->
+    <a href="{link}" target="_blank" style="text-decoration: none; z-index: 2; position: relative;">
+        <button class="job-button">
+            <span style="position: relative; z-index: 2;">🚀 Apply Now →</span>
+        </button>
+    </a>
+</div>
+</body>
+</html>
+"""
+    return job_card_html, estimated_height
+
 def search_jobs(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
     # Encode query values
     role_encoded = urllib.parse.quote_plus(job_role.strip())
@@ -6615,83 +6775,177 @@ init_job_search_db()
 with tab3:
     st.header("🔍 Job Search Across LinkedIn, Naukri, and FoundIt")
 
-    col1, col2 = st.columns(2)
+    # Radio selector for search mode
+    search_mode = st.radio(
+        "Select Search Mode:",
+        ["External Platforms (LinkedIn, Naukri, FoundIt)", "RapidAPI Jobs (India Only)"],
+        horizontal=True,
+        key="search_mode"
+    )
 
-    with col1:
-        job_role = st.text_input("💼 Desired Job Role", placeholder="e.g., Data Scientist")
-        experience_level = st.selectbox(
-            "📈 Experience Level",
-            ["", "Internship", "Entry Level", "Associate", "Mid-Senior Level", "Director", "Executive"]
-        )
+    if search_mode == "External Platforms (LinkedIn, Naukri, FoundIt)":
+        # External Platforms Section
+        col1, col2 = st.columns(2)
 
-    with col2:
-        location = st.text_input("📍 Preferred Location", placeholder="e.g., Bangalore, India")
-        job_type = st.selectbox(
-            "📋 Job Type",
-            ["", "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship"]
-        )
+        with col1:
+            job_role = st.text_input("💼 Job Title / Skills", placeholder="e.g., Data Scientist", key="external_role")
+            experience_level = st.selectbox(
+                "📈 Experience Level",
+                ["", "Internship", "Entry Level", "Associate", "Mid-Senior Level", "Director", "Executive"],
+                key="external_exp"
+            )
 
-    foundit_experience = st.text_input("🔢 Experience (Years) for FoundIt", placeholder="e.g., 1")
+        with col2:
+            location = st.text_input("📍 Location", placeholder="e.g., Bangalore, India", key="external_loc")
+            job_type = st.selectbox(
+                "📋 Job Type",
+                ["", "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship"],
+                key="external_type"
+            )
 
-    search_clicked = st.button("🔎 Search Jobs")
+        foundit_experience = st.text_input("🔢 FoundIt Experience (Years)", placeholder="e.g., 1", key="external_foundit")
 
-    if search_clicked:
-        if job_role.strip() and location.strip():
-            # Call unified search
-            results = unified_search(job_role, location, experience_level, job_type, foundit_experience)
+        search_clicked = st.button("🔎 Search External Jobs", key="search_external")
 
-            # Save search results if user is logged in
-            if hasattr(st.session_state, 'username') and st.session_state.username:
-                save_job_search(st.session_state.username, job_role, location, results)
+        if search_clicked:
+            if job_role.strip() and location.strip():
+                # Call search_jobs function for external platforms
+                results = search_jobs(job_role, location, experience_level, job_type, foundit_experience)
 
-            st.markdown("## 🎯 Job Search Results")
+                # Save search results if user is logged in
+                if hasattr(st.session_state, 'username') and st.session_state.username:
+                    # Convert results to format expected by save_job_search
+                    formatted_results = []
+                    for result in results:
+                        platform_name = result["title"].split(":")[0]
+                        formatted_results.append({
+                            "platform": platform_name,
+                            "apply_link": result["link"]
+                        })
+                    save_job_search(st.session_state.username, job_role, location, formatted_results)
 
-            for job in results:
-                platform = job["platform"].lower()
+                st.markdown("## 🎯 External Job Search Results")
 
-                # Platform styling
-                if "rapidapi" in platform or "live" in platform:
-                    icon = "⚡ <b style='color:#00ff88;'>Live Job</b>"
-                    btn_color = "#00ff88"
-                    platform_gradient = "linear-gradient(135deg, #00ff88 0%, #00cc6f 100%)"
-                elif "linkedin" in platform:
-                    icon = "🔵 <b style='color:#0e76a8;'>LinkedIn</b>"
-                    btn_color = "#0e76a8"
-                    platform_gradient = "linear-gradient(135deg, #0e76a8 0%, #1a8cc8 100%)"
-                elif "naukri" in platform:
-                    icon = "🏢 <b style='color:#ff5722;'>Naukri</b>"
-                    btn_color = "#ff5722"
-                    platform_gradient = "linear-gradient(135deg, #ff5722 0%, #ff7043 100%)"
-                elif "foundit" in platform:
-                    icon = "🌐 <b style='color:#7c4dff;'>Foundit (Monster)</b>"
-                    btn_color = "#7c4dff"
-                    platform_gradient = "linear-gradient(135deg, #7c4dff 0%, #9c64ff 100%)"
-                else:
-                    icon = f"📄 <b>{platform.title()}</b>"
-                    btn_color = "#00c4cc"
-                    platform_gradient = "linear-gradient(135deg, #00c4cc 0%, #26d0ce 100%)"
+                for job in results:
+                    platform = job["title"].split(":")[0].lower()
 
-                # Clean all job fields to ensure no HTML tags appear
-                job_title = clean_html(str(job['title']))
-                job_company = clean_html(str(job['company']))
-                job_location = clean_html(str(job['location']))
-                job_salary = clean_html(str(job['salary']))
-                job_type = clean_html(str(job['type']))
-                job_remote = clean_html(str(job['remote']))
-                job_publisher = clean_html(str(job['publisher']))
-                job_description = clean_html(str(job['description']))
+                    # Platform styling
+                    if "linkedin" in platform:
+                        platform_name = "LinkedIn"
+                        btn_color = "#0e76a8"
+                        platform_gradient = "linear-gradient(135deg, #0e76a8 0%, #1a8cc8 100%)"
+                    elif "naukri" in platform:
+                        platform_name = "Naukri"
+                        btn_color = "#ff5722"
+                        platform_gradient = "linear-gradient(135deg, #ff5722 0%, #ff7043 100%)"
+                    elif "foundit" in platform:
+                        platform_name = "FoundIt (Monster)"
+                        btn_color = "#7c4dff"
+                        platform_gradient = "linear-gradient(135deg, #7c4dff 0%, #9c64ff 100%)"
+                    else:
+                        platform_name = platform.title()
+                        btn_color = "#00c4cc"
+                        platform_gradient = "linear-gradient(135deg, #00c4cc 0%, #26d0ce 100%)"
 
-                # Format date if available
-                formatted_date = "N/A"
-                if job["date"] != "N/A":
-                    try:
-                        date_obj = datetime.datetime.fromisoformat(job["date"].replace('Z', '+00:00'))
-                        formatted_date = date_obj.strftime("%b %d, %Y")
-                    except:
-                        formatted_date = job["date"]
+                    # Render card using reusable function
+                    job_card_html, card_height = render_job_card(
+                        title=job_role,
+                        link=job['link'],
+                        platform_name=platform_name,
+                        brand_color=btn_color,
+                        platform_gradient=platform_gradient,
+                        location=location,
+                        description="Open this platform to view full details."
+                    )
+                    st.components.v1.html(job_card_html, height=card_height, scrolling=False)
+            else:
+                st.warning("⚠️ Please enter both the Job Title and Location to perform the search.")
 
-                # Create job card HTML
-                job_card_html = f"""
+    else:
+        # RapidAPI Jobs Section
+        col1, col2 = st.columns(2)
+
+        with col1:
+            rapid_job_role = st.text_input("💼 Job Title / Skills", placeholder="e.g., Python Developer", key="rapid_role")
+
+        with col2:
+            rapid_location = st.text_input("📍 Location", placeholder="e.g., Mumbai", key="rapid_loc")
+
+        # Number of results
+        num_results = st.slider("📊 Number of Jobs to Fetch", min_value=5, max_value=50, value=10, step=5, key="rapid_num_results")
+
+        # Advanced Filters
+        with st.expander("🔧 Advanced Filters"):
+            date_posted = st.selectbox(
+                "📅 Date Posted",
+                ["all", "today", "3days", "week", "month"],
+                key="rapid_date"
+            )
+            rapid_job_type = st.selectbox(
+                "📋 Job Type",
+                ["", "Full-time", "Part-time", "Contract", "Internship"],
+                key="rapid_type"
+            )
+            remote_only = st.checkbox("🏠 Remote Only", key="rapid_remote")
+            radius = st.number_input("📏 Radius (km)", min_value=0, max_value=200, value=50, key="rapid_radius")
+            job_requirements = st.multiselect(
+                "📝 Job Requirements",
+                ["under_3_years_experience", "more_than_3_years_experience", "no_experience", "no_degree"],
+                key="rapid_req"
+            )
+
+        search_rapid_clicked = st.button("🔎 Search Rapid Jobs", key="search_rapid")
+
+        if search_rapid_clicked:
+            if rapid_job_role.strip() and rapid_location.strip():
+                # Call fetch_live_jobs with parameters
+                results = fetch_live_jobs(
+                    rapid_job_role,
+                    rapid_location,
+                    job_type=rapid_job_type if rapid_job_type else None,
+                    remote_only=remote_only,
+                    results=num_results
+                )
+
+                # Save search results if user is logged in
+                if hasattr(st.session_state, 'username') and st.session_state.username:
+                    formatted_results = []
+                    for job in results:
+                        formatted_results.append({
+                            "platform": "RapidAPI (Live)",
+                            "apply_link": job.get("job_apply_link", "#")
+                        })
+                    save_job_search(st.session_state.username, rapid_job_role, rapid_location, formatted_results)
+
+                st.markdown("## 🎯 RapidAPI Job Results")
+
+                if results:
+                    for job in results:
+                        # Clean all job fields
+                        job_title = clean_html(job.get("job_title", "N/A"))
+                        job_company = clean_html(job.get("employer_name", "Unknown"))
+                        job_location = f"{job.get('job_city','')}, {job.get('job_country','')}"
+                        job_salary = f"{job.get('job_min_salary','None')} - {job.get('job_max_salary','None')} {job.get('job_salary_currency','')}"
+                        job_type = job.get("job_employment_type", "N/A")
+                        job_mode = "Remote" if job.get("job_is_remote") else "On-site"
+                        job_publisher = clean_html(job.get("job_publisher", "N/A"))
+                        job_description = clean_html(job.get("job_description", ""))[:250] + "..."
+
+                        # Format date
+                        formatted_date = "N/A"
+                        if job.get("job_posted_at_datetime_utc") and job["job_posted_at_datetime_utc"] != "N/A":
+                            try:
+                                date_obj = datetime.datetime.fromisoformat(job["job_posted_at_datetime_utc"].replace('Z', '+00:00'))
+                                formatted_date = date_obj.strftime("%b %d, %Y")
+                            except:
+                                formatted_date = job["job_posted_at_datetime_utc"]
+
+                        # Colors
+                        btn_color = "#00ff88"
+                        platform_gradient = "linear-gradient(135deg, #00ff88 0%, #00cc6f 100%)"
+
+                        # Custom HTML card
+                        job_card_html = f"""
 <div class="job-result-card" style="
     background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
     padding: 25px;
@@ -6706,47 +6960,37 @@ with tab3:
     <div class="shimmer-overlay"></div>
 
     <!-- Platform Badge -->
-    <div style="font-size: 18px; margin-bottom: 15px; z-index: 2; position: relative;">{icon}</div>
+    <div style="font-size: 18px; margin-bottom: 15px; color: {btn_color}; font-weight: bold;">
+        ⚡ RapidAPI (Live)
+    </div>
 
     <!-- Job Title -->
-    <div style="color: #ffffff; font-size: 22px; margin-bottom: 10px; font-weight: 600; z-index: 2; position: relative; line-height: 1.4;">
+    <div style="color: #ffffff; font-size: 22px; margin-bottom: 10px; font-weight: 600; line-height: 1.4;">
         {job_title}
     </div>
 
     <!-- Company -->
-    <div style="color: #aaaaaa; font-size: 16px; margin-bottom: 15px; z-index: 2; position: relative;">
+    <div style="color: #aaaaaa; font-size: 16px; margin-bottom: 15px;">
         🏢 <b>{job_company}</b>
     </div>
 
     <!-- Job Details Grid -->
-    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; z-index: 2; position: relative;">
-        <div style="color: #cccccc; font-size: 14px;">
-            📍 <b>Location:</b> {job_location}
-        </div>
-        <div style="color: #cccccc; font-size: 14px;">
-            💰 <b>Salary:</b> {job_salary}
-        </div>
-        <div style="color: #cccccc; font-size: 14px;">
-            📋 <b>Type:</b> {job_type}
-        </div>
-        <div style="color: #cccccc; font-size: 14px;">
-            🌍 <b>Mode:</b> {job_remote}
-        </div>
-        <div style="color: #cccccc; font-size: 14px;">
-            📅 <b>Posted:</b> {formatted_date}
-        </div>
-        <div style="color: #cccccc; font-size: 14px;">
-            📰 <b>Source:</b> {job_publisher}
-        </div>
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px;">
+        <div style="color: #cccccc; font-size: 14px;">📍 <b>Location:</b> {job_location}</div>
+        <div style="color: #cccccc; font-size: 14px;">💰 <b>Salary:</b> {job_salary}</div>
+        <div style="color: #cccccc; font-size: 14px;">📋 <b>Type:</b> {job_type}</div>
+        <div style="color: #cccccc; font-size: 14px;">🌍 <b>Mode:</b> {job_mode}</div>
+        <div style="color: #cccccc; font-size: 14px;">📅 <b>Posted:</b> {formatted_date}</div>
+        <div style="color: #cccccc; font-size: 14px;">📰 <b>Source:</b> {job_publisher}</div>
     </div>
 
     <!-- Description -->
-    <div style="color: #999999; font-size: 14px; margin-bottom: 20px; line-height: 1.6; z-index: 2; position: relative;">
+    <div style="color: #999999; font-size: 14px; margin-bottom: 20px; line-height: 1.6;">
         {job_description}
     </div>
 
     <!-- Apply Button -->
-    <a href="{job['apply_link']}" target="_blank" style="text-decoration: none; z-index: 2; position: relative;">
+    <a href="{job.get('job_apply_link', '#')}" target="_blank" style="text-decoration: none;">
         <button class="job-button" style="
             background: {platform_gradient};
             color: white;
@@ -6758,17 +7002,17 @@ with tab3:
             cursor: pointer;
             box-shadow: 0 4px 15px {btn_color}50;
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
         ">
-            <span style="position: relative; z-index: 2;">🚀 Apply Now →</span>
+            🚀 Apply Now →
         </button>
     </a>
 </div>
 """
-                st.components.v1.html(job_card_html, height=500, scrolling=False)
-        else:
-            st.warning("⚠️ Please enter both the Job Role and Location to perform the search.")
+                        st.components.v1.html(job_card_html, height=500, scrolling=False)
+                else:
+                    st.info("No jobs found. Try adjusting your search criteria.")
+            else:
+                st.warning("⚠️ Please enter both the Job Title and Location to perform the search.")
 
     # Display saved job searches if user is logged in
     if hasattr(st.session_state, 'username') and st.session_state.username:

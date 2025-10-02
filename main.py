@@ -8706,6 +8706,50 @@ with tab4:
         
         return questions
 
+    # Helper function to generate fallback questions
+    def self_generate_fallback_questions(role, domain, difficulty, count):
+        """Generate fallback questions when LLM doesn't return enough"""
+        if difficulty == "Easy":
+            base_questions = [
+                f"What interests you most about the {role} position?",
+                f"Describe your basic understanding of {role} responsibilities.",
+                f"What are the fundamental skills needed for {role}?",
+                f"How do you stay updated with trends in {domain}?",
+                f"Why do you want to work as a {role}?",
+                f"What do you know about the {role} role?",
+                f"Tell me about yourself and your interest in {role}.",
+                f"What motivates you to pursue a career in {domain}?",
+                f"Describe a project you've worked on related to {role}.",
+                f"What are your career goals as a {role}?"
+            ]
+        elif difficulty == "Hard":
+            base_questions = [
+                f"Design a scalable system architecture for a {role} project handling millions of users.",
+                f"Explain the trade-offs between different approaches in {domain} and when to use each.",
+                f"How would you troubleshoot a critical production issue in a {role} context?",
+                f"Describe your approach to mentoring junior team members as a {role}.",
+                f"What are the biggest technical challenges facing {role} professionals today?",
+                f"How would you architect a distributed system for {domain}?",
+                f"Explain how you would optimize performance in a complex {role} project.",
+                f"What advanced techniques do you use in {domain}?",
+                f"Describe a time you made a critical technical decision as a {role}.",
+                f"How do you approach system design for high availability in {domain}?"
+            ]
+        else:  # Medium
+            base_questions = [
+                f"Describe a challenging project you've worked on relevant to {role}.",
+                f"How do you approach problem-solving in {domain}?",
+                f"What tools and technologies are you most comfortable with for {role}?",
+                f"Tell me about a time you had to learn a new skill for {role}.",
+                f"How do you prioritize tasks when working as a {role}?",
+                f"Describe your experience with {domain} technologies.",
+                f"How do you handle tight deadlines as a {role}?",
+                f"What's your approach to code quality in {domain}?",
+                f"Tell me about a technical challenge you solved as a {role}.",
+                f"How do you collaborate with team members in {domain}?"
+            ]
+        return base_questions[:count]
+
     # UPDATED: AI-Generated Questions using LLM with DIFFICULTY SUPPORT
     def generate_interview_questions_with_llm(domain, role, interview_type, num_questions, difficulty="Medium"):
         """
@@ -8722,38 +8766,63 @@ with tab4:
 
         prompt = f"""You are an expert interviewer.
 
-Generate {num_questions} unique {interview_type} interview questions
+Generate EXACTLY {num_questions} unique {interview_type} interview questions
 for the role of {role} in {domain}.
 
 DIFFICULTY LEVEL: {difficulty}
 {difficulty_instructions.get(difficulty, difficulty_instructions["Medium"])}
 
-Requirements:
-- Keep each question concise (1-2 sentences max).
-- Avoid duplicates.
-- Match the difficulty level specified above.
-- Output as plain text, one question per line.
-- No numbering or bullet points.
+CRITICAL REQUIREMENTS:
+- Generate EXACTLY {num_questions} questions - no more, no less
+- Keep each question concise (1-2 sentences max)
+- Avoid duplicates
+- Match the difficulty level specified above
+- Output ONLY the questions, one per line
+- DO NOT add numbering, bullet points, or any prefixes
+- DO NOT add any introductory text or explanations
+
+Output format example:
+What is your experience with cloud technologies?
+How would you handle a system outage?
+Describe your approach to code reviews.
 
 Generate exactly {num_questions} questions now:
 """
 
         try:
             response = call_llm(prompt, session=st.session_state)
-            questions = [q.strip() for q in response.split('\n') if q.strip()]
-            # Remove any numbering or bullet points
+
+            # Split by newlines and clean up
+            raw_questions = [q.strip() for q in response.split('\n') if q.strip()]
+
+            # Remove any numbering or bullet points more aggressively
+            import re
             cleaned_questions = []
-            for q in questions:
-                # Remove common prefixes like "1. ", "- ", "• ", etc.
-                import re
-                clean_q = re.sub(r'^[\d\-•\*\.]+\s*', '', q).strip()
-                if clean_q and len(clean_q) > 10:  # Ensure meaningful questions
+            for q in raw_questions:
+                # Remove various prefixes: "1. ", "1) ", "- ", "• ", "* ", "Question 1:", etc.
+                clean_q = re.sub(r'^[\d\)\.\-•\*]+\s*', '', q).strip()
+                clean_q = re.sub(r'^Question\s*\d*\s*:?\s*', '', clean_q, flags=re.IGNORECASE).strip()
+
+                # Only add if it's a meaningful question
+                if clean_q and len(clean_q) > 15 and not clean_q.lower().startswith('generate') and not clean_q.lower().startswith('here'):
                     cleaned_questions.append(clean_q)
+
+                # Stop if we have enough questions
+                if len(cleaned_questions) >= num_questions:
+                    break
+
+            # If we got fewer questions than requested, try to pad with fallback
+            if len(cleaned_questions) < num_questions:
+                st.warning(f"Only generated {len(cleaned_questions)} questions, padding with fallback questions...")
+                # Add fallback questions to meet the requirement
+                fallback_needed = num_questions - len(cleaned_questions)
+                fallback_qs = self_generate_fallback_questions(role, domain, difficulty, fallback_needed)
+                cleaned_questions.extend(fallback_qs)
 
             return cleaned_questions[:num_questions]  # Return exact number requested
 
         except Exception as e:
-            st.error(f"Failed to generate questions: {e}")
+            st.error(f"Failed to generate questions with LLM: {e}")
             # Fallback to static questions appropriate for difficulty
             if difficulty == "Easy":
                 fallback_questions = [

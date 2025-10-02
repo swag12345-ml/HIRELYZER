@@ -6502,6 +6502,9 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
         location: Job location (optional)
         salary: Salary information (optional)
         description: Job description (optional)
+
+    Returns:
+        tuple: (html_string, estimated_height)
     """
     # Platform icon mapping
     icon_map = {
@@ -6512,14 +6515,17 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
     }
     icon = icon_map.get(platform_name, "📄")
 
-    # Build metadata section
+    # Build metadata section and calculate height
     metadata_html = ""
+    estimated_height = 180  # Base height (platform + title + button + padding)
+
     if company:
         metadata_html += f"""
         <div style="color: #aaaaaa; font-size: 14px; margin-bottom: 8px; z-index: 2; position: relative;">
             🏢 <b>{company}</b>
         </div>
         """
+        estimated_height += 30
 
     if location:
         metadata_html += f"""
@@ -6527,6 +6533,7 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
             📍 {location}
         </div>
         """
+        estimated_height += 30
 
     if salary and salary not in ["Check site", "N/A - N/A "]:
         metadata_html += f"""
@@ -6534,8 +6541,12 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
             💰 {salary}
         </div>
         """
+        estimated_height += 30
 
     if description and description != "Open this platform to view full details.":
+        # Estimate height based on description length
+        desc_lines = len(description) // 60 + 1
+        estimated_height += (desc_lines * 22) + 15
         metadata_html += f"""
         <div style="color: #999999; font-size: 14px; margin-bottom: 15px; line-height: 1.6; z-index: 2; position: relative;">
             {description}
@@ -6544,7 +6555,19 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
 
     # Create the job card HTML
     job_card_html = f"""
+<!DOCTYPE html>
+<html>
+<head>
 <style>
+    * {{
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }}
+    body {{
+        background: transparent;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }}
     @keyframes shimmer {{
         0% {{ transform: translateX(-100%); }}
         100% {{ transform: translateX(100%); }}
@@ -6560,18 +6583,44 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
         animation: shimmer 3s infinite;
         z-index: 1;
     }}
+    .job-result-card {{
+        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+        padding: 22px;
+        border-radius: 20px;
+        border-left: 6px solid {brand_color};
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px {brand_color}40;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }}
+    .job-result-card:hover {{
+        transform: translateY(-3px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 30px {brand_color}60;
+    }}
+    .job-button {{
+        background: {platform_gradient};
+        color: white;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 15px {brand_color}50;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        text-decoration: none;
+        display: inline-block;
+    }}
+    .job-button:hover {{
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px {brand_color}70;
+    }}
 </style>
-<div class="job-result-card" style="
-    background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
-    padding: 22px;
-    border-radius: 20px;
-    margin-bottom: 22px;
-    border-left: 6px solid {brand_color};
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px {brand_color}40;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-">
+</head>
+<body>
+<div class="job-result-card">
     <div class="shimmer-overlay"></div>
 
     <!-- Platform Badge -->
@@ -6589,26 +6638,15 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
 
     <!-- Apply Button -->
     <a href="{link}" target="_blank" style="text-decoration: none; z-index: 2; position: relative;">
-        <button class="job-button" style="
-            background: {platform_gradient};
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 15px {brand_color}50;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        ">
+        <button class="job-button">
             <span style="position: relative; z-index: 2;">🚀 Apply Now →</span>
         </button>
     </a>
 </div>
+</body>
+</html>
 """
-    return job_card_html
+    return job_card_html, estimated_height
 
 def search_jobs(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
     # Encode query values
@@ -6810,7 +6848,7 @@ with tab3:
                         platform_gradient = "linear-gradient(135deg, #00c4cc 0%, #26d0ce 100%)"
 
                     # Render card using reusable function
-                    job_card_html = render_job_card(
+                    job_card_html, card_height = render_job_card(
                         title=job_role,
                         link=job['link'],
                         platform_name=platform_name,
@@ -6819,7 +6857,7 @@ with tab3:
                         location=location,
                         description="Open this platform to view full details."
                     )
-                    st.components.v1.html(job_card_html, scrolling=False)
+                    st.components.v1.html(job_card_html, height=card_height, scrolling=False)
             else:
                 st.warning("⚠️ Please enter both the Job Title and Location to perform the search.")
 
@@ -6894,7 +6932,7 @@ with tab3:
                         platform_gradient = "linear-gradient(135deg, #00ff88 0%, #00cc6f 100%)"
 
                         # Render card using reusable function
-                        job_card_html = render_job_card(
+                        job_card_html, card_height = render_job_card(
                             title=job_title,
                             link=job.get('job_apply_link', '#'),
                             platform_name="RapidAPI (Live)",
@@ -6905,7 +6943,7 @@ with tab3:
                             salary=job_salary,
                             description=job_description
                         )
-                        st.components.v1.html(job_card_html, scrolling=False)
+                        st.components.v1.html(job_card_html, height=card_height, scrolling=False)
                 else:
                     st.info("No jobs found. Try adjusting your search criteria.")
             else:

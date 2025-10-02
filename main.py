@@ -7299,30 +7299,30 @@ with tab3:
                         st.markdown(f"**Showing {start_index}-{end_index} of {filtered_count} searches**")
 
                     for search in saved_searches:
-                    # Format timestamp - Convert UTC to IST
-                    timestamp = datetime.datetime.strptime(search["timestamp"], "%Y-%m-%d %H:%M:%S.%f")
-                    # Assume stored timestamp is in UTC, convert to IST
-                    timestamp_utc = timestamp.replace(tzinfo=ZoneInfo('UTC'))
-                    timestamp_ist = timestamp_utc.astimezone(ZoneInfo('Asia/Kolkata'))
-                    formatted_time = timestamp_ist.strftime("%b %d, %Y at %I:%M %p IST")
+                        # Format timestamp - Convert UTC to IST
+                        timestamp = datetime.datetime.strptime(search["timestamp"], "%Y-%m-%d %H:%M:%S.%f")
+                        # Assume stored timestamp is in UTC, convert to IST
+                        timestamp_utc = timestamp.replace(tzinfo=ZoneInfo('UTC'))
+                        timestamp_ist = timestamp_utc.astimezone(ZoneInfo('Asia/Kolkata'))
+                        formatted_time = timestamp_ist.strftime("%b %d, %Y at %I:%M %p IST")
 
-                    # Platform styling
-                    platform_lower = search["platform"].lower()
-                    if "rapidapi" in platform_lower or "live" in platform_lower:
-                        platform_color = "#00ff88"
-                        platform_icon = "⚡"
-                    elif platform_lower == "linkedin":
-                        platform_color = "#0e76a8"
-                        platform_icon = "🔵"
-                    elif platform_lower == "naukri":
-                        platform_color = "#ff5722"
-                        platform_icon = "🏢"
-                    elif "foundit" in platform_lower:
-                        platform_color = "#7c4dff"
-                        platform_icon = "🌐"
-                    else:
-                        platform_color = "#00c4cc"
-                        platform_icon = "📄"
+                        # Platform styling
+                        platform_lower = search["platform"].lower()
+                        if "rapidapi" in platform_lower or "live" in platform_lower:
+                            platform_color = "#00ff88"
+                            platform_icon = "⚡"
+                        elif platform_lower == "linkedin":
+                            platform_color = "#0e76a8"
+                            platform_icon = "🔵"
+                        elif platform_lower == "naukri":
+                            platform_color = "#ff5722"
+                            platform_icon = "🏢"
+                        elif "foundit" in platform_lower:
+                            platform_color = "#7c4dff"
+                            platform_icon = "🌐"
+                        else:
+                            platform_color = "#00c4cc"
+                            platform_icon = "📄"
 
                         # Create columns for the card content and delete button
                         card_col, delete_col = st.columns([10, 1])

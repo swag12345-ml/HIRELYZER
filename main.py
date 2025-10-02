@@ -7009,7 +7009,7 @@ with tab3:
 </div>
 """
                         
-                        st.components.v1.html(job_card_html, height=350, scrolling=False)
+                        st.components.v1.html(job_card_html, height=450, scrolling=False)
 
 
                 else:

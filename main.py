@@ -7008,8 +7008,9 @@ with tab3:
     </a>
 </div>
 """
-                    card_height = 300 + (len(job_description) // 60) * 20
-						st.components.v1.html(job_card_html, height=card_height, scrolling=False)
+                        card_height = 300 + (len(job_description) // 60) * 20
+                        st.components.v1.html(job_card_html, height=card_height, scrolling=False)
+
 
                 else:
                     st.info("No jobs found. Try adjusting your search criteria.")
@@ -7492,7 +7493,6 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
-
 def evaluate_interview_answer(answer: str, question: str = None):
     """
     Uses an LLM to strictly evaluate an interview answer.

@@ -6925,25 +6925,90 @@ with tab3:
                         job_title = clean_html(job.get("job_title", "N/A"))
                         job_company = clean_html(job.get("employer_name", "Unknown"))
                         job_location = f"{job.get('job_city','')}, {job.get('job_country','')}"
-                        job_salary = f"{job.get('job_min_salary','NA')} - {job.get('job_max_salary','NA')} {job.get('job_salary_currency','')}"
-                        job_description = clean_html(job.get("job_description",""))[:200] + "..."
+                        job_salary = f"{job.get('job_min_salary','None')} - {job.get('job_max_salary','None')} {job.get('job_salary_currency','')}"
+                        job_type = job.get("job_employment_type", "N/A")
+                        job_mode = "Remote" if job.get("job_is_remote") else "On-site"
+                        job_publisher = clean_html(job.get("job_publisher", "N/A"))
+                        job_description = clean_html(job.get("job_description", ""))[:250] + "..."
 
+                        # Format date
+                        formatted_date = "N/A"
+                        if job.get("job_posted_at_datetime_utc") and job["job_posted_at_datetime_utc"] != "N/A":
+                            try:
+                                date_obj = datetime.datetime.fromisoformat(job["job_posted_at_datetime_utc"].replace('Z', '+00:00'))
+                                formatted_date = date_obj.strftime("%b %d, %Y")
+                            except:
+                                formatted_date = job["job_posted_at_datetime_utc"]
+
+                        # Colors
                         btn_color = "#00ff88"
                         platform_gradient = "linear-gradient(135deg, #00ff88 0%, #00cc6f 100%)"
 
-                        # Render card using reusable function
-                        job_card_html, card_height = render_job_card(
-                            title=job_title,
-                            link=job.get('job_apply_link', '#'),
-                            platform_name="RapidAPI (Live)",
-                            brand_color=btn_color,
-                            platform_gradient=platform_gradient,
-                            company=job_company,
-                            location=job_location,
-                            salary=job_salary,
-                            description=job_description
-                        )
-                        st.components.v1.html(job_card_html, height=card_height, scrolling=False)
+                        # Custom HTML card
+                        job_card_html = f"""
+<div class="job-result-card" style="
+    background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+    padding: 20px;
+    border-radius: 20px;
+    margin-bottom: 15px;
+    border-left: 6px solid {btn_color};
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px {btn_color}40;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+">
+    <div class="shimmer-overlay"></div>
+
+    <!-- Platform Badge -->
+    <div style="font-size: 16px; margin-bottom: 12px; color: {btn_color}; font-weight: bold;">
+        ⚡ RapidAPI (Live)
+    </div>
+
+    <!-- Job Title -->
+    <div style="color: #ffffff; font-size: 20px; margin-bottom: 8px; font-weight: 600; line-height: 1.3;">
+        {job_title}
+    </div>
+
+    <!-- Company -->
+    <div style="color: #aaaaaa; font-size: 15px; margin-bottom: 12px;">
+        🏢 <b>{job_company}</b>
+    </div>
+
+    <!-- Job Details Grid -->
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px;">
+        <div style="color: #cccccc; font-size: 13px;">📍 <b>Location:</b> {job_location}</div>
+        <div style="color: #cccccc; font-size: 13px;">💰 <b>Salary:</b> {job_salary}</div>
+        <div style="color: #cccccc; font-size: 13px;">📋 <b>Type:</b> {job_type}</div>
+        <div style="color: #cccccc; font-size: 13px;">🌍 <b>Mode:</b> {job_mode}</div>
+        <div style="color: #cccccc; font-size: 13px;">📅 <b>Posted:</b> {formatted_date}</div>
+        <div style="color: #cccccc; font-size: 13px;">📰 <b>Source:</b> {job_publisher}</div>
+    </div>
+
+    <!-- Description -->
+    <div style="color: #999999; font-size: 13px; margin-bottom: 15px; line-height: 1.5;">
+        {job_description}
+    </div>
+
+    <!-- Apply Button -->
+    <a href="{job.get('job_apply_link', '#')}" target="_blank" style="text-decoration: none;">
+        <button class="job-button" style="
+            background: {platform_gradient};
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px {btn_color}50;
+            transition: all 0.3s ease;
+        ">
+            🚀 Apply Now →
+        </button>
+    </a>
+</div>
+"""
+                        st.components.v1.html(job_card_html, height=380, scrolling=False)
                 else:
                     st.info("No jobs found. Try adjusting your search criteria.")
             else:

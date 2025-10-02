@@ -6863,11 +6863,11 @@ with tab3:
 </style>
 <div class="job-result-card" style="
     background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
-    padding: 25px;
+    padding: 20px;
     border-radius: 20px;
     margin-bottom: 15px;
     border-left: 6px solid {btn_color};
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px {btn_color}40;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
     position: relative;
     overflow: hidden;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -7164,9 +7164,9 @@ with tab3:
         background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
         color: #ffffff;
         border-radius: 20px;
-        padding: 25px;
-        margin-bottom: 25px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        padding: 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.25);
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         cursor: pointer;
         text-decoration: none;

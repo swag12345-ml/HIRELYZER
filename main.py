@@ -7785,7 +7785,7 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
             <h2>Detailed Q&A Review</h2>
         """
 
-        # FIXED: Add each question/answer/score/feedback with full answer (up to 2000 chars)
+        # CRITICAL FIX: Add each question/answer/score/feedback with FULL answer (no truncation)
         for i, (q, a, s, f) in enumerate(zip(questions, answers, scores, feedbacks), 1):
             avg_q_score = (s.get('knowledge', 5) + s.get('clarity', 5) + s.get('relevance', 5)) / 3
 
@@ -7794,10 +7794,8 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
             a_escaped = a.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
             f_escaped = f.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
-            # Show full answer up to 2000 chars instead of 500
-            answer_display = a_escaped[:2000]
-            if len(a_escaped) > 2000:
-                answer_display += '... (truncated)'
+            # SHOW FULL ANSWER - NO TRUNCATION IN PDF
+            answer_display = a_escaped
 
             xhtml += f"""
             <div class="question-block">
@@ -9230,8 +9228,11 @@ Generate exactly {num_questions} questions now:
             
             # Interview in progress
             elif st.session_state.dynamic_interview_started and not st.session_state.dynamic_interview_completed:
-                # FIXED: Properly count answered questions (excluding follow-ups that may be dynamically added)
+                # CRITICAL FIX: Properly count answered questions
                 questions_answered = len(st.session_state.dynamic_interview_answers)
+
+                # Debug info at top of screen (can be removed later)
+                st.info(f"📊 Progress: Answered {questions_answered} / {st.session_state.original_num_questions} questions | Total Q's: {len(st.session_state.dynamic_interview_questions)} | Current Index: {st.session_state.current_dynamic_interview_question}")
 
                 if questions_answered < st.session_state.original_num_questions:
                     question = st.session_state.current_interview_question_text or st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question]
@@ -9378,17 +9379,23 @@ Generate exactly {num_questions} questions now:
                         """, unsafe_allow_html=True)
 
                         # Continue/Complete button
-                        if questions_answered < st.session_state.original_num_questions - 1:
+                        # CRITICAL FIX: Check if we've answered all original questions
+                        if questions_answered >= st.session_state.original_num_questions:
+                            # All questions answered, mark as complete
+                            if st.button("Complete Interview 🏁"):
+                                st.session_state.dynamic_interview_completed = True
+                                st.rerun()
+                        else:
+                            # More questions to go
                             if st.button("Continue to Next Question ➡️"):
                                 st.session_state.current_dynamic_interview_question += 1
                                 st.session_state.dynamic_answer_submitted = False
                                 if st.session_state.current_dynamic_interview_question < len(st.session_state.dynamic_interview_questions):
                                     st.session_state.current_interview_question_text = st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question]
+                                else:
+                                    # Safety check - if we're out of questions but haven't answered all, generate one
+                                    st.session_state.current_interview_question_text = f"Additional question for {selected_role}"
                                 st.session_state.question_timer_start = time.time()
-                                st.rerun()
-                        else:
-                            if st.button("Complete Interview 🏁"):
-                                st.session_state.dynamic_interview_completed = True
                                 st.rerun()
 
                     # Progress bar for interview completion
@@ -9396,12 +9403,13 @@ Generate exactly {num_questions} questions now:
                     st.markdown("### Interview Progress")
                     st.progress(interview_progress)
 
-                    # FIXED: Review Previous Answers during interview - now includes most recent submitted answer
-                    if len(st.session_state.dynamic_interview_answers) > 0 and st.session_state.dynamic_answer_submitted:
+                    # CRITICAL FIX: Review Previous Answers - show all properly
+                    if len(st.session_state.dynamic_interview_answers) > 0:
                         with st.expander("📖 Review Previous Answers"):
-                            # Show all submitted answers including the most recent one
-                            for i in range(len(st.session_state.dynamic_interview_answers)):
-                                if i < len(st.session_state.dynamic_interview_questions):
+                            # Show all submitted answers
+                            num_to_show = len(st.session_state.dynamic_interview_answers)
+                            for i in range(num_to_show):
+                                if i < len(st.session_state.dynamic_interview_questions) and i < len(st.session_state.dynamic_interview_scores):
                                     prev_question = st.session_state.dynamic_interview_questions[i]
                                     prev_answer = st.session_state.dynamic_interview_answers[i]
                                     prev_scores = st.session_state.dynamic_interview_scores[i]
@@ -9415,15 +9423,18 @@ Generate exactly {num_questions} questions now:
                                     st.markdown(f"**Question {i+1}:** {prev_question}")
                                     st.markdown(f"**Your Answer:** {answer_preview}")
                                     st.markdown(f"**Score:** {prev_avg:.1f}/10")
-                                    st.markdown("---")
+                                    if i < num_to_show - 1:  # Don't add separator after last item
+                                        st.markdown("---")
 
                     # Auto-refresh for timer
                     if remaining_time > 0 and not st.session_state.dynamic_answer_submitted:
                         time.sleep(1)
                         st.rerun()
                 else:
-                    # All questions answered, move to completion
+                    # CRITICAL FIX: All questions answered, move to completion automatically
                     st.session_state.dynamic_interview_completed = True
+                    st.success(f"✅ Completed all {st.session_state.original_num_questions} questions!")
+                    time.sleep(1)
                     st.rerun()
             
             # UNIFIED: Interview completed + Course Recommendations + DB + PDF
@@ -9568,15 +9579,24 @@ Generate exactly {num_questions} questions now:
                 st.subheader("📄 Download Interview Report")
 
                 completed_on = get_ist_time()
+
+                # CRITICAL FIX: Ensure all arrays have same length for PDF generation
+                num_complete = min(
+                    len(st.session_state.dynamic_interview_questions),
+                    len(st.session_state.dynamic_interview_answers),
+                    len(st.session_state.dynamic_interview_scores),
+                    len(st.session_state.dynamic_interview_feedbacks)
+                )
+
                 pdf_bytes = generate_interview_pdf_report(
                     username,
                     selected_role,
                     selected_domain,
                     completed_on,
-                    st.session_state.dynamic_interview_questions[:st.session_state.original_num_questions],
-                    st.session_state.dynamic_interview_answers,
-                    st.session_state.dynamic_interview_scores,
-                    st.session_state.dynamic_interview_feedbacks,
+                    st.session_state.dynamic_interview_questions[:num_complete],
+                    st.session_state.dynamic_interview_answers[:num_complete],
+                    st.session_state.dynamic_interview_scores[:num_complete],
+                    st.session_state.dynamic_interview_feedbacks[:num_complete],
                     overall_avg,
                     badge
                 )
@@ -9621,7 +9641,6 @@ Generate exactly {num_questions} questions now:
                     st.rerun()
         else:
             st.info("Please select both a career domain and target role to start the interview practice.")
-
 
                       
 if tab5:

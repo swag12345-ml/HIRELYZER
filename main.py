@@ -6687,33 +6687,56 @@ init_job_search_db()
 with tab3:
     st.header("🔍 Job Search")
 
-    # Two-column layout for External and RapidAPI searches
-    search_col1, search_col2 = st.columns(2)
+    # Radio selector for search type
+    search_type = st.radio(
+        "Select Search Type:",
+        ["External Platforms (LinkedIn, Naukri, FoundIt)", "RapidAPI Jobs (India Only)"],
+        horizontal=True
+    )
 
-    # LEFT COLUMN: External Platforms (LinkedIn, Naukri, FoundIt)
-    with search_col1:
+    st.markdown("---")
+
+    # EXTERNAL PLATFORMS SECTION
+    if search_type == "External Platforms (LinkedIn, Naukri, FoundIt)":
         st.subheader("🌐 External Platforms")
         st.caption("LinkedIn • Naukri • FoundIt")
 
-        ext_job_role = st.text_input("💼 Job Title / Skills", placeholder="e.g., Data Scientist", key="ext_job_role")
-        ext_location = st.text_input("📍 Location", placeholder="e.g., Bangalore, India", key="ext_location")
+        col1, col2 = st.columns(2)
+
+        with col1:
+            job_role = st.text_input("💼 Job Title / Skills", placeholder="e.g., Data Scientist", key="ext_job_role")
+            experience_level = st.selectbox(
+                "📈 Experience Level",
+                ["", "Internship", "Entry Level", "Associate", "Mid-Senior Level", "Director", "Executive"],
+                key="ext_experience"
+            )
+
+        with col2:
+            location = st.text_input("📍 Location", placeholder="e.g., Bangalore, India", key="ext_location")
+            job_type = st.selectbox(
+                "📋 Job Type",
+                ["", "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship"],
+                key="ext_job_type"
+            )
+
+        foundit_experience = st.text_input("🔢 Experience (Years) for FoundIt", placeholder="e.g., 1", key="ext_foundit_exp")
 
         ext_search_clicked = st.button("🔎 Search External Jobs", key="ext_search_btn")
 
         if ext_search_clicked:
-            if ext_job_role.strip() and ext_location.strip():
-                external_results = search_jobs(ext_job_role, ext_location)
+            if job_role.strip() and location.strip():
+                external_results = search_jobs(job_role, location, experience_level, job_type, foundit_experience)
 
                 # Save search results if user is logged in
                 if hasattr(st.session_state, 'username') and st.session_state.username:
                     for job in external_results:
                         platform = job["title"].split(":")[0]
-                        save_job_search(st.session_state.username, ext_job_role, ext_location, [{
+                        save_job_search(st.session_state.username, job_role, location, [{
                             "platform": platform,
                             "apply_link": job["link"]
                         }])
 
-                st.markdown("#### 🎯 External Job Search Results")
+                st.markdown("## 🎯 External Job Search Results")
 
                 for job in external_results:
                     platform_name = job["title"].split(":")[0].lower()
@@ -6762,12 +6785,12 @@ with tab3:
 
     <!-- Job Role -->
     <div style="color: #ffffff; font-size: 20px; margin-bottom: 10px; font-weight: 600; z-index: 2; position: relative;">
-        {ext_job_role}
+        {job_role}
     </div>
 
     <!-- Location -->
     <div style="color: #aaaaaa; font-size: 16px; margin-bottom: 20px; z-index: 2; position: relative;">
-        📍 {ext_location}
+        📍 {location}
     </div>
 
     <!-- Apply Button -->
@@ -6795,8 +6818,8 @@ with tab3:
             else:
                 st.warning("⚠️ Please enter both Job Title and Location")
 
-    # RIGHT COLUMN: RapidAPI Jobs (India Only)
-    with search_col2:
+    # RAPIDAPI SECTION
+    elif search_type == "RapidAPI Jobs (India Only)":
         st.subheader("⚡ RapidAPI Jobs - India Only")
         st.caption("Live job postings from RapidAPI")
 
@@ -6839,7 +6862,7 @@ with tab3:
                             "apply_link": job.get("job_apply_link", "#")
                         }])
 
-                st.markdown("#### 🎯 RapidAPI Job Results")
+                st.markdown("## 🎯 RapidAPI Job Results")
 
                 if live_jobs:
                     display_rapid_jobs(live_jobs)
@@ -7324,7 +7347,6 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
-
 
 
 

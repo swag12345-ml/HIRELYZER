@@ -7008,8 +7008,8 @@ with tab3:
     </a>
 </div>
 """
-                        card_height = 300 + (len(job_description) // 60) * 20
-                        st.components.v1.html(job_card_html, height=card_height, scrolling=False)
+                        
+                        st.components.v1.html(job_card_html, height=350, scrolling=False)
 
 
                 else:

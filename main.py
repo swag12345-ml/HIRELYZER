@@ -7008,7 +7008,8 @@ with tab3:
     </a>
 </div>
 """
-                        st.components.v1.html(job_card_html, height=500, scrolling=False)
+                        st.components.v1.html(job_card_html, scrolling=False)
+
                 else:
                     st.info("No jobs found. Try adjusting your search criteria.")
             else:

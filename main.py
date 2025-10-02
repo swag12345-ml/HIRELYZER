@@ -6299,7 +6299,10 @@ def display_rapid_jobs(jobs):
         salary_currency = job.get('job_salary_currency', '')
         job_salary = f"{min_salary} - {max_salary} {salary_currency}" if min_salary != 'NA' and max_salary != 'NA' else "Not disclosed"
 
-        job_description = clean_html(str(job.get("job_description", "")))[:200] + "..."
+        job_description = clean_html(str(job.get("job_description", "")))
+        if len(job_description) > 300:
+            job_description = job_description[:300] + "..."
+
         job_link = job.get("job_apply_link", "#")
 
         # Format date if available
@@ -6316,9 +6319,9 @@ def display_rapid_jobs(jobs):
         job_card_html = f"""
 <div class="job-result-card" style="
     background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
-    padding: 25px;
+    padding: 20px;
     border-radius: 20px;
-    margin-bottom: 25px;
+    margin-bottom: 15px;
     border-left: 6px solid #00ff88;
     box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px #00ff8840;
     position: relative;
@@ -6328,30 +6331,30 @@ def display_rapid_jobs(jobs):
     <div class="shimmer-overlay"></div>
 
     <!-- Job Title -->
-    <div style="color: #ffffff; font-size: 22px; margin-bottom: 10px; font-weight: 600; z-index: 2; position: relative; line-height: 1.4;">
+    <div style="color: #ffffff; font-size: 20px; margin-bottom: 8px; font-weight: 600; z-index: 2; position: relative; line-height: 1.3;">
         {job_title}
     </div>
 
     <!-- Company -->
-    <div style="color: #aaaaaa; font-size: 16px; margin-bottom: 15px; z-index: 2; position: relative;">
+    <div style="color: #aaaaaa; font-size: 15px; margin-bottom: 12px; z-index: 2; position: relative;">
         🏢 <b>{job_company}</b>
     </div>
 
     <!-- Job Details Grid -->
-    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; z-index: 2; position: relative;">
-        <div style="color: #cccccc; font-size: 14px;">
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; z-index: 2; position: relative;">
+        <div style="color: #cccccc; font-size: 13px;">
             📍 <b>Location:</b> {job_location}
         </div>
-        <div style="color: #cccccc; font-size: 14px;">
+        <div style="color: #cccccc; font-size: 13px;">
             💰 <b>Salary:</b> {job_salary}
         </div>
-        <div style="color: #cccccc; font-size: 14px;">
+        <div style="color: #cccccc; font-size: 13px;">
             📅 <b>Posted:</b> {formatted_date}
         </div>
     </div>
 
     <!-- Description -->
-    <div style="color: #999999; font-size: 14px; margin-bottom: 20px; line-height: 1.6; z-index: 2; position: relative;">
+    <div style="color: #999999; font-size: 13px; margin-bottom: 15px; line-height: 1.5; z-index: 2; position: relative;">
         {job_description}
     </div>
 
@@ -6360,10 +6363,10 @@ def display_rapid_jobs(jobs):
         <button class="job-button" style="
             background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
             color: white;
-            padding: 12px 20px;
+            padding: 10px 18px;
             border: none;
             border-radius: 12px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
             box-shadow: 0 4px 15px #00ff8850;
@@ -6376,7 +6379,7 @@ def display_rapid_jobs(jobs):
     </a>
 </div>
 """
-        st.components.v1.html(job_card_html, height=450, scrolling=False)
+        st.components.v1.html(job_card_html, height=380, scrolling=False)
 
 # Database functions for job search history
 def init_job_search_db():
@@ -7347,9 +7350,6 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
-
-
-
 def evaluate_interview_answer(answer: str, question: str = None):
     """
     Uses an LLM to strictly evaluate an interview answer.

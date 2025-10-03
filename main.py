@@ -6777,7 +6777,7 @@ with tab3:
     <style>
     /* Modern Dark Theme for Tab 3 */
     .search-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -6810,8 +6810,8 @@ with tab3:
     }
 
     .stRadio > div > label:hover {
-        border-color: #667eea;
-        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        border-color: #00c6ff;
+        box-shadow: 0 4px 20px rgba(0, 198, 255, 0.4);
         transform: translateY(-2px);
     }
 
@@ -6830,27 +6830,27 @@ with tab3:
 
     .stTextInput > div > div > input:focus,
     .stSelectbox > div > div > select:focus {
-        border-color: #667eea !important;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2) !important;
+        border-color: #00c6ff !important;
+        box-shadow: 0 0 0 3px rgba(0, 198, 255, 0.2) !important;
     }
 
     /* Search Button Styling */
     .stButton > button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%) !important;
         color: white !important;
         font-weight: 600 !important;
         font-size: 16px !important;
         padding: 14px 36px !important;
         border-radius: 12px !important;
         border: none !important;
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+        box-shadow: 0 6px 20px rgba(0, 200, 255, 0.6) !important;
         transition: all 0.3s ease !important;
         width: 100% !important;
     }
 
     .stButton > button:hover {
         transform: translateY(-2px) !important;
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6) !important;
+        box-shadow: 0 8px 30px rgba(0, 200, 255, 0.8) !important;
     }
     </style>
 
@@ -6936,8 +6936,8 @@ with tab3:
                         platform_gradient = "linear-gradient(135deg, #ff5722 0%, #ff7043 100%)"
                     elif "foundit" in platform:
                         platform_name = "FoundIt (Monster)"
-                        btn_color = "#7c4dff"
-                        platform_gradient = "linear-gradient(135deg, #7c4dff 0%, #9c64ff 100%)"
+                        btn_color = "#00c6ff"
+                        platform_gradient = "linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)"
                     else:
                         platform_name = platform.title()
                         btn_color = "#00c4cc"
@@ -7318,7 +7318,7 @@ with tab3:
                             platform_color = "#ff5722"
                             platform_icon = "🏢"
                         elif "foundit" in platform_lower:
-                            platform_color = "#7c4dff"
+                            platform_color = "#00c6ff"
                             platform_icon = "🌐"
                         else:
                             platform_color = "#00c4cc"
@@ -7582,7 +7582,7 @@ with tab3:
         margin-bottom: 30px;
         font-weight: 700;
         text-align: center;
-        background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
+        background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -7598,7 +7598,7 @@ with tab3:
         transform: translateX(-50%);
         width: 60px;
         height: 3px;
-        background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
+        background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
         border-radius: 2px;
     }
 
@@ -7646,12 +7646,12 @@ with tab3:
     }
 
     ::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
+        background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
         border-radius: 4px;
     }
 
     ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(135deg, #26d0ce 0%, #9c64ff 100%);
+        background: linear-gradient(135deg, #00d4ff 0%, #0090ff 100%);
     }
     </style>
     """, unsafe_allow_html=True)
@@ -7708,11 +7708,11 @@ with tab3:
             """, unsafe_allow_html=True)
 
     with col2:
-        st.markdown("<div style='color: #7c4dff; font-size: 18px; font-weight: 700; margin-bottom: 20px; text-align: center;'>🌍 Top Locations</div>", unsafe_allow_html=True)
+        st.markdown("<div style='color: #00c6ff; font-size: 18px; font-weight: 700; margin-bottom: 20px; text-align: center;'>�� Top Locations</div>", unsafe_allow_html=True)
         for loc in JOB_MARKET_INSIGHTS["top_locations"]:
             st.markdown(f"""
             <div class="company-card" style="margin-bottom: 15px; padding: 18px;">
-                <h4 style="color: #7c4dff; margin-bottom: 8px; font-size: 16px; position: relative; z-index: 2;">📍 {loc['name']}</h4>
+                <h4 style="color: #00c6ff; margin-bottom: 8px; font-size: 16px; position: relative; z-index: 2;">📍 {loc['name']}</h4>
                 <p style="color: #ccc; font-size: 14px; position: relative; z-index: 2;">💼 Openings: <span style="color: #fbbf24; font-weight: 600;">{loc['jobs']}</span></p>
             </div>
             """, unsafe_allow_html=True)

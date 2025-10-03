@@ -2,6 +2,7 @@ streamlit
 streamlit-autorefresh
 streamlit-pdf-viewer
 torch
+streamlit-option-menu
 numpy
 pillow
 matplotlib

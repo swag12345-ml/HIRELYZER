@@ -6798,20 +6798,23 @@ with tab3:
     .stRadio > div > label {
         flex: 1;
         max-width: 350px;
-        background: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 100%);
+        background: linear-gradient(135deg, rgba(0, 198, 255, 0.08) 0%, rgba(0, 114, 255, 0.08) 100%);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
         padding: 18px 24px;
         border-radius: 15px;
         text-align: center;
         font-weight: 600;
         font-size: 15px;
-        border: 2px solid #444;
+        border: 1px solid rgba(0, 198, 255, 0.2);
         transition: all 0.3s ease;
         cursor: pointer;
     }
 
     .stRadio > div > label:hover {
-        border-color: #00c6ff;
-        box-shadow: 0 4px 20px rgba(0, 198, 255, 0.4);
+        background: linear-gradient(135deg, rgba(0, 198, 255, 0.15) 0%, rgba(0, 114, 255, 0.15) 100%);
+        border-color: rgba(0, 198, 255, 0.4);
+        box-shadow: 0 4px 20px rgba(0, 198, 255, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.1);
         transform: translateY(-2px);
     }
 
@@ -6834,23 +6837,27 @@ with tab3:
         box-shadow: 0 0 0 3px rgba(0, 198, 255, 0.2) !important;
     }
 
-    /* Search Button Styling */
+    /* Search Button Styling - Glassmorphism */
     .stButton > button {
-        background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%) !important;
+        background: linear-gradient(135deg, rgba(0, 198, 255, 0.15) 0%, rgba(0, 114, 255, 0.15) 100%) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(0, 198, 255, 0.3) !important;
         color: white !important;
         font-weight: 600 !important;
         font-size: 16px !important;
         padding: 14px 36px !important;
         border-radius: 12px !important;
-        border: none !important;
-        box-shadow: 0 6px 20px rgba(0, 200, 255, 0.6) !important;
+        box-shadow: 0 6px 20px rgba(0, 200, 255, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.1) !important;
         transition: all 0.3s ease !important;
         width: 100% !important;
     }
 
     .stButton > button:hover {
         transform: translateY(-2px) !important;
-        box-shadow: 0 8px 30px rgba(0, 200, 255, 0.8) !important;
+        background: linear-gradient(135deg, rgba(0, 198, 255, 0.25) 0%, rgba(0, 114, 255, 0.25) 100%) !important;
+        border: 1px solid rgba(0, 198, 255, 0.5) !important;
+        box-shadow: 0 8px 30px rgba(0, 200, 255, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
     }
     </style>
 
@@ -7469,14 +7476,16 @@ with tab3:
         }
     }
 
-    /* Enhanced Company Cards */
+    /* Enhanced Company Cards - Glassmorphism */
     .company-card {
-        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+        background: linear-gradient(135deg, rgba(0, 198, 255, 0.05) 0%, rgba(0, 114, 255, 0.05) 100%);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
         color: #ffffff;
         border-radius: 20px;
         padding: 25px;
         margin-bottom: 25px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255, 255, 255, 0.05);
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         cursor: pointer;
         text-decoration: none;
@@ -7484,7 +7493,7 @@ with tab3:
         animation: glow 4s infinite alternate, float 6s ease-in-out infinite;
         position: relative;
         overflow: hidden;
-        border: 1px solid rgba(255,255,255,0.1);
+        border: 1px solid rgba(0, 198, 255, 0.2);
     }
 
     .company-card::before {
@@ -7494,7 +7503,7 @@ with tab3:
         left: 0;
         right: 0;
         bottom: 0;
-        background: linear-gradient(135deg, rgba(0,255,255,0.1) 0%, rgba(255,0,255,0.1) 100%);
+        background: linear-gradient(135deg, rgba(0, 198, 255, 0.1) 0%, rgba(0, 114, 255, 0.1) 100%);
         opacity: 0;
         transition: opacity 0.3s ease;
         z-index: 1;
@@ -7506,8 +7515,9 @@ with tab3:
 
     .company-card:hover {
         transform: translateY(-8px) scale(1.02);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 30px rgba(0, 255, 255, 0.3);
-        border-color: rgba(0,255,255,0.5);
+        background: linear-gradient(135deg, rgba(0, 198, 255, 0.1) 0%, rgba(0, 114, 255, 0.1) 100%);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 30px rgba(0, 198, 255, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+        border-color: rgba(0, 198, 255, 0.5);
     }
 
     /* Job Result Cards */
@@ -7538,16 +7548,18 @@ with tab3:
         box-shadow: 0 8px 25px rgba(0,0,0,0.3);
     }
 
-    /* Enhanced Pills */
+    /* Enhanced Pills - Glassmorphism */
     .pill {
         display: inline-block;
-        background: linear-gradient(135deg, #333 0%, #444 100%);
+        background: linear-gradient(135deg, rgba(0, 198, 255, 0.1) 0%, rgba(0, 114, 255, 0.1) 100%);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
         padding: 8px 16px;
         border-radius: 25px;
         margin: 6px 8px 0 0;
         font-size: 13px;
         font-weight: 500;
-        border: 1px solid rgba(255,255,255,0.1);
+        border: 1px solid rgba(0, 198, 255, 0.2);
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
@@ -7560,7 +7572,7 @@ with tab3:
         left: 0;
         right: 0;
         bottom: 0;
-        background: linear-gradient(135deg, rgba(0,255,255,0.2) 0%, rgba(255,0,255,0.2) 100%);
+        background: linear-gradient(135deg, rgba(0, 198, 255, 0.2) 0%, rgba(0, 114, 255, 0.2) 100%);
         opacity: 0;
         transition: opacity 0.3s ease;
     }
@@ -7571,7 +7583,8 @@ with tab3:
 
     .pill:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,255,255,0.3);
+        background: linear-gradient(135deg, rgba(0, 198, 255, 0.15) 0%, rgba(0, 114, 255, 0.15) 100%);
+        box-shadow: 0 4px 12px rgba(0, 198, 255, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.1);
     }
 
     /* Enhanced Title Headers */
@@ -7606,7 +7619,7 @@ with tab3:
     .company-logo {
         font-size: 28px;
         margin-right: 12px;
-        filter: drop-shadow(0 0 8px rgba(255,255,255,0.3));
+        filter: drop-shadow(0 0 8px rgba(0, 198, 255, 0.5));
         animation: float 4s ease-in-out infinite;
     }
 

@@ -6008,7 +6008,8 @@ FEATURED_COMPANIES = {
             "color": "#4285F4",
             "careers_url": "https://careers.google.com",
             "description": "Leading technology company known for search, cloud, and innovation",
-            "categories": ["Software", "AI/ML", "Cloud", "Data Science"]
+            "categories": ["Software", "AI/ML", "Cloud", "Data Science"],
+            "emoji": "🔍"
         },
         {
             "name": "Microsoft",
@@ -6016,7 +6017,8 @@ FEATURED_COMPANIES = {
             "color": "#00A4EF",
             "careers_url": "https://careers.microsoft.com",
             "description": "Global leader in software, cloud, and enterprise solutions",
-            "categories": ["Software", "Cloud", "Gaming", "Enterprise"]
+            "categories": ["Software", "Cloud", "Gaming", "Enterprise"],
+            "emoji": "💻"
         },
         {
             "name": "Amazon",
@@ -6024,7 +6026,8 @@ FEATURED_COMPANIES = {
             "color": "#FF9900",
             "careers_url": "https://www.amazon.jobs",
             "description": "E-commerce and cloud computing giant",
-            "categories": ["Software", "Operations", "Cloud", "Retail"]
+            "categories": ["Software", "Operations", "Cloud", "Retail"],
+            "emoji": "📦"
         },
         {
             "name": "Apple",
@@ -6032,7 +6035,8 @@ FEATURED_COMPANIES = {
             "color": "#555555",
             "careers_url": "https://www.apple.com/careers",
             "description": "Innovation leader in consumer technology",
-            "categories": ["Software", "Hardware", "Design", "AI/ML"]
+            "categories": ["Software", "Hardware", "Design", "AI/ML"],
+            "emoji": "🍎"
         },
         {
             "name": "Facebook",
@@ -6040,7 +6044,8 @@ FEATURED_COMPANIES = {
             "color": "#1877F2",
             "careers_url": "https://www.metacareers.com/",
             "description": "Social media and technology company",
-            "categories": ["Software", "Marketing", "Networking", "AI/ML"]
+            "categories": ["Software", "Marketing", "Networking", "AI/ML"],
+            "emoji": "👥"
         },
         {
             "name": "Netflix",
@@ -6050,7 +6055,8 @@ FEATURED_COMPANIES = {
             "description": "Streaming media company",
             "categories": ["Software", "Marketing", "Design", "Service"],
             "website": "https://jobs.netflix.com/",
-            "industry": "Entertainment & Technology"
+            "industry": "Entertainment & Technology",
+            "emoji": "🎬"
         }
     ],
     "indian_tech": [
@@ -6060,7 +6066,8 @@ FEATURED_COMPANIES = {
             "color": "#0070C0",
             "careers_url": "https://www.tcs.com/careers",
             "description": "India's largest IT services company",
-            "categories": ["IT Services", "Consulting", "Digital"]
+            "categories": ["IT Services", "Consulting", "Digital"],
+            "emoji": "🇮🇳"
         },
         {
             "name": "Infosys",
@@ -6068,7 +6075,8 @@ FEATURED_COMPANIES = {
             "color": "#007CC3",
             "careers_url": "https://www.infosys.com/careers",
             "description": "Global leader in digital services and consulting",
-            "categories": ["IT Services", "Consulting", "Digital"]
+            "categories": ["IT Services", "Consulting", "Digital"],
+            "emoji": "💼"
         },
         {
             "name": "Wipro",
@@ -6076,7 +6084,8 @@ FEATURED_COMPANIES = {
             "color": "#341F65",
             "careers_url": "https://careers.wipro.com",
             "description": "Leading global information technology company",
-            "categories": ["IT Services", "Consulting", "Digital"]
+            "categories": ["IT Services", "Consulting", "Digital"],
+            "emoji": "🌐"
         },
         {
             "name": "HCL",
@@ -6084,7 +6093,8 @@ FEATURED_COMPANIES = {
             "color": "#0075C9",
             "careers_url": "https://www.hcltech.com/careers",
             "description": "Global technology company",
-            "categories": ["IT Services", "Engineering", "Digital"]
+            "categories": ["IT Services", "Engineering", "Digital"],
+            "emoji": "⚙️"
         }
     ],
     "global_corps": [
@@ -6096,7 +6106,8 @@ FEATURED_COMPANIES = {
             "description": "Global leader in technology and consulting",
             "categories": ["Software", "Consulting", "AI/ML", "Cloud"],
             "website": "https://www.ibm.com/careers/",
-            "industry": "Technology & Consulting"
+            "industry": "Technology & Consulting",
+            "emoji": "🔷"
         },
         {
             "name": "Accenture",
@@ -6104,7 +6115,8 @@ FEATURED_COMPANIES = {
             "color": "#A100FF",
             "careers_url": "https://www.accenture.com/careers",
             "description": "Global professional services company",
-            "categories": ["Consulting", "Technology", "Digital"]
+            "categories": ["Consulting", "Technology", "Digital"],
+            "emoji": "📊"
         },
         {
             "name": "Cognizant",
@@ -6112,7 +6124,8 @@ FEATURED_COMPANIES = {
             "color": "#1299D8",
             "careers_url": "https://careers.cognizant.com",
             "description": "Leading professional services company",
-            "categories": ["IT Services", "Consulting", "Digital"]
+            "categories": ["IT Services", "Consulting", "Digital"],
+            "emoji": "🎯"
         }
     ]
 }
@@ -6773,7 +6786,30 @@ init_job_search_db()
 
 # Your existing tab3 code with enhanced CSS styling
 with tab3:
-    st.header("🔍 Job Search Across LinkedIn, Naukri, and FoundIt")
+    # Job Search Hub Header with neon styling
+    st.markdown("""
+    <div style="
+        text-align: center;
+        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+        padding: 30px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px rgba(0,255,255,0.2);
+        border: 2px solid rgba(0,255,255,0.3);
+    ">
+        <h1 style="
+            color: #ffffff;
+            font-size: 36px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        ">🔍 Job Search Hub</h1>
+        <p style="color: #aaaaaa; font-size: 16px;">Search across LinkedIn, Naukri, FoundIt, and live job listings</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Radio selector for search mode
     search_mode = st.radio(
@@ -7195,6 +7231,81 @@ with tab3:
         font-family: 'Inter', sans-serif;
     }
 
+    /* Enhanced Input Fields */
+    .stTextInput > div > div > input,
+    .stSelectbox > div > div > div,
+    .stNumberInput > div > div > input {
+        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%) !important;
+        color: #ffffff !important;
+        border: 2px solid rgba(0, 196, 204, 0.3) !important;
+        border-radius: 12px !important;
+        padding: 12px 16px !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2), inset 0 0 10px rgba(0, 196, 204, 0.1) !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .stTextInput > div > div > input:focus,
+    .stSelectbox > div > div > div:focus-within,
+    .stNumberInput > div > div > input:focus {
+        border-color: rgba(0, 196, 204, 0.8) !important;
+        box-shadow: 0 4px 16px rgba(0, 196, 204, 0.3), inset 0 0 15px rgba(0, 196, 204, 0.2), 0 0 20px rgba(0, 196, 204, 0.2) !important;
+    }
+
+    /* Enhanced Buttons */
+    .stButton > button {
+        background: linear-gradient(135deg, #0077cc 0%, #00c4cc 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 12px !important;
+        padding: 14px 32px !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        box-shadow: 0 6px 20px rgba(0, 196, 204, 0.4) !important;
+        transition: all 0.3s ease !important;
+        cursor: pointer !important;
+    }
+
+    .stButton > button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px rgba(0, 196, 204, 0.6) !important;
+        background: linear-gradient(135deg, #0088dd 0%, #26d0ce 100%) !important;
+    }
+
+    /* Radio Buttons */
+    .stRadio > div {
+        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+        padding: 15px;
+        border-radius: 12px;
+        border: 2px solid rgba(0, 196, 204, 0.2);
+    }
+
+    /* Slider */
+    .stSlider > div > div > div > div {
+        background: linear-gradient(135deg, #0077cc 0%, #00c4cc 100%) !important;
+    }
+
+    /* Checkbox */
+    .stCheckbox {
+        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 196, 204, 0.2);
+    }
+
+    /* Expander */
+    .streamlit-expanderHeader {
+        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%) !important;
+        border: 2px solid rgba(0, 196, 204, 0.3) !important;
+        border-radius: 12px !important;
+        color: #00c4cc !important;
+        font-weight: 600 !important;
+    }
+
+    .streamlit-expanderHeader:hover {
+        border-color: rgba(0, 196, 204, 0.6) !important;
+        box-shadow: 0 4px 12px rgba(0, 196, 204, 0.3) !important;
+    }
+
     /* Advanced Glow Animation */
     @keyframes glow {
         0% {
@@ -7415,6 +7526,26 @@ with tab3:
         .company-header {
             font-size: 20px;
         }
+
+        /* Stack columns on mobile */
+        .row-widget.stHorizontal {
+            flex-direction: column !important;
+        }
+
+        /* Full width cards on mobile */
+        .company-card {
+            width: 100% !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+    }
+
+    /* Card height consistency */
+    .company-card {
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
 
     /* Scrollbar Styling */
@@ -7446,18 +7577,22 @@ with tab3:
     selected_category = st.selectbox("📂 Browse Featured Companies By Category", ["All", "tech", "indian_tech", "global_corps"])
     companies_to_show = get_featured_companies() if selected_category == "All" else get_featured_companies(selected_category)
 
-    for company in companies_to_show:
-        category_tags = ''.join([f"<span class='pill'>{cat}</span>" for cat in company['categories']])
-        st.markdown(f"""
-        <a href="{company['careers_url']}" class="company-card" target="_blank">
-            <div class="company-header">
-                <span class="company-logo">{company.get('emoji', '🏢')}</span>
-                {company['name']}
-            </div>
-            <p style="margin-bottom: 15px; line-height: 1.6; position: relative; z-index: 2;">{company['description']}</p>
-            <div style="position: relative; z-index: 2;">{category_tags}</div>
-        </a>
-        """, unsafe_allow_html=True)
+    # Display companies in two-column grid
+    company_cols = st.columns(2)
+    for idx, company in enumerate(companies_to_show):
+        col_idx = idx % 2
+        with company_cols[col_idx]:
+            category_tags = ''.join([f"<span class='pill'>{cat}</span>" for cat in company['categories']])
+            st.markdown(f"""
+            <a href="{company['careers_url']}" class="company-card" target="_blank">
+                <div class="company-header">
+                    <span class="company-logo">{company.get('emoji', '🏢')}</span>
+                    {company['name']}
+                </div>
+                <p style="margin-bottom: 15px; line-height: 1.6; position: relative; z-index: 2;">{company['description']}</p>
+                <div style="position: relative; z-index: 2;">{category_tags}</div>
+            </a>
+            """, unsafe_allow_html=True)
 
     # ---------- Market Insights ----------
     st.markdown("### <div class='title-header'>📈 Job Market Trends</div>", unsafe_allow_html=True)
@@ -7465,34 +7600,47 @@ with tab3:
 
     with col1:
         st.markdown("#### <div style='color: #00c4cc; font-size: 20px; font-weight: 600; margin-bottom: 20px;'>🚀 Trending Skills</div>", unsafe_allow_html=True)
-        for skill in JOB_MARKET_INSIGHTS["trending_skills"]:
-            st.markdown(f"""
-            <div class="company-card">
-                <h4 style="color: #00c4cc; margin-bottom: 10px; position: relative; z-index: 2;">🔧 {skill['name']}</h4>
-                <p style="position: relative; z-index: 2;">📈 Growth Rate: <span style="color: #4ade80; font-weight: 600;">{skill['growth']}</span></p>
-            </div>
-            """, unsafe_allow_html=True)
+        # Display skills in two-column grid within the left column
+        skill_cols = st.columns(2)
+        for idx, skill in enumerate(JOB_MARKET_INSIGHTS["trending_skills"]):
+            skill_col_idx = idx % 2
+            with skill_cols[skill_col_idx]:
+                st.markdown(f"""
+                <div class="company-card">
+                    <h4 style="color: #00c4cc; margin-bottom: 10px; position: relative; z-index: 2;">🔧 {skill['name']}</h4>
+                    <p style="position: relative; z-index: 2;">📈 Growth Rate: <span style="color: #4ade80; font-weight: 600;">{skill['growth']}</span></p>
+                </div>
+                """, unsafe_allow_html=True)
 
     with col2:
         st.markdown("#### <div style='color: #7c4dff; font-size: 20px; font-weight: 600; margin-bottom: 20px;'>🌍 Top Job Locations</div>", unsafe_allow_html=True)
-        for loc in JOB_MARKET_INSIGHTS["top_locations"]:
-            st.markdown(f"""
-            <div class="company-card">
-                <h4 style="color: #7c4dff; margin-bottom: 10px; position: relative; z-index: 2;">📍 {loc['name']}</h4>
-                <p style="position: relative; z-index: 2;">💼 Openings: <span style="color: #fbbf24; font-weight: 600;">{loc['jobs']}</span></p>
-            </div>
-            """, unsafe_allow_html=True)
+        # Display locations in two-column grid within the right column
+        loc_cols = st.columns(2)
+        for idx, loc in enumerate(JOB_MARKET_INSIGHTS["top_locations"]):
+            loc_col_idx = idx % 2
+            with loc_cols[loc_col_idx]:
+                st.markdown(f"""
+                <div class="company-card">
+                    <h4 style="color: #7c4dff; margin-bottom: 10px; position: relative; z-index: 2;">📍 {loc['name']}</h4>
+                    <p style="position: relative; z-index: 2;">💼 Openings: <span style="color: #fbbf24; font-weight: 600;">{loc['jobs']}</span></p>
+                </div>
+                """, unsafe_allow_html=True)
 
     # ---------- Salary Insights ----------
     st.markdown("### <div class='title-header'>💰 Salary Insights</div>", unsafe_allow_html=True)
-    for role in JOB_MARKET_INSIGHTS["salary_insights"]:
-        st.markdown(f"""
-        <div class="company-card">
-            <h4 style="color: #10b981; margin-bottom: 10px; position: relative; z-index: 2;">💼 {role['role']}</h4>
-            <p style="margin-bottom: 8px; position: relative; z-index: 2;">📅 Experience: <span style="color: #60a5fa; font-weight: 500;">{role['experience']}</span></p>
-            <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
-        </div>
-        """, unsafe_allow_html=True)
+
+    # Display salary insights in two-column grid
+    salary_cols = st.columns(2)
+    for idx, role in enumerate(JOB_MARKET_INSIGHTS["salary_insights"]):
+        salary_col_idx = idx % 2
+        with salary_cols[salary_col_idx]:
+            st.markdown(f"""
+            <div class="company-card">
+                <h4 style="color: #10b981; margin-bottom: 10px; position: relative; z-index: 2;">💼 {role['role']}</h4>
+                <p style="margin-bottom: 8px; position: relative; z-index: 2;">📅 Experience: <span style="color: #60a5fa; font-weight: 500;">{role['experience']}</span></p>
+                <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
+            </div>
+            """, unsafe_allow_html=True)
 def evaluate_interview_answer(answer: str, question: str = None):
     """
     Uses an LLM to strictly evaluate an interview answer.

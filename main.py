@@ -5996,11 +5996,7 @@ with tab2:
             # ✅ Helper note
             st.markdown("""
             ✅ If the HTML cover letter doesn't display properly, you can 
-            <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color:#2f4f6f; text-decoration:none;">
-            convert it to PDF using Sejda's free online tool</a>.
-            """, unsafe_allow_html=True)
-
-FEATURED_COMPANIES = {
+            <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color:#2f4f6f; text-decorFEATURED_COMPANIES = {
     "tech": [
         {
             "name": "Google",
@@ -6638,7 +6634,24 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
 
     <!-- Apply Button -->
     <a href="{link}" target="_blank" style="text-decoration: none; z-index: 2; position: relative;">
-        <button class="job-button">
+        <button style="
+            background: rgba(20, 30, 40, 0.6);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border: 1.5px solid rgba(0, 200, 255, 0.5);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 200, 255, 0.4), 0 0 40px rgba(0, 200, 255, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            font-weight: 600;
+            padding: 12px 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 16px;
+        "
+        onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 30px rgba(0, 200, 255, 0.6), 0 0 60px rgba(0, 200, 255, 0.5), 0 0 80px rgba(0, 200, 255, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.25)'; this.style.borderColor='rgba(0, 200, 255, 0.9)';"
+        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0, 200, 255, 0.4), 0 0 40px rgba(0, 200, 255, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.15)'; this.style.borderColor='rgba(0, 200, 255, 0.5)';">
             <span style="position: relative; z-index: 2;">🚀 Apply Now →</span>
         </button>
     </a>
@@ -6893,8 +6906,8 @@ with tab3:
         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2) !important;
     }
 
-    /* Search Button Styling */
-    .stButton > button {
+    /* Search Button Styling - Purple gradient for search buttons only */
+    .tab3-container .stButton > button {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
         color: white !important;
         font-weight: 600 !important;
@@ -6907,7 +6920,7 @@ with tab3:
         width: 100% !important;
     }
 
-    .stButton > button:hover {
+    .tab3-container .stButton > button:hover {
         transform: translateY(-2px) !important;
         box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6) !important;
     }
@@ -7163,18 +7176,22 @@ with tab3:
 
     <!-- Apply Button -->
     <a href="{job.get('job_apply_link', '#')}" target="_blank" style="text-decoration: none;">
-        <button class="job-button" style="
-            background: {platform_gradient};
-            color: white;
-            padding: 12px 24px;
-            border: none;
+        <button style="
+            background: rgba(20, 30, 40, 0.6);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border: 1.5px solid rgba(0, 200, 255, 0.5);
             border-radius: 12px;
-            font-size: 16px;
+            box-shadow: 0 4px 20px rgba(0, 200, 255, 0.4), 0 0 40px rgba(0, 200, 255, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.15);
+            color: #ffffff;
             font-weight: 600;
+            padding: 12px 24px;
+            font-size: 16px;
             cursor: pointer;
-            box-shadow: 0 4px 15px {btn_color}50;
             transition: all 0.3s ease;
-        ">
+        "
+        onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 30px rgba(0, 200, 255, 0.6), 0 0 60px rgba(0, 200, 255, 0.5), 0 0 80px rgba(0, 200, 255, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.25)'; this.style.borderColor='rgba(0, 200, 255, 0.9)';"
+        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0, 200, 255, 0.4), 0 0 40px rgba(0, 200, 255, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.15)'; this.style.borderColor='rgba(0, 200, 255, 0.5)';">
             🚀 Apply Now →
         </button>
     </a>
@@ -7286,17 +7303,21 @@ with tab3:
     </div>
     <a href="{search['url']}" target="_blank" style="text-decoration: none;">
         <button style="
-            background: linear-gradient(135deg, {platform_color} 0%, {platform_color}dd 100%);
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 10px;
-            font-size: 15px;
+            background: rgba(20, 30, 40, 0.6);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border: 1.5px solid rgba(0, 200, 255, 0.5);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 200, 255, 0.4), 0 0 40px rgba(0, 200, 255, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.15);
+            color: #ffffff;
             font-weight: 600;
+            padding: 12px 24px;
+            font-size: 15px;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 12px {platform_color}50;
-        ">
+        "
+        onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 30px rgba(0, 200, 255, 0.6), 0 0 60px rgba(0, 200, 255, 0.5), 0 0 80px rgba(0, 200, 255, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.25)'; this.style.borderColor='rgba(0, 200, 255, 0.9)';"
+        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0, 200, 255, 0.4), 0 0 40px rgba(0, 200, 255, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.15)'; this.style.borderColor='rgba(0, 200, 255, 0.5)';">
             🔗 View Jobs →
         </button>
     </a>
@@ -7416,16 +7437,21 @@ with tab3:
     </div>
     <a href="{search['url']}" target="_blank" style="text-decoration: none;">
         <button style="
-            background: linear-gradient(135deg, {platform_color} 0%, {platform_color}dd 100%);
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            font-size: 13px;
+            background: rgba(20, 30, 40, 0.6);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border: 1.5px solid rgba(0, 200, 255, 0.5);
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 200, 255, 0.4), 0 0 40px rgba(0, 200, 255, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.15);
+            color: #ffffff;
             font-weight: 500;
+            padding: 8px 16px;
+            font-size: 13px;
             cursor: pointer;
             transition: all 0.3s ease;
-        ">
+        "
+        onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 30px rgba(0, 200, 255, 0.6), 0 0 60px rgba(0, 200, 255, 0.5), 0 0 80px rgba(0, 200, 255, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.25)'; this.style.borderColor='rgba(0, 200, 255, 0.9)';"
+        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(0, 200, 255, 0.4), 0 0 40px rgba(0, 200, 255, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.15)'; this.style.borderColor='rgba(0, 200, 255, 0.5)';">
             🔗 View Jobs →
         </button>
     </a>
@@ -7804,7 +7830,11 @@ with tab3:
         """, unsafe_allow_html=True)
 
     # Close tab3-container div
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)ation:none;">
+            convert it to PDF using Sejda's free online tool</a>.
+            """, unsafe_allow_html=True)
+
+
 def evaluate_interview_answer(answer: str, question: str = None):
     """
     Uses an LLM to strictly evaluate an interview answer.

@@ -6787,21 +6787,23 @@ with tab3:
         margin-bottom: 30px;
     }
 
-    /* Blue Glassmorphism Buttons for Tab 3 */
+    /* Blue Glassmorphism Buttons for Tab 3 - Cyan/Turquoise Theme */
     .tab3-container .job-button {
-        background: linear-gradient(135deg, rgba(0, 196, 255, 0.3) 0%, rgba(0, 123, 255, 0.3) 100%) !important;
-        backdrop-filter: blur(10px) !important;
-        -webkit-backdrop-filter: blur(10px) !important;
-        border: 1px solid rgba(0, 196, 255, 0.4) !important;
-        border-radius: 15px !important;
-        box-shadow: 0 4px 15px rgba(0, 196, 255, 0.3),
-                    inset 0 1px 1px rgba(255, 255, 255, 0.1) !important;
-        color: white !important;
-        font-weight: bold !important;
+        background: rgba(20, 30, 40, 0.6) !important;
+        backdrop-filter: blur(12px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+        border: 1.5px solid rgba(0, 200, 255, 0.5) !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 20px rgba(0, 200, 255, 0.4),
+                    0 0 40px rgba(0, 200, 255, 0.2),
+                    inset 0 1px 2px rgba(255, 255, 255, 0.15) !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
         padding: 12px 24px !important;
         position: relative !important;
         overflow: hidden !important;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+        transition: all 0.3s ease !important;
+        cursor: pointer !important;
     }
 
     /* Shimmer overlay for buttons */
@@ -6812,8 +6814,13 @@ with tab3:
         left: -100% !important;
         width: 100% !important;
         height: 100% !important;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent) !important;
-        transition: left 0.6s ease !important;
+        background: linear-gradient(90deg,
+            transparent,
+            rgba(0, 200, 255, 0.4),
+            rgba(255, 255, 255, 0.3),
+            rgba(0, 200, 255, 0.4),
+            transparent) !important;
+        transition: left 0.7s ease !important;
         z-index: 1 !important;
     }
 
@@ -6825,11 +6832,12 @@ with tab3:
     /* Button hover effects */
     .tab3-container .job-button:hover {
         transform: translateY(-3px) !important;
-        box-shadow: 0 8px 25px rgba(0, 196, 255, 0.6),
-                    0 0 30px rgba(0, 196, 255, 0.4),
-                    inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
-        border-color: rgba(0, 196, 255, 0.8) !important;
-        background: linear-gradient(135deg, rgba(0, 196, 255, 0.4) 0%, rgba(0, 123, 255, 0.4) 100%) !important;
+        box-shadow: 0 8px 30px rgba(0, 200, 255, 0.6),
+                    0 0 60px rgba(0, 200, 255, 0.5),
+                    0 0 80px rgba(0, 200, 255, 0.3),
+                    inset 0 1px 2px rgba(255, 255, 255, 0.25) !important;
+        border-color: rgba(0, 200, 255, 0.9) !important;
+        background: rgba(20, 30, 40, 0.7) !important;
     }
 
     /* Ensure button text is on top */

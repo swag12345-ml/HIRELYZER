@@ -6553,7 +6553,7 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
         </div>
         """
 
-    # Create the job card HTML with scoped styles
+    # Create the job card HTML
     job_card_html = f"""
 <!DOCTYPE html>
 <html>
@@ -6568,7 +6568,7 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
         background: transparent;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }}
-    @keyframes tab3-card-shimmer {{
+    @keyframes shimmer {{
         0% {{ transform: translateX(-100%); }}
         100% {{ transform: translateX(100%); }}
     }}
@@ -6580,7 +6580,7 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
         height: 100%;
         background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
         transform: translateX(-100%);
-        animation: tab3-card-shimmer 3s infinite;
+        animation: shimmer 3s infinite;
         z-index: 1;
     }}
     .job-result-card {{
@@ -6773,9 +6773,12 @@ init_job_search_db()
 
 # Your existing tab3 code with enhanced CSS styling
 with tab3:
+    # Wrap all Tab 3 content in a scoped container
+    st.markdown('<div class="tab3-container">', unsafe_allow_html=True)
+
     st.markdown("""
     <style>
-    /* Modern Dark Theme for Tab 3 - SCOPED */
+    /* Modern Dark Theme for Tab 3 */
     .tab3-container .search-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
@@ -6854,7 +6857,6 @@ with tab3:
     }
     </style>
 
-    <div class="tab3-container">
     <div class="search-header">🔍 Job Search Hub</div>
     """, unsafe_allow_html=True)
 
@@ -7405,17 +7407,12 @@ with tab3:
 </div>
 """, unsafe_allow_html=True)
 
-    # Enhanced CSS with advanced animations and effects - SCOPED TO TAB 3
+    # Enhanced CSS with advanced animations and effects
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-    /* Tab 3 Container Font */
-    .tab3-container {
-        font-family: 'Inter', sans-serif;
-    }
-
-    /* Advanced Glow Animation - Tab 3 */
+    /* Advanced Glow Animation */
     @keyframes tab3-glow {
         0% {
             box-shadow: 0 0 5px rgba(255,255,255,0.1), 0 0 10px rgba(0,255,255,0.1), 0 0 15px rgba(0,255,255,0.1);
@@ -7428,7 +7425,7 @@ with tab3:
         }
     }
 
-    /* Shimmer Effect - Tab 3 */
+    /* Shimmer Effect */
     @keyframes tab3-shimmer {
         0% {
             transform: translateX(-100%);
@@ -7450,7 +7447,7 @@ with tab3:
         z-index: 1;
     }
 
-    /* Floating Animation - Tab 3 */
+    /* Floating Animation */
     @keyframes tab3-float {
         0%, 100% {
             transform: translateY(0px);
@@ -7460,7 +7457,7 @@ with tab3:
         }
     }
 
-    /* Pulse Animation - Tab 3 */
+    /* Pulse Animation */
     @keyframes tab3-pulse {
         0%, 100% {
             transform: scale(1);
@@ -7637,7 +7634,7 @@ with tab3:
         }
     }
 
-    /* Scrollbar Styling - Tab 3 */
+    /* Scrollbar Styling */
     .tab3-container ::-webkit-scrollbar {
         width: 8px;
     }
@@ -7740,8 +7737,8 @@ with tab3:
         </div>
         """, unsafe_allow_html=True)
 
-    # Close the tab3-container wrapper
-    st.markdown("</div>", unsafe_allow_html=True)
+    # Close the tab3-container div
+    st.markdown('</div>', unsafe_allow_html=True)
 def evaluate_interview_answer(answer: str, question: str = None):
     """
     Uses an LLM to strictly evaluate an interview answer.

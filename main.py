@@ -9498,8 +9498,8 @@ Generate exactly {num_questions} questions now:
                     st.video(url)
 
     # Section 4: UPDATED AI Interview Coach 🤖 with Mock Interview and Enhanced Features
-    elif page == "AI Interview Coach 🤖":
-        st.subheader("🤖 AI Interview Coach")
+    elif page == "AI  Interview  Coach 🤖":
+        st.subheader("🤖 AI  Interview  Coach")
         st.markdown("Practice role-specific interview questions with our AI coach. Get instant feedback on your answers and discover recommended courses!")
 
         # Create database table if not exists

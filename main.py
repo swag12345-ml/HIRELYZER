@@ -6594,11 +6594,11 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px {brand_color}40;
         position: relative;
         overflow: hidden;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transition: all 0.3s ease;
     }}
     .job-result-card:hover {{
-        transform: translateY(-3px);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 30px {brand_color}60;
+        transform: translateY(-4px) scale(1.01);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 35px {brand_color}60;
         background: rgba(255, 255, 255, 0.12);
         border-color: rgba(255, 255, 255, 0.3);
     }}
@@ -6606,12 +6606,12 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
         background: {platform_gradient};
         color: white;
         padding: 12px 20px;
-        border: none;
+        border: 1px solid rgba(255, 255, 255, 0.2);
         border-radius: 12px;
         font-size: 16px;
         font-weight: bold;
         cursor: pointer;
-        box-shadow: 0 4px 15px {brand_color}50;
+        box-shadow: 0 4px 15px {brand_color}50, 0 2px 8px rgba(0, 0, 0, 0.2);
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
@@ -6619,8 +6619,9 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
         display: inline-block;
     }}
     .job-button:hover {{
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px {brand_color}70;
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 6px 25px {brand_color}70, 0 4px 16px rgba(0, 0, 0, 0.3);
+        border-color: rgba(255, 255, 255, 0.4);
     }}
 </style>
 </head>
@@ -6778,16 +6779,14 @@ init_job_search_db()
 
 # Your existing tab3 code with enhanced CSS styling
 with tab3:
-    st.markdown('<div class="tab3-container">', unsafe_allow_html=True)
-
     st.markdown("""
+    <div class="tab3-container">
     <style>
-    /* ========================================
-       TAB 3 GLASSMORPHISM STYLING
-       All styles scoped to .tab3-container
-       ======================================== */
+    /* ============================================
+       TAB 3 GLASSMORPHISM THEME - SCOPED STYLES
+       ============================================ */
 
-    /* Modern Dark Theme for Tab 3 */
+    /* Modern Glassmorphism Header for Tab 3 */
     .tab3-container .search-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
@@ -6799,7 +6798,7 @@ with tab3:
         margin-bottom: 30px;
     }
 
-    /* Search Mode Toggle - Side by Side Equal Width */
+    /* Search Mode Toggle - Glassmorphism Style */
     .tab3-container .stRadio > div {
         display: flex;
         justify-content: center;
@@ -6826,18 +6825,18 @@ with tab3:
 
     .tab3-container .stRadio > div > label:hover {
         border-color: rgba(102, 126, 234, 0.6);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(102, 126, 234, 0.4);
-        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4), 0 8px 32px rgba(0, 0, 0, 0.3);
+        transform: translateY(-2px) scale(1.02);
         background: rgba(255, 255, 255, 0.12);
     }
 
-    /* Compact Input Fields */
+    /* Compact Input Fields - Glassmorphism */
     .tab3-container .stTextInput > div > div > input,
     .tab3-container .stSelectbox > div > div > select,
     .tab3-container .stNumberInput > div > div > input {
         background: rgba(255, 255, 255, 0.08) !important;
-        backdrop-filter: blur(10px) !important;
-        -webkit-backdrop-filter: blur(10px) !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 12px !important;
         color: #fff !important;
@@ -6848,32 +6847,30 @@ with tab3:
     }
 
     .tab3-container .stTextInput > div > div > input:focus,
-    .tab3-container .stSelectbox > div > div > select:focus {
+    .tab3-container .stSelectbox > div > div > select:focus,
+    .tab3-container .stNumberInput > div > div > input:focus {
         border-color: rgba(102, 126, 234, 0.6) !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 0 20px rgba(102, 126, 234, 0.3) !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2), 0 4px 16px rgba(0, 0, 0, 0.2) !important;
         background: rgba(255, 255, 255, 0.12) !important;
     }
 
-    /* Search Button Styling */
+    /* Search Button Styling - Glassmorphism */
     .tab3-container .stButton > button {
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%) !important;
-        backdrop-filter: blur(12px) !important;
-        -webkit-backdrop-filter: blur(12px) !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
         color: white !important;
         font-weight: 600 !important;
         font-size: 16px !important;
         padding: 14px 36px !important;
         border-radius: 12px !important;
-        border: 1px solid rgba(255, 255, 255, 0.3) !important;
-        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4), 0 4px 16px rgba(0, 0, 0, 0.2) !important;
         transition: all 0.3s ease !important;
         width: 100% !important;
     }
 
     .tab3-container .stButton > button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6) !important;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 100%) !important;
+        transform: translateY(-2px) scale(1.02) !important;
+        box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6), 0 8px 24px rgba(0, 0, 0, 0.3) !important;
     }
     </style>
 
@@ -7075,7 +7072,7 @@ with tab3:
                         btn_color = "#00ff88"
                         platform_gradient = "linear-gradient(135deg, #00ff88 0%, #00cc6f 100%)"
 
-                        # Custom HTML card
+                        # Custom HTML card with glassmorphism
                         job_card_html = f"""
 <div class="job-result-card" style="
     background: rgba(255, 255, 255, 0.08);
@@ -7089,7 +7086,7 @@ with tab3:
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px {btn_color}40;
     position: relative;
     overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.3s ease;
 ">
     <div class="shimmer-overlay"></div>
 
@@ -7129,18 +7126,29 @@ with tab3:
             background: {platform_gradient};
             color: white;
             padding: 12px 24px;
-            border: none;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 4px 15px {btn_color}50;
+            box-shadow: 0 4px 15px {btn_color}50, 0 2px 8px rgba(0, 0, 0, 0.2);
             transition: all 0.3s ease;
         ">
             🚀 Apply Now →
         </button>
     </a>
 </div>
+<style>
+    .job-button:hover {{
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 6px 25px {btn_color}70, 0 4px 16px rgba(0, 0, 0, 0.3);
+    }}
+    .job-result-card:hover {{
+        transform: translateY(-4px) scale(1.01);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 35px {btn_color}60;
+        background: rgba(255, 255, 255, 0.12);
+    }}
+</style>
 """
                         
                         st.components.v1.html(job_card_html, height=450, scrolling=False)
@@ -7232,6 +7240,7 @@ with tab3:
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-left: 5px solid {platform_color};
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
 ">
     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px;">
         <div>
@@ -7250,24 +7259,28 @@ with tab3:
         </div>
     </div>
     <a href="{search['url']}" target="_blank" style="text-decoration: none;">
-        <button style="
-            background: linear-gradient(135deg, {platform_color}dd 0%, {platform_color}bb 100%);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+        <button class="saved-search-button" style="
+            background: linear-gradient(135deg, {platform_color} 0%, {platform_color}dd 100%);
             color: white;
             padding: 12px 24px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
             font-size: 15px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 6px 16px {platform_color}50;
+            box-shadow: 0 4px 12px {platform_color}50, 0 2px 8px rgba(0, 0, 0, 0.2);
         ">
             🔗 View Jobs →
         </button>
     </a>
 </div>
+<style>
+    .saved-search-button:hover {{
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 6px 20px {platform_color}70, 0 4px 16px rgba(0, 0, 0, 0.3);
+    }}
+</style>
 """, unsafe_allow_html=True)
 
                     with col2:
@@ -7365,11 +7378,12 @@ with tab3:
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     padding: 18px;
-    border-radius: 14px;
+    border-radius: 12px;
     margin-bottom: 12px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-left: 4px solid {platform_color};
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
 ">
     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
         <div>
@@ -7385,24 +7399,28 @@ with tab3:
         </div>
     </div>
     <a href="{search['url']}" target="_blank" style="text-decoration: none;">
-        <button style="
-            background: linear-gradient(135deg, {platform_color}dd 0%, {platform_color}bb 100%);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+        <button class="saved-search-small-button" style="
+            background: linear-gradient(135deg, {platform_color} 0%, {platform_color}dd 100%);
             color: white;
             padding: 8px 16px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
             font-size: 13px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 12px {platform_color}50;
+            box-shadow: 0 2px 8px {platform_color}50;
         ">
             🔗 View Jobs →
         </button>
     </a>
 </div>
+<style>
+    .saved-search-small-button:hover {{
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 4px 16px {platform_color}70;
+    }}
+</style>
 """, unsafe_allow_html=True)
 
                         with delete_col:
@@ -7414,15 +7432,15 @@ with tab3:
                     # No results for the current filter
                     st.markdown(f"""
 <div style="
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     padding: 20px;
     border-radius: 16px;
     text-align: center;
     color: #888;
-    border: 2px dashed rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 ">
     <div style="font-size: 24px; margin-bottom: 10px;">🔍</div>
     <div>No saved searches found for {platform_filter if platform_filter != 'All' else 'this page'}.</div>
@@ -7432,46 +7450,45 @@ with tab3:
             # No saved searches at all
             st.markdown("""
 <div style="
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     padding: 20px;
     border-radius: 16px;
     text-align: center;
     color: #888;
-    border: 2px dashed rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 ">
     <div style="font-size: 24px; margin-bottom: 10px;">📭</div>
     <div>No saved job searches yet. Start searching to see your history here!</div>
 </div>
 """, unsafe_allow_html=True)
 
-    # Enhanced CSS with advanced animations and effects
+    # Enhanced CSS with advanced animations and glassmorphism effects
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-    /* Global Enhancements */
-    .tab3-container {
-        font-family: 'Inter', sans-serif;
-    }
+    /* ============================================
+       TAB 3 GLASSMORPHISM STYLES - SCOPED
+       ============================================ */
 
-    /* Advanced Glow Animation for Tab 3 */
-    @keyframes tab3-glow {
+    /* Advanced Glow Animation */
+    @keyframes glow {
         0% {
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 15px rgba(102, 126, 234, 0.2);
+            box-shadow: 0 0 5px rgba(255,255,255,0.1), 0 0 10px rgba(0,255,255,0.1), 0 0 15px rgba(0,255,255,0.1);
         }
         50% {
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 25px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 0 10px rgba(255,255,255,0.2), 0 0 20px rgba(0,255,255,0.4), 0 0 30px rgba(0,255,255,0.3);
         }
         100% {
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 15px rgba(102, 126, 234, 0.2);
+            box-shadow: 0 0 5px rgba(255,255,255,0.1), 0 0 10px rgba(0,255,255,0.1), 0 0 15px rgba(0,255,255,0.1);
         }
     }
 
-    /* Shimmer Effect for Tab 3 */
-    @keyframes tab3-shimmer {
+    /* Shimmer Effect */
+    @keyframes shimmer {
         0% {
             transform: translateX(-100%);
         }
@@ -7480,21 +7497,20 @@ with tab3:
         }
     }
 
-    .tab3-container .shimmer-overlay {
+    .shimmer-overlay {
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
         transform: translateX(-100%);
-        animation: tab3-shimmer 3s infinite;
+        animation: shimmer 3s infinite;
         z-index: 1;
-        pointer-events: none;
     }
 
-    /* Floating Animation for Tab 3 */
-    @keyframes tab3-float {
+    /* Floating Animation */
+    @keyframes float {
         0%, 100% {
             transform: translateY(0px);
         }
@@ -7503,8 +7519,8 @@ with tab3:
         }
     }
 
-    /* Pulse Animation for Tab 3 */
-    @keyframes tab3-pulse {
+    /* Pulse Animation */
+    @keyframes pulse {
         0%, 100% {
             transform: scale(1);
         }
@@ -7513,7 +7529,7 @@ with tab3:
         }
     }
 
-    /* Enhanced Company Cards - GLASSMORPHISM */
+    /* Enhanced Company Cards - Glassmorphism */
     .tab3-container .company-card {
         background: rgba(255, 255, 255, 0.08);
         backdrop-filter: blur(12px);
@@ -7522,13 +7538,13 @@ with tab3:
         border-radius: 20px;
         padding: 25px;
         margin-bottom: 25px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         border: 1px solid rgba(255, 255, 255, 0.2);
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
         cursor: pointer;
         text-decoration: none;
         display: block;
-        animation: tab3-glow 4s infinite alternate, tab3-float 6s ease-in-out infinite;
+        animation: float 6s ease-in-out infinite;
         position: relative;
         overflow: hidden;
     }
@@ -7540,11 +7556,10 @@ with tab3:
         left: 0;
         right: 0;
         bottom: 0;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
         opacity: 0;
         transition: opacity 0.3s ease;
         z-index: 1;
-        pointer-events: none;
     }
 
     .tab3-container .company-card:hover::before {
@@ -7552,20 +7567,21 @@ with tab3:
     }
 
     .tab3-container .company-card:hover {
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(102, 126, 234, 0.5);
-        border-color: rgba(102, 126, 234, 0.6);
+        transform: translateY(-6px) scale(1.02);
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 40px rgba(102, 126, 234, 0.3);
+        border-color: rgba(102, 126, 234, 0.5);
         background: rgba(255, 255, 255, 0.12);
     }
 
-    /* Job Result Cards - GLASSMORPHISM */
+    /* Job Result Cards - Glassmorphism Hover */
     .tab3-container .job-result-card:hover {
-        transform: translateY(-5px) scale(1.01);
+        transform: translateY(-4px) scale(1.01);
         box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4) !important;
         background: rgba(255, 255, 255, 0.12) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
     }
 
-    /* Enhanced Buttons - GLASSMORPHISM */
+    /* Enhanced Buttons - Glassmorphism */
     .tab3-container .job-button::before {
         content: '';
         position: absolute;
@@ -7573,10 +7589,9 @@ with tab3:
         left: -100%;
         width: 100%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
         transition: left 0.5s;
         z-index: 1;
-        pointer-events: none;
     }
 
     .tab3-container .job-button:hover::before {
@@ -7584,23 +7599,23 @@ with tab3:
     }
 
     .tab3-container .job-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
     }
 
-    /* Enhanced Pills - GLASSMORPHISM */
+    /* Enhanced Pills - Glassmorphism */
     .tab3-container .pill {
         display: inline-block;
         background: rgba(255, 255, 255, 0.08);
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
         padding: 8px 16px;
-        border-radius: 25px;
+        border-radius: 20px;
         margin: 6px 8px 0 0;
         font-size: 13px;
         font-weight: 500;
         border: 1px solid rgba(255, 255, 255, 0.2);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
@@ -7616,7 +7631,6 @@ with tab3:
         background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
         opacity: 0;
         transition: opacity 0.3s ease;
-        pointer-events: none;
     }
 
     .tab3-container .pill:hover::before {
@@ -7624,13 +7638,12 @@ with tab3:
     }
 
     .tab3-container .pill:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         background: rgba(255, 255, 255, 0.12);
-        border-color: rgba(102, 126, 234, 0.4);
     }
 
-    /* Enhanced Title Headers */
+    /* Enhanced Title Headers - Glassmorphism */
     .tab3-container .title-header {
         color: #ffffff;
         font-size: 28px;
@@ -7643,7 +7656,7 @@ with tab3:
         -webkit-text-fill-color: transparent;
         background-clip: text;
         position: relative;
-        animation: tab3-pulse 3s infinite;
+        animation: pulse 3s infinite;
     }
 
     .tab3-container .title-header::after {
@@ -7656,15 +7669,15 @@ with tab3:
         height: 3px;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 2px;
-        box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.5);
     }
 
-    /* Company Logo Enhancement */
+    /* Company Logo Enhancement - Glassmorphism */
     .tab3-container .company-logo {
         font-size: 28px;
         margin-right: 12px;
-        filter: drop-shadow(0 0 8px rgba(102, 126, 234, 0.4));
-        animation: tab3-float 4s ease-in-out infinite;
+        filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.4));
+        animation: float 4s ease-in-out infinite;
     }
 
     .tab3-container .company-header {
@@ -7677,9 +7690,10 @@ with tab3:
         z-index: 2;
     }
 
-    /* Responsive Enhancements */
+    /* Responsive Enhancements - Glassmorphism */
     @media (max-width: 768px) {
-        .tab3-container .company-card, .tab3-container .job-result-card {
+        .tab3-container .company-card,
+        .tab3-container .job-result-card {
             padding: 20px;
             margin-bottom: 20px;
         }
@@ -7693,26 +7707,27 @@ with tab3:
         }
     }
 
-    /* Scrollbar Styling for Tab 3 */
+    /* Scrollbar Styling - Glassmorphism Theme */
     .tab3-container ::-webkit-scrollbar {
         width: 8px;
     }
 
     .tab3-container ::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 4px;
+        background: rgba(30, 30, 30, 0.5);
+        backdrop-filter: blur(8px);
     }
 
     .tab3-container ::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 4px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
     }
 
     .tab3-container ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 100%);
+        background: linear-gradient(135deg, #7b8ff5 0%, #8a5bb5 100%);
     }
     </style>
+    </div>
     """, unsafe_allow_html=True)
 
     # ---------- Company Lookup by Domain ----------
@@ -7797,9 +7812,6 @@ with tab3:
             <p style="color: #ccc; font-size: 14px; position: relative; z-index: 2;">💵 Salary: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
-
-    # Close tab3-container div
-    st.markdown('</div>', unsafe_allow_html=True)
 def evaluate_interview_answer(answer: str, question: str = None):
     """
     Uses an LLM to strictly evaluate an interview answer.

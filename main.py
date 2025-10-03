@@ -6584,18 +6584,23 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
         z-index: 1;
     }}
     .job-result-card {{
-        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
         padding: 22px;
         border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
         border-left: 6px solid {brand_color};
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px {brand_color}40;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px {brand_color}40;
         position: relative;
         overflow: hidden;
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }}
     .job-result-card:hover {{
         transform: translateY(-3px);
-        box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 30px {brand_color}60;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 30px {brand_color}60;
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.3);
     }}
     .job-button {{
         background: {platform_gradient};
@@ -6773,39 +6778,153 @@ init_job_search_db()
 
 # Your existing tab3 code with enhanced CSS styling
 with tab3:
-    st.header("🔍 Job Search Across LinkedIn, Naukri, and FoundIt")
+    st.markdown('<div class="tab3-container">', unsafe_allow_html=True)
 
-    # Radio selector for search mode
+    st.markdown("""
+    <style>
+    /* ========================================
+       TAB 3 GLASSMORPHISM STYLING
+       All styles scoped to .tab3-container
+       ======================================== */
+
+    /* Modern Dark Theme for Tab 3 */
+    .tab3-container .search-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-size: 32px;
+        font-weight: 800;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    /* Search Mode Toggle - Side by Side Equal Width */
+    .tab3-container .stRadio > div {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .tab3-container .stRadio > div > label {
+        flex: 1;
+        max-width: 350px;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        padding: 18px 24px;
+        border-radius: 16px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .tab3-container .stRadio > div > label:hover {
+        border-color: rgba(102, 126, 234, 0.6);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(102, 126, 234, 0.4);
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Compact Input Fields */
+    .tab3-container .stTextInput > div > div > input,
+    .tab3-container .stSelectbox > div > div > select,
+    .tab3-container .stNumberInput > div > div > input {
+        background: rgba(255, 255, 255, 0.08) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 12px !important;
+        color: #fff !important;
+        padding: 12px 16px !important;
+        font-size: 14px !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .tab3-container .stTextInput > div > div > input:focus,
+    .tab3-container .stSelectbox > div > div > select:focus {
+        border-color: rgba(102, 126, 234, 0.6) !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 0 20px rgba(102, 126, 234, 0.3) !important;
+        background: rgba(255, 255, 255, 0.12) !important;
+    }
+
+    /* Search Button Styling */
+    .tab3-container .stButton > button {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%) !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        color: white !important;
+        font-weight: 600 !important;
+        font-size: 16px !important;
+        padding: 14px 36px !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4) !important;
+        transition: all 0.3s ease !important;
+        width: 100% !important;
+    }
+
+    .tab3-container .stButton > button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6) !important;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 100%) !important;
+    }
+    </style>
+
+    <div class="search-header">🔍 Job Search Hub</div>
+    """, unsafe_allow_html=True)
+
+    # Radio selector for search mode - styled as equal-width side-by-side buttons
     search_mode = st.radio(
-        "Select Search Mode:",
+        "",
         ["External Platforms (LinkedIn, Naukri, FoundIt)", "RapidAPI Jobs (India Only)"],
         horizontal=True,
-        key="search_mode"
+        key="search_mode",
+        label_visibility="collapsed"
     )
 
     if search_mode == "External Platforms (LinkedIn, Naukri, FoundIt)":
-        # External Platforms Section
-        col1, col2 = st.columns(2)
+        # External Platforms Section with LinkedIn-style layout
+        st.markdown("<div style='margin-top: 25px;'></div>", unsafe_allow_html=True)
+
+        # Search filters in a single row (LinkedIn style)
+        col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            job_role = st.text_input("💼 Job Title / Skills", placeholder="e.g., Data Scientist", key="external_role")
-            experience_level = st.selectbox(
-                "📈 Experience Level",
-                ["", "Internship", "Entry Level", "Associate", "Mid-Senior Level", "Director", "Executive"],
-                key="external_exp"
-            )
+            job_role = st.text_input("💼 Job Title", placeholder="e.g., Data Scientist", key="external_role")
 
         with col2:
-            location = st.text_input("📍 Location", placeholder="e.g., Bangalore, India", key="external_loc")
+            location = st.text_input("📍 Location", placeholder="e.g., Bangalore", key="external_loc")
+
+        with col3:
             job_type = st.selectbox(
                 "📋 Job Type",
                 ["", "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship"],
                 key="external_type"
             )
 
-        foundit_experience = st.text_input("🔢 FoundIt Experience (Years)", placeholder="e.g., 1", key="external_foundit")
+        with col4:
+            experience_level = st.selectbox(
+                "📈 Experience",
+                ["", "Internship", "Entry Level", "Associate", "Mid-Senior Level", "Director", "Executive"],
+                key="external_exp"
+            )
 
-        search_clicked = st.button("🔎 Search External Jobs", key="search_external")
+        # Additional filter below in collapsed state
+        with st.expander("⚙️ Advanced Filters"):
+            foundit_experience = st.text_input("🔢 FoundIt Experience (Years)", placeholder="e.g., 1", key="external_foundit")
+
+        # Centered search button
+        st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
+        col_left, col_center, col_right = st.columns([1, 2, 1])
+        with col_center:
+            search_clicked = st.button("🔎 Search Jobs", key="search_external")
 
         if search_clicked:
             if job_role.strip() and location.strip():
@@ -6862,39 +6981,51 @@ with tab3:
                 st.warning("⚠️ Please enter both the Job Title and Location to perform the search.")
 
     else:
-        # RapidAPI Jobs Section
-        col1, col2 = st.columns(2)
+        # RapidAPI Jobs Section with modern layout
+        st.markdown("<div style='margin-top: 25px;'></div>", unsafe_allow_html=True)
+
+        # Search filters in a single row
+        col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            rapid_job_role = st.text_input("💼 Job Title / Skills", placeholder="e.g., Python Developer", key="rapid_role")
+            rapid_job_role = st.text_input("💼 Job Title", placeholder="e.g., Python Developer", key="rapid_role")
 
         with col2:
             rapid_location = st.text_input("📍 Location", placeholder="e.g., Mumbai", key="rapid_loc")
 
-        # Number of results
-        num_results = st.slider("📊 Number of Jobs to Fetch", min_value=5, max_value=50, value=10, step=5, key="rapid_num_results")
-
-        # Advanced Filters
-        with st.expander("🔧 Advanced Filters"):
-            date_posted = st.selectbox(
-                "📅 Date Posted",
-                ["all", "today", "3days", "week", "month"],
-                key="rapid_date"
-            )
+        with col3:
             rapid_job_type = st.selectbox(
                 "📋 Job Type",
                 ["", "Full-time", "Part-time", "Contract", "Internship"],
                 key="rapid_type"
             )
-            remote_only = st.checkbox("🏠 Remote Only", key="rapid_remote")
-            radius = st.number_input("📏 Radius (km)", min_value=0, max_value=200, value=50, key="rapid_radius")
-            job_requirements = st.multiselect(
-                "📝 Job Requirements",
-                ["under_3_years_experience", "more_than_3_years_experience", "no_experience", "no_degree"],
-                key="rapid_req"
-            )
 
-        search_rapid_clicked = st.button("🔎 Search Rapid Jobs", key="search_rapid")
+        with col4:
+            num_results = st.number_input("📊 Results", min_value=5, max_value=50, value=10, step=5, key="rapid_num_results")
+
+        # Advanced Filters in expander
+        with st.expander("⚙️ Advanced Filters"):
+            col_a, col_b = st.columns(2)
+            with col_a:
+                date_posted = st.selectbox(
+                    "📅 Date Posted",
+                    ["all", "today", "3days", "week", "month"],
+                    key="rapid_date"
+                )
+                remote_only = st.checkbox("🏠 Remote Only", key="rapid_remote")
+            with col_b:
+                radius = st.number_input("📏 Radius (km)", min_value=0, max_value=200, value=50, key="rapid_radius")
+                job_requirements = st.multiselect(
+                    "📝 Job Requirements",
+                    ["under_3_years_experience", "more_than_3_years_experience", "no_experience", "no_degree"],
+                    key="rapid_req"
+                )
+
+        # Centered search button
+        st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
+        col_left, col_center, col_right = st.columns([1, 2, 1])
+        with col_center:
+            search_rapid_clicked = st.button("🔎 Search Jobs", key="search_rapid")
 
         if search_rapid_clicked:
             if rapid_job_role.strip() and rapid_location.strip():
@@ -6947,12 +7078,15 @@ with tab3:
                         # Custom HTML card
                         job_card_html = f"""
 <div class="job-result-card" style="
-    background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     padding: 25px;
     border-radius: 20px;
     margin-bottom: 25px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-left: 6px solid {btn_color};
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px {btn_color}40;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 20px {btn_color}40;
     position: relative;
     overflow: hidden;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -7008,8 +7142,8 @@ with tab3:
     </a>
 </div>
 """
-                        card_height = 300 + (len(job_description) // 60) * 20
-                        st.components.v1.html(job_card_html, height=card_height, scrolling=False)
+                        
+                        st.components.v1.html(job_card_html, height=450, scrolling=False)
 
 
                 else:
@@ -7021,66 +7155,46 @@ with tab3:
     if hasattr(st.session_state, 'username') and st.session_state.username:
         # Get available platforms for filtering
         available_platforms = get_available_platforms(st.session_state.username)
-        platform_options = ["All"] + available_platforms
 
         # Get total count of searches
         total_searches = get_total_saved_searches_count(st.session_state.username)
 
-        st.markdown("### 📌 Your Saved Job Searches")
+        st.markdown("""
+        <div style='margin-top: 50px; margin-bottom: 25px;'>
+            <div class='search-header' style='font-size: 26px;'>📌 Saved Job Searches</div>
+        </div>
+        """, unsafe_allow_html=True)
 
         if total_searches > 0:
-            # Controls for filtering and pagination
-            col1, col2 = st.columns([2, 1])
-
-            with col1:
-                platform_filter = st.selectbox(
-                    "🔍 Filter by Platform",
-                    platform_options,
-                    key="platform_filter"
-                )
-
-            with col2:
-                # Calculate pagination
-                searches_per_page = 5
-                filtered_count = get_total_saved_searches_count(st.session_state.username, platform_filter)
-                max_pages = max(1, (filtered_count + searches_per_page - 1) // searches_per_page)
-
-                if max_pages > 1:
-                    current_page = st.slider(
-                        "📄 Page",
-                        min_value=1,
-                        max_value=max_pages,
-                        value=1,
-                        key="page_slider"
-                    )
-                else:
-                    current_page = 1
-
-            # Calculate offset for pagination
-            offset = (current_page - 1) * searches_per_page
-
-            # Get filtered and paginated results
-            saved_searches = get_saved_job_searches(
+            # Compact dropdown for saved searches (replaces long vertical cards)
+            saved_searches_all = get_saved_job_searches(
                 st.session_state.username,
-                limit=searches_per_page,
-                offset=offset,
-                platform_filter=platform_filter
+                limit=100,
+                offset=0,
+                platform_filter=None
             )
 
-            if saved_searches:
-                # Calculate and display search count info
-                start_index = offset + 1
-                end_index = min(offset + len(saved_searches), filtered_count)
+            if saved_searches_all:
+                # Create dropdown options
+                search_options = ["-- Select a saved search --"] + [
+                    f"{search['role']} in {search['location']} ({search['platform']})"
+                    for search in saved_searches_all
+                ]
 
-                if platform_filter != "All":
-                    st.markdown(f"**Showing {start_index}-{end_index} of {filtered_count} searches for {platform_filter}**")
-                else:
-                    st.markdown(f"**Showing {start_index}-{end_index} of {filtered_count} searches**")
+                selected_search = st.selectbox(
+                    "📋 Your Saved Searches",
+                    search_options,
+                    key="saved_search_dropdown"
+                )
 
-                for search in saved_searches:
-                    # Format timestamp - Convert UTC to IST
+                # Display selected search details
+                if selected_search != "-- Select a saved search --":
+                    # Find the selected search
+                    selected_index = search_options.index(selected_search) - 1
+                    search = saved_searches_all[selected_index]
+
+                    # Format timestamp
                     timestamp = datetime.datetime.strptime(search["timestamp"], "%Y-%m-%d %H:%M:%S.%f")
-                    # Assume stored timestamp is in UTC, convert to IST
                     timestamp_utc = timestamp.replace(tzinfo=ZoneInfo('UTC'))
                     timestamp_ist = timestamp_utc.astimezone(ZoneInfo('Asia/Kolkata'))
                     formatted_time = timestamp_ist.strftime("%b %d, %Y at %I:%M %p IST")
@@ -7103,45 +7217,52 @@ with tab3:
                         platform_color = "#00c4cc"
                         platform_icon = "📄"
 
-                    # Create columns for the card content and delete button
-                    card_col, delete_col = st.columns([10, 1])
+                    # Display search details in a compact card
+                    col1, col2 = st.columns([5, 1])
 
-                    with card_col:
+                    with col1:
                         st.markdown(f"""
-<div class="job-result-card" style="
-    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-    padding: 20px;
-    border-radius: 15px;
-    margin-bottom: 15px;
-    border-left: 4px solid {platform_color};
-    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-    position: relative;
-    overflow: hidden;
+<div style="
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 25px;
+    border-radius: 16px;
+    margin-top: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-left: 5px solid {platform_color};
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 ">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px;">
         <div>
-            <div style="color: #ffffff; font-size: 16px; font-weight: 600; margin-bottom: 5px;">
-                {platform_icon} {search['role']} in {search['location']}
+            <div style="color: #ffffff; font-size: 20px; font-weight: 700; margin-bottom: 8px;">
+                {platform_icon} {search['role']}
             </div>
-            <div style="color: {platform_color}; font-size: 14px; font-weight: 500;">
+            <div style="color: #aaa; font-size: 15px; margin-bottom: 5px;">
+                📍 {search['location']}
+            </div>
+            <div style="color: {platform_color}; font-size: 14px; font-weight: 600;">
                 {search['platform']}
             </div>
         </div>
-        <div style="color: #888; font-size: 12px; text-align: right;">
-            {formatted_time}
+        <div style="color: #888; font-size: 13px; text-align: right;">
+            🕒 {formatted_time}
         </div>
     </div>
     <a href="{search['url']}" target="_blank" style="text-decoration: none;">
-        <button class="job-button" style="
-            background: linear-gradient(135deg, {platform_color} 0%, {platform_color}dd 100%);
+        <button style="
+            background: linear-gradient(135deg, {platform_color}dd 0%, {platform_color}bb 100%);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
+            padding: 12px 24px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            box-shadow: 0 6px 16px {platform_color}50;
         ">
             🔗 View Jobs →
         </button>
@@ -7149,21 +7270,159 @@ with tab3:
 </div>
 """, unsafe_allow_html=True)
 
-                    with delete_col:
-                        # Delete button
-                        if st.button("🗑", key=f"delete_{search['id']}", help="Delete this search"):
+                    with col2:
+                        st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
+                        if st.button("🗑️ Delete", key=f"delete_{search['id']}", help="Delete this search"):
                             delete_saved_job_search(search['id'])
                             st.rerun()
-            else:
-                # No results for the current filter
-                st.markdown(f"""
+
+            # Legacy pagination view (hidden by default, can be toggled)
+            with st.expander("📄 View All Searches (Paginated)"):
+                # Get available platforms for filtering
+                platform_options = ["All"] + available_platforms
+
+                # Controls for filtering and pagination
+                col1, col2 = st.columns([2, 1])
+
+                with col1:
+                    platform_filter = st.selectbox(
+                        "🔍 Filter by Platform",
+                        platform_options,
+                        key="platform_filter"
+                    )
+
+                with col2:
+                    # Calculate pagination
+                    searches_per_page = 5
+                    filtered_count = get_total_saved_searches_count(st.session_state.username, platform_filter)
+                    max_pages = max(1, (filtered_count + searches_per_page - 1) // searches_per_page)
+
+                    if max_pages > 1:
+                        current_page = st.slider(
+                            "📄 Page",
+                            min_value=1,
+                            max_value=max_pages,
+                            value=1,
+                            key="page_slider"
+                        )
+                    else:
+                        current_page = 1
+
+                # Calculate offset for pagination
+                offset = (current_page - 1) * searches_per_page
+
+                # Get filtered and paginated results
+                saved_searches = get_saved_job_searches(
+                    st.session_state.username,
+                    limit=searches_per_page,
+                    offset=offset,
+                    platform_filter=platform_filter
+                )
+
+                if saved_searches:
+                    # Calculate and display search count info
+                    start_index = offset + 1
+                    end_index = min(offset + len(saved_searches), filtered_count)
+
+                    if platform_filter != "All":
+                        st.markdown(f"**Showing {start_index}-{end_index} of {filtered_count} searches for {platform_filter}**")
+                    else:
+                        st.markdown(f"**Showing {start_index}-{end_index} of {filtered_count} searches**")
+
+                    for search in saved_searches:
+                        # Format timestamp - Convert UTC to IST
+                        timestamp = datetime.datetime.strptime(search["timestamp"], "%Y-%m-%d %H:%M:%S.%f")
+                        # Assume stored timestamp is in UTC, convert to IST
+                        timestamp_utc = timestamp.replace(tzinfo=ZoneInfo('UTC'))
+                        timestamp_ist = timestamp_utc.astimezone(ZoneInfo('Asia/Kolkata'))
+                        formatted_time = timestamp_ist.strftime("%b %d, %Y at %I:%M %p IST")
+
+                        # Platform styling
+                        platform_lower = search["platform"].lower()
+                        if "rapidapi" in platform_lower or "live" in platform_lower:
+                            platform_color = "#00ff88"
+                            platform_icon = "⚡"
+                        elif platform_lower == "linkedin":
+                            platform_color = "#0e76a8"
+                            platform_icon = "🔵"
+                        elif platform_lower == "naukri":
+                            platform_color = "#ff5722"
+                            platform_icon = "🏢"
+                        elif "foundit" in platform_lower:
+                            platform_color = "#7c4dff"
+                            platform_icon = "🌐"
+                        else:
+                            platform_color = "#00c4cc"
+                            platform_icon = "📄"
+
+                        # Create columns for the card content and delete button
+                        card_col, delete_col = st.columns([10, 1])
+
+                        with card_col:
+                            st.markdown(f"""
 <div style="
-    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 18px;
+    border-radius: 14px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-left: 4px solid {platform_color};
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+        <div>
+            <div style="color: #ffffff; font-size: 15px; font-weight: 600; margin-bottom: 4px;">
+                {platform_icon} {search['role']} in {search['location']}
+            </div>
+            <div style="color: {platform_color}; font-size: 13px; font-weight: 500;">
+                {search['platform']}
+            </div>
+        </div>
+        <div style="color: #888; font-size: 11px; text-align: right;">
+            {formatted_time}
+        </div>
+    </div>
+    <a href="{search['url']}" target="_blank" style="text-decoration: none;">
+        <button style="
+            background: linear-gradient(135deg, {platform_color}dd 0%, {platform_color}bb 100%);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: white;
+            padding: 8px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px {platform_color}50;
+        ">
+            🔗 View Jobs →
+        </button>
+    </a>
+</div>
+""", unsafe_allow_html=True)
+
+                        with delete_col:
+                            # Delete button
+                            if st.button("🗑", key=f"delete_pag_{search['id']}", help="Delete this search"):
+                                delete_saved_job_search(search['id'])
+                                st.rerun()
+                else:
+                    # No results for the current filter
+                    st.markdown(f"""
+<div style="
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     padding: 20px;
-    border-radius: 15px;
+    border-radius: 16px;
     text-align: center;
     color: #888;
-    border: 2px dashed #444;
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 ">
     <div style="font-size: 24px; margin-bottom: 10px;">🔍</div>
     <div>No saved searches found for {platform_filter if platform_filter != 'All' else 'this page'}.</div>
@@ -7173,12 +7432,15 @@ with tab3:
             # No saved searches at all
             st.markdown("""
 <div style="
-    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     padding: 20px;
-    border-radius: 15px;
+    border-radius: 16px;
     text-align: center;
     color: #888;
-    border: 2px dashed #444;
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 ">
     <div style="font-size: 24px; margin-bottom: 10px;">📭</div>
     <div>No saved job searches yet. Start searching to see your history here!</div>
@@ -7191,25 +7453,25 @@ with tab3:
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
     /* Global Enhancements */
-    .stApp {
+    .tab3-container {
         font-family: 'Inter', sans-serif;
     }
 
-    /* Advanced Glow Animation */
-    @keyframes glow {
+    /* Advanced Glow Animation for Tab 3 */
+    @keyframes tab3-glow {
         0% {
-            box-shadow: 0 0 5px rgba(255,255,255,0.1), 0 0 10px rgba(0,255,255,0.1), 0 0 15px rgba(0,255,255,0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 15px rgba(102, 126, 234, 0.2);
         }
         50% {
-            box-shadow: 0 0 10px rgba(255,255,255,0.2), 0 0 20px rgba(0,255,255,0.4), 0 0 30px rgba(0,255,255,0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 25px rgba(102, 126, 234, 0.4);
         }
         100% {
-            box-shadow: 0 0 5px rgba(255,255,255,0.1), 0 0 10px rgba(0,255,255,0.1), 0 0 15px rgba(0,255,255,0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 15px rgba(102, 126, 234, 0.2);
         }
     }
 
-    /* Shimmer Effect */
-    @keyframes shimmer {
+    /* Shimmer Effect for Tab 3 */
+    @keyframes tab3-shimmer {
         0% {
             transform: translateX(-100%);
         }
@@ -7218,20 +7480,21 @@ with tab3:
         }
     }
 
-    .shimmer-overlay {
+    .tab3-container .shimmer-overlay {
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
         transform: translateX(-100%);
-        animation: shimmer 3s infinite;
+        animation: tab3-shimmer 3s infinite;
         z-index: 1;
+        pointer-events: none;
     }
 
-    /* Floating Animation */
-    @keyframes float {
+    /* Floating Animation for Tab 3 */
+    @keyframes tab3-float {
         0%, 100% {
             transform: translateY(0px);
         }
@@ -7240,8 +7503,8 @@ with tab3:
         }
     }
 
-    /* Pulse Animation */
-    @keyframes pulse {
+    /* Pulse Animation for Tab 3 */
+    @keyframes tab3-pulse {
         0%, 100% {
             transform: scale(1);
         }
@@ -7250,128 +7513,140 @@ with tab3:
         }
     }
 
-    /* Enhanced Company Cards */
-    .company-card {
-        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+    /* Enhanced Company Cards - GLASSMORPHISM */
+    .tab3-container .company-card {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
         color: #ffffff;
         border-radius: 20px;
         padding: 25px;
         margin-bottom: 25px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         cursor: pointer;
         text-decoration: none;
         display: block;
-        animation: glow 4s infinite alternate, float 6s ease-in-out infinite;
+        animation: tab3-glow 4s infinite alternate, tab3-float 6s ease-in-out infinite;
         position: relative;
         overflow: hidden;
-        border: 1px solid rgba(255,255,255,0.1);
     }
 
-    .company-card::before {
+    .tab3-container .company-card::before {
         content: '';
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background: linear-gradient(135deg, rgba(0,255,255,0.1) 0%, rgba(255,0,255,0.1) 100%);
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
         opacity: 0;
         transition: opacity 0.3s ease;
         z-index: 1;
+        pointer-events: none;
     }
 
-    .company-card:hover::before {
+    .tab3-container .company-card:hover::before {
         opacity: 1;
     }
 
-    .company-card:hover {
+    .tab3-container .company-card:hover {
         transform: translateY(-8px) scale(1.02);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 30px rgba(0, 255, 255, 0.3);
-        border-color: rgba(0,255,255,0.5);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(102, 126, 234, 0.5);
+        border-color: rgba(102, 126, 234, 0.6);
+        background: rgba(255, 255, 255, 0.12);
     }
 
-    /* Job Result Cards */
-    .job-result-card:hover {
+    /* Job Result Cards - GLASSMORPHISM */
+    .tab3-container .job-result-card:hover {
         transform: translateY(-5px) scale(1.01);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.4) !important;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4) !important;
+        background: rgba(255, 255, 255, 0.12) !important;
     }
 
-    /* Enhanced Buttons */
-    .job-button::before {
+    /* Enhanced Buttons - GLASSMORPHISM */
+    .tab3-container .job-button::before {
         content: '';
         position: absolute;
         top: 0;
         left: -100%;
         width: 100%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
         transition: left 0.5s;
         z-index: 1;
+        pointer-events: none;
     }
 
-    .job-button:hover::before {
+    .tab3-container .job-button:hover::before {
         left: 100%;
     }
 
-    .job-button:hover {
+    .tab3-container .job-button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
     }
 
-    /* Enhanced Pills */
-    .pill {
+    /* Enhanced Pills - GLASSMORPHISM */
+    .tab3-container .pill {
         display: inline-block;
-        background: linear-gradient(135deg, #333 0%, #444 100%);
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
         padding: 8px 16px;
         border-radius: 25px;
         margin: 6px 8px 0 0;
         font-size: 13px;
         font-weight: 500;
-        border: 1px solid rgba(255,255,255,0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
     }
 
-    .pill::before {
+    .tab3-container .pill::before {
         content: '';
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background: linear-gradient(135deg, rgba(0,255,255,0.2) 0%, rgba(255,0,255,0.2) 100%);
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
         opacity: 0;
         transition: opacity 0.3s ease;
+        pointer-events: none;
     }
 
-    .pill:hover::before {
+    .tab3-container .pill:hover::before {
         opacity: 1;
     }
 
-    .pill:hover {
+    .tab3-container .pill:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,255,255,0.3);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(102, 126, 234, 0.4);
     }
 
     /* Enhanced Title Headers */
-    .title-header {
+    .tab3-container .title-header {
         color: #ffffff;
         font-size: 28px;
         margin-top: 50px;
         margin-bottom: 30px;
         font-weight: 700;
         text-align: center;
-        background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
         position: relative;
-        animation: pulse 3s infinite;
+        animation: tab3-pulse 3s infinite;
     }
 
-    .title-header::after {
+    .tab3-container .title-header::after {
         content: '';
         position: absolute;
         bottom: -10px;
@@ -7379,19 +7654,20 @@ with tab3:
         transform: translateX(-50%);
         width: 60px;
         height: 3px;
-        background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 2px;
+        box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
     }
 
     /* Company Logo Enhancement */
-    .company-logo {
+    .tab3-container .company-logo {
         font-size: 28px;
         margin-right: 12px;
-        filter: drop-shadow(0 0 8px rgba(255,255,255,0.3));
-        animation: float 4s ease-in-out infinite;
+        filter: drop-shadow(0 0 8px rgba(102, 126, 234, 0.4));
+        animation: tab3-float 4s ease-in-out infinite;
     }
 
-    .company-header {
+    .tab3-container .company-header {
         font-size: 24px;
         font-weight: 700;
         display: flex;
@@ -7403,36 +7679,38 @@ with tab3:
 
     /* Responsive Enhancements */
     @media (max-width: 768px) {
-        .company-card, .job-result-card {
+        .tab3-container .company-card, .tab3-container .job-result-card {
             padding: 20px;
             margin-bottom: 20px;
         }
 
-        .title-header {
+        .tab3-container .title-header {
             font-size: 24px;
         }
 
-        .company-header {
+        .tab3-container .company-header {
             font-size: 20px;
         }
     }
 
-    /* Scrollbar Styling */
-    ::-webkit-scrollbar {
+    /* Scrollbar Styling for Tab 3 */
+    .tab3-container ::-webkit-scrollbar {
         width: 8px;
     }
 
-    ::-webkit-scrollbar-track {
-        background: #1e1e1e;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
+    .tab3-container ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
         border-radius: 4px;
     }
 
-    ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(135deg, #26d0ce 0%, #9c64ff 100%);
+    .tab3-container ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.8) 0%, rgba(118, 75, 162, 0.8) 100%);
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .tab3-container ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 1) 0%, rgba(118, 75, 162, 1) 100%);
     }
     </style>
     """, unsafe_allow_html=True)
@@ -7441,58 +7719,87 @@ with tab3:
 
 
     # ---------- Featured Companies ----------
-    st.markdown("### <div class='title-header'>🏢 Featured Companies</div>", unsafe_allow_html=True)
+    st.markdown("""
+    <div style='margin-top: 60px; margin-bottom: 30px;'>
+        <div class='search-header' style='font-size: 28px;'>🏢 Featured Companies</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    selected_category = st.selectbox("📂 Browse Featured Companies By Category", ["All", "tech", "indian_tech", "global_corps"])
+    selected_category = st.selectbox("📂 Browse By Category", ["All", "tech", "indian_tech", "global_corps"])
     companies_to_show = get_featured_companies() if selected_category == "All" else get_featured_companies(selected_category)
 
-    for company in companies_to_show:
-        category_tags = ''.join([f"<span class='pill'>{cat}</span>" for cat in company['categories']])
-        st.markdown(f"""
-        <a href="{company['careers_url']}" class="company-card" target="_blank">
-            <div class="company-header">
-                <span class="company-logo">{company.get('emoji', '🏢')}</span>
-                {company['name']}
+    # Display companies in a grid (2 columns)
+    for i in range(0, len(companies_to_show), 2):
+        cols = st.columns(2)
+        for j, col in enumerate(cols):
+            if i + j < len(companies_to_show):
+                company = companies_to_show[i + j]
+                category_tags = ''.join([f"<span class='pill'>{cat}</span>" for cat in company['categories']])
+                with col:
+                    st.markdown(f"""
+        <a href="{company['careers_url']}" class="company-card" target="_blank" style="display: block; text-decoration: none;">
+            <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                <span style="font-size: 24px; margin-right: 12px;">{company.get('emoji', '🏢')}</span>
+                <span style="color: #fff; font-size: 20px; font-weight: 700;">{company['name']}</span>
             </div>
-            <p style="margin-bottom: 15px; line-height: 1.6; position: relative; z-index: 2;">{company['description']}</p>
+            <p style="color: #ccc; margin-bottom: 15px; line-height: 1.6; font-size: 14px; position: relative; z-index: 2;">{company['description']}</p>
             <div style="position: relative; z-index: 2;">{category_tags}</div>
         </a>
         """, unsafe_allow_html=True)
 
     # ---------- Market Insights ----------
-    st.markdown("### <div class='title-header'>📈 Job Market Trends</div>", unsafe_allow_html=True)
+    st.markdown("""
+    <div style='margin-top: 60px; margin-bottom: 30px;'>
+        <div class='search-header' style='font-size: 28px;'>📈 Job Market Trends</div>
+    </div>
+    """, unsafe_allow_html=True)
+
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("#### <div style='color: #00c4cc; font-size: 20px; font-weight: 600; margin-bottom: 20px;'>🚀 Trending Skills</div>", unsafe_allow_html=True)
+        st.markdown("<div style='color: #00c4cc; font-size: 18px; font-weight: 700; margin-bottom: 20px; text-align: center;'>🚀 Trending Skills</div>", unsafe_allow_html=True)
         for skill in JOB_MARKET_INSIGHTS["trending_skills"]:
             st.markdown(f"""
-            <div class="company-card">
-                <h4 style="color: #00c4cc; margin-bottom: 10px; position: relative; z-index: 2;">🔧 {skill['name']}</h4>
-                <p style="position: relative; z-index: 2;">📈 Growth Rate: <span style="color: #4ade80; font-weight: 600;">{skill['growth']}</span></p>
+            <div class="company-card" style="margin-bottom: 15px; padding: 18px;">
+                <h4 style="color: #00c4cc; margin-bottom: 8px; font-size: 16px; position: relative; z-index: 2;">🔧 {skill['name']}</h4>
+                <p style="color: #ccc; font-size: 14px; position: relative; z-index: 2;">📈 Growth: <span style="color: #4ade80; font-weight: 600;">{skill['growth']}</span></p>
             </div>
             """, unsafe_allow_html=True)
 
     with col2:
-        st.markdown("#### <div style='color: #7c4dff; font-size: 20px; font-weight: 600; margin-bottom: 20px;'>🌍 Top Job Locations</div>", unsafe_allow_html=True)
+        st.markdown("<div style='color: #7c4dff; font-size: 18px; font-weight: 700; margin-bottom: 20px; text-align: center;'>🌍 Top Locations</div>", unsafe_allow_html=True)
         for loc in JOB_MARKET_INSIGHTS["top_locations"]:
             st.markdown(f"""
-            <div class="company-card">
-                <h4 style="color: #7c4dff; margin-bottom: 10px; position: relative; z-index: 2;">📍 {loc['name']}</h4>
-                <p style="position: relative; z-index: 2;">💼 Openings: <span style="color: #fbbf24; font-weight: 600;">{loc['jobs']}</span></p>
+            <div class="company-card" style="margin-bottom: 15px; padding: 18px;">
+                <h4 style="color: #7c4dff; margin-bottom: 8px; font-size: 16px; position: relative; z-index: 2;">📍 {loc['name']}</h4>
+                <p style="color: #ccc; font-size: 14px; position: relative; z-index: 2;">💼 Openings: <span style="color: #fbbf24; font-weight: 600;">{loc['jobs']}</span></p>
             </div>
             """, unsafe_allow_html=True)
 
     # ---------- Salary Insights ----------
-    st.markdown("### <div class='title-header'>💰 Salary Insights</div>", unsafe_allow_html=True)
-    for role in JOB_MARKET_INSIGHTS["salary_insights"]:
-        st.markdown(f"""
-        <div class="company-card">
-            <h4 style="color: #10b981; margin-bottom: 10px; position: relative; z-index: 2;">💼 {role['role']}</h4>
-            <p style="margin-bottom: 8px; position: relative; z-index: 2;">📅 Experience: <span style="color: #60a5fa; font-weight: 500;">{role['experience']}</span></p>
-            <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
+    st.markdown("""
+    <div style='margin-top: 60px; margin-bottom: 30px;'>
+        <div class='search-header' style='font-size: 28px;'>💰 Salary Insights</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Display salary insights in a 2-column grid
+    for i in range(0, len(JOB_MARKET_INSIGHTS["salary_insights"]), 2):
+        cols = st.columns(2)
+        for j, col in enumerate(cols):
+            if i + j < len(JOB_MARKET_INSIGHTS["salary_insights"]):
+                role = JOB_MARKET_INSIGHTS["salary_insights"][i + j]
+                with col:
+                    st.markdown(f"""
+        <div class="company-card" style="padding: 20px; margin-bottom: 15px;">
+            <h4 style="color: #10b981; margin-bottom: 10px; font-size: 16px; position: relative; z-index: 2;">💼 {role['role']}</h4>
+            <p style="color: #ccc; font-size: 14px; margin-bottom: 8px; position: relative; z-index: 2;">📅 Experience: <span style="color: #60a5fa; font-weight: 500;">{role['experience']}</span></p>
+            <p style="color: #ccc; font-size: 14px; position: relative; z-index: 2;">💵 Salary: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
+
+    # Close tab3-container div
+    st.markdown('</div>', unsafe_allow_html=True)
 def evaluate_interview_answer(answer: str, question: str = None):
     """
     Uses an LLM to strictly evaluate an interview answer.

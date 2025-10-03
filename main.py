@@ -6773,10 +6773,11 @@ init_job_search_db()
 
 # Your existing tab3 code with enhanced CSS styling
 with tab3:
+    st.markdown('<div class="tab3-container">', unsafe_allow_html=True)
     st.markdown("""
     <style>
-    /* Modern Dark Theme for Tab 3 */
-    .search-header {
+    /* Modern Dark Theme for Tab 3 - Scoped */
+    .tab3-container .search-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -6788,14 +6789,14 @@ with tab3:
     }
 
     /* Search Mode Toggle - Side by Side Equal Width */
-    .stRadio > div {
+    .tab3-container .stRadio > div {
         display: flex;
         justify-content: center;
         gap: 20px;
         margin-bottom: 30px;
     }
 
-    .stRadio > div > label {
+    .tab3-container .stRadio > div > label {
         flex: 1;
         max-width: 350px;
         background: linear-gradient(135deg, #2d2d2d 0%, #1e1e1e 100%);
@@ -6809,16 +6810,16 @@ with tab3:
         cursor: pointer;
     }
 
-    .stRadio > div > label:hover {
+    .tab3-container .stRadio > div > label:hover {
         border-color: #667eea;
         box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
         transform: translateY(-2px);
     }
 
     /* Compact Input Fields */
-    .stTextInput > div > div > input,
-    .stSelectbox > div > div > select,
-    .stNumberInput > div > div > input {
+    .tab3-container .stTextInput > div > div > input,
+    .tab3-container .stSelectbox > div > div > select,
+    .tab3-container .stNumberInput > div > div > input {
         background: #2d2d2d !important;
         border: 2px solid #444 !important;
         border-radius: 12px !important;
@@ -6828,14 +6829,14 @@ with tab3:
         transition: all 0.3s ease !important;
     }
 
-    .stTextInput > div > div > input:focus,
-    .stSelectbox > div > div > select:focus {
+    .tab3-container .stTextInput > div > div > input:focus,
+    .tab3-container .stSelectbox > div > div > select:focus {
         border-color: #667eea !important;
         box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2) !important;
     }
 
     /* Search Button Styling */
-    .stButton > button {
+    .tab3-container .stButton > button {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
         color: white !important;
         font-weight: 600 !important;
@@ -6848,7 +6849,7 @@ with tab3:
         width: 100% !important;
     }
 
-    .stButton > button:hover {
+    .tab3-container .stButton > button:hover {
         transform: translateY(-2px) !important;
         box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6) !important;
     }
@@ -7415,7 +7416,7 @@ with tab3:
     }
 
     /* Advanced Glow Animation */
-    @keyframes glow {
+    @keyframes tab3-glow {
         0% {
             box-shadow: 0 0 5px rgba(255,255,255,0.1), 0 0 10px rgba(0,255,255,0.1), 0 0 15px rgba(0,255,255,0.1);
         }
@@ -7428,7 +7429,7 @@ with tab3:
     }
 
     /* Shimmer Effect */
-    @keyframes shimmer {
+    @keyframes tab3-shimmer {
         0% {
             transform: translateX(-100%);
         }
@@ -7437,7 +7438,7 @@ with tab3:
         }
     }
 
-    .shimmer-overlay {
+    .tab3-container .shimmer-overlay {
         position: absolute;
         top: 0;
         left: 0;
@@ -7445,12 +7446,12 @@ with tab3:
         height: 100%;
         background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
         transform: translateX(-100%);
-        animation: shimmer 3s infinite;
+        animation: tab3-shimmer 3s infinite;
         z-index: 1;
     }
 
     /* Floating Animation */
-    @keyframes float {
+    @keyframes tab3-float {
         0%, 100% {
             transform: translateY(0px);
         }
@@ -7460,7 +7461,7 @@ with tab3:
     }
 
     /* Pulse Animation */
-    @keyframes pulse {
+    @keyframes tab3-pulse {
         0%, 100% {
             transform: scale(1);
         }
@@ -7470,7 +7471,7 @@ with tab3:
     }
 
     /* Enhanced Company Cards */
-    .company-card {
+    .tab3-container .company-card {
         background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
         color: #ffffff;
         border-radius: 20px;
@@ -7481,13 +7482,13 @@ with tab3:
         cursor: pointer;
         text-decoration: none;
         display: block;
-        animation: glow 4s infinite alternate, float 6s ease-in-out infinite;
+        animation: tab3-glow 4s infinite alternate, tab3-float 6s ease-in-out infinite;
         position: relative;
         overflow: hidden;
         border: 1px solid rgba(255,255,255,0.1);
     }
 
-    .company-card::before {
+    .tab3-container .company-card::before {
         content: '';
         position: absolute;
         top: 0;
@@ -7500,24 +7501,24 @@ with tab3:
         z-index: 1;
     }
 
-    .company-card:hover::before {
+    .tab3-container .company-card:hover::before {
         opacity: 1;
     }
 
-    .company-card:hover {
+    .tab3-container .company-card:hover {
         transform: translateY(-8px) scale(1.02);
         box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 30px rgba(0, 255, 255, 0.3);
         border-color: rgba(0,255,255,0.5);
     }
 
     /* Job Result Cards */
-    .job-result-card:hover {
+    .tab3-container .job-result-card:hover {
         transform: translateY(-5px) scale(1.01);
         box-shadow: 0 15px 40px rgba(0,0,0,0.4) !important;
     }
 
     /* Enhanced Buttons */
-    .job-button::before {
+    .tab3-container .job-button::before {
         content: '';
         position: absolute;
         top: 0;
@@ -7529,17 +7530,17 @@ with tab3:
         z-index: 1;
     }
 
-    .job-button:hover::before {
+    .tab3-container .job-button:hover::before {
         left: 100%;
     }
 
-    .job-button:hover {
+    .tab3-container .job-button:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(0,0,0,0.3);
     }
 
     /* Enhanced Pills */
-    .pill {
+    .tab3-container .pill {
         display: inline-block;
         background: linear-gradient(135deg, #333 0%, #444 100%);
         padding: 8px 16px;
@@ -7553,7 +7554,7 @@ with tab3:
         overflow: hidden;
     }
 
-    .pill::before {
+    .tab3-container .pill::before {
         content: '';
         position: absolute;
         top: 0;
@@ -7565,17 +7566,17 @@ with tab3:
         transition: opacity 0.3s ease;
     }
 
-    .pill:hover::before {
+    .tab3-container .pill:hover::before {
         opacity: 1;
     }
 
-    .pill:hover {
+    .tab3-container .pill:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0,255,255,0.3);
     }
 
     /* Enhanced Title Headers */
-    .title-header {
+    .tab3-container .title-header {
         color: #ffffff;
         font-size: 28px;
         margin-top: 50px;
@@ -7587,10 +7588,10 @@ with tab3:
         -webkit-text-fill-color: transparent;
         background-clip: text;
         position: relative;
-        animation: pulse 3s infinite;
+        animation: tab3-pulse 3s infinite;
     }
 
-    .title-header::after {
+    .tab3-container .title-header::after {
         content: '';
         position: absolute;
         bottom: -10px;
@@ -7603,14 +7604,14 @@ with tab3:
     }
 
     /* Company Logo Enhancement */
-    .company-logo {
+    .tab3-container .company-logo {
         font-size: 28px;
         margin-right: 12px;
         filter: drop-shadow(0 0 8px rgba(255,255,255,0.3));
-        animation: float 4s ease-in-out infinite;
+        animation: tab3-float 4s ease-in-out infinite;
     }
 
-    .company-header {
+    .tab3-container .company-header {
         font-size: 24px;
         font-weight: 700;
         display: flex;
@@ -7622,35 +7623,35 @@ with tab3:
 
     /* Responsive Enhancements */
     @media (max-width: 768px) {
-        .company-card, .job-result-card {
+        .tab3-container .company-card, .tab3-container .job-result-card {
             padding: 20px;
             margin-bottom: 20px;
         }
 
-        .title-header {
+        .tab3-container .title-header {
             font-size: 24px;
         }
 
-        .company-header {
+        .tab3-container .company-header {
             font-size: 20px;
         }
     }
 
     /* Scrollbar Styling */
-    ::-webkit-scrollbar {
+    .tab3-container ::-webkit-scrollbar {
         width: 8px;
     }
 
-    ::-webkit-scrollbar-track {
+    .tab3-container ::-webkit-scrollbar-track {
         background: #1e1e1e;
     }
 
-    ::-webkit-scrollbar-thumb {
+    .tab3-container ::-webkit-scrollbar-thumb {
         background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
         border-radius: 4px;
     }
 
-    ::-webkit-scrollbar-thumb:hover {
+    .tab3-container ::-webkit-scrollbar-thumb:hover {
         background: linear-gradient(135deg, #26d0ce 0%, #9c64ff 100%);
     }
     </style>
@@ -7738,6 +7739,9 @@ with tab3:
             <p style="color: #ccc; font-size: 14px; position: relative; z-index: 2;">💵 Salary: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
+
+    # Close the tab3-container div
+    st.markdown('</div>', unsafe_allow_html=True)
 def evaluate_interview_answer(answer: str, question: str = None):
     """
     Uses an LLM to strictly evaluate an interview answer.

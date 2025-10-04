@@ -3065,7 +3065,6 @@ with tab1:
     else:           
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
 
-# ---------------- Sidebar (ONLY in Tab 2) ----------------
 from io import BytesIO
 from bs4 import BeautifulSoup
 from docx import Document
@@ -3098,6 +3097,10 @@ def html_to_docx_bytes(html_string, filename="Resume.docx"):
 
     def add_text_with_style(element, doc):
         """Recursively process HTML elements and add to document"""
+
+        # Skip if element is not a Tag (e.g., NavigableString, Comment)
+        if not hasattr(element, 'name') or element.name is None:
+            return
 
         # Handle headings
         if element.name == 'h1':
@@ -6092,7 +6095,6 @@ with tab2:
             st.markdown("""
             ✅ Download your cover letter as an editable DOCX file or as an HTML template.
             """, unsafe_allow_html=True)
-
 FEATURED_COMPANIES = {
     "tech": [
         {

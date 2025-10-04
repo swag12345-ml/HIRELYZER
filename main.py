@@ -9417,7 +9417,7 @@ Generate exactly {num_questions} questions now:
                     # Add refresh button for new question
                     col1, col2 = st.columns([3, 1])
                     with col2:
-                        if st.button("🔄 Refresh Interview Question"):
+                        if st.button("🔄 Refresh "):
                             with st.spinner("Generating new question..."):
                                 new_questions = generate_interview_questions_with_llm(
                                     selected_domain,

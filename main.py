@@ -6775,35 +6775,35 @@ init_job_search_db()
 with tab3:
     st.header("🔍 Job Search Across LinkedIn, Naukri, and FoundIt")
 
-    # Toggle buttons for search mode using columns
-    st.markdown("**Select Search Mode:**")
-    col_toggle1, col_toggle2 = st.columns(2)
-
     # Initialize session state for toggle
     if 'search_mode' not in st.session_state:
-        st.session_state.search_mode = "External Platforms (LinkedIn, Naukri, FoundIt)"
+        st.session_state.search_mode = "External Platforms"
 
-    with col_toggle1:
-        if st.button(
-            "🌐 External Platforms",
-            key="btn_external",
-            use_container_width=True,
-            type="primary" if st.session_state.search_mode == "External Platforms (LinkedIn, Naukri, FoundIt)" else "secondary"
-        ):
-            st.session_state.search_mode = "External Platforms (LinkedIn, Naukri, FoundIt)"
+    # Styled Toggle Selector
+    st.markdown("**Select Search Mode:**")
 
-    with col_toggle2:
-        if st.button(
-            "⚡ RapidAPI Jobs",
-            key="btn_rapid",
-            use_container_width=True,
-            type="primary" if st.session_state.search_mode == "RapidAPI Jobs (India Only)" else "secondary"
-        ):
-            st.session_state.search_mode = "RapidAPI Jobs (India Only)"
+    # Create two column toggle with visual styling
+    toggle_col1, toggle_col2 = st.columns(2)
+
+    is_external = st.session_state.search_mode == "External Platforms"
+
+    with toggle_col1:
+        btn_type_ext = "primary" if is_external else "secondary"
+        if st.button("🌐 EXTERNAL PLATFORMS", key="btn_external", use_container_width=True, type=btn_type_ext):
+            st.session_state.search_mode = "External Platforms"
+            st.rerun()
+
+    with toggle_col2:
+        btn_type_rapid = "primary" if not is_external else "secondary"
+        if st.button("⚡ RAPIDAPI JOBS", key="btn_rapid", use_container_width=True, type=btn_type_rapid):
+            st.session_state.search_mode = "RapidAPI"
+            st.rerun()
+
+    st.markdown("<br>", unsafe_allow_html=True)
 
     search_mode = st.session_state.search_mode
 
-    if search_mode == "External Platforms (LinkedIn, Naukri, FoundIt)":
+    if search_mode == "External Platforms":
         # External Platforms Section
         col1, col2 = st.columns(2)
 
@@ -6883,7 +6883,7 @@ with tab3:
             else:
                 st.warning("⚠️ Please enter both the Job Title and Location to perform the search.")
 
-    else:
+    elif search_mode == "RapidAPI":
         # RapidAPI Jobs Section
         col1, col2 = st.columns(2)
 
@@ -7048,34 +7048,35 @@ with tab3:
         # Get total count of searches
         total_searches = get_total_saved_searches_count(st.session_state.username)
 
-        # Single row for saved searches heading and controls
+        # Saved searches with collapsible filter controls
         st.markdown("### 📌 Your Saved Job Searches")
 
         if total_searches > 0:
-            # Controls in a single row
-            filter_col, page_col = st.columns([3, 2])
+            # Compact expander for filters
+            with st.expander("🔍 Filter & Navigation Options", expanded=False):
+                filter_col, page_col = st.columns(2)
 
-            with filter_col:
-                platform_filter = st.selectbox(
-                    "🔍 Filter by Platform",
-                    platform_options,
-                    key="platform_filter"
-                )
-
-            with page_col:
-                # Calculate pagination
-                searches_per_page = 5
-                filtered_count = get_total_saved_searches_count(st.session_state.username, platform_filter)
-                max_pages = max(1, (filtered_count + searches_per_page - 1) // searches_per_page)
-
-                if max_pages > 1:
-                    current_page = st.selectbox(
-                        "📄 Page",
-                        options=list(range(1, max_pages + 1)),
-                        key="page_selector"
+                with filter_col:
+                    platform_filter = st.selectbox(
+                        "Filter by Platform",
+                        platform_options,
+                        key="platform_filter"
                     )
-                else:
-                    current_page = 1
+
+                with page_col:
+                    # Calculate pagination
+                    searches_per_page = 5
+                    filtered_count = get_total_saved_searches_count(st.session_state.username, platform_filter)
+                    max_pages = max(1, (filtered_count + searches_per_page - 1) // searches_per_page)
+
+                    if max_pages > 1:
+                        current_page = st.selectbox(
+                            "Page",
+                            options=list(range(1, max_pages + 1)),
+                            key="page_selector"
+                        )
+                    else:
+                        current_page = 1
 
             # Calculate offset for pagination
             offset = (current_page - 1) * searches_per_page
@@ -7322,17 +7323,39 @@ with tab3:
         box-shadow: 0 15px 40px rgba(0,0,0,0.4) !important;
     }
 
-    /* Streamlit Button Styling */
+    /* Toggle Button Styling */
     .stButton > button {
         border-radius: 12px;
         font-weight: 600;
-        transition: all 0.3s ease;
-        border: 2px solid rgba(255,255,255,0.1);
+        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        border: 2px solid rgba(0,255,255,0.2);
+        padding: 12px 24px;
+        font-size: 15px;
+        letter-spacing: 0.5px;
+    }
+
+    .stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #00c4cc 0%, #0e76a8 100%);
+        border-color: rgba(0,196,204,0.5);
+        box-shadow: 0 4px 15px rgba(0,196,204,0.4);
+        color: white;
+        transform: scale(1.02);
+    }
+
+    .stButton > button[kind="secondary"] {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+        border-color: rgba(255,255,255,0.1);
+        color: #888;
     }
 
     .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,255,255,0.3);
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 6px 20px rgba(0,255,255,0.5);
+    }
+
+    .stButton > button[kind="secondary"]:hover {
+        border-color: rgba(0,255,255,0.4);
+        color: #aaa;
     }
 
     /* Streamlit Selectbox and Input Styling */

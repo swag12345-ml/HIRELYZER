@@ -6193,7 +6193,6 @@ def get_companies_by_industry(industry):
                 companies.append(company)
     return companies
 
-# Sample job search function
 import uuid
 import urllib.parse
 import sqlite3
@@ -6203,7 +6202,6 @@ from zoneinfo import ZoneInfo
 import requests
 import re
 
-# ✅ RapidAPI Configuration (from Streamlit secrets)
 RAPID_API_KEY = st.secrets["rapidapi"]["key"]
 RAPID_API_HOST = st.secrets["rapidapi"]["host"]
 
@@ -6211,9 +6209,7 @@ def clean_html(raw_html: str) -> str:
     """Remove HTML tags and comments from API descriptions."""
     if not raw_html:
         return ""
-    # Remove comments
     raw_html = re.sub(r"<!--.*?-->", "", raw_html, flags=re.DOTALL)
-    # Remove all tags
     return re.sub(r"<.*?>", "", raw_html).strip()
 
 def fetch_live_jobs(job_role, location, job_type=None, remote_only=False, results=10):
@@ -6225,7 +6221,6 @@ def fetch_live_jobs(job_role, location, job_type=None, remote_only=False, result
         "remote_jobs_only": str(remote_only).lower()
     }
 
-    # 🔹 Map UI dropdown values to RapidAPI accepted filters
     type_map = {
         "Full-time": "FULLTIME",
         "Part-time": "PARTTIME",
@@ -6250,63 +6245,6 @@ def fetch_live_jobs(job_role, location, job_type=None, remote_only=False, result
     except Exception:
         return []
 
-def fetch_company_by_domain(domain: str):
-    """Fetch company information by domain using LinkedIn Data API"""
-    url = f"https://linkedin-data-api.p.rapidapi.com/get-company-by-domain?domain={domain}"
-    headers = {
-        "X-RapidAPI-Key": RAPID_API_KEY,
-        "X-RapidAPI-Host": "linkedin-data-api.p.rapidapi.com"
-    }
-    try:
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return None
-    except Exception:
-        return None
-
-def unified_search(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
-    results = []
-
-    # 1️⃣ Fetch live jobs from RapidAPI JSearch
-    live_jobs = fetch_live_jobs(job_role, location, job_type=job_type, results=5)
-    for job in live_jobs:
-        results.append({
-            "platform": "RapidAPI (Live)",
-            "title": clean_html(job.get("job_title", "N/A")),
-            "company": clean_html(job.get("employer_name", "Unknown")),
-            "location": f"{job.get('job_city','')}, {job.get('job_country','')}",
-            "salary": f"{job.get('job_min_salary','NA')} - {job.get('job_max_salary','NA')} {job.get('job_salary_currency','')}",
-            "date": job.get("job_posted_at_datetime_utc", "N/A"),
-            "type": job.get("job_employment_type","N/A"),
-            "remote": "Remote" if job.get("job_is_remote") else "On-site",
-            "publisher": clean_html(job.get("job_publisher","N/A")),
-            "description": clean_html(job.get("job_description",""))[:200] + "...",
-            "apply_link": job.get("job_apply_link", "#")
-        })
-
-    # 2️⃣ Add LinkedIn, Naukri, FoundIt links (existing function)
-    external_links = search_jobs(job_role, location, experience_level, job_type, foundit_experience)
-    for job in external_links:
-        results.append({
-            "platform": job["title"].split(":")[0],
-            "title": job["title"].split(":")[1].strip(),
-            "company": "N/A",
-            "location": location,
-            "salary": "Check site",
-            "date": "N/A",
-            "type": "N/A",
-            "remote": "N/A",
-            "publisher": job["title"].split(":")[0],
-            "description": "Open this platform to view full details.",
-            "apply_link": job["link"]
-        })
-
-    return results
-
-
-# Database functions for job search history
 def init_job_search_db():
     """Initialize the job search database and create user_jobs table if not exists"""
     try:
@@ -6340,7 +6278,6 @@ def save_job_search(username, role, location, results):
         cursor = conn.cursor()
 
         for result in results:
-            # Extract platform name from title or use platform field
             platform = result.get("platform", "Unknown")
             url = result.get("apply_link", "#")
 
@@ -6354,32 +6291,6 @@ def save_job_search(username, role, location, results):
 
     except Exception as e:
         st.error(f"Error saving job search: {e}")
-
-def prune_old_searches(username):
-    """Keep only the last 50 saved job searches per user (optional cleanup)"""
-    if not username:
-        return
-
-    try:
-        conn = sqlite3.connect('resume_data.db')
-        cursor = conn.cursor()
-
-        # Delete all but the most recent 50 searches for this user
-        cursor.execute('''
-            DELETE FROM user_jobs
-            WHERE username = ? AND id NOT IN (
-                SELECT id FROM user_jobs
-                WHERE username = ?
-                ORDER BY timestamp DESC
-                LIMIT 50
-            )
-        ''', (username, username))
-
-        conn.commit()
-        conn.close()
-
-    except Exception as e:
-        st.error(f"Error pruning old searches: {e}")
 
 def delete_saved_job_search(search_id):
     """Delete a saved job search by its ID"""
@@ -6395,7 +6306,7 @@ def delete_saved_job_search(search_id):
     except Exception as e:
         st.error(f"Error deleting job search: {e}")
 
-def get_saved_job_searches(username, limit=10, offset=0, platform_filter=None):
+def get_saved_job_searches(username, limit=5, offset=0, platform_filter=None):
     """Get saved job searches for a user with filtering and pagination"""
     if not username:
         return []
@@ -6404,7 +6315,6 @@ def get_saved_job_searches(username, limit=10, offset=0, platform_filter=None):
         conn = sqlite3.connect('resume_data.db')
         cursor = conn.cursor()
 
-        # Build the query with optional platform filter
         if platform_filter and platform_filter != "All":
             cursor.execute('''
                 SELECT id, role, location, platform, url, timestamp
@@ -6488,25 +6398,42 @@ def slugify(text: str) -> str:
     text = re.sub(r"\s+", "-", text)
     return text
 
-def render_job_card(title, link, platform_name, brand_color, platform_gradient, company=None, location=None, salary=None, description=None):
+def render_unified_job_card(
+    title,
+    link,
+    platform_name,
+    brand_color,
+    platform_gradient,
+    company=None,
+    location=None,
+    salary=None,
+    job_type=None,
+    mode=None,
+    date=None,
+    publisher=None,
+    description=None
+):
     """
-    Reusable function to render a modern job card with consistent styling.
+    Unified job card component for ALL job results (External + RapidAPI).
 
     Args:
         title: Job title or role
         link: Apply link URL
-        platform_name: Name of the platform (LinkedIn, Naukri, etc.)
+        platform_name: Name of the platform (LinkedIn, Naukri, FoundIt, RapidAPI)
         brand_color: Platform brand color (hex)
         platform_gradient: CSS gradient for platform
         company: Company name (optional)
         location: Job location (optional)
         salary: Salary information (optional)
+        job_type: Employment type (optional)
+        mode: Work mode - Remote/On-site (optional)
+        date: Posted date (optional)
+        publisher: Job publisher (optional)
         description: Job description (optional)
 
     Returns:
         tuple: (html_string, estimated_height)
     """
-    # Platform icon mapping
     icon_map = {
         "LinkedIn": "🔵",
         "Naukri": "🏢",
@@ -6515,45 +6442,42 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
     }
     icon = icon_map.get(platform_name, "📄")
 
-    # Build metadata section and calculate height
     metadata_html = ""
-    estimated_height = 180  # Base height (platform + title + button + padding)
+    estimated_height = 200
 
-    if company:
-        metadata_html += f"""
-        <div style="color: #aaaaaa; font-size: 14px; margin-bottom: 8px; z-index: 2; position: relative;">
-            🏢 <b>{company}</b>
-        </div>
-        """
-        estimated_height += 30
+    if company and company not in ["N/A", "Unknown", ""]:
+        metadata_html += f'<div class="metadata-item">🏢 <span class="metadata-label">Company:</span> <span class="metadata-value">{company}</span></div>'
+        estimated_height += 25
 
-    if location:
-        metadata_html += f"""
-        <div style="color: #aaaaaa; font-size: 14px; margin-bottom: 8px; z-index: 2; position: relative;">
-            📍 {location}
-        </div>
-        """
-        estimated_height += 30
+    if location and location not in ["N/A", ", ", ""]:
+        metadata_html += f'<div class="metadata-item">📍 <span class="metadata-label">Location:</span> <span class="metadata-value">{location}</span></div>'
+        estimated_height += 25
 
-    if salary and salary not in ["Check site", "N/A - N/A "]:
-        metadata_html += f"""
-        <div style="color: #aaaaaa; font-size: 14px; margin-bottom: 8px; z-index: 2; position: relative;">
-            💰 {salary}
-        </div>
-        """
-        estimated_height += 30
+    if salary and salary not in ["Check site", "N/A - N/A ", "None - None ", ""]:
+        metadata_html += f'<div class="metadata-item">💰 <span class="metadata-label">Salary:</span> <span class="metadata-value">{salary}</span></div>'
+        estimated_height += 25
 
-    if description and description != "Open this platform to view full details.":
-        # Estimate height based on description length
-        desc_lines = len(description) // 60 + 1
-        estimated_height += (desc_lines * 22) + 15
-        metadata_html += f"""
-        <div style="color: #999999; font-size: 14px; margin-bottom: 15px; line-height: 1.6; z-index: 2; position: relative;">
-            {description}
-        </div>
-        """
+    if job_type and job_type not in ["N/A", ""]:
+        metadata_html += f'<div class="metadata-item">📋 <span class="metadata-label">Type:</span> <span class="metadata-value">{job_type}</span></div>'
+        estimated_height += 25
 
-    # Create the job card HTML
+    if mode and mode not in ["N/A", ""]:
+        metadata_html += f'<div class="metadata-item">🌍 <span class="metadata-label">Mode:</span> <span class="metadata-value">{mode}</span></div>'
+        estimated_height += 25
+
+    if date and date not in ["N/A", ""]:
+        metadata_html += f'<div class="metadata-item">📅 <span class="metadata-label">Posted:</span> <span class="metadata-value">{date}</span></div>'
+        estimated_height += 25
+
+    if publisher and publisher not in ["N/A", ""]:
+        metadata_html += f'<div class="metadata-item">📰 <span class="metadata-label">Source:</span> <span class="metadata-value">{publisher}</span></div>'
+        estimated_height += 25
+
+    if description and description not in ["Open this platform to view full details.", ""]:
+        desc_lines = len(description) // 70 + 1
+        estimated_height += (desc_lines * 20) + 20
+        metadata_html += f'<div class="job-description">{description}</div>'
+
     job_card_html = f"""
 <!DOCTYPE html>
 <html>
@@ -6566,7 +6490,7 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
     }}
     body {{
         background: transparent;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
     }}
     @keyframes shimmer {{
         0% {{ transform: translateX(-100%); }}
@@ -6578,69 +6502,112 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
         transform: translateX(-100%);
-        animation: shimmer 3s infinite;
+        animation: shimmer 4s infinite;
         z-index: 1;
+        pointer-events: none;
     }}
-    .job-result-card {{
-        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
-        padding: 22px;
-        border-radius: 20px;
-        border-left: 6px solid {brand_color};
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px {brand_color}40;
+    .job-card {{
+        background: linear-gradient(135deg, #1a1a1a 0%, #252525 100%);
+        padding: 24px;
+        border-radius: 16px;
+        border-left: 5px solid {brand_color};
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4), 0 0 15px {brand_color}30;
         position: relative;
         overflow: hidden;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }}
-    .job-result-card:hover {{
-        transform: translateY(-3px);
-        box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 30px {brand_color}60;
+    .job-card:hover {{
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.5), 0 0 25px {brand_color}50;
     }}
-    .job-button {{
+    .platform-badge {{
+        font-size: 16px;
+        margin-bottom: 12px;
+        z-index: 2;
+        position: relative;
+        font-weight: 700;
+        color: {brand_color};
+        letter-spacing: 0.5px;
+    }}
+    .job-title {{
+        color: #ffffff;
+        font-size: 20px;
+        margin-bottom: 16px;
+        font-weight: 700;
+        z-index: 2;
+        position: relative;
+        line-height: 1.4;
+        letter-spacing: 0.3px;
+    }}
+    .metadata-grid {{
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 16px;
+        z-index: 2;
+        position: relative;
+    }}
+    .metadata-item {{
+        color: #b0b0b0;
+        font-size: 14px;
+        line-height: 1.5;
+    }}
+    .metadata-label {{
+        font-weight: 500;
+        color: #888;
+    }}
+    .metadata-value {{
+        font-weight: 600;
+        color: #d0d0d0;
+    }}
+    .job-description {{
+        color: #999;
+        font-size: 14px;
+        margin-bottom: 18px;
+        line-height: 1.6;
+        z-index: 2;
+        position: relative;
+    }}
+    .apply-button {{
         background: {platform_gradient};
         color: white;
-        padding: 12px 20px;
+        padding: 14px 24px;
         border: none;
-        border-radius: 12px;
+        border-radius: 10px;
         font-size: 16px;
-        font-weight: bold;
+        font-weight: 700;
         cursor: pointer;
-        box-shadow: 0 4px 15px {brand_color}50;
+        box-shadow: 0 4px 12px {brand_color}40;
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
         text-decoration: none;
         display: inline-block;
+        width: 100%;
+        text-align: center;
+        z-index: 2;
     }}
-    .job-button:hover {{
+    .apply-button:hover {{
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px {brand_color}70;
+        box-shadow: 0 6px 18px {brand_color}60;
+    }}
+    @media (max-width: 768px) {{
+        .metadata-grid {{
+            grid-template-columns: 1fr;
+        }}
     }}
 </style>
 </head>
 <body>
-<div class="job-result-card">
+<div class="job-card">
     <div class="shimmer-overlay"></div>
-
-    <!-- Platform Badge -->
-    <div style="font-size: 20px; margin-bottom: 12px; z-index: 2; position: relative; font-weight: bold; color: {brand_color};">
-        {icon} {platform_name}
-    </div>
-
-    <!-- Job Title -->
-    <div style="color: #ffffff; font-size: 18px; margin-bottom: 12px; font-weight: bold; z-index: 2; position: relative; line-height: 1.4;">
-        {title}
-    </div>
-
-    <!-- Metadata (company, location, salary, description) -->
-    {metadata_html}
-
-    <!-- Apply Button -->
+    <div class="platform-badge">{icon} {platform_name}</div>
+    <div class="job-title">{title}</div>
+    <div class="metadata-grid">{metadata_html}</div>
     <a href="{link}" target="_blank" style="text-decoration: none; z-index: 2; position: relative;">
-        <button class="job-button">
-            <span style="position: relative; z-index: 2;">🚀 Apply Now →</span>
-        </button>
+        <button class="apply-button">🚀 Apply Now</button>
     </a>
 </div>
 </body>
@@ -6649,22 +6616,17 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
     return job_card_html, estimated_height
 
 def search_jobs(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
-    # Encode query values
     role_encoded = urllib.parse.quote_plus(job_role.strip())
     loc_encoded = urllib.parse.quote_plus(location.strip())
 
-    # Slugs
     role_path_naukri = job_role.strip().lower().replace(" ", "-")
     city_part = location.strip().split(",")[0].strip()
     city_naukri = city_part.lower().replace(" ", "-")
-    # Only encode what the user entered for the query
     city_query_naukri = urllib.parse.quote_plus(location.strip())
 
-    # FoundIt slugs
     role_path_foundit = slugify(job_role)
     city_path_foundit = slugify(city_part)
 
-    # Experience mappings
     experience_range_map = {
         "Internship": "0~0", "Entry Level": "1~1", "Associate": "2~3",
         "Mid-Senior Level": "4~7", "Director": "8~15", "Executive": "16~20"
@@ -6682,14 +6644,12 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         "Temporary": "T", "Volunteer": "V", "Internship": "I"
     }
 
-    # LinkedIn URL
     linkedin_url = f"https://www.linkedin.com/jobs/search/?keywords={role_encoded}&location={loc_encoded}"
     if experience_level in linkedin_exp_map:
         linkedin_url += f"&f_E={linkedin_exp_map[experience_level]}"
     if job_type in job_type_map:
         linkedin_url += f"&f_JT={job_type_map[job_type]}"
 
-    # Determine experience values
     if foundit_experience is not None:
         experience_range = f"{foundit_experience}~{foundit_experience}"
         experience_exact = str(foundit_experience)
@@ -6697,7 +6657,6 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         experience_range = experience_range_map.get(experience_level, "")
         experience_exact = experience_exact_map.get(experience_level, "")
 
-    # Naukri URL – no forced "and-india"
     naukri_url = (
         f"https://www.naukri.com/{role_path_naukri}-jobs-in-{city_naukri}"
         f"?k={role_encoded}&l={city_query_naukri}"
@@ -6706,7 +6665,6 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         naukri_url += f"&experience={experience_exact}"
     naukri_url += "&nignbevent_src=jobsearchDeskGNB"
 
-    # FoundIt URL
     search_id = uuid.uuid4()
     child_search_id = uuid.uuid4()
     if role_path_foundit and city_path_foundit:
@@ -6733,88 +6691,381 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         {"title": f"FoundIt (Monster): {job_role} jobs in {location}", "link": foundit_url}
     ]
 
-
-
-def add_hyperlink(paragraph, url, text, color="0000FF", underline=True):
-    """
-    A function to add a hyperlink to a paragraph.
-    """
-    part = paragraph.part
-    r_id = part.relate_to(url, RT.HYPERLINK, is_external=True)
-
-    hyperlink = OxmlElement('w:hyperlink')
-    hyperlink.set(qn('r:id'), r_id)
-
-    new_run = OxmlElement('w:r')
-    rPr = OxmlElement('w:rPr')
-
-    # Color and underline
-    if underline:
-        u = OxmlElement('w:u')
-        u.set(qn('w:val'), 'single')
-        rPr.append(u)
-
-    color_element = OxmlElement('w:color')
-    color_element.set(qn('w:val'), color)
-    rPr.append(color_element)
-
-    new_run.append(rPr)
-
-    text_elem = OxmlElement('w:t')
-    text_elem.text = text
-    new_run.append(text_elem)
-
-    hyperlink.append(new_run)
-    paragraph._p.append(hyperlink)
-    return hyperlink
-
-# Initialize database
 init_job_search_db()
 
-# Your existing tab3 code with enhanced CSS styling
 with tab3:
-    st.header("🔍 Job Search Across LinkedIn, Naukri, and FoundIt")
+    st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-    # Radio selector for search mode
-    search_mode = st.radio(
-        "Select Search Mode:",
-        ["External Platforms (LinkedIn, Naukri, FoundIt)", "RapidAPI Jobs (India Only)"],
-        horizontal=True,
-        key="search_mode"
-    )
+    .stApp {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
 
-    if search_mode == "External Platforms (LinkedIn, Naukri, FoundIt)":
-        # External Platforms Section
+    /* Modern Toggle Switch */
+    .toggle-container {
+        display: flex;
+        justify-content: center;
+        margin: 25px 0 35px 0;
+    }
+
+    .toggle-buttons {
+        display: inline-flex;
+        background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+        border-radius: 14px;
+        padding: 6px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .toggle-btn {
+        padding: 12px 32px;
+        border: none;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: transparent;
+        color: #888;
+        margin: 0 4px;
+    }
+
+    .toggle-btn.active {
+        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);
+        font-weight: 700;
+    }
+
+    .toggle-btn:hover:not(.active) {
+        background: rgba(255,255,255,0.05);
+        color: #aaa;
+    }
+
+    /* Section Headers */
+    .section-header {
+        font-size: 24px;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 30px 0 20px 0;
+        text-align: center;
+        letter-spacing: 0.5px;
+    }
+
+    .section-subheader {
+        font-size: 18px;
+        font-weight: 600;
+        color: #d0d0d0;
+        margin: 25px 0 15px 0;
+    }
+
+    /* Full-width Gradient Button */
+    .gradient-button {
+        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+        color: white;
+        padding: 14px 24px;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);
+        transition: all 0.3s ease;
+        width: 100%;
+        text-align: center;
+        margin-top: 10px;
+    }
+
+    .gradient-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(14, 165, 233, 0.6);
+    }
+
+    /* Saved Search Cards */
+    .saved-search-card {
+        background: linear-gradient(135deg, #1a1a1a 0%, #252525 100%);
+        padding: 20px;
+        border-radius: 14px;
+        margin-bottom: 18px;
+        border-left: 4px solid #0ea5e9;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .saved-search-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    }
+
+    .saved-search-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+
+    .saved-search-title {
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+
+    .saved-search-platform {
+        color: #0ea5e9;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .saved-search-time {
+        color: #888;
+        font-size: 12px;
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .saved-search-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Pagination Buttons */
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 25px 0;
+    }
+
+    .pagination-btn {
+        background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
+        color: #d0d0d0;
+        padding: 10px 24px;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+        border-color: #0ea5e9;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+    }
+
+    .pagination-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    .pagination-info {
+        color: #888;
+        font-size: 14px;
+        text-align: center;
+        margin: 10px 0;
+    }
+
+    /* Company & Insight Cards */
+    .company-card, .insight-card {
+        background: linear-gradient(135deg, #1a1a1a 0%, #252525 100%);
+        color: #ffffff;
+        border-radius: 16px;
+        padding: 22px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        text-decoration: none;
+        display: block;
+        border: 1px solid rgba(255,255,255,0.05);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .company-card::before, .insight-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, rgba(6, 182, 212, 0.05) 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+    }
+
+    .company-card:hover::before, .insight-card:hover::before {
+        opacity: 1;
+    }
+
+    .company-card:hover, .insight-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.4), 0 0 20px rgba(14, 165, 233, 0.2);
+        border-color: rgba(14, 165, 233, 0.3);
+    }
+
+    .company-header {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .company-description {
+        color: #b0b0b0;
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 14px;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Pills/Tags */
+    .pill {
+        display: inline-block;
+        background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
+        padding: 6px 14px;
+        border-radius: 20px;
+        margin: 4px 6px 4px 0;
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid rgba(255,255,255,0.1);
+        transition: all 0.2s ease;
+        position: relative;
+        z-index: 2;
+    }
+
+    .pill:hover {
+        transform: translateY(-2px);
+        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+        box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);
+    }
+
+    /* Grid Layouts */
+    .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+    }
+
+    @media (max-width: 768px) {
+        .grid-2, .grid-3 {
+            grid-template-columns: 1fr;
+        }
+
+        .toggle-btn {
+            padding: 10px 20px;
+            font-size: 13px;
+        }
+
+        .saved-search-header {
+            flex-direction: column;
+        }
+
+        .saved-search-time {
+            text-align: left;
+            margin-top: 6px;
+        }
+    }
+
+    /* Animations */
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Empty State */
+    .empty-state {
+        background: linear-gradient(135deg, #1a1a1a 0%, #252525 100%);
+        padding: 40px 20px;
+        border-radius: 16px;
+        text-align: center;
+        color: #888;
+        border: 2px dashed #444;
+        margin: 20px 0;
+    }
+
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 15px;
+    }
+
+    .empty-state-text {
+        font-size: 16px;
+        line-height: 1.6;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<h1 class="section-header">🔍 Job Search Dashboard</h1>', unsafe_allow_html=True)
+
+    if 'search_mode' not in st.session_state:
+        st.session_state.search_mode = "external"
+
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        mode_col1, mode_col2 = st.columns(2)
+        with mode_col1:
+            if st.button("🌐 External Platforms", key="btn_external", use_container_width=True):
+                st.session_state.search_mode = "external"
+        with mode_col2:
+            if st.button("⚡ RapidAPI Jobs", key="btn_rapid", use_container_width=True):
+                st.session_state.search_mode = "rapid"
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    if st.session_state.search_mode == "external":
+        st.markdown('<h2 class="section-subheader">🌐 Search External Platforms</h2>', unsafe_allow_html=True)
+
         col1, col2 = st.columns(2)
-
         with col1:
             job_role = st.text_input("💼 Job Title / Skills", placeholder="e.g., Data Scientist", key="external_role")
-            experience_level = st.selectbox(
-                "📈 Experience Level",
-                ["", "Internship", "Entry Level", "Associate", "Mid-Senior Level", "Director", "Executive"],
-                key="external_exp"
-            )
-
         with col2:
             location = st.text_input("📍 Location", placeholder="e.g., Bangalore, India", key="external_loc")
-            job_type = st.selectbox(
-                "📋 Job Type",
-                ["", "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship"],
-                key="external_type"
-            )
 
-        foundit_experience = st.text_input("🔢 FoundIt Experience (Years)", placeholder="e.g., 1", key="external_foundit")
+        with st.expander("🔧 Advanced Filters", expanded=False):
+            filter_col1, filter_col2 = st.columns(2)
+            with filter_col1:
+                experience_level = st.selectbox(
+                    "📈 Experience Level",
+                    ["", "Internship", "Entry Level", "Associate", "Mid-Senior Level", "Director", "Executive"],
+                    key="external_exp"
+                )
+            with filter_col2:
+                job_type = st.selectbox(
+                    "📋 Job Type",
+                    ["", "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship"],
+                    key="external_type"
+                )
 
-        search_clicked = st.button("🔎 Search External Jobs", key="search_external")
+            foundit_experience = st.text_input("🔢 FoundIt Experience (Years)", placeholder="e.g., 1", key="external_foundit")
 
-        if search_clicked:
+        if st.button("🔎 Search External Jobs", key="search_external", use_container_width=True):
             if job_role.strip() and location.strip():
-                # Call search_jobs function for external platforms
                 results = search_jobs(job_role, location, experience_level, job_type, foundit_experience)
 
-                # Save search results if user is logged in
                 if hasattr(st.session_state, 'username') and st.session_state.username:
-                    # Convert results to format expected by save_job_search
                     formatted_results = []
                     for result in results:
                         platform_name = result["title"].split(":")[0]
@@ -6824,12 +7075,11 @@ with tab3:
                         })
                     save_job_search(st.session_state.username, job_role, location, formatted_results)
 
-                st.markdown("## 🎯 External Job Search Results")
+                st.markdown('<h2 class="section-subheader">🎯 External Job Search Results</h2>', unsafe_allow_html=True)
 
                 for job in results:
                     platform = job["title"].split(":")[0].lower()
 
-                    # Platform styling
                     if "linkedin" in platform:
                         platform_name = "LinkedIn"
                         btn_color = "#0e76a8"
@@ -6847,67 +7097,56 @@ with tab3:
                         btn_color = "#00c4cc"
                         platform_gradient = "linear-gradient(135deg, #00c4cc 0%, #26d0ce 100%)"
 
-                    # Render card using reusable function
-                    job_card_html, card_height = render_job_card(
+                    job_card_html, card_height = render_unified_job_card(
                         title=job_role,
                         link=job['link'],
                         platform_name=platform_name,
                         brand_color=btn_color,
                         platform_gradient=platform_gradient,
                         location=location,
-                        description="Open this platform to view full details."
+                        description="Open this platform to view full job details and listings."
                     )
                     st.components.v1.html(job_card_html, height=card_height, scrolling=False)
             else:
-                st.warning("⚠️ Please enter both the Job Title and Location to perform the search.")
+                st.warning("⚠️ Please enter both Job Title and Location to perform the search.")
 
     else:
-        # RapidAPI Jobs Section
-        col1, col2 = st.columns(2)
+        st.markdown('<h2 class="section-subheader">⚡ Search RapidAPI Jobs</h2>', unsafe_allow_html=True)
 
+        col1, col2 = st.columns(2)
         with col1:
             rapid_job_role = st.text_input("💼 Job Title / Skills", placeholder="e.g., Python Developer", key="rapid_role")
-
         with col2:
             rapid_location = st.text_input("📍 Location", placeholder="e.g., Mumbai", key="rapid_loc")
 
-        # Number of results
-        num_results = st.slider("📊 Number of Jobs to Fetch", min_value=5, max_value=50, value=10, step=5, key="rapid_num_results")
-
-        # Advanced Filters
-        with st.expander("🔧 Advanced Filters"):
-            date_posted = st.selectbox(
-                "📅 Date Posted",
-                ["all", "today", "3days", "week", "month"],
-                key="rapid_date"
-            )
-            rapid_job_type = st.selectbox(
-                "📋 Job Type",
-                ["", "Full-time", "Part-time", "Contract", "Internship"],
-                key="rapid_type"
-            )
-            remote_only = st.checkbox("🏠 Remote Only", key="rapid_remote")
-            radius = st.number_input("📏 Radius (km)", min_value=0, max_value=200, value=50, key="rapid_radius")
-            job_requirements = st.multiselect(
-                "📝 Job Requirements",
-                ["under_3_years_experience", "more_than_3_years_experience", "no_experience", "no_degree"],
-                key="rapid_req"
-            )
-
-        search_rapid_clicked = st.button("🔎 Search Rapid Jobs", key="search_rapid")
-
-        if search_rapid_clicked:
-            if rapid_job_role.strip() and rapid_location.strip():
-                # Call fetch_live_jobs with parameters
-                results = fetch_live_jobs(
-                    rapid_job_role,
-                    rapid_location,
-                    job_type=rapid_job_type if rapid_job_type else None,
-                    remote_only=remote_only,
-                    results=num_results
+        with st.expander("🔧 Advanced Filters", expanded=False):
+            filter_col1, filter_col2 = st.columns(2)
+            with filter_col1:
+                num_results = st.slider("📊 Number of Jobs", min_value=5, max_value=50, value=10, step=5, key="rapid_num")
+                rapid_job_type = st.selectbox(
+                    "📋 Job Type",
+                    ["", "Full-time", "Part-time", "Contract", "Internship"],
+                    key="rapid_type"
+                )
+            with filter_col2:
+                remote_only = st.checkbox("🏠 Remote Only", key="rapid_remote")
+                date_posted = st.selectbox(
+                    "📅 Date Posted",
+                    ["all", "today", "3days", "week", "month"],
+                    key="rapid_date"
                 )
 
-                # Save search results if user is logged in
+        if st.button("🔎 Search RapidAPI Jobs", key="search_rapid", use_container_width=True):
+            if rapid_job_role.strip() and rapid_location.strip():
+                with st.spinner("Fetching live jobs from RapidAPI..."):
+                    results = fetch_live_jobs(
+                        rapid_job_role,
+                        rapid_location,
+                        job_type=rapid_job_type if rapid_job_type else None,
+                        remote_only=remote_only,
+                        results=num_results
+                    )
+
                 if hasattr(st.session_state, 'username') and st.session_state.username:
                     formatted_results = []
                     for job in results:
@@ -6917,11 +7156,10 @@ with tab3:
                         })
                     save_job_search(st.session_state.username, rapid_job_role, rapid_location, formatted_results)
 
-                st.markdown("## 🎯 RapidAPI Job Results")
+                st.markdown('<h2 class="section-subheader">🎯 RapidAPI Job Results</h2>', unsafe_allow_html=True)
 
                 if results:
                     for job in results:
-                        # Clean all job fields
                         job_title = clean_html(job.get("job_title", "N/A"))
                         job_company = clean_html(job.get("employer_name", "Unknown"))
                         job_location = f"{job.get('job_city','')}, {job.get('job_country','')}"
@@ -6929,9 +7167,8 @@ with tab3:
                         job_type = job.get("job_employment_type", "N/A")
                         job_mode = "Remote" if job.get("job_is_remote") else "On-site"
                         job_publisher = clean_html(job.get("job_publisher", "N/A"))
-                        job_description = clean_html(job.get("job_description", ""))[:250] + "..."
+                        job_description = clean_html(job.get("job_description", ""))[:300] + "..."
 
-                        # Format date
                         formatted_date = "N/A"
                         if job.get("job_posted_at_datetime_utc") and job["job_posted_at_datetime_utc"] != "N/A":
                             try:
@@ -6940,126 +7177,57 @@ with tab3:
                             except:
                                 formatted_date = job["job_posted_at_datetime_utc"]
 
-                        # Colors
                         btn_color = "#00ff88"
                         platform_gradient = "linear-gradient(135deg, #00ff88 0%, #00cc6f 100%)"
 
-                        # Custom HTML card
-                        job_card_html = f"""
-<div class="job-result-card" style="
-    background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
-    padding: 25px;
-    border-radius: 20px;
-    margin-bottom: 25px;
-    border-left: 6px solid {btn_color};
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px {btn_color}40;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-">
-    <div class="shimmer-overlay"></div>
-
-    <!-- Platform Badge -->
-    <div style="font-size: 18px; margin-bottom: 15px; color: {btn_color}; font-weight: bold;">
-        ⚡ RapidAPI (Live)
-    </div>
-
-    <!-- Job Title -->
-    <div style="color: #ffffff; font-size: 22px; margin-bottom: 10px; font-weight: 600; line-height: 1.4;">
-        {job_title}
-    </div>
-
-    <!-- Company -->
-    <div style="color: #aaaaaa; font-size: 16px; margin-bottom: 15px;">
-        🏢 <b>{job_company}</b>
-    </div>
-
-    <!-- Job Details Grid -->
-    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px;">
-        <div style="color: #cccccc; font-size: 14px;">📍 <b>Location:</b> {job_location}</div>
-        <div style="color: #cccccc; font-size: 14px;">💰 <b>Salary:</b> {job_salary}</div>
-        <div style="color: #cccccc; font-size: 14px;">📋 <b>Type:</b> {job_type}</div>
-        <div style="color: #cccccc; font-size: 14px;">🌍 <b>Mode:</b> {job_mode}</div>
-        <div style="color: #cccccc; font-size: 14px;">📅 <b>Posted:</b> {formatted_date}</div>
-        <div style="color: #cccccc; font-size: 14px;">📰 <b>Source:</b> {job_publisher}</div>
-    </div>
-
-    <!-- Description -->
-    <div style="color: #999999; font-size: 14px; margin-bottom: 20px; line-height: 1.6;">
-        {job_description}
-    </div>
-
-    <!-- Apply Button -->
-    <a href="{job.get('job_apply_link', '#')}" target="_blank" style="text-decoration: none;">
-        <button class="job-button" style="
-            background: {platform_gradient};
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 4px 15px {btn_color}50;
-            transition: all 0.3s ease;
-        ">
-            🚀 Apply Now →
-        </button>
-    </a>
-</div>
-"""
-                        
-                        st.components.v1.html(job_card_html, height=450, scrolling=False)
-
-
+                        job_card_html, card_height = render_unified_job_card(
+                            title=job_title,
+                            link=job.get('job_apply_link', '#'),
+                            platform_name="RapidAPI (Live)",
+                            brand_color=btn_color,
+                            platform_gradient=platform_gradient,
+                            company=job_company,
+                            location=job_location,
+                            salary=job_salary,
+                            job_type=job_type,
+                            mode=job_mode,
+                            date=formatted_date,
+                            publisher=job_publisher,
+                            description=job_description
+                        )
+                        st.components.v1.html(job_card_html, height=card_height, scrolling=False)
                 else:
-                    st.info("No jobs found. Try adjusting your search criteria.")
+                    st.markdown("""
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <div class="empty-state-text">No jobs found. Try adjusting your search criteria.</div>
+                    </div>
+                    """, unsafe_allow_html=True)
             else:
-                st.warning("⚠️ Please enter both the Job Title and Location to perform the search.")
+                st.warning("⚠️ Please enter both Job Title and Location to perform the search.")
 
-    # Display saved job searches if user is logged in
     if hasattr(st.session_state, 'username') and st.session_state.username:
-        # Get available platforms for filtering
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown('<h2 class="section-subheader">📌 Your Saved Job Searches</h2>', unsafe_allow_html=True)
+
         available_platforms = get_available_platforms(st.session_state.username)
         platform_options = ["All"] + available_platforms
-
-        # Get total count of searches
         total_searches = get_total_saved_searches_count(st.session_state.username)
 
-        st.markdown("### 📌 Your Saved Job Searches")
-
         if total_searches > 0:
-            # Controls for filtering and pagination
-            col1, col2 = st.columns([2, 1])
-
+            col1, col2 = st.columns([3, 1])
             with col1:
-                platform_filter = st.selectbox(
-                    "🔍 Filter by Platform",
-                    platform_options,
-                    key="platform_filter"
-                )
+                platform_filter = st.selectbox("🔍 Filter by Platform", platform_options, key="platform_filter")
 
-            with col2:
-                # Calculate pagination
-                searches_per_page = 5
-                filtered_count = get_total_saved_searches_count(st.session_state.username, platform_filter)
-                max_pages = max(1, (filtered_count + searches_per_page - 1) // searches_per_page)
+            searches_per_page = 5
+            if 'saved_page' not in st.session_state:
+                st.session_state.saved_page = 0
 
-                if max_pages > 1:
-                    current_page = st.slider(
-                        "📄 Page",
-                        min_value=1,
-                        max_value=max_pages,
-                        value=1,
-                        key="page_slider"
-                    )
-                else:
-                    current_page = 1
+            filtered_count = get_total_saved_searches_count(st.session_state.username, platform_filter)
+            max_pages = max(1, (filtered_count + searches_per_page - 1) // searches_per_page)
 
-            # Calculate offset for pagination
-            offset = (current_page - 1) * searches_per_page
+            offset = st.session_state.saved_page * searches_per_page
 
-            # Get filtered and paginated results
             saved_searches = get_saved_job_searches(
                 st.session_state.username,
                 limit=searches_per_page,
@@ -7068,24 +7236,17 @@ with tab3:
             )
 
             if saved_searches:
-                # Calculate and display search count info
                 start_index = offset + 1
                 end_index = min(offset + len(saved_searches), filtered_count)
 
-                if platform_filter != "All":
-                    st.markdown(f"**Showing {start_index}-{end_index} of {filtered_count} searches for {platform_filter}**")
-                else:
-                    st.markdown(f"**Showing {start_index}-{end_index} of {filtered_count} searches**")
+                st.markdown(f'<div class="pagination-info">Showing {start_index}-{end_index} of {filtered_count} searches</div>', unsafe_allow_html=True)
 
                 for search in saved_searches:
-                    # Format timestamp - Convert UTC to IST
                     timestamp = datetime.datetime.strptime(search["timestamp"], "%Y-%m-%d %H:%M:%S.%f")
-                    # Assume stored timestamp is in UTC, convert to IST
                     timestamp_utc = timestamp.replace(tzinfo=ZoneInfo('UTC'))
                     timestamp_ist = timestamp_utc.astimezone(ZoneInfo('Asia/Kolkata'))
                     formatted_time = timestamp_ist.strftime("%b %d, %Y at %I:%M %p IST")
 
-                    # Platform styling
                     platform_lower = search["platform"].lower()
                     if "rapidapi" in platform_lower or "live" in platform_lower:
                         platform_color = "#00ff88"
@@ -7100,399 +7261,133 @@ with tab3:
                         platform_color = "#7c4dff"
                         platform_icon = "🌐"
                     else:
-                        platform_color = "#00c4cc"
+                        platform_color = "#0ea5e9"
                         platform_icon = "📄"
 
-                    # Create columns for the card content and delete button
                     card_col, delete_col = st.columns([10, 1])
 
                     with card_col:
                         st.markdown(f"""
-<div class="job-result-card" style="
-    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-    padding: 20px;
-    border-radius: 15px;
-    margin-bottom: 15px;
-    border-left: 4px solid {platform_color};
-    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-    position: relative;
-    overflow: hidden;
-">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+<div class="saved-search-card" style="border-left-color: {platform_color};">
+    <div class="saved-search-header">
         <div>
-            <div style="color: #ffffff; font-size: 16px; font-weight: 600; margin-bottom: 5px;">
-                {platform_icon} {search['role']} in {search['location']}
-            </div>
-            <div style="color: {platform_color}; font-size: 14px; font-weight: 500;">
-                {search['platform']}
-            </div>
+            <div class="saved-search-title">{platform_icon} {search['role']} in {search['location']}</div>
+            <div class="saved-search-platform">{search['platform']}</div>
         </div>
-        <div style="color: #888; font-size: 12px; text-align: right;">
-            {formatted_time}
-        </div>
+        <div class="saved-search-time">{formatted_time}</div>
     </div>
-    <a href="{search['url']}" target="_blank" style="text-decoration: none;">
-        <button class="job-button" style="
-            background: linear-gradient(135deg, {platform_color} 0%, {platform_color}dd 100%);
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        ">
-            🔗 View Jobs →
-        </button>
-    </a>
+    <div class="saved-search-actions">
+        <a href="{search['url']}" target="_blank" style="text-decoration: none; flex: 1;">
+            <button style="
+                background: linear-gradient(135deg, {platform_color} 0%, {platform_color}dd 100%);
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                width: 100%;
+            ">
+                🔗 View Jobs
+            </button>
+        </a>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
                     with delete_col:
-                        # Delete button
                         if st.button("🗑", key=f"delete_{search['id']}", help="Delete this search"):
                             delete_saved_job_search(search['id'])
                             st.rerun()
+
+                if max_pages > 1:
+                    st.markdown('<div class="pagination-container">', unsafe_allow_html=True)
+                    col1, col2, col3 = st.columns([1, 2, 1])
+
+                    with col1:
+                        if st.button("⬅ Previous", key="prev_page", disabled=(st.session_state.saved_page == 0)):
+                            st.session_state.saved_page -= 1
+                            st.rerun()
+
+                    with col2:
+                        st.markdown(f'<div style="text-align: center; padding: 10px; color: #d0d0d0; font-weight: 600;">Page {st.session_state.saved_page + 1} of {max_pages}</div>', unsafe_allow_html=True)
+
+                    with col3:
+                        if st.button("Next ➡", key="next_page", disabled=(st.session_state.saved_page >= max_pages - 1)):
+                            st.session_state.saved_page += 1
+                            st.rerun()
+
+                    st.markdown('</div>', unsafe_allow_html=True)
             else:
-                # No results for the current filter
                 st.markdown(f"""
-<div style="
-    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-    padding: 20px;
-    border-radius: 15px;
-    text-align: center;
-    color: #888;
-    border: 2px dashed #444;
-">
-    <div style="font-size: 24px; margin-bottom: 10px;">🔍</div>
-    <div>No saved searches found for {platform_filter if platform_filter != 'All' else 'this page'}.</div>
+<div class="empty-state">
+    <div class="empty-state-icon">🔍</div>
+    <div class="empty-state-text">No saved searches found for {platform_filter if platform_filter != 'All' else 'this page'}.</div>
 </div>
 """, unsafe_allow_html=True)
         else:
-            # No saved searches at all
             st.markdown("""
-<div style="
-    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-    padding: 20px;
-    border-radius: 15px;
-    text-align: center;
-    color: #888;
-    border: 2px dashed #444;
-">
-    <div style="font-size: 24px; margin-bottom: 10px;">📭</div>
-    <div>No saved job searches yet. Start searching to see your history here!</div>
+<div class="empty-state">
+    <div class="empty-state-icon">📭</div>
+    <div class="empty-state-text">No saved job searches yet. Start searching to see your history here!</div>
 </div>
 """, unsafe_allow_html=True)
 
-    # Enhanced CSS with advanced animations and effects
-    st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown('<h2 class="section-header">🏢 Featured Companies</h2>', unsafe_allow_html=True)
 
-    /* Global Enhancements */
-    .stApp {
-        font-family: 'Inter', sans-serif;
-    }
-
-    /* Advanced Glow Animation */
-    @keyframes glow {
-        0% {
-            box-shadow: 0 0 5px rgba(255,255,255,0.1), 0 0 10px rgba(0,255,255,0.1), 0 0 15px rgba(0,255,255,0.1);
-        }
-        50% {
-            box-shadow: 0 0 10px rgba(255,255,255,0.2), 0 0 20px rgba(0,255,255,0.4), 0 0 30px rgba(0,255,255,0.3);
-        }
-        100% {
-            box-shadow: 0 0 5px rgba(255,255,255,0.1), 0 0 10px rgba(0,255,255,0.1), 0 0 15px rgba(0,255,255,0.1);
-        }
-    }
-
-    /* Shimmer Effect */
-    @keyframes shimmer {
-        0% {
-            transform: translateX(-100%);
-        }
-        100% {
-            transform: translateX(100%);
-        }
-    }
-
-    .shimmer-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
-        transform: translateX(-100%);
-        animation: shimmer 3s infinite;
-        z-index: 1;
-    }
-
-    /* Floating Animation */
-    @keyframes float {
-        0%, 100% {
-            transform: translateY(0px);
-        }
-        50% {
-            transform: translateY(-5px);
-        }
-    }
-
-    /* Pulse Animation */
-    @keyframes pulse {
-        0%, 100% {
-            transform: scale(1);
-        }
-        50% {
-            transform: scale(1.02);
-        }
-    }
-
-    /* Enhanced Company Cards */
-    .company-card {
-        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
-        color: #ffffff;
-        border-radius: 20px;
-        padding: 25px;
-        margin-bottom: 25px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        cursor: pointer;
-        text-decoration: none;
-        display: block;
-        animation: glow 4s infinite alternate, float 6s ease-in-out infinite;
-        position: relative;
-        overflow: hidden;
-        border: 1px solid rgba(255,255,255,0.1);
-    }
-
-    .company-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(135deg, rgba(0,255,255,0.1) 0%, rgba(255,0,255,0.1) 100%);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        z-index: 1;
-    }
-
-    .company-card:hover::before {
-        opacity: 1;
-    }
-
-    .company-card:hover {
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 30px rgba(0, 255, 255, 0.3);
-        border-color: rgba(0,255,255,0.5);
-    }
-
-    /* Job Result Cards */
-    .job-result-card:hover {
-        transform: translateY(-5px) scale(1.01);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.4) !important;
-    }
-
-    /* Enhanced Buttons */
-    .job-button::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        transition: left 0.5s;
-        z-index: 1;
-    }
-
-    .job-button:hover::before {
-        left: 100%;
-    }
-
-    .job-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-    }
-
-    /* Enhanced Pills */
-    .pill {
-        display: inline-block;
-        background: linear-gradient(135deg, #333 0%, #444 100%);
-        padding: 8px 16px;
-        border-radius: 25px;
-        margin: 6px 8px 0 0;
-        font-size: 13px;
-        font-weight: 500;
-        border: 1px solid rgba(255,255,255,0.1);
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .pill::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(135deg, rgba(0,255,255,0.2) 0%, rgba(255,0,255,0.2) 100%);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .pill:hover::before {
-        opacity: 1;
-    }
-
-    .pill:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,255,255,0.3);
-    }
-
-    /* Enhanced Title Headers */
-    .title-header {
-        color: #ffffff;
-        font-size: 28px;
-        margin-top: 50px;
-        margin-bottom: 30px;
-        font-weight: 700;
-        text-align: center;
-        background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        position: relative;
-        animation: pulse 3s infinite;
-    }
-
-    .title-header::after {
-        content: '';
-        position: absolute;
-        bottom: -10px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 60px;
-        height: 3px;
-        background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
-        border-radius: 2px;
-    }
-
-    /* Company Logo Enhancement */
-    .company-logo {
-        font-size: 28px;
-        margin-right: 12px;
-        filter: drop-shadow(0 0 8px rgba(255,255,255,0.3));
-        animation: float 4s ease-in-out infinite;
-    }
-
-    .company-header {
-        font-size: 24px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        margin-bottom: 15px;
-        position: relative;
-        z-index: 2;
-    }
-
-    /* Responsive Enhancements */
-    @media (max-width: 768px) {
-        .company-card, .job-result-card {
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .title-header {
-            font-size: 24px;
-        }
-
-        .company-header {
-            font-size: 20px;
-        }
-    }
-
-    /* Scrollbar Styling */
-    ::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: #1e1e1e;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
-        border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(135deg, #26d0ce 0%, #9c64ff 100%);
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # ---------- Company Lookup by Domain ----------
-
-
-    # ---------- Featured Companies ----------
-    st.markdown("### <div class='title-header'>🏢 Featured Companies</div>", unsafe_allow_html=True)
-
-    selected_category = st.selectbox("📂 Browse Featured Companies By Category", ["All", "tech", "indian_tech", "global_corps"])
+    selected_category = st.selectbox("📂 Browse by Category", ["All", "tech", "indian_tech", "global_corps"], key="company_category")
     companies_to_show = get_featured_companies() if selected_category == "All" else get_featured_companies(selected_category)
 
     for company in companies_to_show:
         category_tags = ''.join([f"<span class='pill'>{cat}</span>" for cat in company['categories']])
         st.markdown(f"""
-        <a href="{company['careers_url']}" class="company-card" target="_blank">
-            <div class="company-header">
-                <span class="company-logo">{company.get('emoji', '🏢')}</span>
-                {company['name']}
-            </div>
-            <p style="margin-bottom: 15px; line-height: 1.6; position: relative; z-index: 2;">{company['description']}</p>
-            <div style="position: relative; z-index: 2;">{category_tags}</div>
-        </a>
-        """, unsafe_allow_html=True)
+<a href="{company['careers_url']}" class="company-card" target="_blank">
+    <div class="company-header">🏢 {company['name']}</div>
+    <div class="company-description">{company['description']}</div>
+    <div>{category_tags}</div>
+</a>
+""", unsafe_allow_html=True)
 
-    # ---------- Market Insights ----------
-    st.markdown("### <div class='title-header'>📈 Job Market Trends</div>", unsafe_allow_html=True)
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown('<h2 class="section-header">📈 Job Market Trends</h2>', unsafe_allow_html=True)
+
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("#### <div style='color: #00c4cc; font-size: 20px; font-weight: 600; margin-bottom: 20px;'>🚀 Trending Skills</div>", unsafe_allow_html=True)
+        st.markdown('<h3 class="section-subheader">🚀 Trending Skills</h3>', unsafe_allow_html=True)
         for skill in JOB_MARKET_INSIGHTS["trending_skills"]:
             st.markdown(f"""
-            <div class="company-card">
-                <h4 style="color: #00c4cc; margin-bottom: 10px; position: relative; z-index: 2;">🔧 {skill['name']}</h4>
-                <p style="position: relative; z-index: 2;">📈 Growth Rate: <span style="color: #4ade80; font-weight: 600;">{skill['growth']}</span></p>
-            </div>
-            """, unsafe_allow_html=True)
+<div class="insight-card">
+    <div style="font-size: 18px; font-weight: 700; color: #0ea5e9; margin-bottom: 8px;">🔧 {skill['name']}</div>
+    <div style="color: #4ade80; font-weight: 600;">📈 Growth: {skill['growth']}</div>
+</div>
+""", unsafe_allow_html=True)
 
     with col2:
-        st.markdown("#### <div style='color: #7c4dff; font-size: 20px; font-weight: 600; margin-bottom: 20px;'>🌍 Top Job Locations</div>", unsafe_allow_html=True)
+        st.markdown('<h3 class="section-subheader">🌍 Top Job Locations</h3>', unsafe_allow_html=True)
         for loc in JOB_MARKET_INSIGHTS["top_locations"]:
             st.markdown(f"""
-            <div class="company-card">
-                <h4 style="color: #7c4dff; margin-bottom: 10px; position: relative; z-index: 2;">📍 {loc['name']}</h4>
-                <p style="position: relative; z-index: 2;">💼 Openings: <span style="color: #fbbf24; font-weight: 600;">{loc['jobs']}</span></p>
-            </div>
-            """, unsafe_allow_html=True)
+<div class="insight-card">
+    <div style="font-size: 18px; font-weight: 700; color: #06b6d4; margin-bottom: 8px;">📍 {loc['name']}</div>
+    <div style="color: #fbbf24; font-weight: 600;">💼 Openings: {loc['jobs']}</div>
+</div>
+""", unsafe_allow_html=True)
 
-    # ---------- Salary Insights ----------
-    st.markdown("### <div class='title-header'>💰 Salary Insights</div>", unsafe_allow_html=True)
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown('<h2 class="section-header">💰 Salary Insights</h2>', unsafe_allow_html=True)
+
     for role in JOB_MARKET_INSIGHTS["salary_insights"]:
         st.markdown(f"""
-        <div class="company-card">
-            <h4 style="color: #10b981; margin-bottom: 10px; position: relative; z-index: 2;">💼 {role['role']}</h4>
-            <p style="margin-bottom: 8px; position: relative; z-index: 2;">📅 Experience: <span style="color: #60a5fa; font-weight: 500;">{role['experience']}</span></p>
-            <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
-        </div>
-        """, unsafe_allow_html=True)
+<div class="insight-card">
+    <div style="font-size: 18px; font-weight: 700; color: #10b981; margin-bottom: 8px;">💼 {role['role']}</div>
+    <div style="color: #60a5fa; margin-bottom: 6px;">📅 Experience: {role['experience']}</div>
+    <div style="color: #34d399; font-weight: 600;">💵 Salary: {role['range']}</div>
+</div>
+""", unsafe_allow_html=True)
+
 def evaluate_interview_answer(answer: str, question: str = None):
     """
     Uses an LLM to strictly evaluate an interview answer.

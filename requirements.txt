@@ -2,6 +2,7 @@ streamlit
 streamlit-autorefresh
 streamlit-pdf-viewer
 torch
+beautifulsoup4
 streamlit-option-menu
 numpy
 pillow

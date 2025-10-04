@@ -7712,7 +7712,7 @@ def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty:
 
     followup_instruction = ""
     if difficulty == "Hard":
-        followup_instruction = "\n- FollowUp: Generate ONE probing follow-up question to dig deeper into their answer."
+        followup_instruction = "\n- FollowUp: Generate ONE NEW probing question that explores a DIFFERENT ASPECT or DIMENSION of the candidate's answer. DO NOT repeat or rephrase the original question. Ask about a different angle, implication, or related scenario."
 
     # Build role/domain context for relevance checking
     context_info = ""
@@ -9402,8 +9402,8 @@ Generate exactly {num_questions} questions now:
                 st.session_state.timer_seconds = 120
             if 'interview_difficulty' not in st.session_state:
                 st.session_state.interview_difficulty = "Medium"
-            if 'original_num_questions' not in st.session_state:
-                st.session_state.original_num_questions = 6
+            # FIXED: Removed hardcoded original_num_questions initialization
+            # This will be set dynamically when interview starts
 
             # Start interview setup
             if not st.session_state.dynamic_interview_started:
@@ -9436,22 +9436,22 @@ Generate exactly {num_questions} questions now:
 
                 if st.button("🚀 Start Mock Interview"):
                     with st.spinner("Generating personalized questions using AI..."):
-                        # FIXED: Pass difficulty to question generation
+                        # FIXED: Stable question generation - generate once and store
                         selected_questions = generate_interview_questions_with_llm(
                             selected_domain,
                             selected_role,
                             interview_type,
                             num_questions,
-                            interview_difficulty  # Now passing difficulty
+                            interview_difficulty
                         )
 
                         if selected_questions:
-                            # FIXED: Reset ALL interview state variables properly
-                            # EXACT QUESTION COUNT: Enforce exact number of questions
+                            # FIXED: Enforce exact number of questions
                             selected_questions = selected_questions[:num_questions]
 
+                            # FIXED: Store questions in session state for stable access
                             st.session_state.dynamic_interview_questions = selected_questions
-                            st.session_state.original_num_questions = num_questions
+                            st.session_state.original_num_questions = num_questions  # FIXED: Use user's selected count
                             st.session_state.current_dynamic_interview_question = 0
                             st.session_state.dynamic_interview_answers = []
                             st.session_state.dynamic_interview_scores = []
@@ -9514,23 +9514,13 @@ Generate exactly {num_questions} questions now:
                     </div>
                     """, unsafe_allow_html=True)
 
-                    # Add refresh button for new question
+                    # FIXED: Refresh button now only re-renders UI, doesn't regenerate questions
                     col1, col2 = st.columns([3, 1])
                     with col2:
-                        if st.button("🔄 Refresh "):
-                            with st.spinner("Generating new question..."):
-                                new_questions = generate_interview_questions_with_llm(
-                                    selected_domain,
-                                    selected_role,
-                                    "mixed",
-                                    1
-                                )
-                                if new_questions and new_questions[0]:
-                                    st.session_state.current_interview_question_text = new_questions[0]
-                                    st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question] = new_questions[0]
-                                    # TIMER RESET: Reset timer when question refreshes
-                                    st.session_state.question_timer_start = time.time()
-                                    st.rerun()
+                        if st.button("🔄 Refresh Question Display"):
+                            # FIXED: Only reset timer and re-render, don't regenerate question
+                            st.session_state.question_timer_start = time.time()
+                            st.rerun()
 
                     # Answer input with character limit
                     answer_key = f"dynamic_interview_answer_{st.session_state.current_dynamic_interview_question}"
@@ -9889,7 +9879,9 @@ Generate exactly {num_questions} questions now:
                     st.session_state.question_timer_start = None
                     st.session_state.timer_seconds = 120
                     st.session_state.interview_difficulty = "Medium"
-                    st.session_state.original_num_questions = 6
+                    # FIXED: Don't reset original_num_questions to hardcoded value
+                    if 'original_num_questions' in st.session_state:
+                        del st.session_state.original_num_questions
                     st.rerun()
         else:
             st.info("Please select both a career domain and target role to start the interview practice.")

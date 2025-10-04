@@ -9373,9 +9373,13 @@ Generate exactly {num_questions} questions now:
             elif st.session_state.dynamic_interview_started and not st.session_state.dynamic_interview_completed:
                 # CRITICAL FIX: Properly count answered questions
                 questions_answered = len(st.session_state.dynamic_interview_answers)
+                total_questions = len(st.session_state.dynamic_interview_questions)
+                current_index = st.session_state.current_dynamic_interview_question + 1
 
-                # Debug info at top of screen (can be removed later)
-                st.info(f"📊 Progress: Answered {questions_answered} / {st.session_state.original_num_questions} questions | Total Q's: {len(st.session_state.dynamic_interview_questions)} | Current Index: {st.session_state.current_dynamic_interview_question}")
+                # Display progress with correct counts
+                st.markdown(
+                    f"📊 Progress: Answered {questions_answered}/{st.session_state.original_num_questions} questions | Current Index: {current_index} of {st.session_state.original_num_questions}"
+                )
 
                 if questions_answered < st.session_state.original_num_questions:
                     question = st.session_state.current_interview_question_text or st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question]
@@ -9414,23 +9418,23 @@ Generate exactly {num_questions} questions now:
                     </div>
                     """, unsafe_allow_html=True)
 
-                    # Add refresh button for new question
+                    # Add refresh button for regenerating all interview questions
                     col1, col2 = st.columns([3, 1])
                     with col2:
-                        if st.button("🔄 Refresh "):
-                            with st.spinner("Generating new question..."):
-                                new_questions = generate_interview_questions_with_llm(
-                                    selected_domain,
-                                    selected_role,
-                                    "mixed",
-                                    1
-                                )
-                                if new_questions and new_questions[0]:
-                                    st.session_state.current_interview_question_text = new_questions[0]
-                                    st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question] = new_questions[0]
-                                    # TIMER RESET: Reset timer when question refreshes
-                                    st.session_state.question_timer_start = time.time()
-                                    st.rerun()
+                        if st.button("🔄 Refresh Interview"):
+                            # Clear all interview state
+                            st.session_state.dynamic_interview_questions = []
+                            st.session_state.current_dynamic_interview_question = 0
+                            st.session_state.dynamic_interview_answers = []
+                            st.session_state.dynamic_interview_scores = []
+                            st.session_state.dynamic_interview_feedbacks = []
+                            st.session_state.dynamic_interview_completed = False
+                            st.session_state.dynamic_interview_started = False
+                            st.session_state.dynamic_answer_submitted = False
+                            st.session_state.current_interview_question_text = ""
+                            st.session_state.question_timer_start = None
+                            # Force regeneration
+                            st.rerun()
 
                     # Answer input with character limit
                     answer_key = f"dynamic_interview_answer_{st.session_state.current_dynamic_interview_question}"
@@ -9527,6 +9531,10 @@ Generate exactly {num_questions} questions now:
                             </div>
                         </div>
                         """, unsafe_allow_html=True)
+
+                        # Show follow-up question for Hard difficulty
+                        if st.session_state.interview_difficulty == "Hard" and current_score_dict.get("followup"):
+                            st.info(f"🔎 Follow-Up Question: {current_score_dict['followup']}")
 
                         # Continue/Complete button
                         # CRITICAL FIX: Check if we've answered all original questions

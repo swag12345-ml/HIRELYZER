@@ -9376,10 +9376,21 @@ Generate exactly {num_questions} questions now:
                 total_questions = len(st.session_state.dynamic_interview_questions)
                 current_index = st.session_state.current_dynamic_interview_question + 1
 
-                # Display progress with correct counts
-                st.markdown(
-                    f"📊 Progress: Answered {questions_answered}/{st.session_state.original_num_questions} questions | Current Index: {current_index} of {st.session_state.original_num_questions}"
-                )
+                # Display progress with correct counts in glassmorphism box
+                st.markdown(f"""
+                <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.08) 0%, rgba(0, 195, 255, 0.04) 100%);
+                            backdrop-filter: blur(10px);
+                            -webkit-backdrop-filter: blur(10px);
+                            border: 1px solid rgba(0, 195, 255, 0.2);
+                            border-radius: 12px;
+                            padding: 16px 24px;
+                            margin: 20px 0;
+                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);">
+                    <p style="color: #ffffff; font-size: 16px; margin: 0; font-weight: 500;">
+                        📊 Progress: Answered {questions_answered}/{st.session_state.original_num_questions} questions | Current Index: {current_index} of {st.session_state.original_num_questions}
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
 
                 if questions_answered < st.session_state.original_num_questions:
                     question = st.session_state.current_interview_question_text or st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question]

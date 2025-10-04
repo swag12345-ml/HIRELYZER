@@ -6773,70 +6773,15 @@ init_job_search_db()
 
 # Your existing tab3 code with enhanced CSS styling
 with tab3:
-    # Simple header with no background
-    st.markdown("""
-    <h1 style="
-        color: #00bfff;
-        font-size: 36px;
-        font-weight: 700;
-        margin: 20px 0 30px 0;
-        text-align: center;
-    ">
-        🔍 Job Search Hub
-    </h1>
-    """, unsafe_allow_html=True)
+    st.header("🔍 Job Search Across LinkedIn, Naukri, and FoundIt")
 
-    # Custom styling for side-by-side toggle buttons
-    st.markdown("""
-    <style>
-    /* Hide default radio button styling */
-    div[data-testid="stHorizontalBlock"] {
-        gap: 20px !important;
-        justify-content: center;
-    }
-
-    /* Style radio options as cards */
-    div[role="radiogroup"] label {
-        background: linear-gradient(135deg, #0f2436 0%, #1a3a52 100%) !important;
-        border: 2px solid #1e90ff !important;
-        border-radius: 15px !important;
-        padding: 20px 40px !important;
-        cursor: pointer !important;
-        transition: all 0.3s ease !important;
-        min-width: 300px !important;
-        text-align: center !important;
-    }
-
-    div[role="radiogroup"] label:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(30, 144, 255, 0.4);
-    }
-
-    /* Active state */
-    div[role="radiogroup"] label:has(input:checked) {
-        background: linear-gradient(135deg, #1e90ff 0%, #4169e1 100%) !important;
-        border-color: #00bfff !important;
-        box-shadow: 0 0 30px rgba(30, 144, 255, 0.6) !important;
-    }
-
-    div[role="radiogroup"] label span {
-        color: white !important;
-        font-size: 16px !important;
-        font-weight: 600 !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # Radio selector for search mode - will render side by side
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        search_mode = st.radio(
-            "",
-            ["External Platforms (LinkedIn, Naukri, FoundIt)", "RapidAPI Jobs (India Only)"],
-            horizontal=True,
-            key="search_mode",
-            label_visibility="collapsed"
-        )
+    # Radio selector for search mode
+    search_mode = st.radio(
+        "Select Search Mode:",
+        ["External Platforms (LinkedIn, Naukri, FoundIt)", "RapidAPI Jobs (India Only)"],
+        horizontal=True,
+        key="search_mode"
+    )
 
     if search_mode == "External Platforms (LinkedIn, Naukri, FoundIt)":
         # External Platforms Section
@@ -7081,182 +7026,137 @@ with tab3:
         # Get total count of searches
         total_searches = get_total_saved_searches_count(st.session_state.username)
 
-        st.markdown("""
-        <div style="margin-top: 50px;">
-            <h3 style="color: #00bfff; font-size: 28px; font-weight: 700; margin-bottom: 20px;">
-                📌 Saved Job Searches
-            </h3>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("### 📌 Your Saved Job Searches")
 
         if total_searches > 0:
-            # Dropdown for selecting a saved search
-            st.markdown("""
-            <div style="color: #cccccc; font-size: 14px; margin-bottom: 10px; font-weight: 500;">
-                📋 Your Saved Searches
-            </div>
-            """, unsafe_allow_html=True)
+            # Controls for filtering and pagination
+            col1, col2 = st.columns([2, 1])
 
-            saved_search_names = get_saved_job_searches(st.session_state.username, limit=200)
-            search_options = ["-- Select a saved search --"] + [f"{s['role']} in {s['location']} ({s['platform']})" for s in saved_search_names]
-
-            selected_search = st.selectbox(
-                "",
-                search_options,
-                key="saved_search_selector",
-                label_visibility="collapsed"
-            )
-
-            # Expandable section for viewing all searches
-            with st.expander("📄 View All Searches (Paginated)", expanded=False):
-                # Controls for filtering and pagination
-                col1, col2 = st.columns([2, 1])
-
-                with col1:
-                    st.markdown("""
-                    <div style="color: #00bfff; font-size: 14px; margin-bottom: 5px; font-weight: 500;">
-                        💧 Filter by Platform
-                    </div>
-                    """, unsafe_allow_html=True)
-                    platform_filter = st.selectbox(
-                        "",
-                        platform_options,
-                        key="platform_filter",
-                        label_visibility="collapsed"
-                    )
-
-                with col2:
-                    # Calculate pagination
-                    searches_per_page = 5
-                    filtered_count = get_total_saved_searches_count(st.session_state.username, platform_filter)
-                    max_pages = max(1, (filtered_count + searches_per_page - 1) // searches_per_page)
-
-                    st.markdown("""
-                    <div style="color: #00bfff; font-size: 14px; margin-bottom: 5px; font-weight: 500;">
-                        📄 Page
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                    if max_pages > 1:
-                        current_page = st.slider(
-                            "",
-                            min_value=1,
-                            max_value=max_pages,
-                            value=1,
-                            key="page_slider",
-                            label_visibility="collapsed"
-                        )
-                    else:
-                        current_page = 1
-
-                # Calculate offset for pagination
-                offset = (current_page - 1) * searches_per_page
-
-                # Get filtered and paginated results
-                saved_searches = get_saved_job_searches(
-                    st.session_state.username,
-                    limit=searches_per_page,
-                    offset=offset,
-                    platform_filter=platform_filter
+            with col1:
+                platform_filter = st.selectbox(
+                    "🔍 Filter by Platform",
+                    platform_options,
+                    key="platform_filter"
                 )
 
-                if saved_searches:
-                    # Calculate and display search count info
-                    start_index = offset + 1
-                    end_index = min(offset + len(saved_searches), filtered_count)
+            with col2:
+                # Calculate pagination
+                searches_per_page = 5
+                filtered_count = get_total_saved_searches_count(st.session_state.username, platform_filter)
+                max_pages = max(1, (filtered_count + searches_per_page - 1) // searches_per_page)
 
-                    st.markdown(f"""
-                    <div style="color: #888; font-size: 14px; margin: 15px 0;">
-                        Showing {start_index}-{end_index} of {filtered_count} searches
-                    </div>
-                    """, unsafe_allow_html=True)
+                if max_pages > 1:
+                    current_page = st.slider(
+                        "📄 Page",
+                        min_value=1,
+                        max_value=max_pages,
+                        value=1,
+                        key="page_slider"
+                    )
+                else:
+                    current_page = 1
 
-                    for search in saved_searches:
-                        # Format timestamp - Convert UTC to IST
-                        timestamp = datetime.datetime.strptime(search["timestamp"], "%Y-%m-%d %H:%M:%S.%f")
-                        # Assume stored timestamp is in UTC, convert to IST
-                        timestamp_utc = timestamp.replace(tzinfo=ZoneInfo('UTC'))
-                        timestamp_ist = timestamp_utc.astimezone(ZoneInfo('Asia/Kolkata'))
-                        formatted_time = timestamp_ist.strftime("%b %d, %Y at %I:%M %p IST")
+            # Calculate offset for pagination
+            offset = (current_page - 1) * searches_per_page
 
-                        # Platform styling
-                        platform_lower = search["platform"].lower()
-                        if "rapidapi" in platform_lower or "live" in platform_lower:
-                            platform_color = "#00ff88"
-                            platform_icon = "⚡"
-                            platform_name = "RapidAPI (Live)"
-                        elif platform_lower == "linkedin":
-                            platform_color = "#0e76a8"
-                            platform_icon = "🔵"
-                            platform_name = "LinkedIn"
-                        elif platform_lower == "naukri":
-                            platform_color = "#ff5722"
-                            platform_icon = "🏢"
-                            platform_name = "Naukri"
-                        elif "foundit" in platform_lower:
-                            platform_color = "#7c4dff"
-                            platform_icon = "🌐"
-                            platform_name = "FoundIt (Monster)"
-                        else:
-                            platform_color = "#00c4cc"
-                            platform_icon = "📄"
-                            platform_name = search["platform"]
+            # Get filtered and paginated results
+            saved_searches = get_saved_job_searches(
+                st.session_state.username,
+                limit=searches_per_page,
+                offset=offset,
+                platform_filter=platform_filter
+            )
 
-                        # Create columns for the card content and delete button
-                        card_col, delete_col = st.columns([10, 1])
+            if saved_searches:
+                # Calculate and display search count info
+                start_index = offset + 1
+                end_index = min(offset + len(saved_searches), filtered_count)
 
-                        with card_col:
-                            st.markdown(f"""
-<div style="
-    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+                if platform_filter != "All":
+                    st.markdown(f"**Showing {start_index}-{end_index} of {filtered_count} searches for {platform_filter}**")
+                else:
+                    st.markdown(f"**Showing {start_index}-{end_index} of {filtered_count} searches**")
+
+                for search in saved_searches:
+                    # Format timestamp - Convert UTC to IST
+                    timestamp = datetime.datetime.strptime(search["timestamp"], "%Y-%m-%d %H:%M:%S.%f")
+                    # Assume stored timestamp is in UTC, convert to IST
+                    timestamp_utc = timestamp.replace(tzinfo=ZoneInfo('UTC'))
+                    timestamp_ist = timestamp_utc.astimezone(ZoneInfo('Asia/Kolkata'))
+                    formatted_time = timestamp_ist.strftime("%b %d, %Y at %I:%M %p IST")
+
+                    # Platform styling
+                    platform_lower = search["platform"].lower()
+                    if "rapidapi" in platform_lower or "live" in platform_lower:
+                        platform_color = "#00ff88"
+                        platform_icon = "⚡"
+                    elif platform_lower == "linkedin":
+                        platform_color = "#0e76a8"
+                        platform_icon = "🔵"
+                    elif platform_lower == "naukri":
+                        platform_color = "#ff5722"
+                        platform_icon = "🏢"
+                    elif "foundit" in platform_lower:
+                        platform_color = "#7c4dff"
+                        platform_icon = "🌐"
+                    else:
+                        platform_color = "#00c4cc"
+                        platform_icon = "📄"
+
+                    # Create columns for the card content and delete button
+                    card_col, delete_col = st.columns([10, 1])
+
+                    with card_col:
+                        st.markdown(f"""
+<div class="job-result-card" style="
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
     padding: 20px;
-    border-radius: 12px;
+    border-radius: 15px;
     margin-bottom: 15px;
-    border-left: 5px solid {platform_color};
-    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    border-left: 4px solid {platform_color};
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
     position: relative;
     overflow: hidden;
 ">
-    <div style="margin-bottom: 12px;">
-        <div style="color: #ffffff; font-size: 18px; font-weight: 700; margin-bottom: 8px;">
-            ⚡ {search['role'].upper()} in {search['location'].upper()}
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+        <div>
+            <div style="color: #ffffff; font-size: 16px; font-weight: 600; margin-bottom: 5px;">
+                {platform_icon} {search['role']} in {search['location']}
+            </div>
+            <div style="color: {platform_color}; font-size: 14px; font-weight: 500;">
+                {search['platform']}
+            </div>
         </div>
-        <div style="color: {platform_color}; font-size: 13px; font-weight: 500; background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 6px; display: inline-block;">
-            {platform_name}
-        </div>
-    </div>
-    <div style="display: flex; align-items: center; gap: 15px; margin-top: 15px;">
-        <a href="{search['url']}" target="_blank" style="text-decoration: none;">
-            <button style="
-                background: {platform_color};
-                color: white;
-                padding: 10px 20px;
-                border: none;
-                border-radius: 8px;
-                font-size: 14px;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                box-shadow: 0 4px 12px {platform_color}50;
-            ">
-                🔗 View Jobs →
-            </button>
-        </a>
-        <div style="color: #6b7280; font-size: 12px;">
+        <div style="color: #888; font-size: 12px; text-align: right;">
             {formatted_time}
         </div>
     </div>
+    <a href="{search['url']}" target="_blank" style="text-decoration: none;">
+        <button class="job-button" style="
+            background: linear-gradient(135deg, {platform_color} 0%, {platform_color}dd 100%);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        ">
+            🔗 View Jobs →
+        </button>
+    </a>
 </div>
 """, unsafe_allow_html=True)
 
-                        with delete_col:
-                            # Delete button
-                            if st.button("🗑", key=f"delete_{search['id']}", help="Delete this search"):
-                                delete_saved_job_search(search['id'])
-                                st.rerun()
-                else:
-                    # No results for the current filter
-                    st.markdown(f"""
+                    with delete_col:
+                        # Delete button
+                        if st.button("🗑", key=f"delete_{search['id']}", help="Delete this search"):
+                            delete_saved_job_search(search['id'])
+                            st.rerun()
+            else:
+                # No results for the current filter
+                st.markdown(f"""
 <div style="
     background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
     padding: 20px;

@@ -7603,54 +7603,115 @@ def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty:
             "followup": ""
         }
 
+    # Domain-specific evaluation criteria
+    domain_criteria = {
+        "Software Development and Engineering": "Evaluate code quality, design patterns, scalability, testing practices, version control, and software architecture principles.",
+        "Data Science and Analytics": "Evaluate statistical methods, data preprocessing, model selection, feature engineering, interpretation of results, and business impact.",
+        "Cloud Computing and DevOps": "Evaluate infrastructure knowledge, CI/CD pipelines, containerization, orchestration, monitoring, security practices, and cost optimization.",
+        "Cybersecurity": "Evaluate threat modeling, security protocols, incident response, compliance standards, encryption methods, and risk assessment.",
+        "Artificial Intelligence and Machine Learning": "Evaluate algorithm understanding, neural networks, optimization techniques, model evaluation, ethical AI, and deployment strategies.",
+        "Blockchain and Web3": "Evaluate consensus mechanisms, smart contracts, cryptography, decentralization principles, gas optimization, and security vulnerabilities.",
+        "Product Management": "Evaluate user research, prioritization frameworks, roadmap planning, stakeholder management, metrics definition, and product strategy.",
+        "UI/UX Design": "Evaluate design thinking, user research, wireframing, prototyping, accessibility, usability testing, and design systems.",
+        "Business Analysis": "Evaluate requirements gathering, process mapping, stakeholder analysis, data analysis, solution evaluation, and documentation.",
+        "Digital Marketing": "Evaluate campaign strategy, analytics interpretation, SEO/SEM knowledge, content strategy, conversion optimization, and ROI measurement."
+    }
+
+    # Role-specific evaluation focus
+    role_focus = {
+        "Frontend Developer": "Focus on UI implementation, component architecture, state management, performance optimization, and accessibility.",
+        "Backend Developer": "Focus on API design, database optimization, authentication, scalability, and server-side logic.",
+        "Full Stack Developer": "Focus on end-to-end implementation, system integration, architecture decisions, and full-stack best practices.",
+        "Data Scientist": "Focus on statistical rigor, model interpretation, experimental design, and translating insights to business value.",
+        "Data Engineer": "Focus on data pipeline design, ETL processes, data quality, scalability, and infrastructure.",
+        "Machine Learning Engineer": "Focus on model deployment, MLOps, production optimization, monitoring, and system integration.",
+        "DevOps Engineer": "Focus on automation, infrastructure as code, monitoring solutions, deployment strategies, and system reliability.",
+        "Cloud Architect": "Focus on cloud design patterns, cost optimization, security architecture, multi-cloud strategies, and scalability.",
+        "Security Engineer": "Focus on threat detection, security controls, incident response, vulnerability assessment, and compliance.",
+        "Product Manager": "Focus on product strategy, user needs, prioritization rationale, stakeholder alignment, and success metrics.",
+        "UX Designer": "Focus on user-centered design, research insights, interaction patterns, design rationale, and usability.",
+        "UI Designer": "Focus on visual hierarchy, design systems, responsive design, accessibility, and aesthetic consistency."
+    }
+
     # Construct evaluation prompt with difficulty-based strictness
     strictness_instructions = {
-        "Easy": "Be lenient - this is basic level. Give partial credit for effort and general understanding. Scores should range 4-10 typically.",
-        "Medium": "Be moderately strict - expect scenario-based thinking and some technical depth. Scores should range 3-10 typically.",
-        "Hard": "Be very strict - demand deep technical knowledge, system design thinking, and comprehensive answers. Scores should range 1-10 with most answers 2-8."
+        "Easy": "Entry-level expectations: Basic understanding of concepts, ability to explain fundamentals, and awareness of best practices. Scores 4-10.",
+        "Medium": "Mid-level expectations: Practical experience, scenario-based thinking, problem-solving approach, and technical depth. Scores 3-10.",
+        "Hard": "Senior-level expectations: Deep expertise, system design thinking, trade-off analysis, industry best practices, and comprehensive solutions. Scores 1-10, typically 2-8."
     }
 
     followup_instruction = ""
     if difficulty == "Hard":
-        followup_instruction = "\n- FollowUp: Generate ONE probing follow-up question to dig deeper into their answer."
+        followup_instruction = "\n- FollowUp: Generate ONE probing follow-up question to dig deeper into their technical reasoning or explore edge cases."
 
-    # Build role/domain context for relevance checking
+    # Build comprehensive context for evaluation
     context_info = ""
-    if role and domain:
-        context_info = f"\nRole Context: {role} in {domain}"
+    domain_context = ""
+    role_context = ""
 
-    prompt = f"""You are an expert interview evaluator. Evaluate the candidate's answer strictly and constructively.
+    if domain and domain in domain_criteria:
+        domain_context = f"\nDomain Expertise: {domain_criteria[domain]}"
+    if role and role in role_focus:
+        role_context = f"\nRole-Specific Focus: {role_focus[role]}"
+
+    if role and domain:
+        context_info = f"\nCandidate Profile: {role} in {domain}{domain_context}{role_context}"
+
+    prompt = f"""You are a senior technical interviewer and industry expert conducting a professional interview evaluation. Your evaluation must reflect real-world industry standards and hiring practices.
 
 Question: {question}
 Candidate Answer: {answer}
 Difficulty Level: {difficulty}{context_info}
 
-EVALUATION STRICTNESS: {strictness_instructions.get(difficulty, strictness_instructions["Medium"])}
+INDUSTRY-STANDARD EVALUATION CRITERIA:
+{strictness_instructions.get(difficulty, strictness_instructions["Medium"])}
 
-Provide scores (1-10 scale):
-- Knowledge: Technical accuracy and depth of understanding
-- Clarity: How clearly the answer is communicated
-- Relevance: How well the answer addresses the question and stays on-topic within the same domain/role
+SCORING FRAMEWORK (1-10 scale):
 
-CRITICAL RELEVANCE CHECK:
-- Does the answer directly address the question?
-- Does the answer stay within the topic domain (e.g., if this is a Data Science question, is the answer about Data Science or something unrelated like Cloud Computing)?
-- If the answer is from another domain or completely off-topic, score Relevance 0-2 and provide feedback: "Your answer is unrelated to the asked topic. Please focus on {role}/{domain}."
+1. KNOWLEDGE (Technical Accuracy & Depth):
+   - Does the answer demonstrate accurate understanding of concepts?
+   - Is the technical depth appropriate for the difficulty level?
+   - Are industry best practices and standards mentioned?
+   - Does the answer show real-world experience or practical application?
+   - For domain-specific questions, is the domain knowledge accurate and current?
 
-IMPORTANT: If the answer is junk, irrelevant, or barely attempts to answer the question, give scores of 0-2. Do NOT give default mid-range scores to poor answers.
+2. CLARITY (Communication & Structure):
+   - Is the answer well-structured and easy to follow?
+   - Does the candidate use appropriate technical terminology correctly?
+   - Is the explanation logical and coherent?
+   - Would a hiring manager understand the candidate's thought process?
+   - Does the answer include relevant examples or analogies?
 
-Also provide:
-- Feedback: 2-3 short bullet points with specific improvement tips{followup_instruction}
+3. RELEVANCE (Addressing the Question & Context):
+   - Does the answer directly address what was asked?
+   - Is the response focused on the specific {domain} domain and {role} role?
+   - Does the answer stay on-topic without unnecessary tangents?
+   - Is the level of detail appropriate for the question?
+   - Does the answer demonstrate understanding of the question's context?
 
-Output format (strict):
+CRITICAL EVALUATION RULES:
+- CONTEXT AWARENESS: Evaluate based on {role} role in {domain} domain. Answers should align with industry standards in this specific field.
+- RELEVANCE FILTERING: If answer discusses a completely different domain (e.g., marketing answer to a coding question), score Relevance 0-2.
+- NO LENIENCY FOR POOR ANSWERS: Vague, generic, or incorrect answers deserve 1-3 scores. Reserve 7-10 for genuinely strong responses.
+- DETECT JUNK: One-word answers, nonsense, or "I don't know" responses should score 0-2 across all dimensions.
+- REWARD DEPTH: Answers showing trade-off analysis, edge case consideration, or production experience deserve higher scores.
+- PENALIZE BUZZWORDS: Using trendy terms without understanding should lower Knowledge scores.
+
+FEEDBACK GUIDELINES:
+- Provide actionable, specific feedback (not generic advice)
+- Reference industry standards or best practices where applicable
+- Suggest concrete improvements the candidate can make
+- If answer is strong, acknowledge what was done well{followup_instruction}
+
+OUTPUT FORMAT (strict):
 Knowledge: <number 1-10>
 Clarity: <number 1-10>
 Relevance: <number 1-10>
 Feedback:
-- <tip 1>
-- <tip 2>
-- <tip 3>{f"""
-FollowUp: <one probing question>""" if difficulty == "Hard" else ""}
+- <specific actionable tip 1>
+- <specific actionable tip 2>
+- <specific actionable tip 3>{f"""
+FollowUp: <one technical probing question>""" if difficulty == "Hard" else ""}
 """
 
     try:

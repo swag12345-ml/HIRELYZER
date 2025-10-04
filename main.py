@@ -8172,18 +8172,22 @@ with tab4:
 
         .badge-container {
             text-align: center;
-            padding: 20px;
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 193, 7, 0.1) 100%);
-            border-radius: 15px;
-            border: 2px solid rgba(255, 215, 0, 0.3);
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(0, 195, 255, 0.12) 0%, rgba(0, 195, 255, 0.06) 100%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(0, 195, 255, 0.25);
             margin: 20px 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
         }
 
         .score-display {
-            font-size: 48px;
+            font-size: 64px;
             font-weight: bold;
-            color: #00c3ff;
-            text-shadow: 0 0 20px rgba(0, 195, 255, 0.8);
+            color: #00d4ff;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.6);
+            letter-spacing: 2px;
         }
 
         .role-selector {
@@ -9635,13 +9639,13 @@ Generate exactly {num_questions} questions now:
 
                 st.markdown(f"""
                 <div class="badge-container">
-                    <h2 style="margin: 0; color: #333;">🎉 Mock Interview Complete!</h2>
-                    <div style="margin: 20px 0;">
+                    <h2 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">🎉 Mock Interview Complete!</h2>
+                    <div style="margin: 30px 0;">
                         <div class="score-display">{overall_avg:.1f}/10</div>
-                        <h3 style="color: #333; margin: 10px 0;">{badge_emoji} {badge}</h3>
+                        <h3 style="color: #ffffff; margin: 15px 0; font-size: 24px; font-weight: 500;">{badge_emoji} {badge}</h3>
                     </div>
-                    <p style="color: #666;">Role: {selected_role} in {selected_domain}</p>
-                    <p style="color: #666;">Difficulty: {st.session_state.interview_difficulty}</p>
+                    <p style="color: rgba(255, 255, 255, 0.85); font-size: 16px; margin: 8px 0;">Role: {selected_role} in {selected_domain}</p>
+                    <p style="color: rgba(255, 255, 255, 0.85); font-size: 16px; margin: 8px 0;">Difficulty: {st.session_state.interview_difficulty}</p>
                 </div>
                 """, unsafe_allow_html=True)
 

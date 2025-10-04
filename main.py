@@ -3066,72 +3066,163 @@ with tab1:
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
 
 # ---------------- Sidebar (ONLY in Tab 2) ----------------
-from xhtml2pdf import pisa
 from io import BytesIO
+from bs4 import BeautifulSoup
+from docx import Document
+from docx.shared import Pt, RGBColor
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 
-def html_to_pdf_bytes(html_string):
-    styled_html = f"""
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <style>
-            @page {{
-                size: 400mm 297mm;  /* Original custom large page size */
-                margin-top: 10mm;
-                margin-bottom: 10mm;
-                margin-left: 10mm;
-                margin-right: 10mm;
-            }}
-            body {{
-                font-size: 14pt;
-                font-family: "Segoe UI", "Helvetica", sans-serif;
-                line-height: 1.5;
-                color: #000;
-            }}
-            h1, h2, h3 {{
-                color: #2f4f6f;
-            }}
-            table {{
-                width: 100%;
-                border-collapse: collapse;
-                margin-bottom: 15px;
-            }}
-            td {{
-                padding: 4px;
-                vertical-align: top;
-                border: 1px solid #ccc;
-            }}
-            .section-title {{
-                background-color: #e0e0e0;
-                font-weight: bold;
-                padding: 6px;
-                margin-top: 10px;
-            }}
-            .box {{
-                padding: 8px;
-                margin-top: 6px;
-                background-color: #f9f9f9;
-                border-left: 4px solid #999;  /* More elegant than full border */
-            }}
-            ul {{
-                margin: 0.5em 0;
-                padding-left: 1.5em;
-            }}
-            li {{
-                margin-bottom: 5px;
-            }}
-        </style>
-    </head>
-    <body>
-        {html_string}
-    </body>
-    </html>
+def html_to_docx_bytes(html_string, filename="Resume.docx"):
     """
+    Convert HTML resume (from any template) to a professional DOCX format.
 
-    pdf_io = BytesIO()
-    pisa.CreatePDF(styled_html, dest=pdf_io)
-    pdf_io.seek(0)
-    return pdf_io
+    Extracts and preserves:
+    - Headings (h1, h2, h3, h4)
+    - Paragraphs and text content
+    - Bullet points and lists
+    - Text structure and hierarchy
+
+    Returns a BytesIO buffer ready for download.
+    """
+    # Parse HTML
+    soup = BeautifulSoup(html_string, 'html.parser')
+
+    # Create new Document
+    doc = Document()
+
+    # Set default font for the entire document
+    style = doc.styles['Normal']
+    font = style.font
+    font.name = 'Calibri'
+    font.size = Pt(11)
+
+    def add_text_with_style(element, doc):
+        """Recursively process HTML elements and add to document"""
+
+        # Handle headings
+        if element.name == 'h1':
+            text = element.get_text(strip=True)
+            if text:
+                heading = doc.add_heading(text, level=1)
+                heading.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                for run in heading.runs:
+                    run.font.name = 'Calibri'
+                    run.font.size = Pt(18)
+                    run.font.bold = True
+
+        elif element.name == 'h2':
+            text = element.get_text(strip=True)
+            if text:
+                heading = doc.add_heading(text, level=2)
+                for run in heading.runs:
+                    run.font.name = 'Calibri'
+                    run.font.size = Pt(14)
+                    run.font.bold = True
+
+        elif element.name in ['h3', 'h4']:
+            text = element.get_text(strip=True)
+            if text:
+                heading = doc.add_heading(text, level=3)
+                for run in heading.runs:
+                    run.font.name = 'Calibri'
+                    run.font.size = Pt(12)
+                    run.font.bold = True
+
+        # Handle unordered lists
+        elif element.name == 'ul':
+            for li in element.find_all('li', recursive=False):
+                text = li.get_text(strip=True)
+                if text:
+                    para = doc.add_paragraph(text, style='List Bullet')
+                    for run in para.runs:
+                        run.font.name = 'Calibri'
+                        run.font.size = Pt(11)
+
+        # Handle ordered lists
+        elif element.name == 'ol':
+            for li in element.find_all('li', recursive=False):
+                text = li.get_text(strip=True)
+                if text:
+                    para = doc.add_paragraph(text, style='List Number')
+                    for run in para.runs:
+                        run.font.name = 'Calibri'
+                        run.font.size = Pt(11)
+
+        # Handle paragraphs and divs
+        elif element.name in ['p', 'div']:
+            # Skip if it only contains nested structural elements
+            if element.find(['ul', 'ol', 'h1', 'h2', 'h3', 'h4', 'table']):
+                for child in element.children:
+                    if hasattr(child, 'name'):
+                        add_text_with_style(child, doc)
+            else:
+                text = element.get_text(strip=True)
+                if text:
+                    para = doc.add_paragraph(text)
+                    for run in para.runs:
+                        run.font.name = 'Calibri'
+                        run.font.size = Pt(11)
+
+        # Handle spans and other inline elements - extract text
+        elif element.name in ['span', 'strong', 'b', 'em', 'i']:
+            # These are typically handled by their parent
+            pass
+
+        # Handle line breaks
+        elif element.name == 'br':
+            pass  # Handled by get_text()
+
+        # Recursively process children for container elements
+        else:
+            for child in element.children:
+                if hasattr(child, 'name'):
+                    add_text_with_style(child, doc)
+
+    # Process the HTML body
+    body = soup.find('body') if soup.find('body') else soup
+
+    # Process all top-level elements
+    for element in body.children:
+        if hasattr(element, 'name'):
+            add_text_with_style(element, doc)
+
+    # If document is empty, add at least a placeholder
+    if len(doc.paragraphs) == 0:
+        doc.add_paragraph("Resume")
+
+    # Save to BytesIO
+    docx_io = BytesIO()
+    doc.save(docx_io)
+    docx_io.seek(0)
+
+    return docx_io
+
+
+# ==========================================
+# USAGE EXAMPLE
+# ==========================================
+# To use the DOCX export in your Streamlit app:
+#
+# from scripts.resume import render_template_default, html_to_docx_bytes
+#
+# # Generate HTML resume from any template
+# html_resume = render_template_default(st.session_state)  # or modern/sidebar
+#
+# # Convert to DOCX
+# docx_data = html_to_docx_bytes(html_resume)
+#
+# # Add download button
+# st.download_button(
+#     label="📄 Download as DOCX",
+#     data=docx_data,
+#     file_name="resume.docx",
+#     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+# )
+# ==========================================
+
+
+# PDF generation has been removed. Use html_to_docx_bytes() instead.
+# Old function: html_to_pdf_bytes() - DEPRECATED AND REMOVED
 
 def render_template_default(session_state, profile_img_html=""):
     """Default professional template - keeps the exact same design as before"""
@@ -5895,13 +5986,25 @@ with tab2:
             unsafe_allow_html=True
         )
 
-        col1, = st.columns(1)
+        col1, col2 = st.columns(2)
+
+        # DOCX Resume Download Button
+        with col1:
+            docx_resume_bytes = html_to_docx_bytes(st.session_state["generated_html"])
+
+            st.download_button(
+                label="📄 Download as DOCX",
+                data=docx_resume_bytes,
+                file_name=f"{st.session_state['name'].replace(' ', '_')}_Resume.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                key="download_resume_docx"
+            )
 
         # HTML Resume Download Button
-        with col1:
+        with col2:
             html_bytes = st.session_state["generated_html"].encode("utf-8")
             html_file = BytesIO(html_bytes)
-            
+
             st.download_button(
                 label="⬇️ Download as Template",
                 data=html_file,
@@ -5910,14 +6013,9 @@ with tab2:
                 key="download_resume_html"
             )
 
-        # PDF Resume Download Button
-        pdf_resume_bytes = html_to_pdf_bytes(st.session_state["generated_html"])
-        
         # ✅ Extra Help Note
         st.markdown("""
-        ✅ After downloading your HTML resume, you can 
-        <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color:#2f4f6f; text-decoration:none;">
-        convert it to PDF using Sejda's free online tool</a>.
+        ✅ Download your resume as an editable DOCX file or as an HTML template for further customization.
         """, unsafe_allow_html=True)
 
         # ==========================
@@ -5944,9 +6042,6 @@ with tab2:
 
             # ✅ Use already-rendered HTML from session (don't show again)
             styled_cover_letter = st.session_state.get("cover_letter_html", "")
-
-            # ✅ Generate PDF from styled HTML
-            pdf_file = html_to_pdf_bytes(styled_cover_letter)
 
             # ✅ DOCX Generator (preserves line breaks)
             def create_docx_from_text(text, filename="cover_letter.docx"):
@@ -5995,9 +6090,7 @@ with tab2:
 
             # ✅ Helper note
             st.markdown("""
-            ✅ If the HTML cover letter doesn't display properly, you can 
-            <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color:#2f4f6f; text-decoration:none;">
-            convert it to PDF using Sejda's free online tool</a>.
+            ✅ Download your cover letter as an editable DOCX file or as an HTML template.
             """, unsafe_allow_html=True)
 
 FEATURED_COMPANIES = {

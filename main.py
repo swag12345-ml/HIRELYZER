@@ -6773,95 +6773,70 @@ init_job_search_db()
 
 # Your existing tab3 code with enhanced CSS styling
 with tab3:
-    # Modern header styling
+    # Simple header with no background
     st.markdown("""
-    <div style="
-        background: linear-gradient(135deg, #1e3a4c 0%, #0d1b2a 100%);
-        padding: 30px;
-        border-radius: 15px;
-        margin-bottom: 30px;
+    <h1 style="
+        color: #00bfff;
+        font-size: 36px;
+        font-weight: 700;
+        margin: 20px 0 30px 0;
         text-align: center;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        border: 2px solid #1e90ff;
     ">
-        <h1 style="
-            color: #00bfff;
-            font-size: 36px;
-            font-weight: 800;
-            margin: 0;
-            text-shadow: 0 0 20px rgba(0, 191, 255, 0.5);
-        ">
-            🔍 Job Search Hub
-        </h1>
-    </div>
+        🔍 Job Search Hub
+    </h1>
     """, unsafe_allow_html=True)
 
-    # Custom CSS for toggle buttons
+    # Custom styling for side-by-side toggle buttons
     st.markdown("""
     <style>
-    .toggle-container {
-        display: flex;
-        gap: 20px;
-        margin-bottom: 30px;
+    /* Hide default radio button styling */
+    div[data-testid="stHorizontalBlock"] {
+        gap: 20px !important;
         justify-content: center;
     }
-    .toggle-button {
-        background: linear-gradient(135deg, #1e3a4c 0%, #2d4a5c 100%);
-        border: 2px solid #1e90ff;
-        border-radius: 15px;
-        padding: 20px 30px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        flex: 1;
-        max-width: 400px;
-        position: relative;
+
+    /* Style radio options as cards */
+    div[role="radiogroup"] label {
+        background: linear-gradient(135deg, #0f2436 0%, #1a3a52 100%) !important;
+        border: 2px solid #1e90ff !important;
+        border-radius: 15px !important;
+        padding: 20px 40px !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+        min-width: 300px !important;
+        text-align: center !important;
     }
-    .toggle-button:hover {
+
+    div[role="radiogroup"] label:hover {
         transform: translateY(-3px);
         box-shadow: 0 8px 20px rgba(30, 144, 255, 0.4);
     }
-    .toggle-button.active {
-        background: linear-gradient(135deg, #1e90ff 0%, #4169e1 100%);
-        border-color: #00bfff;
-        box-shadow: 0 0 30px rgba(30, 144, 255, 0.6);
+
+    /* Active state */
+    div[role="radiogroup"] label:has(input:checked) {
+        background: linear-gradient(135deg, #1e90ff 0%, #4169e1 100%) !important;
+        border-color: #00bfff !important;
+        box-shadow: 0 0 30px rgba(30, 144, 255, 0.6) !important;
     }
-    .toggle-text {
-        color: white;
-        font-size: 16px;
-        font-weight: 600;
-        text-align: center;
-    }
-    .radio-circle {
-        width: 20px;
-        height: 20px;
-        border: 2px solid white;
-        border-radius: 50%;
-        display: inline-block;
-        margin-right: 10px;
-        position: relative;
-    }
-    .toggle-button.active .radio-circle::after {
-        content: '';
-        width: 10px;
-        height: 10px;
-        background: white;
-        border-radius: 50%;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+
+    div[role="radiogroup"] label span {
+        color: white !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # Radio selector for search mode with custom styling
-    search_mode = st.radio(
-        "",
-        ["External Platforms (LinkedIn, Naukri, FoundIt)", "RapidAPI Jobs (India Only)"],
-        horizontal=True,
-        key="search_mode",
-        label_visibility="collapsed"
-    )
+    # Radio selector for search mode - will render side by side
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        search_mode = st.radio(
+            "",
+            ["External Platforms (LinkedIn, Naukri, FoundIt)", "RapidAPI Jobs (India Only)"],
+            horizontal=True,
+            key="search_mode",
+            label_visibility="collapsed"
+        )
 
     if search_mode == "External Platforms (LinkedIn, Naukri, FoundIt)":
         # External Platforms Section
@@ -7618,7 +7593,6 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
-
 def evaluate_interview_answer(answer: str, question: str = None):
     """
     Uses an LLM to strictly evaluate an interview answer.

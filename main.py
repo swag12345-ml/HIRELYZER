@@ -7610,9 +7610,10 @@ def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty:
         "Hard": "Be very strict - demand deep technical knowledge, system design thinking, and comprehensive answers. Scores should range 1-10 with most answers 2-8."
     }
 
+    # FIXED: Enhanced follow-up instruction for Hard mode to ensure DIFFERENT questions
     followup_instruction = ""
     if difficulty == "Hard":
-        followup_instruction = "\n- FollowUp: Generate ONE NEW probing question that explores a DIFFERENT ASPECT or DIMENSION of the candidate's answer. DO NOT repeat or rephrase the original question. Ask about a different angle, implication, or related scenario."
+        followup_instruction = "\n- FollowUp: Ask ONE probing question exploring a DIFFERENT dimension of the candidate's answer (implications, trade-offs, edge cases, alternatives). DO NOT rephrase the original question. Explore a completely different aspect."
 
     # Build role/domain context for relevance checking
     context_info = ""
@@ -8825,6 +8826,7 @@ with tab4:
         Generate interview questions using LLM based on domain, role, type, and difficulty.
 
         FIXED: Now difficulty is passed into LLM prompt and affects question complexity
+        FIXED: Generates more diverse questions to avoid repeats across refreshes
         """
         # Define difficulty-specific instructions
         difficulty_instructions = {
@@ -8844,7 +8846,7 @@ DIFFICULTY LEVEL: {difficulty}
 CRITICAL REQUIREMENTS:
 - Generate EXACTLY {num_questions} questions - no more, no less
 - Keep each question concise (1-2 sentences max)
-- Avoid duplicates
+- Avoid duplicates and generate DIVERSE questions covering different aspects
 - Match the difficulty level specified above
 - Output ONLY the questions, one per line
 - DO NOT add numbering, bullet points, or any prefixes
@@ -9304,6 +9306,9 @@ Generate exactly {num_questions} questions now:
                 st.session_state.timer_seconds = 120
             if 'interview_difficulty' not in st.session_state:
                 st.session_state.interview_difficulty = "Medium"
+            # FIXED: Track seen questions across refreshes to avoid duplicates
+            if 'seen_questions' not in st.session_state:
+                st.session_state.seen_questions = set()
             # FIXED: Removed hardcoded original_num_questions initialization
             # This will be set dynamically when interview starts
             if 'pending_followup_question' not in st.session_state:
@@ -9353,6 +9358,10 @@ Generate exactly {num_questions} questions now:
                             # FIXED: Enforce exact number of questions
                             selected_questions = selected_questions[:num_questions]
 
+                            # FIXED: Add generated questions to seen_questions to avoid duplicates on refresh
+                            for q in selected_questions:
+                                st.session_state.seen_questions.add(q.lower().strip())
+
                             # FIXED: Store questions in session state for stable access
                             st.session_state.dynamic_interview_questions = selected_questions
                             st.session_state.original_num_questions = num_questions  # FIXED: Use user's selected count
@@ -9368,6 +9377,7 @@ Generate exactly {num_questions} questions now:
                             st.session_state.question_timer_start = time.time()
                             st.session_state.timer_seconds = timer_seconds
                             st.session_state.interview_difficulty = interview_difficulty
+                            st.session_state.interview_type = interview_type  # FIXED: Store interview type for refresh
                             st.session_state.pending_followup_question = None  # FIXED: Clear any pending follow-ups
                             st.success("Questions generated! Starting your mock interview...")
                             time.sleep(1)
@@ -9382,6 +9392,75 @@ Generate exactly {num_questions} questions now:
 
                 # FIXED: Show correct progress - only count original questions, not follow-ups
                 st.info(f"📊 Progress: Answered {questions_answered} / {st.session_state.original_num_questions} questions")
+
+                # FIXED: Add Refresh Questions button at the top
+                col_refresh1, col_refresh2 = st.columns([4, 1])
+                with col_refresh2:
+                    if st.button("🔄 Refresh Questions"):
+                        with st.spinner("Generating new questions..."):
+                            # FIXED: Clear current interview state
+                            st.session_state.dynamic_interview_questions = []
+                            st.session_state.dynamic_interview_answers = []
+                            st.session_state.dynamic_interview_scores = []
+                            st.session_state.dynamic_interview_feedbacks = []
+                            st.session_state.dynamic_interview_questions_asked = []
+                            st.session_state.current_dynamic_interview_question = 0
+                            st.session_state.dynamic_answer_submitted = False
+                            st.session_state.pending_followup_question = None
+                            st.session_state.question_timer_start = time.time()
+
+                            # FIXED: Generate NEW questions, avoiding previously seen ones
+                            max_attempts = 3
+                            attempt = 0
+                            new_questions = []
+
+                            while attempt < max_attempts and len(new_questions) < st.session_state.original_num_questions:
+                                candidate_questions = generate_interview_questions_with_llm(
+                                    st.session_state.interview_domain,
+                                    st.session_state.interview_role,
+                                    st.session_state.get('interview_type', 'technical'),
+                                    st.session_state.original_num_questions * 2,  # Generate more to filter
+                                    st.session_state.interview_difficulty
+                                )
+
+                                # FIXED: Filter out previously seen questions
+                                for q in candidate_questions:
+                                    if q.lower().strip() not in st.session_state.seen_questions:
+                                        new_questions.append(q)
+                                        st.session_state.seen_questions.add(q.lower().strip())
+                                        if len(new_questions) >= st.session_state.original_num_questions:
+                                            break
+
+                                attempt += 1
+
+                            # FIXED: If still not enough unique questions, pad with difficulty-appropriate fallbacks
+                            if len(new_questions) < st.session_state.original_num_questions:
+                                fallback_needed = st.session_state.original_num_questions - len(new_questions)
+                                fallbacks = self_generate_fallback_questions(
+                                    st.session_state.interview_role,
+                                    st.session_state.interview_domain,
+                                    st.session_state.interview_difficulty,
+                                    fallback_needed * 2  # Generate more fallbacks to filter
+                                )
+                                for fb in fallbacks:
+                                    if fb.lower().strip() not in st.session_state.seen_questions:
+                                        new_questions.append(fb)
+                                        st.session_state.seen_questions.add(fb.lower().strip())
+                                        if len(new_questions) >= st.session_state.original_num_questions:
+                                            break
+
+                            # FIXED: Ensure exactly num_questions
+                            new_questions = new_questions[:st.session_state.original_num_questions]
+
+                            if new_questions:
+                                st.session_state.dynamic_interview_questions = new_questions
+                                st.session_state.current_interview_question_text = new_questions[0]
+                                st.success("New questions generated!")
+                                time.sleep(1)
+                                st.rerun()
+                            else:
+                                st.error("Failed to generate new unique questions. Please try again.")
+                                st.rerun()
 
                 if questions_answered < st.session_state.original_num_questions:
                     # FIXED: Check if there's a pending follow-up question first
@@ -9426,13 +9505,7 @@ Generate exactly {num_questions} questions now:
                     </div>
                     """, unsafe_allow_html=True)
 
-                    # FIXED: Refresh button now only re-renders UI, doesn't regenerate questions
-                    col1, col2 = st.columns([3, 1])
-                    with col2:
-                        if st.button("🔄 Refresh Question Display"):
-                            # FIXED: Only reset timer and re-render, don't regenerate question
-                            st.session_state.question_timer_start = time.time()
-                            st.rerun()
+                    # FIXED: Removed redundant refresh button (now at top of interview section)
 
                     # Answer input with character limit
                     answer_key = f"dynamic_interview_answer_{st.session_state.current_dynamic_interview_question}"
@@ -9781,7 +9854,7 @@ Generate exactly {num_questions} questions now:
 
                 # FIXED: Restart button - properly resets ALL interview state
                 if st.button("🔄 Practice Again"):
-                    # Reset all interview-related session state variables
+                    # FIXED: Reset all interview-related session state variables
                     st.session_state.dynamic_interview_started = False
                     st.session_state.dynamic_interview_completed = False
                     st.session_state.dynamic_interview_questions = []
@@ -9796,6 +9869,8 @@ Generate exactly {num_questions} questions now:
                     st.session_state.timer_seconds = 120
                     st.session_state.interview_difficulty = "Medium"
                     st.session_state.pending_followup_question = None
+                    # FIXED: Clear seen_questions to allow fresh question pool
+                    st.session_state.seen_questions = set()
                     # FIXED: Don't reset original_num_questions to hardcoded value
                     if 'original_num_questions' in st.session_state:
                         del st.session_state.original_num_questions

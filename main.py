@@ -6775,16 +6775,36 @@ init_job_search_db()
 with tab3:
     st.header("🔍 Job Search Across LinkedIn, Naukri, and FoundIt")
 
-    # Radio selector for search mode
-    search_mode = st.radio(
-        "Select Search Mode:",
-        ["External Platforms (LinkedIn, Naukri, FoundIt)", "RapidAPI Jobs (India Only)"],
-        horizontal=True,
-        key="search_mode"
-    )
+    # Toggle button selector for search mode (side-by-side pill-shaped buttons)
+    st.markdown("### Select Search Mode")
+    col_toggle1, col_toggle2 = st.columns(2)
+
+    with col_toggle1:
+        external_selected = st.button(
+            "🌐 External Platforms",
+            key="toggle_external",
+            use_container_width=True,
+            type="primary" if st.session_state.get("search_mode_state", "external") == "external" else "secondary"
+        )
+        if external_selected:
+            st.session_state.search_mode_state = "external"
+
+    with col_toggle2:
+        rapid_selected = st.button(
+            "⚡ RapidAPI Jobs",
+            key="toggle_rapid",
+            use_container_width=True,
+            type="primary" if st.session_state.get("search_mode_state", "external") == "rapid" else "secondary"
+        )
+        if rapid_selected:
+            st.session_state.search_mode_state = "rapid"
+
+    # Determine which mode is active
+    search_mode = "External Platforms (LinkedIn, Naukri, FoundIt)" if st.session_state.get("search_mode_state", "external") == "external" else "RapidAPI Jobs (India Only)"
 
     if search_mode == "External Platforms (LinkedIn, Naukri, FoundIt)":
         # External Platforms Section
+        st.markdown("#### 🔎 Job Search Filters")
         col1, col2 = st.columns(2)
 
         with col1:
@@ -6803,7 +6823,9 @@ with tab3:
                 key="external_type"
             )
 
-        foundit_experience = st.text_input("🔢 FoundIt Experience (Years)", placeholder="e.g., 1", key="external_foundit")
+        # FoundIt advanced filter in expander
+        with st.expander("🔧 Advanced Filters"):
+            foundit_experience = st.text_input("🔢 FoundIt Experience (Years)", placeholder="e.g., 1", key="external_foundit")
 
         search_clicked = st.button("🔎 Search External Jobs", key="search_external")
 
@@ -6858,21 +6880,21 @@ with tab3:
                         description="Open this platform to view full details."
                     )
                     st.components.v1.html(job_card_html, height=card_height, scrolling=False)
+                    st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
             else:
                 st.warning("⚠️ Please enter both the Job Title and Location to perform the search.")
 
     else:
         # RapidAPI Jobs Section
+        st.markdown("#### 🔎 Job Search Filters")
         col1, col2 = st.columns(2)
 
         with col1:
             rapid_job_role = st.text_input("💼 Job Title / Skills", placeholder="e.g., Python Developer", key="rapid_role")
+            num_results = st.slider("📊 Number of Jobs to Fetch", min_value=5, max_value=50, value=10, step=5, key="rapid_num_results")
 
         with col2:
             rapid_location = st.text_input("📍 Location", placeholder="e.g., Mumbai", key="rapid_loc")
-
-        # Number of results
-        num_results = st.slider("📊 Number of Jobs to Fetch", min_value=5, max_value=50, value=10, step=5, key="rapid_num_results")
 
         # Advanced Filters
         with st.expander("🔧 Advanced Filters"):
@@ -7008,8 +7030,9 @@ with tab3:
     </a>
 </div>
 """
-                        
+
                         st.components.v1.html(job_card_html, height=450, scrolling=False)
+                        st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
 
                 else:
@@ -7026,35 +7049,43 @@ with tab3:
         # Get total count of searches
         total_searches = get_total_saved_searches_count(st.session_state.username)
 
-        st.markdown("### 📌 Your Saved Job Searches")
+        # Compact saved searches section with single-row controls
+        st.markdown("""<div style='margin-top: 40px;'></div>""", unsafe_allow_html=True)
 
         if total_searches > 0:
-            # Controls for filtering and pagination
-            col1, col2 = st.columns([2, 1])
+            # Single row: heading, filter, and pagination
+            control_col1, control_col2, control_col3 = st.columns([2, 2, 1])
 
-            with col1:
+            with control_col1:
+                st.markdown("### 📌 Your Saved Job Searches")
+
+            with control_col2:
                 platform_filter = st.selectbox(
                     "🔍 Filter by Platform",
                     platform_options,
-                    key="platform_filter"
+                    key="platform_filter",
+                    label_visibility="collapsed"
                 )
 
-            with col2:
+            with control_col3:
                 # Calculate pagination
                 searches_per_page = 5
                 filtered_count = get_total_saved_searches_count(st.session_state.username, platform_filter)
                 max_pages = max(1, (filtered_count + searches_per_page - 1) // searches_per_page)
 
                 if max_pages > 1:
-                    current_page = st.slider(
-                        "📄 Page",
+                    current_page = st.number_input(
+                        "Page",
                         min_value=1,
                         max_value=max_pages,
                         value=1,
-                        key="page_slider"
+                        key="page_slider",
+                        label_visibility="collapsed"
                     )
                 else:
                     current_page = 1
+        else:
+            st.markdown("### 📌 Your Saved Job Searches")
 
             # Calculate offset for pagination
             offset = (current_page - 1) * searches_per_page
@@ -7319,6 +7350,36 @@ with tab3:
         box-shadow: 0 8px 25px rgba(0,0,0,0.3);
     }
 
+    /* Toggle Button Styling */
+    .stButton > button {
+        border-radius: 25px !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .stButton > button[kind="primary"] {
+        box-shadow: 0 0 20px rgba(0, 196, 204, 0.5) !important;
+    }
+
+    .stButton > button[kind="secondary"] {
+        opacity: 0.6 !important;
+    }
+
+    .stButton > button:hover {
+        transform: translateY(-2px) !important;
+    }
+
+    /* Compact Selectbox and Input Styling */
+    .stSelectbox, .stNumberInput {
+        margin-bottom: 0 !important;
+    }
+
+    div[data-baseweb="select"] {
+        border: 1px solid rgba(0, 196, 204, 0.3) !important;
+        box-shadow: 0 0 10px rgba(0, 196, 204, 0.2) !important;
+        border-radius: 10px !important;
+    }
+
     /* Enhanced Pills */
     .pill {
         display: inline-block;
@@ -7414,6 +7475,11 @@ with tab3:
 
         .company-header {
             font-size: 20px;
+        }
+
+        /* Stack columns on mobile */
+        .stColumns {
+            flex-direction: column !important;
         }
     }
 

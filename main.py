@@ -6786,88 +6786,57 @@ with tab3:
     </h1>
     """, unsafe_allow_html=True)
 
-    # Initialize session state for search mode if not exists
-    if 'search_mode' not in st.session_state:
-        st.session_state.search_mode = "External Platforms (LinkedIn, Naukri, FoundIt)"
+    # Custom styling for side-by-side toggle buttons
+    st.markdown("""
+    <style>
+    /* Hide default radio button styling */
+    div[data-testid="stHorizontalBlock"] {
+        gap: 20px !important;
+        justify-content: center;
+    }
 
-    # Create two columns for side-by-side buttons
-    col_left, col1, col2, col_right = st.columns([1, 2, 2, 1])
+    /* Style radio options as cards */
+    div[role="radiogroup"] label {
+        background: linear-gradient(135deg, #0f2436 0%, #1a3a52 100%) !important;
+        border: 2px solid #1e90ff !important;
+        border-radius: 15px !important;
+        padding: 20px 40px !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+        min-width: 300px !important;
+        text-align: center !important;
+    }
 
-    with col1:
-        # External Platforms button
-        is_external_selected = st.session_state.search_mode == "External Platforms (LinkedIn, Naukri, FoundIt)"
-        button_style_external = """
-            background: linear-gradient(135deg, #1e90ff 0%, #4169e1 100%);
-            border: 2px solid #00bfff;
-            box-shadow: 0 0 30px rgba(30, 144, 255, 0.6);
-        """ if is_external_selected else """
-            background: linear-gradient(135deg, #0f2436 0%, #1a3a52 100%);
-            border: 2px solid #1e90ff;
-        """
+    div[role="radiogroup"] label:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(30, 144, 255, 0.4);
+    }
 
-        radio_dot = "⦿" if is_external_selected else "○"
+    /* Active state */
+    div[role="radiogroup"] label:has(input:checked) {
+        background: linear-gradient(135deg, #1e90ff 0%, #4169e1 100%) !important;
+        border-color: #00bfff !important;
+        box-shadow: 0 0 30px rgba(30, 144, 255, 0.6) !important;
+    }
 
-        st.markdown(f"""
-        <div style="
-            {button_style_external}
-            border-radius: 15px;
-            padding: 25px 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-            min-height: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        ">
-            <span style="color: white; font-size: 16px; font-weight: 600;">
-                {radio_dot} External Platforms (LinkedIn, Naukri, FoundIt)
-            </span>
-        </div>
-        """, unsafe_allow_html=True)
+    div[role="radiogroup"] label span {
+        color: white !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-        if st.button("Select", key="btn_external", use_container_width=True):
-            st.session_state.search_mode = "External Platforms (LinkedIn, Naukri, FoundIt)"
-            st.rerun()
-
+    # Radio selector for search mode - will render side by side
+    col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        # RapidAPI button
-        is_rapid_selected = st.session_state.search_mode == "RapidAPI Jobs (India Only)"
-        button_style_rapid = """
-            background: linear-gradient(135deg, #1e90ff 0%, #4169e1 100%);
-            border: 2px solid #00bfff;
-            box-shadow: 0 0 30px rgba(30, 144, 255, 0.6);
-        """ if is_rapid_selected else """
-            background: linear-gradient(135deg, #0f2436 0%, #1a3a52 100%);
-            border: 2px solid #1e90ff;
-        """
-
-        radio_dot = "⦿" if is_rapid_selected else "○"
-
-        st.markdown(f"""
-        <div style="
-            {button_style_rapid}
-            border-radius: 15px;
-            padding: 25px 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-            min-height: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        ">
-            <span style="color: white; font-size: 16px; font-weight: 600;">
-                {radio_dot} RapidAPI Jobs (India Only)
-            </span>
-        </div>
-        """, unsafe_allow_html=True)
-
-        if st.button("Select", key="btn_rapid", use_container_width=True):
-            st.session_state.search_mode = "RapidAPI Jobs (India Only)"
-            st.rerun()
-
-    search_mode = st.session_state.search_mode
+        search_mode = st.radio(
+            "",
+            ["External Platforms (LinkedIn, Naukri, FoundIt)", "RapidAPI Jobs (India Only)"],
+            horizontal=True,
+            key="search_mode",
+            label_visibility="collapsed"
+        )
 
     if search_mode == "External Platforms (LinkedIn, Naukri, FoundIt)":
         # External Platforms Section

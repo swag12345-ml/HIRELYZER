@@ -6775,13 +6775,36 @@ init_job_search_db()
 with tab3:
     st.header("🔍 Job Search Across LinkedIn, Naukri, and FoundIt")
 
-    # Radio selector for search mode
-    search_mode = st.radio(
-        "Select Search Mode:",
-        ["External Platforms (LinkedIn, Naukri, FoundIt)", "RapidAPI Jobs (India Only)"],
-        horizontal=True,
-        key="search_mode"
-    )
+    # Toggle button selector for search mode
+    st.markdown("**Select Search Mode:**")
+    mode_col1, mode_col2 = st.columns(2)
+
+    # Initialize session state for search mode if not exists
+    if 'search_mode' not in st.session_state:
+        st.session_state.search_mode = "External Platforms (LinkedIn, Naukri, FoundIt)"
+
+    with mode_col1:
+        if st.button(
+            "🌐 External Platforms",
+            key="mode_external",
+            use_container_width=True,
+            type="primary" if st.session_state.search_mode == "External Platforms (LinkedIn, Naukri, FoundIt)" else "secondary"
+        ):
+            st.session_state.search_mode = "External Platforms (LinkedIn, Naukri, FoundIt)"
+            st.rerun()
+
+    with mode_col2:
+        if st.button(
+            "⚡ RapidAPI Jobs",
+            key="mode_rapid",
+            use_container_width=True,
+            type="primary" if st.session_state.search_mode == "RapidAPI Jobs (India Only)" else "secondary"
+        ):
+            st.session_state.search_mode = "RapidAPI Jobs (India Only)"
+            st.rerun()
+
+    search_mode = st.session_state.search_mode
+    st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
     if search_mode == "External Platforms (LinkedIn, Naukri, FoundIt)":
         # External Platforms Section
@@ -6803,9 +6826,11 @@ with tab3:
                 key="external_type"
             )
 
-        foundit_experience = st.text_input("🔢 FoundIt Experience (Years)", placeholder="e.g., 1", key="external_foundit")
+        # Advanced filters collapsed
+        with st.expander("🔧 Advanced Filters (FoundIt)"):
+            foundit_experience = st.text_input("🔢 FoundIt Experience (Years)", placeholder="e.g., 1", key="external_foundit")
 
-        search_clicked = st.button("🔎 Search External Jobs", key="search_external")
+        search_clicked = st.button("🔎 Search External Jobs", key="search_external", use_container_width=True)
 
         if search_clicked:
             if job_role.strip() and location.strip():
@@ -6858,6 +6883,7 @@ with tab3:
                         description="Open this platform to view full details."
                     )
                     st.components.v1.html(job_card_html, height=card_height, scrolling=False)
+                    st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
             else:
                 st.warning("⚠️ Please enter both the Job Title and Location to perform the search.")
 
@@ -6871,7 +6897,7 @@ with tab3:
         with col2:
             rapid_location = st.text_input("📍 Location", placeholder="e.g., Mumbai", key="rapid_loc")
 
-        # Number of results
+        # Number of results outside columns
         num_results = st.slider("📊 Number of Jobs to Fetch", min_value=5, max_value=50, value=10, step=5, key="rapid_num_results")
 
         # Advanced Filters
@@ -6894,7 +6920,7 @@ with tab3:
                 key="rapid_req"
             )
 
-        search_rapid_clicked = st.button("🔎 Search Rapid Jobs", key="search_rapid")
+        search_rapid_clicked = st.button("🔎 Search Rapid Jobs", key="search_rapid", use_container_width=True)
 
         if search_rapid_clicked:
             if rapid_job_role.strip() and rapid_location.strip():
@@ -7008,9 +7034,9 @@ with tab3:
     </a>
 </div>
 """
-                        
-                        st.components.v1.html(job_card_html, height=450, scrolling=False)
 
+                        st.components.v1.html(job_card_html, height=450, scrolling=False)
+                        st.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
                 else:
                     st.info("No jobs found. Try adjusting your search criteria.")
@@ -7026,20 +7052,26 @@ with tab3:
         # Get total count of searches
         total_searches = get_total_saved_searches_count(st.session_state.username)
 
-        st.markdown("### 📌 Your Saved Job Searches")
+        # Saved Searches Section with single-row controls
+        st.markdown("<div style='margin-top: 40px;'></div>", unsafe_allow_html=True)
 
         if total_searches > 0:
-            # Controls for filtering and pagination
-            col1, col2 = st.columns([2, 1])
+            # Single row for heading and controls
+            header_col1, header_col2, header_col3 = st.columns([2, 1.5, 1.5])
 
-            with col1:
+            with header_col1:
+                st.markdown("### 📌 Your Saved Job Searches")
+
+            with header_col2:
                 platform_filter = st.selectbox(
-                    "🔍 Filter by Platform",
+                    "🔍 Platform",
                     platform_options,
-                    key="platform_filter"
+                    key="platform_filter",
+                    label_visibility="collapsed",
+                    help="Filter by Platform"
                 )
 
-            with col2:
+            with header_col3:
                 # Calculate pagination
                 searches_per_page = 5
                 filtered_count = get_total_saved_searches_count(st.session_state.username, platform_filter)
@@ -7051,10 +7083,14 @@ with tab3:
                         min_value=1,
                         max_value=max_pages,
                         value=1,
-                        key="page_slider"
+                        key="page_slider",
+                        label_visibility="collapsed",
+                        help="Pagination"
                     )
                 else:
                     current_page = 1
+        else:
+            st.markdown("### 📌 Your Saved Job Searches")
 
             # Calculate offset for pagination
             offset = (current_page - 1) * searches_per_page
@@ -7112,7 +7148,7 @@ with tab3:
     background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
     padding: 20px;
     border-radius: 15px;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     border-left: 4px solid {platform_color};
     box-shadow: 0 4px 16px rgba(0,0,0,0.2);
     position: relative;
@@ -7131,17 +7167,19 @@ with tab3:
             {formatted_time}
         </div>
     </div>
-    <a href="{search['url']}" target="_blank" style="text-decoration: none;">
+    <a href="{search['url']}" target="_blank" style="text-decoration: none; display: flex; justify-content: center;">
         <button class="job-button" style="
             background: linear-gradient(135deg, {platform_color} 0%, {platform_color}dd 100%);
             color: white;
-            padding: 8px 16px;
+            padding: 10px 24px;
             border: none;
             border-radius: 8px;
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.3s ease;
+            width: 200px;
+            text-align: center;
         ">
             🔗 View Jobs →
         </button>
@@ -7295,6 +7333,33 @@ with tab3:
     .job-result-card:hover {
         transform: translateY(-5px) scale(1.01);
         box-shadow: 0 15px 40px rgba(0,0,0,0.4) !important;
+    }
+
+    /* Toggle Button Styling */
+    .stButton > button {
+        transition: all 0.3s ease;
+        border-radius: 12px;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+
+    /* Input and Dropdown Glow Effect */
+    .stTextInput > div > div > input,
+    .stSelectbox > div > div > select,
+    .stSlider > div > div > div {
+        border: 1px solid rgba(0,255,255,0.3);
+        transition: all 0.3s ease;
+    }
+
+    .stTextInput > div > div > input:focus,
+    .stSelectbox > div > div > select:focus {
+        border-color: rgba(0,255,255,0.6);
+        box-shadow: 0 0 10px rgba(0,255,255,0.3);
     }
 
     /* Enhanced Buttons */

@@ -7084,8 +7084,6 @@ with tab3:
                     )
                 else:
                     current_page = 1
-        else:
-            st.markdown("### 📌 Your Saved Job Searches")
 
             # Calculate offset for pagination
             offset = (current_page - 1) * searches_per_page

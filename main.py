@@ -7089,8 +7089,6 @@ with tab3:
                     )
                 else:
                     current_page = 1
-        else:
-            st.markdown("### 📌 Your Saved Job Searches")
 
             # Calculate offset for pagination
             offset = (current_page - 1) * searches_per_page
@@ -7209,6 +7207,7 @@ with tab3:
 """, unsafe_allow_html=True)
         else:
             # No saved searches at all
+            st.markdown("### 📌 Your Saved Job Searches")
             st.markdown("""
 <div style="
     background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);

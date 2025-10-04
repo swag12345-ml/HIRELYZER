@@ -9283,6 +9283,8 @@ Generate exactly {num_questions} questions now:
                 st.session_state.dynamic_interview_scores = []
             if 'dynamic_interview_feedbacks' not in st.session_state:
                 st.session_state.dynamic_interview_feedbacks = []
+            if 'dynamic_interview_questions_asked' not in st.session_state:
+                st.session_state.dynamic_interview_questions_asked = []  # FIXED: Track actual questions asked including follow-ups
             if 'dynamic_interview_completed' not in st.session_state:
                 st.session_state.dynamic_interview_completed = False
             if 'dynamic_interview_started' not in st.session_state:
@@ -9304,6 +9306,8 @@ Generate exactly {num_questions} questions now:
                 st.session_state.interview_difficulty = "Medium"
             # FIXED: Removed hardcoded original_num_questions initialization
             # This will be set dynamically when interview starts
+            if 'pending_followup_question' not in st.session_state:
+                st.session_state.pending_followup_question = None
 
             # Start interview setup
             if not st.session_state.dynamic_interview_started:
@@ -9356,6 +9360,7 @@ Generate exactly {num_questions} questions now:
                             st.session_state.dynamic_interview_answers = []
                             st.session_state.dynamic_interview_scores = []
                             st.session_state.dynamic_interview_feedbacks = []
+                            st.session_state.dynamic_interview_questions_asked = []  # FIXED: Clear questions asked
                             st.session_state.dynamic_interview_completed = False
                             st.session_state.dynamic_interview_started = True
                             st.session_state.dynamic_answer_submitted = False
@@ -9363,6 +9368,7 @@ Generate exactly {num_questions} questions now:
                             st.session_state.question_timer_start = time.time()
                             st.session_state.timer_seconds = timer_seconds
                             st.session_state.interview_difficulty = interview_difficulty
+                            st.session_state.pending_followup_question = None  # FIXED: Clear any pending follow-ups
                             st.success("Questions generated! Starting your mock interview...")
                             time.sleep(1)
                             st.rerun()
@@ -9374,11 +9380,17 @@ Generate exactly {num_questions} questions now:
                 # CRITICAL FIX: Properly count answered questions
                 questions_answered = len(st.session_state.dynamic_interview_answers)
 
-                # Debug info at top of screen (can be removed later)
-                st.info(f"📊 Progress: Answered {questions_answered} / {st.session_state.original_num_questions} questions | Total Q's: {len(st.session_state.dynamic_interview_questions)} | Current Index: {st.session_state.current_dynamic_interview_question}")
+                # FIXED: Show correct progress - only count original questions, not follow-ups
+                st.info(f"📊 Progress: Answered {questions_answered} / {st.session_state.original_num_questions} questions")
 
                 if questions_answered < st.session_state.original_num_questions:
-                    question = st.session_state.current_interview_question_text or st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question]
+                    # FIXED: Check if there's a pending follow-up question first
+                    if st.session_state.pending_followup_question:
+                        question = st.session_state.pending_followup_question
+                        st.session_state.current_interview_question_text = question
+                        st.session_state.pending_followup_question = None  # Clear it
+                    else:
+                        question = st.session_state.current_interview_question_text or st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question]
 
                     # TIMER RESET: Reset timer every time a new question loads
                     if st.session_state.question_timer_start is None:
@@ -9448,21 +9460,18 @@ Generate exactly {num_questions} questions now:
                                 domain=selected_domain
                             )
 
-                        # FIXED: Store answer, scores, and feedback - ensuring all are tracked properly
+                        # FIXED: Store answer, scores, feedback AND the actual question asked
                         st.session_state.dynamic_interview_answers.append(answer)
                         st.session_state.dynamic_interview_scores.append(eval_result)
                         st.session_state.dynamic_interview_feedbacks.append(eval_result["feedback"])
+                        st.session_state.dynamic_interview_questions_asked.append(question)  # FIXED: Track actual question
                         st.session_state.dynamic_answer_submitted = True
 
-                        # FIXED: Handle follow-up for Hard difficulty without breaking indexing
-                        # Follow-ups are added but don't count toward original_num_questions
+                        # FIXED: Handle follow-up for Hard difficulty - store separately, don't insert into list
                         if st.session_state.interview_difficulty == "Hard" and eval_result.get("followup") and eval_result["followup"].strip():
-                            # Only add follow-up if we haven't reached the end
-                            if questions_answered < st.session_state.original_num_questions - 1:
-                                st.session_state.dynamic_interview_questions.insert(
-                                    st.session_state.current_dynamic_interview_question + 1,
-                                    eval_result["followup"]
-                                )
+                            # Store follow-up to be shown next, but don't add to question list
+                            if questions_answered < st.session_state.original_num_questions:
+                                st.session_state.pending_followup_question = eval_result["followup"]
 
                         st.warning("⏰ Time's up! Answer auto-submitted.")
                         st.rerun()
@@ -9481,20 +9490,18 @@ Generate exactly {num_questions} questions now:
                                         domain=selected_domain
                                     )
 
-                                    # FIXED: Store answer, scores, and feedback ensuring proper tracking
+                                    # FIXED: Store answer, scores, feedback AND the actual question asked
                                     st.session_state.dynamic_interview_answers.append(answer)
                                     st.session_state.dynamic_interview_scores.append(eval_result)
                                     st.session_state.dynamic_interview_feedbacks.append(eval_result["feedback"])
+                                    st.session_state.dynamic_interview_questions_asked.append(question)  # FIXED: Track actual question
                                     st.session_state.dynamic_answer_submitted = True
 
-                                    # FIXED: Handle follow-up for Hard difficulty without breaking indexing
+                                    # FIXED: Handle follow-up for Hard difficulty - store separately, don't insert into list
                                     if st.session_state.interview_difficulty == "Hard" and eval_result.get("followup") and eval_result["followup"].strip():
-                                        # Only add follow-up if we haven't reached the end
-                                        if questions_answered < st.session_state.original_num_questions - 1:
-                                            st.session_state.dynamic_interview_questions.insert(
-                                                st.session_state.current_dynamic_interview_question + 1,
-                                                eval_result["followup"]
-                                            )
+                                        # Store follow-up to be shown next, but don't add to question list
+                                        if questions_answered < st.session_state.original_num_questions:
+                                            st.session_state.pending_followup_question = eval_result["followup"]
 
                                     st.rerun()
                             else:
@@ -9528,13 +9535,18 @@ Generate exactly {num_questions} questions now:
                         else:
                             # More questions to go
                             if st.button("Continue to Next Question ➡️"):
-                                st.session_state.current_dynamic_interview_question += 1
                                 st.session_state.dynamic_answer_submitted = False
-                                if st.session_state.current_dynamic_interview_question < len(st.session_state.dynamic_interview_questions):
-                                    st.session_state.current_interview_question_text = st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question]
-                                else:
-                                    # Safety check - if we're out of questions but haven't answered all, generate one
-                                    st.session_state.current_interview_question_text = f"Additional question for {selected_role}"
+
+                                # FIXED: Only increment index if no pending follow-up (follow-up uses same index)
+                                if not st.session_state.pending_followup_question:
+                                    st.session_state.current_dynamic_interview_question += 1
+                                    if st.session_state.current_dynamic_interview_question < len(st.session_state.dynamic_interview_questions):
+                                        st.session_state.current_interview_question_text = st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question]
+                                    else:
+                                        # Safety check - if we're out of questions but haven't answered all, generate one
+                                        st.session_state.current_interview_question_text = f"Additional question for {selected_role}"
+                                # If there's a pending follow-up, it will be loaded in the next render
+
                                 # TIMER RESET: Reset timer for next question
                                 st.session_state.question_timer_start = time.time()
                                 st.rerun()
@@ -9547,25 +9559,28 @@ Generate exactly {num_questions} questions now:
                     # CRITICAL FIX: Review Previous Answers - show all properly
                     if len(st.session_state.dynamic_interview_answers) > 0:
                         with st.expander("📖 Review Previous Answers"):
-                            # Show all submitted answers
-                            num_to_show = len(st.session_state.dynamic_interview_answers)
+                            # FIXED: Show all submitted answers using the actual questions asked
+                            num_to_show = min(
+                                len(st.session_state.dynamic_interview_answers),
+                                len(st.session_state.dynamic_interview_scores),
+                                len(st.session_state.dynamic_interview_questions_asked)
+                            )
                             for i in range(num_to_show):
-                                if i < len(st.session_state.dynamic_interview_questions) and i < len(st.session_state.dynamic_interview_scores):
-                                    prev_question = st.session_state.dynamic_interview_questions[i]
-                                    prev_answer = st.session_state.dynamic_interview_answers[i]
-                                    prev_scores = st.session_state.dynamic_interview_scores[i]
-                                    prev_avg = (prev_scores["knowledge"] + prev_scores["clarity"] + prev_scores["relevance"]) / 3
+                                prev_question = st.session_state.dynamic_interview_questions_asked[i]
+                                prev_answer = st.session_state.dynamic_interview_answers[i]
+                                prev_scores = st.session_state.dynamic_interview_scores[i]
+                                prev_avg = (prev_scores["knowledge"] + prev_scores["clarity"] + prev_scores["relevance"]) / 3
 
-                                    # Show full answer (up to 500 chars in review, full in final)
-                                    answer_preview = prev_answer[:500]
-                                    if len(prev_answer) > 500:
-                                        answer_preview += "..."
+                                # Show full answer (up to 500 chars in review, full in final)
+                                answer_preview = prev_answer[:500]
+                                if len(prev_answer) > 500:
+                                    answer_preview += "..."
 
-                                    st.markdown(f"**Question {i+1}:** {prev_question}")
-                                    st.markdown(f"**Your Answer:** {answer_preview}")
-                                    st.markdown(f"**Score:** {prev_avg:.1f}/10")
-                                    if i < num_to_show - 1:  # Don't add separator after last item
-                                        st.markdown("---")
+                                st.markdown(f"**Question {i+1}:** {prev_question}")
+                                st.markdown(f"**Your Answer:** {answer_preview}")
+                                st.markdown(f"**Score:** {prev_avg:.1f}/10")
+                                if i < num_to_show - 1:  # Don't add separator after last item
+                                    st.markdown("---")
 
                     # Auto-refresh for timer
                     if remaining_time > 0 and not st.session_state.dynamic_answer_submitted:
@@ -9686,19 +9701,19 @@ Generate exactly {num_questions} questions now:
                 st.markdown("---")
                 st.subheader("📋 Detailed Q&A Review:")
 
-                # Ensure we only show as many Q&A pairs as we have complete data for
+                # FIXED: Ensure we only show as many Q&A pairs as we have complete data for
                 num_complete_qa = min(
                     len(st.session_state.dynamic_interview_scores),
                     len(st.session_state.dynamic_interview_answers),
                     len(st.session_state.dynamic_interview_feedbacks),
-                    len(st.session_state.dynamic_interview_questions)
+                    len(st.session_state.dynamic_interview_questions_asked)  # FIXED: Use actual questions asked
                 )
 
                 for i in range(num_complete_qa):
                     score_dict = st.session_state.dynamic_interview_scores[i]
                     answer = st.session_state.dynamic_interview_answers[i]
                     feedback = st.session_state.dynamic_interview_feedbacks[i]
-                    question = st.session_state.dynamic_interview_questions[i]
+                    question = st.session_state.dynamic_interview_questions_asked[i]  # FIXED: Use actual question asked
 
                     q_avg = (score_dict["knowledge"] + score_dict["clarity"] + score_dict["relevance"]) / 3
 
@@ -9721,9 +9736,9 @@ Generate exactly {num_questions} questions now:
 
                 completed_on = get_ist_time()
 
-                # CRITICAL FIX: Ensure all arrays have same length for PDF generation
+                # FIXED: Ensure all arrays have same length for PDF generation using actual questions asked
                 num_complete = min(
-                    len(st.session_state.dynamic_interview_questions),
+                    len(st.session_state.dynamic_interview_questions_asked),
                     len(st.session_state.dynamic_interview_answers),
                     len(st.session_state.dynamic_interview_scores),
                     len(st.session_state.dynamic_interview_feedbacks)
@@ -9734,7 +9749,7 @@ Generate exactly {num_questions} questions now:
                     selected_role,
                     selected_domain,
                     completed_on,
-                    st.session_state.dynamic_interview_questions[:num_complete],
+                    st.session_state.dynamic_interview_questions_asked[:num_complete],  # FIXED: Use actual questions
                     st.session_state.dynamic_interview_answers[:num_complete],
                     st.session_state.dynamic_interview_scores[:num_complete],
                     st.session_state.dynamic_interview_feedbacks[:num_complete],
@@ -9774,11 +9789,13 @@ Generate exactly {num_questions} questions now:
                     st.session_state.dynamic_interview_answers = []
                     st.session_state.dynamic_interview_scores = []
                     st.session_state.dynamic_interview_feedbacks = []
+                    st.session_state.dynamic_interview_questions_asked = []  # FIXED: Clear questions asked
                     st.session_state.dynamic_answer_submitted = False
                     st.session_state.current_interview_question_text = ""
                     st.session_state.question_timer_start = None
                     st.session_state.timer_seconds = 120
                     st.session_state.interview_difficulty = "Medium"
+                    st.session_state.pending_followup_question = None
                     # FIXED: Don't reset original_num_questions to hardcoded value
                     if 'original_num_questions' in st.session_state:
                         del st.session_state.original_num_questions

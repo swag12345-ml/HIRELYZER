@@ -7557,24 +7557,26 @@ def evaluate_interview_answer(answer: str, question: str = None):
 
 def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty: str, role: str = "", domain: str = ""):
     """
-    Enhanced evaluation that returns detailed scores for Knowledge, Clarity, Relevance.
-    Also returns follow-up question for Hard difficulty.
-    Returns dict with keys: knowledge, clarity, relevance, feedback, followup
+    Content-grounded evaluation that returns detailed scores for Knowledge, Communication, Relevance.
+    Uses reasoning chains and keyword extraction to ensure scores are based on actual content overlap.
+    Returns dict with keys: knowledge, communication, relevance, feedback, followup
 
-    FIXED: Now correctly handles junk answers with score = 0 or 1, not default 5
-    FIXED: Adjusted evaluation strictness based on difficulty level
-    FIXED: Stricter junk answer filtering - checks word count and meaningful tokens
-    FIXED: Relevance check across domains to catch off-topic answers
+    Key improvements:
+    - Extracts expected concepts from question automatically
+    - Compares answer against question content (not style/length)
+    - Uses reasoning chain before scoring
+    - Returns strict JSON format
+    - Difficulty-aware scoring (Easy=forgiving, Medium=balanced, Hard=strict)
     """
     from llm_manager import call_llm
-    import re
+    import json
     import streamlit as st
 
     # Empty check or junk answers
     if not answer.strip() or answer == "⚠️ No Answer" or len(answer.strip()) < 3:
         return {
             "knowledge": 0,
-            "clarity": 0,
+            "communication": 0,
             "relevance": 0,
             "feedback": "No answer provided. Try using the STAR method: Situation, Task, Action, Result.",
             "followup": ""
@@ -7584,7 +7586,7 @@ def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty:
     if len(answer.strip()) == 1 or not any(c.isalnum() for c in answer):
         return {
             "knowledge": 0,
-            "clarity": 0,
+            "communication": 0,
             "relevance": 0,
             "feedback": "Answer appears incomplete or invalid. Please provide a meaningful response using the STAR method.",
             "followup": ""
@@ -7597,129 +7599,190 @@ def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty:
     if len(words) < 5 or len(meaningful_words) < 2:
         return {
             "knowledge": 0,
-            "clarity": 0,
+            "communication": 0,
             "relevance": 0,
             "feedback": "Answer too short or irrelevant. Please provide a detailed response with specific examples.",
             "followup": ""
         }
 
-    # Construct evaluation prompt with difficulty-based strictness
-    strictness_instructions = {
-        "Easy": "Be lenient - this is basic level. Give partial credit for effort and general understanding. Scores should range 4-10 typically.",
-        "Medium": "Be moderately strict - expect scenario-based thinking and some technical depth. Scores should range 3-10 typically.",
-        "Hard": "Be very strict - demand deep technical knowledge, system design thinking, and comprehensive answers. Scores should range 1-10 with most answers 2-8."
+    # Difficulty-based scoring guidelines
+    difficulty_guidelines = {
+        "Easy": {
+            "description": "Basic level - forgiving evaluation",
+            "expectations": "Basic understanding, some correct concepts, general relevance",
+            "score_range": "Typically 5-10. Give credit for effort and partial understanding.",
+            "min_concepts": "1-2 key concepts mentioned"
+        },
+        "Medium": {
+            "description": "Intermediate level - balanced evaluation",
+            "expectations": "Solid understanding, multiple concepts, practical examples, clear structure",
+            "score_range": "Typically 3-9. Expect depth and practical application.",
+            "min_concepts": "2-3 key concepts with some depth"
+        },
+        "Hard": {
+            "description": "Advanced level - strict evaluation",
+            "expectations": "Deep expertise, comprehensive coverage, edge cases, trade-offs, system design thinking",
+            "score_range": "Typically 2-8. Demand excellence and thorough analysis.",
+            "min_concepts": "3-4+ key concepts with nuanced understanding"
+        }
     }
 
-    followup_instruction = ""
-    if difficulty == "Hard":
-        followup_instruction = "\n- FollowUp: Generate ONE probing follow-up question to dig deeper into their answer."
+    difficulty_guide = difficulty_guidelines.get(difficulty, difficulty_guidelines["Medium"])
 
-    # Build role/domain context for relevance checking
+    # Build context info
     context_info = ""
     if role and domain:
-        context_info = f"\nRole Context: {role} in {domain}"
+        context_info = f"Role: {role} | Domain: {domain}"
 
-    prompt = f"""You are an expert interview evaluator. Evaluate the candidate's answer strictly and constructively.
+    # Construct content-grounded evaluation prompt
+    prompt = f"""You are an expert technical interview evaluator. Your task is to perform a CONTENT-GROUNDED evaluation of the candidate's answer.
 
+## Interview Context
 Question: {question}
-Candidate Answer: {answer}
-Difficulty Level: {difficulty}{context_info}
+Difficulty: {difficulty} ({difficulty_guide["description"]})
+{context_info if context_info else ""}
 
-EVALUATION STRICTNESS: {strictness_instructions.get(difficulty, strictness_instructions["Medium"])}
+## Candidate's Answer
+{answer}
 
-Provide scores (1-10 scale):
-- Knowledge: Technical accuracy and depth of understanding
-- Clarity: How clearly the answer is communicated
-- Relevance: How well the answer addresses the question and stays on-topic within the same domain/role
+## Evaluation Process (Follow this reasoning chain):
 
-CRITICAL RELEVANCE CHECK:
-- Does the answer directly address the question?
-- Does the answer stay within the topic domain (e.g., if this is a Data Science question, is the answer about Data Science or something unrelated like Cloud Computing)?
-- If the answer is from another domain or completely off-topic, score Relevance 0-2 and provide feedback: "Your answer is unrelated to the asked topic. Please focus on {role}/{domain}."
+### STEP 1: Extract Expected Concepts
+From the question, identify 3-5 key concepts, keywords, or technical elements that a good answer MUST address.
+List these concepts explicitly.
 
-IMPORTANT: If the answer is junk, irrelevant, or barely attempts to answer the question, give scores of 0-2. Do NOT give default mid-range scores to poor answers.
+### STEP 2: Analyze Answer Coverage
+For EACH expected concept, check if the candidate's answer:
+- ✅ Mentions it explicitly
+- ⚠️ Mentions it partially or indirectly
+- ❌ Completely misses it
 
-Also provide:
-- Feedback: 2-3 short bullet points with specific improvement tips{followup_instruction}
+### STEP 3: Evaluate Content Quality
+Based on STEP 2 coverage analysis:
+- What did the answer do RIGHT? (specific concepts covered well)
+- What did the answer do WRONG? (concepts missing, incorrect, or superficial)
+- Is the answer technically accurate?
+- Does it stay on-topic for {domain if domain else "the question domain"}?
 
-Output format (strict):
-Knowledge: <number 1-10>
-Clarity: <number 1-10>
-Relevance: <number 1-10>
-Feedback:
-- <tip 1>
-- <tip 2>
-- <tip 3>{f"""
-FollowUp: <one probing question>""" if difficulty == "Hard" else ""}
-"""
+### STEP 4: Assign Scores (1-10 scale)
+Based on STEP 3 analysis and difficulty level ({difficulty}):
+
+**Difficulty Guidelines:**
+- Expectations: {difficulty_guide["expectations"]}
+- Score Range: {difficulty_guide["score_range"]}
+- Minimum Coverage: {difficulty_guide["min_concepts"]}
+
+**Knowledge Score (1-10):**
+- How many expected concepts were covered correctly?
+- Is the technical content accurate?
+- {difficulty_guide["score_range"]}
+
+**Communication Score (1-10):**
+- Is the answer structured and coherent?
+- Does it use clear language and examples?
+- Note: Judge structure/clarity, NOT length
+
+**Relevance Score (1-10):**
+- Does it directly address the question asked?
+- Does it stay within the correct domain/topic?
+- Are there any off-topic tangents?
+
+### STEP 5: Generate Feedback & Follow-up
+- Feedback: ONE specific, actionable improvement (e.g., "Add an example of X" or "Clarify the difference between Y and Z")
+- {"Follow-up: ONE probing question to deepen understanding" if difficulty == "Hard" else "Follow-up: Not required for this difficulty"}
+
+## Output Format (STRICT JSON)
+Return ONLY valid JSON with this exact structure:
+
+{{
+  "reasoning": {{
+    "expected_concepts": ["concept1", "concept2", "concept3"],
+    "coverage_analysis": "Brief analysis of what was covered vs missed",
+    "strengths": "What the answer did right",
+    "weaknesses": "What the answer missed or got wrong"
+  }},
+  "knowledge": <integer 1-10>,
+  "communication": <integer 1-10>,
+  "relevance": <integer 1-10>,
+  "feedback": "<one specific actionable tip>",
+  "followup": "<one probing question{' (required for Hard difficulty)' if difficulty == 'Hard' else ' (empty string for Easy/Medium)'}>"
+}}
+
+CRITICAL RULES:
+1. Scores MUST be based on concept coverage, NOT answer length or style
+2. If answer misses 50%+ expected concepts, scores should be ≤5
+3. If answer is completely off-topic, Relevance ≤2
+4. Return ONLY valid JSON - no extra text before or after
+5. Apply difficulty-appropriate strictness: Easy=forgiving, Medium=balanced, Hard=strict"""
 
     try:
+        # Call LLM
         response = call_llm(prompt, session=st.session_state).strip()
 
-        # Parse scores with regex
-        knowledge_match = re.search(r"Knowledge:\s*(\d+)", response, re.IGNORECASE)
-        clarity_match = re.search(r"Clarity:\s*(\d+)", response, re.IGNORECASE)
-        relevance_match = re.search(r"Relevance:\s*(\d+)", response, re.IGNORECASE)
+        # Try to extract JSON from response (handle cases where LLM adds text around JSON)
+        json_start = response.find('{')
+        json_end = response.rfind('}') + 1
 
-        # FIXED: Default to 1 (not 5) if regex fails - indicates parsing error or bad answer
-        knowledge = int(knowledge_match.group(1)) if knowledge_match else 1
-        clarity = int(clarity_match.group(1)) if clarity_match else 1
-        relevance = int(relevance_match.group(1)) if relevance_match else 1
+        if json_start != -1 and json_end > json_start:
+            json_str = response[json_start:json_end]
+            result = json.loads(json_str)
+        else:
+            # Fallback: try parsing entire response
+            result = json.loads(response)
 
-        # Clamp to 1-10 range first
+        # Extract scores with validation
+        knowledge = int(result.get("knowledge", 1))
+        communication = int(result.get("communication", 1))
+        relevance = int(result.get("relevance", 1))
+
+        # Clamp to 1-10 range
         knowledge = max(1, min(10, knowledge))
-        clarity = max(1, min(10, clarity))
+        communication = max(1, min(10, communication))
         relevance = max(1, min(10, relevance))
 
-        # SCORING FIX PER DIFFICULTY: Apply minimum score clamping
-        if difficulty == "Easy":
-            # Easy: clamp scores 3-10
-            knowledge = max(3, knowledge)
-            clarity = max(3, clarity)
-            relevance = max(3, relevance)
-        elif difficulty == "Medium":
-            # Medium: clamp scores 2-10
-            knowledge = max(2, knowledge)
-            clarity = max(2, clarity)
-            relevance = max(2, relevance)
-        # Hard: keep 1-10 range (no additional clamping)
-
-        # Parse feedback
-        feedback_match = re.search(r"Feedback:\s*(.+?)(?:FollowUp:|$)", response, re.DOTALL | re.IGNORECASE)
-        if feedback_match:
-            feedback_text = feedback_match.group(1).strip()
-        else:
-            feedback_text = "Use STAR format. Provide concrete examples. Be concise and clear."
-
-        # Parse follow-up question for Hard difficulty
-        followup = ""
-        if difficulty == "Hard":
-            followup_match = re.search(r"FollowUp:\s*(.+)", response, re.DOTALL | re.IGNORECASE)
-            if followup_match:
-                followup = followup_match.group(1).strip()
+        # Extract feedback and followup
+        feedback = result.get("feedback", "Provide more specific details and examples.")
+        followup = result.get("followup", "")
 
         return {
             "knowledge": knowledge,
-            "clarity": clarity,
+            "communication": communication,
             "relevance": relevance,
-            "feedback": feedback_text,
+            "feedback": feedback,
             "followup": followup
         }
 
-    except Exception as e:
-        # FIXED: Fallback defaults based on difficulty
+    except (json.JSONDecodeError, KeyError, ValueError) as e:
+        # Fallback with difficulty-appropriate defaults
         if difficulty == "Easy":
-            fallback_score = 3
+            fallback_score = 5
         elif difficulty == "Medium":
-            fallback_score = 2
+            fallback_score = 3
         else:  # Hard
-            fallback_score = 1
+            fallback_score = 2
 
         return {
             "knowledge": fallback_score,
-            "clarity": fallback_score,
+            "communication": fallback_score,
             "relevance": fallback_score,
-            "feedback": f"Evaluation error. Please provide a clear, detailed answer using the STAR method.",
+            "feedback": "Evaluation parsing error. Please provide a clear, detailed answer addressing the key concepts in the question.",
+            "followup": ""
+        }
+
+    except Exception as e:
+        # General error fallback
+        if difficulty == "Easy":
+            fallback_score = 5
+        elif difficulty == "Medium":
+            fallback_score = 3
+        else:  # Hard
+            fallback_score = 2
+
+        return {
+            "knowledge": fallback_score,
+            "communication": fallback_score,
+            "relevance": fallback_score,
+            "feedback": f"Evaluation error. Please provide a structured answer with specific examples.",
             "followup": ""
         }
 
@@ -9816,6 +9879,7 @@ Generate exactly {num_questions} questions now:
                     st.rerun()
         else:
             st.info("Please select both a career domain and target role to start the interview practice.")
+                      
                       
 if tab5:
 	with tab5:

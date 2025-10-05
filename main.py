@@ -7493,6 +7493,7 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
+
 def evaluate_interview_answer(answer: str, question: str = None):
     """
     Uses an LLM to strictly evaluate an interview answer.
@@ -7557,46 +7558,42 @@ def evaluate_interview_answer(answer: str, question: str = None):
 
 def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty: str, role: str = "", domain: str = ""):
     """
-    Intelligent interview answer evaluator with chain-of-thought reasoning.
-    Returns detailed scores for Knowledge, Communication, and Relevance with structured feedback.
+    UPGRADED: Intelligent evaluation with chain-of-thought reasoning and structured feedback.
+    Uses JSON-based parsing for robustness and provides detailed, actionable feedback.
+
     Returns dict with keys: knowledge, communication, relevance, feedback (list), followup
 
-    UPGRADED: Chain-of-thought evaluation with keyword extraction and comparison
-    UPGRADED: Multi-step reasoning (positives → improvements → scoring)
-    UPGRADED: Structured bullet-point feedback with actionable tips
-    UPGRADED: JSON-based parsing for robustness
-    UPGRADED: Difficulty-level calibration (Easy/Medium/Hard)
+    Features:
+    - Chain-of-thought evaluation: extracts key concepts, identifies strengths/gaps
+    - Structured feedback: 3-5 bullet points with specific, actionable tips
+    - Difficulty calibration: Easy (encouraging), Medium (balanced), Hard (strict)
+    - JSON-based parsing for reliability
     """
     from llm_manager import call_llm
     import json
     import streamlit as st
 
+    # Empty check or junk answers
     if not answer.strip() or answer == "⚠️ No Answer" or len(answer.strip()) < 3:
         return {
             "knowledge": 0,
             "communication": 0,
             "relevance": 0,
-            "feedback": [
-                "No answer provided.",
-                "Try using the STAR method: Situation, Task, Action, Result.",
-                "Provide specific examples from your experience."
-            ],
+            "feedback": ["No answer provided.", "Try using the STAR method: Situation, Task, Action, Result.", "Provide specific examples from your experience."],
             "followup": ""
         }
 
+    # Check for obvious junk answers (single character, just symbols, etc.)
     if len(answer.strip()) == 1 or not any(c.isalnum() for c in answer):
         return {
             "knowledge": 0,
             "communication": 0,
             "relevance": 0,
-            "feedback": [
-                "Answer appears incomplete or invalid.",
-                "Please provide a meaningful response using complete sentences.",
-                "Focus on answering the specific question asked."
-            ],
+            "feedback": ["Answer appears incomplete or invalid.", "Please provide a meaningful response with technical details.", "Structure your answer clearly with examples."],
             "followup": ""
         }
 
+    # STRICTER JUNK FILTERING: Check word count and meaningful tokens
     words = answer.strip().split()
     meaningful_words = [w for w in words if len(w) > 2 and any(c.isalpha() for c in w)]
 
@@ -7605,167 +7602,187 @@ def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty:
             "knowledge": 0,
             "communication": 0,
             "relevance": 0,
-            "feedback": [
-                "Answer too short or lacks substance.",
-                "Provide a detailed response with specific examples.",
-                "Aim for at least 3-4 complete sentences explaining your approach."
-            ],
+            "feedback": ["Answer too short or lacks substance.", "Provide a detailed response with at least 3-4 sentences.", "Include specific examples or technical details."],
             "followup": ""
         }
 
-    difficulty_calibration = {
+    # Difficulty-based evaluation guidance
+    difficulty_guidance = {
         "Easy": {
-            "description": "Be encouraging and forgiving. Reward effort and general understanding. Look for basic grasp of concepts.",
-            "score_range": "Scores typically 6-10. Award 8-10 for solid understanding, 6-7 for partial grasp, below 6 only for significantly off-topic answers."
+            "tone": "encouraging and forgiving",
+            "expectations": "basic understanding and general concepts",
+            "scoring": "Give partial credit for effort. Score 5-10 for reasonable attempts, 3-4 for weak but present answers, 0-2 for irrelevant/junk.",
+            "feedback_style": "positive and encouraging with gentle improvement tips"
         },
         "Medium": {
-            "description": "Be balanced and realistic. Expect scenario-based thinking and moderate technical depth. Reward concrete examples.",
-            "score_range": "Scores typically 4-10. Award 8-10 for comprehensive answers, 5-7 for adequate but incomplete, below 5 for weak or irrelevant answers."
+            "tone": "balanced and realistic",
+            "expectations": "scenario-based thinking, some technical depth, and practical examples",
+            "scoring": "Score 6-10 for good answers, 3-5 for incomplete/basic answers, 0-2 for poor/irrelevant.",
+            "feedback_style": "constructive and specific with clear improvement areas"
         },
         "Hard": {
-            "description": "Be strict and technical. Demand deep expertise, system design thinking, edge cases, and trade-off analysis.",
-            "score_range": "Scores typically 2-9. Award 8-9 for exceptional depth, 5-7 for solid technical answers, 3-4 for surface-level responses, below 3 for poor answers."
+            "tone": "strict and technical",
+            "expectations": "deep technical knowledge, system design thinking, edge cases, and comprehensive understanding",
+            "scoring": "Score 7-10 for excellent answers, 4-6 for adequate but incomplete, 0-3 for weak/incorrect.",
+            "feedback_style": "concise and technical with precise critique"
         }
     }
 
-    calibration = difficulty_calibration.get(difficulty, difficulty_calibration["Medium"])
-    context_info = f" (Role: {role}, Domain: {domain})" if role and domain else ""
+    guidance = difficulty_guidance.get(difficulty, difficulty_guidance["Medium"])
 
-    prompt = f"""You are an expert technical interview evaluator. Perform a thorough, step-by-step evaluation of the candidate's answer.
+    # Build context for relevance checking
+    context_info = f" for {role} in {domain}" if role and domain else ""
 
-**QUESTION:**
-{question}
+    # UPGRADED CHAIN-OF-THOUGHT EVALUATION PROMPT
+    prompt = f"""You are an expert technical interviewer evaluating a candidate's answer{context_info}.
 
-**CANDIDATE'S ANSWER:**
-{answer}
+QUESTION: {question}
+CANDIDATE'S ANSWER: {answer}
+DIFFICULTY LEVEL: {difficulty}
 
-**EVALUATION CONTEXT:**
-- Difficulty Level: {difficulty}{context_info}
-- Calibration: {calibration['description']}
-- Expected Score Range: {calibration['score_range']}
+EVALUATION APPROACH ({guidance['tone']}):
+Expected: {guidance['expectations']}
+Scoring: {guidance['scoring']}
+Feedback Style: {guidance['feedback_style']}
 
-**EVALUATION PROCESS (Chain-of-Thought):**
+STEP-BY-STEP EVALUATION PROCESS:
 
-STEP 1 - EXTRACT KEY CONCEPTS FROM QUESTION:
-First, identify the key technical concepts, keywords, or expected elements that the question is asking for. List 3-5 key points the ideal answer should cover.
+STEP 1 - EXTRACT KEY CONCEPTS FROM THE QUESTION:
+List 3-5 technical concepts, keywords, or expected topics the question is asking about.
 
-STEP 2 - ANALYZE WHAT THE ANSWER DOES WELL:
-Identify specific strengths in the candidate's answer:
-- Which key concepts were correctly addressed?
-- What technical terms or examples were used effectively?
-- What aspects show good understanding?
+STEP 2 - ANALYZE THE ANSWER:
+✅ STRENGTHS: What did the candidate do well? Which concepts did they cover? What was clear or correct?
+⚠️ GAPS/IMPROVEMENTS: What's missing? What's incorrect? What could be clearer?
 
-STEP 3 - IDENTIFY GAPS AND IMPROVEMENTS:
-Identify what's missing or incorrect:
-- Which expected concepts are missing or incomplete?
-- Are there any technical inaccuracies?
-- What could be clearer or more detailed?
-- Is the answer relevant to the question domain?
+STEP 3 - SCORE THE ANSWER (1-10 scale):
+- Knowledge: Technical correctness, depth, and completeness (did they cover key concepts?)
+- Communication: Clarity, structure, and articulation (was it easy to follow?)
+- Relevance: How directly does this answer the question? Is it on-topic?
 
-STEP 4 - ASSIGN SCORES (1-10 scale):
-Based on the analysis above, assign three scores:
-- **Knowledge**: Technical correctness, depth, and accuracy of content
-- **Communication**: Clarity, structure, and articulation of ideas
-- **Relevance**: How directly the answer addresses the question asked
+STEP 4 - GENERATE FEEDBACK (3-5 bullet points):
+Each bullet should be specific, actionable, and reference the actual content:
+- Highlight specific strengths (what they mentioned that was good)
+- Point out specific gaps (what key concept or detail they missed)
+- Provide one actionable tip (e.g., "Try adding a real-world example of...")
 
-STEP 5 - GENERATE FEEDBACK:
-Provide 3-5 specific, actionable bullet points:
-- At least 1 strength (what they did well)
-- At least 2 improvement areas (what's missing or could be better)
-- 1 actionable tip (concrete suggestion for next time)
+{"STEP 5 - FOLLOW-UP QUESTION: Generate ONE probing follow-up question that digs deeper based on their answer." if difficulty == "Hard" else ""}
 
-STEP 6 - FOLLOW-UP QUESTION (for Hard difficulty only):
-{"Generate ONE probing follow-up question to dig deeper into their answer or explore a related concept." if difficulty == "Hard" else "Skip this step."}
-
-**OUTPUT FORMAT (STRICT JSON):**
-Return your evaluation as a valid JSON object with this exact structure:
-
+OUTPUT FORMAT (strict JSON):
 {{
-  "key_concepts_from_question": ["concept 1", "concept 2", "concept 3"],
-  "positives": ["specific strength 1", "specific strength 2"],
-  "improvements": ["specific gap 1", "specific gap 2"],
-  "knowledge": <integer 1-10>,
-  "communication": <integer 1-10>,
-  "relevance": <integer 1-10>,
+  "key_concepts": ["concept1", "concept2", "concept3"],
+  "strengths": ["strength1", "strength2"],
+  "gaps": ["gap1", "gap2"],
+  "knowledge": <number 1-10>,
+  "communication": <number 1-10>,
+  "relevance": <number 1-10>,
   "feedback": [
-    "Specific strength with example",
-    "Specific area for improvement",
-    "Another improvement suggestion",
+    "Specific strength or positive observation",
+    "Specific gap or area for improvement",
     "Actionable tip for next time"
-  ],
-  "followup": "{'"One probing follow-up question"' if difficulty == 'Hard' else ''}"
+  ]{',\n  "followup": "One probing follow-up question"' if difficulty == "Hard" else ''}
 }}
 
-**CRITICAL RULES:**
-1. Scores must match the difficulty calibration range
-2. Feedback must be specific to THIS answer and THIS question (not generic)
-3. If answer is completely off-topic or wrong, score Knowledge and Relevance below 3
-4. Return ONLY valid JSON, no extra text before or after
-"""
+IMPORTANT RULES:
+- If answer is off-topic or from wrong domain, set relevance to 0-2
+- If answer is junk/minimal, set all scores to 0-2
+- Feedback must be specific to THIS answer, not generic templates
+- Reference actual content from the candidate's answer in feedback
+- Each feedback point should feel personalized and human
+
+Provide ONLY the JSON output, no additional text."""
 
     try:
         response = call_llm(prompt, session=st.session_state).strip()
 
-        response = response.strip()
-        if response.startswith("```json"):
-            response = response[7:]
+        # Clean response - remove markdown code blocks if present
         if response.startswith("```"):
-            response = response[3:]
-        if response.endswith("```"):
-            response = response[:-3]
-        response = response.strip()
+            response = response.split("```")[1]
+            if response.startswith("json"):
+                response = response[4:]
+            response = response.strip()
 
+        # Parse JSON response
         result = json.loads(response)
 
+        # Extract and validate scores
         knowledge = int(result.get("knowledge", 1))
         communication = int(result.get("communication", 1))
         relevance = int(result.get("relevance", 1))
 
-        knowledge = max(1, min(10, knowledge))
-        communication = max(1, min(10, communication))
-        relevance = max(1, min(10, relevance))
+        # Clamp scores to 0-10 range
+        knowledge = max(0, min(10, knowledge))
+        communication = max(0, min(10, communication))
+        relevance = max(0, min(10, relevance))
 
+        # Extract feedback (ensure it's a list)
         feedback = result.get("feedback", [])
         if isinstance(feedback, str):
-            feedback = [line.strip("- ").strip() for line in feedback.split("\n") if line.strip()]
-        if not feedback or len(feedback) < 3:
-            feedback = [
-                "Consider providing more specific examples.",
-                "Focus on addressing all parts of the question.",
-                "Try structuring your answer more clearly."
-            ]
+            # If feedback is a string, split by newlines or bullets
+            feedback = [line.strip("- •").strip() for line in feedback.split("\n") if line.strip()]
 
-        followup = result.get("followup", "")
-        if not isinstance(followup, str):
-            followup = ""
+        # Ensure we have at least 3 feedback points
+        if len(feedback) < 3:
+            feedback.extend([
+                "Consider providing more technical details.",
+                "Structure your answer more clearly.",
+                "Include specific examples from your experience."
+            ][:3 - len(feedback)])
+
+        # Extract follow-up question
+        followup = result.get("followup", "") if difficulty == "Hard" else ""
 
         return {
             "knowledge": knowledge,
             "communication": communication,
             "relevance": relevance,
-            "feedback": feedback,
+            "feedback": feedback[:5],  # Limit to 5 points max
             "followup": followup
         }
 
-    except (json.JSONDecodeError, KeyError, ValueError, TypeError) as e:
-        if difficulty == "Easy":
-            fallback_score = 5
-        elif difficulty == "Medium":
-            fallback_score = 4
-        else:
-            fallback_score = 3
+    except json.JSONDecodeError as e:
+        # Fallback: try to extract scores from non-JSON response
+        import re
+        try:
+            knowledge = int(re.search(r'"?knowledge"?\s*:\s*(\d+)', response, re.IGNORECASE).group(1))
+            communication = int(re.search(r'"?communication"?\s*:\s*(\d+)', response, re.IGNORECASE).group(1))
+            relevance = int(re.search(r'"?relevance"?\s*:\s*(\d+)', response, re.IGNORECASE).group(1))
 
-        return {
-            "knowledge": fallback_score,
-            "communication": fallback_score,
-            "relevance": fallback_score,
-            "feedback": [
-                "Your answer shows some understanding but needs more detail.",
-                "Try providing specific examples from your experience.",
-                "Structure your response using the STAR method for clarity."
-            ],
-            "followup": ""
-        }
+            # Extract feedback array
+            feedback_match = re.search(r'"feedback"\s*:\s*\[(.*?)\]', response, re.DOTALL)
+            if feedback_match:
+                feedback_text = feedback_match.group(1)
+                feedback = [f.strip(' "\'') for f in re.findall(r'"([^"]+)"', feedback_text)]
+            else:
+                feedback = ["Answer evaluated but formatting unclear.", "Provide more structured responses.", "Use clear examples and explanations."]
+
+            return {
+                "knowledge": max(0, min(10, knowledge)),
+                "communication": max(0, min(10, communication)),
+                "relevance": max(0, min(10, relevance)),
+                "feedback": feedback[:5],
+                "followup": ""
+            }
+        except:
+            pass
+
+    except Exception as e:
+        pass
+
+    # Final fallback based on difficulty
+    fallback_scores = {"Easy": 3, "Medium": 2, "Hard": 1}
+    fallback_score = fallback_scores.get(difficulty, 2)
+
+    return {
+        "knowledge": fallback_score,
+        "communication": fallback_score,
+        "relevance": fallback_score,
+        "feedback": [
+            "Unable to evaluate properly. Please provide a clear, structured answer.",
+            "Use the STAR method for behavioral questions.",
+            "Include technical details and examples for technical questions."
+        ],
+        "followup": ""
+    }
 
 
 def get_ist_time():
@@ -7883,14 +7900,11 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
             q_escaped = q.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
             a_escaped = a.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
+            # Handle feedback as list or string
             if isinstance(f, list):
-                f_html = "<ul>"
-                for item in f:
-                    item_escaped = item.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-                    f_html += f"<li>{item_escaped}</li>"
-                f_html += "</ul>"
+                f_escaped = '<ul>' + ''.join([f'<li>{tip.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")}</li>' for tip in f]) + '</ul>'
             else:
-                f_html = f.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                f_escaped = f.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
             # SHOW FULL ANSWER - NO TRUNCATION IN PDF
             answer_display = a_escaped
@@ -7911,7 +7925,7 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
                 <div class="answer-text"><strong>Your Answer:</strong><br/>{answer_display}</div>
                 <p class="score">Knowledge: {s.get('knowledge', 0)}/10 | Communication: {s.get('communication', 0)}/10 | Relevance: {s.get('relevance', 0)}/10</p>
                 <p class="score">Question Score: {avg_q_score:.1f}/10</p>
-                <div class="feedback"><strong>Feedback:</strong><br/>{f_html}</div>
+                <div class="feedback"><strong>Feedback:</strong><br/>{f_escaped}</div>
                 {followup_text}
             </div>
             """
@@ -9586,15 +9600,6 @@ Generate exactly {num_questions} questions now:
                         current_score_dict = st.session_state.dynamic_interview_scores[-1]
                         avg_q_score = (current_score_dict["knowledge"] + current_score_dict["communication"] + current_score_dict["relevance"]) / 3
 
-                        feedback_items = current_score_dict["feedback"]
-                        if isinstance(feedback_items, list):
-                            feedback_html = "<ul style='margin: 5px 0; padding-left: 20px;'>"
-                            for item in feedback_items:
-                                feedback_html += f"<li style='margin: 5px 0;'>{item}</li>"
-                            feedback_html += "</ul>"
-                        else:
-                            feedback_html = f"<div style='white-space: pre-line; margin-top: 5px;'>{feedback_items}</div>"
-
                         st.markdown(f"""
                         <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%);
                                     border: 1px solid rgba(0, 195, 255, 0.3); border-radius: 10px; padding: 15px; margin: 15px 0;">
@@ -9603,7 +9608,9 @@ Generate exactly {num_questions} questions now:
                             <p style="color: #ffffff;">⭐ Question Score: {avg_q_score:.1f}/10</p>
                             <div style="color: #ffffff; margin-top: 10px;">
                                 <strong>💡 Improvement Tips:</strong>
-                                {feedback_html}
+                                <ul style="margin-top: 5px; padding-left: 20px;">
+                                    {''.join([f'<li>{tip}</li>' for tip in (current_score_dict["feedback"] if isinstance(current_score_dict["feedback"], list) else [current_score_dict["feedback"]])])}
+                                </ul>
                             </div>
                         </div>
                         """, unsafe_allow_html=True)
@@ -9798,14 +9805,14 @@ Generate exactly {num_questions} questions now:
 
                     with st.expander(f"Question {i+1}: Score {q_avg:.1f}/10"):
                         st.write(f"**Question:** {question}")
-                        st.write(f"**Your Answer:** {answer}")
+                        st.write(f"**Your Answer:** {answer}")  # Show full answer
                         st.write(f"**Scores:** Knowledge: {score_dict['knowledge']}/10 | Communication: {score_dict['communication']}/10 | Relevance: {score_dict['relevance']}/10")
-                        st.write("**Feedback:**")
                         if isinstance(feedback, list):
-                            for item in feedback:
-                                st.write(f"- {item}")
+                            st.write("**Feedback:**")
+                            for tip in feedback:
+                                st.write(f"  - {tip}")
                         else:
-                            st.write(feedback)
+                            st.write(f"**Feedback:** {feedback}")
 
                 # Save to database
                 username = st.session_state.get("username", "Guest")
@@ -9882,6 +9889,7 @@ Generate exactly {num_questions} questions now:
                     st.rerun()
         else:
             st.info("Please select both a career domain and target role to start the interview practice.")
+                      
                       
                       
                       

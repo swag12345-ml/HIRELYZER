@@ -7844,6 +7844,20 @@ def save_interview_result(username: str, role: str, domain: str, avg_score: floa
         return False
 
 
+def format_feedback_text(feedback):
+    """
+    Format feedback text into bullet points for clean display
+    """
+    import re
+    sentences = re.split(r'(?<=\.)\s+', feedback.strip())
+    sentences = [s.strip() for s in sentences if len(s.strip()) > 0]
+    formatted = "<b>💡 Improvement Tips:</b><br><ul style='margin-top:5px;'>"
+    for s in sentences:
+        formatted += f"<li>{s}</li>"
+    formatted += "</ul>"
+    return formatted
+
+
 def generate_interview_pdf_report(username, role, domain, completed_on, questions, answers, scores, feedbacks, overall_avg, badge, difficulty="Medium"):
     """
     Generate PDF report for interview using xhtml2pdf
@@ -7903,8 +7917,16 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
             else:
                 f_text = f
 
-            # Escape HTML and preserve paragraph breaks
-            f_escaped = f_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('\n', '<br/>')
+            # Format feedback into bullet points
+            import re
+            sentences = re.split(r'(?<=\.)\s+', f_text.strip())
+            sentences = [s.strip() for s in sentences if len(s.strip()) > 0]
+            bullet_feedback = "<b>💡 Improvement Tips:</b><br><ul style='margin-top:5px;'>"
+            for s in sentences:
+                s_escaped = s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                bullet_feedback += f"<li>{s_escaped}</li>"
+            bullet_feedback += "</ul>"
+            f_escaped = bullet_feedback
 
             # SHOW FULL ANSWER - NO TRUNCATION IN PDF
             answer_display = a_escaped
@@ -9600,6 +9622,10 @@ Generate exactly {num_questions} questions now:
                         current_score_dict = st.session_state.dynamic_interview_scores[-1]
                         avg_q_score = (current_score_dict["knowledge"] + current_score_dict["communication"] + current_score_dict["relevance"]) / 3
 
+                        # Format feedback for display
+                        feedback_text = current_score_dict["feedback"] if isinstance(current_score_dict["feedback"], str) else chr(10).join(current_score_dict["feedback"])
+                        formatted_feedback = format_feedback_text(feedback_text)
+
                         st.markdown(f"""
                         <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%);
                                     border: 1px solid rgba(0, 195, 255, 0.3); border-radius: 10px; padding: 15px; margin: 15px 0;">
@@ -9607,10 +9633,7 @@ Generate exactly {num_questions} questions now:
                             <p style="color: #ffffff;">📊 Knowledge: {current_score_dict["knowledge"]}/10 | Communication: {current_score_dict["communication"]}/10 | Relevance: {current_score_dict["relevance"]}/10</p>
                             <p style="color: #ffffff;">⭐ Question Score: {avg_q_score:.1f}/10</p>
                             <div style="color: #ffffff; margin-top: 10px;">
-                                <strong>💡 Detailed Feedback:</strong>
-                                <div style="margin-top: 10px; padding: 10px; background: rgba(0, 195, 255, 0.1); border-radius: 8px; white-space: pre-wrap;">
-                                    {current_score_dict["feedback"] if isinstance(current_score_dict["feedback"], str) else chr(10).join(current_score_dict["feedback"])}
-                                </div>
+                                {formatted_feedback}
                             </div>
                         </div>
                         """, unsafe_allow_html=True)
@@ -9807,12 +9830,11 @@ Generate exactly {num_questions} questions now:
                         st.write(f"**Question:** {question}")
                         st.write(f"**Your Answer:** {answer}")  # Show full answer
                         st.write(f"**Scores:** Knowledge: {score_dict['knowledge']}/10 | Communication: {score_dict['communication']}/10 | Relevance: {score_dict['relevance']}/10")
-                        if isinstance(feedback, list):
-                            st.write("**Feedback:**")
-                            for tip in feedback:
-                                st.write(f"  - {tip}")
-                        else:
-                            st.write(f"**Feedback:** {feedback}")
+
+                        # Format and display feedback as bullet points
+                        feedback_text = "\n".join(feedback) if isinstance(feedback, list) else feedback
+                        formatted_feedback = format_feedback_text(feedback_text)
+                        st.markdown(formatted_feedback, unsafe_allow_html=True)
 
                 # Save to database
                 username = st.session_state.get("username", "Guest")
@@ -9889,7 +9911,6 @@ Generate exactly {num_questions} questions now:
                     st.rerun()
         else:
             st.info("Please select both a career domain and target role to start the interview practice.")
-
                       
                       
                       

@@ -7578,7 +7578,9 @@ def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty:
             "knowledge": 0,
             "communication": 0,
             "relevance": 0,
-            "feedback": "No answer provided. Try using the STAR method: Situation, Task, Action, Result.",
+            "feedback": "- No answer provided. Please attempt to answer the question.
+- Try using the STAR method: Situation, Task, Action, Result.
+- Provide specific examples and technical details relevant to the question.",
             "followup": ""
         }
 
@@ -7588,7 +7590,9 @@ def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty:
             "knowledge": 0,
             "communication": 0,
             "relevance": 0,
-            "feedback": "Answer appears incomplete or invalid. Please provide a meaningful response using the STAR method.",
+            "feedback": "- Answer appears incomplete or invalid. Please provide a meaningful response.
+- Use the STAR method to structure your answer: Situation, Task, Action, Result.
+- Include specific technical details and concrete examples relevant to the question.",
             "followup": ""
         }
 
@@ -7601,7 +7605,9 @@ def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty:
             "knowledge": 0,
             "communication": 0,
             "relevance": 0,
-            "feedback": "Answer too short or irrelevant. Please provide a detailed response with specific examples.",
+            "feedback": "- Answer is too short or appears irrelevant to the question asked.
+- Please provide a detailed response with multiple key concepts addressed.
+- Include specific examples, use cases, or scenarios to demonstrate your understanding.",
             "followup": ""
         }
 
@@ -7687,8 +7693,12 @@ Based on STEP 3 analysis and difficulty level ({difficulty}):
 - Does it stay within the correct domain/topic?
 - Are there any off-topic tangents?
 
-### STEP 5: Generate Feedback & Follow-up
-- Feedback: ONE specific, actionable improvement (e.g., "Add an example of X" or "Clarify the difference between Y and Z")
+### STEP 5: Generate Detailed Feedback & Follow-up
+- Feedback: Provide 3-5 detailed, specific, actionable improvement tips as separate bullet points
+  * Each bullet should be a complete sentence with concrete suggestions
+  * Examples: "The answer could benefit from more specific examples of how X is implemented in real-world scenarios to further illustrate its importance and functionality."
+  * Focus on what's missing, what could be improved, and how to add more depth
+  * Make each bullet point substantial (15-30 words minimum)
 - {"Follow-up: ONE probing question to deepen understanding" if difficulty == "Hard" else "Follow-up: Not required for this difficulty"}
 
 ## Output Format (STRICT JSON)
@@ -7704,7 +7714,7 @@ Return ONLY valid JSON with this exact structure:
   "knowledge": <integer 1-10>,
   "communication": <integer 1-10>,
   "relevance": <integer 1-10>,
-  "feedback": "<one specific actionable tip>",
+  "feedback": "- <detailed improvement tip 1 (complete sentence, 15-30 words)>\\n- <detailed improvement tip 2 (complete sentence, 15-30 words)>\\n- <detailed improvement tip 3 (complete sentence, 15-30 words)>",
   "followup": "<one probing question{' (required for Hard difficulty)' if difficulty == 'Hard' else ' (empty string for Easy/Medium)'}>"
 }}
 
@@ -7741,7 +7751,7 @@ CRITICAL RULES:
         relevance = max(1, min(10, relevance))
 
         # Extract feedback and followup
-        feedback = result.get("feedback", "Provide more specific details and examples.")
+        feedback = result.get("feedback", "- Provide more specific technical details about the concepts mentioned.\n- Include concrete real-world examples to illustrate your points.\n- Elaborate on the practical implications and use cases of your answer.")
         followup = result.get("followup", "")
 
         return {
@@ -7765,7 +7775,9 @@ CRITICAL RULES:
             "knowledge": fallback_score,
             "communication": fallback_score,
             "relevance": fallback_score,
-            "feedback": "Evaluation parsing error. Please provide a clear, detailed answer addressing the key concepts in the question.",
+            "feedback": "- Evaluation parsing error occurred. Please try answering again.
+- Ensure your answer directly addresses the key concepts in the question.
+- Provide specific technical details, examples, and demonstrate depth of understanding.",
             "followup": ""
         }
 
@@ -7782,7 +7794,9 @@ CRITICAL RULES:
             "knowledge": fallback_score,
             "communication": fallback_score,
             "relevance": fallback_score,
-            "feedback": f"Evaluation error. Please provide a structured answer with specific examples.",
+            "feedback": "- Evaluation error occurred. Please provide a well-structured answer.
+- Address the key concepts mentioned in the question with technical accuracy.
+- Include concrete examples and demonstrate comprehensive understanding of the topic.",
             "followup": ""
         }
 

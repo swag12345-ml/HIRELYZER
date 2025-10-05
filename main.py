@@ -7896,7 +7896,7 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
 
         # CRITICAL FIX: Add each question/answer/score/feedback with FULL answer (no truncation)
         for i, (q, a, s, f) in enumerate(zip(questions, answers, scores, feedbacks), 1):
-            avg_q_score = (s.get('knowledge', 5) + s.get('clarity', 5) + s.get('relevance', 5)) / 3
+            avg_q_score = (s.get('knowledge', 5) + s.get('communication', 5) + s.get('relevance', 5)) / 3
 
             # Escape HTML special characters to prevent rendering issues
             q_escaped = q.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
@@ -7920,7 +7920,7 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
                 <h3>Question {i}</h3>
                 <p><strong>Q:</strong> {q_escaped}</p>
                 <div class="answer-text"><strong>Your Answer:</strong><br/>{answer_display}</div>
-                <p class="score">Knowledge: {s.get('knowledge', 0)}/10 | Clarity: {s.get('clarity', 0)}/10 | Relevance: {s.get('relevance', 0)}/10</p>
+                <p class="score">Knowledge: {s.get('knowledge', 0)}/10 | Communication: {s.get('communication', 0)}/10 | Relevance: {s.get('relevance', 0)}/10</p>
                 <p class="score">Question Score: {avg_q_score:.1f}/10</p>
                 <div class="feedback"><strong>Feedback:</strong><br/>{f_escaped}</div>
                 {followup_text}
@@ -9595,13 +9595,13 @@ Generate exactly {num_questions} questions now:
                     # Show feedback after answer submitted
                     if st.session_state.dynamic_answer_submitted:
                         current_score_dict = st.session_state.dynamic_interview_scores[-1]
-                        avg_q_score = (current_score_dict["knowledge"] + current_score_dict["clarity"] + current_score_dict["relevance"]) / 3
+                        avg_q_score = (current_score_dict["knowledge"] + current_score_dict["communication"] + current_score_dict["relevance"]) / 3
 
                         st.markdown(f"""
                         <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%);
                                     border: 1px solid rgba(0, 195, 255, 0.3); border-radius: 10px; padding: 15px; margin: 15px 0;">
                             <h4 style="color: #00c3ff;">Immediate Feedback:</h4>
-                            <p style="color: #ffffff;">📊 Knowledge: {current_score_dict["knowledge"]}/10 | Clarity: {current_score_dict["clarity"]}/10 | Relevance: {current_score_dict["relevance"]}/10</p>
+                            <p style="color: #ffffff;">📊 Knowledge: {current_score_dict["knowledge"]}/10 | Communication: {current_score_dict["communication"]}/10 | Relevance: {current_score_dict["relevance"]}/10</p>
                             <p style="color: #ffffff;">⭐ Question Score: {avg_q_score:.1f}/10</p>
                             <div style="color: #ffffff; margin-top: 10px;">
                                 <strong>💡 Improvement Tips:</strong>
@@ -9650,7 +9650,7 @@ Generate exactly {num_questions} questions now:
                                     prev_question = st.session_state.dynamic_interview_questions[i]
                                     prev_answer = st.session_state.dynamic_interview_answers[i]
                                     prev_scores = st.session_state.dynamic_interview_scores[i]
-                                    prev_avg = (prev_scores["knowledge"] + prev_scores["clarity"] + prev_scores["relevance"]) / 3
+                                    prev_avg = (prev_scores["knowledge"] + prev_scores["communication"] + prev_scores["relevance"]) / 3
 
                                     # Show full answer (up to 500 chars in review, full in final)
                                     answer_preview = prev_answer[:500]
@@ -9678,13 +9678,13 @@ Generate exactly {num_questions} questions now:
             elif st.session_state.dynamic_interview_completed:
                 # Calculate average scores for each dimension
                 knowledge_scores = [s["knowledge"] for s in st.session_state.dynamic_interview_scores]
-                clarity_scores = [s["clarity"] for s in st.session_state.dynamic_interview_scores]
+                communication_scores = [s["communication"] for s in st.session_state.dynamic_interview_scores]
                 relevance_scores = [s["relevance"] for s in st.session_state.dynamic_interview_scores]
 
                 avg_knowledge = sum(knowledge_scores) / len(knowledge_scores)
-                avg_clarity = sum(clarity_scores) / len(clarity_scores)
+                avg_communication = sum(communication_scores) / len(communication_scores)
                 avg_relevance = sum(relevance_scores) / len(relevance_scores)
-                overall_avg = (avg_knowledge + avg_clarity + avg_relevance) / 3
+                overall_avg = (avg_knowledge + avg_communication + avg_relevance) / 3
 
                 # Determine badge based on overall average
                 if overall_avg >= 8.5:
@@ -9717,7 +9717,7 @@ Generate exactly {num_questions} questions now:
                 st.subheader("📊 Performance Radar Chart")
 
                 radar_data = {
-                    "Communication": avg_clarity,
+                    "Communication": avg_communication,
                     "Knowledge": avg_knowledge,
                     "Confidence": avg_relevance
                 }
@@ -9765,7 +9765,7 @@ Generate exactly {num_questions} questions now:
                 st.subheader("💡 Performance Analysis")
                 col1, col2 = st.columns(2)
 
-                metrics = [("Communication", avg_clarity), ("Knowledge", avg_knowledge), ("Confidence", avg_relevance)]
+                metrics = [("Communication", avg_communication), ("Knowledge", avg_knowledge), ("Confidence", avg_relevance)]
                 metrics_sorted = sorted(metrics, key=lambda x: x[1], reverse=True)
 
                 with col1:
@@ -9796,12 +9796,12 @@ Generate exactly {num_questions} questions now:
                     feedback = st.session_state.dynamic_interview_feedbacks[i]
                     question = st.session_state.dynamic_interview_questions[i]
 
-                    q_avg = (score_dict["knowledge"] + score_dict["clarity"] + score_dict["relevance"]) / 3
+                    q_avg = (score_dict["knowledge"] + score_dict["communication"] + score_dict["relevance"]) / 3
 
                     with st.expander(f"Question {i+1}: Score {q_avg:.1f}/10"):
                         st.write(f"**Question:** {question}")
                         st.write(f"**Your Answer:** {answer}")  # Show full answer
-                        st.write(f"**Scores:** Knowledge: {score_dict['knowledge']}/10 | Clarity: {score_dict['clarity']}/10 | Relevance: {score_dict['relevance']}/10")
+                        st.write(f"**Scores:** Knowledge: {score_dict['knowledge']}/10 | Communication: {score_dict['communication']}/10 | Relevance: {score_dict['relevance']}/10")
                         st.write(f"**Feedback:** {feedback}")
 
                 # Save to database
@@ -9879,6 +9879,7 @@ Generate exactly {num_questions} questions now:
                     st.rerun()
         else:
             st.info("Please select both a career domain and target role to start the interview practice.")
+                      
                       
                       
 if tab5:

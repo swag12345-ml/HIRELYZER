@@ -6779,80 +6779,125 @@ with tab3:
     if 'search_mode' not in st.session_state:
         st.session_state.search_mode = "External Platforms"
 
-    # Glassmorphic Toggle Buttons
-    st.markdown("""
+    # Modern Toggle Switch with Circular Indicator
+    is_external = st.session_state.search_mode == "External Platforms"
+
+    toggle_html = f"""
     <style>
-    .toggle-container {
+    .toggle-switch-container {{
         display: flex;
         justify-content: center;
-        gap: 20px;
+        align-items: center;
         margin-bottom: 30px;
-        padding: 10px;
-    }
-    .toggle-button {
-        background: rgba(255, 255, 255, 0.05);
+        gap: 0;
+    }}
+    .toggle-option {{
+        background: rgba(30, 30, 30, 0.8);
         backdrop-filter: blur(10px);
-        border: 2px solid rgba(255, 255, 255, 0.1);
-        border-radius: 15px;
-        padding: 15px 30px;
-        color: #ffffff;
-        font-size: 16px;
+        padding: 18px 35px;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 15px;
         font-weight: 600;
-        cursor: pointer;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 12px;
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
         position: relative;
-        overflow: hidden;
-    }
-    .toggle-button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-    }
-    .toggle-button.active-external {
+    }}
+    .toggle-option.left {{
+        border-radius: 20px 0 0 20px;
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }}
+    .toggle-option.right {{
+        border-radius: 0 20px 20px 0;
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+    }}
+    .toggle-option.active {{
+        color: #ffffff;
+        border-color: currentColor;
+        box-shadow: 0 0 25px currentColor;
+    }}
+    .toggle-option.active.external {{
         background: linear-gradient(135deg, #0e76a8 0%, #1a8cc8 100%);
-        border: 2px solid #0e76a8;
-        box-shadow: 0 0 20px rgba(14, 118, 168, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
-    }
-    .toggle-button.active-rapid {
+        border-color: #0e76a8;
+    }}
+    .toggle-option.active.rapid {{
         background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
-        border: 2px solid #00ff88;
-        box-shadow: 0 0 20px rgba(0, 255, 136, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
-    }
+        border-color: #00ff88;
+    }}
+    .toggle-circle {{
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        background: transparent;
+        transition: all 0.3s ease;
+    }}
+    .toggle-option.active .toggle-circle {{
+        background: #ffffff;
+        border-color: #ffffff;
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+    }}
+    .toggle-option:hover:not(.active) {{
+        background: rgba(50, 50, 50, 0.9);
+        color: rgba(255, 255, 255, 0.8);
+        transform: scale(1.02);
+    }}
+    .active-badge {{
+        text-align: center;
+        padding: 15px;
+        margin-bottom: 25px;
+    }}
+    .badge {{
+        background: linear-gradient(135deg, #0e76a8 0%, #1a8cc8 100%);
+        padding: 10px 25px;
+        border-radius: 25px;
+        color: white;
+        font-weight: 600;
+        font-size: 14px;
+        box-shadow: 0 0 20px rgba(14, 118, 168, 0.5);
+        display: inline-block;
+    }}
+    .badge.rapid {{
+        background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
+        box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+    }}
     </style>
-    """, unsafe_allow_html=True)
 
-    # Create two columns for the toggle buttons
+    <div class="toggle-switch-container">
+        <div class="toggle-option left {'active external' if is_external else ''}" id="toggle-external">
+            <div class="toggle-circle"></div>
+            <span>🌐 External Platforms (LinkedIn, Naukri, FoundIt)</span>
+        </div>
+        <div class="toggle-option right {'active rapid' if not is_external else ''}" id="toggle-rapid">
+            <div class="toggle-circle"></div>
+            <span>⚡ RapidAPI Jobs (India Only)</span>
+        </div>
+    </div>
+
+    <div class="active-badge">
+        <span class="badge {'rapid' if not is_external else ''}">
+            {'🌐 External Platforms Mode Active' if is_external else '⚡ RapidAPI Jobs Mode Active'}
+        </span>
+    </div>
+    """
+
+    st.markdown(toggle_html, unsafe_allow_html=True)
+
+    # Create clickable buttons (hidden but functional)
     col_btn1, col_btn2 = st.columns(2)
 
     with col_btn1:
-        if st.button("🌐 External Platforms\n(LinkedIn, Naukri, FoundIt)", key="btn_external", use_container_width=True):
+        if st.button("Switch to External Platforms", key="btn_external"):
             st.session_state.search_mode = "External Platforms"
+            st.rerun()
 
     with col_btn2:
-        if st.button("⚡ RapidAPI Jobs\n(India Only)", key="btn_rapid", use_container_width=True):
+        if st.button("Switch to RapidAPI Jobs", key="btn_rapid"):
             st.session_state.search_mode = "RapidAPI Jobs"
-
-    # Display active mode indicator
-    if st.session_state.search_mode == "External Platforms":
-        st.markdown("""
-        <div style='text-align: center; padding: 10px; margin-bottom: 20px;'>
-            <span style='background: linear-gradient(135deg, #0e76a8 0%, #1a8cc8 100%);
-                         padding: 8px 20px; border-radius: 20px; color: white; font-weight: 600;
-                         box-shadow: 0 0 15px rgba(14, 118, 168, 0.4);'>
-                🌐 External Platforms Mode Active
-            </span>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown("""
-        <div style='text-align: center; padding: 10px; margin-bottom: 20px;'>
-            <span style='background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
-                         padding: 8px 20px; border-radius: 20px; color: white; font-weight: 600;
-                         box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);'>
-                ⚡ RapidAPI Jobs Mode Active
-            </span>
-        </div>
-        """, unsafe_allow_html=True)
+            st.rerun()
 
     search_mode = st.session_state.search_mode
 

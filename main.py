@@ -7882,7 +7882,9 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
                 .header {{ background: #f0f0f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; }}
                 .question-block {{ margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; page-break-inside: avoid; }}
                 .score {{ font-weight: bold; color: #00c3ff; }}
-                .feedback {{ color: #666; margin-top: 10px; white-space: pre-wrap; }}
+                .feedback {{ color: #666; margin-top: 10px; padding: 10px; background: #f9f9f9; border-left: 3px solid #00c3ff; }}
+                .feedback ul {{ margin: 5px 0 0 0; padding-left: 20px; }}
+                .feedback li {{ margin: 8px 0; line-height: 1.5; }}
                 .summary {{ background: #fffacd; padding: 15px; border-radius: 8px; margin: 20px 0; }}
                 .answer-text {{ white-space: pre-wrap; word-wrap: break-word; margin: 10px 0; }}
             </style>
@@ -7927,7 +7929,7 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
             import re
             sentences = re.split(r'(?<=\.)\s+', f_text.strip())
             sentences = [sent.strip() for sent in sentences if len(sent.strip()) > 0]
-            bullet_feedback = "<b>💡 Improvement Tips:</b><br><ul style='margin-top:5px;'>"
+            bullet_feedback = "<b>💡 Improvement Tips:</b><ul>"
             for sent in sentences:
                 sent_escaped = sent.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
                 bullet_feedback += f"<li>{sent_escaped}</li>"
@@ -7953,7 +7955,7 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
                 <div class="answer-text"><strong>Your Answer:</strong><br/>{answer_display}</div>
                 <p class="score">Knowledge: {score_dict.get('knowledge', 0)}/10 | Communication: {score_dict.get('communication', 0)}/10 | Relevance: {score_dict.get('relevance', 0)}/10</p>
                 <p class="score">Question Score: {avg_q_score:.1f}/10</p>
-                <div class="feedback"><strong>Feedback:</strong><br/>{f_escaped}</div>
+                <div class="feedback">{f_escaped}</div>
                 {followup_text}
             </div>
             """

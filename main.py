@@ -8092,28 +8092,14 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
         import streamlit as st
         st.error(f"PDF generation failed: {e}")
         return None
-
-
 import streamlit as st
 import plotly.graph_objects as go
 from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
 from llm_manager import call_llm
 import time
 import threading
-from streamlit.components.v1 import html
 
 with tab4:
-    # Add lightweight JavaScript auto-refresh for timer (only when interview is active)
-    if st.session_state.get('dynamic_interview_started', False) and not st.session_state.get('dynamic_interview_completed', False) and not st.session_state.get('dynamic_answer_submitted', False):
-        # Auto-refresh every 3 seconds instead of every 1 second to reduce flickering
-        html(f"""
-            <script>
-                setTimeout(function() {{
-                    window.parent.location.reload();
-                }}, 3000);
-            </script>
-        """, height=0)
-
     # Inject CSS styles (keeping existing styles)
     st.markdown("""
         <style>
@@ -9589,9 +9575,8 @@ Generate exactly {num_questions} questions now:
                             st.session_state.timer_seconds = timer_seconds
                             st.session_state.interview_difficulty = interview_difficulty
                             st.success("Questions generated! Starting your mock interview...")
-                            st.rerun()
-                        else:
-                            st.error("Failed to generate questions. Please try again.")
+                            # REMOVED: time.sleep(1) and st.rerun() to prevent flickering
+                            # Let natural Streamlit flow handle the refresh
             
             # Interview in progress
             elif st.session_state.dynamic_interview_started and not st.session_state.dynamic_interview_completed:
@@ -9627,20 +9612,66 @@ Generate exactly {num_questions} questions now:
                     elapsed_time = time.time() - st.session_state.question_timer_start
                     remaining_time = max(0, st.session_state.timer_seconds - elapsed_time)
 
-                    # Display timer
-                    timer_minutes = int(remaining_time // 60)
-                    timer_seconds_display = int(remaining_time % 60)
-                    timer_urgent_class = "timer-urgent" if remaining_time <= 30 else ""
-
-                    st.markdown(f"""
-                    <div class="timer-container">
-                        <div class="timer-display {timer_urgent_class}">
-                            ⏰ Time Remaining: {timer_minutes:02d}:{timer_seconds_display:02d}
+                    # CLIENT-SIDE TIMER: Use JavaScript for smooth countdown without page refresh
+                    import streamlit.components.v1 as components
+                    
+                    # Create a unique key for this timer instance
+                    timer_key = f"timer_{st.session_state.current_dynamic_interview_question}_{questions_answered}"
+                    
+                    # JavaScript-based timer that updates without triggering Streamlit rerun
+                    components.html(f"""
+                        <div id="{timer_key}" style="
+                            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+                            border: 1px solid rgba(255, 193, 7, 0.3);
+                            border-radius: 12px;
+                            padding: 15px;
+                            margin: 15px 0;
+                            text-align: center;">
+                            <div id="timer-display-{timer_key}" style="
+                                font-size: 24px;
+                                font-weight: bold;
+                                color: #ffd700;
+                                text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);">
+                                ⏰ Time Remaining: <span id="time-{timer_key}">Calculating...</span>
+                            </div>
                         </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                        <script>
+                            (function() {{
+                                let remainingSeconds = {int(remaining_time)};
+                                const timerElement = document.getElementById('time-{timer_key}');
+                                const displayElement = document.getElementById('timer-display-{timer_key}');
+                                
+                                function updateTimer() {{
+                                    if (remainingSeconds <= 0) {{
+                                        timerElement.textContent = '00:00';
+                                        displayElement.style.color = '#ff4444';
+                                        displayElement.style.textShadow = '0 0 15px rgba(255, 68, 68, 0.8)';
+                                        return;
+                                    }}
+                                    
+                                    const minutes = Math.floor(remainingSeconds / 60);
+                                    const seconds = remainingSeconds % 60;
+                                    timerElement.textContent = 
+                                        String(minutes).padStart(2, '0') + ':' + 
+                                        String(seconds).padStart(2, '0');
+                                    
+                                    // Change color when urgent (< 30 seconds)
+                                    if (remainingSeconds <= 30) {{
+                                        displayElement.style.color = '#ff4444';
+                                        displayElement.style.textShadow = '0 0 15px rgba(255, 68, 68, 0.8)';
+                                        displayElement.style.animation = 'pulse 1s ease-in-out infinite';
+                                    }}
+                                    
+                                    remainingSeconds--;
+                                    setTimeout(updateTimer, 1000);
+                                }}
+                                
+                                updateTimer();
+                            }})();
+                        </script>
+                    """, height=100)
 
-                    # Timer progress bar
+                    # Timer progress bar (static, updated only on rerun)
                     progress_value = (st.session_state.timer_seconds - remaining_time) / st.session_state.timer_seconds
                     st.progress(progress_value)
 
@@ -9668,7 +9699,6 @@ Generate exactly {num_questions} questions now:
                             st.session_state.dynamic_answer_submitted = False
                             st.session_state.current_interview_question_text = ""
                             st.session_state.question_timer_start = None
-                            # Force regeneration
                             st.rerun()
 
                     # Answer input with character limit
@@ -9714,7 +9744,6 @@ Generate exactly {num_questions} questions now:
                                 )
 
                         st.warning("⏰ Time's up! Answer auto-submitted.")
-                        time.sleep(0.5)
                         st.rerun()
 
                     # Submit answer button
@@ -9746,7 +9775,6 @@ Generate exactly {num_questions} questions now:
                                                 eval_result["followup"]
                                             )
 
-                                    time.sleep(0.3)
                                     st.rerun()
                             else:
                                 st.warning("Please provide an answer before proceeding.")
@@ -9824,15 +9852,12 @@ Generate exactly {num_questions} questions now:
                                     st.markdown(f"**Score:** {prev_avg:.1f}/10")
                                     if i < num_to_show - 1:  # Don't add separator after last item
                                         st.markdown("---")
-
-                    # Timer auto-refresh is now handled by JavaScript component at the top
-                    # This eliminates the need for Python-based sleep + rerun that causes flickering
                 else:
                     # CRITICAL FIX: All questions answered, move to completion automatically
                     st.session_state.dynamic_interview_completed = True
                     st.success(f"✅ Completed all {st.session_state.original_num_questions} questions!")
+                    # REMOVED: time.sleep(1) to prevent flickering
                     st.rerun()
-            
             # UNIFIED: Interview completed + Course Recommendations + DB + PDF
             elif st.session_state.dynamic_interview_completed:
                 # Calculate average scores for each dimension

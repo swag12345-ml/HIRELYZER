@@ -7904,8 +7904,14 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
         """
 
         # CRITICAL FIX: Add each question/answer/score/feedback with FULL answer (no truncation)
-        for i, (q, a, s, f) in enumerate(zip(questions, answers, scores, feedbacks), 1):
-            avg_q_score = (s.get('knowledge', 5) + s.get('communication', 5) + s.get('relevance', 5)) / 3
+        for i, (q, a, score_dict, f) in enumerate(zip(questions, answers, scores, feedbacks), 1):
+            # Ensure score_dict is a dictionary
+            if isinstance(score_dict, dict):
+                avg_q_score = (score_dict.get('knowledge', 5) + score_dict.get('communication', 5) + score_dict.get('relevance', 5)) / 3
+            else:
+                # Fallback if score_dict is not a dict
+                avg_q_score = 5.0
+                score_dict = {'knowledge': 5, 'communication': 5, 'relevance': 5}
 
             # Escape HTML special characters to prevent rendering issues
             q_escaped = q.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
@@ -7915,16 +7921,16 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
             if isinstance(f, list):
                 f_text = "\n\n".join(f)
             else:
-                f_text = f
+                f_text = str(f)
 
             # Format feedback into bullet points
             import re
             sentences = re.split(r'(?<=\.)\s+', f_text.strip())
-            sentences = [s.strip() for s in sentences if len(s.strip()) > 0]
+            sentences = [sent.strip() for sent in sentences if len(sent.strip()) > 0]
             bullet_feedback = "<b>💡 Improvement Tips:</b><br><ul style='margin-top:5px;'>"
-            for s in sentences:
-                s_escaped = s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-                bullet_feedback += f"<li>{s_escaped}</li>"
+            for sent in sentences:
+                sent_escaped = sent.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                bullet_feedback += f"<li>{sent_escaped}</li>"
             bullet_feedback += "</ul>"
             f_escaped = bullet_feedback
 
@@ -7933,8 +7939,8 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
 
             # Get follow-up question if exists (for Hard difficulty)
             followup_text = ""
-            if difficulty == "Hard" and isinstance(s, dict) and s.get('followup'):
-                followup_escaped = s['followup'].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            if difficulty == "Hard" and isinstance(score_dict, dict) and score_dict.get('followup'):
+                followup_escaped = score_dict['followup'].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
                 followup_text = f"""<div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px;">
                     <strong>Follow-up Question (for Hard interviews):</strong><br/>
                     {followup_escaped}
@@ -7945,7 +7951,7 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
                 <h3>Question {i}</h3>
                 <p><strong>Q:</strong> {q_escaped}</p>
                 <div class="answer-text"><strong>Your Answer:</strong><br/>{answer_display}</div>
-                <p class="score">Knowledge: {s.get('knowledge', 0)}/10 | Communication: {s.get('communication', 0)}/10 | Relevance: {s.get('relevance', 0)}/10</p>
+                <p class="score">Knowledge: {score_dict.get('knowledge', 0)}/10 | Communication: {score_dict.get('communication', 0)}/10 | Relevance: {score_dict.get('relevance', 0)}/10</p>
                 <p class="score">Question Score: {avg_q_score:.1f}/10</p>
                 <div class="feedback"><strong>Feedback:</strong><br/>{f_escaped}</div>
                 {followup_text}

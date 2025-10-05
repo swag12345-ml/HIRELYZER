@@ -6792,58 +6792,53 @@ with tab3:
         gap: 0;
     }}
     .toggle-option {{
-        background: rgba(30, 30, 30, 0.8);
-        backdrop-filter: blur(10px);
+        background: rgba(40, 40, 40, 0.95);
         padding: 18px 35px;
-        color: rgba(255, 255, 255, 0.5);
+        color: rgba(255, 255, 255, 0.4);
         font-size: 15px;
         font-weight: 600;
-        border: 2px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.15);
         display: flex;
         align-items: center;
         gap: 12px;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transition: all 0.3s ease;
         cursor: pointer;
         position: relative;
     }}
     .toggle-option.left {{
-        border-radius: 20px 0 0 20px;
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px 0 0 16px;
+        border-right: none;
     }}
     .toggle-option.right {{
-        border-radius: 0 20px 20px 0;
-        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0 16px 16px 0;
+        border-left: none;
     }}
     .toggle-option.active {{
         color: #ffffff;
-        border-color: currentColor;
-        box-shadow: 0 0 25px currentColor;
     }}
     .toggle-option.active.external {{
-        background: linear-gradient(135deg, #0e76a8 0%, #1a8cc8 100%);
-        border-color: #0e76a8;
+        background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+        border-color: #1976D2;
     }}
     .toggle-option.active.rapid {{
-        background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
-        border-color: #00ff88;
+        background: linear-gradient(135deg, #00E676 0%, #00C853 100%);
+        border-color: #00C853;
     }}
     .toggle-circle {{
-        width: 18px;
-        height: 18px;
+        width: 16px;
+        height: 16px;
         border-radius: 50%;
-        border: 3px solid rgba(255, 255, 255, 0.3);
+        border: 2px solid rgba(255, 255, 255, 0.4);
         background: transparent;
         transition: all 0.3s ease;
     }}
     .toggle-option.active .toggle-circle {{
         background: #ffffff;
         border-color: #ffffff;
-        box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
     }}
     .toggle-option:hover:not(.active) {{
-        background: rgba(50, 50, 50, 0.9);
-        color: rgba(255, 255, 255, 0.8);
-        transform: scale(1.02);
+        background: rgba(55, 55, 55, 0.95);
+        color: rgba(255, 255, 255, 0.7);
     }}
     .active-badge {{
         text-align: center;
@@ -6851,18 +6846,16 @@ with tab3:
         margin-bottom: 25px;
     }}
     .badge {{
-        background: linear-gradient(135deg, #0e76a8 0%, #1a8cc8 100%);
+        background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
         padding: 10px 25px;
-        border-radius: 25px;
+        border-radius: 20px;
         color: white;
         font-weight: 600;
         font-size: 14px;
-        box-shadow: 0 0 20px rgba(14, 118, 168, 0.5);
         display: inline-block;
     }}
     .badge.rapid {{
-        background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
-        box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        background: linear-gradient(135deg, #00E676 0%, #00C853 100%);
     }}
     </style>
 

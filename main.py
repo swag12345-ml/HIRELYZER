@@ -7604,7 +7604,9 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
-def evaluate_interview_answer(answer: str, question: str = None):
+
+                      
+ def evaluate_interview_answer(answer: str, question: str = None):
     """
     Uses an LLM to strictly evaluate an interview answer.
     Returns (score out of 5, feedback string).
@@ -8098,8 +8100,20 @@ from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_co
 from llm_manager import call_llm
 import time
 import threading
+from streamlit.components.v1 import html
 
 with tab4:
+    # Add lightweight JavaScript auto-refresh for timer (only when interview is active)
+    if st.session_state.get('dynamic_interview_started', False) and not st.session_state.get('dynamic_interview_completed', False) and not st.session_state.get('dynamic_answer_submitted', False):
+        # Auto-refresh every 3 seconds instead of every 1 second to reduce flickering
+        html(f"""
+            <script>
+                setTimeout(function() {{
+                    window.parent.location.reload();
+                }}, 3000);
+            </script>
+        """, height=0)
+
     # Inject CSS styles (keeping existing styles)
     st.markdown("""
         <style>
@@ -9575,7 +9589,6 @@ Generate exactly {num_questions} questions now:
                             st.session_state.timer_seconds = timer_seconds
                             st.session_state.interview_difficulty = interview_difficulty
                             st.success("Questions generated! Starting your mock interview...")
-                            time.sleep(1)
                             st.rerun()
                         else:
                             st.error("Failed to generate questions. Please try again.")
@@ -9701,6 +9714,7 @@ Generate exactly {num_questions} questions now:
                                 )
 
                         st.warning("⏰ Time's up! Answer auto-submitted.")
+                        time.sleep(0.5)
                         st.rerun()
 
                     # Submit answer button
@@ -9732,6 +9746,7 @@ Generate exactly {num_questions} questions now:
                                                 eval_result["followup"]
                                             )
 
+                                    time.sleep(0.3)
                                     st.rerun()
                             else:
                                 st.warning("Please provide an answer before proceeding.")
@@ -9810,15 +9825,12 @@ Generate exactly {num_questions} questions now:
                                     if i < num_to_show - 1:  # Don't add separator after last item
                                         st.markdown("---")
 
-                    # Auto-refresh for timer
-                    if remaining_time > 0 and not st.session_state.dynamic_answer_submitted:
-                        time.sleep(1)
-                        st.rerun()
+                    # Timer auto-refresh is now handled by JavaScript component at the top
+                    # This eliminates the need for Python-based sleep + rerun that causes flickering
                 else:
                     # CRITICAL FIX: All questions answered, move to completion automatically
                     st.session_state.dynamic_interview_completed = True
                     st.success(f"✅ Completed all {st.session_state.original_num_questions} questions!")
-                    time.sleep(1)
                     st.rerun()
             
             # UNIFIED: Interview completed + Course Recommendations + DB + PDF
@@ -10029,9 +10041,7 @@ Generate exactly {num_questions} questions now:
                     st.session_state.original_num_questions = 6
                     st.rerun()
         else:
-            st.info("Please select both a career domain and target role to start the interview practice.")
-                      
-                      
+            st.info("Please select both a career domain and target role to start the interview practice.")                     
                       
                       
 if tab5:

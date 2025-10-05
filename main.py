@@ -6773,17 +6773,90 @@ init_job_search_db()
 
 # Your existing tab3 code with enhanced CSS styling
 with tab3:
-    st.header("🔍 Job Search Across LinkedIn, Naukri, and FoundIt")
+    st.markdown("<h1 style='text-align: center; color: #ffffff; margin-bottom: 30px;'>🟦 Job Search Hub</h1>", unsafe_allow_html=True)
 
-    # Radio selector for search mode
-    search_mode = st.radio(
-        "Select Search Mode:",
-        ["External Platforms (LinkedIn, Naukri, FoundIt)", "RapidAPI Jobs (India Only)"],
-        horizontal=True,
-        key="search_mode"
-    )
+    # Initialize session state for search mode
+    if 'search_mode' not in st.session_state:
+        st.session_state.search_mode = "External Platforms"
 
-    if search_mode == "External Platforms (LinkedIn, Naukri, FoundIt)":
+    # Glassmorphic Toggle Buttons
+    st.markdown("""
+    <style>
+    .toggle-container {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 30px;
+        padding: 10px;
+    }
+    .toggle-button {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 15px 30px;
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+    .toggle-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+    .toggle-button.active-external {
+        background: linear-gradient(135deg, #0e76a8 0%, #1a8cc8 100%);
+        border: 2px solid #0e76a8;
+        box-shadow: 0 0 20px rgba(14, 118, 168, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+    .toggle-button.active-rapid {
+        background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
+        border: 2px solid #00ff88;
+        box-shadow: 0 0 20px rgba(0, 255, 136, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Create two columns for the toggle buttons
+    col_btn1, col_btn2 = st.columns(2)
+
+    with col_btn1:
+        if st.button("🌐 External Platforms\n(LinkedIn, Naukri, FoundIt)", key="btn_external", use_container_width=True):
+            st.session_state.search_mode = "External Platforms"
+
+    with col_btn2:
+        if st.button("⚡ RapidAPI Jobs\n(India Only)", key="btn_rapid", use_container_width=True):
+            st.session_state.search_mode = "RapidAPI Jobs"
+
+    # Display active mode indicator
+    if st.session_state.search_mode == "External Platforms":
+        st.markdown("""
+        <div style='text-align: center; padding: 10px; margin-bottom: 20px;'>
+            <span style='background: linear-gradient(135deg, #0e76a8 0%, #1a8cc8 100%);
+                         padding: 8px 20px; border-radius: 20px; color: white; font-weight: 600;
+                         box-shadow: 0 0 15px rgba(14, 118, 168, 0.4);'>
+                🌐 External Platforms Mode Active
+            </span>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div style='text-align: center; padding: 10px; margin-bottom: 20px;'>
+            <span style='background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
+                         padding: 8px 20px; border-radius: 20px; color: white; font-weight: 600;
+                         box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);'>
+                ⚡ RapidAPI Jobs Mode Active
+            </span>
+        </div>
+        """, unsafe_allow_html=True)
+
+    search_mode = st.session_state.search_mode
+
+    if search_mode == "External Platforms":
         # External Platforms Section
         col1, col2 = st.columns(2)
 

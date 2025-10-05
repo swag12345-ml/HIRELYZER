@@ -7557,46 +7557,46 @@ def evaluate_interview_answer(answer: str, question: str = None):
 
 def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty: str, role: str = "", domain: str = ""):
     """
-    Content-grounded evaluation that returns detailed scores for Knowledge, Communication, Relevance.
-    Uses reasoning chains and keyword extraction to ensure scores are based on actual content overlap.
-    Returns dict with keys: knowledge, communication, relevance, feedback, followup
+    Intelligent interview answer evaluator with chain-of-thought reasoning.
+    Returns detailed scores for Knowledge, Communication, and Relevance with structured feedback.
+    Returns dict with keys: knowledge, communication, relevance, feedback (list), followup
 
-    Key improvements:
-    - Extracts expected concepts from question automatically
-    - Compares answer against question content (not style/length)
-    - Uses reasoning chain before scoring
-    - Returns strict JSON format
-    - Difficulty-aware scoring (Easy=forgiving, Medium=balanced, Hard=strict)
+    UPGRADED: Chain-of-thought evaluation with keyword extraction and comparison
+    UPGRADED: Multi-step reasoning (positives → improvements → scoring)
+    UPGRADED: Structured bullet-point feedback with actionable tips
+    UPGRADED: JSON-based parsing for robustness
+    UPGRADED: Difficulty-level calibration (Easy/Medium/Hard)
     """
     from llm_manager import call_llm
     import json
     import streamlit as st
 
-    # Empty check or junk answers
     if not answer.strip() or answer == "⚠️ No Answer" or len(answer.strip()) < 3:
         return {
             "knowledge": 0,
             "communication": 0,
             "relevance": 0,
-            "feedback": "- No answer provided. Please attempt to answer the question.
-- Try using the STAR method: Situation, Task, Action, Result.
-- Provide specific examples and technical details relevant to the question.",
+            "feedback": [
+                "No answer provided.",
+                "Try using the STAR method: Situation, Task, Action, Result.",
+                "Provide specific examples from your experience."
+            ],
             "followup": ""
         }
 
-    # Check for obvious junk answers (single character, just symbols, etc.)
     if len(answer.strip()) == 1 or not any(c.isalnum() for c in answer):
         return {
             "knowledge": 0,
             "communication": 0,
             "relevance": 0,
-            "feedback": "- Answer appears incomplete or invalid. Please provide a meaningful response.
-- Use the STAR method to structure your answer: Situation, Task, Action, Result.
-- Include specific technical details and concrete examples relevant to the question.",
+            "feedback": [
+                "Answer appears incomplete or invalid.",
+                "Please provide a meaningful response using complete sentences.",
+                "Focus on answering the specific question asked."
+            ],
             "followup": ""
         }
 
-    # STRICTER JUNK FILTERING: Check word count and meaningful tokens
     words = answer.strip().split()
     meaningful_words = [w for w in words if len(w) > 2 and any(c.isalpha() for c in w)]
 
@@ -7605,154 +7605,139 @@ def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty:
             "knowledge": 0,
             "communication": 0,
             "relevance": 0,
-            "feedback": "- Answer is too short or appears irrelevant to the question asked.
-- Please provide a detailed response with multiple key concepts addressed.
-- Include specific examples, use cases, or scenarios to demonstrate your understanding.",
+            "feedback": [
+                "Answer too short or lacks substance.",
+                "Provide a detailed response with specific examples.",
+                "Aim for at least 3-4 complete sentences explaining your approach."
+            ],
             "followup": ""
         }
 
-    # Difficulty-based scoring guidelines
-    difficulty_guidelines = {
+    difficulty_calibration = {
         "Easy": {
-            "description": "Basic level - forgiving evaluation",
-            "expectations": "Basic understanding, some correct concepts, general relevance",
-            "score_range": "Typically 5-10. Give credit for effort and partial understanding.",
-            "min_concepts": "1-2 key concepts mentioned"
+            "description": "Be encouraging and forgiving. Reward effort and general understanding. Look for basic grasp of concepts.",
+            "score_range": "Scores typically 6-10. Award 8-10 for solid understanding, 6-7 for partial grasp, below 6 only for significantly off-topic answers."
         },
         "Medium": {
-            "description": "Intermediate level - balanced evaluation",
-            "expectations": "Solid understanding, multiple concepts, practical examples, clear structure",
-            "score_range": "Typically 3-9. Expect depth and practical application.",
-            "min_concepts": "2-3 key concepts with some depth"
+            "description": "Be balanced and realistic. Expect scenario-based thinking and moderate technical depth. Reward concrete examples.",
+            "score_range": "Scores typically 4-10. Award 8-10 for comprehensive answers, 5-7 for adequate but incomplete, below 5 for weak or irrelevant answers."
         },
         "Hard": {
-            "description": "Advanced level - strict evaluation",
-            "expectations": "Deep expertise, comprehensive coverage, edge cases, trade-offs, system design thinking",
-            "score_range": "Typically 2-8. Demand excellence and thorough analysis.",
-            "min_concepts": "3-4+ key concepts with nuanced understanding"
+            "description": "Be strict and technical. Demand deep expertise, system design thinking, edge cases, and trade-off analysis.",
+            "score_range": "Scores typically 2-9. Award 8-9 for exceptional depth, 5-7 for solid technical answers, 3-4 for surface-level responses, below 3 for poor answers."
         }
     }
 
-    difficulty_guide = difficulty_guidelines.get(difficulty, difficulty_guidelines["Medium"])
+    calibration = difficulty_calibration.get(difficulty, difficulty_calibration["Medium"])
+    context_info = f" (Role: {role}, Domain: {domain})" if role and domain else ""
 
-    # Build context info
-    context_info = ""
-    if role and domain:
-        context_info = f"Role: {role} | Domain: {domain}"
+    prompt = f"""You are an expert technical interview evaluator. Perform a thorough, step-by-step evaluation of the candidate's answer.
 
-    # Construct content-grounded evaluation prompt
-    prompt = f"""You are an expert technical interview evaluator. Your task is to perform a CONTENT-GROUNDED evaluation of the candidate's answer.
+**QUESTION:**
+{question}
 
-## Interview Context
-Question: {question}
-Difficulty: {difficulty} ({difficulty_guide["description"]})
-{context_info if context_info else ""}
-
-## Candidate's Answer
+**CANDIDATE'S ANSWER:**
 {answer}
 
-## Evaluation Process (Follow this reasoning chain):
+**EVALUATION CONTEXT:**
+- Difficulty Level: {difficulty}{context_info}
+- Calibration: {calibration['description']}
+- Expected Score Range: {calibration['score_range']}
 
-### STEP 1: Extract Expected Concepts
-From the question, identify 3-5 key concepts, keywords, or technical elements that a good answer MUST address.
-List these concepts explicitly.
+**EVALUATION PROCESS (Chain-of-Thought):**
 
-### STEP 2: Analyze Answer Coverage
-For EACH expected concept, check if the candidate's answer:
-- ✅ Mentions it explicitly
-- ⚠️ Mentions it partially or indirectly
-- ❌ Completely misses it
+STEP 1 - EXTRACT KEY CONCEPTS FROM QUESTION:
+First, identify the key technical concepts, keywords, or expected elements that the question is asking for. List 3-5 key points the ideal answer should cover.
 
-### STEP 3: Evaluate Content Quality
-Based on STEP 2 coverage analysis:
-- What did the answer do RIGHT? (specific concepts covered well)
-- What did the answer do WRONG? (concepts missing, incorrect, or superficial)
-- Is the answer technically accurate?
-- Does it stay on-topic for {domain if domain else "the question domain"}?
+STEP 2 - ANALYZE WHAT THE ANSWER DOES WELL:
+Identify specific strengths in the candidate's answer:
+- Which key concepts were correctly addressed?
+- What technical terms or examples were used effectively?
+- What aspects show good understanding?
 
-### STEP 4: Assign Scores (1-10 scale)
-Based on STEP 3 analysis and difficulty level ({difficulty}):
+STEP 3 - IDENTIFY GAPS AND IMPROVEMENTS:
+Identify what's missing or incorrect:
+- Which expected concepts are missing or incomplete?
+- Are there any technical inaccuracies?
+- What could be clearer or more detailed?
+- Is the answer relevant to the question domain?
 
-**Difficulty Guidelines:**
-- Expectations: {difficulty_guide["expectations"]}
-- Score Range: {difficulty_guide["score_range"]}
-- Minimum Coverage: {difficulty_guide["min_concepts"]}
+STEP 4 - ASSIGN SCORES (1-10 scale):
+Based on the analysis above, assign three scores:
+- **Knowledge**: Technical correctness, depth, and accuracy of content
+- **Communication**: Clarity, structure, and articulation of ideas
+- **Relevance**: How directly the answer addresses the question asked
 
-**Knowledge Score (1-10):**
-- How many expected concepts were covered correctly?
-- Is the technical content accurate?
-- {difficulty_guide["score_range"]}
+STEP 5 - GENERATE FEEDBACK:
+Provide 3-5 specific, actionable bullet points:
+- At least 1 strength (what they did well)
+- At least 2 improvement areas (what's missing or could be better)
+- 1 actionable tip (concrete suggestion for next time)
 
-**Communication Score (1-10):**
-- Is the answer structured and coherent?
-- Does it use clear language and examples?
-- Note: Judge structure/clarity, NOT length
+STEP 6 - FOLLOW-UP QUESTION (for Hard difficulty only):
+{"Generate ONE probing follow-up question to dig deeper into their answer or explore a related concept." if difficulty == "Hard" else "Skip this step."}
 
-**Relevance Score (1-10):**
-- Does it directly address the question asked?
-- Does it stay within the correct domain/topic?
-- Are there any off-topic tangents?
-
-### STEP 5: Generate Detailed Feedback & Follow-up
-- Feedback: Provide 3-5 detailed, specific, actionable improvement tips as separate bullet points
-  * Each bullet should be a complete sentence with concrete suggestions
-  * Examples: "The answer could benefit from more specific examples of how X is implemented in real-world scenarios to further illustrate its importance and functionality."
-  * Focus on what's missing, what could be improved, and how to add more depth
-  * Make each bullet point substantial (15-30 words minimum)
-- {"Follow-up: ONE probing question to deepen understanding" if difficulty == "Hard" else "Follow-up: Not required for this difficulty"}
-
-## Output Format (STRICT JSON)
-Return ONLY valid JSON with this exact structure:
+**OUTPUT FORMAT (STRICT JSON):**
+Return your evaluation as a valid JSON object with this exact structure:
 
 {{
-  "reasoning": {{
-    "expected_concepts": ["concept1", "concept2", "concept3"],
-    "coverage_analysis": "Brief analysis of what was covered vs missed",
-    "strengths": "What the answer did right",
-    "weaknesses": "What the answer missed or got wrong"
-  }},
+  "key_concepts_from_question": ["concept 1", "concept 2", "concept 3"],
+  "positives": ["specific strength 1", "specific strength 2"],
+  "improvements": ["specific gap 1", "specific gap 2"],
   "knowledge": <integer 1-10>,
   "communication": <integer 1-10>,
   "relevance": <integer 1-10>,
-  "feedback": "- <detailed improvement tip 1 (complete sentence, 15-30 words)>\\n- <detailed improvement tip 2 (complete sentence, 15-30 words)>\\n- <detailed improvement tip 3 (complete sentence, 15-30 words)>",
-  "followup": "<one probing question{' (required for Hard difficulty)' if difficulty == 'Hard' else ' (empty string for Easy/Medium)'}>"
+  "feedback": [
+    "Specific strength with example",
+    "Specific area for improvement",
+    "Another improvement suggestion",
+    "Actionable tip for next time"
+  ],
+  "followup": "{'"One probing follow-up question"' if difficulty == 'Hard' else ''}"
 }}
 
-CRITICAL RULES:
-1. Scores MUST be based on concept coverage, NOT answer length or style
-2. If answer misses 50%+ expected concepts, scores should be ≤5
-3. If answer is completely off-topic, Relevance ≤2
-4. Return ONLY valid JSON - no extra text before or after
-5. Apply difficulty-appropriate strictness: Easy=forgiving, Medium=balanced, Hard=strict"""
+**CRITICAL RULES:**
+1. Scores must match the difficulty calibration range
+2. Feedback must be specific to THIS answer and THIS question (not generic)
+3. If answer is completely off-topic or wrong, score Knowledge and Relevance below 3
+4. Return ONLY valid JSON, no extra text before or after
+"""
 
     try:
-        # Call LLM
         response = call_llm(prompt, session=st.session_state).strip()
 
-        # Try to extract JSON from response (handle cases where LLM adds text around JSON)
-        json_start = response.find('{')
-        json_end = response.rfind('}') + 1
+        response = response.strip()
+        if response.startswith("```json"):
+            response = response[7:]
+        if response.startswith("```"):
+            response = response[3:]
+        if response.endswith("```"):
+            response = response[:-3]
+        response = response.strip()
 
-        if json_start != -1 and json_end > json_start:
-            json_str = response[json_start:json_end]
-            result = json.loads(json_str)
-        else:
-            # Fallback: try parsing entire response
-            result = json.loads(response)
+        result = json.loads(response)
 
-        # Extract scores with validation
         knowledge = int(result.get("knowledge", 1))
         communication = int(result.get("communication", 1))
         relevance = int(result.get("relevance", 1))
 
-        # Clamp to 1-10 range
         knowledge = max(1, min(10, knowledge))
         communication = max(1, min(10, communication))
         relevance = max(1, min(10, relevance))
 
-        # Extract feedback and followup
-        feedback = result.get("feedback", "- Provide more specific technical details about the concepts mentioned.\n- Include concrete real-world examples to illustrate your points.\n- Elaborate on the practical implications and use cases of your answer.")
+        feedback = result.get("feedback", [])
+        if isinstance(feedback, str):
+            feedback = [line.strip("- ").strip() for line in feedback.split("\n") if line.strip()]
+        if not feedback or len(feedback) < 3:
+            feedback = [
+                "Consider providing more specific examples.",
+                "Focus on addressing all parts of the question.",
+                "Try structuring your answer more clearly."
+            ]
+
         followup = result.get("followup", "")
+        if not isinstance(followup, str):
+            followup = ""
 
         return {
             "knowledge": knowledge,
@@ -7762,41 +7747,23 @@ CRITICAL RULES:
             "followup": followup
         }
 
-    except (json.JSONDecodeError, KeyError, ValueError) as e:
-        # Fallback with difficulty-appropriate defaults
+    except (json.JSONDecodeError, KeyError, ValueError, TypeError) as e:
         if difficulty == "Easy":
             fallback_score = 5
         elif difficulty == "Medium":
+            fallback_score = 4
+        else:
             fallback_score = 3
-        else:  # Hard
-            fallback_score = 2
 
         return {
             "knowledge": fallback_score,
             "communication": fallback_score,
             "relevance": fallback_score,
-            "feedback": "- Evaluation parsing error occurred. Please try answering again.
-- Ensure your answer directly addresses the key concepts in the question.
-- Provide specific technical details, examples, and demonstrate depth of understanding.",
-            "followup": ""
-        }
-
-    except Exception as e:
-        # General error fallback
-        if difficulty == "Easy":
-            fallback_score = 5
-        elif difficulty == "Medium":
-            fallback_score = 3
-        else:  # Hard
-            fallback_score = 2
-
-        return {
-            "knowledge": fallback_score,
-            "communication": fallback_score,
-            "relevance": fallback_score,
-            "feedback": "- Evaluation error occurred. Please provide a well-structured answer.
-- Address the key concepts mentioned in the question with technical accuracy.
-- Include concrete examples and demonstrate comprehensive understanding of the topic.",
+            "feedback": [
+                "Your answer shows some understanding but needs more detail.",
+                "Try providing specific examples from your experience.",
+                "Structure your response using the STAR method for clarity."
+            ],
             "followup": ""
         }
 
@@ -7915,7 +7882,15 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
             # Escape HTML special characters to prevent rendering issues
             q_escaped = q.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
             a_escaped = a.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-            f_escaped = f.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
+            if isinstance(f, list):
+                f_html = "<ul>"
+                for item in f:
+                    item_escaped = item.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                    f_html += f"<li>{item_escaped}</li>"
+                f_html += "</ul>"
+            else:
+                f_html = f.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
             # SHOW FULL ANSWER - NO TRUNCATION IN PDF
             answer_display = a_escaped
@@ -7936,7 +7911,7 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
                 <div class="answer-text"><strong>Your Answer:</strong><br/>{answer_display}</div>
                 <p class="score">Knowledge: {s.get('knowledge', 0)}/10 | Communication: {s.get('communication', 0)}/10 | Relevance: {s.get('relevance', 0)}/10</p>
                 <p class="score">Question Score: {avg_q_score:.1f}/10</p>
-                <div class="feedback"><strong>Feedback:</strong><br/>{f_escaped}</div>
+                <div class="feedback"><strong>Feedback:</strong><br/>{f_html}</div>
                 {followup_text}
             </div>
             """
@@ -9611,6 +9586,15 @@ Generate exactly {num_questions} questions now:
                         current_score_dict = st.session_state.dynamic_interview_scores[-1]
                         avg_q_score = (current_score_dict["knowledge"] + current_score_dict["communication"] + current_score_dict["relevance"]) / 3
 
+                        feedback_items = current_score_dict["feedback"]
+                        if isinstance(feedback_items, list):
+                            feedback_html = "<ul style='margin: 5px 0; padding-left: 20px;'>"
+                            for item in feedback_items:
+                                feedback_html += f"<li style='margin: 5px 0;'>{item}</li>"
+                            feedback_html += "</ul>"
+                        else:
+                            feedback_html = f"<div style='white-space: pre-line; margin-top: 5px;'>{feedback_items}</div>"
+
                         st.markdown(f"""
                         <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%);
                                     border: 1px solid rgba(0, 195, 255, 0.3); border-radius: 10px; padding: 15px; margin: 15px 0;">
@@ -9619,7 +9603,7 @@ Generate exactly {num_questions} questions now:
                             <p style="color: #ffffff;">⭐ Question Score: {avg_q_score:.1f}/10</p>
                             <div style="color: #ffffff; margin-top: 10px;">
                                 <strong>💡 Improvement Tips:</strong>
-                                <div style="white-space: pre-line; margin-top: 5px;">{current_score_dict["feedback"]}</div>
+                                {feedback_html}
                             </div>
                         </div>
                         """, unsafe_allow_html=True)
@@ -9814,9 +9798,14 @@ Generate exactly {num_questions} questions now:
 
                     with st.expander(f"Question {i+1}: Score {q_avg:.1f}/10"):
                         st.write(f"**Question:** {question}")
-                        st.write(f"**Your Answer:** {answer}")  # Show full answer
+                        st.write(f"**Your Answer:** {answer}")
                         st.write(f"**Scores:** Knowledge: {score_dict['knowledge']}/10 | Communication: {score_dict['communication']}/10 | Relevance: {score_dict['relevance']}/10")
-                        st.write(f"**Feedback:** {feedback}")
+                        st.write("**Feedback:**")
+                        if isinstance(feedback, list):
+                            for item in feedback:
+                                st.write(f"- {item}")
+                        else:
+                            st.write(feedback)
 
                 # Save to database
                 username = st.session_state.get("username", "Guest")

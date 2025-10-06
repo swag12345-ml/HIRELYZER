@@ -10034,10 +10034,7 @@ Generate exactly {num_questions} questions now:
                     st.rerun()
         else:
             st.info("Please select both a career domain and target role to start the interview practice.")
-		
-                 
-                      
-                      
+
 if tab5:
 	with tab5:
 		import sqlite3
@@ -10497,27 +10494,58 @@ if tab5:
 										"Average ATS Score by Domain", orientation='h')
 				st.plotly_chart(fig, use_container_width=True)
 				
-				# Enhanced domain cards
+				# Enhanced domain cards with glassmorphism
 				for i, row in df_sorted.iterrows():
 					progress_value = row['avg_ats'] / 100
 					st.markdown(f"""
-					<div style="border: 2px solid #e1e5e9; border-radius: 15px; padding: 15px; margin-bottom: 15px; 
-								background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+					<div style="
+						background: rgba(255, 255, 255, 0.08);
+						backdrop-filter: blur(12px);
+						border: 1px solid rgba(0, 200, 255, 0.25);
+						box-shadow: 0 8px 32px rgba(0, 200, 255, 0.25);
+						border-radius: 15px;
+						padding: 15px;
+						margin-bottom: 15px;
+						transition: all 0.3s ease;
+						cursor: pointer;
+					"
+					onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 40px rgba(0, 200, 255, 0.4)';"
+					onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 32px rgba(0, 200, 255, 0.25)';">
 						<div style="display: flex; justify-content: space-between; align-items: center;">
-							<h4 style="margin: 0; color: #495057;">📁 {row['domain']}</h4>
-							<span style="background: #007bff; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px;">
+							<h4 style="margin: 0; color: #4da6ff; text-shadow: 0 0 8px rgba(0, 200, 255, 0.5);">📁 {row['domain']}</h4>
+							<span style="
+								background: rgba(0, 200, 255, 0.2);
+								border: 1px solid rgba(0, 200, 255, 0.4);
+								color: #4da6ff;
+								padding: 5px 10px;
+								border-radius: 20px;
+								font-size: 12px;
+								font-weight: bold;
+								backdrop-filter: blur(8px);
+							">
 								Rank #{i+1}
 							</span>
 						</div>
 						<div style="margin: 10px 0;">
-							<div style="background: #e9ecef; border-radius: 10px; height: 8px; overflow: hidden;">
-								<div style="background: linear-gradient(90deg, #28a745, #20c997); height: 100%; 
-									width: {progress_value*100}%; transition: width 0.3s ease;"></div>
+							<div style="
+								background: rgba(255, 255, 255, 0.05);
+								border-radius: 10px;
+								height: 8px;
+								overflow: hidden;
+								box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+							">
+								<div style="
+									background: linear-gradient(90deg, rgba(0, 200, 255, 0.6), rgba(0, 255, 200, 0.8));
+									height: 100%;
+									width: {progress_value*100}%;
+									transition: width 0.3s ease;
+									box-shadow: 0 0 10px rgba(0, 200, 255, 0.6);
+								"></div>
 							</div>
 						</div>
 						<div style="display: flex; justify-content: space-between; margin-top: 10px;">
-							<span><b>🧠 Avg ATS:</b> <span style="color:#007acc; font-weight: bold;">{row['avg_ats']:.2f}</span></span>
-							<span><b>📄 Resumes:</b> {row['count']}</span>
+							<span style="color: #e6f7ff;"><b>🧠 Avg ATS:</b> <span style="color: #4da6ff; font-weight: bold; text-shadow: 0 0 6px rgba(0, 200, 255, 0.4);">{row['avg_ats']:.2f}</span></span>
+							<span style="color: #e6f7ff;"><b>📄 Resumes:</b> <span style="color: #4da6ff; font-weight: bold;">{row['count']}</span></span>
 						</div>
 					</div>
 					""", unsafe_allow_html=True)
@@ -10831,3 +10859,5 @@ if tab5:
 			<p>Last updated: {}</p>
 		</div>
 		""".format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
+
+		

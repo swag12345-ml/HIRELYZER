@@ -7958,18 +7958,33 @@ def save_interview_result(username: str, role: str, domain: str, avg_score: floa
 
 def format_feedback_text(feedback):
     """
-    Format feedback text into bullet points for clean display
+    Format feedback text into bullet points for clean display.
+
+    Args:
+        feedback (str): Raw feedback text from LLM
+
+    Returns:
+        str: HTML-formatted feedback with escaped special characters
     """
     import re
     import html
+
+    # Input validation
+    if not feedback or not isinstance(feedback, str):
+        return "<b>💡 Improvement Tips:</b><br><ul style='margin-top:5px;'><li>No feedback available.</li></ul>"
+
+    # Split into sentences and filter empty ones
     sentences = re.split(r'(?<=\.)\s+', feedback.strip())
-    sentences = [s.strip() for s in sentences if len(s.strip()) > 0]
-    formatted = "<b>💡 Improvement Tips:</b><br><ul style='margin-top:5px;'>"
-    for s in sentences:
-        # Escape HTML special characters to display tags like <header>, <section>, etc.
-        safe_sentence = html.escape(s)
-        formatted += f"<li>{safe_sentence}</li>"
-    formatted += "</ul>"
+    sentences = [s.strip() for s in sentences if s.strip()]
+
+    # Handle empty feedback after filtering
+    if not sentences:
+        return "<b>💡 Improvement Tips:</b><br><ul style='margin-top:5px;'><li>No feedback available.</li></ul>"
+
+    # Build formatted HTML with escaped content (prevents XSS and displays HTML tags as text)
+    list_items = [f"<li>{html.escape(s)}</li>" for s in sentences]
+    formatted = "<b>💡 Improvement Tips:</b><br><ul style='margin-top:5px;'>" + "".join(list_items) + "</ul>"
+
     return formatted
 
 

@@ -10497,15 +10497,15 @@ if tab5:
 				# Enhanced domain cards with glassmorphism
 				st.markdown("""
 				<style>
-				@keyframes shimmer {
+				@keyframes tab5-shimmer {
 					0% { background-position: -200% 0; }
 					100% { background-position: 200% 0; }
 				}
-				.domain-card {
-					background: rgba(255, 255, 255, 0.05);
-					backdrop-filter: blur(12px);
-					border: 1px solid rgba(0, 200, 255, 0.15);
-					box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+				.tab5-domain-card {
+					background: rgba(10, 20, 40, 0.3);
+					backdrop-filter: blur(10px);
+					border: 1px solid rgba(0, 200, 255, 0.2);
+					box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 					border-radius: 15px;
 					padding: 15px;
 					margin-bottom: 15px;
@@ -10514,7 +10514,7 @@ if tab5:
 					position: relative;
 					overflow: hidden;
 				}
-				.domain-card::before {
+				.tab5-domain-card::before {
 					content: "";
 					position: absolute;
 					top: 0;
@@ -10524,21 +10524,21 @@ if tab5:
 					background: linear-gradient(
 						120deg,
 						transparent 0%,
-						rgba(0, 200, 255, 0.1) 50%,
+						rgba(255, 255, 255, 0.08) 50%,
 						transparent 100%
 					);
 					background-size: 200% 100%;
 					opacity: 0;
 					transition: opacity 0.3s ease;
 				}
-				.domain-card:hover::before {
+				.tab5-domain-card:hover::before {
 					opacity: 1;
-					animation: shimmer 1.5s ease-in-out infinite;
+					animation: tab5-shimmer 1.5s ease-in-out infinite;
 				}
-				.domain-card:hover {
+				.tab5-domain-card:hover {
 					transform: translateY(-2px);
-					border-color: rgba(0, 200, 255, 0.3);
-					box-shadow: 0 6px 20px rgba(0, 200, 255, 0.15);
+					border-color: rgba(0, 200, 255, 0.35);
+					background: rgba(10, 20, 40, 0.4);
 				}
 				</style>
 				""", unsafe_allow_html=True)
@@ -10546,17 +10546,18 @@ if tab5:
 				for i, row in df_sorted.iterrows():
 					progress_value = row['avg_ats'] / 100
 					st.markdown(f"""
-					<div class="domain-card">
+					<div class="tab5-domain-card">
 						<div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1;">
 							<h4 style="margin: 0; color: #5eb8ff;">📁 {row['domain']}</h4>
 							<span style="
-								background: rgba(0, 200, 255, 0.15);
-								border: 1px solid rgba(0, 200, 255, 0.3);
+								background: rgba(0, 200, 255, 0.1);
+								border: 1px solid rgba(0, 200, 255, 0.25);
 								color: #5eb8ff;
 								padding: 5px 10px;
 								border-radius: 20px;
 								font-size: 12px;
 								font-weight: bold;
+								backdrop-filter: blur(8px);
 							">
 								Rank #{i+1}
 							</span>
@@ -10569,7 +10570,7 @@ if tab5:
 								overflow: hidden;
 							">
 								<div style="
-									background: linear-gradient(90deg, rgba(0, 200, 255, 0.5), rgba(0, 255, 200, 0.6));
+									background: linear-gradient(90deg, rgba(0, 200, 255, 0.4), rgba(0, 255, 200, 0.5));
 									height: 100%;
 									width: {progress_value*100}%;
 									transition: width 0.3s ease;
@@ -10892,4 +10893,3 @@ if tab5:
 			<p>Last updated: {}</p>
 		</div>
 		""".format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
-		

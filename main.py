@@ -7604,7 +7604,9 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
-def evaluate_interview_answer(answer: str, question: str = None):
+
+                      
+ def evaluate_interview_answer(answer: str, question: str = None):
     """
     Uses an LLM to strictly evaluate an interview answer.
     Returns (score out of 5, feedback string).
@@ -7960,11 +7962,14 @@ def format_feedback_text(feedback):
     Format feedback text into bullet points for clean display
     """
     import re
+    import html
     sentences = re.split(r'(?<=\.)\s+', feedback.strip())
     sentences = [s.strip() for s in sentences if len(s.strip()) > 0]
     formatted = "<b>💡 Improvement Tips:</b><br><ul style='margin-top:5px;'>"
     for s in sentences:
-        formatted += f"<li>{s}</li>"
+        # Escape HTML special characters to display tags like <header>, <section>, etc.
+        safe_sentence = html.escape(s)
+        formatted += f"<li>{safe_sentence}</li>"
     formatted += "</ul>"
     return formatted
 
@@ -10029,9 +10034,7 @@ Generate exactly {num_questions} questions now:
                     st.session_state.original_num_questions = 6
                     st.rerun()
         else:
-            st.info("Please select both a career domain and target role to start the interview practice.")
-                      
-                      
+            st.info("Please select both a career domain and target role to start the interview practice.")                     
                       
                       
 if tab5:

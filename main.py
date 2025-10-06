@@ -10495,57 +10495,90 @@ if tab5:
 				st.plotly_chart(fig, use_container_width=True)
 				
 				# Enhanced domain cards with glassmorphism
+				st.markdown("""
+				<style>
+				@keyframes shimmer {
+					0% { background-position: -200% 0; }
+					100% { background-position: 200% 0; }
+				}
+				.domain-card {
+					background: rgba(255, 255, 255, 0.05);
+					backdrop-filter: blur(12px);
+					border: 1px solid rgba(0, 200, 255, 0.15);
+					box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+					border-radius: 15px;
+					padding: 15px;
+					margin-bottom: 15px;
+					transition: all 0.3s ease;
+					cursor: pointer;
+					position: relative;
+					overflow: hidden;
+				}
+				.domain-card::before {
+					content: "";
+					position: absolute;
+					top: 0;
+					left: 0;
+					width: 100%;
+					height: 100%;
+					background: linear-gradient(
+						120deg,
+						transparent 0%,
+						rgba(0, 200, 255, 0.1) 50%,
+						transparent 100%
+					);
+					background-size: 200% 100%;
+					opacity: 0;
+					transition: opacity 0.3s ease;
+				}
+				.domain-card:hover::before {
+					opacity: 1;
+					animation: shimmer 1.5s ease-in-out infinite;
+				}
+				.domain-card:hover {
+					transform: translateY(-2px);
+					border-color: rgba(0, 200, 255, 0.3);
+					box-shadow: 0 6px 20px rgba(0, 200, 255, 0.15);
+				}
+				</style>
+				""", unsafe_allow_html=True)
+
 				for i, row in df_sorted.iterrows():
 					progress_value = row['avg_ats'] / 100
 					st.markdown(f"""
-					<div style="
-						background: rgba(255, 255, 255, 0.08);
-						backdrop-filter: blur(12px);
-						border: 1px solid rgba(0, 200, 255, 0.25);
-						box-shadow: 0 8px 32px rgba(0, 200, 255, 0.25);
-						border-radius: 15px;
-						padding: 15px;
-						margin-bottom: 15px;
-						transition: all 0.3s ease;
-						cursor: pointer;
-					"
-					onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 40px rgba(0, 200, 255, 0.4)';"
-					onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 32px rgba(0, 200, 255, 0.25)';">
-						<div style="display: flex; justify-content: space-between; align-items: center;">
-							<h4 style="margin: 0; color: #4da6ff; text-shadow: 0 0 8px rgba(0, 200, 255, 0.5);">📁 {row['domain']}</h4>
+					<div class="domain-card">
+						<div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1;">
+							<h4 style="margin: 0; color: #5eb8ff;">📁 {row['domain']}</h4>
 							<span style="
-								background: rgba(0, 200, 255, 0.2);
-								border: 1px solid rgba(0, 200, 255, 0.4);
-								color: #4da6ff;
+								background: rgba(0, 200, 255, 0.15);
+								border: 1px solid rgba(0, 200, 255, 0.3);
+								color: #5eb8ff;
 								padding: 5px 10px;
 								border-radius: 20px;
 								font-size: 12px;
 								font-weight: bold;
-								backdrop-filter: blur(8px);
 							">
 								Rank #{i+1}
 							</span>
 						</div>
-						<div style="margin: 10px 0;">
+						<div style="margin: 10px 0; position: relative; z-index: 1;">
 							<div style="
 								background: rgba(255, 255, 255, 0.05);
 								border-radius: 10px;
 								height: 8px;
 								overflow: hidden;
-								box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 							">
 								<div style="
-									background: linear-gradient(90deg, rgba(0, 200, 255, 0.6), rgba(0, 255, 200, 0.8));
+									background: linear-gradient(90deg, rgba(0, 200, 255, 0.5), rgba(0, 255, 200, 0.6));
 									height: 100%;
 									width: {progress_value*100}%;
 									transition: width 0.3s ease;
-									box-shadow: 0 0 10px rgba(0, 200, 255, 0.6);
 								"></div>
 							</div>
 						</div>
-						<div style="display: flex; justify-content: space-between; margin-top: 10px;">
-							<span style="color: #e6f7ff;"><b>🧠 Avg ATS:</b> <span style="color: #4da6ff; font-weight: bold; text-shadow: 0 0 6px rgba(0, 200, 255, 0.4);">{row['avg_ats']:.2f}</span></span>
-							<span style="color: #e6f7ff;"><b>📄 Resumes:</b> <span style="color: #4da6ff; font-weight: bold;">{row['count']}</span></span>
+						<div style="display: flex; justify-content: space-between; margin-top: 10px; position: relative; z-index: 1;">
+							<span style="color: #cce6ff;"><b>🧠 Avg ATS:</b> <span style="color: #5eb8ff; font-weight: bold;">{row['avg_ats']:.2f}</span></span>
+							<span style="color: #cce6ff;"><b>📄 Resumes:</b> <span style="color: #5eb8ff; font-weight: bold;">{row['count']}</span></span>
 						</div>
 					</div>
 					""", unsafe_allow_html=True)
@@ -10859,5 +10892,4 @@ if tab5:
 			<p>Last updated: {}</p>
 		</div>
 		""".format(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), unsafe_allow_html=True)
-
 		

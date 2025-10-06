@@ -7605,8 +7605,7 @@ with tab3:
         </div>
         """, unsafe_allow_html=True)
 
-                      
- def evaluate_interview_answer(answer: str, question: str = None):
+def evaluate_interview_answer(answer: str, question: str = None):
     """
     Uses an LLM to strictly evaluate an interview answer.
     Returns (score out of 5, feedback string).
@@ -10034,7 +10033,9 @@ Generate exactly {num_questions} questions now:
                     st.session_state.original_num_questions = 6
                     st.rerun()
         else:
-            st.info("Please select both a career domain and target role to start the interview practice.")                     
+            st.info("Please select both a career domain and target role to start the interview practice.")
+		
+                 
                       
                       
 if tab5:

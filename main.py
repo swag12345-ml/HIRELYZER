@@ -906,7 +906,20 @@ if st.session_state.username == "admin":
         )
     else:
         st.info("No logs found yet.")
+if st.session_state.get("username") == "admin":
+    st.divider()
+    st.subheader("📦 Database Backup & Download")
 
+    if os.path.exists(DB_PATH):
+        with open(DB_PATH, "rb") as f:
+            st.download_button(
+                "⬇️ Download resume_data.db",
+                data=f,
+                file_name="resume_data_backup.db",
+                mime="application/octet-stream"
+            )
+    else:
+        st.warning("⚠️ No database file found yet.")
 # Always-visible tabs
 tab_labels = [
     "📊 Dashboard",
@@ -929,23 +942,6 @@ tab1, tab2, tab3, tab4 = tabs[:4]
 tab5 = tabs[4] if len(tabs) > 4 else None
 
 # ============================================================
-# 📦 Database Backup & Download Section (Admin Only)
-# ============================================================
-if st.session_state.get("username") == "admin":
-    st.divider()
-    st.subheader("📦 Database Backup & Download")
-
-    if os.path.exists(DB_PATH):
-        with open(DB_PATH, "rb") as f:
-            st.download_button(
-                "⬇️ Download resume_data.db",
-                data=f,
-                file_name="resume_data_backup.db",
-                mime="application/octet-stream"
-            )
-    else:
-        st.warning("⚠️ No database file found yet.")
-
 with tab1:
     st.markdown("""
     <style>

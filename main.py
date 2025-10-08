@@ -34,6 +34,7 @@ from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from xhtml2pdf import pisa
 from pydantic import BaseModel
 from streamlit_pdf_viewer import pdf_viewer
+from streamlit_autorefresh import st_autorefresh
 
 # Heavy libraries - loaded with caching
 import torch
@@ -305,6 +306,7 @@ body, .main {
 
 # ------------------- BEFORE LOGIN -------------------
 if not st.session_state.authenticated:
+    st_autorefresh(interval=6000, key="dashboard_refresh")
 
     # -------- Sidebar --------
     with st.sidebar:
@@ -906,7 +908,7 @@ if st.session_state.username == "admin":
         )
     else:
         st.info("No logs found yet.")
-if st.session_state.get("username") == "admin":
+
     st.divider()
     st.subheader("📦 Database Backup & Download")
 

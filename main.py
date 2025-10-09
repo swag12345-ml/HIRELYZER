@@ -34,6 +34,7 @@ from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from xhtml2pdf import pisa
 from pydantic import BaseModel
 from streamlit_pdf_viewer import pdf_viewer
+from streamlit_autorefresh import st_autorefresh
 
 # Heavy libraries - loaded with caching
 import torch
@@ -50,10 +51,10 @@ from langchain.chains import ConversationalRetrievalChain
 from llm_manager import call_llm, load_groq_api_keys
 from db_manager import (
     db_manager,
-    insert_candidate, 
+    insert_candidate,
     get_top_domains_by_score,
     get_database_stats,
-    detect_domain_from_title_and_description, 
+    detect_domain_from_title_and_description,
     get_domain_similarity
 )
 from user_login import (
@@ -64,10 +65,16 @@ from user_login import (
     get_total_registered_users,
     log_user_action,
     username_exists,
-    save_user_api_key, 
+    save_user_api_key,
     get_user_api_key,
     get_all_user_logs
 )
+
+# ============================================================
+# 💾 Persistent Storage Configuration for Streamlit Cloud
+# ============================================================
+os.makedirs(".streamlit_storage", exist_ok=True)
+DB_PATH = os.path.join(".streamlit_storage", "resume_data.db")
 
 def html_to_pdf_bytes(html_string):
     styled_html = f"""
@@ -217,6 +224,7 @@ Hiring Manager, {company}, {location}
         st.markdown(cover_letter_html, unsafe_allow_html=True)
 
 # ------------------- Initialize -------------------
+# ✅ Initialize database in persistent storage
 create_user_table()
 
 # ------------------- Initialize Session State -------------------
@@ -226,6 +234,10 @@ if "username" not in st.session_state:
     st.session_state.username = None
 if "processed_files" not in st.session_state:
     st.session_state.processed_files = set()
+if "just_registered" not in st.session_state:
+    st.session_state.just_registered = False
+if "active_tab" not in st.session_state:
+    st.session_state.active_tab = 0  # 0 = Login, 1 = Register
 
 # ------------------- CSS Styling -------------------
 st.markdown("""
@@ -298,6 +310,7 @@ body, .main {
 
 # ------------------- BEFORE LOGIN -------------------
 if not st.session_state.authenticated:
+    st_autorefresh(interval=6000, key="dashboard_refresh")
 
     # -------- Sidebar --------
     with st.sidebar:
@@ -777,11 +790,16 @@ if not st.session_state.get("authenticated", False):
 
         # ---------------- REGISTER TAB ----------------
         with register_tab:
-            new_user = st.text_input("Choose a Username", key="reg_user")
-            new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
+            # ✅ Initialize default values for inputs
+            reg_user_default = "" if st.session_state.just_registered else st.session_state.get("reg_user", "")
+            reg_pass_default = "" if st.session_state.just_registered else st.session_state.get("reg_pass", "")
+
+            new_user = st.text_input("Choose a Username", value=reg_user_default, key="reg_user")
+            new_pass = st.text_input("Choose a Password", type="password", value=reg_pass_default, key="reg_pass")
             st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
 
-            if new_user.strip():
+            # ✅ Only show live availability check if NOT just registered
+            if new_user.strip() and not st.session_state.just_registered:
                 if username_exists(new_user.strip()):
                     st.markdown("""<div class='slide-message error-msg'>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
@@ -796,16 +814,28 @@ if not st.session_state.get("authenticated", False):
                         Username is available.
                     </div>""", unsafe_allow_html=True)
 
+            # ✅ Show success message only once after registration
+            if st.session_state.just_registered:
+                st.markdown("""<div class='slide-message success-msg'>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                      stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                    Registered successfully! You can now login.
+                </div>""", unsafe_allow_html=True)
+
+                # ✅ Auto-switch to Login tab after 1.5 seconds
+                time.sleep(1.5)
+                st.session_state.just_registered = False
+                st.session_state.active_tab = 0  # Switch to Login tab
+                st.rerun()
+
             if st.button("Register", key="register_btn"):
                 if new_user.strip() and new_pass.strip():
                     success, message = add_user(new_user.strip(), new_pass.strip())
                     if success:
-                        st.markdown(f"""<div class='slide-message success-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                            {message}
-                        </div>""", unsafe_allow_html=True)
+                        # ✅ Set flag and trigger rerun
+                        st.session_state.just_registered = True
                         log_user_action(new_user.strip(), "register")
+                        st.rerun()
                     else:
                         st.markdown(f"""<div class='slide-message error-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
@@ -900,6 +930,19 @@ if st.session_state.username == "admin":
     else:
         st.info("No logs found yet.")
 
+    st.divider()
+    st.subheader("📦 Database Backup & Download")
+
+    if os.path.exists(DB_PATH):
+        with open(DB_PATH, "rb") as f:
+            st.download_button(
+                "⬇️ Download resume_data.db",
+                data=f,
+                file_name="resume_data_backup.db",
+                mime="application/octet-stream"
+            )
+    else:
+        st.warning("⚠️ No database file found yet.")
 # Always-visible tabs
 tab_labels = [
     "📊 Dashboard",

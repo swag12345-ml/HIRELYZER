@@ -786,24 +786,10 @@ if not st.session_state.get("authenticated", False):
 
         # ---------------- REGISTER TAB ----------------
         with register_tab:
-            # Initialize form counter if it doesn't exist
-            if "reg_form_counter" not in st.session_state:
-                st.session_state["reg_form_counter"] = 0
-
-            # Check if we just completed a successful registration
-            if st.session_state.get("just_registered", False):
-                # Clear the flag
-                st.session_state["just_registered"] = False
-                # Increment the counter to force new widget keys (this clears the form)
-                st.session_state["reg_form_counter"] += 1
-
-            # Use dynamic keys based on counter to force widget reset
-            form_id = st.session_state["reg_form_counter"]
-            new_user = st.text_input("Choose a Username", key=f"reg_user_{form_id}")
-            new_pass = st.text_input("Choose a Password", type="password", key=f"reg_pass_{form_id}")
+            new_user = st.text_input("Choose a Username", key="reg_user")
+            new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
             st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
 
-            # Show live username validation only when user is typing
             if new_user.strip():
                 if username_exists(new_user.strip()):
                     st.markdown("""<div class='slide-message error-msg'>
@@ -819,7 +805,7 @@ if not st.session_state.get("authenticated", False):
                         Username is available.
                     </div>""", unsafe_allow_html=True)
 
-            if st.button("Register", key=f"register_btn_{form_id}"):
+            if st.button("Register", key="register_btn"):
                 if new_user.strip() and new_pass.strip():
                     success, message = add_user(new_user.strip(), new_pass.strip())
                     if success:
@@ -829,10 +815,6 @@ if not st.session_state.get("authenticated", False):
                             {message}
                         </div>""", unsafe_allow_html=True)
                         log_user_action(new_user.strip(), "register")
-                        # Set flag to indicate successful registration
-                        st.session_state["just_registered"] = True
-                        # Trigger rerun to clear the form
-                        st.rerun()
                     else:
                         st.markdown(f"""<div class='slide-message error-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"

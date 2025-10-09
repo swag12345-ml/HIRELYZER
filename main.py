@@ -786,10 +786,12 @@ if not st.session_state.get("authenticated", False):
 
         # ---------------- REGISTER TAB ----------------
         with register_tab:
-            # Check if we just completed a successful registration
+            # Check if we just completed a successful registration and clear it BEFORE rendering widgets
+            skip_validation = False
             if st.session_state.get("just_registered", False):
                 # Clear the flag and reset the form
                 st.session_state["just_registered"] = False
+                skip_validation = True
                 # Clear the widget values by deleting their keys
                 if "reg_user" in st.session_state:
                     del st.session_state["reg_user"]
@@ -800,8 +802,8 @@ if not st.session_state.get("authenticated", False):
             new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
             st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
 
-            # Only show live username validation if we haven't just registered
-            if new_user.strip() and not st.session_state.get("just_registered", False):
+            # Only show live username validation if we haven't just registered and user is typing
+            if new_user.strip() and not skip_validation:
                 if username_exists(new_user.strip()):
                     st.markdown("""<div class='slide-message error-msg'>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"

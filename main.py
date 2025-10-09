@@ -790,31 +790,32 @@ if not st.session_state.get("authenticated", False):
             new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
             st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
 
-            if new_user.strip():
-                if username_exists(new_user.strip()):
-                    st.markdown("""<div class='slide-message error-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                        Username already exists.
-                    </div>""", unsafe_allow_html=True)
-                else:
-                    st.markdown("""<div class='slide-message info-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
-                          <path d="M12 8h.01M12 12v4"/></svg>
-                        Username is available.
-                    </div>""", unsafe_allow_html=True)
-
             if st.button("Register", key="register_btn"):
                 if new_user.strip() and new_pass.strip():
-                    success, message = add_user(new_user.strip(), new_pass.strip())
-                    if success:
-                        st.markdown(f"""<div class='slide-message success-msg'>
+                    # ✅ Check username existence ONLY when Register button is clicked
+                    if username_exists(new_user.strip()):
+                        st.markdown("""<div class='slide-message error-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                            {message}
+                              stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                            Username already exists.
                         </div>""", unsafe_allow_html=True)
-                        log_user_action(new_user.strip(), "register")
+                    else:
+                        success, message = add_user(new_user.strip(), new_pass.strip())
+                        if success:
+                            st.markdown(f"""<div class='slide-message success-msg'>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                                  stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                                {message} Redirecting to Login...
+                            </div>""", unsafe_allow_html=True)
+                            log_user_action(new_user.strip(), "register")
+
+                            # ✅ Clear the input fields
+                            st.session_state.reg_user = ""
+                            st.session_state.reg_pass = ""
+
+                            # ✅ Wait and rerun to switch to Login tab
+                            time.sleep(3)
+                            st.rerun()
                     else:
                         st.markdown(f"""<div class='slide-message error-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"

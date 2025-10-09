@@ -4,11 +4,8 @@ import streamlit as st
 from datetime import datetime
 import pytz
 import re
-import os
 
-# Persistent storage path for Streamlit Cloud
-os.makedirs(".streamlit_storage", exist_ok=True)
-DB_NAME = os.path.join(".streamlit_storage", "resume_data.db")
+DB_NAME = "resume_data.db"
 
 # ------------------ Utility: Get IST Time ------------------
 def get_ist_time():
@@ -168,18 +165,3 @@ def get_all_user_logs():
     logs = c.fetchall()
     conn.close()
     return logs
-
-# ------------------ Database Backup & Download UI ------------------
-st.divider()
-st.subheader("📦 Database Backup & Download")
-
-if os.path.exists(DB_NAME):
-    with open(DB_NAME, "rb") as f:
-        st.download_button(
-            "⬇️ Download resume_data.db",
-            data=f,
-            file_name="resume_data_backup.db",
-            mime="application/octet-stream"
-        )
-else:
-    st.warning("⚠️ No database file found yet.")

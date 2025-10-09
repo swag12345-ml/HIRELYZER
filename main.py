@@ -792,7 +792,7 @@ if not st.session_state.get("authenticated", False):
 
             if st.button("Register", key="register_btn"):
                 if new_user.strip() and new_pass.strip():
-                    # ✅ Check username existence ONLY when Register button is clicked
+                    # Check if username exists only when Register is clicked
                     if username_exists(new_user.strip()):
                         st.markdown("""<div class='slide-message error-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
@@ -802,26 +802,24 @@ if not st.session_state.get("authenticated", False):
                     else:
                         success, message = add_user(new_user.strip(), new_pass.strip())
                         if success:
-                            st.markdown(f"""<div class='slide-message success-msg'>
+                            st.markdown("""<div class='slide-message success-msg'>
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                                   stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                                {message} Redirecting to Login...
+                                Registered successfully! You can now log in.
                             </div>""", unsafe_allow_html=True)
                             log_user_action(new_user.strip(), "register")
 
-                            # ✅ Clear the input fields
+                            # Clear the input fields and switch to login tab
                             st.session_state.reg_user = ""
                             st.session_state.reg_pass = ""
-
-                            # ✅ Wait and rerun to switch to Login tab
-                            time.sleep(3)
+                            time.sleep(1.5)
                             st.rerun()
-                    else:
-                        st.markdown(f"""<div class='slide-message error-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                            {message}
-                        </div>""", unsafe_allow_html=True)
+                        else:
+                            st.markdown(f"""<div class='slide-message error-msg'>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                                  stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                                {message}
+                            </div>""", unsafe_allow_html=True)
                 else:
                     st.markdown("""<div class='slide-message warn-msg'>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"

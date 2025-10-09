@@ -1,3 +1,4 @@
+# Standard library imports
 import os
 import json
 import random
@@ -34,7 +35,6 @@ from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from xhtml2pdf import pisa
 from pydantic import BaseModel
 from streamlit_pdf_viewer import pdf_viewer
-from streamlit_autorefresh import st_autorefresh
 
 # Heavy libraries - loaded with caching
 import torch
@@ -51,10 +51,10 @@ from langchain.chains import ConversationalRetrievalChain
 from llm_manager import call_llm, load_groq_api_keys
 from db_manager import (
     db_manager,
-    insert_candidate,
+    insert_candidate, 
     get_top_domains_by_score,
     get_database_stats,
-    detect_domain_from_title_and_description,
+    detect_domain_from_title_and_description, 
     get_domain_similarity
 )
 from user_login import (
@@ -65,16 +65,10 @@ from user_login import (
     get_total_registered_users,
     log_user_action,
     username_exists,
-    save_user_api_key,
+    save_user_api_key, 
     get_user_api_key,
     get_all_user_logs
 )
-
-# ============================================================
-# 💾 Persistent Storage Configuration for Streamlit Cloud
-# ============================================================
-os.makedirs(".streamlit_storage", exist_ok=True)
-DB_PATH = os.path.join(".streamlit_storage", "resume_data.db")
 
 def html_to_pdf_bytes(html_string):
     styled_html = f"""
@@ -224,7 +218,6 @@ Hiring Manager, {company}, {location}
         st.markdown(cover_letter_html, unsafe_allow_html=True)
 
 # ------------------- Initialize -------------------
-# ✅ Initialize database in persistent storage
 create_user_table()
 
 # ------------------- Initialize Session State -------------------
@@ -234,10 +227,6 @@ if "username" not in st.session_state:
     st.session_state.username = None
 if "processed_files" not in st.session_state:
     st.session_state.processed_files = set()
-if "just_registered" not in st.session_state:
-    st.session_state.just_registered = False
-if "active_tab" not in st.session_state:
-    st.session_state.active_tab = 0  # 0 = Login, 1 = Register
 
 # ------------------- CSS Styling -------------------
 st.markdown("""
@@ -310,7 +299,6 @@ body, .main {
 
 # ------------------- BEFORE LOGIN -------------------
 if not st.session_state.authenticated:
-    st_autorefresh(interval=6000, key="dashboard_refresh")
 
     # -------- Sidebar --------
     with st.sidebar:
@@ -790,16 +778,11 @@ if not st.session_state.get("authenticated", False):
 
         # ---------------- REGISTER TAB ----------------
         with register_tab:
-            # ✅ Initialize default values for inputs
-            reg_user_default = "" if st.session_state.just_registered else st.session_state.get("reg_user", "")
-            reg_pass_default = "" if st.session_state.just_registered else st.session_state.get("reg_pass", "")
-
-            new_user = st.text_input("Choose a Username", value=reg_user_default, key="reg_user")
-            new_pass = st.text_input("Choose a Password", type="password", value=reg_pass_default, key="reg_pass")
+            new_user = st.text_input("Choose a Username", key="reg_user")
+            new_pass = st.text_input("Choose a Password", type="password", key="reg_pass")
             st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
 
-            # ✅ Only show live availability check if NOT just registered
-            if new_user.strip() and not st.session_state.just_registered:
+            if new_user.strip():
                 if username_exists(new_user.strip()):
                     st.markdown("""<div class='slide-message error-msg'>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
@@ -814,28 +797,16 @@ if not st.session_state.get("authenticated", False):
                         Username is available.
                     </div>""", unsafe_allow_html=True)
 
-            # ✅ Show success message only once after registration
-            if st.session_state.just_registered:
-                st.markdown("""<div class='slide-message success-msg'>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                      stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                    Registered successfully! You can now login.
-                </div>""", unsafe_allow_html=True)
-
-                # ✅ Auto-switch to Login tab after 1.5 seconds
-                time.sleep(1.5)
-                st.session_state.just_registered = False
-                st.session_state.active_tab = 0  # Switch to Login tab
-                st.rerun()
-
             if st.button("Register", key="register_btn"):
                 if new_user.strip() and new_pass.strip():
                     success, message = add_user(new_user.strip(), new_pass.strip())
                     if success:
-                        # ✅ Set flag and trigger rerun
-                        st.session_state.just_registered = True
+                        st.markdown(f"""<div class='slide-message success-msg'>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                            {message}
+                        </div>""", unsafe_allow_html=True)
                         log_user_action(new_user.strip(), "register")
-                        st.rerun()
                     else:
                         st.markdown(f"""<div class='slide-message error-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
@@ -930,19 +901,6 @@ if st.session_state.username == "admin":
     else:
         st.info("No logs found yet.")
 
-    st.divider()
-    st.subheader("📦 Database Backup & Download")
-
-    if os.path.exists(DB_PATH):
-        with open(DB_PATH, "rb") as f:
-            st.download_button(
-                "⬇️ Download resume_data.db",
-                data=f,
-                file_name="resume_data_backup.db",
-                mime="application/octet-stream"
-            )
-    else:
-        st.warning("⚠️ No database file found yet.")
 # Always-visible tabs
 tab_labels = [
     "📊 Dashboard",
@@ -1818,9 +1776,9 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 - MCA (Master of Computer Applications)
 - BE CS / BTech CS / BTech IT
 
-→ **ASSIGN MINIMUM {int(edu_weight * 0.75)} points** out of {edu_weight} max points
+→ **ASSIGN MINIMUM 15 points** out of {edu_weight} max points
 → **DO NOT penalize** for ongoing status - pursuing counts equally as completed
-→ If completed with strong academic performance, allow scoring up to {int(edu_weight * 0.9)}-{edu_weight} points
+→ If completed with strong academic performance, allow scoring up to 18-20 points
 
 **CRITICAL DATE PARSING RULES:**
 - If end year < 2025 → ✅ ALWAYS Completed (HARDCODED CUTOFF)
@@ -1834,47 +1792,47 @@ If candidate is **currently pursuing OR has completed** any of these degrees:
 
 **SCORING IMPACT:**
 - ✅ Completed relevant education → Full scoring potential (up to max points)
-- 🔄 Ongoing relevant education → **MINIMUM {int(edu_weight * 0.75)} points for priority degrees listed above**
+- 🔄 Ongoing relevant education → **MINIMUM 15 points for priority degrees listed above**
 - Education score is based ONLY on degree relevance and completion status
 - DO NOT add points for certifications/projects in education - these belong in skills/experience sections
 
 **Stable Education Scoring Framework (Independent of Job Description):**
-- {int(edu_weight * 0.90)}-{edu_weight}: Outstanding (completed highly relevant degree with excellent academic performance)
-- {int(edu_weight * 0.75)}-{int(edu_weight * 0.85)}: Excellent (priority degrees listed above - completed or ongoing)
-- {int(edu_weight * 0.60)}-{int(edu_weight * 0.70)}: Very Good (related technical/quantitative degree)
-- {int(edu_weight * 0.45)}-{int(edu_weight * 0.55)}: Good (somewhat related education with transferable knowledge)
-- {int(edu_weight * 0.30)}-{int(edu_weight * 0.40)}: Fair (different degree but shows analytical/technical foundation)
-- {int(edu_weight * 0.15)}-{int(edu_weight * 0.25)}: Basic (unrelated degree)
-- 0-{int(edu_weight * 0.10)}: Insufficient (no degree information or incomplete details)
+- 18-{edu_weight}: Outstanding (completed highly relevant degree with excellent academic performance)
+- 15-17: Excellent (priority degrees listed above - completed or ongoing)
+- 12-14: Very Good (related technical/quantitative degree)
+- 9-11: Good (somewhat related education with transferable knowledge)
+- 6-8: Fair (different degree but shows analytical/technical foundation)
+- 3-5: Basic (unrelated degree)
+- 0-2: Insufficient (no degree information or incomplete details)
 
 
 **Experience Scoring Framework ({exp_weight} points max):**
-- {int(exp_weight * 0.91)}-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
-- {int(exp_weight * 0.80)}-{int(exp_weight * 0.89)}: Excellent (meets/exceeds years + strong domain fit + leadership + clear results)
-- {int(exp_weight * 0.69)}-{int(exp_weight * 0.77)}: Very Good (adequate years + good domain fit + solid responsibilities + some results)
-- {int(exp_weight * 0.57)}-{int(exp_weight * 0.66)}: Good (reasonable years + relevant experience + decent responsibilities)
-- {int(exp_weight * 0.43)}-{int(exp_weight * 0.54)}: Fair (some gaps in years OR domain but shows potential)
-- {int(exp_weight * 0.29)}-{int(exp_weight * 0.40)}: Basic (limited experience but relevant skills/potential shown)
-- {int(exp_weight * 0.14)}-{int(exp_weight * 0.26)}: Entry Level (minimal experience but shows promise)
-- 0-{int(exp_weight * 0.11)}: Insufficient (major gaps with no transferable skills)
+- 32-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
+- 28-31: Excellent (meets/exceeds years + strong domain fit + leadership + clear results)
+- 24-27: Very Good (adequate years + good domain fit + solid responsibilities + some results)
+- 20-23: Good (reasonable years + relevant experience + decent responsibilities)
+- 15-19: Fair (some gaps in years OR domain but shows potential)
+- 10-14: Basic (limited experience but relevant skills/potential shown)
+- 5-9: Entry Level (minimal experience but shows promise)
+- 0-4: Insufficient (major gaps with no transferable skills)
 
 **Skills Scoring Framework ({skills_weight} points max):**
-- {int(skills_weight * 0.93)}-{skills_weight}: Outstanding (90%+ required skills + expert proficiency + recent usage)
-- {int(skills_weight * 0.80)}-{int(skills_weight * 0.90)}: Excellent (80%+ required skills + advanced proficiency)
-- {int(skills_weight * 0.67)}-{int(skills_weight * 0.77)}: Very Good (70%+ required skills + good proficiency)
-- {int(skills_weight * 0.53)}-{int(skills_weight * 0.63)}: Good (60%+ required skills + adequate proficiency)
-- {int(skills_weight * 0.40)}-{int(skills_weight * 0.50)}: Fair (50%+ required skills + basic proficiency OR strong learning ability)
-- {int(skills_weight * 0.27)}-{int(skills_weight * 0.37)}: Basic (40%+ skills OR strong foundational skills with growth potential)
-- {int(skills_weight * 0.13)}-{int(skills_weight * 0.23)}: Limited (30%+ skills but shows willingness to learn)
-- 0-{int(skills_weight * 0.10)}: Insufficient (<30% skills with no evidence of learning ability)
+- 28-{skills_weight}: Outstanding (90%+ required skills + expert proficiency + recent usage)
+- 24-27: Excellent (80%+ required skills + advanced proficiency)
+- 20-23: Very Good (70%+ required skills + good proficiency)
+- 16-19: Good (60%+ required skills + adequate proficiency)
+- 12-15: Fair (50%+ required skills + basic proficiency OR strong learning ability)
+- 8-11: Basic (40%+ skills OR strong foundational skills with growth potential)
+- 4-7: Limited (30%+ skills but shows willingness to learn)
+- 0-3: Insufficient (<30% skills with no evidence of learning ability)
 
 **Keyword Scoring Framework ({keyword_weight} points max):**
-- {int(keyword_weight * 0.90)}-{keyword_weight}: Excellent optimization (85%+ critical terms + industry language)
-- {int(keyword_weight * 0.80)}: Very Good (75%+ critical terms + good industry awareness)
-- {int(keyword_weight * 0.60)}-{int(keyword_weight * 0.70)}: Good (65%+ critical terms + adequate industry knowledge)
-- {int(keyword_weight * 0.40)}-{int(keyword_weight * 0.50)}: Fair (50%+ critical terms + some industry understanding)
-- {int(keyword_weight * 0.20)}-{int(keyword_weight * 0.30)}: Basic (35%+ critical terms + basic awareness)
-- {int(keyword_weight * 0.10)}: Limited (20%+ critical terms)
+- 9-{keyword_weight}: Excellent optimization (85%+ critical terms + industry language)
+- 8: Very Good (75%+ critical terms + good industry awareness)
+- 6-7: Good (65%+ critical terms + adequate industry knowledge)
+- 4-5: Fair (50%+ critical terms + some industry understanding)
+- 2-3: Basic (35%+ critical terms + basic awareness)
+- 1: Limited (20%+ critical terms)
 - 0: Poor (<20% critical terms)
 
 **EVALUATION INSTRUCTIONS (Tech-Focused):**
@@ -2029,16 +1987,15 @@ Context for Evaluation:
     keyword_analysis = extract_section(r"### 🔑 Keyword Analysis(.*?)###", ats_result)
     final_thoughts = extract_section(r"### ✅ Final Assessment(.*)", ats_result)
 
-    # Extract scores with improved patterns (LLM now scores directly using sidebar weights)
+    # Extract scores with improved patterns
     edu_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis)
-    exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)
+    exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)  
     skills_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
     keyword_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis)
-    lang_score = grammar_score  # Grammar score already uses lang_weight
 
-    # ✅ Apply minimum thresholds to avoid overly harsh penalties
+    # ✅ IMPROVED: More generous minimum scores to avoid harsh penalties
     edu_score = max(edu_score, int(edu_weight * 0.15))  # Minimum 15% of weight
-    exp_score = max(exp_score, int(exp_weight * 0.15))  # Minimum 15% of weight
+    exp_score = max(exp_score, int(exp_weight * 0.15))  # Minimum 15% of weight  
     skills_score = max(skills_score, int(skills_weight * 0.15))  # Minimum 15% of weight
     keyword_score = max(keyword_score, int(keyword_weight * 0.10))  # Minimum 10% of weight
 
@@ -2080,7 +2037,7 @@ Context for Evaluation:
     missing_skills = extract_list_items(missing_skills_section)
 
     # ✅ IMPROVED: More balanced total score calculation
-    total_score = edu_score + exp_score + skills_score + lang_score + keyword_score
+    total_score = edu_score + exp_score + skills_score + grammar_score + keyword_score
     
     # Apply domain penalty more gently
     total_score = max(total_score - domain_penalty, int(total_score * 0.7))  # Never go below 70% of pre-penalty score
@@ -2131,7 +2088,7 @@ Context for Evaluation:
         "Education Score": edu_score,
         "Experience Score": exp_score,
         "Skills Score": skills_score,
-        "Language Score": lang_score,
+        "Language Score": grammar_score,
         "Keyword Score": keyword_score,
         "ATS Match %": total_score,
         "Formatted Score": formatted_score,
@@ -6043,6 +6000,12 @@ with tab2:
             convert it to PDF using Sejda's free online tool</a>.
             """, unsafe_allow_html=True)
 
+from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
+
+
+
+
+
 FEATURED_COMPANIES = {
     "tech": [
         {
@@ -6208,7 +6171,7 @@ def get_featured_companies(category=None):
 
     if category and category in FEATURED_COMPANIES:
         return [company for company in FEATURED_COMPANIES[category] if has_valid_logo(company)]
-
+    
     return [
         company for companies in FEATURED_COMPANIES.values()
         for company in companies if has_valid_logo(company)
@@ -6236,476 +6199,22 @@ def get_companies_by_industry(industry):
                 companies.append(company)
     return companies
 
+# Gender-coded language
+
 # Sample job search function
 import uuid
 import urllib.parse
-import sqlite3
-import datetime
-import streamlit as st
-from zoneinfo import ZoneInfo
-import requests
-import re
-
-# ✅ RapidAPI Configuration (from Streamlit secrets)
-RAPID_API_KEY = st.secrets["rapidapi"]["key"]
-RAPID_API_HOST = st.secrets["rapidapi"]["host"]
-
-def clean_html(raw_html: str) -> str:
-    """Remove HTML tags and comments from API descriptions."""
-    if not raw_html:
-        return ""
-    # Remove comments
-    raw_html = re.sub(r"<!--.*?-->", "", raw_html, flags=re.DOTALL)
-    # Remove all tags
-    return re.sub(r"<.*?>", "", raw_html).strip()
-
-def fetch_live_jobs(job_role, location, job_type=None, remote_only=False, results=10):
-    url = f"https://{RAPID_API_HOST}/search"
-    querystring = {
-        "query": f"{job_role} in {location}",
-        "page": "1",
-        "num_pages": "1",
-        "remote_jobs_only": str(remote_only).lower()
-    }
-
-    # 🔹 Map UI dropdown values to RapidAPI accepted filters
-    type_map = {
-        "Full-time": "FULLTIME",
-        "Part-time": "PARTTIME",
-        "Contract": "CONTRACTOR",
-        "Internship": "INTERN",
-        "Temporary": "TEMPORARY",
-        "Volunteer": "VOLUNTEER"
-    }
-    if job_type and job_type in type_map:
-        querystring["employment_types"] = type_map[job_type]
-
-    headers = {
-        "X-RapidAPI-Key": RAPID_API_KEY,
-        "X-RapidAPI-Host": RAPID_API_HOST
-    }
-    try:
-        response = requests.get(url, headers=headers, params=querystring)
-        if response.status_code == 200:
-            return response.json().get("data", [])[:results]
-        else:
-            return []
-    except Exception:
-        return []
-
-def fetch_company_by_domain(domain: str):
-    """Fetch company information by domain using LinkedIn Data API"""
-    url = f"https://linkedin-data-api.p.rapidapi.com/get-company-by-domain?domain={domain}"
-    headers = {
-        "X-RapidAPI-Key": RAPID_API_KEY,
-        "X-RapidAPI-Host": "linkedin-data-api.p.rapidapi.com"
-    }
-    try:
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return None
-    except Exception:
-        return None
-
-def unified_search(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
-    results = []
-
-    # 1️⃣ Fetch live jobs from RapidAPI JSearch
-    live_jobs = fetch_live_jobs(job_role, location, job_type=job_type, results=5)
-    for job in live_jobs:
-        results.append({
-            "platform": "RapidAPI (Live)",
-            "title": clean_html(job.get("job_title", "N/A")),
-            "company": clean_html(job.get("employer_name", "Unknown")),
-            "location": f"{job.get('job_city','')}, {job.get('job_country','')}",
-            "salary": f"{job.get('job_min_salary','NA')} - {job.get('job_max_salary','NA')} {job.get('job_salary_currency','')}",
-            "date": job.get("job_posted_at_datetime_utc", "N/A"),
-            "type": job.get("job_employment_type","N/A"),
-            "remote": "Remote" if job.get("job_is_remote") else "On-site",
-            "publisher": clean_html(job.get("job_publisher","N/A")),
-            "description": clean_html(job.get("job_description",""))[:200] + "...",
-            "apply_link": job.get("job_apply_link", "#")
-        })
-
-    # 2️⃣ Add LinkedIn, Naukri, FoundIt links (existing function)
-    external_links = search_jobs(job_role, location, experience_level, job_type, foundit_experience)
-    for job in external_links:
-        results.append({
-            "platform": job["title"].split(":")[0],
-            "title": job["title"].split(":")[1].strip(),
-            "company": "N/A",
-            "location": location,
-            "salary": "Check site",
-            "date": "N/A",
-            "type": "N/A",
-            "remote": "N/A",
-            "publisher": job["title"].split(":")[0],
-            "description": "Open this platform to view full details.",
-            "apply_link": job["link"]
-        })
-
-    return results
-
-
-# Database functions for job search history
-def init_job_search_db():
-    """Initialize the job search database and create user_jobs table if not exists"""
-    try:
-        conn = sqlite3.connect('resume_data.db')
-        cursor = conn.cursor()
-
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS user_jobs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT NOT NULL,
-                role TEXT NOT NULL,
-                location TEXT NOT NULL,
-                platform TEXT NOT NULL,
-                url TEXT NOT NULL,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-
-        conn.commit()
-        conn.close()
-    except Exception as e:
-        st.error(f"Database initialization error: {e}")
-
-def save_job_search(username, role, location, results):
-    """Save job search results to database for logged-in user"""
-    if not username:
-        return
-
-    try:
-        conn = sqlite3.connect('resume_data.db')
-        cursor = conn.cursor()
-
-        for result in results:
-            # Extract platform name from title or use platform field
-            platform = result.get("platform", "Unknown")
-            url = result.get("apply_link", "#")
-
-            cursor.execute('''
-                INSERT INTO user_jobs (username, role, location, platform, url, timestamp)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (username, role, location, platform, url, datetime.datetime.now()))
-
-        conn.commit()
-        conn.close()
-
-    except Exception as e:
-        st.error(f"Error saving job search: {e}")
-
-def prune_old_searches(username):
-    """Keep only the last 50 saved job searches per user (optional cleanup)"""
-    if not username:
-        return
-
-    try:
-        conn = sqlite3.connect('resume_data.db')
-        cursor = conn.cursor()
-
-        # Delete all but the most recent 50 searches for this user
-        cursor.execute('''
-            DELETE FROM user_jobs
-            WHERE username = ? AND id NOT IN (
-                SELECT id FROM user_jobs
-                WHERE username = ?
-                ORDER BY timestamp DESC
-                LIMIT 50
-            )
-        ''', (username, username))
-
-        conn.commit()
-        conn.close()
-
-    except Exception as e:
-        st.error(f"Error pruning old searches: {e}")
-
-def delete_saved_job_search(search_id):
-    """Delete a saved job search by its ID"""
-    try:
-        conn = sqlite3.connect('resume_data.db')
-        cursor = conn.cursor()
-
-        cursor.execute('DELETE FROM user_jobs WHERE id = ?', (search_id,))
-
-        conn.commit()
-        conn.close()
-
-    except Exception as e:
-        st.error(f"Error deleting job search: {e}")
-
-def get_saved_job_searches(username, limit=10, offset=0, platform_filter=None):
-    """Get saved job searches for a user with filtering and pagination"""
-    if not username:
-        return []
-
-    try:
-        conn = sqlite3.connect('resume_data.db')
-        cursor = conn.cursor()
-
-        # Build the query with optional platform filter
-        if platform_filter and platform_filter != "All":
-            cursor.execute('''
-                SELECT id, role, location, platform, url, timestamp
-                FROM user_jobs
-                WHERE username = ? AND platform = ?
-                ORDER BY timestamp DESC
-                LIMIT ? OFFSET ?
-            ''', (username, platform_filter, limit, offset))
-        else:
-            cursor.execute('''
-                SELECT id, role, location, platform, url, timestamp
-                FROM user_jobs
-                WHERE username = ?
-                ORDER BY timestamp DESC
-                LIMIT ? OFFSET ?
-            ''', (username, limit, offset))
-
-        results = cursor.fetchall()
-        conn.close()
-
-        return [
-            {
-                "id": row[0],
-                "role": row[1],
-                "location": row[2],
-                "platform": row[3],
-                "url": row[4],
-                "timestamp": row[5]
-            }
-            for row in results
-        ]
-    except Exception as e:
-        st.error(f"Error fetching saved searches: {e}")
-        return []
-
-def get_total_saved_searches_count(username, platform_filter=None):
-    """Get total count of saved searches for pagination"""
-    if not username:
-        return 0
-
-    try:
-        conn = sqlite3.connect('resume_data.db')
-        cursor = conn.cursor()
-
-        if platform_filter and platform_filter != "All":
-            cursor.execute('SELECT COUNT(*) FROM user_jobs WHERE username = ? AND platform = ?', (username, platform_filter))
-        else:
-            cursor.execute('SELECT COUNT(*) FROM user_jobs WHERE username = ?', (username,))
-
-        count = cursor.fetchone()[0]
-        conn.close()
-
-        return count
-    except Exception as e:
-        st.error(f"Error getting search count: {e}")
-        return 0
-
-def get_available_platforms(username):
-    """Get list of platforms that the user has searched on"""
-    if not username:
-        return []
-
-    try:
-        conn = sqlite3.connect('resume_data.db')
-        cursor = conn.cursor()
-
-        cursor.execute('SELECT DISTINCT platform FROM user_jobs WHERE username = ? ORDER BY platform', (username,))
-
-        platforms = [row[0] for row in cursor.fetchall()]
-        conn.close()
-
-        return platforms
-    except Exception as e:
-        st.error(f"Error fetching platforms: {e}")
-        return []
-
-def slugify(text: str) -> str:
-    """Convert text into a safe slug (lowercase, hyphenated, no special chars)."""
-    text = text.lower().strip()
-    text = re.sub(r"[^\w\s-]", "", text)
-    text = re.sub(r"\s+", "-", text)
-    return text
-
-def render_job_card(title, link, platform_name, brand_color, platform_gradient, company=None, location=None, salary=None, description=None):
-    """
-    Reusable function to render a modern job card with consistent styling.
-
-    Args:
-        title: Job title or role
-        link: Apply link URL
-        platform_name: Name of the platform (LinkedIn, Naukri, etc.)
-        brand_color: Platform brand color (hex)
-        platform_gradient: CSS gradient for platform
-        company: Company name (optional)
-        location: Job location (optional)
-        salary: Salary information (optional)
-        description: Job description (optional)
-
-    Returns:
-        tuple: (html_string, estimated_height)
-    """
-    # Platform icon mapping
-    icon_map = {
-        "LinkedIn": "🔵",
-        "Naukri": "🏢",
-        "FoundIt (Monster)": "🌐",
-        "RapidAPI (Live)": "⚡"
-    }
-    icon = icon_map.get(platform_name, "📄")
-
-    # Build metadata section and calculate height
-    metadata_html = ""
-    estimated_height = 180  # Base height (platform + title + button + padding)
-
-    if company:
-        metadata_html += f"""
-        <div style="color: #aaaaaa; font-size: 14px; margin-bottom: 8px; z-index: 2; position: relative;">
-            🏢 <b>{company}</b>
-        </div>
-        """
-        estimated_height += 30
-
-    if location:
-        metadata_html += f"""
-        <div style="color: #aaaaaa; font-size: 14px; margin-bottom: 8px; z-index: 2; position: relative;">
-            📍 {location}
-        </div>
-        """
-        estimated_height += 30
-
-    if salary and salary not in ["Check site", "N/A - N/A "]:
-        metadata_html += f"""
-        <div style="color: #aaaaaa; font-size: 14px; margin-bottom: 8px; z-index: 2; position: relative;">
-            💰 {salary}
-        </div>
-        """
-        estimated_height += 30
-
-    if description and description != "Open this platform to view full details.":
-        # Estimate height based on description length
-        desc_lines = len(description) // 60 + 1
-        estimated_height += (desc_lines * 22) + 15
-        metadata_html += f"""
-        <div style="color: #999999; font-size: 14px; margin-bottom: 15px; line-height: 1.6; z-index: 2; position: relative;">
-            {description}
-        </div>
-        """
-
-    # Create the job card HTML
-    job_card_html = f"""
-<!DOCTYPE html>
-<html>
-<head>
-<style>
-    * {{
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }}
-    body {{
-        background: transparent;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }}
-    @keyframes shimmer {{
-        0% {{ transform: translateX(-100%); }}
-        100% {{ transform: translateX(100%); }}
-    }}
-    .shimmer-overlay {{
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
-        transform: translateX(-100%);
-        animation: shimmer 3s infinite;
-        z-index: 1;
-    }}
-    .job-result-card {{
-        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
-        padding: 22px;
-        border-radius: 20px;
-        border-left: 6px solid {brand_color};
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px {brand_color}40;
-        position: relative;
-        overflow: hidden;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }}
-    .job-result-card:hover {{
-        transform: translateY(-3px);
-        box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 30px {brand_color}60;
-    }}
-    .job-button {{
-        background: {platform_gradient};
-        color: white;
-        padding: 12px 20px;
-        border: none;
-        border-radius: 12px;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-        box-shadow: 0 4px 15px {brand_color}50;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-        text-decoration: none;
-        display: inline-block;
-    }}
-    .job-button:hover {{
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px {brand_color}70;
-    }}
-</style>
-</head>
-<body>
-<div class="job-result-card">
-    <div class="shimmer-overlay"></div>
-
-    <!-- Platform Badge -->
-    <div style="font-size: 20px; margin-bottom: 12px; z-index: 2; position: relative; font-weight: bold; color: {brand_color};">
-        {icon} {platform_name}
-    </div>
-
-    <!-- Job Title -->
-    <div style="color: #ffffff; font-size: 18px; margin-bottom: 12px; font-weight: bold; z-index: 2; position: relative; line-height: 1.4;">
-        {title}
-    </div>
-
-    <!-- Metadata (company, location, salary, description) -->
-    {metadata_html}
-
-    <!-- Apply Button -->
-    <a href="{link}" target="_blank" style="text-decoration: none; z-index: 2; position: relative;">
-        <button class="job-button">
-            <span style="position: relative; z-index: 2;">🚀 Apply Now →</span>
-        </button>
-    </a>
-</div>
-</body>
-</html>
-"""
-    return job_card_html, estimated_height
 
 def search_jobs(job_role, location, experience_level=None, job_type=None, foundit_experience=None):
-    # Encode query values
+    # Encode values for query
     role_encoded = urllib.parse.quote_plus(job_role.strip())
     loc_encoded = urllib.parse.quote_plus(location.strip())
 
-    # Slugs
-    role_path_naukri = job_role.strip().lower().replace(" ", "-")
-    city_part = location.strip().split(",")[0].strip()
-    city_naukri = city_part.lower().replace(" ", "-")
-    # Only encode what the user entered for the query
-    city_query_naukri = urllib.parse.quote_plus(location.strip())
-
-    # FoundIt slugs
-    role_path_foundit = slugify(job_role)
-    city_path_foundit = slugify(city_part)
+    # Create role/city slugs for path
+    role_path = job_role.strip().lower().replace(" ", "-")
+    city = location.strip().split(",")[0].strip().lower()
+    city_path = city.replace(" ", "-")
+    city_query = city.replace(" ", "%20") + "%20and%20india"
 
     # Experience mappings
     experience_range_map = {
@@ -6725,14 +6234,14 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         "Temporary": "T", "Volunteer": "V", "Internship": "I"
     }
 
-    # LinkedIn URL
+    # LinkedIn
     linkedin_url = f"https://www.linkedin.com/jobs/search/?keywords={role_encoded}&location={loc_encoded}"
     if experience_level in linkedin_exp_map:
         linkedin_url += f"&f_E={linkedin_exp_map[experience_level]}"
     if job_type in job_type_map:
         linkedin_url += f"&f_JT={job_type_map[job_type]}"
 
-    # Determine experience values
+    # Experience values
     if foundit_experience is not None:
         experience_range = f"{foundit_experience}~{foundit_experience}"
         experience_exact = str(foundit_experience)
@@ -6740,35 +6249,29 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         experience_range = experience_range_map.get(experience_level, "")
         experience_exact = experience_exact_map.get(experience_level, "")
 
-    # Naukri URL – no forced "and-india"
+    # ✅ Naukri (cleaned)
     naukri_url = (
-        f"https://www.naukri.com/{role_path_naukri}-jobs-in-{city_naukri}"
-        f"?k={role_encoded}&l={city_query_naukri}"
+        f"https://www.naukri.com/{role_path}-jobs-in-{city_path}-and-india"
+        f"?k={role_encoded}"
+        f"&l={city_query}"
     )
     if experience_exact:
         naukri_url += f"&experience={experience_exact}"
     naukri_url += "&nignbevent_src=jobsearchDeskGNB"
 
-    # FoundIt URL
+    # ✅ FoundIt
     search_id = uuid.uuid4()
     child_search_id = uuid.uuid4()
-    if role_path_foundit and city_path_foundit:
-        foundit_url = (
-            f"https://www.foundit.in/search/{role_path_foundit}-jobs-in-{city_path_foundit}"
-            f"?query={role_encoded}&locations={loc_encoded}"
-            f"&experienceRanges={urllib.parse.quote_plus(experience_range)}"
-            f"&experience={experience_exact}"
-            f"&queryDerived=true"
-            f"&searchId={search_id}&child_search_id={child_search_id}"
-        )
-    else:
-        foundit_url = (
-            f"https://www.foundit.in/search/result?query={role_encoded}&locations={loc_encoded}"
-            f"&experienceRanges={urllib.parse.quote_plus(experience_range)}"
-            f"&experience={experience_exact}"
-            f"&queryDerived=true"
-            f"&searchId={search_id}&child_search_id={child_search_id}"
-        )
+    foundit_url = (
+        f"https://www.foundit.in/search/{role_path}-jobs-in-{city_path}"
+        f"?query={role_encoded}"
+        f"&locations={loc_encoded}"
+        f"&experienceRanges={urllib.parse.quote_plus(experience_range)}"
+        f"&experience={experience_exact}"
+        f"&queryDerived=true"
+        f"&searchId={search_id}"
+        f"&child_search_id={child_search_id}"
+    )
 
     return [
         {"title": f"LinkedIn: {job_role} jobs in {location}", "link": linkedin_url},
@@ -6811,295 +6314,57 @@ def add_hyperlink(paragraph, url, text, color="0000FF", underline=True):
     paragraph._p.append(hyperlink)
     return hyperlink
 
-# Initialize database
-init_job_search_db()
-
 # Your existing tab3 code with enhanced CSS styling
 with tab3:
-    st.markdown("<h1 style='text-align: center; color: #ffffff; margin-bottom: 30px;'>🟦 Job Search Hub</h1>", unsafe_allow_html=True)
+    st.header("🔍 Job Search Across LinkedIn, Naukri, and FoundIt")
 
-    # Initialize session state for search mode
-    if 'search_mode' not in st.session_state:
-        st.session_state.search_mode = "External Platforms"
+    col1, col2 = st.columns(2)
 
-    # Modern Toggle Switch with Circular Indicator
-    is_external = st.session_state.search_mode == "External Platforms"
+    with col1:
+        job_role = st.text_input("💼 Desired Job Role", placeholder="e.g., Data Scientist")
+        experience_level = st.selectbox(
+            "📈 Experience Level",
+            ["", "Internship", "Entry Level", "Associate", "Mid-Senior Level", "Director", "Executive"]
+        )
 
-    toggle_html = f"""
-    <style>
-    .toggle-switch-container {{
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-bottom: 30px;
-        gap: 0;
-    }}
-    .toggle-option {{
-        background: rgba(40, 40, 40, 0.95);
-        padding: 18px 35px;
-        color: rgba(255, 255, 255, 0.4);
-        font-size: 15px;
-        font-weight: 600;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        position: relative;
-    }}
-    .toggle-option.left {{
-        border-radius: 16px 0 0 16px;
-        border-right: none;
-    }}
-    .toggle-option.right {{
-        border-radius: 0 16px 16px 0;
-        border-left: none;
-    }}
-    .toggle-option.active {{
-        color: #ffffff;
-    }}
-    .toggle-option.active.external {{
-        background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-        border-color: #1976D2;
-    }}
-    .toggle-option.active.rapid {{
-        background: linear-gradient(135deg, #00E676 0%, #00C853 100%);
-        border-color: #00C853;
-    }}
-    .toggle-circle {{
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        border: 2px solid rgba(255, 255, 255, 0.4);
-        background: transparent;
-        transition: all 0.3s ease;
-    }}
-    .toggle-option.active .toggle-circle {{
-        background: #ffffff;
-        border-color: #ffffff;
-    }}
-    .toggle-option:hover:not(.active) {{
-        background: rgba(55, 55, 55, 0.95);
-        color: rgba(255, 255, 255, 0.7);
-    }}
-    .active-badge {{
-        text-align: center;
-        padding: 15px;
-        margin-bottom: 25px;
-    }}
-    .badge {{
-        background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-        padding: 10px 25px;
-        border-radius: 20px;
-        color: white;
-        font-weight: 600;
-        font-size: 14px;
-        display: inline-block;
-    }}
-    .badge.rapid {{
-        background: linear-gradient(135deg, #00E676 0%, #00C853 100%);
-    }}
-    </style>
+    with col2:
+        location = st.text_input("📍 Preferred Location", placeholder="e.g., Bangalore, India")
+        job_type = st.selectbox(
+            "📋 Job Type",
+            ["", "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship"]
+        )
 
-    <div class="toggle-switch-container">
-        <div class="toggle-option left {'active external' if is_external else ''}" id="toggle-external">
-            <div class="toggle-circle"></div>
-            <span>🌐 External Platforms (LinkedIn, Naukri, FoundIt)</span>
-        </div>
-        <div class="toggle-option right {'active rapid' if not is_external else ''}" id="toggle-rapid">
-            <div class="toggle-circle"></div>
-            <span>⚡ RapidAPI Jobs (India Only)</span>
-        </div>
-    </div>
+    foundit_experience = st.text_input("🔢 Experience (Years) for FoundIt", placeholder="e.g., 1")
 
-    <div class="active-badge">
-        <span class="badge {'rapid' if not is_external else ''}">
-            {'🌐 External Platforms Mode Active' if is_external else '⚡ RapidAPI Jobs Mode Active'}
-        </span>
-    </div>
-    """
+    search_clicked = st.button("🔎 Search Jobs")
 
-    st.markdown(toggle_html, unsafe_allow_html=True)
+    if search_clicked:
+        if job_role.strip() and location.strip():
+            results = search_jobs(job_role, location, experience_level, job_type, foundit_experience)
 
-    # Create clickable buttons (hidden but functional)
-    col_btn1, col_btn2 = st.columns(2)
+            st.markdown("## 🎯 Job Search Results")
 
-    with col_btn1:
-        if st.button("Switch to External Platforms", key="btn_external"):
-            st.session_state.search_mode = "External Platforms"
-            st.rerun()
+            for job in results:
+                platform = job["title"].split(":")[0].strip().lower()
 
-    with col_btn2:
-        if st.button("Switch to RapidAPI Jobs", key="btn_rapid"):
-            st.session_state.search_mode = "RapidAPI Jobs"
-            st.rerun()
+                if platform == "linkedin":
+                    icon = "🔵 <b style='color:#0e76a8;'>LinkedIn</b>"
+                    btn_color = "#0e76a8"
+                    platform_gradient = "linear-gradient(135deg, #0e76a8 0%, #1a8cc8 100%)"
+                elif platform == "naukri":
+                    icon = "🏢 <b style='color:#ff5722;'>Naukri</b>"
+                    btn_color = "#ff5722"
+                    platform_gradient = "linear-gradient(135deg, #ff5722 0%, #ff7043 100%)"
+                elif "foundit" in platform:
+                    icon = "🌐 <b style='color:#7c4dff;'>Foundit (Monster)</b>"
+                    btn_color = "#7c4dff"
+                    platform_gradient = "linear-gradient(135deg, #7c4dff 0%, #9c64ff 100%)"
+                else:
+                    icon = f"📄 <b>{platform.title()}</b>"
+                    btn_color = "#00c4cc"
+                    platform_gradient = "linear-gradient(135deg, #00c4cc 0%, #26d0ce 100%)"
 
-    search_mode = st.session_state.search_mode
-
-    if search_mode == "External Platforms":
-        # External Platforms Section
-        col1, col2 = st.columns(2)
-
-        with col1:
-            job_role = st.text_input("💼 Job Title / Skills", placeholder="e.g., Data Scientist", key="external_role")
-            experience_level = st.selectbox(
-                "📈 Experience Level",
-                ["", "Internship", "Entry Level", "Associate", "Mid-Senior Level", "Director", "Executive"],
-                key="external_exp"
-            )
-
-        with col2:
-            location = st.text_input("📍 Location", placeholder="e.g., Bangalore, India", key="external_loc")
-            job_type = st.selectbox(
-                "📋 Job Type",
-                ["", "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship"],
-                key="external_type"
-            )
-
-        foundit_experience = st.text_input("🔢 FoundIt Experience (Years)", placeholder="e.g., 1", key="external_foundit")
-
-        search_clicked = st.button("🔎 Search External Jobs", key="search_external")
-
-        if search_clicked:
-            if job_role.strip() and location.strip():
-                # Call search_jobs function for external platforms
-                results = search_jobs(job_role, location, experience_level, job_type, foundit_experience)
-
-                # Save search results if user is logged in
-                if hasattr(st.session_state, 'username') and st.session_state.username:
-                    # Convert results to format expected by save_job_search
-                    formatted_results = []
-                    for result in results:
-                        platform_name = result["title"].split(":")[0]
-                        formatted_results.append({
-                            "platform": platform_name,
-                            "apply_link": result["link"]
-                        })
-                    save_job_search(st.session_state.username, job_role, location, formatted_results)
-
-                st.markdown("## 🎯 External Job Search Results")
-
-                for job in results:
-                    platform = job["title"].split(":")[0].lower()
-
-                    # Platform styling
-                    if "linkedin" in platform:
-                        platform_name = "LinkedIn"
-                        btn_color = "#0e76a8"
-                        platform_gradient = "linear-gradient(135deg, #0e76a8 0%, #1a8cc8 100%)"
-                    elif "naukri" in platform:
-                        platform_name = "Naukri"
-                        btn_color = "#ff5722"
-                        platform_gradient = "linear-gradient(135deg, #ff5722 0%, #ff7043 100%)"
-                    elif "foundit" in platform:
-                        platform_name = "FoundIt (Monster)"
-                        btn_color = "#7c4dff"
-                        platform_gradient = "linear-gradient(135deg, #7c4dff 0%, #9c64ff 100%)"
-                    else:
-                        platform_name = platform.title()
-                        btn_color = "#00c4cc"
-                        platform_gradient = "linear-gradient(135deg, #00c4cc 0%, #26d0ce 100%)"
-
-                    # Render card using reusable function
-                    job_card_html, card_height = render_job_card(
-                        title=job_role,
-                        link=job['link'],
-                        platform_name=platform_name,
-                        brand_color=btn_color,
-                        platform_gradient=platform_gradient,
-                        location=location,
-                        description="Open this platform to view full details."
-                    )
-                    st.components.v1.html(job_card_html, height=card_height, scrolling=False)
-            else:
-                st.warning("⚠️ Please enter both the Job Title and Location to perform the search.")
-
-    else:
-        # RapidAPI Jobs Section
-        col1, col2 = st.columns(2)
-
-        with col1:
-            rapid_job_role = st.text_input("💼 Job Title / Skills", placeholder="e.g., Python Developer", key="rapid_role")
-
-        with col2:
-            rapid_location = st.text_input("📍 Location", placeholder="e.g., Mumbai", key="rapid_loc")
-
-        # Number of results
-        num_results = st.slider("📊 Number of Jobs to Fetch", min_value=5, max_value=50, value=10, step=5, key="rapid_num_results")
-
-        # Advanced Filters
-        with st.expander("🔧 Advanced Filters"):
-            date_posted = st.selectbox(
-                "📅 Date Posted",
-                ["all", "today", "3days", "week", "month"],
-                key="rapid_date"
-            )
-            rapid_job_type = st.selectbox(
-                "📋 Job Type",
-                ["", "Full-time", "Part-time", "Contract", "Internship"],
-                key="rapid_type"
-            )
-            remote_only = st.checkbox("🏠 Remote Only", key="rapid_remote")
-            radius = st.number_input("📏 Radius (km)", min_value=0, max_value=200, value=50, key="rapid_radius")
-            job_requirements = st.multiselect(
-                "📝 Job Requirements",
-                ["under_3_years_experience", "more_than_3_years_experience", "no_experience", "no_degree"],
-                key="rapid_req"
-            )
-
-        search_rapid_clicked = st.button("🔎 Search Rapid Jobs", key="search_rapid")
-
-        if search_rapid_clicked:
-            if rapid_job_role.strip() and rapid_location.strip():
-                # Call fetch_live_jobs with parameters
-                results = fetch_live_jobs(
-                    rapid_job_role,
-                    rapid_location,
-                    job_type=rapid_job_type if rapid_job_type else None,
-                    remote_only=remote_only,
-                    results=num_results
-                )
-
-                # Save search results if user is logged in
-                if hasattr(st.session_state, 'username') and st.session_state.username:
-                    formatted_results = []
-                    for job in results:
-                        formatted_results.append({
-                            "platform": "RapidAPI (Live)",
-                            "apply_link": job.get("job_apply_link", "#")
-                        })
-                    save_job_search(st.session_state.username, rapid_job_role, rapid_location, formatted_results)
-
-                st.markdown("## 🎯 RapidAPI Job Results")
-
-                if results:
-                    for job in results:
-                        # Clean all job fields
-                        job_title = clean_html(job.get("job_title", "N/A"))
-                        job_company = clean_html(job.get("employer_name", "Unknown"))
-                        job_location = f"{job.get('job_city','')}, {job.get('job_country','')}"
-                        job_salary = f"{job.get('job_min_salary','None')} - {job.get('job_max_salary','None')} {job.get('job_salary_currency','')}"
-                        job_type = job.get("job_employment_type", "N/A")
-                        job_mode = "Remote" if job.get("job_is_remote") else "On-site"
-                        job_publisher = clean_html(job.get("job_publisher", "N/A"))
-                        job_description = clean_html(job.get("job_description", ""))[:250] + "..."
-
-                        # Format date
-                        formatted_date = "N/A"
-                        if job.get("job_posted_at_datetime_utc") and job["job_posted_at_datetime_utc"] != "N/A":
-                            try:
-                                date_obj = datetime.datetime.fromisoformat(job["job_posted_at_datetime_utc"].replace('Z', '+00:00'))
-                                formatted_date = date_obj.strftime("%b %d, %Y")
-                            except:
-                                formatted_date = job["job_posted_at_datetime_utc"]
-
-                        # Colors
-                        btn_color = "#00ff88"
-                        platform_gradient = "linear-gradient(135deg, #00ff88 0%, #00cc6f 100%)"
-
-                        # Custom HTML card
-                        job_card_html = f"""
+                st.markdown(f"""
 <div class="job-result-card" style="
     background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
     padding: 25px;
@@ -7112,43 +6377,15 @@ with tab3:
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 ">
     <div class="shimmer-overlay"></div>
-
-    <!-- Platform Badge -->
-    <div style="font-size: 18px; margin-bottom: 15px; color: {btn_color}; font-weight: bold;">
-        ⚡ RapidAPI (Live)
+    <div style="font-size: 22px; margin-bottom: 12px; z-index: 2; position: relative;">{icon}</div>
+    <div style="color: #ffffff; font-size: 18px; margin-bottom: 20px; font-weight: 500; z-index: 2; position: relative; line-height: 1.4;">
+        {job['title'].split(':')[1].strip()}
     </div>
-
-    <!-- Job Title -->
-    <div style="color: #ffffff; font-size: 22px; margin-bottom: 10px; font-weight: 600; line-height: 1.4;">
-        {job_title}
-    </div>
-
-    <!-- Company -->
-    <div style="color: #aaaaaa; font-size: 16px; margin-bottom: 15px;">
-        🏢 <b>{job_company}</b>
-    </div>
-
-    <!-- Job Details Grid -->
-    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px;">
-        <div style="color: #cccccc; font-size: 14px;">📍 <b>Location:</b> {job_location}</div>
-        <div style="color: #cccccc; font-size: 14px;">💰 <b>Salary:</b> {job_salary}</div>
-        <div style="color: #cccccc; font-size: 14px;">📋 <b>Type:</b> {job_type}</div>
-        <div style="color: #cccccc; font-size: 14px;">🌍 <b>Mode:</b> {job_mode}</div>
-        <div style="color: #cccccc; font-size: 14px;">📅 <b>Posted:</b> {formatted_date}</div>
-        <div style="color: #cccccc; font-size: 14px;">📰 <b>Source:</b> {job_publisher}</div>
-    </div>
-
-    <!-- Description -->
-    <div style="color: #999999; font-size: 14px; margin-bottom: 20px; line-height: 1.6;">
-        {job_description}
-    </div>
-
-    <!-- Apply Button -->
-    <a href="{job.get('job_apply_link', '#')}" target="_blank" style="text-decoration: none;">
+    <a href="{job['link']}" target="_blank" style="text-decoration: none; z-index: 2; position: relative;">
         <button class="job-button" style="
             background: {platform_gradient};
             color: white;
-            padding: 12px 24px;
+            padding: 12px 20px;
             border: none;
             border-radius: 12px;
             font-size: 16px;
@@ -7156,199 +6393,27 @@ with tab3:
             cursor: pointer;
             box-shadow: 0 4px 15px {btn_color}50;
             transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         ">
-            🚀 Apply Now →
+            <span style="position: relative; z-index: 2;">🚀 View Jobs on {platform.title()} →</span>
         </button>
     </a>
-</div>
-"""
-                        
-                        st.components.v1.html(job_card_html, height=450, scrolling=False)
-
-
-                else:
-                    st.info("No jobs found. Try adjusting your search criteria.")
-            else:
-                st.warning("⚠️ Please enter both the Job Title and Location to perform the search.")
-
-    # Display saved job searches if user is logged in
-    if hasattr(st.session_state, 'username') and st.session_state.username:
-        # Get available platforms for filtering
-        available_platforms = get_available_platforms(st.session_state.username)
-        platform_options = ["All"] + available_platforms
-
-        # Get total count of searches
-        total_searches = get_total_saved_searches_count(st.session_state.username)
-
-        st.markdown("### 📌 Your Saved Job Searches")
-
-        if total_searches > 0:
-            # Controls for filtering and pagination
-            col1, col2 = st.columns([2, 1])
-
-            with col1:
-                platform_filter = st.selectbox(
-                    "🔍 Filter by Platform",
-                    platform_options,
-                    key="platform_filter"
-                )
-
-            with col2:
-                # Calculate pagination
-                searches_per_page = 5
-                filtered_count = get_total_saved_searches_count(st.session_state.username, platform_filter)
-                max_pages = max(1, (filtered_count + searches_per_page - 1) // searches_per_page)
-
-                if max_pages > 1:
-                    current_page = st.slider(
-                        "📄 Page",
-                        min_value=1,
-                        max_value=max_pages,
-                        value=1,
-                        key="page_slider"
-                    )
-                else:
-                    current_page = 1
-
-            # Calculate offset for pagination
-            offset = (current_page - 1) * searches_per_page
-
-            # Get filtered and paginated results
-            saved_searches = get_saved_job_searches(
-                st.session_state.username,
-                limit=searches_per_page,
-                offset=offset,
-                platform_filter=platform_filter
-            )
-
-            if saved_searches:
-                # Calculate and display search count info
-                start_index = offset + 1
-                end_index = min(offset + len(saved_searches), filtered_count)
-
-                if platform_filter != "All":
-                    st.markdown(f"**Showing {start_index}-{end_index} of {filtered_count} searches for {platform_filter}**")
-                else:
-                    st.markdown(f"**Showing {start_index}-{end_index} of {filtered_count} searches**")
-
-                for search in saved_searches:
-                    # Format timestamp - Convert UTC to IST
-                    timestamp = datetime.datetime.strptime(search["timestamp"], "%Y-%m-%d %H:%M:%S.%f")
-                    # Assume stored timestamp is in UTC, convert to IST
-                    timestamp_utc = timestamp.replace(tzinfo=ZoneInfo('UTC'))
-                    timestamp_ist = timestamp_utc.astimezone(ZoneInfo('Asia/Kolkata'))
-                    formatted_time = timestamp_ist.strftime("%b %d, %Y at %I:%M %p IST")
-
-                    # Platform styling
-                    platform_lower = search["platform"].lower()
-                    if "rapidapi" in platform_lower or "live" in platform_lower:
-                        platform_color = "#00ff88"
-                        platform_icon = "⚡"
-                    elif platform_lower == "linkedin":
-                        platform_color = "#0e76a8"
-                        platform_icon = "🔵"
-                    elif platform_lower == "naukri":
-                        platform_color = "#ff5722"
-                        platform_icon = "🏢"
-                    elif "foundit" in platform_lower:
-                        platform_color = "#7c4dff"
-                        platform_icon = "🌐"
-                    else:
-                        platform_color = "#00c4cc"
-                        platform_icon = "📄"
-
-                    # Create columns for the card content and delete button
-                    card_col, delete_col = st.columns([10, 1])
-
-                    with card_col:
-                        st.markdown(f"""
-<div class="job-result-card" style="
-    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-    padding: 20px;
-    border-radius: 15px;
-    margin-bottom: 15px;
-    border-left: 4px solid {platform_color};
-    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-    position: relative;
-    overflow: hidden;
-">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
-        <div>
-            <div style="color: #ffffff; font-size: 16px; font-weight: 600; margin-bottom: 5px;">
-                {platform_icon} {search['role']} in {search['location']}
-            </div>
-            <div style="color: {platform_color}; font-size: 14px; font-weight: 500;">
-                {search['platform']}
-            </div>
-        </div>
-        <div style="color: #888; font-size: 12px; text-align: right;">
-            {formatted_time}
-        </div>
-    </div>
-    <a href="{search['url']}" target="_blank" style="text-decoration: none;">
-        <button class="job-button" style="
-            background: linear-gradient(135deg, {platform_color} 0%, {platform_color}dd 100%);
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        ">
-            🔗 View Jobs →
-        </button>
-    </a>
-</div>
-""", unsafe_allow_html=True)
-
-                    with delete_col:
-                        # Delete button
-                        if st.button("🗑", key=f"delete_{search['id']}", help="Delete this search"):
-                            delete_saved_job_search(search['id'])
-                            st.rerun()
-            else:
-                # No results for the current filter
-                st.markdown(f"""
-<div style="
-    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-    padding: 20px;
-    border-radius: 15px;
-    text-align: center;
-    color: #888;
-    border: 2px dashed #444;
-">
-    <div style="font-size: 24px; margin-bottom: 10px;">🔍</div>
-    <div>No saved searches found for {platform_filter if platform_filter != 'All' else 'this page'}.</div>
 </div>
 """, unsafe_allow_html=True)
         else:
-            # No saved searches at all
-            st.markdown("""
-<div style="
-    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-    padding: 20px;
-    border-radius: 15px;
-    text-align: center;
-    color: #888;
-    border: 2px dashed #444;
-">
-    <div style="font-size: 24px; margin-bottom: 10px;">📭</div>
-    <div>No saved job searches yet. Start searching to see your history here!</div>
-</div>
-""", unsafe_allow_html=True)
+            st.warning("⚠️ Please enter both the Job Role and Location to perform the search.")
 
     # Enhanced CSS with advanced animations and effects
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
+    
     /* Global Enhancements */
     .stApp {
         font-family: 'Inter', sans-serif;
     }
-
+    
     /* Advanced Glow Animation */
     @keyframes glow {
         0% {
@@ -7361,7 +6426,7 @@ with tab3:
             box-shadow: 0 0 5px rgba(255,255,255,0.1), 0 0 10px rgba(0,255,255,0.1), 0 0 15px rgba(0,255,255,0.1);
         }
     }
-
+    
     /* Shimmer Effect */
     @keyframes shimmer {
         0% {
@@ -7371,7 +6436,7 @@ with tab3:
             transform: translateX(100%);
         }
     }
-
+    
     .shimmer-overlay {
         position: absolute;
         top: 0;
@@ -7383,7 +6448,7 @@ with tab3:
         animation: shimmer 3s infinite;
         z-index: 1;
     }
-
+    
     /* Floating Animation */
     @keyframes float {
         0%, 100% {
@@ -7393,7 +6458,7 @@ with tab3:
             transform: translateY(-5px);
         }
     }
-
+    
     /* Pulse Animation */
     @keyframes pulse {
         0%, 100% {
@@ -7403,7 +6468,7 @@ with tab3:
             transform: scale(1.02);
         }
     }
-
+    
     /* Enhanced Company Cards */
     .company-card {
         background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
@@ -7421,7 +6486,7 @@ with tab3:
         overflow: hidden;
         border: 1px solid rgba(255,255,255,0.1);
     }
-
+    
     .company-card::before {
         content: '';
         position: absolute;
@@ -7434,23 +6499,23 @@ with tab3:
         transition: opacity 0.3s ease;
         z-index: 1;
     }
-
+    
     .company-card:hover::before {
         opacity: 1;
     }
-
+    
     .company-card:hover {
         transform: translateY(-8px) scale(1.02);
         box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 30px rgba(0, 255, 255, 0.3);
         border-color: rgba(0,255,255,0.5);
     }
-
+    
     /* Job Result Cards */
     .job-result-card:hover {
         transform: translateY(-5px) scale(1.01);
         box-shadow: 0 15px 40px rgba(0,0,0,0.4) !important;
     }
-
+    
     /* Enhanced Buttons */
     .job-button::before {
         content: '';
@@ -7463,16 +6528,16 @@ with tab3:
         transition: left 0.5s;
         z-index: 1;
     }
-
+    
     .job-button:hover::before {
         left: 100%;
     }
-
+    
     .job-button:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(0,0,0,0.3);
     }
-
+    
     /* Enhanced Pills */
     .pill {
         display: inline-block;
@@ -7487,7 +6552,7 @@ with tab3:
         position: relative;
         overflow: hidden;
     }
-
+    
     .pill::before {
         content: '';
         position: absolute;
@@ -7499,16 +6564,16 @@ with tab3:
         opacity: 0;
         transition: opacity 0.3s ease;
     }
-
+    
     .pill:hover::before {
         opacity: 1;
     }
-
+    
     .pill:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0,255,255,0.3);
     }
-
+    
     /* Enhanced Title Headers */
     .title-header {
         color: #ffffff;
@@ -7524,7 +6589,7 @@ with tab3:
         position: relative;
         animation: pulse 3s infinite;
     }
-
+    
     .title-header::after {
         content: '';
         position: absolute;
@@ -7536,7 +6601,7 @@ with tab3:
         background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
         border-radius: 2px;
     }
-
+    
     /* Company Logo Enhancement */
     .company-logo {
         font-size: 28px;
@@ -7544,7 +6609,7 @@ with tab3:
         filter: drop-shadow(0 0 8px rgba(255,255,255,0.3));
         animation: float 4s ease-in-out infinite;
     }
-
+    
     .company-header {
         font-size: 24px;
         font-weight: 700;
@@ -7554,45 +6619,42 @@ with tab3:
         position: relative;
         z-index: 2;
     }
-
+    
     /* Responsive Enhancements */
     @media (max-width: 768px) {
         .company-card, .job-result-card {
             padding: 20px;
             margin-bottom: 20px;
         }
-
+        
         .title-header {
             font-size: 24px;
         }
-
+        
         .company-header {
             font-size: 20px;
         }
     }
-
+    
     /* Scrollbar Styling */
     ::-webkit-scrollbar {
         width: 8px;
     }
-
+    
     ::-webkit-scrollbar-track {
         background: #1e1e1e;
     }
-
+    
     ::-webkit-scrollbar-thumb {
         background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
         border-radius: 4px;
     }
-
+    
     ::-webkit-scrollbar-thumb:hover {
         background: linear-gradient(135deg, #26d0ce 0%, #9c64ff 100%);
     }
     </style>
     """, unsafe_allow_html=True)
-
-    # ---------- Company Lookup by Domain ----------
-
 
     # ---------- Featured Companies ----------
     st.markdown("### <div class='title-header'>🏢 Featured Companies</div>", unsafe_allow_html=True)
@@ -7647,7 +6709,6 @@ with tab3:
             <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
-
 def evaluate_interview_answer(answer: str, question: str = None):
     """
     Uses an LLM to strictly evaluate an interview answer.
@@ -7666,7 +6727,7 @@ def evaluate_interview_answer(answer: str, question: str = None):
     You are an expert technical interview evaluator.
 
     ### Task:
-    Evaluate the candidate's answer to the question below.
+    Evaluate the candidate's answer to the question below. 
     Be STRICT. Only give high scores if the answer is technically correct, relevant, and detailed.
 
     ### Question:
@@ -7708,435 +6769,6 @@ def evaluate_interview_answer(answer: str, question: str = None):
         feedback = f"⚠️ Evaluation fallback due to error: {e}"
 
     return score, feedback
-
-
-def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty: str, role: str = "", domain: str = ""):
-    """
-    UPGRADED: Intelligent evaluation with chain-of-thought reasoning and structured feedback.
-    Uses JSON-based parsing for robustness and provides detailed, actionable feedback.
-
-    Returns dict with keys: knowledge, communication, relevance, feedback (list), followup
-
-    Features:
-    - Chain-of-thought evaluation: extracts key concepts, identifies strengths/gaps
-    - Structured feedback: detailed paragraph with specific, actionable insights
-    - Difficulty calibration: Easy (encouraging), Medium (balanced), Hard (strict)
-    - JSON-based parsing for reliability
-    """
-    from llm_manager import call_llm
-    import json
-    import streamlit as st
-
-    # Empty check or junk answers
-    if not answer.strip() or answer == "⚠️ No Answer" or len(answer.strip()) < 3:
-        return {
-            "knowledge": 0,
-            "communication": 0,
-            "relevance": 0,
-            "feedback": "No answer provided. Try using the STAR method: Situation, Task, Action, Result. Provide specific examples from your experience to demonstrate your understanding and capabilities.",
-            "followup": ""
-        }
-
-    # Check for obvious junk answers (single character, just symbols, etc.)
-    if len(answer.strip()) == 1 or not any(c.isalnum() for c in answer):
-        return {
-            "knowledge": 0,
-            "communication": 0,
-            "relevance": 0,
-            "feedback": "Answer appears incomplete or invalid. Please provide a meaningful response with technical details and structure your answer clearly with concrete examples from your experience.",
-            "followup": ""
-        }
-
-    # STRICTER JUNK FILTERING: Check word count and meaningful tokens
-    words = answer.strip().split()
-    meaningful_words = [w for w in words if len(w) > 2 and any(c.isalpha() for c in w)]
-
-    if len(words) < 5 or len(meaningful_words) < 2:
-        return {
-            "knowledge": 0,
-            "communication": 0,
-            "relevance": 0,
-            "feedback": "Answer too short or lacks substance. Provide a detailed response with at least 3-4 sentences and include specific examples or technical details to demonstrate your understanding.",
-            "followup": ""
-        }
-
-    # Difficulty-based evaluation guidance
-    difficulty_guidance = {
-        "Easy": {
-            "tone": "encouraging and forgiving",
-            "expectations": "basic understanding and general concepts",
-            "scoring": "Give partial credit for effort. Score 5-10 for reasonable attempts, 3-4 for weak but present answers, 0-2 for irrelevant/junk.",
-            "feedback_style": "positive and encouraging with gentle improvement tips"
-        },
-        "Medium": {
-            "tone": "balanced and realistic",
-            "expectations": "scenario-based thinking, some technical depth, and practical examples",
-            "scoring": "Score 6-10 for good answers, 3-5 for incomplete/basic answers, 0-2 for poor/irrelevant.",
-            "feedback_style": "constructive and specific with clear improvement areas"
-        },
-        "Hard": {
-            "tone": "strict and technical",
-            "expectations": "deep technical knowledge, system design thinking, edge cases, and comprehensive understanding",
-            "scoring": "Score 7-10 for excellent answers, 4-6 for adequate but incomplete, 0-3 for weak/incorrect.",
-            "feedback_style": "concise and technical with precise critique"
-        }
-    }
-
-    guidance = difficulty_guidance.get(difficulty, difficulty_guidance["Medium"])
-
-    # Build context for relevance checking
-    context_info = f" for {role} in {domain}" if role and domain else ""
-
-    # UPGRADED CHAIN-OF-THOUGHT EVALUATION PROMPT
-    prompt = f"""You are an expert technical interviewer evaluating a candidate's answer{context_info}.
-
-QUESTION: {question}
-CANDIDATE'S ANSWER: {answer}
-DIFFICULTY LEVEL: {difficulty}
-
-EVALUATION APPROACH ({guidance['tone']}):
-Expected: {guidance['expectations']}
-Scoring: {guidance['scoring']}
-Feedback Style: {guidance['feedback_style']}
-
-STEP-BY-STEP EVALUATION PROCESS:
-
-STEP 1 - EXTRACT KEY CONCEPTS FROM THE QUESTION:
-List 3-5 technical concepts, keywords, or expected topics the question is asking about.
-
-STEP 2 - ANALYZE THE ANSWER:
-✅ STRENGTHS: What did the candidate do well? Which concepts did they cover? What was clear or correct?
-⚠️ GAPS/IMPROVEMENTS: What's missing? What's incorrect? What could be clearer?
-
-STEP 3 - SCORE THE ANSWER (1-10 scale):
-- Knowledge: Technical correctness, depth, and completeness (did they cover key concepts?)
-- Communication: Clarity, structure, and articulation (was it easy to follow?)
-- Relevance: How directly does this answer the question? Is it on-topic?
-
-STEP 4 - GENERATE DETAILED FEEDBACK (2-4 comprehensive paragraphs):
-Provide detailed, flowing feedback that covers:
-- Specific strengths: What they did well, which concepts they covered correctly, and what was clear
-- Specific gaps or areas for improvement: What key concepts or details they missed, what could be more accurate
-- Actionable recommendations: Concrete suggestions for improvement with examples
-- Overall assessment: A brief summary of their understanding level
-
-Write feedback as natural, flowing paragraphs (not bullet points). Make it detailed, specific to their answer, and constructive.
-
-{"STEP 5 - FOLLOW-UP QUESTION: Generate ONE probing follow-up question that digs deeper based on their answer." if difficulty == "Hard" else ""}
-
-OUTPUT FORMAT (strict JSON):
-{{
-  "key_concepts": ["concept1", "concept2", "concept3"],
-  "strengths": ["strength1", "strength2"],
-  "gaps": ["gap1", "gap2"],
-  "knowledge": <number 1-10>,
-  "communication": <number 1-10>,
-  "relevance": <number 1-10>,
-  "feedback": "Detailed, comprehensive feedback in 2-4 flowing paragraphs. Be specific about what the candidate did well, what they missed, and how they can improve. Reference actual content from their answer. Make it constructive, actionable, and personalized."{',\n  "followup": "One probing follow-up question"' if difficulty == "Hard" else ''}
-}}
-
-IMPORTANT RULES:
-- If answer is off-topic or from wrong domain, set relevance to 0-2
-- If answer is junk/minimal, set all scores to 0-2
-- Feedback must be specific to THIS answer, not generic templates
-- Reference actual content from the candidate's answer in feedback
-- Each feedback point should feel personalized and human
-
-Provide ONLY the JSON output, no additional text."""
-
-    try:
-        response = call_llm(prompt, session=st.session_state).strip()
-
-        # Clean response - remove markdown code blocks if present
-        if response.startswith("```"):
-            response = response.split("```")[1]
-            if response.startswith("json"):
-                response = response[4:]
-            response = response.strip()
-
-        # Parse JSON response
-        result = json.loads(response)
-
-        # Extract and validate scores
-        knowledge = int(result.get("knowledge", 1))
-        communication = int(result.get("communication", 1))
-        relevance = int(result.get("relevance", 1))
-
-        # Clamp scores to 0-10 range
-        knowledge = max(0, min(10, knowledge))
-        communication = max(0, min(10, communication))
-        relevance = max(0, min(10, relevance))
-
-        # Extract feedback (should be a detailed string, not a list)
-        feedback = result.get("feedback", "")
-
-        # If feedback comes as a list (fallback), join it into paragraphs
-        if isinstance(feedback, list):
-            feedback = "\n\n".join(feedback)
-
-        # Ensure we have substantial feedback
-        if not feedback or len(feedback.strip()) < 50:
-            feedback = "Your answer shows some understanding, but could benefit from more technical depth and specific examples. Consider structuring your response more clearly and providing concrete details from your experience. Focus on addressing all aspects of the question comprehensively."
-
-        # Extract follow-up question
-        followup = result.get("followup", "") if difficulty == "Hard" else ""
-
-        return {
-            "knowledge": knowledge,
-            "communication": communication,
-            "relevance": relevance,
-            "feedback": feedback,  # Now a string, not a list
-            "followup": followup
-        }
-
-    except json.JSONDecodeError as e:
-        # Fallback: try to extract scores from non-JSON response
-        import re
-        try:
-            knowledge = int(re.search(r'"?knowledge"?\s*:\s*(\d+)', response, re.IGNORECASE).group(1))
-            communication = int(re.search(r'"?communication"?\s*:\s*(\d+)', response, re.IGNORECASE).group(1))
-            relevance = int(re.search(r'"?relevance"?\s*:\s*(\d+)', response, re.IGNORECASE).group(1))
-
-            # Extract feedback (try both string and array format)
-            feedback_match = re.search(r'"feedback"\s*:\s*"([^"]+)"', response, re.DOTALL)
-            if feedback_match:
-                feedback = feedback_match.group(1)
-            else:
-                # Fallback: try array format and join
-                feedback_array_match = re.search(r'"feedback"\s*:\s*\[(.*?)\]', response, re.DOTALL)
-                if feedback_array_match:
-                    feedback_text = feedback_array_match.group(1)
-                    feedback_items = [f.strip(' "\'') for f in re.findall(r'"([^"]+)"', feedback_text)]
-                    feedback = "\n\n".join(feedback_items) if feedback_items else "Answer evaluated but formatting unclear. Provide more structured responses with clear examples and explanations."
-                else:
-                    feedback = "Answer evaluated but formatting unclear. Provide more structured responses with clear examples and explanations."
-
-            return {
-                "knowledge": max(0, min(10, knowledge)),
-                "communication": max(0, min(10, communication)),
-                "relevance": max(0, min(10, relevance)),
-                "feedback": feedback if isinstance(feedback, str) else "\n\n".join(feedback[:5]),
-                "followup": ""
-            }
-        except:
-            pass
-
-    except Exception as e:
-        pass
-
-    # Final fallback based on difficulty
-    fallback_scores = {"Easy": 3, "Medium": 2, "Hard": 1}
-    fallback_score = fallback_scores.get(difficulty, 2)
-
-    return {
-        "knowledge": fallback_score,
-        "communication": fallback_score,
-        "relevance": fallback_score,
-        "feedback": "Unable to evaluate properly. Please provide a clear, structured answer. Use the STAR method for behavioral questions and include technical details and examples for technical questions.",
-        "followup": ""
-    }
-
-
-def get_ist_time():
-    """Get current time in IST timezone"""
-    try:
-        from datetime import datetime
-        import pytz
-        ist = pytz.timezone('Asia/Kolkata')
-        return datetime.now(ist).strftime('%Y-%m-%d %H:%M:%S')
-    except:
-        from datetime import datetime
-        return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-
-def log_user_action(username: str, action: str):
-    """Log user actions - placeholder for compatibility"""
-    pass
-
-
-def create_interview_database():
-    """Create interview_results table if not exists"""
-    import sqlite3
-    try:
-        conn = sqlite3.connect('resume_data.db')
-        cursor = conn.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS interview_results (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT NOT NULL,
-                role TEXT,
-                domain TEXT,
-                avg_score REAL,
-                total_questions INTEGER,
-                completed_on TEXT,
-                feedback_summary TEXT
-            )
-        """)
-        conn.commit()
-        conn.close()
-    except Exception as e:
-        import streamlit as st
-        st.error(f"Database error: {e}")
-
-
-def save_interview_result(username: str, role: str, domain: str, avg_score: float, total_questions: int, feedback_summary: str):
-    """Save interview result to database"""
-    import sqlite3
-    try:
-        conn = sqlite3.connect('resume_data.db')
-        cursor = conn.cursor()
-        completed_on = get_ist_time()
-        cursor.execute("""
-            INSERT INTO interview_results (username, role, domain, avg_score, total_questions, completed_on, feedback_summary)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (username, role, domain, avg_score, total_questions, completed_on, feedback_summary))
-        conn.commit()
-        conn.close()
-        return True
-    except Exception as e:
-        import streamlit as st
-        st.error(f"Failed to save interview result: {e}")
-        return False
-
-
-def format_feedback_text(feedback):
-    """
-    Format feedback text into bullet points for clean display
-    """
-    import re
-    import html
-    sentences = re.split(r'(?<=\.)\s+', feedback.strip())
-    sentences = [s.strip() for s in sentences if len(s.strip()) > 0]
-    formatted = "<b>💡 Improvement Tips:</b><br><ul style='margin-top:5px;'>"
-    for s in sentences:
-        # Escape HTML special characters to display tags like <header>, <section>, etc.
-        safe_sentence = html.escape(s)
-        formatted += f"<li>{safe_sentence}</li>"
-    formatted += "</ul>"
-    return formatted
-
-
-def generate_interview_pdf_report(username, role, domain, completed_on, questions, answers, scores, feedbacks, overall_avg, badge, difficulty="Medium"):
-    """
-    Generate PDF report for interview using xhtml2pdf
-
-    FIXED: Now shows full answers (up to 2000 chars) instead of truncating at 500
-    FIXED: Added follow-up questions for Hard difficulty interviews
-    """
-    try:
-        from xhtml2pdf import pisa
-        from io import BytesIO
-
-        # Build XHTML content
-        xhtml = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <style>
-                body {{ font-family: Arial, sans-serif; margin: 20px; }}
-                h1 {{ color: #00c3ff; text-align: center; }}
-                h2 {{ color: #0099cc; margin-top: 20px; }}
-                .header {{ background: #f0f0f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; }}
-                .question-block {{ margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; page-break-inside: avoid; }}
-                .score {{ font-weight: bold; color: #00c3ff; }}
-                .feedback {{ color: #666; margin-top: 10px; padding: 10px; background: #f9f9f9; border-left: 3px solid #00c3ff; }}
-                .feedback ul {{ margin: 5px 0 0 0; padding-left: 20px; }}
-                .feedback li {{ margin: 8px 0; line-height: 1.5; }}
-                .summary {{ background: #fffacd; padding: 15px; border-radius: 8px; margin: 20px 0; }}
-                .answer-text {{ white-space: pre-wrap; word-wrap: break-word; margin: 10px 0; }}
-            </style>
-        </head>
-        <body>
-            <h1>Interview Practice Report</h1>
-            <div class="header">
-                <p><strong>Candidate:</strong> {username}</p>
-                <p><strong>Role:</strong> {role}</p>
-                <p><strong>Domain:</strong> {domain}</p>
-                <p><strong>Date:</strong> {completed_on}</p>
-            </div>
-            <div class="summary">
-                <h2>Overall Performance</h2>
-                <p class="score">Average Score: {overall_avg:.1f}/10</p>
-                <p><strong>Badge Earned:</strong> {badge}</p>
-            </div>
-            <h2>Detailed Q&A Review</h2>
-        """
-
-        # CRITICAL FIX: Add each question/answer/score/feedback with FULL answer (no truncation)
-        for i, (q, a, score_dict, f) in enumerate(zip(questions, answers, scores, feedbacks), 1):
-            # Ensure score_dict is a dictionary
-            if isinstance(score_dict, dict):
-                avg_q_score = (score_dict.get('knowledge', 5) + score_dict.get('communication', 5) + score_dict.get('relevance', 5)) / 3
-            else:
-                # Fallback if score_dict is not a dict
-                avg_q_score = 5.0
-                score_dict = {'knowledge': 5, 'communication': 5, 'relevance': 5}
-
-            # Escape HTML special characters to prevent rendering issues
-            q_escaped = q.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-            a_escaped = a.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-
-            # Handle feedback as string (convert list to paragraphs if needed)
-            if isinstance(f, list):
-                f_text = "\n\n".join(f)
-            else:
-                f_text = str(f)
-
-            # Format feedback into bullet points
-            import re
-            sentences = re.split(r'(?<=\.)\s+', f_text.strip())
-            sentences = [sent.strip() for sent in sentences if len(sent.strip()) > 0]
-            bullet_feedback = "<b>💡 Improvement Tips:</b><ul>"
-            for sent in sentences:
-                sent_escaped = sent.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-                bullet_feedback += f"<li>{sent_escaped}</li>"
-            bullet_feedback += "</ul>"
-            f_escaped = bullet_feedback
-
-            # SHOW FULL ANSWER - NO TRUNCATION IN PDF
-            answer_display = a_escaped
-
-            # Get follow-up question if exists (for Hard difficulty)
-            followup_text = ""
-            if difficulty == "Hard" and isinstance(score_dict, dict) and score_dict.get('followup'):
-                followup_escaped = score_dict['followup'].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-                followup_text = f"""<div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px;">
-                    <strong>Follow-up Question (for Hard interviews):</strong><br/>
-                    {followup_escaped}
-                </div>"""
-
-            xhtml += f"""
-            <div class="question-block">
-                <h3>Question {i}</h3>
-                <p><strong>Q:</strong> {q_escaped}</p>
-                <div class="answer-text"><strong>Your Answer:</strong><br/>{answer_display}</div>
-                <p class="score">Knowledge: {score_dict.get('knowledge', 0)}/10 | Communication: {score_dict.get('communication', 0)}/10 | Relevance: {score_dict.get('relevance', 0)}/10</p>
-                <p class="score">Question Score: {avg_q_score:.1f}/10</p>
-                <div class="feedback">{f_escaped}</div>
-                {followup_text}
-            </div>
-            """
-
-        xhtml += """
-        </body>
-        </html>
-        """
-
-        # Convert to PDF
-        pdf_out = BytesIO()
-        pisa_status = pisa.CreatePDF(xhtml, dest=pdf_out)
-        pdf_out.seek(0)
-
-        if pisa_status.err:
-            return None
-
-        return pdf_out.getvalue()
-
-    except Exception as e:
-        import streamlit as st
-        st.error(f"PDF generation failed: {e}")
-        return None
 
 
 import streamlit as st
@@ -8426,22 +7058,18 @@ with tab4:
 
         .badge-container {
             text-align: center;
-            padding: 30px;
-            background: linear-gradient(135deg, rgba(0, 195, 255, 0.12) 0%, rgba(0, 195, 255, 0.06) 100%);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-radius: 16px;
-            border: 1px solid rgba(0, 195, 255, 0.25);
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 193, 7, 0.1) 100%);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
             margin: 20px 0;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
         }
 
         .score-display {
-            font-size: 64px;
+            font-size: 48px;
             font-weight: bold;
-            color: #00d4ff;
-            text-shadow: 0 0 30px rgba(0, 212, 255, 0.6);
-            letter-spacing: 2px;
+            color: #00c3ff;
+            text-shadow: 0 0 20px rgba(0, 195, 255, 0.8);
         }
 
         .role-selector {
@@ -8585,9 +7213,6 @@ with tab4:
             <div style="display: flex; justify-content: center; gap: 16px;">
     """, unsafe_allow_html=True)
 
-    # Check if page changed away from AI Interview Coach - stop interview if so
-    previous_page = st.session_state.get('previous_page_selection', None)
-
     page = st.radio(
         label="Select Learning Option",
         options=["Courses by Role", "Resume Videos", "Interview Videos",  "AI Interview Coach 🤖"],
@@ -8595,16 +7220,6 @@ with tab4:
         key="page_selection",
         label_visibility="collapsed"
     )
-
-    # STOP INTERVIEW ON TAB CHANGE
-    if previous_page == "AI Interview Coach 🤖" and page != "AI Interview Coach 🤖":
-        # User switched away from AI Interview Coach - reset interview state
-        if st.session_state.get('dynamic_interview_started', False) and not st.session_state.get('dynamic_interview_completed', False):
-            st.session_state.dynamic_interview_started = False
-            st.session_state.dynamic_interview_completed = True
-
-    # Update previous page for next comparison
-    st.session_state.previous_page_selection = page
 
     st.markdown("</div></div>", unsafe_allow_html=True)
 
@@ -9033,150 +7648,41 @@ with tab4:
         
         return questions
 
-    # Helper function to generate fallback questions
-    def self_generate_fallback_questions(role, domain, difficulty, count):
-        """Generate fallback questions when LLM doesn't return enough"""
-        if difficulty == "Easy":
-            base_questions = [
-                f"What interests you most about the {role} position?",
-                f"Describe your basic understanding of {role} responsibilities.",
-                f"What are the fundamental skills needed for {role}?",
-                f"How do you stay updated with trends in {domain}?",
-                f"Why do you want to work as a {role}?",
-                f"What do you know about the {role} role?",
-                f"Tell me about yourself and your interest in {role}.",
-                f"What motivates you to pursue a career in {domain}?",
-                f"Describe a project you've worked on related to {role}.",
-                f"What are your career goals as a {role}?"
-            ]
-        elif difficulty == "Hard":
-            base_questions = [
-                f"Design a scalable system architecture for a {role} project handling millions of users.",
-                f"Explain the trade-offs between different approaches in {domain} and when to use each.",
-                f"How would you troubleshoot a critical production issue in a {role} context?",
-                f"Describe your approach to mentoring junior team members as a {role}.",
-                f"What are the biggest technical challenges facing {role} professionals today?",
-                f"How would you architect a distributed system for {domain}?",
-                f"Explain how you would optimize performance in a complex {role} project.",
-                f"What advanced techniques do you use in {domain}?",
-                f"Describe a time you made a critical technical decision as a {role}.",
-                f"How do you approach system design for high availability in {domain}?"
-            ]
-        else:  # Medium
-            base_questions = [
-                f"Describe a challenging project you've worked on relevant to {role}.",
-                f"How do you approach problem-solving in {domain}?",
-                f"What tools and technologies are you most comfortable with for {role}?",
-                f"Tell me about a time you had to learn a new skill for {role}.",
-                f"How do you prioritize tasks when working as a {role}?",
-                f"Describe your experience with {domain} technologies.",
-                f"How do you handle tight deadlines as a {role}?",
-                f"What's your approach to code quality in {domain}?",
-                f"Tell me about a technical challenge you solved as a {role}.",
-                f"How do you collaborate with team members in {domain}?"
-            ]
-        return base_questions[:count]
-
-    # UPDATED: AI-Generated Questions using LLM with DIFFICULTY SUPPORT
-    def generate_interview_questions_with_llm(domain, role, interview_type, num_questions, difficulty="Medium"):
-        """
-        Generate interview questions using LLM based on domain, role, type, and difficulty.
-
-        FIXED: Now difficulty is passed into LLM prompt and affects question complexity
-        """
-        # Define difficulty-specific instructions
-        difficulty_instructions = {
-            "Easy": "Generate BASIC and INTRODUCTORY level questions. Focus on fundamental concepts, definitions, and simple scenarios. Questions should be suitable for entry-level candidates or those new to the field.",
-            "Medium": "Generate SCENARIO-BASED and MODERATELY TECHNICAL questions. Include situational questions that require practical thinking and intermediate technical knowledge. Suitable for candidates with some experience.",
-            "Hard": "Generate DEEP TECHNICAL, SYSTEM DESIGN, and COMPLEX PROBLEM-SOLVING questions. Include architecture decisions, trade-offs, scalability concerns, and advanced concepts. Suitable for senior-level candidates."
-        }
-
+    # UPDATED: AI-Generated Questions using LLM
+    def generate_interview_questions_with_llm(domain, role, interview_type, num_questions):
+        """Generate interview questions using LLM based on domain, role, and type"""
         prompt = f"""You are an expert interviewer.
-
-Generate EXACTLY {num_questions} unique {interview_type} interview questions
+Generate {num_questions} unique {interview_type} interview questions 
 for the role of {role} in {domain}.
-
-DIFFICULTY LEVEL: {difficulty}
-{difficulty_instructions.get(difficulty, difficulty_instructions["Medium"])}
-
-CRITICAL REQUIREMENTS:
-- Generate EXACTLY {num_questions} questions - no more, no less
-- Keep each question concise (1-2 sentences max)
-- Avoid duplicates
-- Match the difficulty level specified above
-- Output ONLY the questions, one per line
-- DO NOT add numbering, bullet points, or any prefixes
-- DO NOT add any introductory text or explanations
-
-Output format example:
-What is your experience with cloud technologies?
-How would you handle a system outage?
-Describe your approach to code reviews.
-
-Generate exactly {num_questions} questions now:
+- Keep each question concise (max 1 sentence).
+- Avoid duplicates.
+- Output as plain text, one question per line.
 """
-
+        
         try:
             response = call_llm(prompt, session=st.session_state)
-
-            # Split by newlines and clean up
-            raw_questions = [q.strip() for q in response.split('\n') if q.strip()]
-
-            # Remove any numbering or bullet points more aggressively
-            import re
+            questions = [q.strip() for q in response.split('\n') if q.strip()]
+            # Remove any numbering or bullet points
             cleaned_questions = []
-            for q in raw_questions:
-                # Remove various prefixes: "1. ", "1) ", "- ", "• ", "* ", "Question 1:", etc.
-                clean_q = re.sub(r'^[\d\)\.\-•\*]+\s*', '', q).strip()
-                clean_q = re.sub(r'^Question\s*\d*\s*:?\s*', '', clean_q, flags=re.IGNORECASE).strip()
-
-                # Only add if it's a meaningful question
-                if clean_q and len(clean_q) > 15 and not clean_q.lower().startswith('generate') and not clean_q.lower().startswith('here'):
+            for q in questions:
+                # Remove common prefixes like "1. ", "- ", "• ", etc.
+                import re
+                clean_q = re.sub(r'^[\d\-•\*\.]+\s*', '', q).strip()
+                if clean_q and len(clean_q) > 10:  # Ensure meaningful questions
                     cleaned_questions.append(clean_q)
-
-                # Stop if we have enough questions
-                if len(cleaned_questions) >= num_questions:
-                    break
-
-            # If we got fewer questions than requested, try to pad with fallback
-            if len(cleaned_questions) < num_questions:
-                st.warning(f"Only generated {len(cleaned_questions)} questions, padding with fallback questions...")
-                # Add fallback questions to meet the requirement
-                fallback_needed = num_questions - len(cleaned_questions)
-                fallback_qs = self_generate_fallback_questions(role, domain, difficulty, fallback_needed)
-                cleaned_questions.extend(fallback_qs)
-
-            # EXACT QUESTION COUNT: Enforce exact count
-            cleaned_questions = cleaned_questions[:num_questions]
-            return cleaned_questions
-
+            
+            return cleaned_questions[:num_questions]  # Return exact number requested
+            
         except Exception as e:
-            st.error(f"Failed to generate questions with LLM: {e}")
-            # Fallback to static questions appropriate for difficulty
-            if difficulty == "Easy":
-                fallback_questions = [
-                    f"What interests you most about the {role} position?",
-                    f"Describe your basic understanding of {role} responsibilities.",
-                    f"What are the fundamental skills needed for {role}?",
-                    f"How do you stay updated with trends in {domain}?",
-                    f"Why do you want to work as a {role}?"
-                ]
-            elif difficulty == "Hard":
-                fallback_questions = [
-                    f"Design a scalable system architecture for a {role} project handling millions of users.",
-                    f"Explain the trade-offs between different approaches in {domain} and when to use each.",
-                    f"How would you troubleshoot a critical production issue in a {role} context?",
-                    f"Describe your approach to mentoring junior team members as a {role}.",
-                    f"What are the biggest technical challenges facing {role} professionals today?"
-                ]
-            else:  # Medium
-                fallback_questions = [
-                    f"Describe a challenging project you've worked on relevant to {role}.",
-                    f"How do you approach problem-solving in {domain}?",
-                    f"What tools and technologies are you most comfortable with for {role}?",
-                    f"Tell me about a time you had to learn a new skill for {role}.",
-                    f"How do you prioritize tasks when working as a {role}?"
-                ]
+            st.error(f"Failed to generate questions: {e}")
+            # Fallback to static questions
+            fallback_questions = [
+                f"What interests you most about the {role} position?",
+                f"Describe your experience relevant to {role}.",
+                f"How do you stay updated with trends in {domain}?",
+                f"What challenges do you expect in the {role} role?",
+                f"Why do you want to work as a {role}?"
+            ]
             return fallback_questions[:num_questions]
 
     # Badge system for gamification
@@ -9497,17 +8003,14 @@ Generate exactly {num_questions} questions now:
                     st.markdown(f"**{title}**")
                     st.video(url)
 
-    # Section 4: UPDATED AI Interview Coach 🤖 with Mock Interview and Enhanced Features
+    # Section 4: UPDATED AI Interview Coach 🤖 with LLM Questions, Timer, and Enhanced Features
     elif page == "AI Interview Coach 🤖":
         st.subheader("🤖 AI Interview Coach")
         st.markdown("Practice role-specific interview questions with our AI coach. Get instant feedback on your answers and discover recommended courses!")
-
-        # Create database table if not exists
-        create_interview_database()
-
+        
         # Domain and Role selection
         st.markdown('<div class="role-selector">', unsafe_allow_html=True)
-
+        
         col1, col2 = st.columns(2)
         with col1:
             selected_domain = st.selectbox(
@@ -9515,7 +8018,7 @@ Generate exactly {num_questions} questions now:
                 options=list(COURSES_BY_CATEGORY.keys()),
                 key="interview_domain_selection"
             )
-
+        
         with col2:
             if selected_domain:
                 roles = list(COURSES_BY_CATEGORY[selected_domain].keys())
@@ -9526,7 +8029,7 @@ Generate exactly {num_questions} questions now:
                 )
             else:
                 selected_role = None
-
+        
         st.markdown('</div>', unsafe_allow_html=True)
         
         if selected_domain and selected_role:
@@ -9539,8 +8042,6 @@ Generate exactly {num_questions} questions now:
                 st.session_state.dynamic_interview_answers = []
             if 'dynamic_interview_scores' not in st.session_state:
                 st.session_state.dynamic_interview_scores = []
-            if 'dynamic_interview_feedbacks' not in st.session_state:
-                st.session_state.dynamic_interview_feedbacks = []
             if 'dynamic_interview_completed' not in st.session_state:
                 st.session_state.dynamic_interview_completed = False
             if 'dynamic_interview_started' not in st.session_state:
@@ -9557,18 +8058,14 @@ Generate exactly {num_questions} questions now:
             if 'question_timer_start' not in st.session_state:
                 st.session_state.question_timer_start = None
             if 'timer_seconds' not in st.session_state:
-                st.session_state.timer_seconds = 120
-            if 'interview_difficulty' not in st.session_state:
-                st.session_state.interview_difficulty = "Medium"
-            if 'original_num_questions' not in st.session_state:
-                st.session_state.original_num_questions = 6
-
+                st.session_state.timer_seconds = 120  # Default 120 seconds
+                
             # Start interview setup
             if not st.session_state.dynamic_interview_started:
                 st.markdown(f"### Practice interview for: {selected_role}")
-
+                
                 col1, col2 = st.columns(2)
-
+                
                 with col1:
                     interview_type = st.selectbox(
                         "Interview Type",
@@ -9576,52 +8073,34 @@ Generate exactly {num_questions} questions now:
                         format_func=lambda x: x.title() + (" (Technical + Behavioral)" if x == "mixed" else ""),
                         key="dynamic_interview_type_select"
                     )
-
+                
                 with col2:
-                    interview_difficulty = st.selectbox(
-                        "Interview Difficulty",
-                        options=["Easy", "Medium", "Hard"],
-                        key="interview_difficulty_select",
-                        index=1
-                    )
-
-                col3, col4 = st.columns(2)
-                with col3:
-                    num_questions = st.slider("Number of questions:", 5, 10, 6)
-
-                with col4:
-                    timer_seconds = st.slider("Time per question (seconds):", 60, 300, 120, step=30)
-
-                if st.button("🚀 Start Mock Interview"):
+                    num_questions = st.slider("Number of questions:", 3, 8, 5)
+                
+                # Timer setting
+                st.session_state.timer_seconds = st.slider("Time per question (seconds):", 60, 300, 120, step=30)
+                
+                if st.button("🚀 Start Interview Practice"):
                     with st.spinner("Generating personalized questions using AI..."):
-                        # FIXED: Pass difficulty to question generation
+                        # Generate questions using LLM
                         selected_questions = generate_interview_questions_with_llm(
-                            selected_domain,
-                            selected_role,
-                            interview_type,
-                            num_questions,
-                            interview_difficulty  # Now passing difficulty
+                            selected_domain, 
+                            selected_role, 
+                            interview_type, 
+                            num_questions
                         )
-
+                        
                         if selected_questions:
-                            # FIXED: Reset ALL interview state variables properly
-                            # EXACT QUESTION COUNT: Enforce exact number of questions
-                            selected_questions = selected_questions[:num_questions]
-
                             st.session_state.dynamic_interview_questions = selected_questions
-                            st.session_state.original_num_questions = num_questions
                             st.session_state.current_dynamic_interview_question = 0
                             st.session_state.dynamic_interview_answers = []
                             st.session_state.dynamic_interview_scores = []
-                            st.session_state.dynamic_interview_feedbacks = []
                             st.session_state.dynamic_interview_completed = False
                             st.session_state.dynamic_interview_started = True
                             st.session_state.dynamic_answer_submitted = False
                             st.session_state.current_interview_question_text = selected_questions[0]
                             st.session_state.question_timer_start = time.time()
-                            st.session_state.timer_seconds = timer_seconds
-                            st.session_state.interview_difficulty = interview_difficulty
-                            st.success("Questions generated! Starting your mock interview...")
+                            st.success("Questions generated! Starting your interview practice...")
                             time.sleep(1)
                             st.rerun()
                         else:
@@ -9629,43 +8108,22 @@ Generate exactly {num_questions} questions now:
             
             # Interview in progress
             elif st.session_state.dynamic_interview_started and not st.session_state.dynamic_interview_completed:
-                # CRITICAL FIX: Properly count answered questions
-                questions_answered = len(st.session_state.dynamic_interview_answers)
-                total_questions = len(st.session_state.dynamic_interview_questions)
-                current_index = st.session_state.current_dynamic_interview_question + 1
-
-                # Display progress with correct counts in glassmorphism box
-                st.markdown(f"""
-                <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.08) 0%, rgba(0, 195, 255, 0.04) 100%);
-                            backdrop-filter: blur(10px);
-                            -webkit-backdrop-filter: blur(10px);
-                            border: 1px solid rgba(0, 195, 255, 0.2);
-                            border-radius: 12px;
-                            padding: 16px 24px;
-                            margin: 20px 0;
-                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);">
-                    <p style="color: #ffffff; font-size: 16px; margin: 0; font-weight: 500;">
-                        📊 Progress: Answered {questions_answered}/{st.session_state.original_num_questions} questions | Current Index: {current_index} of {st.session_state.original_num_questions}
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
-
-                if questions_answered < st.session_state.original_num_questions:
+                if st.session_state.current_dynamic_interview_question < len(st.session_state.dynamic_interview_questions):
                     question = st.session_state.current_interview_question_text or st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question]
-
-                    # TIMER RESET: Reset timer every time a new question loads
+                    
+                    # Initialize timer if not set
                     if st.session_state.question_timer_start is None:
                         st.session_state.question_timer_start = time.time()
-
+                    
                     # Calculate remaining time
                     elapsed_time = time.time() - st.session_state.question_timer_start
                     remaining_time = max(0, st.session_state.timer_seconds - elapsed_time)
-
+                    
                     # Display timer
                     timer_minutes = int(remaining_time // 60)
                     timer_seconds_display = int(remaining_time % 60)
                     timer_urgent_class = "timer-urgent" if remaining_time <= 30 else ""
-
+                    
                     st.markdown(f"""
                     <div class="timer-container">
                         <div class="timer-display {timer_urgent_class}">
@@ -9673,411 +8131,195 @@ Generate exactly {num_questions} questions now:
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
-
+                    
                     # Timer progress bar
                     progress_value = (st.session_state.timer_seconds - remaining_time) / st.session_state.timer_seconds
                     st.progress(progress_value)
-
+                    
                     # Question display
                     st.markdown(f"""
                     <div class="quiz-card">
-                        <h3 style="color: #00c3ff;">Question {questions_answered + 1} of {st.session_state.original_num_questions}</h3>
-                        <h4 style="color: #ffffff; margin: 15px 0;">Role: {selected_role} | Difficulty: {st.session_state.interview_difficulty}</h4>
+                        <h3 style="color: #00c3ff;">Question {st.session_state.current_dynamic_interview_question + 1} of {len(st.session_state.dynamic_interview_questions)}</h3>
+                        <h4 style="color: #ffffff; margin: 15px 0;">Role: {selected_role}</h4>
                         <p style="font-size: 18px; color: #ffffff; margin: 15px 0;">{question}</p>
                     </div>
                     """, unsafe_allow_html=True)
-
-                    # Add refresh button for regenerating all interview questions
+                    
+                    # Add refresh button for new question
                     col1, col2 = st.columns([3, 1])
                     with col2:
-                        if st.button("🔄 Refresh Interview"):
-                            # Clear all interview state
-                            st.session_state.dynamic_interview_questions = []
-                            st.session_state.current_dynamic_interview_question = 0
-                            st.session_state.dynamic_interview_answers = []
-                            st.session_state.dynamic_interview_scores = []
-                            st.session_state.dynamic_interview_feedbacks = []
-                            st.session_state.dynamic_interview_completed = False
-                            st.session_state.dynamic_interview_started = False
-                            st.session_state.dynamic_answer_submitted = False
-                            st.session_state.current_interview_question_text = ""
-                            st.session_state.question_timer_start = None
-                            # Force regeneration
-                            st.rerun()
-
-                    # Answer input with character limit
+                        if st.button("🔄 Refresh Interview Question"):
+                            with st.spinner("Generating new question..."):
+                                new_questions = generate_interview_questions_with_llm(
+                                    selected_domain, 
+                                    selected_role, 
+                                    "mixed",  # Generate mixed type for variety
+                                    1
+                                )
+                                if new_questions and new_questions[0]:
+                                    st.session_state.current_interview_question_text = new_questions[0]
+                                    st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question] = new_questions[0]
+                                    st.session_state.question_timer_start = time.time()  # Reset timer
+                                    st.rerun()
+                    
+                    # Answer input
                     answer_key = f"dynamic_interview_answer_{st.session_state.current_dynamic_interview_question}"
                     answer = st.text_area(
                         "Your answer:",
-                        placeholder="Type your detailed answer here... (Use STAR method: Situation, Task, Action, Result)",
+                        placeholder="Type your detailed answer here...",
                         height=150,
-                        max_chars=2000,
-                        key=answer_key,
-                        help="Maximum 2000 characters"
+                        key=answer_key
                     )
-
+                    
                     # Auto-submit logic when timer expires
                     if remaining_time <= 0 and not st.session_state.dynamic_answer_submitted:
                         if not answer.strip():
                             answer = "⚠️ No Answer"
-
-                        # Evaluate answer using enhanced evaluation with role/domain context
-                        with st.spinner("Evaluating your answer..."):
-                            eval_result = evaluate_interview_answer_for_scores(
-                                answer,
-                                question,
-                                st.session_state.interview_difficulty,
-                                role=selected_role,
-                                domain=selected_domain
-                            )
-
-                        # FIXED: Store answer, scores, and feedback - ensuring all are tracked properly
+                        
+                        # Evaluate answer
+                        score, feedback = evaluate_interview_answer(answer, question)
+                        
+                        # Store answer and score
                         st.session_state.dynamic_interview_answers.append(answer)
-                        st.session_state.dynamic_interview_scores.append(eval_result)
-                        st.session_state.dynamic_interview_feedbacks.append(eval_result["feedback"])
+                        st.session_state.dynamic_interview_scores.append(score)
                         st.session_state.dynamic_answer_submitted = True
-
-                        # FIXED: Handle follow-up for Hard difficulty without breaking indexing
-                        # Follow-ups are added but don't count toward original_num_questions
-                        if st.session_state.interview_difficulty == "Hard" and eval_result.get("followup") and eval_result["followup"].strip():
-                            # Only add follow-up if we haven't reached the end
-                            if questions_answered < st.session_state.original_num_questions - 1:
-                                st.session_state.dynamic_interview_questions.insert(
-                                    st.session_state.current_dynamic_interview_question + 1,
-                                    eval_result["followup"]
-                                )
-
+                        
                         st.warning("⏰ Time's up! Answer auto-submitted.")
                         st.rerun()
-
+                    
                     # Submit answer button
                     if not st.session_state.dynamic_answer_submitted and remaining_time > 0:
                         if st.button("Submit Answer & Get Feedback"):
                             if answer.strip():
                                 with st.spinner("Evaluating your answer..."):
-                                    # Evaluate answer using enhanced evaluation with role/domain context
-                                    eval_result = evaluate_interview_answer_for_scores(
-                                        answer,
-                                        question,
-                                        st.session_state.interview_difficulty,
-                                        role=selected_role,
-                                        domain=selected_domain
-                                    )
-
-                                    # FIXED: Store answer, scores, and feedback ensuring proper tracking
+                                    # Evaluate answer
+                                    score, feedback = evaluate_interview_answer(answer, question)
+                                    
+                                    # Store answer and score
                                     st.session_state.dynamic_interview_answers.append(answer)
-                                    st.session_state.dynamic_interview_scores.append(eval_result)
-                                    st.session_state.dynamic_interview_feedbacks.append(eval_result["feedback"])
+                                    st.session_state.dynamic_interview_scores.append(score)
                                     st.session_state.dynamic_answer_submitted = True
-
-                                    # FIXED: Handle follow-up for Hard difficulty without breaking indexing
-                                    if st.session_state.interview_difficulty == "Hard" and eval_result.get("followup") and eval_result["followup"].strip():
-                                        # Only add follow-up if we haven't reached the end
-                                        if questions_answered < st.session_state.original_num_questions - 1:
-                                            st.session_state.dynamic_interview_questions.insert(
-                                                st.session_state.current_dynamic_interview_question + 1,
-                                                eval_result["followup"]
-                                            )
-
                                     st.rerun()
                             else:
                                 st.warning("Please provide an answer before proceeding.")
-
+                    
                     # Show feedback after answer submitted
                     if st.session_state.dynamic_answer_submitted:
-                        current_score_dict = st.session_state.dynamic_interview_scores[-1]
-                        avg_q_score = (current_score_dict["knowledge"] + current_score_dict["communication"] + current_score_dict["relevance"]) / 3
-
-                        # Format feedback for display
-                        feedback_text = current_score_dict["feedback"] if isinstance(current_score_dict["feedback"], str) else chr(10).join(current_score_dict["feedback"])
-                        formatted_feedback = format_feedback_text(feedback_text)
-
+                        score = st.session_state.dynamic_interview_scores[st.session_state.current_dynamic_interview_question]
+                        answer_text = st.session_state.dynamic_interview_answers[st.session_state.current_dynamic_interview_question]
+                        _, feedback = evaluate_interview_answer(answer_text, st.session_state.current_interview_question_text)
+                        
                         st.markdown(f"""
-                        <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%);
+                        <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%); 
                                     border: 1px solid rgba(0, 195, 255, 0.3); border-radius: 10px; padding: 15px; margin: 15px 0;">
-                            <h4 style="color: #00c3ff;">Immediate Feedback:</h4>
-                            <p style="color: #ffffff;">📊 Knowledge: {current_score_dict["knowledge"]}/10 | Communication: {current_score_dict["communication"]}/10 | Relevance: {current_score_dict["relevance"]}/10</p>
-                            <p style="color: #ffffff;">⭐ Question Score: {avg_q_score:.1f}/10</p>
-                            <div style="color: #ffffff; margin-top: 10px;">
-                                {formatted_feedback}
-                            </div>
+                            <h4 style="color: #00c3ff;">Feedback:</h4>
+                            <p style="color: #ffffff;">📊 Score: {score:.1f}/5.0</p>
+                            <p style="color: #ffffff;">💬 {feedback}</p>
                         </div>
                         """, unsafe_allow_html=True)
-
-                        # Show follow-up question for Hard difficulty
-                        if st.session_state.interview_difficulty == "Hard" and current_score_dict.get("followup"):
-                            st.info(f"🔎 Follow-Up Question: {current_score_dict['followup']}")
-
+                        
                         # Continue/Complete button
-                        # CRITICAL FIX: Check if we've answered all original questions
-                        if questions_answered >= st.session_state.original_num_questions:
-                            # All questions answered, mark as complete
-                            if st.button("Complete Interview 🏁"):
-                                st.session_state.dynamic_interview_completed = True
-                                st.rerun()
-                        else:
-                            # More questions to go
+                        if st.session_state.current_dynamic_interview_question < len(st.session_state.dynamic_interview_questions) - 1:
                             if st.button("Continue to Next Question ➡️"):
                                 st.session_state.current_dynamic_interview_question += 1
                                 st.session_state.dynamic_answer_submitted = False
+                                # Set next question and reset timer
                                 if st.session_state.current_dynamic_interview_question < len(st.session_state.dynamic_interview_questions):
                                     st.session_state.current_interview_question_text = st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question]
-                                else:
-                                    # Safety check - if we're out of questions but haven't answered all, generate one
-                                    st.session_state.current_interview_question_text = f"Additional question for {selected_role}"
-                                # TIMER RESET: Reset timer for next question
                                 st.session_state.question_timer_start = time.time()
                                 st.rerun()
-
+                        else:
+                            if st.button("Complete Interview 🏁"):
+                                st.session_state.dynamic_interview_completed = True
+                                st.rerun()
+                    
                     # Progress bar for interview completion
-                    interview_progress = questions_answered / st.session_state.original_num_questions
+                    interview_progress = (st.session_state.current_dynamic_interview_question + (1 if st.session_state.dynamic_answer_submitted else 0)) / len(st.session_state.dynamic_interview_questions)
                     st.markdown("### Interview Progress")
                     st.progress(interview_progress)
-
-                    # CRITICAL FIX: Review Previous Answers - show all properly
+                    
+                    # Review Previous Answers during interview
                     if len(st.session_state.dynamic_interview_answers) > 0:
                         with st.expander("📖 Review Previous Answers"):
-                            # Show all submitted answers
-                            num_to_show = len(st.session_state.dynamic_interview_answers)
-                            for i in range(num_to_show):
-                                if i < len(st.session_state.dynamic_interview_questions) and i < len(st.session_state.dynamic_interview_scores):
+                            for i, (prev_answer, prev_score) in enumerate(zip(st.session_state.dynamic_interview_answers, st.session_state.dynamic_interview_scores)):
+                                if i < st.session_state.current_dynamic_interview_question:
                                     prev_question = st.session_state.dynamic_interview_questions[i]
-                                    prev_answer = st.session_state.dynamic_interview_answers[i]
-                                    prev_scores = st.session_state.dynamic_interview_scores[i]
-                                    prev_avg = (prev_scores["knowledge"] + prev_scores["communication"] + prev_scores["relevance"]) / 3
-
-                                    # Show full answer (up to 500 chars in review, full in final)
-                                    answer_preview = prev_answer[:500]
-                                    if len(prev_answer) > 500:
-                                        answer_preview += "..."
-
                                     st.markdown(f"**Question {i+1}:** {prev_question}")
-                                    st.markdown(f"**Your Answer:** {answer_preview}")
-                                    st.markdown(f"**Score:** {prev_avg:.1f}/10")
-                                    if i < num_to_show - 1:  # Don't add separator after last item
-                                        st.markdown("---")
-
+                                    st.markdown(f"**Your Answer:** {prev_answer[:200]}...")
+                                    st.markdown(f"**Score:** {prev_score:.1f}/5.0")
+                                    st.markdown("---")
+                    
                     # Auto-refresh for timer
                     if remaining_time > 0 and not st.session_state.dynamic_answer_submitted:
                         time.sleep(1)
                         st.rerun()
-                else:
-                    # CRITICAL FIX: All questions answered, move to completion automatically
-                    st.session_state.dynamic_interview_completed = True
-                    st.success(f"✅ Completed all {st.session_state.original_num_questions} questions!")
-                    time.sleep(1)
-                    st.rerun()
             
-            # UNIFIED: Interview completed + Course Recommendations + DB + PDF
+            # UNIFIED: Interview completed + Course Recommendations
             elif st.session_state.dynamic_interview_completed:
-                # Calculate average scores for each dimension
-                knowledge_scores = [s["knowledge"] for s in st.session_state.dynamic_interview_scores]
-                communication_scores = [s["communication"] for s in st.session_state.dynamic_interview_scores]
-                relevance_scores = [s["relevance"] for s in st.session_state.dynamic_interview_scores]
-
-                avg_knowledge = sum(knowledge_scores) / len(knowledge_scores)
-                avg_communication = sum(communication_scores) / len(communication_scores)
-                avg_relevance = sum(relevance_scores) / len(relevance_scores)
-                overall_avg = (avg_knowledge + avg_communication + avg_relevance) / 3
-
-                # Determine badge based on overall average
-                if overall_avg >= 8.5:
-                    badge = "Interview Ready"
-                    badge_emoji = "🏆"
-                elif overall_avg >= 7.0:
-                    badge = "Excellent"
-                    badge_emoji = "🌟"
-                elif overall_avg >= 5.0:
-                    badge = "Good"
-                    badge_emoji = "👍"
-                else:
-                    badge = "Needs Practice"
-                    badge_emoji = "💪"
-
+                # Calculate average score
+                avg_score = sum(st.session_state.dynamic_interview_scores) / len(st.session_state.dynamic_interview_scores)
+                
+                # Store results for gamification
+                st.session_state.interview_result = {
+                    "avg_score": avg_score,
+                    "num_questions": len(st.session_state.dynamic_interview_questions),
+                    "scores": st.session_state.dynamic_interview_scores,
+                    "role": selected_role,
+                    "domain": selected_domain
+                }
+                
+                # Get badge
+                badge_emoji, badge_title = get_badge_for_score("interview", avg_score)
+                
                 st.markdown(f"""
                 <div class="badge-container">
-                    <h2 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">🎉 Mock Interview Complete!</h2>
-                    <div style="margin: 30px 0;">
-                        <div class="score-display">{overall_avg:.1f}/10</div>
-                        <h3 style="color: #ffffff; margin: 15px 0; font-size: 24px; font-weight: 500;">{badge_emoji} {badge}</h3>
+                    <h2 style="margin: 0; color: #333;">🎉 Interview Practice Complete!</h2>
+                    <div style="margin: 20px 0;">
+                        <div class="score-display">{avg_score:.1f}/5.0</div>
+                        <h3 style="color: #333; margin: 10px 0;">{badge_emoji} {badge_title}</h3>
                     </div>
-                    <p style="color: rgba(255, 255, 255, 0.85); font-size: 16px; margin: 8px 0;">Role: {selected_role} in {selected_domain}</p>
-                    <p style="color: rgba(255, 255, 255, 0.85); font-size: 16px; margin: 8px 0;">Difficulty: {st.session_state.interview_difficulty}</p>
+                    <p style="color: #666;">Role: {selected_role} in {selected_domain}</p>
                 </div>
                 """, unsafe_allow_html=True)
-
-                # Create radar chart for skills
-                st.markdown('<div class="radar-container">', unsafe_allow_html=True)
-                st.subheader("📊 Performance Radar Chart")
-
-                radar_data = {
-                    "Communication": avg_communication,
-                    "Knowledge": avg_knowledge,
-                    "Confidence": avg_relevance
-                }
-
-                fig = go.Figure()
-                fig.add_trace(go.Scatterpolar(
-                    r=list(radar_data.values()),
-                    theta=list(radar_data.keys()),
-                    fill='toself',
-                    name='Performance',
-                    line=dict(color='#00c3ff', width=2),
-                    fillcolor='rgba(0, 195, 255, 0.2)'
-                ))
-
-                fig.update_layout(
-                    polar=dict(
-                        radialaxis=dict(
-                            visible=True,
-                            range=[0, 10],
-                            tickfont=dict(color='white', size=10),
-                            gridcolor='rgba(255, 255, 255, 0.2)'
-                        ),
-                        angularaxis=dict(
-                            tickfont=dict(color='white', size=12),
-                            gridcolor='rgba(255, 255, 255, 0.2)'
-                        ),
-                        bgcolor='rgba(0, 0, 0, 0)'
-                    ),
-                    showlegend=False,
-                    title=dict(
-                        text="Interview Performance Metrics",
-                        x=0.5,
-                        font=dict(color='#00c3ff', size=16)
-                    ),
-                    paper_bgcolor='rgba(0, 0, 0, 0)',
-                    plot_bgcolor='rgba(0, 0, 0, 0)',
-                    font=dict(color='white'),
-                    height=400
-                )
-
-                st.plotly_chart(fig, use_container_width=True)
-                st.markdown('</div>', unsafe_allow_html=True)
-
-                # Strengths and Weaknesses
-                st.subheader("💡 Performance Analysis")
-                col1, col2 = st.columns(2)
-
-                metrics = [("Communication", avg_communication), ("Knowledge", avg_knowledge), ("Confidence", avg_relevance)]
-                metrics_sorted = sorted(metrics, key=lambda x: x[1], reverse=True)
-
-                with col1:
-                    st.markdown("**🌟 Strengths:**")
-                    for name, score in metrics_sorted[:2]:
-                        st.markdown(f"- {name}: {score:.1f}/10")
-
-                with col2:
-                    st.markdown("**📈 Areas to Improve:**")
-                    for name, score in metrics_sorted[-2:]:
-                        st.markdown(f"- {name}: {score:.1f}/10")
-
-                # FIXED: Show detailed Q&A results with full answers and proper matching
-                st.markdown("---")
-                st.subheader("📋 Detailed Q&A Review:")
-
-                # Ensure we only show as many Q&A pairs as we have complete data for
-                num_complete_qa = min(
-                    len(st.session_state.dynamic_interview_scores),
-                    len(st.session_state.dynamic_interview_answers),
-                    len(st.session_state.dynamic_interview_feedbacks),
-                    len(st.session_state.dynamic_interview_questions)
-                )
-
-                for i in range(num_complete_qa):
-                    score_dict = st.session_state.dynamic_interview_scores[i]
-                    answer = st.session_state.dynamic_interview_answers[i]
-                    feedback = st.session_state.dynamic_interview_feedbacks[i]
-                    question = st.session_state.dynamic_interview_questions[i]
-
-                    q_avg = (score_dict["knowledge"] + score_dict["communication"] + score_dict["relevance"]) / 3
-
-                    with st.expander(f"Question {i+1}: Score {q_avg:.1f}/10"):
-                        st.write(f"**Question:** {question}")
-                        st.write(f"**Your Answer:** {answer}")  # Show full answer
-                        st.write(f"**Scores:** Knowledge: {score_dict['knowledge']}/10 | Communication: {score_dict['communication']}/10 | Relevance: {score_dict['relevance']}/10")
-
-                        # Format and display feedback as bullet points
-                        feedback_text = "\n".join(feedback) if isinstance(feedback, list) else feedback
-                        formatted_feedback = format_feedback_text(feedback_text)
-                        st.markdown(formatted_feedback, unsafe_allow_html=True)
-
-                # Save to database
-                username = st.session_state.get("username", "Guest")
-                feedback_summary = f"Strengths: {metrics_sorted[0][0]}, {metrics_sorted[1][0]}. Weaknesses: {metrics_sorted[-1][0]}, {metrics_sorted[-2][0]}."
-
-                if save_interview_result(username, selected_role, selected_domain, overall_avg, st.session_state.original_num_questions, feedback_summary):
-                    log_user_action(username, "completed_interview")
-
-                # Generate PDF report
-                st.markdown("---")
-                st.subheader("📄 Download Interview Report")
-
-                completed_on = get_ist_time()
-
-                # CRITICAL FIX: Ensure all arrays have same length for PDF generation
-                num_complete = min(
-                    len(st.session_state.dynamic_interview_questions),
-                    len(st.session_state.dynamic_interview_answers),
-                    len(st.session_state.dynamic_interview_scores),
-                    len(st.session_state.dynamic_interview_feedbacks)
-                )
-
-                pdf_bytes = generate_interview_pdf_report(
-                    username,
-                    selected_role,
-                    selected_domain,
-                    completed_on,
-                    st.session_state.dynamic_interview_questions[:num_complete],
-                    st.session_state.dynamic_interview_answers[:num_complete],
-                    st.session_state.dynamic_interview_scores[:num_complete],
-                    st.session_state.dynamic_interview_feedbacks[:num_complete],
-                    overall_avg,
-                    badge,
-                    difficulty=st.session_state.interview_difficulty
-                )
-
-                if pdf_bytes:
-                    st.download_button(
-                        label="📄 Download Interview Report",
-                        data=pdf_bytes,
-                        file_name=f"interview_report_{username}_{selected_role.replace(' ', '_')}_{completed_on.split()[0]}.pdf",
-                        mime="application/pdf"
-                    )
-                else:
-                    st.warning("PDF generation failed. You can still review your results above.")
-
+                
+                # Show detailed results
+                st.subheader("📊 Detailed Results:")
+                for i, (score, answer) in enumerate(zip(st.session_state.dynamic_interview_scores, st.session_state.dynamic_interview_answers)):
+                    with st.expander(f"Question {i+1}: Score {score:.1f}/5.0"):
+                        st.write(f"**Question:** {st.session_state.dynamic_interview_questions[i]}")
+                        st.write(f"**Your Answer:** {answer}")
+                        st.write(f"**Score:** {score:.1f}/5.0")
+                        # Re-generate feedback for review
+                        _, feedback = evaluate_interview_answer(answer, st.session_state.dynamic_interview_questions[i])
+                        st.write(f"**Feedback:** {feedback}")
+                
                 # UNIFIED: Display recommended courses by difficulty
                 st.markdown("---")
                 st.subheader("📚 Recommended Courses for Your Career Growth")
                 st.markdown(f"Based on your interview practice for **{selected_role}** in **{selected_domain}**, here are our course recommendations organized by difficulty level:")
-
+                
                 courses = get_courses_for_role(selected_domain, selected_role)
                 if courses:
+                    # Display courses grouped by difficulty using the new index-based function
                     display_courses_by_difficulty(courses, selected_role)
                 else:
                     st.info("No specific courses found for this role. Explore our course categories to find relevant learning resources!")
-
-                # FIXED: Restart button - properly resets ALL interview state
-                if st.button("🔄 Practice Again"):
-                    # Reset all interview-related session state variables
+                
+                # Restart button
+                if st.button("🔄 Practice for Different Role"):
                     st.session_state.dynamic_interview_started = False
                     st.session_state.dynamic_interview_completed = False
                     st.session_state.dynamic_interview_questions = []
                     st.session_state.current_dynamic_interview_question = 0
                     st.session_state.dynamic_interview_answers = []
                     st.session_state.dynamic_interview_scores = []
-                    st.session_state.dynamic_interview_feedbacks = []
                     st.session_state.dynamic_answer_submitted = False
                     st.session_state.current_interview_question_text = ""
                     st.session_state.question_timer_start = None
-                    st.session_state.timer_seconds = 120
-                    st.session_state.interview_difficulty = "Medium"
-                    st.session_state.original_num_questions = 6
                     st.rerun()
         else:
             st.info("Please select both a career domain and target role to start the interview practice.")
-
+                      
 if tab5:
 	with tab5:
 		import sqlite3
@@ -10537,92 +8779,27 @@ if tab5:
 										"Average ATS Score by Domain", orientation='h')
 				st.plotly_chart(fig, use_container_width=True)
 				
-				# Enhanced domain cards with glassmorphism
-				st.markdown("""
-				<style>
-				@keyframes tab5-shimmer {
-					0% { background-position: -200% 0; }
-					100% { background-position: 200% 0; }
-				}
-				.tab5-domain-card {
-					background: rgba(10, 20, 40, 0.3);
-					backdrop-filter: blur(10px);
-					border: 1px solid rgba(0, 200, 255, 0.2);
-					box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-					border-radius: 15px;
-					padding: 15px;
-					margin-bottom: 15px;
-					transition: all 0.3s ease;
-					cursor: pointer;
-					position: relative;
-					overflow: hidden;
-				}
-				.tab5-domain-card::before {
-					content: "";
-					position: absolute;
-					top: 0;
-					left: 0;
-					width: 100%;
-					height: 100%;
-					background: linear-gradient(
-						120deg,
-						transparent 0%,
-						rgba(255, 255, 255, 0.08) 50%,
-						transparent 100%
-					);
-					background-size: 200% 100%;
-					opacity: 0;
-					transition: opacity 0.3s ease;
-				}
-				.tab5-domain-card:hover::before {
-					opacity: 1;
-					animation: tab5-shimmer 1.5s ease-in-out infinite;
-				}
-				.tab5-domain-card:hover {
-					transform: translateY(-2px);
-					border-color: rgba(0, 200, 255, 0.35);
-					background: rgba(10, 20, 40, 0.4);
-				}
-				</style>
-				""", unsafe_allow_html=True)
-
+				# Enhanced domain cards
 				for i, row in df_sorted.iterrows():
 					progress_value = row['avg_ats'] / 100
 					st.markdown(f"""
-					<div class="tab5-domain-card">
-						<div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1;">
-							<h4 style="margin: 0; color: #5eb8ff;">📁 {row['domain']}</h4>
-							<span style="
-								background: rgba(0, 200, 255, 0.1);
-								border: 1px solid rgba(0, 200, 255, 0.25);
-								color: #5eb8ff;
-								padding: 5px 10px;
-								border-radius: 20px;
-								font-size: 12px;
-								font-weight: bold;
-								backdrop-filter: blur(8px);
-							">
+					<div style="border: 2px solid #e1e5e9; border-radius: 15px; padding: 15px; margin-bottom: 15px; 
+								background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+						<div style="display: flex; justify-content: space-between; align-items: center;">
+							<h4 style="margin: 0; color: #495057;">📁 {row['domain']}</h4>
+							<span style="background: #007bff; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px;">
 								Rank #{i+1}
 							</span>
 						</div>
-						<div style="margin: 10px 0; position: relative; z-index: 1;">
-							<div style="
-								background: rgba(255, 255, 255, 0.05);
-								border-radius: 10px;
-								height: 8px;
-								overflow: hidden;
-							">
-								<div style="
-									background: linear-gradient(90deg, rgba(0, 200, 255, 0.4), rgba(0, 255, 200, 0.5));
-									height: 100%;
-									width: {progress_value*100}%;
-									transition: width 0.3s ease;
-								"></div>
+						<div style="margin: 10px 0;">
+							<div style="background: #e9ecef; border-radius: 10px; height: 8px; overflow: hidden;">
+								<div style="background: linear-gradient(90deg, #28a745, #20c997); height: 100%; 
+									width: {progress_value*100}%; transition: width 0.3s ease;"></div>
 							</div>
 						</div>
-						<div style="display: flex; justify-content: space-between; margin-top: 10px; position: relative; z-index: 1;">
-							<span style="color: #cce6ff;"><b>🧠 Avg ATS:</b> <span style="color: #5eb8ff; font-weight: bold;">{row['avg_ats']:.2f}</span></span>
-							<span style="color: #cce6ff;"><b>📄 Resumes:</b> <span style="color: #5eb8ff; font-weight: bold;">{row['count']}</span></span>
+						<div style="display: flex; justify-content: space-between; margin-top: 10px;">
+							<span><b>🧠 Avg ATS:</b> <span style="color:#007acc; font-weight: bold;">{row['avg_ats']:.2f}</span></span>
+							<span><b>📄 Resumes:</b> {row['count']}</span>
 						</div>
 					</div>
 					""", unsafe_allow_html=True)

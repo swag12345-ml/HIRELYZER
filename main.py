@@ -956,11 +956,11 @@ if not st.session_state.get("authenticated", False):
                                     username = get_user_by_email(st.session_state.reset_email)
                                     log_user_action(username, "password_reset")
 
-                                # Reset all forgot password session states
-                                st.session_state.reset_stage = "none"
-                                st.session_state.reset_email = ""
-                                st.session_state.reset_otp = ""
-                                st.session_state.reset_otp_time = 0
+                                    # Reset all forgot password session states
+                                    st.session_state.reset_stage = "none"
+                                    st.session_state.reset_email = ""
+                                    st.session_state.reset_otp = ""
+                                    st.session_state.reset_otp_time = 0
 
                                     time.sleep(2)
                                     st.rerun()
@@ -1173,7 +1173,6 @@ tab1, tab2, tab3, tab4 = tabs[:4]
 
 # Handle optional admin tab
 tab5 = tabs[4] if len(tabs) > 4 else None
-
 with tab1:
     st.markdown("""
     <style>

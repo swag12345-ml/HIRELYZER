@@ -20,7 +20,7 @@ def get_ist_time():
     return datetime.now(ist)
 
 # Show IST Time in UI
-st.write("🕒 Current IST Time:", get_ist_time().strftime("%Y-%m-%d %H:%M:%S"))
+
 
 # ------------------ Password Strength Validator ------------------
 def is_strong_password(password):
@@ -331,3 +331,4 @@ if os.path.exists(DB_NAME):
         )
 else:
     st.warning("⚠️ No database file found yet.")
+

@@ -32,11 +32,25 @@ def is_strong_password(password):
         re.search(r'[!@#$%^&*(),.?":{}|<>]', password)
     )
 
+# ------------------ Email Validation ------------------
+def is_valid_email(email):
+    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(email_regex, email) is not None
+
 # ------------------ Check if Username Already Exists ------------------
 def username_exists(username):
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     c.execute("SELECT 1 FROM users WHERE username = ?", (username,))
+    exists = c.fetchone() is not None
+    conn.close()
+    return exists
+
+# ------------------ Check if Email Already Exists ------------------
+def email_exists(email):
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM users WHERE email = ?", (email,))
     exists = c.fetchone() is not None
     conn.close()
     return exists
@@ -51,7 +65,7 @@ def create_user_table():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
-            email TEXT,
+            email TEXT UNIQUE,
             groq_api_key TEXT
         )
     ''')
@@ -61,6 +75,10 @@ def create_user_table():
         pass
     try:
         c.execute('ALTER TABLE users ADD COLUMN groq_api_key TEXT')
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute('CREATE UNIQUE INDEX IF NOT EXISTS idx_email ON users(email)')
     except sqlite3.OperationalError:
         pass
 
@@ -77,40 +95,65 @@ def create_user_table():
     conn.close()
 
 # ------------------ Add User ------------------
-def add_user(username, password):
+def add_user(username, password, email=None):
     if not is_strong_password(password):
         return False, "⚠ Password must be at least 8 characters long and include uppercase, lowercase, number, and special character."
+
+    if email:
+        if not is_valid_email(email):
+            return False, "⚠ Invalid email format. Please provide a valid email address."
+
+        if email_exists(email):
+            return False, "🚫 Email already exists. Please use a different email."
 
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     try:
-        c.execute('INSERT INTO users (username, password) VALUES (?, ?)', 
-                  (username, hashed_password.decode('utf-8')))
+        if email:
+            c.execute('INSERT INTO users (username, password, email) VALUES (?, ?, ?)',
+                      (username, hashed_password.decode('utf-8'), email))
+        else:
+            c.execute('INSERT INTO users (username, password) VALUES (?, ?)',
+                      (username, hashed_password.decode('utf-8')))
         conn.commit()
         return True, "✅ Registered! You can now login."
-    except sqlite3.IntegrityError:
-        return False, "🚫 Username already exists."
+    except sqlite3.IntegrityError as e:
+        if 'username' in str(e):
+            return False, "🚫 Username already exists."
+        elif 'email' in str(e):
+            return False, "🚫 Email already exists."
+        else:
+            return False, "🚫 Registration failed. Username or email already exists."
     finally:
         conn.close()
 
 # ------------------ Verify User & Load Saved API Key ------------------
-def verify_user(username, password):
+def verify_user(username_or_email, password):
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
-    c.execute('SELECT password, groq_api_key FROM users WHERE username = ?', (username,))
+
+    if '@' in username_or_email:
+        c.execute('SELECT username, password, groq_api_key FROM users WHERE email = ?', (username_or_email,))
+    else:
+        c.execute('SELECT username, password, groq_api_key FROM users WHERE username = ?', (username_or_email,))
+
     result = c.fetchone()
     conn.close()
 
     if result:
-        stored_hashed, stored_key = result
+        if '@' in username_or_email:
+            actual_username, stored_hashed, stored_key = result
+        else:
+            actual_username = username_or_email
+            stored_hashed, stored_key = result[1], result[2]
+
         if bcrypt.checkpw(password.encode('utf-8'), stored_hashed.encode('utf-8')):
-            # Store username in session
-            st.session_state.username = username
-            # Save key in session (if exists)
+            st.session_state.username = actual_username
             st.session_state.user_groq_key = stored_key or ""
-            return True, stored_key  # ✅ still returns tuple
-    return False, None  # ✅ matches expected unpacking
+            return True, stored_key
+
+    return False, None
 
 # ------------------ Save or Update User's Groq API Key ------------------
 def save_user_api_key(username, api_key):

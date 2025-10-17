@@ -57,7 +57,7 @@ from db_manager import (
     detect_domain_from_title_and_description,
     get_domain_similarity
 )
-from newuser_login import (
+from user_login import (
     create_user_table,
     add_user,
     verify_user,

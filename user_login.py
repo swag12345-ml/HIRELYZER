@@ -1,11 +1,18 @@
 import sqlite3
 import bcrypt
 import streamlit as st
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 import re
+import os
+import random
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
-DB_NAME = "resume_data.db"
+# Persistent storage path for Streamlit Cloud
+os.makedirs(".streamlit_storage", exist_ok=True)
+DB_NAME = os.path.join(".streamlit_storage", "resume_data.db")
 
 # ------------------ Utility: Get IST Time ------------------
 def get_ist_time():
@@ -165,3 +172,119 @@ def get_all_user_logs():
     logs = c.fetchall()
     conn.close()
     return logs
+
+# ------------------ Forgot Password Functions ------------------
+
+def generate_otp():
+    """Generate a random 6-digit OTP as a string."""
+    return str(random.randint(100000, 999999))
+
+def send_email_otp(to_email, otp):
+    """
+    Send OTP via Gmail SMTP using credentials from st.secrets.
+    Returns True if successful, False otherwise.
+    """
+    try:
+        # Get email credentials from secrets
+        sender_email = st.secrets["email_address"]
+        sender_password = st.secrets["email_password"]
+
+        # Create email message
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = to_email
+        msg['Subject'] = "Password Reset OTP"
+
+        # Email body
+        body = f"""
+        Hello,
+
+        Your OTP for password reset is: {otp}
+
+        This OTP will expire in 3 minutes.
+
+        If you did not request this password reset, please ignore this email.
+
+        Best regards,
+        Resume App Team
+        """
+
+        msg.attach(MIMEText(body, 'plain'))
+
+        # Connect to Gmail SMTP server
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+
+        # Send email
+        text = msg.as_string()
+        server.sendmail(sender_email, to_email, text)
+        server.quit()
+
+        return True
+
+    except smtplib.SMTPException as e:
+        st.error(f"SMTP Error: {str(e)}")
+        return False
+    except Exception as e:
+        st.error(f"Error sending email: {str(e)}")
+        return False
+
+def get_user_by_email(email):
+    """
+    Check if an email exists in the users table.
+    Returns the username if found, None otherwise.
+    """
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("SELECT username FROM users WHERE email = ?", (email,))
+    result = c.fetchone()
+    conn.close()
+    return result[0] if result else None
+
+def update_password_by_email(email, new_password):
+    """
+    Update the user's password (bcrypt-hashed) for the given email.
+    Returns True if successful, False otherwise.
+    """
+    # Validate password strength
+    if not is_strong_password(new_password):
+        st.error("Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.")
+        return False
+
+    # Hash the new password
+    hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    try:
+        c.execute("UPDATE users SET password = ? WHERE email = ?",
+                  (hashed_password.decode('utf-8'), email))
+        conn.commit()
+
+        # Check if any row was updated
+        if c.rowcount > 0:
+            conn.close()
+            return True
+        else:
+            conn.close()
+            return False
+    except Exception as e:
+        st.error(f"Database error: {str(e)}")
+        conn.close()
+        return False
+
+# ------------------ Database Backup & Download UI ------------------
+st.divider()
+st.subheader("📦 Database Backup & Download")
+
+if os.path.exists(DB_NAME):
+    with open(DB_NAME, "rb") as f:
+        st.download_button(
+            "⬇️ Download resume_data.db",
+            data=f,
+            file_name="resume_data_backup.db",
+            mime="application/octet-stream"
+        )
+else:
+    st.warning("⚠️ No database file found yet.")

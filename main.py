@@ -1122,7 +1122,7 @@ if st.session_state.username == "admin":
     if logs:
         st.dataframe(
             {
-                "Username": [log[0] for log in logs],
+                "Username/Email": [log[0] for log in logs],
                 "Action": [log[1] for log in logs],
                 "Timestamp": [log[2] for log in logs]
             },

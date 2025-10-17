@@ -19,9 +19,6 @@ def get_ist_time():
     ist = pytz.timezone("Asia/Kolkata")
     return datetime.now(ist)
 
-# Show IST Time in UI
-st.write("🕒 Current IST Time:", get_ist_time().strftime("%Y-%m-%d %H:%M:%S"))
-
 # ------------------ Password Strength Validator ------------------
 def is_strong_password(password):
     return (
@@ -229,8 +226,12 @@ def send_email_otp(to_email, otp):
     """
     try:
         # Get email credentials from secrets
-        sender_email = st.secrets["email_address"]
-        sender_password = st.secrets["email_password"]
+        try:
+            sender_email = st.secrets["email_address"]
+            sender_password = st.secrets["email_password"]
+        except KeyError as e:
+            st.error(f"Missing secret key: {str(e)}. Please configure email_address and email_password in Streamlit secrets.")
+            return False
 
         # Create email message
         msg = MIMEMultipart()
@@ -316,18 +317,3 @@ def update_password_by_email(email, new_password):
         st.error(f"Database error: {str(e)}")
         conn.close()
         return False
-
-# ------------------ Database Backup & Download UI ------------------
-st.divider()
-st.subheader("📦 Database Backup & Download")
-
-if os.path.exists(DB_NAME):
-    with open(DB_NAME, "rb") as f:
-        st.download_button(
-            "⬇️ Download resume_data.db",
-            data=f,
-            file_name="resume_data_backup.db",
-            mime="application/octet-stream"
-        )
-else:
-    st.warning("⚠️ No database file found yet.")

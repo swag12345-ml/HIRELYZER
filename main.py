@@ -1,4 +1,5 @@
 import os
+os.environ["STREAMLIT_WATCHDOG"] = "false"
 import json
 import random
 import string

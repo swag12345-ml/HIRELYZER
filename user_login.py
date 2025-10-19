@@ -9,6 +9,7 @@ import random
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import dns.resolver
 
 # Persistent storage path for Streamlit Cloud
 os.makedirs(".streamlit_storage", exist_ok=True)
@@ -36,6 +37,21 @@ def is_strong_password(password):
 def is_valid_email(email):
     email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(email_regex, email) is not None
+
+# ------------------ Check Email Domain MX Record ------------------
+def domain_has_mx_record(email):
+    """
+    Check if the email domain has valid MX records.
+    Returns True if MX records exist, False otherwise.
+    """
+    try:
+        domain = email.split('@')[1]
+        dns.resolver.resolve(domain, 'MX')
+        return True
+    except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN, dns.resolver.NoNameservers, IndexError):
+        return False
+    except Exception:
+        return True
 
 # ------------------ Check if Username Already Exists ------------------
 def username_exists(username):
@@ -94,30 +110,125 @@ def create_user_table():
     conn.commit()
     conn.close()
 
-# ------------------ Add User ------------------
+# ------------------ Add User (with OTP Verification) ------------------
 def add_user(username, password, email=None):
+    """
+    Validate user registration details and send OTP for email verification.
+    Does NOT insert user into database yet - that happens in complete_registration().
+    Returns (success, message) tuple.
+    """
     if not is_strong_password(password):
         return False, "⚠ Password must be at least 8 characters long and include uppercase, lowercase, number, and special character."
 
-    if email:
-        if not is_valid_email(email):
-            return False, "⚠ Invalid email format. Please provide a valid email address."
+    if not email:
+        return False, "⚠ Email is required for registration."
 
-        if email_exists(email):
-            return False, "🚫 Email already exists. Please use a different email."
+    if not is_valid_email(email):
+        return False, "⚠ Invalid email format. Please provide a valid email address."
+
+    if not domain_has_mx_record(email):
+        return False, "⚠ Email domain does not exist or has no valid mail server."
+
+    if email_exists(email):
+        return False, "🚫 Email already exists. Please use a different email."
+
+    if username_exists(username):
+        return False, "🚫 Username already exists."
+
+    otp = generate_otp()
+
+    if not send_registration_otp(email, otp):
+        return False, "❌ Failed to send OTP email. Please check your email address and try again."
+
+    st.session_state.pending_registration = {
+        'username': username,
+        'password': password,
+        'email': email,
+        'otp': otp,
+        'timestamp': get_ist_time()
+    }
+
+    return True, "📧 Verification email sent! Please check your inbox for OTP."
+
+def send_registration_otp(to_email, otp):
+    """
+    Send OTP for registration verification via Gmail SMTP.
+    Returns True if successful, False otherwise.
+    """
+    try:
+        sender_email = st.secrets["email_address"]
+        sender_password = st.secrets["email_password"]
+
+        msg = MIMEMultipart()
+        msg['From'] = sender_email
+        msg['To'] = to_email
+        msg['Subject'] = "Email Verification OTP"
+
+        body = f"""
+        Hello,
+
+        Welcome! Your verification OTP for registration is: {otp}
+
+        This OTP will expire in 3 minutes.
+
+        If you did not request this registration, please ignore this email.
+
+        Best regards,
+        Resume App Team
+        """
+
+        msg.attach(MIMEText(body, 'plain'))
+
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+
+        text = msg.as_string()
+        server.sendmail(sender_email, to_email, text)
+        server.quit()
+
+        return True
+
+    except smtplib.SMTPException as e:
+        st.error(f"SMTP Error: {str(e)}")
+        return False
+    except Exception as e:
+        st.error(f"Error sending email: {str(e)}")
+        return False
+
+def complete_registration(entered_otp):
+    """
+    Verify OTP and complete user registration by inserting into database.
+    Returns (success, message) tuple.
+    """
+    if 'pending_registration' not in st.session_state:
+        return False, "⚠ No pending registration found. Please start registration again."
+
+    pending = st.session_state.pending_registration
+    stored_otp = pending['otp']
+    timestamp = pending['timestamp']
+
+    time_elapsed = (get_ist_time() - timestamp).total_seconds()
+    if time_elapsed > 180:
+        del st.session_state.pending_registration
+        return False, "⏱ OTP has expired. Please register again."
+
+    if entered_otp != stored_otp:
+        return False, "❌ Invalid OTP. Please try again."
+
+    username = pending['username']
+    password = pending['password']
+    email = pending['email']
 
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
     try:
-        if email:
-            c.execute('INSERT INTO users (username, password, email) VALUES (?, ?, ?)',
-                      (username, hashed_password.decode('utf-8'), email))
-        else:
-            c.execute('INSERT INTO users (username, password) VALUES (?, ?)',
-                      (username, hashed_password.decode('utf-8')))
+        c.execute('INSERT INTO users (username, password, email) VALUES (?, ?, ?)',
+                  (username, hashed_password.decode('utf-8'), email))
         conn.commit()
-        return True, "✅ Registered! You can now login."
+        del st.session_state.pending_registration
+        return True, "✅ Registration completed! You can now login."
     except sqlite3.IntegrityError as e:
         if 'username' in str(e):
             return False, "🚫 Username already exists."
@@ -125,6 +236,8 @@ def add_user(username, password, email=None):
             return False, "🚫 Email already exists."
         else:
             return False, "🚫 Registration failed. Username or email already exists."
+    except Exception as e:
+        return False, f"❌ Database error: {str(e)}"
     finally:
         conn.close()
 
@@ -331,4 +444,3 @@ if os.path.exists(DB_NAME):
         )
 else:
     st.warning("⚠️ No database file found yet.")
-

@@ -6,6 +6,8 @@ beautifulsoup4
 streamlit-option-menu
 numpy
 pillow
+dnspython
+
 matplotlib
 pytz
 pdfkit

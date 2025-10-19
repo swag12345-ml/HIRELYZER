@@ -1012,9 +1012,11 @@ if not st.session_state.get("authenticated", False):
 
                     otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="reg_otp_input", max_chars=6)
 
-                    col1, col2 = st.columns(2)
+                    col1, col2, col3 = st.columns(3)
                     with col1:
                         if st.button("✅ Verify OTP", key="verify_reg_otp_btn"):
+                            # ✅ Cache username BEFORE calling complete_registration
+                            cached_username = st.session_state.pending_registration['username']
                             success, message = complete_registration(otp_input.strip())
                             if success:
                                 st.markdown(f"""<div class='slide-message success-msg'>
@@ -1022,7 +1024,8 @@ if not st.session_state.get("authenticated", False):
                                       stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
                                     {message}
                                 </div>""", unsafe_allow_html=True)
-                                log_user_action(st.session_state.pending_registration['username'], "register")
+                                # ✅ Use cached username for logging
+                                log_user_action(cached_username, "register")
                                 time.sleep(1)
                                 st.rerun()
                             else:
@@ -1044,6 +1047,11 @@ if not st.session_state.get("authenticated", False):
                                 </div>""", unsafe_allow_html=True)
                                 time.sleep(1)
                                 st.rerun()
+
+                    with col3:
+                        if st.button("↩️ Back to Registration", key="back_to_reg_btn"):
+                            del st.session_state.pending_registration
+                            st.rerun()
                 else:
                     st.markdown("""<div class='slide-message error-msg'>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"

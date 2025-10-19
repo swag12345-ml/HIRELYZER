@@ -1003,8 +1003,8 @@ if not st.session_state.get("authenticated", False):
                 st.markdown(f"<p style='color:#c9d1d9;'>Enter the 6-digit OTP sent to <strong>{st.session_state.pending_registration['email']}</strong></p>", unsafe_allow_html=True)
 
                 # Calculate remaining time
-                from datetime import datetime
-                elapsed = (datetime.now(st.session_state.pending_registration['timestamp'].tzinfo) - st.session_state.pending_registration['timestamp']).total_seconds()
+                from user_login import get_ist_time
+                elapsed = (get_ist_time() - st.session_state.pending_registration['timestamp']).total_seconds()
                 remaining = max(0, 180 - int(elapsed))
 
                 if remaining > 0:
@@ -1179,7 +1179,7 @@ if st.session_state.get("authenticated"):
         save_user_api_key(st.session_state.username, None)
         st.sidebar.success("✅ Cleared saved Groq API key. Now using shared admin key.")
 
-if st.session_state.username == "admin":
+if st.session_state.get("username") == "admin":
     st.markdown("<hr>", unsafe_allow_html=True)
     st.markdown("<h2 style='color:#00BFFF;'>📊 Admin Dashboard</h2>", unsafe_allow_html=True)
 
@@ -1228,7 +1228,7 @@ tab_labels = [
 ]
 
 # Add Admin tab only for admin user
-if st.session_state.username == "admin":
+if st.session_state.get("username") == "admin":
     tab_labels.append("📁 Admin DB View")
 
 # Create tabs dynamically

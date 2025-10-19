@@ -41,12 +41,22 @@ from streamlit_autorefresh import st_autorefresh
 import torch
 
 # Langchain & Embeddings
-from langchain_text_splitters import CharacterTextSplitter
-from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_groq import ChatGroq
-from langchain_core.memory import ConversationBufferMemory
-from langchain.chains import ConversationalRetrievalChain
+
+from langchain_text_splitters import CharacterTextSplitter 
+from langchain_community.vectorstores import FAISS 
+from langchain_community.embeddings import HuggingFaceEmbeddings 
+from langchain_groq import ChatGroq  # optional if you're using it
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Local project imports
@@ -62,6 +72,7 @@ from db_manager import (
 from user_login import (
     create_user_table,
     add_user,
+    complete_registration,
     verify_user,
     get_logins_today,
     get_total_registered_users,
@@ -76,7 +87,8 @@ from user_login import (
     send_email_otp,
     get_user_by_email,
     update_password_by_email,
-    is_strong_password
+    is_strong_password,
+    domain_has_mx_record
 )
 
 # ============================================================
@@ -985,74 +997,135 @@ if not st.session_state.get("authenticated", False):
 
         # ---------------- REGISTER TAB ----------------
         with register_tab:
-            new_email = st.text_input("📧 Email", key="reg_email", placeholder="your@email.com")
-            new_user = st.text_input("👤 Username", key="reg_user")
-            new_pass = st.text_input("🔑 Password", type="password", key="reg_pass")
-            st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
+            # Check if OTP was sent and pending verification
+            if 'pending_registration' in st.session_state:
+                st.markdown("<h3 style='color:#00BFFF;'>📧 Verify Your Email</h3>", unsafe_allow_html=True)
+                st.markdown(f"<p style='color:#c9d1d9;'>Enter the 6-digit OTP sent to <strong>{st.session_state.pending_registration['email']}</strong></p>", unsafe_allow_html=True)
 
-            # Real-time validation feedback
-            if new_email.strip():
-                if not is_valid_email(new_email.strip()):
-                    st.markdown("""<div class='slide-message warn-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24">
-                          <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
-                        </svg>
-                        ⚠ Invalid email format.
-                    </div>""", unsafe_allow_html=True)
-                elif email_exists(new_email.strip()):
+                # Calculate remaining time
+                from datetime import datetime
+                elapsed = (datetime.now(st.session_state.pending_registration['timestamp'].tzinfo) - st.session_state.pending_registration['timestamp']).total_seconds()
+                remaining = max(0, 180 - int(elapsed))
+
+                if remaining > 0:
+                    st.markdown(f"<p style='color:#FFD700;'>⏱️ Time remaining: <strong>{remaining // 60}m {remaining % 60}s</strong></p>", unsafe_allow_html=True)
+
+                    otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="reg_otp_input", max_chars=6)
+
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.button("✅ Verify OTP", key="verify_reg_otp_btn"):
+                            success, message = complete_registration(otp_input.strip())
+                            if success:
+                                st.markdown(f"""<div class='slide-message success-msg'>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                                      stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                                    {message}
+                                </div>""", unsafe_allow_html=True)
+                                log_user_action(st.session_state.pending_registration['username'], "register")
+                                time.sleep(1)
+                                st.rerun()
+                            else:
+                                st.markdown(f"""<div class='slide-message error-msg'>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                                      stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                                    {message}
+                                </div>""", unsafe_allow_html=True)
+
+                    with col2:
+                        if st.button("🔄 Resend OTP", key="resend_reg_otp_btn"):
+                            pending = st.session_state.pending_registration
+                            success, message = add_user(pending['username'], pending['password'], pending['email'])
+                            if success:
+                                st.markdown("""<div class='slide-message success-msg'>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                                      stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                                    ✅ New OTP sent successfully!
+                                </div>""", unsafe_allow_html=True)
+                                time.sleep(1)
+                                st.rerun()
+                else:
                     st.markdown("""<div class='slide-message error-msg'>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                           stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                        🚫 Email already registered.
-                    </div>""", unsafe_allow_html=True)
-                else:
-                    st.markdown("""<div class='slide-message info-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
-                          <path d="M12 8h.01M12 12v4"/></svg>
-                        ✅ Email is available.
+                        ⏱ OTP has expired. Please register again.
                     </div>""", unsafe_allow_html=True)
 
-            if new_user.strip():
-                if username_exists(new_user.strip()):
-                    st.markdown("""<div class='slide-message error-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                        🚫 Username already exists.
-                    </div>""", unsafe_allow_html=True)
-                else:
-                    st.markdown("""<div class='slide-message info-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
-                          <path d="M12 8h.01M12 12v4"/></svg>
-                        ✅ Username is available.
-                    </div>""", unsafe_allow_html=True)
+                    if st.button("↩️ Start Over", key="reg_start_over_btn"):
+                        del st.session_state.pending_registration
+                        st.rerun()
 
-            if st.button("Register", key="register_btn"):
-                if new_email.strip() and new_user.strip() and new_pass.strip():
-                    success, message = add_user(new_user.strip(), new_pass.strip(), new_email.strip())
-                    if success:
-                        st.markdown(f"""<div class='slide-message success-msg'>
+            else:
+                # Normal registration form
+                new_email = st.text_input("📧 Email", key="reg_email", placeholder="your@email.com")
+                new_user = st.text_input("👤 Username", key="reg_user")
+                new_pass = st.text_input("🔑 Password", type="password", key="reg_pass")
+                st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
+
+                # Real-time validation feedback
+                if new_email.strip():
+                    if not is_valid_email(new_email.strip()):
+                        st.markdown("""<div class='slide-message warn-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                            {message}
+                              stroke-width="2" viewBox="0 0 24 24">
+                              <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
+                            </svg>
+                            ⚠ Invalid email format.
                         </div>""", unsafe_allow_html=True)
-                        log_user_action(new_user.strip(), "register")
-                    else:
-                        st.markdown(f"""<div class='slide-message error-msg'>
+                    elif email_exists(new_email.strip()):
+                        st.markdown("""<div class='slide-message error-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                               stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                            {message}
+                            🚫 Email already registered.
                         </div>""", unsafe_allow_html=True)
-                else:
-                    st.markdown("""<div class='slide-message warn-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24">
-                          <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
-                        </svg>
-                        ⚠ Please fill in all fields (email, username, and password).
-                    </div>""", unsafe_allow_html=True)
+                    else:
+                        st.markdown("""<div class='slide-message info-msg'>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                              stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
+                              <path d="M12 8h.01M12 12v4"/></svg>
+                            ✅ Email is available.
+                        </div>""", unsafe_allow_html=True)
+
+                if new_user.strip():
+                    if username_exists(new_user.strip()):
+                        st.markdown("""<div class='slide-message error-msg'>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                              stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                            🚫 Username already exists.
+                        </div>""", unsafe_allow_html=True)
+                    else:
+                        st.markdown("""<div class='slide-message info-msg'>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                              stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
+                              <path d="M12 8h.01M12 12v4"/></svg>
+                            ✅ Username is available.
+                        </div>""", unsafe_allow_html=True)
+
+                if st.button("📧 Register & Send OTP", key="register_btn"):
+                    if new_email.strip() and new_user.strip() and new_pass.strip():
+                        success, message = add_user(new_user.strip(), new_pass.strip(), new_email.strip())
+                        if success:
+                            st.markdown(f"""<div class='slide-message success-msg'>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                                  stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                                {message}
+                            </div>""", unsafe_allow_html=True)
+                            time.sleep(1)
+                            st.rerun()
+                        else:
+                            st.markdown(f"""<div class='slide-message error-msg'>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                                  stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                                {message}
+                            </div>""", unsafe_allow_html=True)
+                    else:
+                        st.markdown("""<div class='slide-message warn-msg'>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                              stroke-width="2" viewBox="0 0 24 24">
+                              <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
+                            </svg>
+                            ⚠ Please fill in all fields (email, username, and password).
+                        </div>""", unsafe_allow_html=True)
 
         st.markdown("</div>", unsafe_allow_html=True)
 

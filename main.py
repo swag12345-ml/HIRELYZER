@@ -736,8 +736,8 @@ if not st.session_state.get("authenticated", False):
 
     /* ===== Glassmorphism Input Fields ===== */
     .stTextInput input {{
-      background: linear-gradient(135deg,
-        rgba(0, 191, 255, 0.08) 0%,
+      background: linear-gradient(135deg, 
+        rgba(0, 191, 255, 0.08) 0%, 
         rgba(30, 144, 255, 0.04) 100%);
       backdrop-filter: blur(15px);
       -webkit-backdrop-filter: blur(15px);
@@ -746,18 +746,18 @@ if not st.session_state.get("authenticated", False):
       padding: 10px;
       color: #E0F7FF;
       font-family: 'Orbitron', sans-serif;
-      box-shadow:
+      box-shadow: 
         0 4px 16px rgba(0, 191, 255, 0.05),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
       transition: all 0.3s ease-in-out;
     }}
     .stTextInput input:focus {{
       outline: none !important;
-      background: linear-gradient(135deg,
-        rgba(0, 191, 255, 0.12) 0%,
+      background: linear-gradient(135deg, 
+        rgba(0, 191, 255, 0.12) 0%, 
         rgba(30, 144, 255, 0.06) 100%);
       border: 1px solid rgba(0, 191, 255, 0.4);
-      box-shadow:
+      box-shadow: 
         0 8px 25px rgba(0, 191, 255, 0.15),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
       transform: translateY(-1px);
@@ -766,77 +766,6 @@ if not st.session_state.get("authenticated", False):
       font-family: 'Orbitron', sans-serif;
       color: #00BFFF !important;
       text-shadow: 0 0 10px rgba(0, 191, 255, 0.3);
-    }}
-
-    /* ===== OTP Container for Aligned Layout ===== */
-    .otp-container {{
-      background: linear-gradient(135deg,
-        rgba(0, 191, 255, 0.08) 0%,
-        rgba(30, 144, 255, 0.04) 100%);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border: 1px solid rgba(0, 191, 255, 0.2);
-      border-radius: 16px;
-      padding: 25px;
-      margin: 15px 0;
-      box-shadow:
-        0 8px 32px rgba(0, 191, 255, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    }}
-
-    .otp-button-row {{
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 15px;
-    }}
-
-    .otp-button-row > div {{
-      flex: 0 1 auto;
-    }}
-
-    .otp-timer {{
-      text-align: center;
-      margin: 12px 0;
-      padding: 10px;
-      background: linear-gradient(135deg,
-        rgba(255, 215, 0, 0.1) 0%,
-        rgba(255, 165, 0, 0.05) 100%);
-      border: 1px solid rgba(255, 215, 0, 0.3);
-      border-radius: 10px;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.1em;
-      font-weight: bold;
-      color: #FFD700;
-      text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-    }}
-
-    .otp-expired {{
-      text-align: center;
-      margin: 12px 0;
-      padding: 10px;
-      background: linear-gradient(135deg,
-        rgba(255, 99, 71, 0.15) 0%,
-        rgba(255, 99, 71, 0.05) 100%);
-      border: 1px solid rgba(255, 99, 71, 0.3);
-      border-radius: 10px;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.1em;
-      font-weight: bold;
-      color: #FF6347;
-      text-shadow: 0 0 10px rgba(255, 99, 71, 0.5);
-    }}
-
-    /* ===== Column alignment fix ===== */
-    .stColumns {{
-      gap: 12px;
-    }}
-
-    .stColumns > div {{
-      display: flex;
-      align-items: stretch;
     }}
     </style>
 
@@ -960,43 +889,31 @@ if not st.session_state.get("authenticated", False):
                 st.markdown("<h3 style='color:#00BFFF;'>🔐 Verify OTP</h3>", unsafe_allow_html=True)
                 st.markdown(f"<p style='color:#c9d1d9;'>Enter the 6-digit OTP sent to <strong>{st.session_state.reset_email}</strong></p>", unsafe_allow_html=True)
 
-                # Auto-refresh every second to update timer
-                st_autorefresh(interval=1000, key="forgot_otp_timer")
-
                 # Check if OTP expired (3 minutes)
                 elapsed_time = time.time() - st.session_state.reset_otp_time
                 if elapsed_time > 180:  # 3 minutes
-                    st.markdown("<div class='otp-container'>", unsafe_allow_html=True)
-                    st.markdown("<div class='otp-expired'>⏱ OTP Expired</div>", unsafe_allow_html=True)
                     st.markdown("""<div class='slide-message error-msg'>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                           stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                        Please request a new OTP to continue.
+                        ⚠️ OTP expired. Please request a new one.
                     </div>""", unsafe_allow_html=True)
 
-                    st.markdown("<div class='otp-button-row'>", unsafe_allow_html=True)
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        if st.button("🔄 Request New OTP", key="resend_otp_btn"):
-                            st.session_state.reset_stage = "request_email"
-                            st.rerun()
-                    with col2:
-                        if st.button("↩️ Back to Login", key="back_to_login_expired"):
-                            st.session_state.reset_stage = "none"
-                            st.rerun()
-                    st.markdown("</div>", unsafe_allow_html=True)
-                    st.markdown("</div>", unsafe_allow_html=True)
+                    if st.button("🔄 Request New OTP", key="resend_otp_btn"):
+                        st.session_state.reset_stage = "request_email"
+                        st.rerun()
+
+                    if st.button("↩️ Back to Login", key="back_to_login_expired"):
+                        st.session_state.reset_stage = "none"
+                        st.rerun()
                 else:
                     remaining_time = int(180 - elapsed_time)
-                    st.markdown("<div class='otp-container'>", unsafe_allow_html=True)
-                    st.markdown(f"<div class='otp-timer'>⏱️ Time Remaining: {remaining_time // 60}m {remaining_time % 60}s</div>", unsafe_allow_html=True)
+                    st.markdown(f"<p style='color:#FFD700;'>⏱️ Time remaining: <strong>{remaining_time // 60}m {remaining_time % 60}s</strong></p>", unsafe_allow_html=True)
 
                     otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="otp_input", max_chars=6)
 
-                    st.markdown("<div class='otp-button-row'>", unsafe_allow_html=True)
                     col1, col2 = st.columns(2)
                     with col1:
-                        if st.button("✅ Verify OTP", key="verify_otp_btn", use_container_width=True):
+                        if st.button("✅ Verify OTP", key="verify_otp_btn"):
                             if otp_input.strip() == st.session_state.reset_otp:
                                 st.session_state.reset_stage = "reset_password"
                                 st.markdown("""<div class='slide-message success-msg'>
@@ -1014,11 +931,9 @@ if not st.session_state.get("authenticated", False):
                                 </div>""", unsafe_allow_html=True)
 
                     with col2:
-                        if st.button("↩️ Back to Login", key="back_to_login_2", use_container_width=True):
+                        if st.button("↩️ Back to Login", key="back_to_login_2"):
                             st.session_state.reset_stage = "none"
                             st.rerun()
-                    st.markdown("</div>", unsafe_allow_html=True)
-                    st.markdown("</div>", unsafe_allow_html=True)
 
             # ============================================================
             # FORGOT PASSWORD FLOW - Stage 3: Reset Password
@@ -1087,24 +1002,19 @@ if not st.session_state.get("authenticated", False):
                 st.markdown("<h3 style='color:#00BFFF;'>📧 Verify Your Email</h3>", unsafe_allow_html=True)
                 st.markdown(f"<p style='color:#c9d1d9;'>Enter the 6-digit OTP sent to <strong>{st.session_state.pending_registration['email']}</strong></p>", unsafe_allow_html=True)
 
-                # Auto-refresh every second to update timer
-                st_autorefresh(interval=1000, key="reg_otp_timer")
-
                 # Calculate remaining time
                 from datetime import datetime
                 elapsed = (datetime.now(st.session_state.pending_registration['timestamp'].tzinfo) - st.session_state.pending_registration['timestamp']).total_seconds()
                 remaining = max(0, 180 - int(elapsed))
 
                 if remaining > 0:
-                    st.markdown("<div class='otp-container'>", unsafe_allow_html=True)
-                    st.markdown(f"<div class='otp-timer'>⏱️ Time Remaining: {int(remaining) // 60}m {int(remaining) % 60}s</div>", unsafe_allow_html=True)
+                    st.markdown(f"<p style='color:#FFD700;'>⏱️ Time remaining: <strong>{remaining // 60}m {remaining % 60}s</strong></p>", unsafe_allow_html=True)
 
                     otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="reg_otp_input", max_chars=6)
 
-                    st.markdown("<div class='otp-button-row'>", unsafe_allow_html=True)
                     col1, col2, col3 = st.columns(3)
                     with col1:
-                        if st.button("✅ Verify OTP", key="verify_reg_otp_btn", use_container_width=True):
+                        if st.button("✅ Verify OTP", key="verify_reg_otp_btn"):
                             # ✅ Cache username BEFORE calling complete_registration
                             cached_username = st.session_state.pending_registration['username']
                             success, message = complete_registration(otp_input.strip())
@@ -1126,7 +1036,7 @@ if not st.session_state.get("authenticated", False):
                                 </div>""", unsafe_allow_html=True)
 
                     with col2:
-                        if st.button("🔄 Resend OTP", key="resend_reg_otp_btn", use_container_width=True):
+                        if st.button("🔄 Resend OTP", key="resend_reg_otp_btn"):
                             pending = st.session_state.pending_registration
                             success, message = add_user(pending['username'], pending['password'], pending['email'])
                             if success:
@@ -1139,24 +1049,19 @@ if not st.session_state.get("authenticated", False):
                                 st.rerun()
 
                     with col3:
-                        if st.button("↩️ Back", key="back_to_reg_btn", use_container_width=True):
+                        if st.button("↩️ Back", key="back_to_reg_btn"):
                             del st.session_state.pending_registration
                             st.rerun()
-                    st.markdown("</div>", unsafe_allow_html=True)
-                    st.markdown("</div>", unsafe_allow_html=True)
                 else:
-                    st.markdown("<div class='otp-container'>", unsafe_allow_html=True)
-                    st.markdown("<div class='otp-expired'>⏱ OTP Expired</div>", unsafe_allow_html=True)
                     st.markdown("""<div class='slide-message error-msg'>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                           stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                        Please register again to receive a new OTP.
+                        ⏱ OTP has expired. Please register again.
                     </div>""", unsafe_allow_html=True)
 
-                    if st.button("↩️ Start Over", key="reg_start_over_btn", use_container_width=True):
+                    if st.button("↩️ Start Over", key="reg_start_over_btn"):
                         del st.session_state.pending_registration
                         st.rerun()
-                    st.markdown("</div>", unsafe_allow_html=True)
 
             else:
                 # Normal registration form

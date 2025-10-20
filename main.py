@@ -1014,7 +1014,7 @@ if not st.session_state.get("authenticated", False):
 
                     col1, col2, col3 = st.columns(3)
                     with col1:
-                        if st.button("✅ Verify OTP", key="verify_reg_otp_btn"):
+                        if st.button("✅ Verify", key="verify_reg_otp_btn"):
                             # ✅ Cache username BEFORE calling complete_registration
                             cached_username = st.session_state.pending_registration['username']
                             success, message = complete_registration(otp_input.strip())
@@ -1036,7 +1036,7 @@ if not st.session_state.get("authenticated", False):
                                 </div>""", unsafe_allow_html=True)
 
                     with col2:
-                        if st.button("🔄 Resend OTP", key="resend_reg_otp_btn"):
+                        if st.button("🔄 Resend", key="resend_reg_otp_btn"):
                             pending = st.session_state.pending_registration
                             success, message = add_user(pending['username'], pending['password'], pending['email'])
                             if success:

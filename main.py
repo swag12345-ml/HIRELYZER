@@ -1049,7 +1049,7 @@ if not st.session_state.get("authenticated", False):
                                 st.rerun()
 
                     with col3:
-                        if st.button("↩️ Back to Registration", key="back_to_reg_btn"):
+                        if st.button("↩️ Back", key="back_to_reg_btn"):
                             del st.session_state.pending_registration
                             st.rerun()
                 else:

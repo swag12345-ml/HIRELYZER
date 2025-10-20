@@ -682,81 +682,6 @@ if not st.session_state.get("authenticated", False):
       100% {{ transform: translateX(0); opacity: 1; }}
     }}
 
-    /* ===== OTP Container for Consistent Layout ===== */
-    .otp-container {{
-      background: linear-gradient(135deg,
-        rgba(0, 191, 255, 0.12) 0%,
-        rgba(30, 144, 255, 0.06) 100%);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border: 1px solid rgba(0, 191, 255, 0.25);
-      border-radius: 16px;
-      padding: 25px;
-      margin: 20px 0;
-      text-align: center;
-      box-shadow:
-        0 8px 32px rgba(0, 191, 255, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    }}
-
-    .otp-container h3 {{
-      color: #00BFFF;
-      margin-bottom: 10px;
-      text-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
-    }}
-
-    .otp-container p {{
-      color: #c9d1d9;
-      margin-bottom: 15px;
-    }}
-
-    .otp-timer {{
-      font-size: 1.2em;
-      color: #FFD700;
-      font-weight: bold;
-      margin: 15px 0;
-      padding: 10px;
-      background: linear-gradient(135deg,
-        rgba(255, 215, 0, 0.1) 0%,
-        rgba(255, 215, 0, 0.05) 100%);
-      border-radius: 8px;
-      border: 1px solid rgba(255, 215, 0, 0.2);
-    }}
-
-    .otp-timer.expired {{
-      color: #FF6347;
-      background: linear-gradient(135deg,
-        rgba(255, 99, 71, 0.1) 0%,
-        rgba(255, 99, 71, 0.05) 100%);
-      border: 1px solid rgba(255, 99, 71, 0.2);
-    }}
-
-    .otp-button-row {{
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-top: 20px;
-      flex-wrap: wrap;
-    }}
-
-    .otp-button-row .stButton {{
-      flex: 0 1 auto;
-    }}
-
-    /* ===== Message Box Improvements ===== */
-    .message-container {{
-      max-width: 100%;
-      margin: 15px auto;
-      padding: 0 10px;
-      display: flex;
-      justify-content: center;
-    }}
-
-    .slide-message {{
-      width: 100%;
-      max-width: 500px;
-    }}
-
     /* ===== Glassmorphism Buttons ===== */
     .stButton>button {{
       background: linear-gradient(135deg, 
@@ -880,18 +805,18 @@ if not st.session_state.get("authenticated", False):
                             st.session_state["user_groq_key"] = saved_key
                         log_user_action(st.session_state.username, "login")
 
-                        st.markdown("""<div class='message-container'><div class='slide-message success-msg'>
+                        st.markdown("""<div class='slide-message success-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                               stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
                             Login successful!
-                        </div></div>""", unsafe_allow_html=True)
+                        </div>""", unsafe_allow_html=True)
                         st.rerun()
                     else:
-                        st.markdown("""<div class='message-container'><div class='slide-message error-msg'>
+                        st.markdown("""<div class='slide-message error-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                               stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
                             Invalid credentials.
-                        </div></div>""", unsafe_allow_html=True)
+                        </div>""", unsafe_allow_html=True)
 
                 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -911,7 +836,7 @@ if not st.session_state.get("authenticated", False):
 
                 col1, col2 = st.columns(2)
                 with col1:
-                    if st.button("📤 Send OTP", key="send_otp_btn", use_container_width=True):
+                    if st.button("📤 Send OTP", key="send_otp_btn"):
                         if email_input.strip():
                             if get_user_by_email(email_input.strip()):
                                 # Generate and send OTP
@@ -924,36 +849,36 @@ if not st.session_state.get("authenticated", False):
                                     st.session_state.reset_otp_time = time.time()
                                     st.session_state.reset_stage = "verify_otp"
 
-                                    st.markdown("""<div class='message-container'><div class='slide-message success-msg'>
+                                    st.markdown("""<div class='slide-message success-msg'>
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                                           stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
                                         ✅ OTP sent successfully to your email!
-                                    </div></div>""", unsafe_allow_html=True)
+                                    </div>""", unsafe_allow_html=True)
                                     time.sleep(1)
                                     st.rerun()
                                 else:
-                                    st.markdown("""<div class='message-container'><div class='slide-message error-msg'>
+                                    st.markdown("""<div class='slide-message error-msg'>
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                                           stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
                                         ❌ Failed to send OTP. Please try again.
-                                    </div></div>""", unsafe_allow_html=True)
+                                    </div>""", unsafe_allow_html=True)
                             else:
-                                st.markdown("""<div class='message-container'><div class='slide-message error-msg'>
+                                st.markdown("""<div class='slide-message error-msg'>
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                                       stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
                                     ❌ Email not found. Please register first.
-                                </div></div>""", unsafe_allow_html=True)
+                                </div>""", unsafe_allow_html=True)
                         else:
-                            st.markdown("""<div class='message-container'><div class='slide-message warn-msg'>
+                            st.markdown("""<div class='slide-message warn-msg'>
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                                   stroke-width="2" viewBox="0 0 24 24">
                                   <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
                                 </svg>
                                 ⚠️ Please enter your email address.
-                            </div></div>""", unsafe_allow_html=True)
+                            </div>""", unsafe_allow_html=True)
 
                 with col2:
-                    if st.button("↩️ Back to Login", key="back_to_login_1", use_container_width=True):
+                    if st.button("↩️ Back to Login", key="back_to_login_1"):
                         st.session_state.reset_stage = "none"
                         st.rerun()
 
@@ -961,64 +886,54 @@ if not st.session_state.get("authenticated", False):
             # FORGOT PASSWORD FLOW - Stage 2: Verify OTP
             # ============================================================
             elif st.session_state.reset_stage == "verify_otp":
-                # Auto-refresh every second for timer
-                st_autorefresh(interval=1000, key="otp_timer_refresh")
+                st.markdown("<h3 style='color:#00BFFF;'>🔐 Verify OTP</h3>", unsafe_allow_html=True)
+                st.markdown(f"<p style='color:#c9d1d9;'>Enter the 6-digit OTP sent to <strong>{st.session_state.reset_email}</strong></p>", unsafe_allow_html=True)
 
                 # Check if OTP expired (3 minutes)
                 elapsed_time = time.time() - st.session_state.reset_otp_time
-                remaining_time = max(0, int(180 - elapsed_time))
-
-                st.markdown("<div class='otp-container'>", unsafe_allow_html=True)
-                st.markdown("<h3>🔐 Verify OTP</h3>", unsafe_allow_html=True)
-                st.markdown(f"<p>Enter the 6-digit OTP sent to <strong>{st.session_state.reset_email}</strong></p>", unsafe_allow_html=True)
-
-                if remaining_time > 0:
-                    # Display auto-updating timer
-                    st.markdown(f"<div class='otp-timer'>⏱️ Time remaining: <strong>{remaining_time // 60}m {remaining_time % 60}s</strong></div>", unsafe_allow_html=True)
-
-                    otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="otp_input", max_chars=6, label_visibility="collapsed", placeholder="Enter 6-digit OTP")
-
-                    st.markdown("<div class='otp-button-row'>", unsafe_allow_html=True)
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        if st.button("✅ Verify OTP", key="verify_otp_btn", use_container_width=True):
-                            if otp_input.strip() == st.session_state.reset_otp:
-                                st.session_state.reset_stage = "reset_password"
-                                st.rerun()
-                            else:
-                                st.markdown("""<div class='message-container'><div class='slide-message error-msg'>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                                      stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                                    ❌ Invalid OTP. Please try again.
-                                </div></div>""", unsafe_allow_html=True)
-
-                    with col2:
-                        if st.button("↩️ Back to Login", key="back_to_login_2", use_container_width=True):
-                            st.session_state.reset_stage = "none"
-                            st.rerun()
-                    st.markdown("</div>", unsafe_allow_html=True)
-                else:
-                    # OTP expired
-                    st.markdown("<div class='otp-timer expired'>⏱️ OTP expired</div>", unsafe_allow_html=True)
-                    st.markdown("""<div class='message-container'><div class='slide-message error-msg'>
+                if elapsed_time > 180:  # 3 minutes
+                    st.markdown("""<div class='slide-message error-msg'>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                           stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
                         ⚠️ OTP expired. Please request a new one.
-                    </div></div>""", unsafe_allow_html=True)
+                    </div>""", unsafe_allow_html=True)
 
-                    st.markdown("<div class='otp-button-row'>", unsafe_allow_html=True)
+                    if st.button("🔄 Request New OTP", key="resend_otp_btn"):
+                        st.session_state.reset_stage = "request_email"
+                        st.rerun()
+
+                    if st.button("↩️ Back to Login", key="back_to_login_expired"):
+                        st.session_state.reset_stage = "none"
+                        st.rerun()
+                else:
+                    remaining_time = int(180 - elapsed_time)
+                    st.markdown(f"<p style='color:#FFD700;'>⏱️ Time remaining: <strong>{remaining_time // 60}m {remaining_time % 60}s</strong></p>", unsafe_allow_html=True)
+
+                    otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="otp_input", max_chars=6)
+
                     col1, col2 = st.columns(2)
                     with col1:
-                        if st.button("🔄 Request New OTP", key="resend_otp_btn", use_container_width=True):
-                            st.session_state.reset_stage = "request_email"
-                            st.rerun()
+                        if st.button("✅ Verify OTP", key="verify_otp_btn"):
+                            if otp_input.strip() == st.session_state.reset_otp:
+                                st.session_state.reset_stage = "reset_password"
+                                st.markdown("""<div class='slide-message success-msg'>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                                      stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                                    ✅ OTP verified successfully!
+                                </div>""", unsafe_allow_html=True)
+                                time.sleep(1)
+                                st.rerun()
+                            else:
+                                st.markdown("""<div class='slide-message error-msg'>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                                      stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                                    ❌ Invalid OTP. Please try again.
+                                </div>""", unsafe_allow_html=True)
+
                     with col2:
-                        if st.button("↩️ Back to Login", key="back_to_login_expired", use_container_width=True):
+                        if st.button("↩️ Back to Login", key="back_to_login_2"):
                             st.session_state.reset_stage = "none"
                             st.rerun()
-                    st.markdown("</div>", unsafe_allow_html=True)
-
-                st.markdown("</div>", unsafe_allow_html=True)
 
             # ============================================================
             # FORGOT PASSWORD FLOW - Stage 3: Reset Password
@@ -1032,17 +947,17 @@ if not st.session_state.get("authenticated", False):
 
                 st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
 
-                if st.button("✅ Reset Password", key="reset_password_btn", use_container_width=True):
+                if st.button("✅ Reset Password", key="reset_password_btn"):
                     if new_password.strip() and confirm_password.strip():
                         if new_password == confirm_password:
                             success = update_password_by_email(st.session_state.reset_email, new_password)
 
                             if success:
-                                st.markdown("""<div class='message-container'><div class='slide-message success-msg'>
+                                st.markdown("""<div class='slide-message success-msg'>
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                                       stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
                                     ✅ Password reset successful! Please log in again.
-                                </div></div>""", unsafe_allow_html=True)
+                                </div>""", unsafe_allow_html=True)
 
                                 # Log the password reset action
                                 log_user_action(st.session_state.reset_email, "password_reset")
@@ -1056,27 +971,27 @@ if not st.session_state.get("authenticated", False):
                                 time.sleep(2)
                                 st.rerun()
                             else:
-                                st.markdown("""<div class='message-container'><div class='slide-message error-msg'>
+                                st.markdown("""<div class='slide-message error-msg'>
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                                       stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
                                     ❌ Failed to reset password. Please try again.
-                                </div></div>""", unsafe_allow_html=True)
+                                </div>""", unsafe_allow_html=True)
                         else:
-                            st.markdown("""<div class='message-container'><div class='slide-message error-msg'>
+                            st.markdown("""<div class='slide-message error-msg'>
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                                   stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
                                 ❌ Passwords do not match.
-                            </div></div>""", unsafe_allow_html=True)
+                            </div>""", unsafe_allow_html=True)
                     else:
-                        st.markdown("""<div class='message-container'><div class='slide-message warn-msg'>
+                        st.markdown("""<div class='slide-message warn-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                               stroke-width="2" viewBox="0 0 24 24">
                               <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
                             </svg>
                             ⚠️ Please fill in both password fields.
-                        </div></div>""", unsafe_allow_html=True)
+                        </div>""", unsafe_allow_html=True)
 
-                if st.button("↩️ Back to Login", key="back_to_login_3", use_container_width=True):
+                if st.button("↩️ Back to Login", key="back_to_login_3"):
                     st.session_state.reset_stage = "none"
                     st.rerun()
 
@@ -1084,74 +999,69 @@ if not st.session_state.get("authenticated", False):
         with register_tab:
             # Check if OTP was sent and pending verification
             if 'pending_registration' in st.session_state:
-                # Auto-refresh every second for timer
-                st_autorefresh(interval=1000, key="reg_otp_timer_refresh")
+                st.markdown("<h3 style='color:#00BFFF;'>📧 Verify Your Email</h3>", unsafe_allow_html=True)
+                st.markdown(f"<p style='color:#c9d1d9;'>Enter the 6-digit OTP sent to <strong>{st.session_state.pending_registration['email']}</strong></p>", unsafe_allow_html=True)
 
                 # Calculate remaining time
                 from datetime import datetime
                 elapsed = (datetime.now(st.session_state.pending_registration['timestamp'].tzinfo) - st.session_state.pending_registration['timestamp']).total_seconds()
                 remaining = max(0, 180 - int(elapsed))
 
-                st.markdown("<div class='otp-container'>", unsafe_allow_html=True)
-                st.markdown("<h3>📧 Verify Your Email</h3>", unsafe_allow_html=True)
-                st.markdown(f"<p>Enter the 6-digit OTP sent to <strong>{st.session_state.pending_registration['email']}</strong></p>", unsafe_allow_html=True)
-
                 if remaining > 0:
-                    # Display auto-updating timer
-                    st.markdown(f"<div class='otp-timer'>⏱️ Time remaining: <strong>{remaining // 60}m {remaining % 60}s</strong></div>", unsafe_allow_html=True)
+                    st.markdown(f"<p style='color:#FFD700;'>⏱️ Time remaining: <strong>{remaining // 60}m {remaining % 60}s</strong></p>", unsafe_allow_html=True)
 
-                    otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="reg_otp_input", max_chars=6, label_visibility="collapsed", placeholder="Enter 6-digit OTP")
+                    otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="reg_otp_input", max_chars=6)
 
-                    st.markdown("<div class='otp-button-row'>", unsafe_allow_html=True)
                     col1, col2, col3 = st.columns(3)
                     with col1:
-                        if st.button("✅ Verify OTP", key="verify_reg_otp_btn", use_container_width=True):
+                        if st.button("✅ Verify OTP", key="verify_reg_otp_btn"):
                             # ✅ Cache username BEFORE calling complete_registration
                             cached_username = st.session_state.pending_registration['username']
                             success, message = complete_registration(otp_input.strip())
                             if success:
+                                st.markdown(f"""<div class='slide-message success-msg'>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                                      stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                                    {message}
+                                </div>""", unsafe_allow_html=True)
                                 # ✅ Use cached username for logging
                                 log_user_action(cached_username, "register")
+                                time.sleep(1)
                                 st.rerun()
                             else:
-                                st.markdown(f"""<div class='message-container'><div class='slide-message error-msg'>
+                                st.markdown(f"""<div class='slide-message error-msg'>
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                                       stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
                                     {message}
-                                </div></div>""", unsafe_allow_html=True)
+                                </div>""", unsafe_allow_html=True)
 
                     with col2:
-                        if st.button("🔄 Resend OTP", key="resend_reg_otp_btn", use_container_width=True):
+                        if st.button("🔄 Resend OTP", key="resend_reg_otp_btn"):
                             pending = st.session_state.pending_registration
                             success, message = add_user(pending['username'], pending['password'], pending['email'])
                             if success:
-                                st.markdown("""<div class='message-container'><div class='slide-message success-msg'>
+                                st.markdown("""<div class='slide-message success-msg'>
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                                       stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
                                     ✅ New OTP sent successfully!
-                                </div></div>""", unsafe_allow_html=True)
+                                </div>""", unsafe_allow_html=True)
                                 time.sleep(1)
                                 st.rerun()
 
                     with col3:
-                        if st.button("↩️ Back", key="back_to_reg_btn", use_container_width=True):
+                        if st.button("↩️ Back to Registration", key="back_to_reg_btn"):
                             del st.session_state.pending_registration
                             st.rerun()
-                    st.markdown("</div>", unsafe_allow_html=True)
                 else:
-                    # OTP expired
-                    st.markdown("<div class='otp-timer expired'>⏱️ OTP expired</div>", unsafe_allow_html=True)
-                    st.markdown("""<div class='message-container'><div class='slide-message error-msg'>
+                    st.markdown("""<div class='slide-message error-msg'>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                           stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
                         ⏱ OTP has expired. Please register again.
-                    </div></div>""", unsafe_allow_html=True)
+                    </div>""", unsafe_allow_html=True)
 
-                    if st.button("↩️ Start Over", key="reg_start_over_btn", use_container_width=True):
+                    if st.button("↩️ Start Over", key="reg_start_over_btn"):
                         del st.session_state.pending_registration
                         st.rerun()
-
-                st.markdown("</div>", unsafe_allow_html=True)
 
             else:
                 # Normal registration form
@@ -1163,67 +1073,67 @@ if not st.session_state.get("authenticated", False):
                 # Real-time validation feedback
                 if new_email.strip():
                     if not is_valid_email(new_email.strip()):
-                        st.markdown("""<div class='message-container'><div class='slide-message warn-msg'>
+                        st.markdown("""<div class='slide-message warn-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                               stroke-width="2" viewBox="0 0 24 24">
                               <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
                             </svg>
                             ⚠ Invalid email format.
-                        </div></div>""", unsafe_allow_html=True)
+                        </div>""", unsafe_allow_html=True)
                     elif email_exists(new_email.strip()):
-                        st.markdown("""<div class='message-container'><div class='slide-message error-msg'>
+                        st.markdown("""<div class='slide-message error-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                               stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
                             🚫 Email already registered.
-                        </div></div>""", unsafe_allow_html=True)
+                        </div>""", unsafe_allow_html=True)
                     else:
-                        st.markdown("""<div class='message-container'><div class='slide-message info-msg'>
+                        st.markdown("""<div class='slide-message info-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                               stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
                               <path d="M12 8h.01M12 12v4"/></svg>
                             ✅ Email is available.
-                        </div></div>""", unsafe_allow_html=True)
+                        </div>""", unsafe_allow_html=True)
 
                 if new_user.strip():
                     if username_exists(new_user.strip()):
-                        st.markdown("""<div class='message-container'><div class='slide-message error-msg'>
+                        st.markdown("""<div class='slide-message error-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                               stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
                             🚫 Username already exists.
-                        </div></div>""", unsafe_allow_html=True)
+                        </div>""", unsafe_allow_html=True)
                     else:
-                        st.markdown("""<div class='message-container'><div class='slide-message info-msg'>
+                        st.markdown("""<div class='slide-message info-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                               stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
                               <path d="M12 8h.01M12 12v4"/></svg>
                             ✅ Username is available.
-                        </div></div>""", unsafe_allow_html=True)
+                        </div>""", unsafe_allow_html=True)
 
-                if st.button("📧 Register & Send OTP", key="register_btn", use_container_width=True):
+                if st.button("📧 Register & Send OTP", key="register_btn"):
                     if new_email.strip() and new_user.strip() and new_pass.strip():
                         success, message = add_user(new_user.strip(), new_pass.strip(), new_email.strip())
                         if success:
-                            st.markdown(f"""<div class='message-container'><div class='slide-message success-msg'>
+                            st.markdown(f"""<div class='slide-message success-msg'>
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                                   stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
                                 {message}
-                            </div></div>""", unsafe_allow_html=True)
+                            </div>""", unsafe_allow_html=True)
                             time.sleep(1)
                             st.rerun()
                         else:
-                            st.markdown(f"""<div class='message-container'><div class='slide-message error-msg'>
+                            st.markdown(f"""<div class='slide-message error-msg'>
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                                   stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
                                 {message}
-                            </div></div>""", unsafe_allow_html=True)
+                            </div>""", unsafe_allow_html=True)
                     else:
-                        st.markdown("""<div class='message-container'><div class='slide-message warn-msg'>
+                        st.markdown("""<div class='slide-message warn-msg'>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                               stroke-width="2" viewBox="0 0 24 24">
                               <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
                             </svg>
                             ⚠ Please fill in all fields (email, username, and password).
-                        </div></div>""", unsafe_allow_html=True)
+                        </div>""", unsafe_allow_html=True)
 
         st.markdown("</div>", unsafe_allow_html=True)
 

@@ -889,51 +889,58 @@ if not st.session_state.get("authenticated", False):
                 st.markdown("<h3 style='color:#00BFFF;'>🔐 Verify OTP</h3>", unsafe_allow_html=True)
                 st.markdown(f"<p style='color:#c9d1d9;'>Enter the 6-digit OTP sent to <strong>{st.session_state.reset_email}</strong></p>", unsafe_allow_html=True)
 
-                # Check if OTP expired (3 minutes)
-                elapsed_time = time.time() - st.session_state.reset_otp_time
-                if elapsed_time > 180:  # 3 minutes
-                    st.markdown("""<div class='slide-message error-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                        ⚠️ OTP expired. Please request a new one.
-                    </div>""", unsafe_allow_html=True)
+                # Initialize timer state if not present
+                if "otp_timer_last_update" not in st.session_state:
+                    st.session_state.otp_timer_last_update = time.time()
 
+                # Calculate remaining time (180 seconds = 3 minutes)
+                elapsed_time = time.time() - st.session_state.reset_otp_time
+                remaining_time = int(180 - elapsed_time)
+
+                # Expired OTP
+                if remaining_time <= 0:
+                    st.error("⚠️ OTP expired. Please request a new one.")
                     if st.button("🔄 Request New OTP", key="resend_otp_btn"):
                         st.session_state.reset_stage = "request_email"
                         st.rerun()
-
                     if st.button("↩️ Back to Login", key="back_to_login_expired"):
                         st.session_state.reset_stage = "none"
                         st.rerun()
-                else:
-                    remaining_time = int(180 - elapsed_time)
-                    st.markdown(f"<p style='color:#FFD700;'>⏱️ Time remaining: <strong>{remaining_time // 60}m {remaining_time % 60}s</strong></p>", unsafe_allow_html=True)
+                    st.stop()
 
-                    otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="otp_input", max_chars=6)
+                # --- Smart Timer Display (does not block buttons) ---
+                timer_placeholder = st.empty()
 
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        if st.button("✅ Verify OTP", key="verify_otp_btn"):
-                            if otp_input.strip() == st.session_state.reset_otp:
-                                st.session_state.reset_stage = "reset_password"
-                                st.markdown("""<div class='slide-message success-msg'>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                                      stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                                    ✅ OTP verified successfully!
-                                </div>""", unsafe_allow_html=True)
-                                time.sleep(1)
-                                st.rerun()
-                            else:
-                                st.markdown("""<div class='slide-message error-msg'>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                                      stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                                    ❌ Invalid OTP. Please try again.
-                                </div>""", unsafe_allow_html=True)
-
-                    with col2:
-                        if st.button("↩️ Back to Login", key="back_to_login_2"):
-                            st.session_state.reset_stage = "none"
+                def run_timer():
+                    remaining = remaining_time
+                    while remaining > 0:
+                        mins, secs = divmod(remaining, 60)
+                        timer_placeholder.markdown(
+                            f"<p style='color:#FFD700;'>⏱️ Time remaining: <strong>{mins}m {secs}s</strong></p>",
+                            unsafe_allow_html=True
+                        )
+                        time.sleep(1)
+                        remaining = int(180 - (time.time() - st.session_state.reset_otp_time))
+                        if remaining <= 0:
                             st.rerun()
+
+                run_timer()
+
+                otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="otp_input", max_chars=6)
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("✅ Verify OTP", key="verify_otp_btn"):
+                        if otp_input.strip() == st.session_state.reset_otp:
+                            st.session_state.reset_stage = "reset_password"
+                            st.success("✅ OTP verified successfully!")
+                            time.sleep(1)
+                            st.rerun()
+                        else:
+                            st.error("❌ Invalid OTP. Please try again.")
+                with col2:
+                    if st.button("↩️ Back to Login", key="back_to_login_2"):
+                        st.session_state.reset_stage = "none"
+                        st.rerun()
 
             # ============================================================
             # FORGOT PASSWORD FLOW - Stage 3: Reset Password

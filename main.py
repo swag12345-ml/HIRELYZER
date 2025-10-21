@@ -8566,11 +8566,115 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
 
 
 import streamlit as st
+import streamlit.components.v1 as components
 import plotly.graph_objects as go
 from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
 from llm_manager import call_llm
 import time
 import threading
+
+def display_interview_timer(duration_seconds, question_index):
+    """
+    Display a live JavaScript-powered countdown timer for interview questions.
+    Auto-triggers submission when time expires.
+    """
+    timer_html = f"""
+    <div class="timer-container" style="
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        border-radius: 12px;
+        padding: 15px;
+        margin: 15px 0;
+        text-align: center;
+    ">
+        <div id="timer-display-{question_index}" class="timer-display" style="
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        ">⏰ Loading timer...</div>
+    </div>
+
+    <style>
+        @keyframes pulse {{
+            0%, 100% {{ opacity: 1; transform: scale(1); }}
+            50% {{ opacity: 0.8; transform: scale(1.05); }}
+        }}
+        .timer-urgent {{
+            color: #ff4444 !important;
+            text-shadow: 0 0 15px rgba(255, 68, 68, 0.8) !important;
+            animation: pulse 1s ease-in-out infinite;
+        }}
+    </style>
+
+    <script>
+        (function() {{
+            let duration = {duration_seconds};
+            let questionIndex = {question_index};
+            let timerKey = 'interview_timer_' + questionIndex;
+            let startTimeKey = 'interview_timer_start_' + questionIndex;
+
+            // Get or initialize start time
+            let startTime = sessionStorage.getItem(startTimeKey);
+            if (!startTime) {{
+                startTime = Date.now();
+                sessionStorage.setItem(startTimeKey, startTime);
+            }} else {{
+                startTime = parseInt(startTime);
+            }}
+
+            let timerDisplay = document.getElementById('timer-display-' + questionIndex);
+
+            function updateTimer() {{
+                let elapsed = Math.floor((Date.now() - startTime) / 1000);
+                let remaining = Math.max(0, duration - elapsed);
+
+                let minutes = Math.floor(remaining / 60);
+                let seconds = remaining % 60;
+
+                // Format time
+                let timeStr = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+
+                if (remaining <= 0) {{
+                    timerDisplay.innerHTML = '⏱️ Time\'s Up – Auto-submitting…';
+                    timerDisplay.classList.add('timer-urgent');
+
+                    // Clear session storage
+                    sessionStorage.removeItem(startTimeKey);
+                    sessionStorage.removeItem(timerKey);
+
+                    // Trigger Streamlit rerun to auto-submit
+                    setTimeout(function() {{
+                        window.parent.postMessage({{
+                            type: 'streamlit:setComponentValue',
+                            value: 'TIMER_EXPIRED'
+                        }}, '*');
+                    }}, 1000);
+
+                    return;
+                }}
+
+                // Update display
+                timerDisplay.innerHTML = '⏰ Time Remaining: ' + timeStr;
+
+                // Add urgent styling when < 30 seconds
+                if (remaining <= 30) {{
+                    timerDisplay.classList.add('timer-urgent');
+                }} else {{
+                    timerDisplay.classList.remove('timer-urgent');
+                }}
+
+                // Continue countdown
+                setTimeout(updateTimer, 1000);
+            }}
+
+            // Start the timer
+            updateTimer();
+        }})();
+    </script>
+    """
+
+    components.html(timer_html, height=120, scrolling=False)
 
 with tab4:
     # Inject CSS styles (keeping existing styles)
@@ -10087,18 +10191,11 @@ Generate exactly {num_questions} questions now:
                     elapsed_time = time.time() - st.session_state.question_timer_start
                     remaining_time = max(0, st.session_state.timer_seconds - elapsed_time)
 
-                    # Display timer
-                    timer_minutes = int(remaining_time // 60)
-                    timer_seconds_display = int(remaining_time % 60)
-                    timer_urgent_class = "timer-urgent" if remaining_time <= 30 else ""
-
-                    st.markdown(f"""
-                    <div class="timer-container">
-                        <div class="timer-display {timer_urgent_class}">
-                            ⏰ Time Remaining: {timer_minutes:02d}:{timer_seconds_display:02d}
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    # Display JavaScript-powered countdown timer
+                    display_interview_timer(
+                        duration_seconds=st.session_state.timer_seconds,
+                        question_index=st.session_state.current_dynamic_interview_question
+                    )
 
                     # Timer progress bar
                     progress_value = (st.session_state.timer_seconds - remaining_time) / st.session_state.timer_seconds
@@ -10283,9 +10380,9 @@ Generate exactly {num_questions} questions now:
                                     if i < num_to_show - 1:  # Don't add separator after last item
                                         st.markdown("---")
 
-                    # Auto-refresh for timer
-                    if remaining_time > 0 and not st.session_state.dynamic_answer_submitted:
-                        time.sleep(1)
+                    # Check if timer expired (for auto-submit)
+                    if remaining_time <= 0 and not st.session_state.dynamic_answer_submitted:
+                        # Timer expired - trigger auto-submit logic
                         st.rerun()
                 else:
                     # CRITICAL FIX: All questions answered, move to completion automatically
@@ -10503,7 +10600,6 @@ Generate exactly {num_questions} questions now:
                     st.rerun()
         else:
             st.info("Please select both a career domain and target role to start the interview practice.")
-
 if tab5:
 	with tab5:
 		import sqlite3

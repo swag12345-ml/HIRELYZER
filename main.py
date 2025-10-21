@@ -8566,7 +8566,6 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
 
 
 import streamlit as st
-import streamlit.components.v1 as components
 import plotly.graph_objects as go
 from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
 from llm_manager import call_llm
@@ -10088,50 +10087,16 @@ Generate exactly {num_questions} questions now:
                     elapsed_time = time.time() - st.session_state.question_timer_start
                     remaining_time = max(0, st.session_state.timer_seconds - elapsed_time)
 
-                    # Display timer with proper styling
+                    # Display timer
                     timer_minutes = int(remaining_time // 60)
                     timer_seconds_display = int(remaining_time % 60)
+                    timer_urgent_class = "timer-urgent" if remaining_time <= 30 else ""
 
-                    # Determine timer style based on remaining time
-                    if remaining_time <= 0:
-                        timer_bg = 'linear-gradient(135deg, rgba(255, 99, 71, 0.18) 0%, rgba(255, 99, 71, 0.08) 100%)'
-                        timer_border = '2px solid rgba(255, 99, 71, 0.4)'
-                        timer_color = '#FF6347'
-                        timer_shadow = '0 0 18px rgba(255, 99, 71, 0.5)'
-                        timer_text = "⏱️ Time's Up!"
-                    elif remaining_time <= 30:
-                        timer_bg = 'linear-gradient(135deg, rgba(255, 99, 71, 0.18) 0%, rgba(255, 99, 71, 0.08) 100%)'
-                        timer_border = '2px solid rgba(255, 99, 71, 0.4)'
-                        timer_color = '#FF6347'
-                        timer_shadow = '0 0 18px rgba(255, 99, 71, 0.5)'
-                        timer_text = f"⏰ Time Remaining: {timer_minutes:02d}:{timer_seconds_display:02d}"
-                    else:
-                        timer_bg = 'linear-gradient(135deg, rgba(255, 215, 0, 0.18) 0%, rgba(255, 165, 0, 0.08) 100%)'
-                        timer_border = '2px solid rgba(255, 215, 0, 0.4)'
-                        timer_color = '#FFD700'
-                        timer_shadow = '0 0 18px rgba(255, 215, 0, 0.5)'
-                        timer_text = f"⏰ Time Remaining: {timer_minutes:02d}:{timer_seconds_display:02d}"
-
-                    # Display timer
                     st.markdown(f"""
-                    <div style="
-                        background: {timer_bg};
-                        backdrop-filter: blur(15px);
-                        -webkit-backdrop-filter: blur(15px);
-                        border: {timer_border};
-                        border-radius: 14px;
-                        padding: 16px 24px;
-                        margin: 20px 0;
-                        text-align: center;
-                        box-shadow: 0 4px 20px rgba(255, 215, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-                    ">
-                        <span style="
-                            color: {timer_color};
-                            font-size: 1.5em;
-                            font-weight: bold;
-                            font-family: 'Orbitron', sans-serif;
-                            text-shadow: {timer_shadow};
-                        ">{timer_text}</span>
+                    <div class="timer-container">
+                        <div class="timer-display {timer_urgent_class}">
+                            ⏰ Time Remaining: {timer_minutes:02d}:{timer_seconds_display:02d}
+                        </div>
                     </div>
                     """, unsafe_allow_html=True)
 
@@ -10176,11 +10141,6 @@ Generate exactly {num_questions} questions now:
                         key=answer_key,
                         help="Maximum 2000 characters"
                     )
-
-                    # Auto-rerun to update timer smoothly (only if not submitted)
-                    if remaining_time > 0 and not st.session_state.dynamic_answer_submitted:
-                        time.sleep(1)
-                        st.rerun()
 
                     # Auto-submit logic when timer expires
                     if remaining_time <= 0 and not st.session_state.dynamic_answer_submitted:
@@ -10291,8 +10251,8 @@ Generate exactly {num_questions} questions now:
                                 else:
                                     # Safety check - if we're out of questions but haven't answered all, generate one
                                     st.session_state.current_interview_question_text = f"Additional question for {selected_role}"
-                                # TIMER RESET: Reset timer for next question (set to None to trigger fresh start)
-                                st.session_state.question_timer_start = None
+                                # TIMER RESET: Reset timer for next question
+                                st.session_state.question_timer_start = time.time()
                                 st.rerun()
 
                     # Progress bar for interview completion
@@ -10323,8 +10283,10 @@ Generate exactly {num_questions} questions now:
                                     if i < num_to_show - 1:  # Don't add separator after last item
                                         st.markdown("---")
 
-                    # No need for auto-refresh - JavaScript timer handles countdown client-side
-                    # Only rerun when timer expires (handled in auto-submit logic above)
+                    # Auto-refresh for timer
+                    if remaining_time > 0 and not st.session_state.dynamic_answer_submitted:
+                        time.sleep(1)
+                        st.rerun()
                 else:
                     # CRITICAL FIX: All questions answered, move to completion automatically
                     st.session_state.dynamic_interview_completed = True

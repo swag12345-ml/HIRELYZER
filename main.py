@@ -35,7 +35,6 @@ from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from xhtml2pdf import pisa
 from pydantic import BaseModel
 from streamlit_pdf_viewer import pdf_viewer
-from streamlit_autorefresh import st_autorefresh
 
 # Heavy libraries - loaded with caching
 import torch
@@ -275,13 +274,15 @@ def show_message(message_type, text, icon_svg=""):
     </div>
     """, unsafe_allow_html=True)
 
-def display_timer(remaining_seconds, expired=False):
+def display_timer(remaining_seconds, expired=False, key_suffix=""):
     """
-    Display a non-blocking timer with glassmorphism styling.
+    Display a non-blocking reactive timer with glassmorphism styling.
+    Uses session state to trigger updates without page refresh.
 
     Args:
         remaining_seconds: Time remaining in seconds
         expired: Whether the timer has expired
+        key_suffix: Unique suffix for the timer component
     """
     minutes = remaining_seconds // 60
     seconds = remaining_seconds % 60
@@ -293,10 +294,36 @@ def display_timer(remaining_seconds, expired=False):
         </div>
         """, unsafe_allow_html=True)
     else:
+        # Inject JavaScript for live countdown that doesn't block buttons
         st.markdown(f"""
-        <div class='timer-display'>
-            <span class='timer-text'>⏱️ Time Remaining: {minutes:02d}:{seconds:02d}</span>
+        <div class='timer-display' id='timer-{key_suffix}'>
+            <span class='timer-text'>⏱️ Time Remaining: <span id='countdown-{key_suffix}'>{minutes:02d}:{seconds:02d}</span></span>
         </div>
+        <script>
+        (function() {{
+            let remaining = {remaining_seconds};
+            const countdownEl = document.getElementById('countdown-{key_suffix}');
+            const timerEl = document.getElementById('timer-{key_suffix}');
+
+            const interval = setInterval(() => {{
+                remaining--;
+                if (remaining <= 0) {{
+                    clearInterval(interval);
+                    if (timerEl) {{
+                        timerEl.className = 'timer-display timer-expired';
+                        timerEl.innerHTML = "<span class='timer-text'>⏱️ OTP Expired</span>";
+                    }}
+                    setTimeout(() => window.location.reload(), 500);
+                }} else {{
+                    const mins = Math.floor(remaining / 60);
+                    const secs = remaining % 60;
+                    if (countdownEl) {{
+                        countdownEl.textContent = `${{mins.toString().padStart(2, '0')}}:${{secs.toString().padStart(2, '0')}}`;
+                    }}
+                }}
+            }}, 1000);
+        }})();
+        </script>
         """, unsafe_allow_html=True)
 
 # ------------------- Initialize Session State -------------------
@@ -1069,14 +1096,8 @@ if not st.session_state.get("authenticated", False):
                             st.session_state.reset_stage = "none"
                             st.rerun()
                 else:
-                    # Display live countdown timer (non-blocking)
-                    timer_placeholder = st.empty()
-                    with timer_placeholder.container():
-                        display_timer(remaining_time)
-
-                    # Auto-refresh every second only while timer is running
-                    if remaining_time > 0:
-                        st_autorefresh(interval=1000, key="forgot_pw_timer", limit=180)
+                    # Display live countdown timer (non-blocking with JavaScript)
+                    display_timer(remaining_time, key_suffix="forgot_pw")
 
                     otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="otp_input", max_chars=6)
 
@@ -1169,14 +1190,8 @@ if not st.session_state.get("authenticated", False):
                             del st.session_state.pending_registration
                             st.rerun()
                 else:
-                    # Display live countdown timer (non-blocking)
-                    timer_placeholder = st.empty()
-                    with timer_placeholder.container():
-                        display_timer(remaining)
-
-                    # Auto-refresh every second only while timer is running
-                    if remaining > 0:
-                        st_autorefresh(interval=1000, key="register_timer", limit=180)
+                    # Display live countdown timer (non-blocking with JavaScript)
+                    display_timer(remaining, key_suffix="register")
 
                     otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="reg_otp_input", max_chars=6)
 

@@ -35,7 +35,6 @@ from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from xhtml2pdf import pisa
 from pydantic import BaseModel
 from streamlit_pdf_viewer import pdf_viewer
-from streamlit_autorefresh import st_autorefresh
 
 # Heavy libraries - loaded with caching
 import torch
@@ -636,23 +635,22 @@ if not st.session_state.get("authenticated", False):
     }}
     .login-card h2 span {{ color: #00BFFF; }}
 
-    /* ===== Enhanced Sliding Messages ===== */
+    /* ===== Enhanced Sliding Messages (Unified Styling) ===== */
     .slide-message {{
       position: relative;
       overflow: hidden;
-      margin: 12px auto;
-      padding: 12px 18px;
-      border-radius: 14px;
+      margin: 15px 0;
+      padding: 14px 20px;
+      border-radius: 12px;
       font-weight: 600;
       font-size: 0.95em;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       animation: slideIn 0.8s ease forwards;
       backdrop-filter: blur(15px);
       -webkit-backdrop-filter: blur(15px);
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-      max-width: 100%;
       width: 100%;
       box-sizing: border-box;
       line-height: 1.4;
@@ -943,9 +941,20 @@ if not st.session_state.get("authenticated", False):
                 elapsed_time = time.time() - st.session_state.reset_otp_time
                 remaining_time = max(0, int(180 - elapsed_time))
 
-                # Auto-refresh every second only while timer is running
+                # Smooth live timer using session state (no page reload)
                 if remaining_time > 0:
-                    st_autorefresh(interval=1000, key="forgot_pw_timer")
+                    minutes = remaining_time // 60
+                    seconds = remaining_time % 60
+
+                    timer_placeholder = st.empty()
+                    timer_placeholder.markdown(f"""
+                    <div class='timer-display'>
+                        <span class='timer-text'>⏱️ Time Remaining: {minutes:02d}:{seconds:02d}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    time.sleep(0.1)
+                    st.rerun()
 
                 # Check if OTP expired (3 minutes)
                 if remaining_time == 0:
@@ -965,15 +974,6 @@ if not st.session_state.get("authenticated", False):
                             st.session_state.reset_stage = "none"
                             st.rerun()
                 else:
-                    # Display live countdown timer with glassmorphism styling
-                    minutes = remaining_time // 60
-                    seconds = remaining_time % 60
-                    st.markdown(f"""
-                    <div class='timer-display'>
-                        <span class='timer-text'>⏱️ Time Remaining: {minutes:02d}:{seconds:02d}</span>
-                    </div>
-                    """, unsafe_allow_html=True)
-
                     otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="otp_input", max_chars=6)
 
                     col1, col2 = st.columns(2)
@@ -1072,9 +1072,20 @@ if not st.session_state.get("authenticated", False):
                 elapsed = (datetime.now(st.session_state.pending_registration['timestamp'].tzinfo) - st.session_state.pending_registration['timestamp']).total_seconds()
                 remaining = max(0, 180 - int(elapsed))
 
-                # Auto-refresh every second only while timer is running
+                # Smooth live timer using session state (no page reload)
                 if remaining > 0:
-                    st_autorefresh(interval=1000, key="register_timer")
+                    minutes = remaining // 60
+                    seconds = remaining % 60
+
+                    reg_timer_placeholder = st.empty()
+                    reg_timer_placeholder.markdown(f"""
+                    <div class='timer-display'>
+                        <span class='timer-text'>⏱️ Time Remaining: {minutes:02d}:{seconds:02d}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    time.sleep(0.1)
+                    st.rerun()
 
                 if remaining == 0:
                     # OTP Expired
@@ -1098,15 +1109,6 @@ if not st.session_state.get("authenticated", False):
                             del st.session_state.pending_registration
                             st.rerun()
                 else:
-                    # Display live countdown timer with glassmorphism styling
-                    minutes = remaining // 60
-                    seconds = remaining % 60
-                    st.markdown(f"""
-                    <div class='timer-display'>
-                        <span class='timer-text'>⏱️ Time Remaining: {minutes:02d}:{seconds:02d}</span>
-                    </div>
-                    """, unsafe_allow_html=True)
-
                     otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="reg_otp_input", max_chars=6)
 
                     col1, col2, col3 = st.columns(3)

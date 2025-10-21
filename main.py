@@ -744,14 +744,14 @@ if not st.session_state.get("authenticated", False):
     /* ===== Enhanced Message Cards with Consistent Layout ===== */
     .slide-message {{
       position: relative;
-      overflow: hidden;
+      overflow: visible;
       margin: 16px 0;
-      padding: 12px 18px;
+      padding: 14px 20px;
       border-radius: 14px;
       font-weight: 600;
       font-size: 0.95em;
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       align-items: center;
       justify-content: flex-start;
       gap: 12px;
@@ -762,9 +762,9 @@ if not st.session_state.get("authenticated", False):
         0 4px 20px rgba(0, 0, 0, 0.15),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
       width: 100%;
-      max-width: 100%;
+      max-width: none;
       box-sizing: border-box;
-      line-height: 1.5;
+      line-height: 1.6;
       font-family: 'Orbitron', sans-serif;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       min-height: auto;
@@ -811,8 +811,16 @@ if not st.session_state.get("authenticated", False):
       position: relative;
       word-wrap: break-word;
       overflow-wrap: break-word;
-      word-break: break-word;
       white-space: normal;
+      min-width: 0;
+    }}
+
+    /* Ensure message cards use full container width */
+    .login-card .slide-message {{
+      width: calc(100% + 0px) !important;
+      max-width: none !important;
+      margin-left: 0;
+      margin-right: 0;
     }}
 
     .success-msg {{

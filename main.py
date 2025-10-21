@@ -321,13 +321,6 @@ def display_timer(remaining_seconds, expired=False, key_suffix=""):
             const countdownEl = document.getElementById('countdown-{key_suffix}');
             const timerEl = document.getElementById('timer-{key_suffix}');
 
-            // Initialize timer with correct synced time immediately
-            const mins = Math.floor(remaining / 60);
-            const secs = remaining % 60;
-            if (countdownEl) {{
-                countdownEl.textContent = `${{mins.toString().padStart(2, '0')}}:${{secs.toString().padStart(2, '0')}}`;
-            }}
-
             const interval = setInterval(() => {{
                 remaining--;
                 if (remaining <= 0) {{
@@ -349,9 +342,6 @@ def display_timer(remaining_seconds, expired=False, key_suffix=""):
         }})();
         </script>
         """, height=80)
-
-        # Add empty placeholder container to isolate widgets and prevent iframe event conflicts
-        st.empty()
 
 # ------------------- Initialize Session State -------------------
 if "authenticated" not in st.session_state:
@@ -744,14 +734,13 @@ if not st.session_state.get("authenticated", False):
     /* ===== Enhanced Message Cards with Consistent Layout ===== */
     .slide-message {{
       position: relative;
-      overflow: visible;
+      overflow: hidden;
       margin: 16px 0;
       padding: 14px 20px;
       border-radius: 14px;
       font-weight: 600;
       font-size: 0.95em;
       display: flex;
-      flex-wrap: nowrap;
       align-items: center;
       justify-content: flex-start;
       gap: 12px;
@@ -762,12 +751,12 @@ if not st.session_state.get("authenticated", False):
         0 4px 20px rgba(0, 0, 0, 0.15),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
       width: 100%;
-      max-width: none;
+      max-width: 100%;
       box-sizing: border-box;
-      line-height: 1.6;
+      line-height: 1.5;
       font-family: 'Orbitron', sans-serif;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      min-height: auto;
+      min-height: 50px;
     }}
 
     .slide-message:hover {{
@@ -812,15 +801,6 @@ if not st.session_state.get("authenticated", False):
       word-wrap: break-word;
       overflow-wrap: break-word;
       white-space: normal;
-      min-width: 0;
-    }}
-
-    /* Ensure message cards use full container width */
-    .login-card .slide-message {{
-      width: calc(100% + 0px) !important;
-      max-width: none !important;
-      margin-left: 0;
-      margin-right: 0;
     }}
 
     .success-msg {{

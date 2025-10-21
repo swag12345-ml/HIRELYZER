@@ -295,9 +295,25 @@ def display_timer(remaining_seconds, expired=False, key_suffix=""):
         """, unsafe_allow_html=True)
     else:
         # Inject JavaScript for live countdown that doesn't block buttons
-        st.markdown(f"""
-        <div class='timer-display' id='timer-{key_suffix}'>
-            <span class='timer-text'>⏱️ Time Remaining: <span id='countdown-{key_suffix}'>{minutes:02d}:{seconds:02d}</span></span>
+        st.components.v1.html(f"""
+        <div class='timer-display' id='timer-{key_suffix}' style="
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.18) 0%, rgba(255, 165, 0, 0.08) 100%);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 2px solid rgba(255, 215, 0, 0.4);
+            border-radius: 14px;
+            padding: 16px 24px;
+            margin: 20px 0;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        ">
+            <span class='timer-text' style="
+                color: #FFD700;
+                font-size: 1.15em;
+                font-weight: bold;
+                font-family: 'Orbitron', sans-serif;
+                text-shadow: 0 0 18px rgba(255, 215, 0, 0.5);
+            ">⏱️ Time Remaining: <span id='countdown-{key_suffix}'>{minutes:02d}:{seconds:02d}</span></span>
         </div>
         <script>
         (function() {{
@@ -310,10 +326,11 @@ def display_timer(remaining_seconds, expired=False, key_suffix=""):
                 if (remaining <= 0) {{
                     clearInterval(interval);
                     if (timerEl) {{
-                        timerEl.className = 'timer-display timer-expired';
-                        timerEl.innerHTML = "<span class='timer-text'>⏱️ OTP Expired</span>";
+                        timerEl.style.background = 'linear-gradient(135deg, rgba(255, 99, 71, 0.18) 0%, rgba(255, 99, 71, 0.08) 100%)';
+                        timerEl.style.border = '2px solid rgba(255, 99, 71, 0.4)';
+                        timerEl.innerHTML = "<span style='color: #FF6347; font-size: 1.15em; font-weight: bold; font-family: Orbitron, sans-serif; text-shadow: 0 0 18px rgba(255, 99, 71, 0.5);'>⏱️ OTP Expired</span>";
                     }}
-                    setTimeout(() => window.location.reload(), 500);
+                    setTimeout(() => window.parent.location.reload(), 500);
                 }} else {{
                     const mins = Math.floor(remaining / 60);
                     const secs = remaining % 60;
@@ -324,7 +341,7 @@ def display_timer(remaining_seconds, expired=False, key_suffix=""):
             }}, 1000);
         }})();
         </script>
-        """, unsafe_allow_html=True)
+        """, height=80)
 
 # ------------------- Initialize Session State -------------------
 if "authenticated" not in st.session_state:
@@ -781,6 +798,9 @@ if not st.session_state.get("authenticated", False):
       flex: 1;
       z-index: 2;
       position: relative;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      white-space: normal;
     }}
 
     .success-msg {{

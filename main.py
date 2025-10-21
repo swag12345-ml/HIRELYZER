@@ -330,7 +330,7 @@ def display_timer(remaining_seconds, expired=False, key_suffix=""):
                         timerEl.style.border = '2px solid rgba(255, 99, 71, 0.4)';
                         timerEl.innerHTML = "<span style='color: #FF6347; font-size: 1.15em; font-weight: bold; font-family: Orbitron, sans-serif; text-shadow: 0 0 18px rgba(255, 99, 71, 0.5);'>⏱️ OTP Expired</span>";
                     }}
-                    setTimeout(() => window.parent.location.reload(), 500);
+                    // Reload line removed - timer just displays "OTP Expired" without refreshing
                 }} else {{
                     const mins = Math.floor(remaining / 60);
                     const secs = remaining % 60;

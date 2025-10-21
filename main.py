@@ -636,50 +636,100 @@ if not st.session_state.get("authenticated", False):
     }}
     .login-card h2 span {{ color: #00BFFF; }}
 
-    /* ===== Sliding Messages ===== */
+    /* ===== Enhanced Sliding Messages ===== */
     .slide-message {{
       position: relative;
       overflow: hidden;
-      margin: 10px 0;
-      padding: 10px 15px;
-      border-radius: 12px;
-      font-weight: bold;
+      margin: 12px auto;
+      padding: 12px 18px;
+      border-radius: 14px;
+      font-weight: 600;
+      font-size: 0.95em;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       animation: slideIn 0.8s ease forwards;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      max-width: 100%;
+      width: 100%;
+      box-sizing: border-box;
+      line-height: 1.4;
+      font-family: 'Orbitron', sans-serif;
+      transition: all 0.3s ease;
     }}
+
+    .slide-message:hover {{
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+    }}
+
     .slide-message svg {{
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       flex-shrink: 0;
+      filter: drop-shadow(0 0 4px currentColor);
     }}
-    .success-msg {{ 
-      background: linear-gradient(135deg, rgba(0,255,127,0.15), rgba(0,255,127,0.05)); 
-      border: 1px solid rgba(0,255,127,0.3); 
-      color:#00FF7F; 
+
+    .success-msg {{
+      background: linear-gradient(135deg, rgba(0,255,127,0.18), rgba(0,255,127,0.06));
+      border: 1.5px solid rgba(0,255,127,0.35);
+      color: #00FF7F;
+      text-shadow: 0 0 10px rgba(0, 255, 127, 0.3);
     }}
-    .error-msg {{ 
-      background: linear-gradient(135deg, rgba(255,99,71,0.15), rgba(255,99,71,0.05)); 
-      border: 1px solid rgba(255,99,71,0.3); 
-      color:#FF6347; 
+
+    .error-msg {{
+      background: linear-gradient(135deg, rgba(255,99,71,0.18), rgba(255,99,71,0.06));
+      border: 1.5px solid rgba(255,99,71,0.35);
+      color: #FF6347;
+      text-shadow: 0 0 10px rgba(255, 99, 71, 0.3);
     }}
-    .info-msg {{ 
-      background: linear-gradient(135deg, rgba(30,144,255,0.15), rgba(30,144,255,0.05)); 
-      border: 1px solid rgba(30,144,255,0.3); 
-      color:#1E90FF; 
+
+    .info-msg {{
+      background: linear-gradient(135deg, rgba(30,144,255,0.18), rgba(30,144,255,0.06));
+      border: 1.5px solid rgba(30,144,255,0.35);
+      color: #1E90FF;
+      text-shadow: 0 0 10px rgba(30, 144, 255, 0.3);
     }}
-    .warn-msg {{ 
-      background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,215,0,0.05)); 
-      border: 1px solid rgba(255,215,0,0.3); 
-      color:#FFD700; 
+
+    .warn-msg {{
+      background: linear-gradient(135deg, rgba(255,215,0,0.18), rgba(255,215,0,0.06));
+      border: 1.5px solid rgba(255,215,0,0.35);
+      color: #FFD700;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
     }}
 
     @keyframes slideIn {{
-      0%   {{ transform: translateX(100%); opacity: 0; }}
+      0%   {{ transform: translateX(120%); opacity: 0; }}
       100% {{ transform: translateX(0); opacity: 1; }}
+    }}
+
+    /* ===== Timer Display ===== */
+    .timer-display {{
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05));
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      border-radius: 12px;
+      padding: 12px 20px;
+      margin: 15px 0;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(255, 215, 0, 0.1);
+      transition: all 0.3s ease;
+    }}
+
+    .timer-display:hover {{
+      box-shadow: 0 6px 24px rgba(255, 215, 0, 0.2);
+      transform: translateY(-2px);
+    }}
+
+    .timer-text {{
+      color: #FFD700;
+      font-size: 1.1em;
+      font-weight: bold;
+      font-family: 'Orbitron', sans-serif;
+      text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
     }}
 
     /* ===== Glassmorphism Buttons ===== */
@@ -889,25 +939,40 @@ if not st.session_state.get("authenticated", False):
                 st.markdown("<h3 style='color:#00BFFF;'>🔐 Verify OTP</h3>", unsafe_allow_html=True)
                 st.markdown(f"<p style='color:#c9d1d9;'>Enter the 6-digit OTP sent to <strong>{st.session_state.reset_email}</strong></p>", unsafe_allow_html=True)
 
-                # Check if OTP expired (3 minutes)
+                # Calculate elapsed and remaining time
                 elapsed_time = time.time() - st.session_state.reset_otp_time
-                if elapsed_time > 180:  # 3 minutes
+                remaining_time = max(0, int(180 - elapsed_time))
+
+                # Auto-refresh every second only while timer is running
+                if remaining_time > 0:
+                    st_autorefresh(interval=1000, key="forgot_pw_timer")
+
+                # Check if OTP expired (3 minutes)
+                if remaining_time == 0:
                     st.markdown("""<div class='slide-message error-msg'>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                           stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                        ⚠️ OTP expired. Please request a new one.
+                        ⏱️ OTP expired. Please request a new one.
                     </div>""", unsafe_allow_html=True)
 
-                    if st.button("🔄 Request New OTP", key="resend_otp_btn"):
-                        st.session_state.reset_stage = "request_email"
-                        st.rerun()
-
-                    if st.button("↩️ Back to Login", key="back_to_login_expired"):
-                        st.session_state.reset_stage = "none"
-                        st.rerun()
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.button("🔄 Request New OTP", key="resend_otp_btn"):
+                            st.session_state.reset_stage = "request_email"
+                            st.rerun()
+                    with col2:
+                        if st.button("↩️ Back to Login", key="back_to_login_expired"):
+                            st.session_state.reset_stage = "none"
+                            st.rerun()
                 else:
-                    remaining_time = int(180 - elapsed_time)
-                    st.markdown(f"<p style='color:#FFD700;'>⏱️ Time remaining: <strong>{remaining_time // 60}m {remaining_time % 60}s</strong></p>", unsafe_allow_html=True)
+                    # Display live countdown timer with glassmorphism styling
+                    minutes = remaining_time // 60
+                    seconds = remaining_time % 60
+                    st.markdown(f"""
+                    <div class='timer-display'>
+                        <span class='timer-text'>⏱️ Time Remaining: {minutes:02d}:{seconds:02d}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
 
                     otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="otp_input", max_chars=6)
 
@@ -1007,8 +1072,40 @@ if not st.session_state.get("authenticated", False):
                 elapsed = (datetime.now(st.session_state.pending_registration['timestamp'].tzinfo) - st.session_state.pending_registration['timestamp']).total_seconds()
                 remaining = max(0, 180 - int(elapsed))
 
+                # Auto-refresh every second only while timer is running
                 if remaining > 0:
-                    st.markdown(f"<p style='color:#FFD700;'>⏱️ Time remaining: <strong>{remaining // 60}m {remaining % 60}s</strong></p>", unsafe_allow_html=True)
+                    st_autorefresh(interval=1000, key="register_timer")
+
+                if remaining == 0:
+                    # OTP Expired
+                    st.markdown("""<div class='slide-message error-msg'>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                        ⏱️ OTP expired. Please start over.
+                    </div>""", unsafe_allow_html=True)
+
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.button("🔄 Resend OTP", key="reg_resend_expired_btn"):
+                            pending = st.session_state.pending_registration
+                            success, message = add_user(pending['username'], pending['password'], pending['email'])
+                            if success:
+                                st.success("✅ New OTP sent!")
+                                time.sleep(1)
+                                st.rerun()
+                    with col2:
+                        if st.button("↩️ Start Over", key="reg_start_over_btn"):
+                            del st.session_state.pending_registration
+                            st.rerun()
+                else:
+                    # Display live countdown timer with glassmorphism styling
+                    minutes = remaining // 60
+                    seconds = remaining % 60
+                    st.markdown(f"""
+                    <div class='timer-display'>
+                        <span class='timer-text'>⏱️ Time Remaining: {minutes:02d}:{seconds:02d}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
 
                     otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="reg_otp_input", max_chars=6)
 
@@ -1052,16 +1149,6 @@ if not st.session_state.get("authenticated", False):
                         if st.button("↩️ Back", key="back_to_reg_btn"):
                             del st.session_state.pending_registration
                             st.rerun()
-                else:
-                    st.markdown("""<div class='slide-message error-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                        ⏱ OTP has expired. Please register again.
-                    </div>""", unsafe_allow_html=True)
-
-                    if st.button("↩️ Start Over", key="reg_start_over_btn"):
-                        del st.session_state.pending_registration
-                        st.rerun()
 
             else:
                 # Normal registration form

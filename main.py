@@ -10088,72 +10088,52 @@ Generate exactly {num_questions} questions now:
                     elapsed_time = time.time() - st.session_state.question_timer_start
                     remaining_time = max(0, st.session_state.timer_seconds - elapsed_time)
 
-                    # Display dynamic JavaScript-based timer (like OTP timer in main.py)
+                    # Display timer with proper styling
                     timer_minutes = int(remaining_time // 60)
                     timer_seconds_display = int(remaining_time % 60)
 
-                    # Use JavaScript for live countdown that triggers auto-submit
-                    st.components.v1.html(f"""
-                    <div id='timer-interview' style="
-                        background: linear-gradient(135deg, rgba(255, 215, 0, 0.18) 0%, rgba(255, 165, 0, 0.08) 100%);
+                    # Determine timer style based on remaining time
+                    if remaining_time <= 0:
+                        timer_bg = 'linear-gradient(135deg, rgba(255, 99, 71, 0.18) 0%, rgba(255, 99, 71, 0.08) 100%)'
+                        timer_border = '2px solid rgba(255, 99, 71, 0.4)'
+                        timer_color = '#FF6347'
+                        timer_shadow = '0 0 18px rgba(255, 99, 71, 0.5)'
+                        timer_text = "⏱️ Time's Up!"
+                    elif remaining_time <= 30:
+                        timer_bg = 'linear-gradient(135deg, rgba(255, 99, 71, 0.18) 0%, rgba(255, 99, 71, 0.08) 100%)'
+                        timer_border = '2px solid rgba(255, 99, 71, 0.4)'
+                        timer_color = '#FF6347'
+                        timer_shadow = '0 0 18px rgba(255, 99, 71, 0.5)'
+                        timer_text = f"⏰ Time Remaining: {timer_minutes:02d}:{timer_seconds_display:02d}"
+                    else:
+                        timer_bg = 'linear-gradient(135deg, rgba(255, 215, 0, 0.18) 0%, rgba(255, 165, 0, 0.08) 100%)'
+                        timer_border = '2px solid rgba(255, 215, 0, 0.4)'
+                        timer_color = '#FFD700'
+                        timer_shadow = '0 0 18px rgba(255, 215, 0, 0.5)'
+                        timer_text = f"⏰ Time Remaining: {timer_minutes:02d}:{timer_seconds_display:02d}"
+
+                    # Display timer
+                    st.markdown(f"""
+                    <div style="
+                        background: {timer_bg};
                         backdrop-filter: blur(15px);
                         -webkit-backdrop-filter: blur(15px);
-                        border: 2px solid rgba(255, 215, 0, 0.4);
+                        border: {timer_border};
                         border-radius: 14px;
                         padding: 16px 24px;
                         margin: 20px 0;
                         text-align: center;
                         box-shadow: 0 4px 20px rgba(255, 215, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
                     ">
-                        <span id='countdown-interview' style="
-                            color: #FFD700;
+                        <span style="
+                            color: {timer_color};
                             font-size: 1.5em;
                             font-weight: bold;
                             font-family: 'Orbitron', sans-serif;
-                            text-shadow: 0 0 18px rgba(255, 215, 0, 0.5);
-                        ">⏰ Time Remaining: <span id='time-display'>{timer_minutes:02d}:{timer_seconds_display:02d}</span></span>
+                            text-shadow: {timer_shadow};
+                        ">{timer_text}</span>
                     </div>
-                    <script>
-                    (function() {{
-                        let remaining = {int(remaining_time)};
-                        const timerEl = document.getElementById('timer-interview');
-                        const timeDisplay = document.getElementById('time-display');
-                        const countdownEl = document.getElementById('countdown-interview');
-
-                        const interval = setInterval(() => {{
-                            remaining--;
-
-                            if (remaining <= 0) {{
-                                clearInterval(interval);
-                                if (timerEl) {{
-                                    timerEl.style.background = 'linear-gradient(135deg, rgba(255, 99, 71, 0.18) 0%, rgba(255, 99, 71, 0.08) 100%)';
-                                    timerEl.style.border = '2px solid rgba(255, 99, 71, 0.4)';
-                                    countdownEl.innerHTML = "<span style='color: #FF6347; font-size: 1.15em; font-weight: bold; font-family: Orbitron, sans-serif; text-shadow: 0 0 18px rgba(255, 99, 71, 0.5);'>⏱️ Time's Up – Auto-submitting…</span>";
-                                }}
-                                // Trigger Streamlit rerun for auto-submit
-                                setTimeout(() => {{
-                                    window.parent.postMessage({{type: 'streamlit:setComponentValue', value: 'expired'}}, '*');
-                                }}, 1000);
-                            }} else {{
-                                const mins = Math.floor(remaining / 60);
-                                const secs = remaining % 60;
-
-                                // Change color when urgent (< 30 seconds)
-                                if (remaining <= 30 && remaining > 0) {{
-                                    timerEl.style.background = 'linear-gradient(135deg, rgba(255, 99, 71, 0.18) 0%, rgba(255, 99, 71, 0.08) 100%)';
-                                    timerEl.style.border = '2px solid rgba(255, 99, 71, 0.4)';
-                                    countdownEl.style.color = '#FF6347';
-                                    countdownEl.style.textShadow = '0 0 18px rgba(255, 99, 71, 0.5)';
-                                }}
-
-                                if (timeDisplay) {{
-                                    timeDisplay.textContent = `${{mins.toString().padStart(2, '0')}}:${{secs.toString().padStart(2, '0')}}`;
-                                }}
-                            }}
-                        }}, 1000);
-                    }})();
-                    </script>
-                    """, height=100)
+                    """, unsafe_allow_html=True)
 
                     # Timer progress bar
                     progress_value = (st.session_state.timer_seconds - remaining_time) / st.session_state.timer_seconds
@@ -10196,6 +10176,11 @@ Generate exactly {num_questions} questions now:
                         key=answer_key,
                         help="Maximum 2000 characters"
                     )
+
+                    # Auto-rerun to update timer smoothly (only if not submitted)
+                    if remaining_time > 0 and not st.session_state.dynamic_answer_submitted:
+                        time.sleep(1)
+                        st.rerun()
 
                     # Auto-submit logic when timer expires
                     if remaining_time <= 0 and not st.session_state.dynamic_answer_submitted:
@@ -10306,8 +10291,8 @@ Generate exactly {num_questions} questions now:
                                 else:
                                     # Safety check - if we're out of questions but haven't answered all, generate one
                                     st.session_state.current_interview_question_text = f"Additional question for {selected_role}"
-                                # TIMER RESET: Reset timer for next question
-                                st.session_state.question_timer_start = time.time()
+                                # TIMER RESET: Reset timer for next question (set to None to trigger fresh start)
+                                st.session_state.question_timer_start = None
                                 st.rerun()
 
                     # Progress bar for interview completion

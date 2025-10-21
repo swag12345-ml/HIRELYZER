@@ -35,6 +35,7 @@ from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from xhtml2pdf import pisa
 from pydantic import BaseModel
 from streamlit_pdf_viewer import pdf_viewer
+from streamlit_autorefresh import st_autorefresh
 
 # Heavy libraries - loaded with caching
 import torch
@@ -246,6 +247,57 @@ Hiring Manager, {company}, {location}
 # ------------------- Initialize -------------------
 # ✅ Initialize database in persistent storage
 create_user_table()
+
+# ------------------- Helper Functions -------------------
+def show_message(message_type, text, icon_svg=""):
+    """
+    Display a consistent message card with glassmorphism styling.
+
+    Args:
+        message_type: 'success', 'error', 'info', or 'warn'
+        text: Message text to display
+        icon_svg: Optional custom SVG icon (defaults provided)
+    """
+    icons = {
+        "success": '<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>',
+        "error": '<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>',
+        "info": '<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8h.01M12 12v4"/></svg>',
+        "warn": '<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/></svg>'
+    }
+
+    icon = icon_svg if icon_svg else icons.get(message_type, icons["info"])
+    css_class = f"{message_type}-msg"
+
+    st.markdown(f"""
+    <div class='slide-message {css_class}'>
+        {icon}
+        <span class='slide-message-text'>{text}</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+def display_timer(remaining_seconds, expired=False):
+    """
+    Display a non-blocking timer with glassmorphism styling.
+
+    Args:
+        remaining_seconds: Time remaining in seconds
+        expired: Whether the timer has expired
+    """
+    minutes = remaining_seconds // 60
+    seconds = remaining_seconds % 60
+
+    if expired:
+        st.markdown("""
+        <div class='timer-display timer-expired'>
+            <span class='timer-text'>⏱️ OTP Expired</span>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+        <div class='timer-display'>
+            <span class='timer-text'>⏱️ Time Remaining: {minutes:02d}:{seconds:02d}</span>
+        </div>
+        """, unsafe_allow_html=True)
 
 # ------------------- Initialize Session State -------------------
 if "authenticated" not in st.session_state:
@@ -547,7 +599,7 @@ if not st.session_state.get("authenticated", False):
         0% {{ background-position: -200% 0; }}
         100% {{ background-position: 200% 0; }}
     }}
-    
+
     @keyframes glassShimmer {{
         0% {{ transform: translateX(-100%) skewX(-15deg); }}
         100% {{ transform: translateX(200%) skewX(-15deg); }}
@@ -582,16 +634,16 @@ if not st.session_state.get("authenticated", False):
 
     /* ===== Glassmorphism Login Card ===== */
     .login-card {{
-      background: linear-gradient(135deg, 
-        rgba(0, 191, 255, 0.1) 0%, 
-        rgba(30, 144, 255, 0.05) 50%, 
+      background: linear-gradient(135deg,
+        rgba(0, 191, 255, 0.1) 0%,
+        rgba(30, 144, 255, 0.05) 50%,
         rgba(0, 191, 255, 0.1) 100%);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(0, 191, 255, 0.2);
       border-radius: 20px;
       padding: 25px;
-      box-shadow: 
+      box-shadow:
         0 8px 32px rgba(0, 191, 255, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
       font-family: 'Orbitron', sans-serif;
@@ -603,7 +655,7 @@ if not st.session_state.get("authenticated", False):
       position: relative;
       overflow: hidden;
     }}
-    
+
     .login-card::before {{
       content: '';
       position: absolute;
@@ -619,7 +671,7 @@ if not st.session_state.get("authenticated", False):
       );
       animation: glassShimmer 3s infinite;
     }}
-    
+
     @keyframes slideInLeft {{
       0%   {{ transform: translateX(-120%); opacity: 0; }}
       100% {{ transform: translateX(0); opacity: 1; }}
@@ -635,99 +687,185 @@ if not st.session_state.get("authenticated", False):
     }}
     .login-card h2 span {{ color: #00BFFF; }}
 
-    /* ===== Enhanced Sliding Messages (Unified Styling) ===== */
+    /* ===== Enhanced Message Cards with Consistent Layout ===== */
     .slide-message {{
       position: relative;
       overflow: hidden;
-      margin: 15px 0;
+      margin: 16px 0;
       padding: 14px 20px;
-      border-radius: 12px;
+      border-radius: 14px;
       font-weight: 600;
       font-size: 0.95em;
       display: flex;
       align-items: center;
+      justify-content: flex-start;
       gap: 12px;
-      animation: slideIn 0.8s ease forwards;
+      animation: slideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
       backdrop-filter: blur(15px);
       -webkit-backdrop-filter: blur(15px);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
       width: 100%;
+      max-width: 100%;
       box-sizing: border-box;
-      line-height: 1.4;
+      line-height: 1.5;
       font-family: 'Orbitron', sans-serif;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      min-height: 50px;
     }}
 
     .slide-message:hover {{
-      transform: translateY(-2px);
-      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+      transform: translateY(-3px) scale(1.01);
+      box-shadow:
+        0 8px 30px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }}
+
+    .slide-message::before {{
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+      );
+      transition: left 0.5s;
+    }}
+
+    .slide-message:hover::before {{
+      left: 100%;
     }}
 
     .slide-message svg {{
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
       flex-shrink: 0;
-      filter: drop-shadow(0 0 4px currentColor);
+      filter: drop-shadow(0 0 6px currentColor);
+      z-index: 2;
+    }}
+
+    .slide-message-text {{
+      flex: 1;
+      z-index: 2;
+      position: relative;
     }}
 
     .success-msg {{
-      background: linear-gradient(135deg, rgba(0,255,127,0.18), rgba(0,255,127,0.06));
-      border: 1.5px solid rgba(0,255,127,0.35);
+      background: linear-gradient(135deg,
+        rgba(0, 255, 127, 0.20) 0%,
+        rgba(0, 255, 127, 0.08) 100%);
+      border: 2px solid rgba(0, 255, 127, 0.4);
       color: #00FF7F;
-      text-shadow: 0 0 10px rgba(0, 255, 127, 0.3);
+      text-shadow: 0 0 12px rgba(0, 255, 127, 0.4);
     }}
 
     .error-msg {{
-      background: linear-gradient(135deg, rgba(255,99,71,0.18), rgba(255,99,71,0.06));
-      border: 1.5px solid rgba(255,99,71,0.35);
+      background: linear-gradient(135deg,
+        rgba(255, 99, 71, 0.20) 0%,
+        rgba(255, 99, 71, 0.08) 100%);
+      border: 2px solid rgba(255, 99, 71, 0.4);
       color: #FF6347;
-      text-shadow: 0 0 10px rgba(255, 99, 71, 0.3);
+      text-shadow: 0 0 12px rgba(255, 99, 71, 0.4);
     }}
 
     .info-msg {{
-      background: linear-gradient(135deg, rgba(30,144,255,0.18), rgba(30,144,255,0.06));
-      border: 1.5px solid rgba(30,144,255,0.35);
+      background: linear-gradient(135deg,
+        rgba(30, 144, 255, 0.20) 0%,
+        rgba(30, 144, 255, 0.08) 100%);
+      border: 2px solid rgba(30, 144, 255, 0.4);
       color: #1E90FF;
-      text-shadow: 0 0 10px rgba(30, 144, 255, 0.3);
+      text-shadow: 0 0 12px rgba(30, 144, 255, 0.4);
     }}
 
     .warn-msg {{
-      background: linear-gradient(135deg, rgba(255,215,0,0.18), rgba(255,215,0,0.06));
-      border: 1.5px solid rgba(255,215,0,0.35);
+      background: linear-gradient(135deg,
+        rgba(255, 215, 0, 0.20) 0%,
+        rgba(255, 215, 0, 0.08) 100%);
+      border: 2px solid rgba(255, 215, 0, 0.4);
       color: #FFD700;
-      text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+      text-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
     }}
 
     @keyframes slideIn {{
-      0%   {{ transform: translateX(120%); opacity: 0; }}
-      100% {{ transform: translateX(0); opacity: 1; }}
+      0%   {{
+        transform: translateX(-50px);
+        opacity: 0;
+      }}
+      100% {{
+        transform: translateX(0);
+        opacity: 1;
+      }}
     }}
 
-    /* ===== Timer Display ===== */
+    /* ===== Improved Timer Display ===== */
     .timer-display {{
-      background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05));
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 215, 0, 0.3);
-      border-radius: 12px;
-      padding: 12px 20px;
-      margin: 15px 0;
+      background: linear-gradient(135deg,
+        rgba(255, 215, 0, 0.18) 0%,
+        rgba(255, 165, 0, 0.08) 100%);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 2px solid rgba(255, 215, 0, 0.4);
+      border-radius: 14px;
+      padding: 16px 24px;
+      margin: 20px 0;
       text-align: center;
-      box-shadow: 0 4px 16px rgba(255, 215, 0, 0.1);
-      transition: all 0.3s ease;
+      box-shadow:
+        0 4px 20px rgba(255, 215, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }}
+
+    .timer-display::before {{
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 215, 0, 0.2),
+        transparent
+      );
+      animation: glassShimmer 3s infinite;
     }}
 
     .timer-display:hover {{
-      box-shadow: 0 6px 24px rgba(255, 215, 0, 0.2);
-      transform: translateY(-2px);
+      box-shadow:
+        0 8px 30px rgba(255, 215, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      transform: translateY(-3px);
     }}
 
     .timer-text {{
       color: #FFD700;
-      font-size: 1.1em;
+      font-size: 1.15em;
       font-weight: bold;
       font-family: 'Orbitron', sans-serif;
-      text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+      text-shadow: 0 0 18px rgba(255, 215, 0, 0.5);
+      position: relative;
+      z-index: 2;
+    }}
+
+    .timer-expired {{
+      background: linear-gradient(135deg,
+        rgba(255, 99, 71, 0.18) 0%,
+        rgba(255, 99, 71, 0.08) 100%);
+      border: 2px solid rgba(255, 99, 71, 0.4);
+    }}
+
+    .timer-expired .timer-text {{
+      color: #FF6347;
+      text-shadow: 0 0 18px rgba(255, 99, 71, 0.5);
     }}
 
     /* ===== Glassmorphism Buttons ===== */
@@ -853,18 +991,10 @@ if not st.session_state.get("authenticated", False):
                             st.session_state["user_groq_key"] = saved_key
                         log_user_action(st.session_state.username, "login")
 
-                        st.markdown("""<div class='slide-message success-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                            Login successful!
-                        </div>""", unsafe_allow_html=True)
+                        show_message("success", "Login successful!")
                         st.rerun()
                     else:
-                        st.markdown("""<div class='slide-message error-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                            Invalid credentials.
-                        </div>""", unsafe_allow_html=True)
+                        show_message("error", "Invalid credentials.")
 
                 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -897,33 +1027,15 @@ if not st.session_state.get("authenticated", False):
                                     st.session_state.reset_otp_time = time.time()
                                     st.session_state.reset_stage = "verify_otp"
 
-                                    st.markdown("""<div class='slide-message success-msg'>
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                                          stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                                        ✅ OTP sent successfully to your email!
-                                    </div>""", unsafe_allow_html=True)
+                                    show_message("success", "✅ OTP sent successfully to your email!")
                                     time.sleep(1)
                                     st.rerun()
                                 else:
-                                    st.markdown("""<div class='slide-message error-msg'>
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                                        ❌ Failed to send OTP. Please try again.
-                                    </div>""", unsafe_allow_html=True)
+                                    show_message("error", "❌ Failed to send OTP. Please try again.")
                             else:
-                                st.markdown("""<div class='slide-message error-msg'>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                                      stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                                    ❌ Email not found. Please register first.
-                                </div>""", unsafe_allow_html=True)
+                                show_message("error", "❌ Email not found. Please register first.")
                         else:
-                            st.markdown("""<div class='slide-message warn-msg'>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                                  stroke-width="2" viewBox="0 0 24 24">
-                                  <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
-                                </svg>
-                                ⚠️ Please enter your email address.
-                            </div>""", unsafe_allow_html=True)
+                            show_message("warn", "⚠️ Please enter your email address.")
 
                 with col2:
                     if st.button("↩️ Back to Login", key="back_to_login_1"):
@@ -941,28 +1053,11 @@ if not st.session_state.get("authenticated", False):
                 elapsed_time = time.time() - st.session_state.reset_otp_time
                 remaining_time = max(0, int(180 - elapsed_time))
 
-                # Smooth live timer using session state (no page reload)
-                if remaining_time > 0:
-                    minutes = remaining_time // 60
-                    seconds = remaining_time % 60
-
-                    timer_placeholder = st.empty()
-                    timer_placeholder.markdown(f"""
-                    <div class='timer-display'>
-                        <span class='timer-text'>⏱️ Time Remaining: {minutes:02d}:{seconds:02d}</span>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                    time.sleep(0.1)
-                    st.rerun()
-
                 # Check if OTP expired (3 minutes)
                 if remaining_time == 0:
-                    st.markdown("""<div class='slide-message error-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                        ⏱️ OTP expired. Please request a new one.
-                    </div>""", unsafe_allow_html=True)
+                    # Display expired timer
+                    display_timer(0, expired=True)
+                    show_message("error", "⏱️ OTP expired. Please request a new one.")
 
                     col1, col2 = st.columns(2)
                     with col1:
@@ -974,6 +1069,15 @@ if not st.session_state.get("authenticated", False):
                             st.session_state.reset_stage = "none"
                             st.rerun()
                 else:
+                    # Display live countdown timer (non-blocking)
+                    timer_placeholder = st.empty()
+                    with timer_placeholder.container():
+                        display_timer(remaining_time)
+
+                    # Auto-refresh every second only while timer is running
+                    if remaining_time > 0:
+                        st_autorefresh(interval=1000, key="forgot_pw_timer", limit=180)
+
                     otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="otp_input", max_chars=6)
 
                     col1, col2 = st.columns(2)
@@ -981,19 +1085,11 @@ if not st.session_state.get("authenticated", False):
                         if st.button("✅ Verify OTP", key="verify_otp_btn"):
                             if otp_input.strip() == st.session_state.reset_otp:
                                 st.session_state.reset_stage = "reset_password"
-                                st.markdown("""<div class='slide-message success-msg'>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                                      stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                                    ✅ OTP verified successfully!
-                                </div>""", unsafe_allow_html=True)
+                                show_message("success", "✅ OTP verified successfully!")
                                 time.sleep(1)
                                 st.rerun()
                             else:
-                                st.markdown("""<div class='slide-message error-msg'>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                                      stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                                    ❌ Invalid OTP. Please try again.
-                                </div>""", unsafe_allow_html=True)
+                                show_message("error", "❌ Invalid OTP. Please try again.")
 
                     with col2:
                         if st.button("↩️ Back to Login", key="back_to_login_2"):
@@ -1018,11 +1114,7 @@ if not st.session_state.get("authenticated", False):
                             success = update_password_by_email(st.session_state.reset_email, new_password)
 
                             if success:
-                                st.markdown("""<div class='slide-message success-msg'>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                                      stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                                    ✅ Password reset successful! Please log in again.
-                                </div>""", unsafe_allow_html=True)
+                                show_message("success", "✅ Password reset successful! Please log in again.")
 
                                 # Log the password reset action
                                 log_user_action(st.session_state.reset_email, "password_reset")
@@ -1036,25 +1128,11 @@ if not st.session_state.get("authenticated", False):
                                 time.sleep(2)
                                 st.rerun()
                             else:
-                                st.markdown("""<div class='slide-message error-msg'>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                                      stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                                    ❌ Failed to reset password. Please try again.
-                                </div>""", unsafe_allow_html=True)
+                                show_message("error", "❌ Failed to reset password. Please try again.")
                         else:
-                            st.markdown("""<div class='slide-message error-msg'>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                                  stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                                ❌ Passwords do not match.
-                            </div>""", unsafe_allow_html=True)
+                            show_message("error", "❌ Passwords do not match.")
                     else:
-                        st.markdown("""<div class='slide-message warn-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24">
-                              <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
-                            </svg>
-                            ⚠️ Please fill in both password fields.
-                        </div>""", unsafe_allow_html=True)
+                        show_message("warn", "⚠️ Please fill in both password fields.")
 
                 if st.button("↩️ Back to Login", key="back_to_login_3"):
                     st.session_state.reset_stage = "none"
@@ -1072,28 +1150,10 @@ if not st.session_state.get("authenticated", False):
                 elapsed = (datetime.now(st.session_state.pending_registration['timestamp'].tzinfo) - st.session_state.pending_registration['timestamp']).total_seconds()
                 remaining = max(0, 180 - int(elapsed))
 
-                # Smooth live timer using session state (no page reload)
-                if remaining > 0:
-                    minutes = remaining // 60
-                    seconds = remaining % 60
-
-                    reg_timer_placeholder = st.empty()
-                    reg_timer_placeholder.markdown(f"""
-                    <div class='timer-display'>
-                        <span class='timer-text'>⏱️ Time Remaining: {minutes:02d}:{seconds:02d}</span>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                    time.sleep(0.1)
-                    st.rerun()
-
                 if remaining == 0:
                     # OTP Expired
-                    st.markdown("""<div class='slide-message error-msg'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                          stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                        ⏱️ OTP expired. Please start over.
-                    </div>""", unsafe_allow_html=True)
+                    display_timer(0, expired=True)
+                    show_message("error", "⏱️ OTP expired. Please start over.")
 
                     col1, col2 = st.columns(2)
                     with col1:
@@ -1101,7 +1161,7 @@ if not st.session_state.get("authenticated", False):
                             pending = st.session_state.pending_registration
                             success, message = add_user(pending['username'], pending['password'], pending['email'])
                             if success:
-                                st.success("✅ New OTP sent!")
+                                show_message("success", "✅ New OTP sent!")
                                 time.sleep(1)
                                 st.rerun()
                     with col2:
@@ -1109,6 +1169,15 @@ if not st.session_state.get("authenticated", False):
                             del st.session_state.pending_registration
                             st.rerun()
                 else:
+                    # Display live countdown timer (non-blocking)
+                    timer_placeholder = st.empty()
+                    with timer_placeholder.container():
+                        display_timer(remaining)
+
+                    # Auto-refresh every second only while timer is running
+                    if remaining > 0:
+                        st_autorefresh(interval=1000, key="register_timer", limit=180)
+
                     otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="reg_otp_input", max_chars=6)
 
                     col1, col2, col3 = st.columns(3)
@@ -1118,32 +1187,20 @@ if not st.session_state.get("authenticated", False):
                             cached_username = st.session_state.pending_registration['username']
                             success, message = complete_registration(otp_input.strip())
                             if success:
-                                st.markdown(f"""<div class='slide-message success-msg'>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                                      stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                                    {message}
-                                </div>""", unsafe_allow_html=True)
+                                show_message("success", message)
                                 # ✅ Use cached username for logging
                                 log_user_action(cached_username, "register")
                                 time.sleep(1)
                                 st.rerun()
                             else:
-                                st.markdown(f"""<div class='slide-message error-msg'>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                                      stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                                    {message}
-                                </div>""", unsafe_allow_html=True)
+                                show_message("error", message)
 
                     with col2:
                         if st.button("🔄 Resend", key="resend_reg_otp_btn"):
                             pending = st.session_state.pending_registration
                             success, message = add_user(pending['username'], pending['password'], pending['email'])
                             if success:
-                                st.markdown("""<div class='slide-message success-msg'>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                                      stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                                    ✅ New OTP sent successfully!
-                                </div>""", unsafe_allow_html=True)
+                                show_message("success", "✅ New OTP sent successfully!")
                                 time.sleep(1)
                                 st.rerun()
 
@@ -1162,67 +1219,29 @@ if not st.session_state.get("authenticated", False):
                 # Real-time validation feedback
                 if new_email.strip():
                     if not is_valid_email(new_email.strip()):
-                        st.markdown("""<div class='slide-message warn-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24">
-                              <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
-                            </svg>
-                            ⚠ Invalid email format.
-                        </div>""", unsafe_allow_html=True)
+                        show_message("warn", "⚠ Invalid email format.")
                     elif email_exists(new_email.strip()):
-                        st.markdown("""<div class='slide-message error-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                            🚫 Email already registered.
-                        </div>""", unsafe_allow_html=True)
+                        show_message("error", "🚫 Email already registered.")
                     else:
-                        st.markdown("""<div class='slide-message info-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
-                              <path d="M12 8h.01M12 12v4"/></svg>
-                            ✅ Email is available.
-                        </div>""", unsafe_allow_html=True)
+                        show_message("info", "✅ Email is available.")
 
                 if new_user.strip():
                     if username_exists(new_user.strip()):
-                        st.markdown("""<div class='slide-message error-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                            🚫 Username already exists.
-                        </div>""", unsafe_allow_html=True)
+                        show_message("error", "🚫 Username already exists.")
                     else:
-                        st.markdown("""<div class='slide-message info-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
-                              <path d="M12 8h.01M12 12v4"/></svg>
-                            ✅ Username is available.
-                        </div>""", unsafe_allow_html=True)
+                        show_message("info", "✅ Username is available.")
 
                 if st.button("📧 Register & Send OTP", key="register_btn"):
                     if new_email.strip() and new_user.strip() and new_pass.strip():
                         success, message = add_user(new_user.strip(), new_pass.strip(), new_email.strip())
                         if success:
-                            st.markdown(f"""<div class='slide-message success-msg'>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                                  stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                                {message}
-                            </div>""", unsafe_allow_html=True)
+                            show_message("success", message)
                             time.sleep(1)
                             st.rerun()
                         else:
-                            st.markdown(f"""<div class='slide-message error-msg'>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                                  stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-                                {message}
-                            </div>""", unsafe_allow_html=True)
+                            show_message("error", message)
                     else:
-                        st.markdown("""<div class='slide-message warn-msg'>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
-                              stroke-width="2" viewBox="0 0 24 24">
-                              <circle cx="12" cy="12" r="10"/><path d="M12 9v2m0 4h.01M12 5h.01"/>
-                            </svg>
-                            ⚠ Please fill in all fields (email, username, and password).
-                        </div>""", unsafe_allow_html=True)
+                        show_message("warn", "⚠ Please fill in all fields (email, username, and password).")
 
         st.markdown("</div>", unsafe_allow_html=True)
 

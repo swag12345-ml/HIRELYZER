@@ -1074,7 +1074,7 @@ if not st.session_state.get("authenticated", False):
                         log_user_action(st.session_state.username, "login")
 
                         notify("success", "✅ Login successful!")
-                        time.sleep(0.5)
+                        time.sleep(3.0)
                         st.rerun()
                     else:
                         notify("error", "❌ Invalid credentials. Please try again.")
@@ -1360,7 +1360,7 @@ if not st.session_state.get("authenticated", False):
                             success, message = add_user(new_user.strip(), new_pass.strip(), new_email.strip())
                             if success:
                                 notify("success", message)
-                                time.sleep(0.5)
+                                time.sleep(3.0)
                                 st.rerun()
                             else:
                                 notify("error", message)

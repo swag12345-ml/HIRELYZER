@@ -40,23 +40,10 @@ from streamlit_pdf_viewer import pdf_viewer
 import torch
 
 # Langchain & Embeddings
-
-from langchain_text_splitters import CharacterTextSplitter 
-from langchain_community.vectorstores import FAISS 
-from langchain_community.embeddings import HuggingFaceEmbeddings 
-from langchain_groq import ChatGroq  # optional if you're using it
-
-
-
-
-
-
-
-
-
-
-
-
+from langchain_text_splitters import CharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_groq import ChatGroq
 
 # Local project imports
 from llm_manager import call_llm, load_groq_api_keys
@@ -103,7 +90,7 @@ def html_to_pdf_bytes(html_string):
         <meta charset="UTF-8">
         <style>
             @page {{
-                size: 400mm 297mm;  /* Original custom large page size */
+                size: 400mm 297mm;
                 margin-top: 10mm;
                 margin-bottom: 10mm;
                 margin-left: 10mm;
@@ -138,7 +125,7 @@ def html_to_pdf_bytes(html_string):
                 padding: 8px;
                 margin-top: 6px;
                 background-color: #f9f9f9;
-                border-left: 4px solid #999;  /* More elegant than full border */
+                border-left: 4px solid #999;
             }}
             ul {{
                 margin: 0.5em 0;
@@ -154,7 +141,6 @@ def html_to_pdf_bytes(html_string):
     </body>
     </html>
     """
-
     pdf_io = BytesIO()
     pisa.CreatePDF(styled_html, dest=pdf_io)
     pdf_io.seek(0)
@@ -168,15 +154,12 @@ def generate_cover_letter_from_resume_builder():
     location = st.session_state.get("location", "")
     today_date = datetime.today().strftime("%B %d, %Y")
 
-    # ✅ Input boxes for contact info
     company = st.text_input("🏢 Target Company", placeholder="e.g., Google")
     linkedin = st.text_input("🔗 LinkedIn URL", placeholder="e.g., https://linkedin.com/in/username")
     email = st.text_input("📧 Email", placeholder="e.g., you@example.com")
     mobile = st.text_input("📞 Mobile Number", placeholder="e.g., +91 9876543210")
 
-    # ✅ Button to prevent relooping
     if st.button("✉️ Generate Cover Letter"):
-        # ✅ Validate input before generating
         if not all([name, job_title, summary, skills, company, linkedin, email, mobile]):
             st.warning("⚠️ Please fill in all fields including LinkedIn, email, and mobile.")
             return
@@ -184,7 +167,7 @@ def generate_cover_letter_from_resume_builder():
         prompt = f"""
 You are a professional cover letter writer.
 
-Write a formal and compelling cover letter using the information below. 
+Write a formal and compelling cover letter using the information below.
 Format it as a real letter with:
 1. Date
 2. Recipient heading
@@ -192,7 +175,7 @@ Format it as a real letter with:
 4. Three short paragraphs
 5. Professional closing
 
-Ensure you **only include the company name once** in the header or salutation, 
+Ensure you **only include the company name once** in the header or salutation,
 and avoid repeating it redundantly in the body.
 
 ### Heading Info:
@@ -207,21 +190,16 @@ Hiring Manager, {company}, {location}
 - Location: {location}
 
 ### Instructions:
-- Do not use HTML tags. 
+- Do not use HTML tags.
 - Return plain text only.
 """
-
-        # ✅ Call LLM
         cover_letter = call_llm(prompt, session=st.session_state).strip()
-
-        # ✅ Store plain text
         st.session_state["cover_letter"] = cover_letter
 
-        # ✅ Build HTML wrapper for preview (safe)
         cover_letter_html = f"""
-        <div style="font-family: Georgia, serif; font-size: 13pt; line-height: 1.6; 
-                    color: #000; background: #fff; padding: 25px; 
-                    border-radius: 8px; box-shadow: 0px 2px 6px rgba(0,0,0,0.1); 
+        <div style="font-family: Georgia, serif; font-size: 13pt; line-height: 1.6;
+                    color: #000; background: #fff; padding: 25px;
+                    border-radius: 8px; box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
                     max-width: 800px; margin: auto;">
             <div style="text-align:center; margin-bottom:15px;">
                 <div style="font-size:18pt; font-weight:bold; color:#003366;">{name}</div>
@@ -237,57 +215,86 @@ Hiring Manager, {company}, {location}
             </pre>
         </div>
         """
-
         st.session_state["cover_letter_html"] = cover_letter_html
-
-        # ✅ Show nicely in Streamlit
         st.markdown(cover_letter_html, unsafe_allow_html=True)
 
-# ------------------- Initialize -------------------
-# ✅ Initialize database in persistent storage
+# ------------------- Initialize Database -------------------
 create_user_table()
 
-# ------------------- Global Notification System -------------------
-if "notification" not in st.session_state:
-    st.session_state.notification = {"type": None, "text": None, "expires": 0.0}
+# ------------------- Initialize Session State -------------------
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+if "username" not in st.session_state:
+    st.session_state.username = None
+if "processed_files" not in st.session_state:
+    st.session_state.processed_files = set()
+if "reset_stage" not in st.session_state:
+    st.session_state.reset_stage = "none"
+if "reset_email" not in st.session_state:
+    st.session_state.reset_email = ""
+if "reset_otp" not in st.session_state:
+    st.session_state.reset_otp = ""
+if "reset_otp_time" not in st.session_state:
+    st.session_state.reset_otp_time = 0
 
-def notify(msg_type, text, duration=3.0):
-    """Show auto-disappearing message (success/error/info/warning)."""
-    st.session_state.notification = {
-        "type": msg_type,
-        "text": text,
-        "expires": time.time() + duration,
-    }
+# Notification system - state-based
+if "show_login_notification" not in st.session_state:
+    st.session_state.show_login_notification = False
+if "login_notification_type" not in st.session_state:
+    st.session_state.login_notification_type = ""
+if "login_notification_msg" not in st.session_state:
+    st.session_state.login_notification_msg = ""
 
-def render_notification():
-    """Render notification in a fixed center slot (prevents button shifting)."""
-    notif = st.session_state.notification
+if "show_register_notification" not in st.session_state:
+    st.session_state.show_register_notification = False
+if "register_notification_type" not in st.session_state:
+    st.session_state.register_notification_type = ""
+if "register_notification_msg" not in st.session_state:
+    st.session_state.register_notification_msg = ""
 
-    # Always reserve space for notification (60px height)
-    if notif["type"] and time.time() < notif["expires"]:
-        # Show active notification
-        if notif["type"] == "success":
-            st.success(notif["text"])
-        elif notif["type"] == "error":
-            st.error(notif["text"])
-        elif notif["type"] == "warning":
-            st.warning(notif["text"])
-        elif notif["type"] == "info":
-            st.info(notif["text"])
+# ------------------- Notification Helpers -------------------
+def show_notification_login(msg_type, message):
+    """Set login notification state (no rerun)"""
+    st.session_state.show_login_notification = True
+    st.session_state.login_notification_type = msg_type
+    st.session_state.login_notification_msg = message
+
+def show_notification_register(msg_type, message):
+    """Set register notification state (no rerun)"""
+    st.session_state.show_register_notification = True
+    st.session_state.register_notification_type = msg_type
+    st.session_state.register_notification_msg = message
+
+def render_notification_login():
+    """Render login notification if active"""
+    if st.session_state.show_login_notification:
+        if st.session_state.login_notification_type == "success":
+            st.success(st.session_state.login_notification_msg)
+        elif st.session_state.login_notification_type == "error":
+            st.error(st.session_state.login_notification_msg)
+        elif st.session_state.login_notification_type == "warning":
+            st.warning(st.session_state.login_notification_msg)
+        elif st.session_state.login_notification_type == "info":
+            st.info(st.session_state.login_notification_msg)
     else:
-        # Reserve space with empty div to prevent layout shift
+        st.markdown("<div style='height:60px;'></div>", unsafe_allow_html=True)
+
+def render_notification_register():
+    """Render register notification if active"""
+    if st.session_state.show_register_notification:
+        if st.session_state.register_notification_type == "success":
+            st.success(st.session_state.register_notification_msg)
+        elif st.session_state.register_notification_type == "error":
+            st.error(st.session_state.register_notification_msg)
+        elif st.session_state.register_notification_type == "warning":
+            st.warning(st.session_state.register_notification_msg)
+        elif st.session_state.register_notification_type == "info":
+            st.info(st.session_state.register_notification_msg)
+    else:
         st.markdown("<div style='height:60px;'></div>", unsafe_allow_html=True)
 
 def display_timer(remaining_seconds, expired=False, key_suffix=""):
-    """
-    Display a server-synced timer with glassmorphism styling.
-    Server-side validation ensures OTP expiry is accurately enforced.
-
-    Args:
-        remaining_seconds: Time remaining in seconds (server-calculated)
-        expired: Whether the timer has expired
-        key_suffix: Unique suffix for the timer component
-    """
+    """Display client-side countdown timer"""
     minutes = remaining_seconds // 60
     seconds = remaining_seconds % 60
 
@@ -296,7 +303,6 @@ def display_timer(remaining_seconds, expired=False, key_suffix=""):
         <div class='timer-display timer-expired' style="
             background: linear-gradient(135deg, rgba(255, 99, 71, 0.18) 0%, rgba(255, 99, 71, 0.08) 100%);
             backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
             border: 2px solid rgba(255, 99, 71, 0.4);
             border-radius: 14px;
             padding: 16px 24px;
@@ -314,12 +320,10 @@ def display_timer(remaining_seconds, expired=False, key_suffix=""):
         </div>
         """, unsafe_allow_html=True)
     else:
-        # Client-side countdown for UX, but server validates on action
-        st.components.v1.html(f"""
+        components.html(f"""
         <div class='timer-display' id='timer-{key_suffix}' style="
             background: linear-gradient(135deg, rgba(255, 215, 0, 0.18) 0%, rgba(255, 165, 0, 0.08) 100%);
             backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
             border: 2px solid rgba(255, 215, 0, 0.4);
             border-radius: 14px;
             padding: 16px 24px;
@@ -362,41 +366,21 @@ def display_timer(remaining_seconds, expired=False, key_suffix=""):
         </script>
         """, height=80)
 
-# ------------------- Initialize Session State -------------------
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-if "username" not in st.session_state:
-    st.session_state.username = None
-if "processed_files" not in st.session_state:
-    st.session_state.processed_files = set()
-
-# Forgot password session states
-if "reset_stage" not in st.session_state:
-    st.session_state.reset_stage = "none"
-if "reset_email" not in st.session_state:
-    st.session_state.reset_email = ""
-if "reset_otp" not in st.session_state:
-    st.session_state.reset_otp = ""
-if "reset_otp_time" not in st.session_state:
-    st.session_state.reset_otp_time = 0
-
 # ------------------- CSS Styling -------------------
 st.markdown("""
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+
 body, .main {
     background-color: #0d1117;
     color: white;
 }
 
-/* Smooth fade animation for notifications */
 div.stAlert {
     border-radius: 12px;
     padding: 10px 14px;
-    animation: fadein 0.3s, fadeout 0.3s 2.7s;
     text-align: center;
 }
-@keyframes fadein { from {opacity: 0;} to {opacity: 1;} }
-@keyframes fadeout { from {opacity: 1;} to {opacity: 0;} }
 
 .login-card {
     background: #161b22;
@@ -405,10 +389,12 @@ div.stAlert {
     box-shadow: 0 0 25px rgba(0,0,0,0.3);
     transition: all 0.4s ease;
 }
+
 .login-card:hover {
     transform: translateY(-6px) scale(1.01);
     box-shadow: 0 0 45px rgba(0,255,255,0.25);
 }
+
 .stTextInput > div > input {
     background-color: #0d1117;
     color: white;
@@ -416,13 +402,16 @@ div.stAlert {
     border-radius: 10px;
     padding: 0.6em;
 }
+
 .stTextInput > div > input:hover {
     border: 1px solid #00BFFF;
     box-shadow: 0 0 8px rgba(0,191,255,0.2);
 }
+
 .stTextInput > label {
     color: #c9d1d9;
 }
+
 .stButton > button {
     background-color: #238636;
     color: white;
@@ -430,12 +419,15 @@ div.stAlert {
     padding: 0.6em 1.5em;
     border: none;
     font-weight: bold;
+    transition: all 0.3s ease;
 }
+
 .stButton > button:hover {
     background-color: #2ea043;
     box-shadow: 0 0 10px rgba(46,160,67,0.4);
     transform: scale(1.02);
 }
+
 .feature-card {
     background: radial-gradient(circle at top left, #1f2937, #111827);
     padding: 20px;
@@ -446,25 +438,133 @@ div.stAlert {
     color: #fff;
     margin-bottom: 20px;
 }
+
 .feature-card:hover {
     transform: translateY(-10px);
     box-shadow: 0 0 30px rgba(0,255,255,0.4);
 }
+
 .feature-card h3 {
     color: #00BFFF;
 }
+
 .feature-card p {
     color: #c9d1d9;
 }
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-5px); }
+}
+
+.counter-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 250px);
+    column-gap: 40px;
+    row-gap: 25px;
+    justify-content: center;
+    padding: 30px 10px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.counter-box {
+    background: linear-gradient(135deg,
+        rgba(0, 191, 255, 0.1) 0%,
+        rgba(30, 144, 255, 0.05) 50%,
+        rgba(0, 191, 255, 0.1) 100%);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(0, 191, 255, 0.2);
+    border-radius: 16px;
+    width: 100%;
+    height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    animation: float 3s ease-in-out infinite;
+}
+
+.counter-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 191, 255, 0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+.counter-box:hover {
+    transform: translateY(-8px) scale(1.02);
+    background: linear-gradient(135deg,
+        rgba(0, 191, 255, 0.15) 0%,
+        rgba(30, 144, 255, 0.08) 50%,
+        rgba(0, 191, 255, 0.15) 100%);
+    border: 1px solid rgba(0, 191, 255, 0.4);
+    box-shadow: 0 20px 40px rgba(0, 191, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.counter-number {
+    font-size: 2.2em;
+    font-weight: bold;
+    color: #00BFFF;
+    margin: 0;
+    position: relative;
+    z-index: 2;
+    text-shadow: 0 0 20px rgba(0, 191, 255, 0.5);
+}
+
+.counter-label {
+    margin-top: 8px;
+    font-size: 1em;
+    color: #c9d1d9;
+    position: relative;
+    z-index: 2;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.animated-cards {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    position: relative;
+    height: 300px;
+}
+
+.animated-cards img {
+    position: absolute;
+    width: 240px;
+    animation: splitCards 2.5s ease-in-out infinite alternate;
+    z-index: 1;
+}
+
+.animated-cards img:nth-child(1) { animation-delay: 0s; z-index: 3; }
+.animated-cards img:nth-child(2) { animation-delay: 0.3s; z-index: 2; }
+.animated-cards img:nth-child(3) { animation-delay: 0.6s; z-index: 1; }
+
+@keyframes splitCards {
+    0% { transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }
+    100% { transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }
+}
+
+.card-left { --x-offset: -80px; --rot: -5deg; }
+.card-center { --x-offset: 0px; --rot: 0deg; }
+.card-right { --x-offset: 80px; --rot: 5deg; }
 </style>
 """, unsafe_allow_html=True)
-# 🔹 VIDEO BACKGROUND & GLOW TEXT
 
 # ------------------- BEFORE LOGIN -------------------
 if not st.session_state.authenticated:
-    
-
-    # -------- Sidebar --------
     with st.sidebar:
         st.markdown("<h1 style='color:#00BFFF;'>Smart Resume AI</h1>", unsafe_allow_html=True)
         st.markdown("<p style='color:#c9d1d9;'>Transform your career with AI-powered resume analysis, job matching, and smart insights.</p>", unsafe_allow_html=True)
@@ -486,37 +586,12 @@ if not st.session_state.authenticated:
             </div>
             """, unsafe_allow_html=True)
 
-    # -------- Animated Cards --------
+    # Animated Cards
     image_url = "https://cdn-icons-png.flaticon.com/512/3135/3135768.png"
     response = requests.get(image_url)
     img_base64 = b64encode(response.content).decode()
 
     st.markdown(f"""
-    <style>
-    .animated-cards {{
-      margin-top: 30px;
-      display: flex;
-      justify-content: center;
-      position: relative;
-      height: 300px;
-    }}
-    .animated-cards img {{
-      position: absolute;
-      width: 240px;
-      animation: splitCards 2.5s ease-in-out infinite alternate;
-      z-index: 1;
-    }}
-    .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
-    .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
-    .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
-    @keyframes splitCards {{
-      0% {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
-      100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
-    }}
-    .card-left {{ --x-offset: -80px; --rot: -5deg; }}
-    .card-center {{ --x-offset: 0px; --rot: 0deg; }}
-    .card-right {{ --x-offset: 80px; --rot: 5deg; }}
-    </style>
     <div class="animated-cards">
         <img class="card-left" src="data:image/png;base64,{img_base64}" />
         <img class="card-center" src="data:image/png;base64,{img_base64}" />
@@ -524,117 +599,12 @@ if not st.session_state.authenticated:
     </div>
     """, unsafe_allow_html=True)
 
-    # -------- Counter Section (Updated Layout & Style with glassmorphism and shimmer) --------
-
-    # Fetch counters
+    # Counter Section
     total_users = get_total_registered_users()
     active_logins = get_logins_today()
     stats = get_database_stats()
-
-# Replace static 15 with dynamic count
     resumes_uploaded = stats.get("total_candidates", 0)
-
     states_accessed = 29
-
-    glassmorphism_counter_style = """
-    <style>
-    @keyframes shimmer {
-        0% { background-position: -200% 0; }
-        100% { background-position: 200% 0; }
-    }
-    
-    @keyframes float {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-5px); }
-    }
-
-    .counter-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 250px);
-        column-gap: 40px;
-        row-gap: 25px;
-        justify-content: center;
-        padding: 30px 10px;
-        max-width: 600px;
-        margin: 0 auto;
-    }
-
-    .counter-box {
-        background: linear-gradient(135deg, 
-            rgba(0, 191, 255, 0.1) 0%, 
-            rgba(30, 144, 255, 0.05) 50%, 
-            rgba(0, 191, 255, 0.1) 100%);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border: 1px solid rgba(0, 191, 255, 0.2);
-        border-radius: 16px;
-        width: 100%;
-        height: 120px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        position: relative;
-        overflow: hidden;
-        transition: all 0.3s ease;
-        animation: float 3s ease-in-out infinite;
-    }
-
-    .counter-box::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(0, 191, 255, 0.3),
-            transparent
-        );
-        animation: shimmer 2s infinite;
-    }
-
-    .counter-box:hover {
-        transform: translateY(-8px) scale(1.02);
-        background: linear-gradient(135deg, 
-            rgba(0, 191, 255, 0.15) 0%, 
-            rgba(30, 144, 255, 0.08) 50%, 
-            rgba(0, 191, 255, 0.15) 100%);
-        border: 1px solid rgba(0, 191, 255, 0.4);
-        box-shadow: 
-            0 20px 40px rgba(0, 191, 255, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    }
-
-    .counter-box:nth-child(1) { animation-delay: 0s; }
-    .counter-box:nth-child(2) { animation-delay: 0.5s; }
-    .counter-box:nth-child(3) { animation-delay: 1s; }
-    .counter-box:nth-child(4) { animation-delay: 1.5s; }
-
-    .counter-number {
-        font-size: 2.2em;
-        font-weight: bold;
-        color: #00BFFF;
-        margin: 0;
-        position: relative;
-        z-index: 2;
-        text-shadow: 0 0 20px rgba(0, 191, 255, 0.5);
-    }
-
-    .counter-label {
-        margin-top: 8px;
-        font-size: 1em;
-        color: #c9d1d9;
-        position: relative;
-        z-index: 2;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    }
-    </style>
-    """
-
-    st.markdown(glassmorphism_counter_style, unsafe_allow_html=True)
 
     st.markdown(f"""
     <div class="counter-grid">
@@ -657,754 +627,285 @@ if not st.session_state.authenticated:
     </div>
     """, unsafe_allow_html=True)
 
-if not st.session_state.get("authenticated", False):
-
-    # ✅ Futuristic silhouette
-    image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
-    response = requests.get(image_url)
-    img_base64 = b64encode(response.content).decode()
-
-    # ✅ Inject glassmorphism CSS with shimmer effects
-    st.markdown(f"""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
-
-    @keyframes shimmer {{
-        0% {{ background-position: -200% 0; }}
-        100% {{ background-position: 200% 0; }}
-    }}
-
-    @keyframes glassShimmer {{
-        0% {{ transform: translateX(-100%) skewX(-15deg); }}
-        100% {{ transform: translateX(200%) skewX(-15deg); }}
-    }}
-
-    /* ===== Card Shuffle Animation ===== */
-    .animated-cards {{
-      margin-top: 40px;
-      display: flex;
-      justify-content: center;
-      position: relative;
-      height: 260px;
-    }}
-    .animated-cards img {{
-      position: absolute;
-      width: 220px;
-      animation: splitCards 2.5s ease-in-out infinite alternate;
-      z-index: 1;
-      filter: drop-shadow(0 0 15px rgba(0,191,255,0.3));
-    }}
-    .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
-    .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
-    .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
-
-    @keyframes splitCards {{
-      0%   {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
-      100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
-    }}
-    .card-left   {{ --x-offset: -80px; --rot: -4deg; }}
-    .card-center {{ --x-offset: 0px;  --rot: 0deg;  }}
-    .card-right  {{ --x-offset: 80px;  --rot: 4deg;  }}
-
-    /* ===== Glassmorphism Login Card ===== */
-    .login-card {{
-      background: linear-gradient(135deg,
-        rgba(0, 191, 255, 0.1) 0%,
-        rgba(30, 144, 255, 0.05) 50%,
-        rgba(0, 191, 255, 0.1) 100%);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(0, 191, 255, 0.2);
-      border-radius: 20px;
-      padding: 25px;
-      box-shadow:
-        0 8px 32px rgba(0, 191, 255, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      font-family: 'Orbitron', sans-serif;
-      color: white;
-      margin-top: 20px;
-      opacity: 0;
-      transform: translateX(-120%);
-      animation: slideInLeft 1.2s ease-out forwards;
-      position: relative;
-      overflow: hidden;
-    }}
-
-    .login-card::before {{
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(0, 191, 255, 0.2),
-        transparent
-      );
-      animation: glassShimmer 3s infinite;
-    }}
-
-    @keyframes slideInLeft {{
-      0%   {{ transform: translateX(-120%); opacity: 0; }}
-      100% {{ transform: translateX(0); opacity: 1; }}
-    }}
-
-    .login-card h2 {{
-      text-align: center;
-      font-size: 1.6rem;
-      text-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
-      margin-bottom: 15px;
-      position: relative;
-      z-index: 2;
-    }}
-    .login-card h2 span {{ color: #00BFFF; }}
-
-    /* ===== Enhanced Message Cards with Consistent Layout ===== */
-    .slide-message {{
-      position: relative;
-      overflow: hidden;
-      margin: 16px 0;
-      padding: 14px 20px;
-      border-radius: 14px;
-      font-weight: 600;
-      font-size: 0.95em;
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      gap: 12px;
-      animation: slideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      box-shadow:
-        0 4px 20px rgba(0, 0, 0, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      width: 100%;
-      max-width: 100%;
-      box-sizing: border-box;
-      line-height: 1.5;
-      font-family: 'Orbitron', sans-serif;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      min-height: 50px;
-    }}
-
-    .slide-message:hover {{
-      transform: translateY(-3px) scale(1.01);
-      box-shadow:
-        0 8px 30px rgba(0, 0, 0, 0.25),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15);
-    }}
-
-    .slide-message::before {{
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.1),
-        transparent
-      );
-      transition: left 0.5s;
-    }}
-
-    .slide-message:hover::before {{
-      left: 100%;
-    }}
-
-    .slide-message svg {{
-      width: 22px;
-      height: 22px;
-      flex-shrink: 0;
-      filter: drop-shadow(0 0 6px currentColor);
-      z-index: 2;
-    }}
-
-    .slide-message-text {{
-      flex: 1;
-      z-index: 2;
-      position: relative;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-      white-space: normal;
-    }}
-
-    .success-msg {{
-      background: linear-gradient(135deg,
-        rgba(0, 255, 127, 0.20) 0%,
-        rgba(0, 255, 127, 0.08) 100%);
-      border: 2px solid rgba(0, 255, 127, 0.4);
-      color: #00FF7F;
-      text-shadow: 0 0 12px rgba(0, 255, 127, 0.4);
-    }}
-
-    .error-msg {{
-      background: linear-gradient(135deg,
-        rgba(255, 99, 71, 0.20) 0%,
-        rgba(255, 99, 71, 0.08) 100%);
-      border: 2px solid rgba(255, 99, 71, 0.4);
-      color: #FF6347;
-      text-shadow: 0 0 12px rgba(255, 99, 71, 0.4);
-    }}
-
-    .info-msg {{
-      background: linear-gradient(135deg,
-        rgba(30, 144, 255, 0.20) 0%,
-        rgba(30, 144, 255, 0.08) 100%);
-      border: 2px solid rgba(30, 144, 255, 0.4);
-      color: #1E90FF;
-      text-shadow: 0 0 12px rgba(30, 144, 255, 0.4);
-    }}
-
-    .warn-msg {{
-      background: linear-gradient(135deg,
-        rgba(255, 215, 0, 0.20) 0%,
-        rgba(255, 215, 0, 0.08) 100%);
-      border: 2px solid rgba(255, 215, 0, 0.4);
-      color: #FFD700;
-      text-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
-    }}
-
-    @keyframes slideIn {{
-      0%   {{
-        transform: translateX(-50px);
-        opacity: 0;
-      }}
-      100% {{
-        transform: translateX(0);
-        opacity: 1;
-      }}
-    }}
-
-    /* ===== Improved Timer Display ===== */
-    .timer-display {{
-      background: linear-gradient(135deg,
-        rgba(255, 215, 0, 0.18) 0%,
-        rgba(255, 165, 0, 0.08) 100%);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border: 2px solid rgba(255, 215, 0, 0.4);
-      border-radius: 14px;
-      padding: 16px 24px;
-      margin: 20px 0;
-      text-align: center;
-      box-shadow:
-        0 4px 20px rgba(255, 215, 0, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
-    }}
-
-    .timer-display::before {{
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 215, 0, 0.2),
-        transparent
-      );
-      animation: glassShimmer 3s infinite;
-    }}
-
-    .timer-display:hover {{
-      box-shadow:
-        0 8px 30px rgba(255, 215, 0, 0.25),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15);
-      transform: translateY(-3px);
-    }}
-
-    .timer-text {{
-      color: #FFD700;
-      font-size: 1.15em;
-      font-weight: bold;
-      font-family: 'Orbitron', sans-serif;
-      text-shadow: 0 0 18px rgba(255, 215, 0, 0.5);
-      position: relative;
-      z-index: 2;
-    }}
-
-    .timer-expired {{
-      background: linear-gradient(135deg,
-        rgba(255, 99, 71, 0.18) 0%,
-        rgba(255, 99, 71, 0.08) 100%);
-      border: 2px solid rgba(255, 99, 71, 0.4);
-    }}
-
-    .timer-expired .timer-text {{
-      color: #FF6347;
-      text-shadow: 0 0 18px rgba(255, 99, 71, 0.5);
-    }}
-
-    /* ===== Glassmorphism Buttons ===== */
-    .stButton>button {{
-      background: linear-gradient(135deg, 
-        rgba(0, 191, 255, 0.2) 0%, 
-        rgba(30, 144, 255, 0.1) 100%);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      color: white;
-      border: 1px solid rgba(0, 191, 255, 0.3);
-      border-radius: 12px;
-      font-family: 'Orbitron', sans-serif;
-      font-weight: bold;
-      padding: 8px 20px;
-      box-shadow: 
-        0 4px 16px rgba(0, 191, 255, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }}
-    
-    .stButton>button::before {{
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.2),
-        transparent
-      );
-      transition: left 0.5s;
-    }}
-    
-    .stButton>button:hover {{
-      transform: translateY(-2px);
-      background: linear-gradient(135deg, 
-        rgba(0, 191, 255, 0.3) 0%, 
-        rgba(30, 144, 255, 0.15) 100%);
-      border: 1px solid rgba(0, 191, 255, 0.5);
-      box-shadow: 
-        0 8px 25px rgba(0, 191, 255, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    }}
-    
-    .stButton>button:hover::before {{
-      left: 100%;
-    }}
-
-    /* ===== Glassmorphism Input Fields ===== */
-    .stTextInput input {{
-      background: linear-gradient(135deg, 
-        rgba(0, 191, 255, 0.08) 0%, 
-        rgba(30, 144, 255, 0.04) 100%);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border: 1px solid rgba(0, 191, 255, 0.2);
-      border-radius: 10px;
-      padding: 10px;
-      color: #E0F7FF;
-      font-family: 'Orbitron', sans-serif;
-      box-shadow: 
-        0 4px 16px rgba(0, 191, 255, 0.05),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
-      transition: all 0.3s ease-in-out;
-    }}
-    .stTextInput input:focus {{
-      outline: none !important;
-      background: linear-gradient(135deg, 
-        rgba(0, 191, 255, 0.12) 0%, 
-        rgba(30, 144, 255, 0.06) 100%);
-      border: 1px solid rgba(0, 191, 255, 0.4);
-      box-shadow: 
-        0 8px 25px rgba(0, 191, 255, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      transform: translateY(-1px);
-    }}
-    .stTextInput label {{
-      font-family: 'Orbitron', sans-serif;
-      color: #00BFFF !important;
-      text-shadow: 0 0 10px rgba(0, 191, 255, 0.3);
-    }}
-    </style>
-
-    <!-- Animated Cards -->
-    <div class="animated-cards">
-        <img class="card-left" src="data:image/png;base64,{img_base64}" />
-        <img class="card-center" src="data:image/png;base64,{img_base64}" />
-        <img class="card-right" src="data:image/png;base64,{img_base64}" />
-    </div>
-    """, unsafe_allow_html=True)
-
-    # -------- Login/Register Layout --------
+    # Login/Register Layout
     left, center, right = st.columns([1, 2, 1])
 
     with center:
-        st.markdown(
-            "<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>HIRELYZER</span></h2>",
-            unsafe_allow_html=True,
-        )
+        st.markdown("<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>HIRELYZER</span></h2>", unsafe_allow_html=True)
 
         login_tab, register_tab = st.tabs(["Login", "Register"])
 
-        # ---------------- LOGIN TAB ----------------
+        # ============== LOGIN TAB ==============
         with login_tab:
-            # Show login or forgot password flow based on reset_stage
-            if st.session_state.reset_stage == "none":
-                # Normal Login UI
-                st.markdown("<h3 style='color:#00BFFF; text-align:center;'>🔐 Login to Your Account</h3>", unsafe_allow_html=True)
+            with st.container():
+                if st.session_state.reset_stage == "none":
+                    st.markdown("<h3 style='color:#00BFFF; text-align:center;'>🔐 Login to Your Account</h3>", unsafe_allow_html=True)
 
-                user = st.text_input("👤 Username or Email", key="login_user")
-                pwd = st.text_input("🔑 Password", type="password", key="login_pass")
+                    user = st.text_input("👤 Username or Email", key="login_user")
+                    pwd = st.text_input("🔑 Password", type="password", key="login_pass")
 
-                # Render notification area (reserves space)
-                render_notification()
+                    render_notification_login()
 
-                if st.button("🚀 Login", key="login_btn", use_container_width=True):
-                    success, saved_key = verify_user(user.strip(), pwd.strip())
-                    if success:
-                        st.session_state.authenticated = True
-                        # username is already set in session by verify_user()
-                        if saved_key:
-                            st.session_state["user_groq_key"] = saved_key
-                        log_user_action(st.session_state.username, "login")
-
-                        notify("success", "✅ Login successful!")
-                        time.sleep(3.0)
-                        st.rerun()
-                    else:
-                        notify("error", "❌ Invalid credentials. Please try again.")
-                        st.rerun()
-
-                st.markdown("<br>", unsafe_allow_html=True)
-
-                # Forgot Password Link
-                if st.button("🔑 Forgot Password?", key="forgot_pw_link"):
-                    st.session_state.reset_stage = "request_email"
-                    st.rerun()
-
-            # ============================================================
-            # FORGOT PASSWORD FLOW - Stage 1: Request Email
-            # ============================================================
-            elif st.session_state.reset_stage == "request_email":
-                st.markdown("<h3 style='color:#00BFFF; text-align:center;'>🔐 Reset Password</h3>", unsafe_allow_html=True)
-                st.markdown("<p style='color:#c9d1d9; text-align:center;'>Enter your registered email to receive an OTP</p>", unsafe_allow_html=True)
-
-                email_input = st.text_input("📧 Email Address", key="reset_email_input")
-
-                # Render notification area (reserves space)
-                render_notification()
-
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button("📤 Send OTP", key="send_otp_btn", use_container_width=True):
-                        if email_input.strip():
-                            if get_user_by_email(email_input.strip()):
-                                # Generate and send OTP
-                                otp = generate_otp()
-                                success = send_email_otp(email_input.strip(), otp)
-
-                                if success:
-                                    st.session_state.reset_email = email_input.strip()
-                                    st.session_state.reset_otp = otp
-                                    st.session_state.reset_otp_time = time.time()
-                                    st.session_state.reset_stage = "verify_otp"
-
-                                    notify("success", "✅ OTP sent successfully to your email!")
-                                    time.sleep(0.5)
-                                    st.rerun()
-                                else:
-                                    notify("error", "❌ Failed to send OTP. Please try again.")
-                                    st.rerun()
-                            else:
-                                notify("error", "❌ Email not found. Please register first.")
-                                st.rerun()
+                    if st.button("🚀 Login", key="login_btn", use_container_width=True):
+                        st.session_state.show_login_notification = False
+                        success, saved_key = verify_user(user.strip(), pwd.strip())
+                        if success:
+                            st.session_state.authenticated = True
+                            if saved_key:
+                                st.session_state["user_groq_key"] = saved_key
+                            log_user_action(st.session_state.username, "login")
+                            st.rerun()
                         else:
-                            notify("warning", "⚠️ Please enter your email address.")
+                            show_notification_login("error", "❌ Invalid credentials. Please try again.")
                             st.rerun()
 
-                with col2:
-                    if st.button("↩️ Back to Login", key="back_to_login_1", use_container_width=True):
+                    st.markdown("<br>", unsafe_allow_html=True)
+
+                    if st.button("🔑 Forgot Password?", key="forgot_pw_link"):
+                        st.session_state.reset_stage = "request_email"
+                        st.session_state.show_login_notification = False
+                        st.rerun()
+
+                elif st.session_state.reset_stage == "request_email":
+                    st.markdown("<h3 style='color:#00BFFF; text-align:center;'>🔐 Reset Password</h3>", unsafe_allow_html=True)
+                    st.markdown("<p style='color:#c9d1d9; text-align:center;'>Enter your registered email to receive an OTP</p>", unsafe_allow_html=True)
+
+                    email_input = st.text_input("📧 Email Address", key="reset_email_input")
+                    render_notification_login()
+
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.button("📤 Send OTP", key="send_otp_btn", use_container_width=True):
+                            st.session_state.show_login_notification = False
+                            if email_input.strip():
+                                if get_user_by_email(email_input.strip()):
+                                    otp = generate_otp()
+                                    success = send_email_otp(email_input.strip(), otp)
+                                    if success:
+                                        st.session_state.reset_email = email_input.strip()
+                                        st.session_state.reset_otp = otp
+                                        st.session_state.reset_otp_time = time.time()
+                                        st.session_state.reset_stage = "verify_otp"
+                                        st.rerun()
+                                    else:
+                                        show_notification_login("error", "❌ Failed to send OTP. Please try again.")
+                                        st.rerun()
+                                else:
+                                    show_notification_login("error", "❌ Email not found. Please register first.")
+                                    st.rerun()
+                            else:
+                                show_notification_login("warning", "⚠️ Please enter your email address.")
+                                st.rerun()
+
+                    with col2:
+                        if st.button("↩️ Back to Login", key="back_to_login_1", use_container_width=True):
+                            st.session_state.reset_stage = "none"
+                            st.session_state.show_login_notification = False
+                            st.rerun()
+
+                elif st.session_state.reset_stage == "verify_otp":
+                    st.markdown("<h3 style='color:#00BFFF; text-align:center;'>📩 Verify OTP</h3>", unsafe_allow_html=True)
+                    st.markdown(f"<p style='color:#c9d1d9; text-align:center;'>Enter the 6-digit OTP sent to <strong>{st.session_state.reset_email}</strong></p>", unsafe_allow_html=True)
+
+                    elapsed_time = time.time() - st.session_state.reset_otp_time
+                    remaining_time = max(0, int(180 - elapsed_time))
+
+                    display_timer(remaining_time, expired=(remaining_time == 0), key_suffix="forgot_pw")
+
+                    if remaining_time == 0:
+                        render_notification_login()
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.button("🔄 Resend OTP", key="resend_otp_btn", use_container_width=True):
+                                otp = generate_otp()
+                                success = send_email_otp(st.session_state.reset_email, otp)
+                                if success:
+                                    st.session_state.reset_otp = otp
+                                    st.session_state.reset_otp_time = time.time()
+                                    st.rerun()
+
+                        with col2:
+                            if st.button("↩️ Back to Login", key="back_to_login_expired", use_container_width=True):
+                                st.session_state.reset_stage = "none"
+                                st.rerun()
+                    else:
+                        otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="otp_input", max_chars=6)
+                        render_notification_login()
+
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.button("✅ Verify OTP", key="verify_otp_btn", use_container_width=True):
+                                current_elapsed = time.time() - st.session_state.reset_otp_time
+                                if current_elapsed >= 180:
+                                    show_notification_login("error", "⏱️ OTP has expired. Please request a new one.")
+                                    st.rerun()
+                                elif otp_input.strip() == st.session_state.reset_otp:
+                                    st.session_state.reset_stage = "reset_password"
+                                    st.session_state.show_login_notification = False
+                                    st.rerun()
+                                else:
+                                    show_notification_login("error", "❌ Invalid OTP. Please try again.")
+                                    st.rerun()
+
+                        with col2:
+                            if st.button("↩️ Back to Login", key="back_to_login_2", use_container_width=True):
+                                st.session_state.reset_stage = "none"
+                                st.rerun()
+
+                elif st.session_state.reset_stage == "reset_password":
+                    st.markdown("<h3 style='color:#00BFFF; text-align:center;'>🔐 Reset Password</h3>", unsafe_allow_html=True)
+                    st.markdown("<p style='color:#c9d1d9; text-align:center;'>Enter your new password</p>", unsafe_allow_html=True)
+
+                    new_password = st.text_input("🔑 New Password", type="password", key="new_password_input")
+                    confirm_password = st.text_input("🔑 Confirm Password", type="password", key="confirm_password_input")
+
+                    st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
+                    render_notification_login()
+
+                    if st.button("✅ Reset Password", key="reset_password_btn", use_container_width=True):
+                        if new_password.strip() and confirm_password.strip():
+                            if new_password == confirm_password:
+                                success = update_password_by_email(st.session_state.reset_email, new_password)
+                                if success:
+                                    log_user_action(st.session_state.reset_email, "password_reset")
+                                    st.session_state.reset_stage = "none"
+                                    st.session_state.reset_email = ""
+                                    st.session_state.reset_otp = ""
+                                    st.session_state.reset_otp_time = 0
+                                    show_notification_login("success", "✅ Password reset successful! Please log in again.")
+                                    st.rerun()
+                            else:
+                                show_notification_login("error", "❌ Passwords do not match.")
+                                st.rerun()
+                        else:
+                            show_notification_login("warning", "⚠️ Please fill in both password fields.")
+                            st.rerun()
+
+                    if st.button("↩️ Back to Login", key="back_to_login_3"):
                         st.session_state.reset_stage = "none"
                         st.rerun()
 
-            # ============================================================
-            # FORGOT PASSWORD FLOW - Stage 2: Verify OTP
-            # ============================================================
-            elif st.session_state.reset_stage == "verify_otp":
-                st.markdown("<h3 style='color:#00BFFF; text-align:center;'>📩 Verify OTP</h3>", unsafe_allow_html=True)
-                st.markdown(f"<p style='color:#c9d1d9; text-align:center;'>Enter the 6-digit OTP sent to <strong>{st.session_state.reset_email}</strong></p>", unsafe_allow_html=True)
-
-                # Calculate elapsed and remaining time (server-side)
-                elapsed_time = time.time() - st.session_state.reset_otp_time
-                remaining_time = max(0, int(180 - elapsed_time))
-
-                # Display timer
-                display_timer(remaining_time, expired=(remaining_time == 0), key_suffix="forgot_pw")
-
-                # Check if OTP expired (3 minutes)
-                if remaining_time == 0:
-                    # OTP Expired - Show resend option
-                    render_notification()
-                    notify("error", "⏱️ OTP expired. Please request a new one.")
-
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        if st.button("🔄 Resend OTP", key="resend_otp_btn", use_container_width=True):
-                            # Generate new OTP
-                            otp = generate_otp()
-                            success = send_email_otp(st.session_state.reset_email, otp)
-
-                            if success:
-                                st.session_state.reset_otp = otp
-                                st.session_state.reset_otp_time = time.time()
-                                notify("info", "📨 New OTP sent!")
-                                time.sleep(0.5)
-                                st.rerun()
-                            else:
-                                notify("error", "❌ Failed to send OTP. Please try again.")
-                                st.rerun()
-
-                    with col2:
-                        if st.button("↩️ Back to Login", key="back_to_login_expired", use_container_width=True):
-                            st.session_state.reset_stage = "none"
-                            st.rerun()
-                else:
-                    # OTP still valid - Show verification form
-                    otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="otp_input", max_chars=6)
-
-                    # Render notification area (reserves space)
-                    render_notification()
-
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        if st.button("✅ Verify OTP", key="verify_otp_btn", use_container_width=True):
-                            # Re-check expiry on server side before verifying
-                            current_elapsed = time.time() - st.session_state.reset_otp_time
-                            if current_elapsed >= 180:
-                                notify("error", "⏱️ OTP has expired. Please request a new one.")
-                                st.rerun()
-                            elif otp_input.strip() == st.session_state.reset_otp:
-                                st.session_state.reset_stage = "reset_password"
-                                notify("success", "✅ OTP verified successfully!")
-                                time.sleep(0.5)
-                                st.rerun()
-                            else:
-                                notify("error", "❌ Invalid OTP. Please try again.")
-                                st.rerun()
-
-                    with col2:
-                        if st.button("↩️ Back to Login", key="back_to_login_2", use_container_width=True):
-                            st.session_state.reset_stage = "none"
-                            st.rerun()
-
-            # ============================================================
-            # FORGOT PASSWORD FLOW - Stage 3: Reset Password
-            # ============================================================
-            elif st.session_state.reset_stage == "reset_password":
-                st.markdown("<h3 style='color:#00BFFF; text-align:center;'>🔐 Reset Password</h3>", unsafe_allow_html=True)
-                st.markdown("<p style='color:#c9d1d9; text-align:center;'>Enter your new password</p>", unsafe_allow_html=True)
-
-                new_password = st.text_input("🔑 New Password", type="password", key="new_password_input")
-                confirm_password = st.text_input("🔑 Confirm Password", type="password", key="confirm_password_input")
-
-                st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
-
-                # Render notification area (reserves space)
-                render_notification()
-
-                if st.button("✅ Reset Password", key="reset_password_btn", use_container_width=True):
-                    if new_password.strip() and confirm_password.strip():
-                        if new_password == confirm_password:
-                            success = update_password_by_email(st.session_state.reset_email, new_password)
-
-                            if success:
-                                notify("success", "✅ Password reset successful! Please log in again.")
-
-                                # Log the password reset action
-                                log_user_action(st.session_state.reset_email, "password_reset")
-
-                                # Reset all forgot password session states
-                                st.session_state.reset_stage = "none"
-                                st.session_state.reset_email = ""
-                                st.session_state.reset_otp = ""
-                                st.session_state.reset_otp_time = 0
-
-                                time.sleep(1)
-                                st.rerun()
-                            else:
-                                notify("error", "❌ Failed to reset password. Please try again.")
-                                st.rerun()
-                        else:
-                            notify("error", "❌ Passwords do not match.")
-                            st.rerun()
-                    else:
-                        notify("warning", "⚠️ Please fill in both password fields.")
-                        st.rerun()
-
-                if st.button("↩️ Back to Login", key="back_to_login_3"):
-                    st.session_state.reset_stage = "none"
-                    st.rerun()
-
-        # ---------------- REGISTER TAB ----------------
+        # ============== REGISTER TAB ==============
         with register_tab:
-            # Check if OTP was sent and pending verification
-            if 'pending_registration' in st.session_state:
-                st.markdown("<h3 style='color:#00BFFF; text-align:center;'>📧 Verify Your Email</h3>", unsafe_allow_html=True)
-                st.markdown(f"<p style='color:#c9d1d9; text-align:center;'>Enter the 6-digit OTP sent to <strong>{st.session_state.pending_registration['email']}</strong></p>", unsafe_allow_html=True)
+            with st.container():
+                if 'pending_registration' in st.session_state:
+                    st.markdown("<h3 style='color:#00BFFF; text-align:center;'>📧 Verify Your Email</h3>", unsafe_allow_html=True)
+                    st.markdown(f"<p style='color:#c9d1d9; text-align:center;'>Enter the 6-digit OTP sent to <strong>{st.session_state.pending_registration['email']}</strong></p>", unsafe_allow_html=True)
 
-                # Calculate remaining time
-                from datetime import datetime
-                elapsed = (datetime.now(st.session_state.pending_registration['timestamp'].tzinfo) - st.session_state.pending_registration['timestamp']).total_seconds()
-                remaining = max(0, 180 - int(elapsed))
+                    from datetime import datetime
+                    elapsed = (datetime.now(st.session_state.pending_registration['timestamp'].tzinfo) - st.session_state.pending_registration['timestamp']).total_seconds()
+                    remaining = max(0, 180 - int(elapsed))
 
-                # Display timer
-                display_timer(remaining, expired=(remaining == 0), key_suffix="register")
+                    display_timer(remaining, expired=(remaining == 0), key_suffix="register")
 
-                if remaining == 0:
-                    # OTP Expired
-                    render_notification()
-                    notify("error", "⏱️ OTP expired. Please request a new one.")
-
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        if st.button("🔄 Resend OTP", key="reg_resend_expired_btn", use_container_width=True):
-                            pending = st.session_state.pending_registration
-                            success, message = add_user(pending['username'], pending['password'], pending['email'])
-                            if success:
-                                notify("success", "✅ New OTP sent!")
-                                time.sleep(0.5)
-                                st.rerun()
-                            else:
-                                notify("error", f"❌ {message}")
-                                st.rerun()
-                    with col2:
-                        if st.button("↩️ Start Over", key="reg_start_over_btn", use_container_width=True):
-                            del st.session_state.pending_registration
-                            st.rerun()
-                else:
-                    # OTP still valid
-                    otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="reg_otp_input", max_chars=6)
-
-                    # Render notification area (reserves space)
-                    render_notification()
-
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        if st.button("✅ Verify", key="verify_reg_otp_btn", use_container_width=True):
-                            # Cache username BEFORE calling complete_registration
-                            cached_username = st.session_state.pending_registration['username']
-
-                            # Re-check expiry before verification
-                            current_elapsed = (datetime.now(st.session_state.pending_registration['timestamp'].tzinfo) - st.session_state.pending_registration['timestamp']).total_seconds()
-                            if current_elapsed >= 180:
-                                notify("error", "⏱️ OTP has expired. Please request a new one.")
-                                st.rerun()
-                            else:
-                                success, message = complete_registration(otp_input.strip())
+                    if remaining == 0:
+                        render_notification_register()
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.button("🔄 Resend OTP", key="reg_resend_expired_btn", use_container_width=True):
+                                pending = st.session_state.pending_registration
+                                success, message = add_user(pending['username'], pending['password'], pending['email'])
                                 if success:
-                                    notify("success", message)
-                                    log_user_action(cached_username, "register")
-                                    time.sleep(0.5)
+                                    show_notification_register("success", "✅ New OTP sent!")
                                     st.rerun()
                                 else:
-                                    notify("error", message)
+                                    show_notification_register("error", f"❌ {message}")
                                     st.rerun()
-
-                    with col2:
-                        if st.button("🔄 Resend", key="resend_reg_otp_btn", use_container_width=True):
-                            pending = st.session_state.pending_registration
-                            success, message = add_user(pending['username'], pending['password'], pending['email'])
-                            if success:
-                                notify("info", "📨 New OTP sent successfully!")
-                                time.sleep(0.5)
-                                st.rerun()
-                            else:
-                                notify("error", f"❌ {message}")
-                                st.rerun()
-
-                    with col3:
-                        if st.button("↩️ Back", key="back_to_reg_btn", use_container_width=True):
-                            del st.session_state.pending_registration
-                            st.rerun()
-
-            else:
-                # Normal registration form
-                st.markdown("<h3 style='color:#00BFFF; text-align:center;'>🧾 Register New User</h3>", unsafe_allow_html=True)
-
-                new_email = st.text_input("📧 Email", key="reg_email", placeholder="your@email.com")
-                new_user = st.text_input("👤 Username", key="reg_user")
-                new_pass = st.text_input("🔑 Password", type="password", key="reg_pass")
-                st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
-
-                # Render notification area (reserves space)
-                render_notification()
-
-                if st.button("📧 Register & Send OTP", key="register_btn", use_container_width=True):
-                    if new_email.strip() and new_user.strip() and new_pass.strip():
-                        # Validate before attempting registration
-                        if not is_valid_email(new_email.strip()):
-                            notify("warning", "⚠️ Invalid email format.")
-                            st.rerun()
-                        elif email_exists(new_email.strip()):
-                            notify("error", "🚫 Email already registered.")
-                            st.rerun()
-                        elif username_exists(new_user.strip()):
-                            notify("error", "🚫 Username already exists.")
-                            st.rerun()
-                        else:
-                            success, message = add_user(new_user.strip(), new_pass.strip(), new_email.strip())
-                            if success:
-                                notify("success", message)
-                                time.sleep(0.5)
-                                st.rerun()
-                            else:
-                                notify("error", message)
+                        with col2:
+                            if st.button("↩️ Start Over", key="reg_start_over_btn", use_container_width=True):
+                                del st.session_state.pending_registration
                                 st.rerun()
                     else:
-                        notify("warning", "⚠️ Please fill in all fields (email, username, and password).")
-                        st.rerun()
+                        otp_input = st.text_input("🔢 Enter 6-Digit OTP", key="reg_otp_input", max_chars=6)
+                        render_notification_register()
+
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            if st.button("✅ Verify", key="verify_reg_otp_btn", use_container_width=True):
+                                cached_username = st.session_state.pending_registration['username']
+                                current_elapsed = (datetime.now(st.session_state.pending_registration['timestamp'].tzinfo) - st.session_state.pending_registration['timestamp']).total_seconds()
+                                if current_elapsed >= 180:
+                                    show_notification_register("error", "⏱️ OTP has expired. Please request a new one.")
+                                    st.rerun()
+                                else:
+                                    success, message = complete_registration(otp_input.strip())
+                                    if success:
+                                        log_user_action(cached_username, "register")
+                                        del st.session_state.pending_registration
+                                        show_notification_register("success", message)
+                                        st.rerun()
+                                    else:
+                                        show_notification_register("error", message)
+                                        st.rerun()
+
+                        with col2:
+                            if st.button("🔄 Resend", key="resend_reg_otp_btn", use_container_width=True):
+                                pending = st.session_state.pending_registration
+                                success, message = add_user(pending['username'], pending['password'], pending['email'])
+                                if success:
+                                    show_notification_register("info", "📨 New OTP sent successfully!")
+                                    st.rerun()
+
+                        with col3:
+                            if st.button("↩️ Back", key="back_to_reg_btn", use_container_width=True):
+                                del st.session_state.pending_registration
+                                st.rerun()
+
+                else:
+                    st.markdown("<h3 style='color:#00BFFF; text-align:center;'>🧾 Register New User</h3>", unsafe_allow_html=True)
+
+                    new_email = st.text_input("📧 Email", key="reg_email", placeholder="your@email.com")
+                    new_user = st.text_input("👤 Username", key="reg_user")
+                    new_pass = st.text_input("🔑 Password", type="password", key="reg_pass")
+                    st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
+
+                    render_notification_register()
+
+                    if st.button("📧 Register & Send OTP", key="register_btn", use_container_width=True):
+                        st.session_state.show_register_notification = False
+                        if new_email.strip() and new_user.strip() and new_pass.strip():
+                            if not is_valid_email(new_email.strip()):
+                                show_notification_register("warning", "⚠️ Invalid email format.")
+                                st.rerun()
+                            elif email_exists(new_email.strip()):
+                                show_notification_register("error", "🚫 Email already registered.")
+                                st.rerun()
+                            elif username_exists(new_user.strip()):
+                                show_notification_register("error", "🚫 Username already exists.")
+                                st.rerun()
+                            else:
+                                success, message = add_user(new_user.strip(), new_pass.strip(), new_email.strip())
+                                if success:
+                                    show_notification_register("success", message)
+                                    st.rerun()
+                                else:
+                                    show_notification_register("error", message)
+                                    st.rerun()
+                        else:
+                            show_notification_register("warning", "⚠️ Please fill in all fields (email, username, and password).")
+                            st.rerun()
 
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()
 
-# ------------------- AFTER LOGIN -------------------
+# ================= AFTER LOGIN =================
 if st.session_state.get("authenticated"):
-    st.markdown(
-        f"<h2 style='color:#00BFFF;'>Welcome to HIRELYZER, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>",
-        unsafe_allow_html=True,
-    )
+    st.markdown(f"<h2 style='color:#00BFFF;'>Welcome to HIRELYZER, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>", unsafe_allow_html=True)
 
-    # 🔓 LOGOUT BUTTON
     if st.button("🚪 Logout"):
         log_user_action(st.session_state.get("username", "unknown"), "logout")
-
-        # ✅ Clear all session keys safely
         for key in list(st.session_state.keys()):
             del st.session_state[key]
+        st.rerun()
 
-        st.success("✅ Logged out successfully.")
-        st.rerun()  # Force rerun to prevent stale UI
-
-    # 🔑 GROQ API KEY SECTION (SIDEBAR)
+    # GROQ API KEY SECTION
     st.sidebar.markdown("### 🔑 Groq API Key")
-
-    # ✅ Load saved key from DB
     saved_key = get_user_api_key(st.session_state.username)
     masked_preview = f"****{saved_key[-6:]}" if saved_key else ""
 
-    user_api_key_input = st.sidebar.text_input(
-        "Your Groq API Key (Optional)",
-        placeholder=masked_preview,
-        type="password"
-    )
+    user_api_key_input = st.sidebar.text_input("Your Groq API Key (Optional)", placeholder=masked_preview, type="password")
 
-    # ✅ Save or reuse key
     if user_api_key_input:
         st.session_state["user_groq_key"] = user_api_key_input
         save_user_api_key(st.session_state.username, user_api_key_input)
@@ -1415,72 +916,51 @@ if st.session_state.get("authenticated"):
     else:
         st.sidebar.warning("⚠ Using shared admin key with possible usage limits")
 
-    # 🧹 Clear saved key
     if st.sidebar.button("🗑️ Clear My API Key"):
         st.session_state["user_groq_key"] = None
         save_user_api_key(st.session_state.username, None)
         st.sidebar.success("✅ Cleared saved Groq API key. Now using shared admin key.")
 
-if st.session_state.username == "admin":
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown("<h2 style='color:#00BFFF;'>📊 Admin Dashboard</h2>", unsafe_allow_html=True)
+    # ADMIN DASHBOARD
+    if st.session_state.username == "admin":
+        st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown("<h2 style='color:#00BFFF;'>📊 Admin Dashboard</h2>", unsafe_allow_html=True)
 
-    # Metrics row
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("👤 Total Registered Users", get_total_registered_users())
-    with col2:
-        st.metric("📅 Logins Today (IST)", get_logins_today())
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("👤 Total Registered Users", get_total_registered_users())
+        with col2:
+            st.metric("📅 Logins Today (IST)", get_logins_today())
 
-    # Removed API key usage section (no longer tracked)
-    # Activity log
-    st.markdown("<h3 style='color:#00BFFF;'>📋 Admin Activity Log</h3>", unsafe_allow_html=True)
-    logs = get_all_user_logs()
-    if logs:
-        st.dataframe(
-            {
+        st.markdown("<h3 style='color:#00BFFF;'>📋 Admin Activity Log</h3>", unsafe_allow_html=True)
+        logs = get_all_user_logs()
+        if logs:
+            st.dataframe({
                 "Username": [log[0] for log in logs],
                 "Action": [log[1] for log in logs],
                 "Timestamp": [log[2] for log in logs]
-            },
-            use_container_width=True
-        )
-    else:
-        st.info("No logs found yet.")
+            }, use_container_width=True)
+        else:
+            st.info("No logs found yet.")
 
-    st.divider()
-    st.subheader("📦 Database Backup & Download")
+        st.divider()
+        st.subheader("📦 Database Backup & Download")
 
-    if os.path.exists(DB_PATH):
-        with open(DB_PATH, "rb") as f:
-            st.download_button(
-                "⬇️ Download resume_data.db",
-                data=f,
-                file_name="resume_data_backup.db",
-                mime="application/octet-stream"
-            )
-    else:
-        st.warning("⚠️ No database file found yet.")
-# Always-visible tabs
-tab_labels = [
-    "📊 Dashboard",
-    "🧾 Resume Builder",
-    "💼 Job Search",
-    "📚 Course Recommendation"
-]
+        if os.path.exists(DB_PATH):
+            with open(DB_PATH, "rb") as f:
+                st.download_button("⬇️ Download resume_data.db", data=f, file_name="resume_data_backup.db", mime="application/octet-stream")
+        else:
+            st.warning("⚠️ No database file found yet.")
 
-# Add Admin tab only for admin user
-if st.session_state.username == "admin":
-    tab_labels.append("📁 Admin DB View")
+    # TABS
+    tab_labels = ["📊 Dashboard", "🧾 Resume Builder", "💼 Job Search", "📚 Course Recommendation"]
 
-# Create tabs dynamically
-tabs = st.tabs(tab_labels)
+    if st.session_state.username == "admin":
+        tab_labels.append("📁 Admin DB View")
 
-# Unpack first four (always exist)
-tab1, tab2, tab3, tab4 = tabs[:4]
-
-# Handle optional admin tab
-tab5 = tabs[4] if len(tabs) > 4 else None
+    tabs = st.tabs(tab_labels)
+    tab1, tab2, tab3, tab4 = tabs[:4]
+    tab5 = tabs[4] if len(tabs) > 4 else None
 with tab1:
     st.markdown("""
     <style>

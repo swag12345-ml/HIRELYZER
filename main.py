@@ -253,7 +253,7 @@ if "login_notification" not in st.session_state:
 if "register_notification" not in st.session_state:
     st.session_state.register_notification = {"type": None, "text": None, "expires": 0.0}
 
-def notify(tab, msg_type, text, duration=3.0):
+def notify(tab, msg_type, text, duration=8.0):
     """Show auto-disappearing message for specific tab (login/register)."""
     notification_key = f"{tab}_notification"
     st.session_state[notification_key] = {

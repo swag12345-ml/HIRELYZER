@@ -249,37 +249,38 @@ create_user_table()
 
 # ------------------- Tab-Specific Notification System -------------------
 if "login_notification" not in st.session_state:
-    st.session_state.login_notification = {"type": None, "text": None, "show": False}
+    st.session_state.login_notification = {"type": None, "text": None, "expires": 0.0}
 if "register_notification" not in st.session_state:
-    st.session_state.register_notification = {"type": None, "text": None, "show": False}
+    st.session_state.register_notification = {"type": None, "text": None, "expires": 0.0}
 
-def notify(tab, msg_type, text):
-    """Set notification for specific tab without triggering rerun."""
+def notify(tab, msg_type, text, duration=3.0):
+    """Show auto-disappearing message for specific tab (login/register)."""
     notification_key = f"{tab}_notification"
     st.session_state[notification_key] = {
         "type": msg_type,
         "text": text,
-        "show": True,
+        "expires": time.time() + duration,
     }
 
 def render_notification(tab):
     """Render notification in a fixed center slot for specific tab (prevents button shifting)."""
     notification_key = f"{tab}_notification"
-    notif = st.session_state.get(notification_key, {"type": None, "text": None, "show": False})
+    notif = st.session_state[notification_key]
 
-    # Create placeholder for consistent spacing
-    notif_placeholder = st.empty()
-
-    if notif.get("show") and notif.get("type"):
-        with notif_placeholder.container():
-            if notif["type"] == "success":
-                st.success(notif["text"])
-            elif notif["type"] == "error":
-                st.error(notif["text"])
-            elif notif["type"] == "warning":
-                st.warning(notif["text"])
-            elif notif["type"] == "info":
-                st.info(notif["text"])
+    # Always reserve space for notification (60px height)
+    if notif["type"] and time.time() < notif["expires"]:
+        # Show active notification
+        if notif["type"] == "success":
+            st.success(notif["text"])
+        elif notif["type"] == "error":
+            st.error(notif["text"])
+        elif notif["type"] == "warning":
+            st.warning(notif["text"])
+        elif notif["type"] == "info":
+            st.info(notif["text"])
+    else:
+        # Reserve space with empty div to prevent layout shift
+        st.markdown("<div style='height:60px;'></div>", unsafe_allow_html=True)
 
 def display_timer(remaining_seconds, expired=False, key_suffix=""):
     """
@@ -1083,9 +1084,13 @@ if not st.session_state.get("authenticated", False):
                         if saved_key:
                             st.session_state["user_groq_key"] = saved_key
                         log_user_action(st.session_state.username, "login")
+
+                        notify("login", "success", "✅ Login successful!")
+                        time.sleep(3.0)
                         st.rerun()
                     else:
                         notify("login", "error", "❌ Invalid credentials. Please try again.")
+                        st.rerun()
 
                 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -1120,13 +1125,19 @@ if not st.session_state.get("authenticated", False):
                                     st.session_state.reset_otp = otp
                                     st.session_state.reset_otp_time = time.time()
                                     st.session_state.reset_stage = "verify_otp"
+
+                                    notify("login", "success", "✅ OTP sent successfully to your email!")
+                                    time.sleep(0.5)
                                     st.rerun()
                                 else:
                                     notify("login", "error", "❌ Failed to send OTP. Please try again.")
+                                    st.rerun()
                             else:
                                 notify("login", "error", "❌ Email not found. Please register first.")
+                                st.rerun()
                         else:
                             notify("login", "warning", "⚠️ Please enter your email address.")
+                            st.rerun()
 
                 with col2:
                     if st.button("↩️ Back to Login", key="back_to_login_1", use_container_width=True):
@@ -1163,9 +1174,12 @@ if not st.session_state.get("authenticated", False):
                             if success:
                                 st.session_state.reset_otp = otp
                                 st.session_state.reset_otp_time = time.time()
+                                notify("login", "info", "📨 New OTP sent!")
+                                time.sleep(0.5)
                                 st.rerun()
                             else:
                                 notify("login", "error", "❌ Failed to send OTP. Please try again.")
+                                st.rerun()
 
                     with col2:
                         if st.button("↩️ Back to Login", key="back_to_login_expired", use_container_width=True):
@@ -1185,11 +1199,15 @@ if not st.session_state.get("authenticated", False):
                             current_elapsed = time.time() - st.session_state.reset_otp_time
                             if current_elapsed >= 180:
                                 notify("login", "error", "⏱️ OTP has expired. Please request a new one.")
+                                st.rerun()
                             elif otp_input.strip() == st.session_state.reset_otp:
                                 st.session_state.reset_stage = "reset_password"
+                                notify("login", "success", "✅ OTP verified successfully!")
+                                time.sleep(0.5)
                                 st.rerun()
                             else:
                                 notify("login", "error", "❌ Invalid OTP. Please try again.")
+                                st.rerun()
 
                     with col2:
                         if st.button("↩️ Back to Login", key="back_to_login_2", use_container_width=True):
@@ -1217,6 +1235,8 @@ if not st.session_state.get("authenticated", False):
                             success = update_password_by_email(st.session_state.reset_email, new_password)
 
                             if success:
+                                notify("login", "success", "✅ Password reset successful! Please log in again.")
+
                                 # Log the password reset action
                                 log_user_action(st.session_state.reset_email, "password_reset")
 
@@ -1226,14 +1246,17 @@ if not st.session_state.get("authenticated", False):
                                 st.session_state.reset_otp = ""
                                 st.session_state.reset_otp_time = 0
 
-                                notify("login", "success", "✅ Password reset successful! Please log in again.")
+                                time.sleep(1)
                                 st.rerun()
                             else:
                                 notify("login", "error", "❌ Failed to reset password. Please try again.")
+                                st.rerun()
                         else:
                             notify("login", "error", "❌ Passwords do not match.")
+                            st.rerun()
                     else:
                         notify("login", "warning", "⚠️ Please fill in both password fields.")
+                        st.rerun()
 
                 if st.button("↩️ Back to Login", key="back_to_login_3"):
                     st.session_state.reset_stage = "none"
@@ -1265,9 +1288,12 @@ if not st.session_state.get("authenticated", False):
                             pending = st.session_state.pending_registration
                             success, message = add_user(pending['username'], pending['password'], pending['email'])
                             if success:
+                                notify("register", "success", "✅ New OTP sent!")
+                                time.sleep(0.5)
                                 st.rerun()
                             else:
                                 notify("register", "error", f"❌ {message}")
+                                st.rerun()
                     with col2:
                         if st.button("↩️ Start Over", key="reg_start_over_btn", use_container_width=True):
                             del st.session_state.pending_registration
@@ -1293,20 +1319,25 @@ if not st.session_state.get("authenticated", False):
                             else:
                                 success, message = complete_registration(otp_input.strip())
                                 if success:
-                                    log_user_action(cached_username, "register")
-                                    del st.session_state.pending_registration
                                     notify("register", "success", message)
+                                    log_user_action(cached_username, "register")
+                                    time.sleep(0.5)
+                                    st.rerun()
                                 else:
                                     notify("register", "error", message)
+                                    st.rerun()
 
                     with col2:
                         if st.button("🔄 Resend", key="resend_reg_otp_btn", use_container_width=True):
                             pending = st.session_state.pending_registration
                             success, message = add_user(pending['username'], pending['password'], pending['email'])
                             if success:
+                                notify("register", "info", "📨 New OTP sent successfully!")
+                                time.sleep(0.5)
                                 st.rerun()
                             else:
                                 notify("register", "error", f"❌ {message}")
+                                st.rerun()
 
                     with col3:
                         if st.button("↩️ Back", key="back_to_reg_btn", use_container_width=True):
@@ -1346,6 +1377,9 @@ if not st.session_state.get("authenticated", False):
                                 unsafe_allow_html=True
                             )
                         st.session_state.last_validated_email = new_email
+                        # Auto-hide after 3 seconds by clearing after delay
+                        time.sleep(3)
+                        email_validation_placeholder.empty()
                 elif not new_email:
                     email_validation_placeholder.empty()
                     st.session_state.last_validated_email = ""
@@ -1372,6 +1406,8 @@ if not st.session_state.get("authenticated", False):
                                 unsafe_allow_html=True
                             )
                         st.session_state.last_validated_username = new_user
+                        time.sleep(3)
+                        username_validation_placeholder.empty()
                 elif not new_user:
                     username_validation_placeholder.empty()
                     st.session_state.last_validated_username = ""
@@ -1399,6 +1435,8 @@ if not st.session_state.get("authenticated", False):
                                 unsafe_allow_html=True
                             )
                         st.session_state.last_validated_password = new_pass
+                        time.sleep(3)
+                        password_validation_placeholder.empty()
                 elif not new_pass:
                     password_validation_placeholder.empty()
                     st.session_state.last_validated_password = ""
@@ -1411,18 +1449,25 @@ if not st.session_state.get("authenticated", False):
                         # Validate before attempting registration
                         if not is_valid_email(new_email.strip()):
                             notify("register", "warning", "⚠️ Invalid email format.")
+                            st.rerun()
                         elif email_exists(new_email.strip()):
                             notify("register", "error", "🚫 Email already registered.")
+                            st.rerun()
                         elif username_exists(new_user.strip()):
                             notify("register", "error", "🚫 Username already exists.")
+                            st.rerun()
                         else:
                             success, message = add_user(new_user.strip(), new_pass.strip(), new_email.strip())
                             if success:
+                                notify("register", "success", message)
+                                time.sleep(0.5)
                                 st.rerun()
                             else:
                                 notify("register", "error", message)
+                                st.rerun()
                     else:
                         notify("register", "warning", "⚠️ Please fill in all fields (email, username, and password).")
+                        st.rerun()
 
         st.markdown("</div>", unsafe_allow_html=True)
 

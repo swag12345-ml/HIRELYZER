@@ -1351,7 +1351,7 @@ if not st.session_state.get("authenticated", False):
                 # Email input with live validation
                 new_email = st.text_input("📧 Email", key="reg_email", placeholder="your@email.com")
 
-                # Email validation placeholder with fixed height (prevents button shifting)
+                # Email validation placeholder (using st.empty for dynamic updates)
                 email_validation_placeholder = st.empty()
 
                 # Check if email changed and validate
@@ -1359,37 +1359,35 @@ if not st.session_state.get("authenticated", False):
                     if not is_valid_email(new_email.strip()):
                         with email_validation_placeholder:
                             st.markdown(
-                                '<div class="slide-message warn-msg" style="min-height:50px;"><span class="slide-message-text">⚠️ Invalid email format.</span></div>',
+                                '<div class="slide-message warn-msg"><span class="slide-message-text">⚠️ Invalid email format.</span></div>',
                                 unsafe_allow_html=True
                             )
                         st.session_state.last_validated_email = new_email
                     elif email_exists(new_email.strip()):
                         with email_validation_placeholder:
                             st.markdown(
-                                '<div class="slide-message error-msg" style="min-height:50px;"><span class="slide-message-text">❌ Email already registered.</span></div>',
+                                '<div class="slide-message error-msg"><span class="slide-message-text">❌ Email already registered.</span></div>',
                                 unsafe_allow_html=True
                             )
                         st.session_state.last_validated_email = new_email
                     else:
                         with email_validation_placeholder:
                             st.markdown(
-                                '<div class="slide-message success-msg" style="min-height:50px;"><span class="slide-message-text">✅ Email is available.</span></div>',
+                                '<div class="slide-message success-msg"><span class="slide-message-text">✅ Email is available.</span></div>',
                                 unsafe_allow_html=True
                             )
                         st.session_state.last_validated_email = new_email
+                        # Auto-hide after 3 seconds by clearing after delay
+                        time.sleep(3)
+                        email_validation_placeholder.empty()
                 elif not new_email:
+                    email_validation_placeholder.empty()
                     st.session_state.last_validated_email = ""
-                    with email_validation_placeholder:
-                        st.markdown('<div style="min-height:50px;"></div>', unsafe_allow_html=True)
-                else:
-                    # Reserve space even when not showing message
-                    with email_validation_placeholder:
-                        st.markdown('<div style="min-height:50px;"></div>', unsafe_allow_html=True)
 
                 # Username input with live validation
                 new_user = st.text_input("👤 Username", key="reg_user")
 
-                # Username validation placeholder with fixed height
+                # Username validation placeholder
                 username_validation_placeholder = st.empty()
 
                 # Check if username changed and validate
@@ -1397,31 +1395,28 @@ if not st.session_state.get("authenticated", False):
                     if username_exists(new_user.strip()):
                         with username_validation_placeholder:
                             st.markdown(
-                                '<div class="slide-message error-msg" style="min-height:50px;"><span class="slide-message-text">❌ Username already exists.</span></div>',
+                                '<div class="slide-message error-msg"><span class="slide-message-text">❌ Username already exists.</span></div>',
                                 unsafe_allow_html=True
                             )
                         st.session_state.last_validated_username = new_user
                     else:
                         with username_validation_placeholder:
                             st.markdown(
-                                '<div class="slide-message success-msg" style="min-height:50px;"><span class="slide-message-text">✅ Username is available.</span></div>',
+                                '<div class="slide-message success-msg"><span class="slide-message-text">✅ Username is available.</span></div>',
                                 unsafe_allow_html=True
                             )
                         st.session_state.last_validated_username = new_user
+                        time.sleep(3)
+                        username_validation_placeholder.empty()
                 elif not new_user:
+                    username_validation_placeholder.empty()
                     st.session_state.last_validated_username = ""
-                    with username_validation_placeholder:
-                        st.markdown('<div style="min-height:50px;"></div>', unsafe_allow_html=True)
-                else:
-                    # Reserve space even when not showing message
-                    with username_validation_placeholder:
-                        st.markdown('<div style="min-height:50px;"></div>', unsafe_allow_html=True)
 
                 # Password input with live validation
                 new_pass = st.text_input("🔑 Password", type="password", key="reg_pass")
                 st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
 
-                # Password validation placeholder with fixed height
+                # Password validation placeholder
                 password_validation_placeholder = st.empty()
 
                 # Check if password changed and validate
@@ -1429,25 +1424,22 @@ if not st.session_state.get("authenticated", False):
                     if not is_strong_password(new_pass):
                         with password_validation_placeholder:
                             st.markdown(
-                                '<div class="slide-message warn-msg" style="min-height:50px;"><span class="slide-message-text">⚠️ Password must be at least 8 characters and strong.</span></div>',
+                                '<div class="slide-message warn-msg"><span class="slide-message-text">⚠️ Password must be at least 8 characters and strong.</span></div>',
                                 unsafe_allow_html=True
                             )
                         st.session_state.last_validated_password = new_pass
                     else:
                         with password_validation_placeholder:
                             st.markdown(
-                                '<div class="slide-message success-msg" style="min-height:50px;"><span class="slide-message-text">✅ Strong password.</span></div>',
+                                '<div class="slide-message success-msg"><span class="slide-message-text">✅ Strong password.</span></div>',
                                 unsafe_allow_html=True
                             )
                         st.session_state.last_validated_password = new_pass
+                        time.sleep(3)
+                        password_validation_placeholder.empty()
                 elif not new_pass:
+                    password_validation_placeholder.empty()
                     st.session_state.last_validated_password = ""
-                    with password_validation_placeholder:
-                        st.markdown('<div style="min-height:50px;"></div>', unsafe_allow_html=True)
-                else:
-                    # Reserve space even when not showing message
-                    with password_validation_placeholder:
-                        st.markdown('<div style="min-height:50px;"></div>', unsafe_allow_html=True)
 
                 # Render notification area (reserves space)
                 render_notification("register")

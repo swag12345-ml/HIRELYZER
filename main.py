@@ -1495,8 +1495,8 @@ if st.session_state.get("authenticated"):
     #######st.sidebar.markdown("### 🔑 Groq API Key")#########
 
     # ✅ Load saved key from DB
-    saved_key = get_user_api_key(st.session_state.username)
-    masked_preview = f"****{saved_key[-6:]}" if saved_key else ""
+    #####saved_key = get_user_api_key(st.session_state.username)#####
+    #####masked_preview = f"****{saved_key[-6:]}" if saved_key else ""#####
 
     #####user_api_key_input = st.sidebar.text_input(
         ####"Your Groq API Key (Optional)",#####
@@ -1505,20 +1505,20 @@ if st.session_state.get("authenticated"):
     ###)##########
 
     # ✅ Save or reuse key
-    if user_api_key_input:
-        st.session_state["user_groq_key"] = user_api_key_input
-        save_user_api_key(st.session_state.username, user_api_key_input)
+    #####if user_api_key_input:#####
+    ######   st.session_state["user_groq_key"] = user_api_key_input######
+    ######    save_user_api_key(st.session_state.username, user_api_key_input)######
         #####st.sidebar.success("✅ New key saved and in use.")######
-    elif saved_key:
-        st.session_state["user_groq_key"] = saved_key
+    ######elif saved_key:#$#####
+    ######    st.session_state["user_groq_key"] = saved_key######
         ####st.sidebar.info(f"ℹ️ Using your previously saved API key ({masked_preview})")######
-    else:
+    #######else:#######
         ####st.sidebar.warning("⚠ Using shared admin key with possible usage limits")######
 
     # 🧹 Clear saved key
     ###if st.sidebar.button("🗑️ Clear My API Key"):#####
-        st.session_state["user_groq_key"] = None
-        save_user_api_key(st.session_state.username, None)
+    #####    st.session_state["user_groq_key"] = None#####
+        ######save_user_api_key(st.session_state.username, None)######
         ###st.sidebar.success("✅ Cleared saved Groq API key. Now using shared admin key.")###
 
 if st.session_state.username == "admin":

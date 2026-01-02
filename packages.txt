@@ -1,6 +1,5 @@
 libgl1
 poppler-utils
 tesseract-ocr
-default-jre
 libcairo2-dev
 pkg-config

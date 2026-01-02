@@ -3725,7 +3725,6 @@ with tab1:
     else:           
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
 
-# ---------------- Sidebar (ONLY in Tab 2) ----------------
 from xhtml2pdf import pisa
 from io import BytesIO
 
@@ -6264,98 +6263,204 @@ with tab2:
                 normalized_project_entries.append("Placeholder Project")
 
             enhance_prompt = f"""
-            You are a professional, unbiased resume optimization specialist. Create an ATS-friendly resume that uses inclusive, neutral language and avoids gendered or culturally biased terms.
+            You are a professional and unbiased Resume Optimization Specialist with deep knowledge of ATS systems,
+            industry hiring standards, and professional resume writing conventions. Your goal is to enhance the
+            provided resume data for the role:
+            "{st.session_state['job_title']}" — ensuring strong ATS alignment, linguistic precision, and
+            real-world industry relevance.
 
-            ROLE-SPECIFIC ENHANCEMENT for: "{st.session_state['job_title']}"
-            Enhance all sections to align precisely with this role's industry standards, required competencies, and professional expectations.
+            ROLE-SPECIFIC INSTRUCTION:
+            - Tailor every section strictly toward the competencies, technical skills, and outcomes expected
+              for "{st.session_state['job_title']}".
+            - Infer the most essential 6–10 role-defining skills, tools, and responsibilities using industry standards.
+            - Prioritize factual accuracy, clarity, and hiring relevance over creative or generic rewriting.
 
-            LANGUAGE GUIDELINES:
-            - Use neutral, professional terminology
-            - Avoid gendered language (e.g., "rockstar," "ninja," "guru")
-            - Focus on skills, achievements, and measurable outcomes
-            - Use inclusive action verbs: developed, implemented, optimized, collaborated, analyzed, designed, managed, executed
+            LANGUAGE & TONE GUIDELINES:
+            - Maintain neutral, inclusive, and strictly professional tone.
+            - Avoid biased, informal, exaggerated, or marketing-style terms (e.g., “rockstar,” “guru,” “ninja”).
+            - Use concise, quantifiable, outcome-focused language.
+            - Do NOT repeat the same verbs, verb roots, phrases, or semantic actions across different sections.
+            - Focus on measurable impact, scope, and responsibility.
+            - Avoid subjective adjectives like "excellent" or "great" — prefer evidence-based outcomes.
 
-            FORMATTING REQUIREMENTS (CRITICAL - Follow exactly):
-            Each section must start with the exact label followed by a colon and content on the next line.
+            ABSOLUTE PRONOUN & VOICE RESTRICTIONS (NON-NEGOTIABLE):
+            - NEVER use first-person language under any circumstance (I, me, my, we, our).
+            - NEVER use gendered pronouns or possessives
+              (he, she, him, her, his, hers, himself, herself).
+            - NEVER refer to the AI, system, assistant, or writer in the output.
+            - ALL content must be written in third-person, candidate-focused, resume-standard language.
+            - Prefer implicit subject sentences or neutral nouns such as
+              “the candidate”, “the professional”, or role-based references.
+
+            CRITICAL PROFESSIONAL WRITING CONSTRAINT (VERY IMPORTANT):
+            - Treat each resume section as a completely isolated linguistic document.
+            - Once a verb, phrase, or action concept appears in one section, it is forbidden in all other sections,
+              even if reworded, paraphrased, or changed in tense.
+            - Each section (Summary, Experience, Projects, Skills, SoftSkills, Interests) MUST use a distinct
+              vocabulary set and unique action intent.
+            - Any repetition across sections is a strict quality failure.
+
+            GLOBAL ACTION & VERB ISOLATION PROTOCOL (MANDATORY EXECUTION STEP):
+
+            Before generating any resume content, you MUST internally perform the following steps:
+
+            STEP 1 — SECTION VOCABULARY PLANNING (INTERNAL, DO NOT OUTPUT):
+            - Create a private, internal list of verbs and action concepts for EACH section:
+              • Summary_Verb_Set
+              • Experience_Verb_Set
+              • Projects_Verb_Set
+              • Interests_Action_Set
+            - Each list MUST contain only verbs or action concepts unique to that section.
+            - NO verb, verb root, synonym, or semantic action may appear in more than one list.
+
+            STEP 2 — VOCABULARY LOCKING:
+            - Once a verb or action concept is assigned to a section, it becomes permanently locked.
+            - Locked verbs or actions are FORBIDDEN in all other sections, even if paraphrased.
+
+            STEP 3 — ENFORCED GENERATION:
+            - While writing each section, use ONLY the verbs and action concepts from its locked set.
+            - If a conflict is detected, you MUST rewrite the conflicting section completely
+              before producing final output.
+
+            FAILURE CONDITION:
+            - Any repeated verb, verb root, synonym, or semantic action across sections
+              is considered a critical failure and must be corrected before output.
+
+            FORMATTING REQUIREMENTS (FOLLOW EXACTLY):
+            Each section must start with its label followed by a colon and then the formatted content.
 
             SECTION ENHANCEMENT RULES:
 
-            1. SUMMARY: Write 3-4 bullet points highlighting role-specific expertise, quantifiable achievements, and core competencies. Use strong action verbs and avoid subjective adjectives.
+            SECTION-SPECIFIC LANGUAGE ENFORCEMENT:
 
-            2. EXPERIENCE: Structure as lettered entries (A., B., C.) with:
-               - Company Name (Duration) format
-               - Role-specific responsibilities as bullet points
-               - Focus on achievements, not just duties
-               - Include metrics where possible
+            - SUMMARY:
+              Use third-person PRESENT tense ONLY.
+              Every bullet MUST begin with a third-person singular verb
+              (e.g., specializes, positions, focuses, leverages).
+              Do NOT use base verb forms (e.g., specialize, bring, focus).
+              Do NOT use past or future tense.
+              Use high-level professional positioning and strategic identity language only.
+              Do NOT include implementation, execution, or tooling verbs.
 
-            3. PROJECTS: Structure as lettered entries (A., B., C.) with:
+            - EXPERIENCE:
+              Use PAST tense ONLY.
+              Use ownership, accountability, delivery, and responsibility-oriented language
+              (e.g., led, governed, executed, resolved, delivered).
+              Emphasize outcomes, scope, and measurable impact.
+              Do NOT reuse verbs, phrases, or semantic actions from the Summary.
+
+            - PROJECTS:
+              Use PAST tense ONLY.
+              Use deep technical, engineering, and system-design language
+              (e.g., architected, engineered, integrated, optimized, validated).
+              Projects MUST reflect industry-standard, real-world complexity.
+              Avoid basic CRUD apps, toy projects, or academic-only descriptions.
+              Emphasize architecture, constraints, scalability, performance, or security.
+              Do NOT reuse verbs, phrases, or action ideas from Summary or Experience.
+
+            - SKILLS & SOFTSKILLS:
+              Nouns only.
+              List-only format.
+              Do NOT include descriptive or explanatory sentences.
+
+            - INTERESTS:
+              Use professional learning, exploration, contribution, or domain-engagement language.
+              Avoid overlap with Skills or Projects.
+
+            1. SUMMARY:
+               Write 3–4 bullet points defining the candidate’s current professional identity,
+               specialization, and measurable strengths for "{st.session_state['job_title']}". 
+
+            2. EXPERIENCE:
+               Present entries as (A., B., C.) containing:
+               - Company Name (Duration)
+               - Role title
+               - 3–4 bullets focused on achievements, ownership, and measurable impact
+               - Include tools, metrics, scale, and outcomes where applicable
+
+            3. PROJECTS:
+               Present as (A., B., C.) with:
                - Project Title
-               - Tech Stack: (role-relevant technologies only)
+               - Tech Stack: (only relevant, production-grade technologies)
                - Duration: (timeframe)
-               - Description: 4-5 bullet points covering implementation, challenges solved, technologies used, and measurable impact
+               - Description:
+                 - System or feature engineered
+                 - Technical decisions or architectural approach
+                 - Performance, scalability, or security improvement with metrics
+                 - Complexity handled or constraints solved
+                 - Final measurable outcome or professional learning
 
-            4. SKILLS: List 6-8 current, industry-standard technical skills relevant to the role
-            5. SOFTSKILLS: List 6-8 professional competencies using neutral language
-            6. LANGUAGES: List only spoken/written languages
-            7. INTERESTS: List 3-6 professional interests aligned with the role
-            8. CERTIFICATES: List 3-6 real, industry-recognized certifications with provider and duration
+            4. SKILLS:
+               List 6–8 current, job-relevant technical skills only.
 
-            DOMAIN-SPECIFIC REQUIREMENTS:
-            - For Technical Roles: Focus on programming languages, frameworks, tools, methodologies
-            - For Security Roles: Emphasize security tools, compliance standards, threat analysis
-            - For Data Roles: Highlight analytics tools, statistical methods, visualization platforms
-            - For Management Roles: Stress leadership frameworks, process improvement, team development
+            5. SOFTSKILLS:
+               List 6–8 professional traits related to collaboration, ownership,
+               adaptability, communication, and analytical thinking.
 
-            OUTPUT FORMAT (EXACT STRUCTURE REQUIRED):
+            6. LANGUAGES:
+               Include spoken or written languages only.
+
+            7. INTERESTS:
+               Include 3–6 professional or domain-aligned interests.
+
+            8. CERTIFICATES:
+               Include 3–6 verified, industry-recognized certifications with provider and duration.
+
+            DOMAIN-SPECIFIC FOCUS:
+            - Technical Roles → Frameworks, programming languages, CI/CD, cloud platforms, scalability, security.
+            - Security Roles → Threat modeling, SIEM tools, incident response, compliance frameworks.
+            - Data Roles → Python, SQL, analytics, machine learning, visualization, statistics.
+            - Management Roles → Leadership, KPIs, process optimization, strategic execution.
+
+            OUTPUT FORMAT (STRICTLY FOLLOW THIS STRUCTURE):
 
             Summary:
-            • [Achievement-focused bullet point with quantifiable impact]
-            • [Core competency statement with role-specific expertise]
-            • [Professional strength with measurable outcome]
+            • [Third-person present tense, strategic positioning, measurable impact]
+            • [Distinct professional strength with role alignment]
+            • [Unique competency with quantified outcome]
 
             Experience:
             A. [Company Name] ([Duration])
                • [Role Title]
-               • [Specific responsibility with measurable outcome]
-               • [Achievement or project contribution]
-               • [Process improvement or efficiency gain]
+               • [Achievement with metrics]
+               • [Ownership or delivery responsibility]
+               • [Process or performance improvement]
 
             B. [Company Name] ([Duration])
                • [Role Title]
-               • [Specific responsibility with measurable outcome]
-               • [Achievement or project contribution]
+               • [Achievement with measurable outcome]
+               • [Contribution or responsibility]
 
             Projects:
             A. [Project Title]
                • Tech Stack: [Relevant technologies only]
-               • Duration: [Start – End timeframe]
+               • Duration: [Start – End]
                • Description:
-                 - [Specific implementation or feature developed]
-                 - [Technology used and its application context]
-                 - [Performance improvement or problem solved with metrics]
-                 - [Collaborative achievement or technical innovation]
-                 - [Additional impact or learning outcome]
+                 - [System or feature engineered]
+                 - [Technical decisions and implementation]
+                 - [Measured improvement or result]
+                 - [Complexity handled or innovation]
 
             B. [Project Title]
                • Tech Stack: [Relevant technologies only]
-               • Duration: [Start – End timeframe]
+               • Duration: [Start – End]
                • Description:
-                 - [Specific implementation details]
-                 - [Technical challenges addressed]
-                 - [Measurable results or improvements]
-                 - [Skills demonstrated or technologies mastered]
+                 - [Technical scope]
+                 - [Challenges solved]
+                 - [Quantified results]
+                 - [Skills demonstrated]
 
             Skills:
-            [Skill 1], [Skill 2], [Skill 3], [Skill 4], [Skill 5], [Skill 6]
+            [Skill 1], [Skill 2], [Skill 3], [Skill 4], [Skill 5], [Skill 6], [Skill 7], [Skill 8]
 
             SoftSkills:
-            [Professional Competency 1], [Professional Competency 2], [Professional Competency 3], [Professional Competency 4], [Professional Competency 5], [Professional Competency 6]
+            [Soft Skill 1], [Soft Skill 2], [Soft Skill 3], [Soft Skill 4], [Soft Skill 5], [Soft Skill 6]
 
             Languages:
             [Language 1], [Language 2], [Language 3]
 
             Interests:
-            [Professional Interest 1], [Professional Interest 2], [Professional Interest 3], [Professional Interest 4]
+            [Interest 1], [Interest 2], [Interest 3], [Interest 4]
 
             Certificates:
             [Certificate Name] – [Provider] ([Duration/Level])
@@ -6363,7 +6468,8 @@ with tab2:
             [Certificate Name] – [Provider] ([Duration/Level])
 
             ENHANCEMENT SOURCE DATA:
-            Transform and enhance the following user inputs while maintaining accuracy and relevance:
+            Enhance the following inputs while maintaining factual accuracy
+            and logical alignment with "{st.session_state['job_title']}":
 
             Summary:
             {st.session_state['summary']}
@@ -6388,7 +6494,21 @@ with tab2:
 
             Certificates:
             {[cert['name'] for cert in st.session_state['certificate_links'] if cert['name']]}
+
+            FINAL QUALITY & DE-DUPLICATION CHECK (MANDATORY):
+            - Ensure verb tense consistency per section.
+            - Ensure zero verb, phrase, or semantic repetition across sections.
+            - If any conflict exists, rewrite the later section entirely before output.
+
+            IMPORTANT:
+            - Do NOT fabricate companies, experience, or certifications.
+            - Maintain professional, ATS-optimized language.
+            - Output ONLY the formatted resume content without explanations.
             """
+
+
+
+
 
             with st.spinner("🧠 Thinking..."):
                 ai_output = call_llm(enhance_prompt, session=st.session_state)
@@ -6659,7 +6779,6 @@ with tab2:
             <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color:#2f4f6f; text-decoration:none;">
             convert it to PDF using Sejda's free online tool</a>.
             """, unsafe_allow_html=True)
-
 FEATURED_COMPANIES = {
     "tech": [
         {
@@ -8762,6 +8881,241 @@ from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_co
 from llm_manager import call_llm
 import time
 import threading
+import json
+
+
+import json
+import time
+import re
+import streamlit as st
+
+# ======================================================
+# RESUME TEXT EXTRACTION (pdfplumber + OCR fallback)
+# ======================================================
+def extract_resume_text_from_pdf(pdf_file):
+    """
+    Robust resume extraction:
+    - pdfplumber for text-based & two-column resumes
+    - OCR fallback for scanned/image resumes
+    """
+
+    text = ""
+
+    # ---------- PRIMARY: pdfplumber ----------
+    try:
+        import pdfplumber
+        with pdfplumber.open(pdf_file) as pdf:
+            for page in pdf.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text + "\n"
+        text = text.strip()
+    except Exception:
+        text = ""
+
+    # ---------- FALLBACK: OCR ----------
+    if len(text.split()) < 120:
+        try:
+            from pdf2image import convert_from_bytes
+            import pytesseract
+
+            images = convert_from_bytes(pdf_file.getvalue())
+            ocr_text = ""
+            for img in images:
+                ocr_text += pytesseract.image_to_string(img)
+
+            if len(ocr_text.split()) > len(text.split()):
+                text = ocr_text.strip()
+        except Exception:
+            st.warning("OCR fallback failed. Resume may be image-heavy.")
+
+    # ---------- FINAL VALIDATION ----------
+    if not text or len(text.split()) < 80:
+        st.warning("Resume text extraction was weak. Some questions may be generic.")
+        return None
+
+    return text
+
+
+# ======================================================
+# RESUME ANALYSIS USING LLM (IMPROVED PROMPT)
+# ======================================================
+def analyze_resume_with_llm(resume_text):
+    """
+    Analyze resume using LLM to extract INTERVIEW-RELEVANT structured information
+    """
+
+    prompt = f"""
+You are a senior technical interviewer and resume screening expert.
+
+Analyze the resume below and extract ONLY the most interview-relevant information.
+Focus on technical depth, real-world work, and ownership.
+IGNORE generic soft skills unless strongly implied by technical work.
+
+RESUME TEXT:
+{resume_text}
+
+Return ONLY a valid JSON object with this exact structure:
+
+{{
+  "skills": [
+    "Core technical skill clearly demonstrated in projects or experience"
+  ],
+  "projects": [
+    "Project name – what was built, tech used, and key technical challenge solved"
+  ],
+  "experience": [
+    "Role at company – main technical responsibility and impact"
+  ],
+  "technologies": [
+    "Primary technologies actually used (not buzzwords)"
+  ]
+}}
+
+STRICT RULES:
+- Prefer HARD technical skills over soft skills
+- Extract ONLY skills clearly demonstrated
+- Rank items by importance (most interview-worthy first)
+- Avoid generic terms like 'problem solving', 'communication'
+- Projects MUST mention tech used
+- Experience MUST show ownership or responsibility
+- Extract:
+  - 4–6 skills
+  - 2–4 projects
+  - 2–4 experience entries
+  - 4–6 technologies
+- Keep entries concise but specific
+- Output ONLY JSON (no markdown, no explanations)
+
+JSON:
+"""
+
+    try:
+        response = call_llm(prompt, session=st.session_state).strip()
+
+        # Clean markdown if present
+        if response.startswith("```"):
+            response = response.split("```")[1]
+            if response.lower().startswith("json"):
+                response = response[4:]
+            response = response.strip()
+
+        resume_data = json.loads(response)
+
+        return {
+            "skills": resume_data.get("skills", [])[:6],
+            "projects": resume_data.get("projects", [])[:4],
+            "experience": resume_data.get("experience", [])[:4],
+            "technologies": resume_data.get("technologies", [])[:6]
+        }
+
+    except Exception:
+        st.warning("Resume analysis failed. Using fallback data.")
+        return {
+            "skills": ["Basic Programming Knowledge"],
+            "projects": ["Personal Technical Project"],
+            "experience": ["General Technical Experience"],
+            "technologies": ["General Tech Stack"]
+        }
+
+
+# ======================================================
+# RESUME-BASED QUESTION GENERATION
+# ======================================================
+def generate_resume_based_questions(resume_context, role, domain, difficulty, num_questions=3):
+    """
+    Generate interview questions strictly based on resume context
+    """
+
+    skills = resume_context.get("skills", [])
+    projects = resume_context.get("projects", [])
+    experience = resume_context.get("experience", [])
+    technologies = resume_context.get("technologies", [])
+
+    prompt = f"""
+You are a technical interviewer.
+
+Generate EXACTLY {num_questions} interview questions based ONLY on the candidate's resume.
+
+RESUME CONTEXT:
+- Skills: {', '.join(skills[:4])}
+- Projects: {', '.join(projects[:2])}
+- Experience: {', '.join(experience[:2])}
+- Technologies: {', '.join(technologies[:4])}
+
+Target Role: {role}
+Domain: {domain}
+Difficulty: {difficulty}
+
+RULES:
+- Every question MUST reference resume content
+- Ask like a real interviewer
+- Difficulty:
+  - Easy: explanation & fundamentals
+  - Medium: scenarios & decisions
+  - Hard: deep technical trade-offs or design
+- Output ONLY questions
+- One question per line
+- No numbering, no prefixes
+
+Generate now:
+"""
+
+    try:
+        response = call_llm(prompt, session=st.session_state)
+        raw_questions = [q.strip() for q in response.split("\n") if q.strip()]
+
+        cleaned_questions = []
+        for q in raw_questions:
+            q = re.sub(r'^[\d\)\.\-•\*]+\s*', '', q).strip()
+            if len(q) > 15:
+                cleaned_questions.append(q)
+            if len(cleaned_questions) >= num_questions:
+                break
+
+        while len(cleaned_questions) < num_questions:
+            cleaned_questions.append(
+                f"Explain your most significant project and the technical decisions you made."
+            )
+
+        return cleaned_questions[:num_questions]
+
+    except Exception:
+        return [
+            "Walk us through your most technically challenging project.",
+            "What design or implementation decisions did you personally make?",
+            "How does your experience prepare you for this role?"
+        ]
+
+
+# ======================================================
+# RESUME SCANNING ANIMATION
+# ======================================================
+def show_resume_scanning_animation():
+    """Animated resume scanning UI"""
+
+    status = st.empty()
+    progress = st.empty()
+
+    steps = [
+        ("📄 Reading resume...", 0.2),
+        ("🔍 Extracting key skills...", 0.4),
+        ("📊 Evaluating experience...", 0.6),
+        ("🧠 Understanding projects...", 0.8),
+        ("🎯 Preparing interview questions...", 1.0),
+    ]
+
+    for text, value in steps:
+        status.markdown(
+            f"<h4 style='text-align:center;color:#00c3ff'>{text}</h4>",
+            unsafe_allow_html=True
+        )
+        progress.progress(value)
+        time.sleep(0.6)
+
+    status.empty()
+    progress.empty()
+
 
 with tab4:
     # Inject CSS styles (keeping existing styles)
@@ -10114,37 +10468,99 @@ Generate exactly {num_questions} questions now:
                     st.markdown(f"**{title}**")
                     st.video(url)
 
-    # Section 4: UPDATED AI Interview Coach 🤖 with Mock Interview and Enhanced Features
+    # Section 4: UPDATED AI Interview Coach 🤖 with Resume-Based Interviewing
     elif page == "AI Interview Coach 🤖":
         st.subheader("🤖 AI Interview Coach")
-        st.markdown("Practice role-specific interview questions with our AI coach. Get instant feedback on your answers and discover recommended courses!")
+        st.markdown("Upload your resume and practice role-specific interview questions with AI-powered feedback!")
 
         # Create database table if not exists
         create_interview_database()
 
-        # Domain and Role selection
-        st.markdown('<div class="role-selector">', unsafe_allow_html=True)
+        # Initialize resume state
+        if 'resume_file' not in st.session_state:
+            st.session_state.resume_file = None
+        if 'resume_context' not in st.session_state:
+            st.session_state.resume_context = None
+        if 'interview_phase' not in st.session_state:
+            st.session_state.interview_phase = "resume"
+        if 'resume_questions_answered' not in st.session_state:
+            st.session_state.resume_questions_answered = 0
 
-        col1, col2 = st.columns(2)
-        with col1:
-            selected_domain = st.selectbox(
-                "Select Career Domain",
-                options=list(COURSES_BY_CATEGORY.keys()),
-                key="interview_domain_selection"
+        # RESUME UPLOAD SECTION (MANDATORY)
+        st.markdown("---")
+        st.markdown("<h3 style='color: #00c3ff;'>📄 Step 1: Upload Your Resume</h3>", unsafe_allow_html=True)
+
+        if st.session_state.resume_file is None:
+            uploaded_resume = st.file_uploader(
+                "Upload your resume (PDF format)",
+                type=['pdf'],
+                key="resume_uploader"
             )
 
-        with col2:
-            if selected_domain:
-                roles = list(COURSES_BY_CATEGORY[selected_domain].keys())
-                selected_role = st.selectbox(
-                    "Select Target Role",
-                    options=roles,
-                    key="interview_role_selection"
-                )
-            else:
-                selected_role = None
+            if uploaded_resume:
+                with st.spinner("Processing your resume..."):
+                    # Extract text from PDF
+                    resume_text = extract_resume_text_from_pdf(uploaded_resume)
 
-        st.markdown('</div>', unsafe_allow_html=True)
+                    if resume_text and len(resume_text.strip()) > 50:
+                        # Analyze resume
+                        with st.spinner("Analyzing your resume with AI..."):
+                            resume_context = analyze_resume_with_llm(resume_text)
+
+                        # Store in session
+                        st.session_state.resume_file = uploaded_resume.name
+                        st.session_state.resume_context = resume_context
+                        st.session_state.interview_phase = "resume"
+                        st.session_state.resume_questions_answered = 0
+
+                        st.success("✅ Resume uploaded and analyzed successfully!")
+                        
+                        time.sleep(1)
+                        st.rerun()
+                    else:
+                        st.error("Could not extract text from resume. Please ensure it's a valid PDF.")
+        else:
+            st.success(f"✅ Resume loaded: {st.session_state.resume_file}")
+            
+
+            if st.button("🔄 Upload Different Resume"):
+                st.session_state.resume_file = None
+                st.session_state.resume_context = None
+                st.session_state.dynamic_interview_started = False
+                st.session_state.dynamic_interview_completed = False
+                st.rerun()
+
+        # Only show domain/role selection if resume is uploaded
+        if st.session_state.resume_file is not None:
+            st.markdown("---")
+            st.markdown("<h3 style='color: #00c3ff;'>👔 Step 2: Select Target Role</h3>", unsafe_allow_html=True)
+
+            # Domain and Role selection
+            st.markdown('<div class="role-selector">', unsafe_allow_html=True)
+
+            col1, col2 = st.columns(2)
+            with col1:
+                selected_domain = st.selectbox(
+                    "Select Career Domain",
+                    options=list(COURSES_BY_CATEGORY.keys()),
+                    key="interview_domain_selection"
+                )
+
+            with col2:
+                if selected_domain:
+                    roles = list(COURSES_BY_CATEGORY[selected_domain].keys())
+                    selected_role = st.selectbox(
+                        "Select Target Role",
+                        options=roles,
+                        key="interview_role_selection"
+                    )
+                else:
+                    selected_role = None
+
+            st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            selected_domain = None
+            selected_role = None
         
         if selected_domain and selected_role:
             # Initialize interview state
@@ -10179,6 +10595,10 @@ Generate exactly {num_questions} questions now:
                 st.session_state.interview_difficulty = "Medium"
             if 'original_num_questions' not in st.session_state:
                 st.session_state.original_num_questions = 6
+            if 'resume_based_questions' not in st.session_state:
+                st.session_state.resume_based_questions = []
+            if 'generic_questions' not in st.session_state:
+                st.session_state.generic_questions = []
 
             # Start interview setup
             if not st.session_state.dynamic_interview_started:
@@ -10211,21 +10631,40 @@ Generate exactly {num_questions} questions now:
 
                 if st.button("🚀 Start Mock Interview"):
                     with st.spinner("Generating personalized questions using AI..."):
-                        # FIXED: Pass difficulty to question generation
-                        selected_questions = generate_interview_questions_with_llm(
-                            selected_domain,
-                            selected_role,
-                            interview_type,
-                            num_questions,
-                            interview_difficulty  # Now passing difficulty
-                        )
+                        # Generate resume-based questions
+                        resume_based_qs = []
+                        if st.session_state.resume_context:
+                            with st.spinner("Creating resume-based questions..."):
+                                resume_based_qs = generate_resume_based_questions(
+                                    st.session_state.resume_context,
+                                    selected_role,
+                                    selected_domain,
+                                    interview_difficulty,
+                                    num_questions=2
+                                )
 
-                        if selected_questions:
-                            # FIXED: Reset ALL interview state variables properly
-                            # EXACT QUESTION COUNT: Enforce exact number of questions
-                            selected_questions = selected_questions[:num_questions]
+                        # Generate generic questions
+                        generic_qs = []
+                        remaining_questions = num_questions - len(resume_based_qs)
+                        if remaining_questions > 0:
+                            with st.spinner("Creating generic interview questions..."):
+                                generic_qs = generate_interview_questions_with_llm(
+                                    selected_domain,
+                                    selected_role,
+                                    interview_type,
+                                    remaining_questions,
+                                    interview_difficulty
+                                )
 
-                            st.session_state.dynamic_interview_questions = selected_questions
+                        # Combine all questions: resume-based first, then generic
+                        all_questions = resume_based_qs + generic_qs
+                        all_questions = all_questions[:num_questions]
+
+                        if all_questions:
+                            # Reset ALL interview state variables properly
+                            st.session_state.dynamic_interview_questions = all_questions
+                            st.session_state.resume_based_questions = resume_based_qs
+                            st.session_state.generic_questions = generic_qs
                             st.session_state.original_num_questions = num_questions
                             st.session_state.current_dynamic_interview_question = 0
                             st.session_state.dynamic_interview_answers = []
@@ -10234,10 +10673,17 @@ Generate exactly {num_questions} questions now:
                             st.session_state.dynamic_interview_completed = False
                             st.session_state.dynamic_interview_started = True
                             st.session_state.dynamic_answer_submitted = False
-                            st.session_state.current_interview_question_text = selected_questions[0]
+                            st.session_state.current_interview_question_text = all_questions[0]
                             st.session_state.question_timer_start = time.time()
                             st.session_state.timer_seconds = timer_seconds
                             st.session_state.interview_difficulty = interview_difficulty
+                            st.session_state.interview_phase = "resume" if resume_based_qs else "generic"
+
+                            # Show resume scanning animation if resume questions exist
+                            if resume_based_qs:
+                                st.info("🎯 Starting with resume-based questions...")
+                                show_resume_scanning_animation()
+
                             st.success("Questions generated! Starting your mock interview...")
                             time.sleep(1)
                             st.rerun()
@@ -10251,6 +10697,10 @@ Generate exactly {num_questions} questions now:
                 total_questions = len(st.session_state.dynamic_interview_questions)
                 current_index = st.session_state.current_dynamic_interview_question + 1
 
+                # Determine current phase
+                num_resume_qs = len(st.session_state.resume_based_questions)
+                current_phase = "Resume-Based" if current_index <= num_resume_qs else "Generic Interview"
+
                 # Display progress with correct counts in glassmorphism box
                 st.markdown(f"""
                 <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.08) 0%, rgba(0, 195, 255, 0.04) 100%);
@@ -10262,7 +10712,7 @@ Generate exactly {num_questions} questions now:
                             margin: 20px 0;
                             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);">
                     <p style="color: #ffffff; font-size: 16px; margin: 0; font-weight: 500;">
-                        📊 Progress: Answered {questions_answered}/{st.session_state.original_num_questions} questions | Current Index: {current_index} of {st.session_state.original_num_questions}
+                        📊 Progress: Answered {questions_answered}/{st.session_state.original_num_questions} questions | Phase: {current_phase}
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
@@ -10295,10 +10745,14 @@ Generate exactly {num_questions} questions now:
                     progress_value = (st.session_state.timer_seconds - remaining_time) / st.session_state.timer_seconds
                     st.progress(progress_value)
 
-                    # Question display
+                    # Question display with phase indicator
+                    phase_badge = "📄 Resume-Based Question" if current_index <= num_resume_qs else "💼 Generic Interview Question"
                     st.markdown(f"""
                     <div class="quiz-card">
                         <h3 style="color: #00c3ff;">Question {questions_answered + 1} of {st.session_state.original_num_questions}</h3>
+                        <div style="background: rgba(0, 195, 255, 0.15); padding: 8px 12px; border-radius: 6px; margin: 10px 0; display: inline-block;">
+                            <span style="color: #00c3ff; font-weight: 600;">{phase_badge}</span>
+                        </div>
                         <h4 style="color: #ffffff; margin: 15px 0;">Role: {selected_role} | Difficulty: {st.session_state.interview_difficulty}</h4>
                         <p style="font-size: 18px; color: #ffffff; margin: 15px 0;">{question}</p>
                     </div>
@@ -10691,6 +11145,9 @@ Generate exactly {num_questions} questions now:
                     st.session_state.timer_seconds = 120
                     st.session_state.interview_difficulty = "Medium"
                     st.session_state.original_num_questions = 6
+                    st.session_state.resume_based_questions = []
+                    st.session_state.generic_questions = []
+                    st.session_state.interview_phase = "resume"
                     st.rerun()
         else:
             st.info("Please select both a career domain and target role to start the interview practice.")

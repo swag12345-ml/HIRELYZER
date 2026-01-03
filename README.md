@@ -1,4 +1,4 @@
-# 💼 LEXIBOT – Smart Resume AI 🔍🚀  
+# 💼 HIRELYZER – Smart Resume AI 🔍🚀  
 **Transform your career with AI-powered resume analysis, inclusive rewriting, job insights, and more.**
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
@@ -14,7 +14,7 @@
 
 ## 🚀 Project Summary
 
-**LEXIBOT** is a powerful, ethically-aware resume analysis tool designed using cutting-edge LLMs. It helps users:
+**HIRELYZER** is a powerful, ethically-aware resume analysis tool designed using cutting-edge LLMs. It helps users:
 
 - Analyze resumes against job descriptions (ATS scoring)
 - Detect gender-coded bias in language

@@ -182,33 +182,41 @@ def generate_cover_letter_from_resume_builder():
             return
 
         prompt = f"""
-You are a professional cover letter writer.
+You are a world-class executive cover letter writer with 20+ years of experience helping candidates land roles at top-tier companies.
 
-Write a formal and compelling cover letter using the information below. 
-Format it as a real letter with:
-1. Date
-2. Recipient heading
-3. Proper salutation
-4. Three short paragraphs
-5. Professional closing
+Write a compelling, personalized cover letter using the candidate information below.
 
-Ensure you **only include the company name once** in the header or salutation, 
-and avoid repeating it redundantly in the body.
+COVER LETTER STRUCTURE:
+1. **Header** — Date, Hiring Manager, Company Name
+2. **Opening Paragraph** — Hook with specific value proposition; mention the role and why this company specifically
+3. **Core Value Paragraph** — Top 2 achievements from their background (quantified if possible); connect directly to company's likely needs
+4. **Skills-Fit Paragraph** — Bridge candidate skills to the role requirements; show cultural awareness
+5. **Closing Paragraph** — Confident call to action; express enthusiasm; professional closing
 
-### Heading Info:
-{today_date}
-Hiring Manager, {company}, {location}
+TONE: Professional, confident, specific — NOT generic. Avoid clichés like "I am passionate about..." or "I believe I would be a great fit."
+INCLUDE the contact block at the very top: Name, LinkedIn, Email, Phone.
+ENSURE company name appears only once (in the header or salutation).
+LENGTH: 3 short-to-medium paragraphs. Maximum 350 words.
 
-### Candidate Info:
-- Name: {name}
-- Job Title: {job_title}
-- Summary: {summary}
-- Skills: {skills}
+### CANDIDATE DETAILS:
+- Full Name: {name}
+- Job Title Applying For: {job_title}
+- Professional Summary: {summary}
+- Key Skills: {skills}
 - Location: {location}
+- Date: {today_date}
 
-### Instructions:
-- Do not use HTML tags. 
-- Return plain text only.
+### COMPANY DETAILS:
+- Target Company: {company}
+- Candidate LinkedIn: {linkedin}
+- Candidate Email: {email}
+- Candidate Phone: {mobile}
+
+### INSTRUCTIONS:
+- Return PLAIN TEXT ONLY — no HTML, no markdown, no asterisks
+- Do NOT mention company name more than once
+- Make it feel tailored — not templated
+- End with: "Sincerely," followed by the candidate's full name
 """
 
         # ✅ Call LLM
@@ -395,78 +403,957 @@ if "last_validated_password" not in st.session_state:
 # ------------------- CSS Styling -------------------
 st.markdown("""
 <style>
-body, .main {
-    background-color: #0d1117;
-    color: white;
+/* ═══════════════════════════════════════════════════════════════
+   HIRELYZER — Premium Apple-Style Dark Theme
+   Font Stack: SF Pro Display → Segoe UI → Roboto → sans-serif
+   Design Language: Glassmorphism · Soft gradients · Refined motion
+   ═══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=Orbitron:wght@600&display=swap');
+
+:root {
+    --bg-primary:       #080c12;
+    --bg-secondary:     #0e1420;
+    --bg-tertiary:      #141c2b;
+    --surface-01:       rgba(255,255,255,0.04);
+    --surface-02:       rgba(255,255,255,0.07);
+    --surface-hover:    rgba(255,255,255,0.10);
+    --border-subtle:    rgba(255,255,255,0.07);
+    --border-accent:    rgba(99,179,237,0.30);
+    --accent-blue:      #4fa3e3;
+    --accent-cyan:      #38bdf8;
+    --accent-violet:    #818cf8;
+    --accent-emerald:   #34d399;
+    --accent-amber:     #fbbf24;
+    --accent-rose:      #fb7185;
+    --text-primary:     #f0f4f8;
+    --text-secondary:   #94a3b8;
+    --text-muted:       #4a5568;
+    --radius-sm:        8px;
+    --radius-md:        14px;
+    --radius-lg:        20px;
+    --radius-xl:        28px;
+    --shadow-glow-blue: 0 0 30px rgba(79,163,227,0.15);
+    --shadow-card:      0 8px 40px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.06) inset;
+    --font-sans:        -apple-system, BlinkMacSystemFont, "SF Pro Display", "DM Sans", "Segoe UI", Roboto, sans-serif;
+    --transition-fast:  0.18s cubic-bezier(0.4,0,0.2,1);
+    --transition-base:  0.28s cubic-bezier(0.4,0,0.2,1);
+    --transition-slow:  0.45s cubic-bezier(0.4,0,0.2,1);
 }
 
-/* Smooth fade animation for notifications */
+/* ── Base Reset ── */
+html, body, [class*="css"], .stApp {
+    font-family: var(--font-sans) !important;
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+}
+
+/* ── Force unified background — eliminates the horizontal seam glitch ── */
+.stApp > header,
+.stApp [data-testid="stAppViewContainer"],
+.stApp [data-testid="stAppViewBlockContainer"],
+.stApp [data-testid="block-container"],
+.main,
+.main > div,
+section[data-testid="stMain"],
+section[data-testid="stMain"] > div {
+    background-color: var(--bg-primary) !important;
+    background: var(--bg-primary) !important;
+}
+
+/* ── Streamlit top toolbar / header bar — the actual seam source ── */
+header[data-testid="stHeader"],
+header[data-testid="stHeader"] > div,
+header[data-testid="stHeader"] > div > div,
+.stApp header,
+div[data-testid="stToolbar"],
+div[data-testid="stStatusWidget"] {
+    background-color: var(--bg-primary) !important;
+    background: var(--bg-primary) !important;
+    border-bottom: none !important;
+    box-shadow: none !important;
+}
+
+/* ── Remove the decorative top colour bar Streamlit injects ── */
+div[data-testid="stDecoration"],
+#stDecoration {
+    background: var(--bg-primary) !important;
+    background-image: none !important;
+    display: none !important;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb { background: rgba(79,163,227,0.35); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(79,163,227,0.6); }
+
+/* ── Main container ── */
+.main .block-container {
+    padding: 1.5rem 2rem 3rem !important;
+    max-width: 1280px;
+}
+
+/* ══════════════════════════════════════
+   FADE ANIMATIONS
+   ══════════════════════════════════════ */
+@keyframes fadein  { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeout { from { opacity: 1; } to { opacity: 0; } }
+@keyframes fadeSlideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: var(--shadow-card); }
+    50%       { box-shadow: var(--shadow-card), var(--shadow-glow-blue); }
+}
+@keyframes shimmerSlide {
+    0%   { transform: translateX(-100%) skewX(-12deg); }
+    100% { transform: translateX(220%) skewX(-12deg); }
+}
+@keyframes glassShimmer {
+    0%   { transform: translateX(-100%) skewX(-15deg); }
+    100% { transform: translateX(200%) skewX(-15deg); }
+}
+@keyframes slideIn {
+    0%   { transform: translateX(-50px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+@keyframes floatUp {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-6px); }
+}
+
+/* ── Animated cards removed — replaced by premium hero section ── */
+
+/* ══════════════════════════════════════
+   STREAMLIT ALERT TOASTS
+   ══════════════════════════════════════ */
 div.stAlert {
-    border-radius: 12px;
-    padding: 10px 14px;
-    animation: fadein 0.3s, fadeout 0.3s 2.7s;
-    text-align: center;
+    border-radius: var(--radius-md) !important;
+    padding: 12px 18px !important;
+    animation: fadein 0.3s ease, fadeout 0.3s 2.7s ease;
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border-subtle);
+    font-size: 0.875rem;
+    font-family: var(--font-sans) !important;
 }
-@keyframes fadein { from {opacity: 0;} to {opacity: 1;} }
-@keyframes fadeout { from {opacity: 1;} to {opacity: 0;} }
 
+/* ══════════════════════════════════════
+   GLASSMORPHISM CARD — base class
+   ══════════════════════════════════════ */
+.glass-card {
+    background: var(--surface-01);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
+    position: relative;
+    overflow: hidden;
+}
+.glass-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 60%);
+    pointer-events: none;
+    border-radius: inherit;
+}
+.glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-card), 0 0 50px rgba(79,163,227,0.10);
+    border-color: var(--border-accent);
+}
+
+/* ══════════════════════════════════════
+   LOGIN / AUTH CARD
+   ══════════════════════════════════════ */
 .login-card {
-    background: #161b22;
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 0 25px rgba(0,0,0,0.3);
-    transition: all 0.4s ease;
+    background: linear-gradient(160deg,
+        rgba(14,20,32,0.95) 0%,
+        rgba(8,12,18,0.98) 100%);
+    backdrop-filter: blur(32px) saturate(160%);
+    -webkit-backdrop-filter: blur(32px) saturate(160%);
+    border: 1px solid rgba(99,179,237,0.18);
+    border-radius: var(--radius-xl);
+    padding: 28px 32px 36px;
+    box-shadow: var(--shadow-card), 0 0 60px rgba(79,163,227,0.07);
+    transition: all var(--transition-slow);
+    position: relative;
+    overflow: hidden;
+    animation: fadeSlideUp 0.7s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+.login-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(79,163,227,0.06), transparent);
+    animation: shimmerSlide 3.5s ease-in-out infinite;
 }
 .login-card:hover {
-    transform: translateY(-6px) scale(1.01);
-    box-shadow: 0 0 45px rgba(0,255,255,0.25);
+    border-color: rgba(99,179,237,0.32);
+    box-shadow: var(--shadow-card), 0 0 80px rgba(79,163,227,0.12);
 }
-.stTextInput > div > input {
-    background-color: #0d1117;
-    color: white;
-    border: 1px solid #30363d;
-    border-radius: 10px;
-    padding: 0.6em;
+
+/* ══════════════════════════════════════
+   TEXT INPUTS & TEXTAREAS
+   ══════════════════════════════════════ */
+.stTextInput > div > div > input,
+.stTextArea > div > div > textarea,
+.stSelectbox > div > div > div {
+    background: rgba(255,255,255,0.04) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid rgba(255,255,255,0.10) !important;
+    border-radius: var(--radius-sm) !important;
+    font-family: var(--font-sans) !important;
+    font-size: 0.9rem !important;
+    padding: 10px 14px !important;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast) !important;
 }
-.stTextInput > div > input:hover {
-    border: 1px solid #00BFFF;
-    box-shadow: 0 0 8px rgba(0,191,255,0.2);
+.stTextInput > div > div > input:focus,
+.stTextArea > div > div > textarea:focus {
+    border-color: rgba(79,163,227,0.5) !important;
+    box-shadow: 0 0 0 3px rgba(79,163,227,0.12) !important;
+    outline: none !important;
 }
-.stTextInput > label {
-    color: #c9d1d9;
+.stTextInput > div > div > input:hover,
+.stTextArea > div > div > textarea:hover {
+    border-color: rgba(79,163,227,0.28) !important;
 }
+.stTextInput > label,
+.stTextArea > label,
+.stSelectbox > label,
+.stSlider > label,
+.stFileUploader > label {
+    color: var(--text-secondary) !important;
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.03em !important;
+    text-transform: uppercase !important;
+    font-family: var(--font-sans) !important;
+}
+
+/* ══════════════════════════════════════
+   BUTTONS — Primary style
+   ══════════════════════════════════════ */
 .stButton > button {
-    background-color: #238636;
-    color: white;
-    border-radius: 10px;
-    padding: 0.6em 1.5em;
-    border: none;
-    font-weight: bold;
+    background: linear-gradient(135deg,
+        rgba(56,189,248,0.18) 0%,
+        rgba(79,163,227,0.12) 100%) !important;
+    color: var(--accent-cyan) !important;
+    border: 1px solid rgba(56,189,248,0.3) !important;
+    border-radius: var(--radius-sm) !important;
+    font-family: var(--font-sans) !important;
+    font-weight: 600 !important;
+    font-size: 0.875rem !important;
+    letter-spacing: 0.02em !important;
+    padding: 10px 22px !important;
+    backdrop-filter: blur(12px) !important;
+    box-shadow: 0 2px 12px rgba(56,189,248,0.08), inset 0 1px 0 rgba(255,255,255,0.08) !important;
+    transition: all var(--transition-fast) !important;
+    position: relative;
+    overflow: hidden;
 }
 .stButton > button:hover {
-    background-color: #2ea043;
-    box-shadow: 0 0 10px rgba(46,160,67,0.4);
-    transform: scale(1.02);
+    background: linear-gradient(135deg,
+        rgba(56,189,248,0.28) 0%,
+        rgba(79,163,227,0.22) 100%) !important;
+    border-color: rgba(56,189,248,0.55) !important;
+    box-shadow: 0 4px 20px rgba(56,189,248,0.18), inset 0 1px 0 rgba(255,255,255,0.12) !important;
+    transform: translateY(-2px) !important;
+    color: #e0f6ff !important;
 }
+.stButton > button:active {
+    transform: translateY(0px) !important;
+    box-shadow: 0 1px 6px rgba(56,189,248,0.10) !important;
+}
+
+/* ══════════════════════════════════════
+   DOWNLOAD BUTTONS
+   ══════════════════════════════════════ */
+.stDownloadButton > button {
+    background: linear-gradient(135deg,
+        rgba(52,211,153,0.16) 0%,
+        rgba(52,211,153,0.08) 100%) !important;
+    color: var(--accent-emerald) !important;
+    border: 1px solid rgba(52,211,153,0.28) !important;
+    border-radius: var(--radius-sm) !important;
+    font-family: var(--font-sans) !important;
+    font-weight: 600 !important;
+    font-size: 0.875rem !important;
+    transition: all var(--transition-fast) !important;
+}
+.stDownloadButton > button:hover {
+    background: linear-gradient(135deg,
+        rgba(52,211,153,0.26) 0%,
+        rgba(52,211,153,0.16) 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 18px rgba(52,211,153,0.15) !important;
+}
+
+/* ══════════════════════════════════════
+   METRICS
+   ══════════════════════════════════════ */
+div[data-testid="metric-container"] {
+    background: var(--surface-01) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: var(--radius-md) !important;
+    padding: 18px 20px !important;
+    backdrop-filter: blur(16px) !important;
+    transition: all var(--transition-base) !important;
+    animation: fadeSlideUp 0.5s ease forwards;
+}
+div[data-testid="metric-container"]:hover {
+    border-color: var(--border-accent) !important;
+    background: var(--surface-02) !important;
+    transform: translateY(-3px) !important;
+    box-shadow: var(--shadow-glow-blue) !important;
+}
+div[data-testid="metric-container"] label {
+    color: var(--text-secondary) !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+    font-family: var(--font-sans) !important;
+}
+div[data-testid="metric-container"] [data-testid="stMetricValue"] {
+    color: var(--text-primary) !important;
+    font-size: 1.75rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em !important;
+    line-height: 1.2 !important;
+    font-family: var(--font-sans) !important;
+}
+
+/* ══════════════════════════════════════
+   TABS
+   ══════════════════════════════════════ */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 4px !important;
+    background: rgba(255,255,255,0.03) !important;
+    padding: 5px !important;
+    border-radius: var(--radius-md) !important;
+    border: 1px solid var(--border-subtle) !important;
+    backdrop-filter: blur(16px) !important;
+}
+.stTabs [data-baseweb="tab"] {
+    border-radius: var(--radius-sm) !important;
+    color: var(--text-secondary) !important;
+    font-family: var(--font-sans) !important;
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
+    padding: 9px 18px !important;
+    transition: all var(--transition-fast) !important;
+    border: none !important;
+    background: transparent !important;
+}
+.stTabs [aria-selected="true"] {
+    background: linear-gradient(135deg,
+        rgba(56,189,248,0.18) 0%,
+        rgba(79,163,227,0.12) 100%) !important;
+    color: var(--accent-cyan) !important;
+    font-weight: 600 !important;
+    border: 1px solid rgba(56,189,248,0.25) !important;
+    box-shadow: 0 2px 10px rgba(56,189,248,0.12) !important;
+}
+.stTabs [data-baseweb="tab-highlight"] { display: none !important; }
+.stTabs [data-baseweb="tab-panel"] {
+    background: transparent !important;
+    padding: 20px 0 !important;
+}
+
+/* ══════════════════════════════════════
+   DATAFRAME / TABLE
+   ══════════════════════════════════════ */
+.dataframe, .stDataFrame {
+    border-radius: var(--radius-md) !important;
+    overflow: hidden !important;
+    border: 1px solid var(--border-subtle) !important;
+}
+.stDataFrame [data-testid="stDataFrameResizable"] {
+    background: var(--bg-secondary) !important;
+}
+
+/* ══════════════════════════════════════
+   SIDEBAR
+   ══════════════════════════════════════ */
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg,
+        rgba(10,14,22,0.98) 0%,
+        rgba(8,12,18,1) 100%) !important;
+    border-right: 1px solid var(--border-subtle) !important;
+}
+section[data-testid="stSidebar"] .block-container {
+    padding: 1.5rem 1rem !important;
+}
+section[data-testid="stSidebar"] label {
+    color: var(--text-secondary) !important;
+    font-size: 0.8rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    font-weight: 600 !important;
+}
+section[data-testid="stSidebar"] .stTextInput > div > div > input,
+section[data-testid="stSidebar"] .stTextArea > div > div > textarea {
+    background: rgba(255,255,255,0.03) !important;
+    border-color: rgba(255,255,255,0.08) !important;
+}
+
+/* ══════════════════════════════════════
+   EXPANDER
+   ══════════════════════════════════════ */
+.streamlit-expanderHeader {
+    background: var(--surface-01) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: var(--radius-md) !important;
+    color: var(--text-primary) !important;
+    font-family: var(--font-sans) !important;
+    font-weight: 500 !important;
+    transition: all var(--transition-fast) !important;
+}
+.streamlit-expanderHeader:hover {
+    background: var(--surface-hover) !important;
+    border-color: var(--border-accent) !important;
+}
+.streamlit-expanderContent {
+    background: rgba(255,255,255,0.02) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-top: none !important;
+    border-radius: 0 0 var(--radius-md) var(--radius-md) !important;
+}
+
+/* ══════════════════════════════════════
+   SLIDERS
+   ══════════════════════════════════════ */
+.stSlider [data-baseweb="slider"] [role="slider"] {
+    background: var(--accent-cyan) !important;
+    border: 2px solid var(--bg-primary) !important;
+    box-shadow: 0 0 0 3px rgba(56,189,248,0.3) !important;
+}
+.stSlider [data-baseweb="slider"] [data-testid="stTickBar"] > div {
+    background: rgba(56,189,248,0.6) !important;
+}
+
+/* ══════════════════════════════════════
+   FILE UPLOADER
+   ══════════════════════════════════════ */
+.stFileUploader > div {
+    background: var(--surface-01) !important;
+    border: 1.5px dashed rgba(79,163,227,0.3) !important;
+    border-radius: var(--radius-lg) !important;
+    transition: all var(--transition-base) !important;
+}
+.stFileUploader > div:hover {
+    border-color: rgba(79,163,227,0.6) !important;
+    background: rgba(79,163,227,0.04) !important;
+    box-shadow: 0 0 40px rgba(79,163,227,0.07) !important;
+}
+
+/* ══════════════════════════════════════
+   DIVIDER
+   ══════════════════════════════════════ */
+hr {
+    border: none !important;
+    border-top: 1px solid var(--border-subtle) !important;
+    margin: 28px 0 !important;
+}
+
+/* ══════════════════════════════════════
+   HEADINGS
+   ══════════════════════════════════════ */
+h1, h2, h3, h4, h5, h6,
+.stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
+    font-family: var(--font-sans) !important;
+    color: var(--text-primary) !important;
+    letter-spacing: -0.02em !important;
+    font-weight: 700 !important;
+}
+h1, .stMarkdown h1 { font-size: 2rem !important; }
+h2, .stMarkdown h2 { font-size: 1.4rem !important; }
+h3, .stMarkdown h3 {
+    font-size: 1.1rem !important;
+    color: var(--text-secondary) !important;
+    font-weight: 600 !important;
+}
+
+/* ══════════════════════════════════════
+   FEATURE CARDS (sidebar pre-login)
+   ══════════════════════════════════════ */
 .feature-card {
-    background: radial-gradient(circle at top left, #1f2937, #111827);
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: 0 0 20px rgba(0,255,255,0.1);
-    text-align: center;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    color: #fff;
-    margin-bottom: 20px;
+    background: var(--surface-01);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 18px 16px;
+    margin-bottom: 12px;
+    transition: all var(--transition-base);
+    position: relative;
+    overflow: hidden;
+    animation: fadeSlideUp 0.5s ease forwards;
 }
-.feature-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 0 30px rgba(0,255,255,0.4);
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(79,163,227,0.05), transparent);
+    transition: left 0.6s ease;
 }
+.feature-card:hover { transform: translateY(-4px); border-color: var(--border-accent); }
+.feature-card:hover::before { left: 150%; }
 .feature-card h3 {
-    color: #00BFFF;
+    color: var(--accent-cyan) !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    margin: 8px 0 4px !important;
 }
 .feature-card p {
-    color: #c9d1d9;
+    color: var(--text-secondary) !important;
+    font-size: 0.78rem !important;
+    line-height: 1.5 !important;
+    margin: 0 !important;
+}
+
+/* ══════════════════════════════════════
+   SLIDE MESSAGES (inline notifications)
+   ══════════════════════════════════════ */
+.slide-message {
+    position: relative;
+    overflow: hidden;
+    margin: 12px 0;
+    padding: 12px 18px;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    animation: fadein 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.08);
+    width: 100%;
+    box-sizing: border-box;
+    font-family: var(--font-sans) !important;
+    transition: all var(--transition-fast);
+    min-height: 46px;
+}
+.slide-message:hover { transform: translateY(-2px); }
+.slide-message-text { flex: 1; position: relative; z-index: 2; word-wrap: break-word; }
+.success-msg {
+    background: linear-gradient(135deg, rgba(52,211,153,0.15) 0%, rgba(52,211,153,0.05) 100%);
+    border: 1px solid rgba(52,211,153,0.30);
+    color: #6ee7b7;
+}
+.error-msg {
+    background: linear-gradient(135deg, rgba(251,113,133,0.15) 0%, rgba(251,113,133,0.05) 100%);
+    border: 1px solid rgba(251,113,133,0.30);
+    color: #fca5a5;
+}
+.info-msg {
+    background: linear-gradient(135deg, rgba(56,189,248,0.15) 0%, rgba(56,189,248,0.05) 100%);
+    border: 1px solid rgba(56,189,248,0.30);
+    color: #7dd3fc;
+}
+.warn-msg {
+    background: linear-gradient(135deg, rgba(251,191,36,0.15) 0%, rgba(251,191,36,0.05) 100%);
+    border: 1px solid rgba(251,191,36,0.30);
+    color: #fde68a;
+}
+
+/* ══════════════════════════════════════
+   COUNTER GRID (landing page stats)
+   ══════════════════════════════════════ */
+.counter-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 24px 0;
+    max-width: 520px;
+    margin: 0 auto;
+}
+.counter-box {
+    background: var(--surface-01);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 22px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    transition: all var(--transition-base);
+    animation: floatUp 4s ease-in-out infinite;
+}
+.counter-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(56,189,248,0.06), transparent);
+    animation: shimmerSlide 3s infinite;
+}
+.counter-box:hover {
+    transform: translateY(-6px) scale(1.02);
+    border-color: var(--border-accent);
+    box-shadow: 0 12px 40px rgba(56,189,248,0.10);
+}
+.counter-box:nth-child(1) { animation-delay: 0s; }
+.counter-box:nth-child(2) { animation-delay: 0.6s; }
+.counter-box:nth-child(3) { animation-delay: 1.2s; }
+.counter-box:nth-child(4) { animation-delay: 1.8s; }
+.counter-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent-cyan);
+    letter-spacing: -0.03em;
+    line-height: 1;
+    position: relative;
+    z-index: 2;
+    font-family: var(--font-sans);
+}
+.counter-label {
+    margin-top: 6px;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    position: relative;
+    z-index: 2;
+    font-family: var(--font-sans);
+}
+
+/* ══════════════════════════════════════
+   ATS SECTION CARDS (analysis results)
+   ══════════════════════════════════════ */
+.ats-section-header {
+    background: linear-gradient(135deg,
+        rgba(56,189,248,0.14) 0%,
+        rgba(79,163,227,0.08) 100%);
+    border: 1px solid rgba(56,189,248,0.22);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    padding: 12px 18px;
+    font-family: var(--font-sans) !important;
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: var(--accent-cyan);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+.ats-section-body {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-top: none;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    padding: 16px 18px;
+    color: var(--text-secondary);
+    font-family: var(--font-sans) !important;
+    font-size: 0.875rem;
+    line-height: 1.65;
+    margin-bottom: 14px;
+}
+.score-badge {
+    display: inline-flex;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(56,189,248,0.18) 0%, rgba(56,189,248,0.08) 100%);
+    border: 1px solid rgba(56,189,248,0.30);
+    border-radius: 99px;
+    padding: 4px 14px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--accent-cyan);
+    letter-spacing: 0.04em;
+    font-family: var(--font-sans);
+    margin-bottom: 10px;
+}
+
+/* ══════════════════════════════════════
+   WELCOME BANNER (post-login)
+   ══════════════════════════════════════ */
+.welcome-banner {
+    background: linear-gradient(135deg,
+        rgba(14,20,32,0.9) 0%,
+        rgba(10,16,26,0.95) 100%);
+    border: 1px solid rgba(56,189,248,0.15);
+    border-radius: var(--radius-lg);
+    padding: 24px 32px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    animation: fadeSlideUp 0.6s ease forwards;
+    position: relative;
+    overflow: hidden;
+}
+.welcome-banner::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -20%;
+    width: 60%; height: 200%;
+    background: radial-gradient(ellipse, rgba(56,189,248,0.05) 0%, transparent 70%);
+    pointer-events: none;
+}
+.welcome-title {
+    font-family: var(--font-sans) !important;
+    font-size: 1.45rem !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.025em !important;
+    color: var(--text-primary) !important;
+    line-height: 1.3 !important;
+}
+.welcome-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    font-family: var(--font-sans);
+}
+.welcome-username {
+    color: var(--accent-cyan);
+    font-weight: 700;
+}
+
+/* ══════════════════════════════════════
+   ADMIN DASHBOARD
+   ══════════════════════════════════════ */
+.admin-header {
+    background: linear-gradient(135deg,
+        rgba(129,140,248,0.12) 0%,
+        rgba(99,102,241,0.06) 100%);
+    border: 1px solid rgba(129,140,248,0.20);
+    border-radius: var(--radius-md);
+    padding: 16px 24px;
+    margin-bottom: 24px;
+}
+.admin-header h2 {
+    color: var(--accent-violet) !important;
+    margin: 0 !important;
+    font-size: 1.2rem !important;
+}
+
+/* ══════════════════════════════════════
+   SECTION DIVIDER with label
+   ══════════════════════════════════════ */
+.section-label {
+    font-family: var(--font-sans) !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    color: var(--text-muted) !important;
+    margin-bottom: 12px !important;
+    padding-bottom: 8px !important;
+    border-bottom: 1px solid var(--border-subtle) !important;
+}
+
+/* ══════════════════════════════════════
+   SPINNER
+   ══════════════════════════════════════ */
+.stSpinner > div {
+    border-top-color: var(--accent-cyan) !important;
+}
+
+/* ══════════════════════════════════════
+   TIMER DISPLAY
+   ══════════════════════════════════════ */
+.timer-display {
+    background: linear-gradient(135deg,
+        rgba(251,191,36,0.12) 0%,
+        rgba(251,191,36,0.05) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(251,191,36,0.28);
+    border-radius: var(--radius-md);
+    padding: 16px 24px;
+    margin: 18px 0;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(251,191,36,0.08), inset 0 1px 0 rgba(255,255,255,0.06);
+    transition: all var(--transition-base);
+    position: relative;
+    overflow: hidden;
+}
+.timer-display::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(251,191,36,0.08), transparent);
+    animation: shimmerSlide 3s infinite;
+}
+.timer-display:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(251,191,36,0.12); }
+.timer-text {
+    color: var(--accent-amber);
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: var(--font-sans);
+    letter-spacing: 0.04em;
+    position: relative;
+    z-index: 2;
+}
+.timer-expired { 
+    background: linear-gradient(135deg, rgba(251,113,133,0.12) 0%, rgba(251,113,133,0.05) 100%);
+    border-color: rgba(251,113,133,0.28);
+}
+.timer-expired .timer-text { color: var(--accent-rose); }
+
+/* ══════════════════════════════════════
+   BANNER / MARQUEE (tab1 dashboard)
+   ══════════════════════════════════════ */
+.banner-container {
+    width: 100%;
+    height: 60px;
+    background: linear-gradient(90deg,
+        rgba(8,12,18,1) 0%,
+        rgba(14,20,32,0.9) 50%,
+        rgba(8,12,18,1) 100%);
+    border: 1px solid var(--border-subtle);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    position: relative;
+    margin-bottom: 24px;
+    border-radius: var(--radius-md);
+    backdrop-filter: blur(20px);
+}
+.pulse-bar {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: var(--font-sans);
+    color: var(--accent-cyan);
+    white-space: nowrap;
+    letter-spacing: 0.04em;
+    animation: glideIn 14s linear infinite;
+}
+.pulse-bar .bar {
+    width: 3px;
+    height: 18px;
+    margin-right: 12px;
+    background: var(--accent-cyan);
+    border-radius: 2px;
+    box-shadow: 0 0 8px var(--accent-cyan);
+    animation: pulse 1s ease-in-out infinite;
+}
+@keyframes glideIn {
+    0%   { left: -40%; opacity: 0; }
+    8%   { opacity: 1; }
+    92%  { opacity: 1; }
+    100% { left: 110%; opacity: 0; }
+}
+@keyframes pulse {
+    0%, 100% { height: 14px; background: var(--accent-cyan); }
+    50%       { height: 22px; background: var(--accent-violet); }
+}
+
+/* ══════════════════════════════════════
+   HEADER BOX (dashboard title area)
+   ══════════════════════════════════════ */
+.header {
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: -0.02em;
+    padding: 20px 28px;
+    color: var(--text-primary);
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg,
+        rgba(14,20,32,0.8) 0%,
+        rgba(10,16,26,0.9) 100%);
+    border: 1px solid rgba(56,189,248,0.18);
+    box-shadow: var(--shadow-card);
+    font-family: var(--font-sans);
+}
+.header span { color: var(--accent-cyan); }
+.header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(56,189,248,0.05), transparent);
+    transition: left 0.7s ease;
+}
+.header:hover::before { left: 150%; }
+
+/* ══════════════════════════════════════
+   ANALYSIS RESULT CARDS
+   ══════════════════════════════════════ */
+.result-card {
+    background: var(--surface-01);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin-bottom: 14px;
+    transition: all var(--transition-base);
+    animation: fadeSlideUp 0.5s ease forwards;
+    position: relative;
+    overflow: hidden;
+}
+.result-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--accent-cyan) 0%, var(--accent-violet) 100%);
+    border-radius: 0 0 0 var(--radius-md);
+}
+.result-card:hover {
+    border-color: var(--border-accent);
+    background: var(--surface-02);
+    transform: translateX(3px);
+}
+
+/* ══════════════════════════════════════
+   DARK STREAMLIT OVERRIDES
+   ══════════════════════════════════════ */
+.stMarkdown p, .stText {
+    color: var(--text-secondary) !important;
+    font-family: var(--font-sans) !important;
+    font-size: 0.9rem !important;
+    line-height: 1.65 !important;
+}
+.stMarkdown strong { color: var(--text-primary) !important; }
+.stMarkdown code {
+    background: rgba(255,255,255,0.06) !important;
+    color: var(--accent-cyan) !important;
+    border-radius: 4px !important;
+    padding: 2px 6px !important;
+    font-size: 0.83rem !important;
+}
+.stInfo, .stSuccess, .stWarning, .stError {
+    border-radius: var(--radius-md) !important;
+    font-family: var(--font-sans) !important;
+    font-size: 0.875rem !important;
+}
+
+/* Caption */
+.stCaption {
+    color: var(--text-muted) !important;
+    font-size: 0.78rem !important;
+    font-family: var(--font-sans) !important;
+}
+
+/* ══════════════════════════════════════
+   FILE UPLOADER INNER LABEL
+   ══════════════════════════════════════ */
+.stFileUploader [data-testid="stFileUploaderDropzone"] {
+    background: rgba(56,189,248,0.02) !important;
+}
+.stFileUploader [data-testid="stFileUploaderDropzone"] span {
+    color: var(--text-secondary) !important;
+    font-family: var(--font-sans) !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -478,8 +1365,37 @@ if not st.session_state.authenticated:
 
     # -------- Sidebar --------
     with st.sidebar:
-        st.markdown("<h1 style='color:#00BFFF;'>Smart Resume AI</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='color:#c9d1d9;'>Transform your career with AI-powered resume analysis, job matching, and smart insights.</p>", unsafe_allow_html=True)
+        st.markdown("""
+        <div style="
+            padding: 16px 4px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            margin-bottom: 16px;
+        ">
+            <div style="
+                font-family: var(--font-sans, -apple-system, sans-serif);
+                font-size: 1.1rem;
+                font-weight: 700;
+                letter-spacing: -0.02em;
+                color: #f0f4f8;
+                line-height: 1.2;
+            ">HIRELYZER</div>
+            <div style="
+                font-size: 0.72rem;
+                font-weight: 600;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: #38bdf8;
+                margin-top: 3px;
+            ">AI Resume Intelligence</div>
+        </div>
+        <p style="
+            color: #64748b;
+            font-size: 0.8rem;
+            line-height: 1.55;
+            font-family: var(--font-sans, -apple-system, sans-serif);
+            margin-bottom: 16px;
+        ">Transform your career with AI-powered resume analysis, job matching, and smart insights.</p>
+        """, unsafe_allow_html=True)
 
         features = [
             ("https://img.icons8.com/fluency/48/resume.png", "Resume Analyzer", "Get feedback, scores, and tips powered by AI along with the biased words detection and rewriting the resume in an inclusive way."),
@@ -498,566 +1414,336 @@ if not st.session_state.authenticated:
             </div>
             """, unsafe_allow_html=True)
 
-    # -------- Animated Cards --------
-    image_url = "https://cdn-icons-png.flaticon.com/512/3135/3135768.png"
-    response = requests.get(image_url)
-    img_base64 = b64encode(response.content).decode()
-
-    st.markdown(f"""
-    <style>
-    .animated-cards {{
-      margin-top: 30px;
-      display: flex;
-      justify-content: center;
-      position: relative;
-      height: 300px;
-    }}
-    .animated-cards img {{
-      position: absolute;
-      width: 240px;
-      animation: splitCards 2.5s ease-in-out infinite alternate;
-      z-index: 1;
-    }}
-    .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
-    .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
-    .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
-    @keyframes splitCards {{
-      0% {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
-      100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
-    }}
-    .card-left {{ --x-offset: -80px; --rot: -5deg; }}
-    .card-center {{ --x-offset: 0px; --rot: 0deg; }}
-    .card-right {{ --x-offset: 80px; --rot: 5deg; }}
-    </style>
-    <div class="animated-cards">
-        <img class="card-left" src="data:image/png;base64,{img_base64}" />
-        <img class="card-center" src="data:image/png;base64,{img_base64}" />
-        <img class="card-right" src="data:image/png;base64,{img_base64}" />
-    </div>
-    """, unsafe_allow_html=True)
-
-    # -------- Counter Section (Updated Layout & Style with glassmorphism and shimmer) --------
-
-    # Fetch counters
+    # -------- Premium Hero Section --------
+    # Fetch live stats for subtle ribbon
     total_users = get_total_registered_users()
     active_logins = get_logins_today()
     stats = get_database_stats()
-
-# Replace static 15 with dynamic count
     resumes_uploaded = stats.get("total_candidates", 0)
+    active_domains = stats.get("unique_domains", 0)
 
-    states_accessed = 29
-
-    glassmorphism_counter_style = """
+    # ── Hero HTML (no script — Streamlit strips <script> from st.markdown) ──
+    st.markdown(f"""
     <style>
-    @keyframes shimmer {
-        0% { background-position: -200% 0; }
-        100% { background-position: 200% 0; }
-    }
-    
-    @keyframes float {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-5px); }
-    }
-
-    .counter-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 250px);
-        column-gap: 40px;
-        row-gap: 25px;
-        justify-content: center;
-        padding: 30px 10px;
-        max-width: 600px;
-        margin: 0 auto;
-    }
-
-    .counter-box {
-        background: linear-gradient(135deg, 
-            rgba(0, 191, 255, 0.1) 0%, 
-            rgba(30, 144, 255, 0.05) 50%, 
-            rgba(0, 191, 255, 0.1) 100%);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border: 1px solid rgba(0, 191, 255, 0.2);
-        border-radius: 16px;
-        width: 100%;
-        height: 120px;
+    .hero-section {{
         display: flex;
         flex-direction: column;
-        justify-content: center;
         align-items: center;
+        justify-content: center;
+        padding: 36px 24px 14px;
         position: relative;
         overflow: hidden;
-        transition: all 0.3s ease;
-        animation: float 3s ease-in-out infinite;
-    }
-
-    .counter-box::before {
+    }}
+    .hero-section::before {{
         content: '';
         position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(0, 191, 255, 0.3),
-            transparent
-        );
-        animation: shimmer 2s infinite;
-    }
-
-    .counter-box:hover {
-        transform: translateY(-8px) scale(1.02);
-        background: linear-gradient(135deg, 
-            rgba(0, 191, 255, 0.15) 0%, 
-            rgba(30, 144, 255, 0.08) 50%, 
-            rgba(0, 191, 255, 0.15) 100%);
-        border: 1px solid rgba(0, 191, 255, 0.4);
-        box-shadow: 
-            0 20px 40px rgba(0, 191, 255, 0.1),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    }
-
-    .counter-box:nth-child(1) { animation-delay: 0s; }
-    .counter-box:nth-child(2) { animation-delay: 0.5s; }
-    .counter-box:nth-child(3) { animation-delay: 1s; }
-    .counter-box:nth-child(4) { animation-delay: 1.5s; }
-
-    .counter-number {
-        font-size: 2.2em;
-        font-weight: bold;
-        color: #00BFFF;
-        margin: 0;
+        top: -60px; left: 50%;
+        transform: translateX(-50%);
+        width: 520px; height: 320px;
+        background: radial-gradient(ellipse, rgba(56,189,248,0.08) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: 0;
+    }}
+    .hero-brand {{
         position: relative;
         z-index: 2;
-        text-shadow: 0 0 20px rgba(0, 191, 255, 0.5);
-    }
-
-    .counter-label {
+        text-align: center;
+        margin-bottom: 18px;
+        animation: fadeSlideUp 0.7s cubic-bezier(0.22,1,0.36,1) both;
+    }}
+    .hero-wordmark {{
+        font-size: 3rem;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        line-height: 1;
+        color: #f0f4f8;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "DM Sans", sans-serif;
+    }}
+    .hero-wordmark span {{
+        background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }}
+    .hero-tagline {{
         margin-top: 8px;
-        font-size: 1em;
-        color: #c9d1d9;
+        font-size: 0.8rem;
+        color: #334155;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        font-weight: 500;
+    }}
+    .hero-pills-container {{
+        display: inline-flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 99px;
+        padding: 6px 10px;
+        margin-bottom: 32px;
         position: relative;
         z-index: 2;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    }
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        animation: fadeSlideUp 1s cubic-bezier(0.22,1,0.36,1) 0.25s both;
+    }}
+    .hero-pill {{
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 11px;
+        border-radius: 99px;
+        background: transparent;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #64748b;
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        letter-spacing: 0.01em;
+        transition: color 0.2s ease;
+    }}
+    .hero-pill:hover {{
+        color: #38bdf8;
+    }}
+    .hero-pill-dot {{
+        width: 5px; height: 5px;
+        border-radius: 50%;
+        background: #38bdf8;
+        opacity: 0.55;
+        flex-shrink: 0;
+    }}
+    .hero-pill-sep {{
+        width: 1px; height: 12px;
+        background: rgba(255,255,255,0.10);
+        flex-shrink: 0;
+        align-self: center;
+    }}
+    .hero-stat-ribbon {{
+        display: inline-flex;
+        gap: 0;
+        justify-content: center;
+        align-items: stretch;
+        position: relative;
+        z-index: 2;
+        margin-bottom: 8px;
+        background: rgba(255,255,255,0.025);
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 16px;
+        padding: 0;
+        overflow: hidden;
+        animation: fadeSlideUp 1.1s cubic-bezier(0.22,1,0.36,1) 0.35s both;
+    }}
+    .hero-stat-item {{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 16px 28px;
+        gap: 2px;
+        transition: background 0.2s ease;
+    }}
+    .hero-stat-item:hover {{
+        background: rgba(56,189,248,0.05);
+    }}
+    .hero-stat-item:not(:last-child) {{
+        border-right: 1px solid rgba(255,255,255,0.07);
+    }}
+    .hero-stat-num {{
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #f0f4f8;
+        letter-spacing: -0.03em;
+        line-height: 1;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    }}
+    .hero-stat-icon {{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px; height: 28px;
+        border-radius: 8px;
+        background: rgba(56,189,248,0.08);
+        border: 1px solid rgba(56,189,248,0.15);
+        margin-bottom: 4px;
+        flex-shrink: 0;
+    }}
+    .hero-stat-lbl {{
+        font-size: 0.65rem;
+        color: #4a5568;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        font-weight: 600;
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }}
     </style>
-    """
 
-    st.markdown(glassmorphism_counter_style, unsafe_allow_html=True)
-
-    st.markdown(f"""
-    <div class="counter-grid">
-        <div class="counter-box">
-            <div class="counter-number">{total_users}</div>
-            <div class="counter-label">Total Users</div>
+    <div class="hero-section">
+        <div class="hero-brand">
+            <div class="hero-wordmark">HIRE<span>LYZER</span></div>
+            <div class="hero-tagline">AI-Powered Resume Intelligence Platform</div>
         </div>
-        <div class="counter-box">
-            <div class="counter-number">{states_accessed}</div>
-            <div class="counter-label">States Accessed</div>
+        <div class="hero-pills-container">
+            <div class="hero-pill"><span class="hero-pill-dot"></span>Bias Detection</div>
+            <div class="hero-pill-sep"></div>
+            <div class="hero-pill"><span class="hero-pill-dot"></span>ATS Scoring</div>
+            <div class="hero-pill-sep"></div>
+            <div class="hero-pill"><span class="hero-pill-dot"></span>Resume Builder</div>
+            <div class="hero-pill-sep"></div>
+            <div class="hero-pill"><span class="hero-pill-dot"></span>Job Matching</div>
+            <div class="hero-pill-sep"></div>
+            <div class="hero-pill"><span class="hero-pill-dot"></span>AI Coach</div>
         </div>
-        <div class="counter-box">
-            <div class="counter-number">{resumes_uploaded}</div>
-            <div class="counter-label">Resumes Uploaded</div>
-        </div>
-        <div class="counter-box">
-            <div class="counter-number">{active_logins}</div>
-            <div class="counter-label">Active Sessions</div>
+        <div class="hero-stat-ribbon">
+            <div class="hero-stat-item">
+                <div class="hero-stat-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="7" r="4" stroke="#38bdf8" stroke-width="1.8" fill="rgba(56,189,248,0.12)"/>
+                        <path d="M4 20c0-4 3.582-7 8-7s8 3 8 7" stroke="#38bdf8" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="hero-stat-num">{total_users}</div>
+                <div class="hero-stat-lbl">Users</div>
+            </div>
+            <div class="hero-stat-item">
+                <div class="hero-stat-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="4" y="2" width="16" height="20" rx="2" stroke="#38bdf8" stroke-width="1.8" fill="rgba(56,189,248,0.08)"/>
+                        <path d="M8 7h8M8 11h8M8 15h5" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="hero-stat-num">{resumes_uploaded}</div>
+                <div class="hero-stat-lbl">Resumes Analysed</div>
+            </div>
+            <div class="hero-stat-item">
+                <div class="hero-stat-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="9" stroke="#38bdf8" stroke-width="1.8" fill="rgba(56,189,248,0.08)"/>
+                        <path d="M12 3v18M3 12h18" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="hero-stat-num">{active_domains}</div>
+                <div class="hero-stat-lbl">Domains</div>
+            </div>
+            <div class="hero-stat-item">
+                <div class="hero-stat-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13 2L4.5 13.5H12L11 22L19.5 10.5H12L13 2Z" stroke="#38bdf8" stroke-width="1.8" stroke-linejoin="round" fill="rgba(56,189,248,0.12)"/>
+                    </svg>
+                </div>
+                <div class="hero-stat-num">{active_logins}</div>
+                <div class="hero-stat-lbl">Active Today</div>
+            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+    # ── Typewriter animation via components.html (scripts work here) ──
+    st.components.v1.html("""
+    <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+    .tw-wrap {
+        text-align: center;
+        padding: 4px 0 8px;
+        width: 100%;
+    }
+    .tw-text {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #38bdf8;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+        letter-spacing: -0.01em;
+        border-right: 2px solid #38bdf8;
+        white-space: nowrap;
+        display: inline-block;
+        max-width: 100%;
+        animation: twBlink 1s ease-in-out infinite;
+        background: transparent;
+        vertical-align: middle;
+    }
+    @keyframes twBlink {
+        0%, 100% { border-color: #38bdf8; }
+        50%       { border-color: transparent; }
+    }
+    </style>
+    <div class="tw-wrap"><span class="tw-text" id="tw">&nbsp;</span></div>
+    <script>
+    (function() {
+        var phrases = [
+            "Analyse resumes with zero bias.",
+            "Score smarter. Hire better.",
+            "AI that reads between the lines.",
+            "Ethical hiring starts here.",
+            "10x faster resume screening."
+        ];
+        var idx = 0, charIdx = 0, deleting = false;
+        var el = document.getElementById('tw');
+        function tick() {
+            var phrase = phrases[idx];
+            if (!deleting) {
+                el.textContent = phrase.slice(0, ++charIdx);
+                if (charIdx === phrase.length) { deleting = true; setTimeout(tick, 1800); return; }
+            } else {
+                el.textContent = phrase.slice(0, --charIdx);
+                if (charIdx === 0) { deleting = false; idx = (idx + 1) % phrases.length; }
+            }
+            setTimeout(tick, deleting ? 38 : 62);
+        }
+        setTimeout(tick, 600);
+    })();
+    </script>
+    """, height=44, scrolling=False)
 
 if not st.session_state.get("authenticated", False):
-
-    # ✅ Futuristic silhouette
-    image_url = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
-    response = requests.get(image_url)
-    img_base64 = b64encode(response.content).decode()
-
-    # ✅ Inject glassmorphism CSS with shimmer effects
-    st.markdown(f"""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
-
-    @keyframes shimmer {{
-        0% {{ background-position: -200% 0; }}
-        100% {{ background-position: 200% 0; }}
-    }}
-
-    @keyframes glassShimmer {{
-        0% {{ transform: translateX(-100%) skewX(-15deg); }}
-        100% {{ transform: translateX(200%) skewX(-15deg); }}
-    }}
-
-    /* ===== Card Shuffle Animation ===== */
-    .animated-cards {{
-      margin-top: 40px;
-      display: flex;
-      justify-content: center;
-      position: relative;
-      height: 260px;
-    }}
-    .animated-cards img {{
-      position: absolute;
-      width: 220px;
-      animation: splitCards 2.5s ease-in-out infinite alternate;
-      z-index: 1;
-      filter: drop-shadow(0 0 15px rgba(0,191,255,0.3));
-    }}
-    .animated-cards img:nth-child(1) {{ animation-delay: 0s; z-index: 3; }}
-    .animated-cards img:nth-child(2) {{ animation-delay: 0.3s; z-index: 2; }}
-    .animated-cards img:nth-child(3) {{ animation-delay: 0.6s; z-index: 1; }}
-
-    @keyframes splitCards {{
-      0%   {{ transform: scale(1) translateX(0) rotate(0deg); opacity: 1; }}
-      100% {{ transform: scale(1) translateX(var(--x-offset)) rotate(var(--rot)); opacity: 1; }}
-    }}
-    .card-left   {{ --x-offset: -80px; --rot: -4deg; }}
-    .card-center {{ --x-offset: 0px;  --rot: 0deg;  }}
-    .card-right  {{ --x-offset: 80px;  --rot: 4deg;  }}
-
-    /* ===== Glassmorphism Login Card ===== */
-    .login-card {{
-      background: linear-gradient(135deg,
-        rgba(0, 191, 255, 0.1) 0%,
-        rgba(30, 144, 255, 0.05) 50%,
-        rgba(0, 191, 255, 0.1) 100%);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(0, 191, 255, 0.2);
-      border-radius: 20px;
-      padding: 25px;
-      box-shadow:
-        0 8px 32px rgba(0, 191, 255, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      font-family: 'Orbitron', sans-serif;
-      color: white;
-      margin-top: 20px;
-      opacity: 0;
-      transform: translateX(-120%);
-      animation: slideInLeft 1.2s ease-out forwards;
-      position: relative;
-      overflow: hidden;
-    }}
-
-    .login-card::before {{
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(0, 191, 255, 0.2),
-        transparent
-      );
-      animation: glassShimmer 3s infinite;
-    }}
-
-    @keyframes slideInLeft {{
-      0%   {{ transform: translateX(-120%); opacity: 0; }}
-      100% {{ transform: translateX(0); opacity: 1; }}
-    }}
-
-    .login-card h2 {{
-      text-align: center;
-      font-size: 1.6rem;
-      text-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
-      margin-bottom: 15px;
-      position: relative;
-      z-index: 2;
-    }}
-    .login-card h2 span {{ color: #00BFFF; }}
-
-    /* ===== Enhanced Message Cards with Consistent Layout ===== */
-    .slide-message {{
-      position: relative;
-      overflow: hidden;
-      margin: 16px 0;
-      padding: 14px 20px;
-      border-radius: 14px;
-      font-weight: 600;
-      font-size: 0.95em;
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      gap: 12px;
-      animation: slideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      box-shadow:
-        0 4px 20px rgba(0, 0, 0, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      width: 100%;
-      max-width: 100%;
-      box-sizing: border-box;
-      line-height: 1.5;
-      font-family: 'Orbitron', sans-serif;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      min-height: 50px;
-    }}
-
-    .slide-message:hover {{
-      transform: translateY(-3px) scale(1.01);
-      box-shadow:
-        0 8px 30px rgba(0, 0, 0, 0.25),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15);
-    }}
-
-    .slide-message::before {{
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.1),
-        transparent
-      );
-      transition: left 0.5s;
-    }}
-
-    .slide-message:hover::before {{
-      left: 100%;
-    }}
-
-    .slide-message svg {{
-      width: 22px;
-      height: 22px;
-      flex-shrink: 0;
-      filter: drop-shadow(0 0 6px currentColor);
-      z-index: 2;
-    }}
-
-    .slide-message-text {{
-      flex: 1;
-      z-index: 2;
-      position: relative;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-      white-space: normal;
-    }}
-
-    .success-msg {{
-      background: linear-gradient(135deg,
-        rgba(0, 255, 127, 0.20) 0%,
-        rgba(0, 255, 127, 0.08) 100%);
-      border: 2px solid rgba(0, 255, 127, 0.4);
-      color: #00FF7F;
-      text-shadow: 0 0 12px rgba(0, 255, 127, 0.4);
-    }}
-
-    .error-msg {{
-      background: linear-gradient(135deg,
-        rgba(255, 99, 71, 0.20) 0%,
-        rgba(255, 99, 71, 0.08) 100%);
-      border: 2px solid rgba(255, 99, 71, 0.4);
-      color: #FF6347;
-      text-shadow: 0 0 12px rgba(255, 99, 71, 0.4);
-    }}
-
-    .info-msg {{
-      background: linear-gradient(135deg,
-        rgba(30, 144, 255, 0.20) 0%,
-        rgba(30, 144, 255, 0.08) 100%);
-      border: 2px solid rgba(30, 144, 255, 0.4);
-      color: #1E90FF;
-      text-shadow: 0 0 12px rgba(30, 144, 255, 0.4);
-    }}
-
-    .warn-msg {{
-      background: linear-gradient(135deg,
-        rgba(255, 215, 0, 0.20) 0%,
-        rgba(255, 215, 0, 0.08) 100%);
-      border: 2px solid rgba(255, 215, 0, 0.4);
-      color: #FFD700;
-      text-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
-    }}
-
-    @keyframes slideIn {{
-      0%   {{
-        transform: translateX(-50px);
-        opacity: 0;
-      }}
-      100% {{
-        transform: translateX(0);
-        opacity: 1;
-      }}
-    }}
-
-    /* ===== Improved Timer Display ===== */
-    .timer-display {{
-      background: linear-gradient(135deg,
-        rgba(255, 215, 0, 0.18) 0%,
-        rgba(255, 165, 0, 0.08) 100%);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border: 2px solid rgba(255, 215, 0, 0.4);
-      border-radius: 14px;
-      padding: 16px 24px;
-      margin: 20px 0;
-      text-align: center;
-      box-shadow:
-        0 4px 20px rgba(255, 215, 0, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
-    }}
-
-    .timer-display::before {{
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 215, 0, 0.2),
-        transparent
-      );
-      animation: glassShimmer 3s infinite;
-    }}
-
-    .timer-display:hover {{
-      box-shadow:
-        0 8px 30px rgba(255, 215, 0, 0.25),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15);
-      transform: translateY(-3px);
-    }}
-
-    .timer-text {{
-      color: #FFD700;
-      font-size: 1.15em;
-      font-weight: bold;
-      font-family: 'Orbitron', sans-serif;
-      text-shadow: 0 0 18px rgba(255, 215, 0, 0.5);
-      position: relative;
-      z-index: 2;
-    }}
-
-    .timer-expired {{
-      background: linear-gradient(135deg,
-        rgba(255, 99, 71, 0.18) 0%,
-        rgba(255, 99, 71, 0.08) 100%);
-      border: 2px solid rgba(255, 99, 71, 0.4);
-    }}
-
-    .timer-expired .timer-text {{
-      color: #FF6347;
-      text-shadow: 0 0 18px rgba(255, 99, 71, 0.5);
-    }}
-
-    /* ===== Glassmorphism Buttons ===== */
-    .stButton>button {{
-      background: linear-gradient(135deg, 
-        rgba(0, 191, 255, 0.2) 0%, 
-        rgba(30, 144, 255, 0.1) 100%);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      color: white;
-      border: 1px solid rgba(0, 191, 255, 0.3);
-      border-radius: 12px;
-      font-family: 'Orbitron', sans-serif;
-      font-weight: bold;
-      padding: 8px 20px;
-      box-shadow: 
-        0 4px 16px rgba(0, 191, 255, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }}
-    
-    .stButton>button::before {{
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.2),
-        transparent
-      );
-      transition: left 0.5s;
-    }}
-    
-    .stButton>button:hover {{
-      transform: translateY(-2px);
-      background: linear-gradient(135deg, 
-        rgba(0, 191, 255, 0.3) 0%, 
-        rgba(30, 144, 255, 0.15) 100%);
-      border: 1px solid rgba(0, 191, 255, 0.5);
-      box-shadow: 
-        0 8px 25px rgba(0, 191, 255, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    }}
-    
-    .stButton>button:hover::before {{
-      left: 100%;
-    }}
-
-    /* ===== Glassmorphism Input Fields ===== */
-    .stTextInput input {{
-      background: linear-gradient(135deg, 
-        rgba(0, 191, 255, 0.08) 0%, 
-        rgba(30, 144, 255, 0.04) 100%);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border: 1px solid rgba(0, 191, 255, 0.2);
-      border-radius: 10px;
-      padding: 10px;
-      color: #E0F7FF;
-      font-family: 'Orbitron', sans-serif;
-      box-shadow: 
-        0 4px 16px rgba(0, 191, 255, 0.05),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
-      transition: all 0.3s ease-in-out;
-    }}
-    .stTextInput input:focus {{
-      outline: none !important;
-      background: linear-gradient(135deg, 
-        rgba(0, 191, 255, 0.12) 0%, 
-        rgba(30, 144, 255, 0.06) 100%);
-      border: 1px solid rgba(0, 191, 255, 0.4);
-      box-shadow: 
-        0 8px 25px rgba(0, 191, 255, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      transform: translateY(-1px);
-    }}
-    .stTextInput label {{
-      font-family: 'Orbitron', sans-serif;
-      color: #00BFFF !important;
-      text-shadow: 0 0 10px rgba(0, 191, 255, 0.3);
-    }}
-    </style>
-
-    <!-- Animated Cards -->
-    <div class="animated-cards">
-        <img class="card-left" src="data:image/png;base64,{img_base64}" />
-        <img class="card-center" src="data:image/png;base64,{img_base64}" />
-        <img class="card-right" src="data:image/png;base64,{img_base64}" />
-    </div>
-    """, unsafe_allow_html=True)
 
     # -------- Login/Register Layout --------
     left, center, right = st.columns([1, 2, 1])
 
     with center:
         st.markdown(
-            "<div class='login-card'><h2 style='text-align:center;'>🔐 Login to <span style='color:#00BFFF;'>HIRELYZER</span></h2>",
+            """<div class='login-card'>
+            <div style='text-align:center; margin-bottom:12px;'>
+                <div style='display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:10px; background:rgba(79,140,255,0.12); border:1px solid rgba(79,140,255,0.22); margin-bottom:12px;'>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="5" y="11" width="14" height="10" rx="2" stroke="#4f8cff" stroke-width="1.5" fill="rgba(79,140,255,0.12)"/>
+                        <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="#4f8cff" stroke-width="1.5" stroke-linecap="round"/>
+                        <circle cx="12" cy="16" r="1.2" fill="#4f8cff"/>
+                    </svg>
+                </div>
+            </div>
+            <h2 id='auth-heading' style='text-align:center; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif; font-size:1.3rem; font-weight:700; letter-spacing:-0.025em; color:#e6edf3; margin:0 0 18px 0;'>Sign in to <span style='color:#4f8cff;'>HIRELYZER</span></h2>
+            <script>
+            (function() {
+                function updateHeading() {
+                    var tabs = window.parent.document.querySelectorAll('[data-baseweb="tab"]');
+                    var heading = window.parent.document.getElementById('auth-heading');
+                    if (!heading || tabs.length < 2) return;
+                    var activeTab = window.parent.document.querySelector('[data-baseweb="tab"][aria-selected="true"]');
+                    if (activeTab) {
+                        var label = activeTab.textContent.trim().toLowerCase();
+                        if (label === 'register') {
+                            heading.innerHTML = 'Register to <span style="color:#4f8cff;">HIRELYZER</span>';
+                        } else {
+                            heading.innerHTML = 'Sign in to <span style="color:#4f8cff;">HIRELYZER</span>';
+                        }
+                    }
+                    tabs.forEach(function(tab) {
+                        tab.addEventListener('click', function() {
+                            setTimeout(updateHeading, 80);
+                        });
+                    });
+                }
+                setTimeout(updateHeading, 400);
+                var observer = new MutationObserver(function() { updateHeading(); });
+                setTimeout(function() {
+                    var tabBar = window.parent.document.querySelector('[data-baseweb="tab-list"]');
+                    if (tabBar) observer.observe(tabBar, { attributes: true, subtree: true, attributeFilter: ['aria-selected'] });
+                }, 600);
+            })();
+            </script>""",
             unsafe_allow_html=True,
         )
 
@@ -1068,15 +1754,15 @@ if not st.session_state.get("authenticated", False):
             # Show login or forgot password flow based on reset_stage
             if st.session_state.reset_stage == "none":
                 # Normal Login UI
-                st.markdown("<h3 style='color:#00BFFF; text-align:center;'>🔐 Login to Your Account</h3>", unsafe_allow_html=True)
+                st.markdown("""<h3 style='color:#9aa4af; text-align:center; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif; font-size:0.82rem; font-weight:500; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:24px;'>Welcome Back</h3>""", unsafe_allow_html=True)
 
-                user = st.text_input("👤 Username or Email", key="login_user")
-                pwd = st.text_input("🔑 Password", type="password", key="login_pass")
+                user = st.text_input("Username or Email", key="login_user")
+                pwd = st.text_input("Password", type="password", key="login_pass")
 
                 # Render notification area (reserves space)
                 render_notification("login")
 
-                if st.button("🚀 Login", key="login_btn", use_container_width=True):
+                if st.button("Sign In", key="login_btn", use_container_width=True):
                     success, saved_key = verify_user(user.strip(), pwd.strip())
                     if success:
                         st.session_state.authenticated = True
@@ -1095,7 +1781,7 @@ if not st.session_state.get("authenticated", False):
                 st.markdown("<br>", unsafe_allow_html=True)
 
                 # Forgot Password Link
-                if st.button("🔑 Forgot Password?", key="forgot_pw_link"):
+                if st.button("Forgot Password?", key="forgot_pw_link"):
                     st.session_state.reset_stage = "request_email"
                     st.rerun()
 
@@ -1103,10 +1789,10 @@ if not st.session_state.get("authenticated", False):
             # FORGOT PASSWORD FLOW - Stage 1: Request Email
             # ============================================================
             elif st.session_state.reset_stage == "request_email":
-                st.markdown("<h3 style='color:#00BFFF; text-align:center;'>🔐 Reset Password</h3>", unsafe_allow_html=True)
+                st.markdown("""<h3 style='color:#9aa4af; text-align:center; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif; font-size:0.82rem; font-weight:500; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:16px;'>Reset Password</h3>""", unsafe_allow_html=True)
                 st.markdown("<p style='color:#c9d1d9; text-align:center;'>Enter your registered email to receive an OTP</p>", unsafe_allow_html=True)
 
-                email_input = st.text_input("📧 Email Address", key="reset_email_input")
+                email_input = st.text_input("Email Address", key="reset_email_input")
 
                 # Render notification area (reserves space)
                 render_notification("login")
@@ -1148,7 +1834,9 @@ if not st.session_state.get("authenticated", False):
             # FORGOT PASSWORD FLOW - Stage 2: Verify OTP
             # ============================================================
             elif st.session_state.reset_stage == "verify_otp":
-                st.markdown("<h3 style='color:#00BFFF; text-align:center;'>📩 Verify OTP</h3>", unsafe_allow_html=True)
+                st.markdown("""<h3 style='color:#e6edf3; text-align:center; font-family:-apple-system,sans-serif; font-size:1.05rem; font-weight:600;'>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align:-3px; margin-right:6px;" xmlns="http://www.w3.org/2000/svg"><path d="M4 4h16v16H4z" rx="2" stroke="#38bdf8" stroke-width="1.5" fill="none"/><path d="M4 9h16" stroke="#38bdf8" stroke-width="1.5"/><path d="M8 4v5" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round"/><path d="M16 4v5" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    Verify OTP</h3>""", unsafe_allow_html=True)
                 st.markdown(f"<p style='color:#c9d1d9; text-align:center;'>Enter the 6-digit OTP sent to <strong>{st.session_state.reset_email}</strong></p>", unsafe_allow_html=True)
 
                 # Calculate elapsed and remaining time (server-side)
@@ -1218,11 +1906,13 @@ if not st.session_state.get("authenticated", False):
             # FORGOT PASSWORD FLOW - Stage 3: Reset Password
             # ============================================================
             elif st.session_state.reset_stage == "reset_password":
-                st.markdown("<h3 style='color:#00BFFF; text-align:center;'>🔐 Reset Password</h3>", unsafe_allow_html=True)
+                st.markdown("""<h3 style='color:#e6edf3; text-align:center; font-family:-apple-system,sans-serif; font-size:1.05rem; font-weight:600;'>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align:-3px; margin-right:6px;" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a4 4 0 0 1 4 4v1H8V7a4 4 0 0 1 4-4z" stroke="#38bdf8" stroke-width="1.5" fill="none"/><rect x="5" y="11" width="14" height="10" rx="2" stroke="#38bdf8" stroke-width="1.5" fill="rgba(56,189,248,0.08)"/><circle cx="12" cy="16" r="1.5" fill="#38bdf8"/></svg>
+                    Set New Password</h3>""", unsafe_allow_html=True)
                 st.markdown("<p style='color:#c9d1d9; text-align:center;'>Enter your new password</p>", unsafe_allow_html=True)
 
-                new_password = st.text_input("🔑 New Password", type="password", key="new_password_input")
-                confirm_password = st.text_input("🔑 Confirm Password", type="password", key="confirm_password_input")
+                new_password = st.text_input("New Password", type="password", key="new_password_input")
+                confirm_password = st.text_input("Confirm Password", type="password", key="confirm_password_input")
 
                 st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
 
@@ -1266,7 +1956,9 @@ if not st.session_state.get("authenticated", False):
         with register_tab:
             # Check if OTP was sent and pending verification
             if 'pending_registration' in st.session_state:
-                st.markdown("<h3 style='color:#00BFFF; text-align:center;'>📧 Verify Your Email</h3>", unsafe_allow_html=True)
+                st.markdown("""<h3 style='color:#e6edf3; text-align:center; font-family:-apple-system,sans-serif; font-size:1.05rem; font-weight:600;'>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align:-3px; margin-right:6px;" xmlns="http://www.w3.org/2000/svg"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" stroke="#38bdf8" stroke-width="1.5" fill="none"/><path d="M2 8l10 7 10-7" stroke="#38bdf8" stroke-width="1.5"/></svg>
+                    Verify Your Email</h3>""", unsafe_allow_html=True)
                 st.markdown(f"<p style='color:#c9d1d9; text-align:center;'>Enter the 6-digit OTP sent to <strong>{st.session_state.pending_registration['email']}</strong></p>", unsafe_allow_html=True)
 
                 # Calculate remaining time
@@ -1475,10 +2167,28 @@ if not st.session_state.get("authenticated", False):
 
 # ------------------- AFTER LOGIN -------------------
 if st.session_state.get("authenticated"):
-    st.markdown(
-        f"<h2 style='color:#00BFFF;'>Welcome to HIRELYZER, <span style='color:white;'>{st.session_state.username}</span> 👋</h2>",
-        unsafe_allow_html=True,
-    )
+    st.markdown(f"""
+    <div class="welcome-banner">
+        <div>
+            <div class="welcome-title">Welcome back, <span class="welcome-username">{st.session_state.username}</span> 👋</div>
+            <div class="welcome-subtitle">HIRELYZER — AI-Powered Resume Intelligence Platform</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <div style="
+                background: linear-gradient(135deg, rgba(52,211,153,0.15) 0%, rgba(52,211,153,0.06) 100%);
+                border: 1px solid rgba(52,211,153,0.25);
+                border-radius: 99px;
+                padding: 5px 14px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                color: #6ee7b7;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                font-family: var(--font-sans);
+            ">● Live</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # 🔓 LOGOUT BUTTON
     if st.button("🚪 Logout"):
@@ -1492,7 +2202,19 @@ if st.session_state.get("authenticated"):
         st.rerun()  # Force rerun to prevent stale UI
 
     # 🔑 GROQ API KEY SECTION (SIDEBAR)
-    st.sidebar.markdown("### 🔑 Groq API Key")
+    st.sidebar.markdown("""
+    <p style='
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.10em;
+        text-transform: uppercase;
+        color: #4a5568;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        padding-bottom: 8px;
+        margin-bottom: 12px;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    '>🔑 Groq API Key</p>
+    """, unsafe_allow_html=True)
 
     # ✅ Load saved key from DB
     saved_key = get_user_api_key(st.session_state.username)
@@ -1522,8 +2244,11 @@ if st.session_state.get("authenticated"):
         st.sidebar.success("✅ Cleared saved Groq API key. Now using shared admin key.")
 
 if st.session_state.username == "admin":
-    st.markdown("<hr>", unsafe_allow_html=True)
-    st.markdown("<h2 style='color:#00BFFF;'>📊 Admin Dashboard</h2>", unsafe_allow_html=True)
+    st.markdown("""
+    <div class="admin-header">
+        <h2>⬡ Admin Control Panel</h2>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Metrics row
     col1, col2 = st.columns(2)
@@ -1534,7 +2259,7 @@ if st.session_state.username == "admin":
 
     # Removed API key usage section (no longer tracked)
     # Activity log
-    st.markdown("<h3 style='color:#00BFFF;'>📋 Admin Activity Log</h3>", unsafe_allow_html=True)
+    st.markdown("<p class='section-label'>📋 Activity Log</p>", unsafe_allow_html=True)
     logs = get_all_user_logs()
     if logs:
         st.dataframe(
@@ -1864,9 +2589,55 @@ reader = get_easyocr_reader()
 
 def generate_docx(text, filename="bias_free_resume.docx"):
     doc = Document()
-    doc.add_heading('Bias-Free Resume', 0)
-    doc.add_paragraph(text)
-    
+
+    # ── Page margins (standard resume: 1 inch all sides) ──
+    from docx.oxml.ns import qn as _qn
+    from docx.oxml import OxmlElement as _OE
+    section = doc.sections[0]
+    section.top_margin    = Inches(1.0)
+    section.bottom_margin = Inches(1.0)
+    section.left_margin   = Inches(1.0)
+    section.right_margin  = Inches(1.0)
+
+    # ── Document title heading ──
+    title = doc.add_heading('Bias-Free Resume', 0)
+    title.alignment = 1  # center
+    title_run = title.runs[0]
+    title_run.font.color.rgb = RGBColor(0x2F, 0x4F, 0x6F)
+    title_run.font.size = Pt(18)
+
+    doc.add_paragraph()  # spacer
+
+    # ── Process text: detect section headers and bullet points ──
+    lines = text.strip().split('\n')
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            doc.add_paragraph()
+            continue
+
+        # Section headers (emoji + CAPS or all-caps lines)
+        if (stripped.isupper() and len(stripped) > 3) or \
+           any(stripped.startswith(e) for e in ['🏷️','📞','📧','📍','🔗','🌐','✍️','🛠️','💼','🧑‍💼','📂','🎓','🏫','🤝','🌟','🎯']):
+            p = doc.add_heading(stripped, level=2)
+            p.runs[0].font.color.rgb = RGBColor(0x2F, 0x4F, 0x6F)
+            p.runs[0].font.size = Pt(12)
+            continue
+
+        # Bullet points
+        if stripped.startswith(('•', '-', '*')):
+            content = stripped.lstrip('•-* ').strip()
+            p = doc.add_paragraph(style='List Bullet')
+            run = p.add_run(content)
+            run.font.size = Pt(10.5)
+            p.paragraph_format.space_after = Pt(3)
+            continue
+
+        # Regular paragraph
+        p = doc.add_paragraph(stripped)
+        p.runs[0].font.size = Pt(10.5)
+        p.paragraph_format.space_after = Pt(4)
+
     buffer = BytesIO()
     doc.save(buffer)
     buffer.seek(0)
@@ -1920,23 +2691,40 @@ def safe_extract_text(uploaded_file):
 # Predefined gender-coded word lists
 gender_words = {
     "masculine": [
-        "active", "aggressive", "ambitious", "analytical", "assertive", "autonomous", "boast", "bold",
+        # Dominance / aggression-coded
+        "active", "aggressive", "ambitious", "assertive", "autonomous", "boast", "bold",
         "challenging", "competitive", "confident", "courageous", "decisive", "determined", "dominant", "driven",
         "dynamic", "forceful", "independent", "individualistic", "intellectual", "lead", "leader", "objective",
         "outspoken", "persistent", "principled", "proactive", "resilient", "self-reliant", "self-sufficient",
-        "strong", "superior", "tenacious","guru","tech guru","technical guru", "visionary", "manpower", "strongman", "command",
-        "assert", "headstrong", "rockstar", "superstar", "go-getter", "trailblazer", "results-driven",
-        "fast-paced", "driven", "determination", "competitive spirit"
+        "strong", "superior", "tenacious", "guru", "tech guru", "technical guru", "visionary", "manpower",
+        "strongman", "command", "assert", "headstrong", "rockstar", "superstar", "go-getter", "trailblazer",
+        "results-driven", "fast-paced", "determination", "competitive spirit",
+        # Additional research-backed masculine-coded terms (Gaucher et al., 2011)
+        "analytical", "backbone", "challenge", "champion", "combat", "conquer", "courageous",
+        "crusade", "debate", "fearless", "fight", "grit", "hustle", "impact", "ninja",
+        "power", "ruthless", "self-starter", "sharp", "warrior", "win", "wrestler",
+        "alpha", "beast", "brutally honest", "cutting-edge", "dominate", "edge", "elite",
+        "fearless", "grind", "hardcore", "hero", "high-performance", "intense",
+        "kill it", "relentless", "savage", "slayer", "tiger", "tough", "uncompromising"
     ],
     
     "feminine": [
+        # Communal / warmth-coded
         "affectionate", "agreeable", "attentive", "collaborative", "committed", "compassionate", "considerate",
         "cooperative", "dependable", "dependent", "emotional", "empathetic", "enthusiastic", "friendly", "gentle",
         "honest", "inclusive", "interpersonal", "kind", "loyal", "modest", "nurturing", "pleasant", "polite",
         "sensitive", "supportive", "sympathetic", "tactful", "tender", "trustworthy", "understanding", "warm",
         "yield", "adaptable", "communal", "helpful", "dedicated", "respectful", "nurture", "sociable",
-        "relationship-oriented", "team player", "dependable", "people-oriented", "empathetic listener",
-        "gentle communicator", "open-minded"
+        "relationship-oriented", "team player", "people-oriented", "empathetic listener",
+        "gentle communicator", "open-minded",
+        # Additional research-backed feminine-coded terms
+        "balance", "caring", "child-friendly", "connect", "connection", "flexible hours",
+        "harmony", "heart", "humanize", "mindful", "patience", "patient", "peace",
+        "personal touch", "responsive", "share", "sharing", "together", "unite",
+        "welcoming", "wholesome", "connect with", "feeling", "feelings", "giving back",
+        "heartfelt", "humanity", "inspire", "inspired", "passion", "passionate",
+        "personable", "relate", "relatable", "soften", "soft skills", "spread",
+        "thrive", "togetherness", "transparent", "uplift", "vulnerable"
     ]
 }
 
@@ -2013,7 +2801,7 @@ replacement_mapping = {
         "aggressive": "proactive",
         "ambitious": "motivated",
         "analytical": "detail-oriented",
-        "assertive": "confident",
+        "assertive": "direct",
         "autonomous": "self-directed",
         "boast": "highlight",
         "bold": "confident",
@@ -2027,7 +2815,7 @@ replacement_mapping = {
         "driven": "committed",
         "dynamic": "adaptable",
         "forceful": "persuasive",
-        "guru":"technical expert",
+        "guru": "technical expert",
         "independent": "self-sufficient",
         "individualistic": "self-motivated",
         "intellectual": "knowledgeable",
@@ -2035,7 +2823,7 @@ replacement_mapping = {
         "leader": "team lead",
         "objective": "unbiased",
         "outspoken": "expressive",
-        "persistent": "resilient",
+        "persistent": "tenacious",
         "principled": "ethical",
         "proactive": "initiative-taking",
         "resilient": "adaptable",
@@ -2049,7 +2837,7 @@ replacement_mapping = {
         "manpower": "workforce",
         "strongman": "resilient individual",
         "command": "direct",
-        "assert": "state confidently",
+        "assert": "state clearly",
         "headstrong": "determined",
         "rockstar": "top performer",
         "superstar": "outstanding contributor",
@@ -2058,7 +2846,32 @@ replacement_mapping = {
         "results-driven": "outcome-focused",
         "fast-paced": "dynamic",
         "determination": "commitment",
-        "competitive spirit": "goal-oriented mindset"
+        "competitive spirit": "goal-oriented mindset",
+        # New additions
+        "ninja": "specialist",
+        "warrior": "dedicated professional",
+        "alpha": "senior",
+        "beast": "high performer",
+        "dominate": "excel in",
+        "elite": "high-performing",
+        "relentless": "persistent",
+        "savage": "highly skilled",
+        "hustle": "work efficiently",
+        "grit": "resilience",
+        "hardcore": "rigorous",
+        "hero": "key contributor",
+        "ruthless": "highly focused",
+        "kill it": "excel",
+        "champion": "advocate",
+        "conquer": "achieve",
+        "fight": "address",
+        "win": "achieve success",
+        "crush": "exceed targets",
+        "unstoppable": "highly motivated",
+        "fearless": "courageous",
+        "power": "capability",
+        "backbone": "core strength",
+        "sharp": "perceptive"
     },
     
     "feminine": {
@@ -2075,128 +2888,221 @@ replacement_mapping = {
         "dependable": "reliable",
         "dependent": "team-oriented",
         "emotional": "passionate",
-        "empathetic": "understanding",
-        "enthusiastic": "positive",
+        "empathetic": "perceptive",
+        "enthusiastic": "energized",
         "gentle": "respectful",
-        "honest": "trustworthy",
+        "honest": "transparent",
         "inclusive": "open-minded",
         "interpersonal": "people-focused",
         "kind": "respectful",
         "loyal": "dedicated",
-        "modest": "humble",
+        "modest": "measured",
         "nurturing": "supportive",
-        "pleasant": "positive",
-        "polite": "professional",
-        "sensitive": "attentive",
-        "supportive": "encouraging",
+        "pleasant": "professional",
+        "polite": "courteous",
+        "sensitive": "perceptive",
+        "supportive": "enabling",
         "sympathetic": "understanding",
         "tactful": "diplomatic",
         "tender": "considerate",
         "trustworthy": "reliable",
         "understanding": "empathetic",
         "warm": "welcoming",
-        "yield": "adaptable",
+        "yield": "adjust",
         "adaptable": "flexible",
         "communal": "team-centered",
-        "helpful": "supportive",
+        "helpful": "contributive",
         "dedicated": "committed",
-        "respectful": "considerate",
+        "respectful": "professional",
         "nurture": "develop",
-        "sociable": "friendly",
+        "sociable": "collegial",
         "relationship-oriented": "team-focused",
         "team player": "collaborative member",
-        "people-oriented": "person-focused",
+        "people-oriented": "stakeholder-focused",
         "empathetic listener": "active listener",
         "gentle communicator": "considerate communicator",
-        "open-minded": "inclusive"
+        "open-minded": "inclusive",
+        # New additions
+        "passionate": "highly motivated",
+        "inspired": "driven by purpose",
+        "inspire": "motivate",
+        "vulnerable": "transparent",
+        "heartfelt": "sincere",
+        "harmony": "alignment",
+        "caring": "attentive",
+        "patient": "thorough",
+        "wholesome": "balanced",
+        "togetherness": "team cohesion",
+        "soft skills": "professional competencies",
+        "personal touch": "tailored approach",
+        "feeling": "assessment",
+        "feelings": "perspectives",
+        "transparent": "accountable",
+        "uplift": "elevate",
+        "thrive": "excel",
+        "welcoming": "inclusive",
+        "relatable": "accessible",
+        "connect": "engage",
+        "together": "collaboratively",
+        "sharing": "distributing",
+        "mindful": "deliberate",
+        "balance": "manage effectively"
     }
 }
 
 def rewrite_text_with_llm(text, replacement_mapping, user_location):
     """
-    Uses LLM to rewrite a resume with bias-free language, while preserving
-    the original content length. Enhances grammar, structure, and clarity.
-    Ensures structured formatting and includes relevant links and job suggestions.
+    Enhanced resume rewrite engine (backward compatible).
+    - Improves structure, clarity, and ATS readiness
+    - Fills missing sections using internal evidence
+    - Maintains bias-free language
+    - Preserves and ENFORCES suggested job titles output
     """
 
-    # Create a clear mapping in bullet format
+    # -----------------------------
+    # Format bias replacement rules
+    # -----------------------------
     formatted_mapping = "\n".join(
         [f'- "{key}" → "{value}"' for key, value in replacement_mapping.items()]
     )
 
-    # Prompt for LLM
+    # -----------------------------
+    # MASTER PROMPT
+    # -----------------------------
     prompt = f"""
-You are an expert resume editor and career advisor.
+You are an elite Resume Optimization Engine used by Fortune 500 recruiters and executive career coaches.
 
-Your tasks:
+You will receive:
+1. Original Resume Text
+2. Bias Replacement Rules
+3. Candidate Location
 
-1. ✨ Rewrite the resume text below with these rules:
-   - Replace any biased or gender-coded language using the exact matches from the replacement mapping.
-   - Do NOT reduce the length of any section — preserve the original **number of words per section**.
-   - Improve grammar, tone, sentence clarity, and flow without shortening or removing any content.
-   - Do NOT change or remove names, tools, technologies, certifications, or project details.
+Your goal is to TRANSFORM the resume into a top-1% recruiter-ready document:
+ATS-optimized, bias-free, quantification-rich, and professionally compelling.
 
-2. 🧾 Structure the resume using these sections **if present** in the original, keeping the original text size:
-   - 🏷️ **Name**
-   - 📞 **Contact Information**
-   - 📍 **Location**
-   - 📧 **Email**
-   - 🔗 **LinkedIn** → If missing, insert: 🔗 Please paste your LinkedIn URL here.
-   - 🌐 **Portfolio** → If missing, insert: 🌐 Please paste your GitHub or portfolio link here.
-   - ✍️ **Professional Summary**
-   - 💼 **Work Experience**
-   - 🧑‍💼 **Internships**
-   - 🛠️ **Skills**
-   - 🤝 **Soft Skills**
-   - 🎓 **Certifications**
-   - 🏫 **Education**
-   - 📂 **Projects**
-   - 🌟 **Interests**
+═══════════════════════════════════════════════════
+🔒 ABSOLUTE RULES (NON-NEGOTIABLE)
+═══════════════════════════════════════════════════
 
-   - Use bullet points (•) inside each section for clarity.
-   - Maintain new lines after each points properly.
-   - Keep all hyperlinks intact and show them in full where applicable (e.g., LinkedIn, GitHub, project links).
-   - Do not invent or assume any information not present in the original.
+- DO NOT fabricate companies, job titles, degrees, institutions, or dates
+- DO NOT invent metrics or statistics not implied by the resume
+- DO NOT add certifications or skills that don't appear anywhere in the resume
+- You MAY:
+  ✅ Strengthen and expand existing bullet points with stronger action verbs
+  ✅ CREATE missing sections if clear evidence exists elsewhere in the resume
+  ✅ Move skills from projects/experience into the dedicated Skills section
+  ✅ Infer tool proficiency ONLY when strongly implied (e.g., "built Flask API" → Python/Flask listed)
+  ✅ Estimate impact framing ONLY when role implies it (e.g., "customer support" → "resolved X+ client issues")
+  ✅ Reorder sections for maximum ATS impact
 
-3. 📌 Strictly apply this **replacement mapping** (match exact phrases only — avoid altering keywords or terminology):
+═══════════════════════════════════════════════════
+📌 OPTIMIZATION RULES
+═══════════════════════════════════════════════════
+
+1. **Professional Summary** — Write a 3–4 sentence executive-level summary that:
+   - Opens with seniority + core domain (e.g., "Results-driven Data Engineer with 3+ years...")
+   - Highlights top 2–3 technical strengths with specificity
+   - Closes with value proposition aligned to career goals
+
+2. **Experience Bullet Points** — Every bullet MUST follow:
+   → **Action Verb + Specific Task + Technology/Method Used + Quantified Impact**
+   → Example: "Engineered real-time data pipeline using Apache Kafka and Spark, reducing latency by 40%"
+   → Use STRONG action verbs: Architected, Engineered, Designed, Deployed, Optimized, Automated, Reduced, Increased, Led, Built, Launched, Delivered
+
+3. **Skills Section** — Must include ALL technologies, tools, frameworks, platforms, and methodologies mentioned ANYWHERE in the resume.
+   Format as clean ATS-friendly lists grouped by category:
+   - Programming Languages | Frameworks & Libraries | Cloud & DevOps | Databases | Tools & Platforms | Soft Skills
+
+4. **Projects Section** — Each project must include:
+   - Project name + brief (1 sentence) description
+   - Full tech stack used
+   - Your specific role/contribution
+   - Outcome, metric, or learning
+
+5. **Education** — Include: Degree, Institution, Year, GPA (if strong), Relevant Coursework (if applicable)
+
+6. **Certifications** — List ALL found in resume. Add plausible ones ONLY if tool names strongly imply them.
+
+7. **Sections to create if evidence exists but are missing:**
+   🛠️ Skills | 📂 Projects | 🎓 Certifications | 🤝 Professional Competencies | 🌟 Interests
+
+═══════════════════════════════════════════════════
+🧾 REQUIRED OUTPUT STRUCTURE
+═══════════════════════════════════════════════════
+
+Return a COMPLETE, polished resume with these sections (skip only if truly impossible):
+
+🏷️ Full Name  
+📞 Phone Number  
+📧 Email Address  
+📍 Location  
+🔗 LinkedIn Profile URL  
+🌐 GitHub / Portfolio URL  
+
+✍️ Professional Summary  
+🛠️ Technical Skills  
+💼 Work Experience  
+🧑‍💼 Internships (if applicable)  
+📂 Projects  
+🎓 Certifications & Training  
+🏫 Education  
+🤝 Professional Competencies  
+🌟 Interests & Extracurriculars  
+
+Formatting requirements:
+- Bullet points (•) for all list items
+- Clean spacing between sections
+- Section headers in CAPS or bold
+- ATS-safe formatting (no tables, columns, or special characters)
+- Tense: past for completed roles, present for current role
+
+═══════════════════════════════════════════════════
+🧠 BIAS REPLACEMENT RULES (APPLY EXACTLY)
+═══════════════════════════════════════════════════
 {formatted_mapping}
 
-4. 💼 Suggest **5 relevant job titles** suited for this candidate based in **{user_location}**. For each:
-   - Provide a detailed  reason for relevance.
-   - Attach a direct LinkedIn job search URL.
-
----
-
-### 📄 Original Resume Text
+═══════════════════════════════════════════════════
+📄 ORIGINAL RESUME
+═══════════════════════════════════════════════════
 \"\"\"{text}\"\"\"
 
----
+═══════════════════════════════════════════════════
+🎯 MANDATORY JOB TITLE SUGGESTIONS
+═══════════════════════════════════════════════════
 
-### ✅ Bias-Free Rewritten Resume (Fully Structured, Same Length)
+After the resume, include a clearly separated section:
 
----
+### 🎯 Suggested Job Titles (Based on Resume)
 
-### 🎯 Suggested Job Titles with Reasoning and LinkedIn Search Links
+Provide EXACTLY **5 job titles** suited for a candidate in **{user_location}**.
 
-1. **[Job Title 1]** — Brief reason  
-🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%201&location={user_location})
+For EACH job title, provide:
+- A specific reason why this role fits the candidate's background
+- A DIRECT LinkedIn job search URL using the exact format below
 
-2. **[Job Title 2]** — Brief reason  
-🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%202&location={user_location})
+FORMAT STRICTLY AS:
 
-3. **[Job Title 3]** — Brief reason  
-🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%203&location={user_location})
+1. **[Job Title]** — [Specific reason based on resume content]  
+🔗 https://www.linkedin.com/jobs/search/?keywords=[URL+encoded+title]&location={urllib.parse.quote(user_location)}
 
-4. **[Job Title 4]** — Brief reason  
-🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%204&location={user_location})
+2. **[Job Title]** — ...  
+🔗 ...
 
-5. **[Job Title 5]** — Brief reason  
-🔗 [Search on LinkedIn](https://www.linkedin.com/jobs/search/?keywords=Job%20Title%205&location={user_location})
+(Continue for all 5)
+
+═══════════════════════════════════════════════════
+✅ FINAL OUTPUT
+═══════════════════════════════════════════════════
+1. Fully optimized, bias-free resume (complete, not a summary)
+2. Suggested Job Titles section (MANDATORY — 5 titles with URLs)
 """
 
-    # Call the LLM of your choice
+    # -----------------------------
+    # Call LLM
+    # -----------------------------
     response = call_llm(prompt, session=st.session_state)
     return response
+
 
 def rewrite_and_highlight(text, replacement_mapping, user_location):
     highlighted_text = text
@@ -2292,28 +3198,37 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
 # ✅ Enhanced Grammar evaluation using LLM with suggestions
 def get_grammar_score_with_llm(text, max_score=5):
     grammar_prompt = f"""
-You are a grammar and tone evaluator AI. Analyze the following resume text and:
+You are a senior HR language quality specialist and professional resume reviewer with 15+ years of experience evaluating resumes for Fortune 500 companies.
 
-1. Give a grammar score out of {max_score} based on grammar quality, sentence structure, clarity, and tone.
-2. Return a 1-sentence summary of the grammar and tone.
-3. Provide 3 to 5 **specific improvement suggestions** (bullet points) for enhancing grammar, clarity, tone, or structure.
+Analyze the following resume text across FIVE dimensions and provide an overall language quality score:
 
-**Scoring Guidelines for Balance:**
-- {max_score}: Exceptional - Professional, error-free, excellent flow
-- {max_score-1}: Very Good - Minor issues, mostly professional
-- {max_score-2}: Good - Some grammar issues but readable and professional
-- {max_score-3}: Fair - Noticeable issues but understandable
-- {max_score-4}: Poor - Multiple errors affecting readability
-- 0-1: Very Poor - Significant grammar problems
+**EVALUATION DIMENSIONS:**
+1. **Grammar & Mechanics** — Correct grammar, punctuation, subject-verb agreement, tense consistency
+2. **Clarity & Conciseness** — Ideas expressed directly; no filler words or redundancy
+3. **Professional Tone** — Appropriate formality, no informal slang or casual phrasing
+4. **Action Verb Usage** — Starts bullet points with strong, quantifiable action verbs (e.g., "Led", "Engineered", "Reduced")
+5. **ATS Language Alignment** — Industry-standard terminology, keyword density, no keyword stuffing
 
-Return response in the exact format below:
+**SCORING SCALE (out of {max_score}):**
+- {max_score}: Exceptional — Flawless grammar, powerful action verbs, crystal-clear and professional throughout
+- {max_score-1}: Very Good — Minor stylistic issues; highly professional and readable
+- {max_score-2}: Good — Some grammar or clarity issues but largely professional and effective
+- {max_score-3}: Fair — Noticeable grammar, tone, or clarity problems that could affect readability
+- {max_score-4}: Poor — Multiple errors affecting professional impression; needs significant editing
+- 0-1: Very Poor — Significant language issues that would cause ATS rejection or recruiter dismissal
+
+**IMPORTANT:** Be balanced — a technically competent resume with minor grammar issues should not be harshly penalized. Focus on overall professional impression.
+
+Return EXACTLY in this format (no extra text):
 
 Score: <number>
-Feedback: <summary>
+Feedback: <single sentence summarizing overall language quality and tone>
 Suggestions:
-- <suggestion 1>
-- <suggestion 2>
-...
+- <Actionable suggestion 1 with example if helpful>
+- <Actionable suggestion 2 with example if helpful>
+- <Actionable suggestion 3 with example if helpful>
+- <Actionable suggestion 4 with example if helpful>
+- <Actionable suggestion 5 with example if helpful>
 
 ---
 {text}
@@ -2326,7 +3241,7 @@ Suggestions:
     suggestions = re.findall(r"- (.+)", response)
 
     score = int(score_match.group(1)) if score_match else max(3, max_score-2)  # More generous default
-    feedback = feedback_match.group(1).strip() if feedback_match else "Grammar appears adequate for professional communication."
+    feedback = feedback_match.group(1).strip() if feedback_match else "Language quality appears adequate for professional communication."
     return score, feedback, suggestions
 
 # ✅ Main ATS Evaluation Function
@@ -2419,208 +3334,204 @@ def ats_percentage_score(
     
     # ✅ UPDATED: Stable education scoring with priority degrees minimum
     prompt = f"""
-You are a professional ATS evaluator specializing in **technical roles** (AI/ML, Blockchain, Cloud, Data, Software, Cybersecurity). 
-Your role is to provide **balanced, objective scoring** that reflects industry standards and recognizes candidate potential while maintaining professional standards.
+You are a senior ATS (Applicant Tracking System) Evaluator and Technical Recruiter with 15+ years of experience at top-tier tech firms.
+Your evaluation must be rigorous, consistent, evidence-based, and match industry-standard hiring benchmarks.
 
-🎯 **BALANCED SCORING GUIDELINES - Tech-Focused (AI/ML/Blockchain/Software/Data):**
+You specialize in: AI/ML, Blockchain, Cloud Computing, Data Engineering, Software Development, DevOps, and Cybersecurity roles.
 
-**Education Scoring Framework ({edu_weight} points max):**
+═══════════════════════════════════════════════════
+🎯 EVALUATION PHILOSOPHY
+═══════════════════════════════════════════════════
+- Score based on EVIDENCE found in the resume — not assumptions
+- Reward quantified achievements (numbers, percentages, scale)
+- Credit projects, GitHub, hackathons, Kaggle, open-source contributions, certifications
+- Penalize vague claims without evidence ("good communication skills")
+- Recognize career stage: entry-level vs senior vs lead
+- Prioritize recency: skills/experience from the last 3 years matter most
+- Be encouraging but calibrated: do not inflate scores without evidence
 
-⚡ **PRIORITY RULE - Minimum Points for Relevant Degrees:**
-If candidate is **currently pursuing OR has completed** any of these degrees:
-- BSc CS / BSc Computer Science
-- BSc Mathematics / BSc Maths
-- MSc CS / MSc Computer Science
-- MSc Mathematics / MSc Maths
-- MCA (Master of Computer Applications)
-- BE CS / BTech CS / BTech IT
+═══════════════════════════════════════════════════
+📐 SCORING FRAMEWORK
+═══════════════════════════════════════════════════
 
-→ **ASSIGN MINIMUM {int(edu_weight * 0.75)} points** out of {edu_weight} max points
-→ **DO NOT penalize** for ongoing status - pursuing counts equally as completed
-→ If completed with strong academic performance, allow scoring up to {int(edu_weight * 0.9)}-{edu_weight} points
+**🎓 Education Score ({edu_weight} points max):**
 
-**CRITICAL DATE PARSING RULES:**
-- If end year < 2025 → ✅ ALWAYS Completed (HARDCODED CUTOFF)
-- If end year == 2025 → ✅ Completed
-- If end year > 2025 → 🔄 Ongoing  
+PRIORITY RULE — Minimum {int(edu_weight * 0.75)} pts for these degrees (completed OR pursuing):
+  • BSc/MSc Computer Science or Mathematics
+  • MCA (Master of Computer Applications)  
+  • BE/BTech Computer Science or IT
+  • BCA + MCA combination
 
-**EXPLICIT STATUS INDICATORS (override year logic for years >= 2025):**
-- Words like "pursuing", "currently enrolled", "in progress" → 🔄 Ongoing  
-- Words like "Graduated", "Completed", "Finished" → ✅ Completed
-- **OVERRIDE RULE**: If end year < 2025, it is ✅ Completed no matter what the text says (2025 IS THE CUTOFF YEAR).
+DATE PARSING (STRICT — Non-negotiable):
+  • End year < 2025 → ✅ COMPLETED (hardcoded cutoff)
+  • End year = 2025 → ✅ COMPLETED
+  • End year > 2025 → 🔄 ONGOING
+  • Keywords "pursuing", "in progress", "currently enrolled" → 🔄 ONGOING
+  • Keywords "graduated", "completed", "finished" → ✅ COMPLETED
+  • If end year < 2025, ALWAYS mark completed regardless of text
 
-**SCORING IMPACT:**
-- ✅ Completed relevant education → Full scoring potential (up to max points)
-- 🔄 Ongoing relevant education → **MINIMUM {int(edu_weight * 0.75)} points for priority degrees listed above**
-- Education score is based ONLY on degree relevance and completion status
-- DO NOT add points for certifications/projects in education - these belong in skills/experience sections
+Scoring bands:
+  • {int(edu_weight * 0.90)}–{edu_weight}: Outstanding — completed highly relevant degree + exceptional academic record
+  • {int(edu_weight * 0.75)}–{int(edu_weight * 0.85)}: Excellent — priority degree (completed or ongoing), good standing
+  • {int(edu_weight * 0.60)}–{int(edu_weight * 0.70)}: Very Good — related STEM/technical degree
+  • {int(edu_weight * 0.45)}–{int(edu_weight * 0.55)}: Good — partially related degree with transferable foundation
+  • {int(edu_weight * 0.30)}–{int(edu_weight * 0.40)}: Fair — unrelated degree with relevant self-learning evidence
+  • {int(edu_weight * 0.15)}–{int(edu_weight * 0.25)}: Basic — minimal or no degree information
+  • 0–{int(edu_weight * 0.10)}: Insufficient — no education details at all
 
-**Stable Education Scoring Framework (Independent of Job Description):**
-- {int(edu_weight * 0.90)}-{edu_weight}: Outstanding (completed highly relevant degree with excellent academic performance)
-- {int(edu_weight * 0.75)}-{int(edu_weight * 0.85)}: Excellent (priority degrees listed above - completed or ongoing)
-- {int(edu_weight * 0.60)}-{int(edu_weight * 0.70)}: Very Good (related technical/quantitative degree)
-- {int(edu_weight * 0.45)}-{int(edu_weight * 0.55)}: Good (somewhat related education with transferable knowledge)
-- {int(edu_weight * 0.30)}-{int(edu_weight * 0.40)}: Fair (different degree but shows analytical/technical foundation)
-- {int(edu_weight * 0.15)}-{int(edu_weight * 0.25)}: Basic (unrelated degree)
-- 0-{int(edu_weight * 0.10)}: Insufficient (no degree information or incomplete details)
+**💼 Experience Score ({exp_weight} points max):**
 
+Evaluate: years of relevant experience, role seniority, domain fit, impact, leadership, quantification.
 
-**Experience Scoring Framework ({exp_weight} points max):**
-- {int(exp_weight * 0.91)}-{exp_weight}: Exceptional (exceeds requirements + perfect fit + leadership + outstanding results)
-- {int(exp_weight * 0.80)}-{int(exp_weight * 0.89)}: Excellent (meets/exceeds years + strong domain fit + leadership + clear results)
-- {int(exp_weight * 0.69)}-{int(exp_weight * 0.77)}: Very Good (adequate years + good domain fit + solid responsibilities + some results)
-- {int(exp_weight * 0.57)}-{int(exp_weight * 0.66)}: Good (reasonable years + relevant experience + decent responsibilities)
-- {int(exp_weight * 0.43)}-{int(exp_weight * 0.54)}: Fair (some gaps in years OR domain but shows potential)
-- {int(exp_weight * 0.29)}-{int(exp_weight * 0.40)}: Basic (limited experience but relevant skills/potential shown)
-- {int(exp_weight * 0.14)}-{int(exp_weight * 0.26)}: Entry Level (minimal experience but shows promise)
-- 0-{int(exp_weight * 0.11)}: Insufficient (major gaps with no transferable skills)
+  • {int(exp_weight * 0.91)}–{exp_weight}: Exceptional — exceeds requirements; strong leadership; quantified high-impact results
+  • {int(exp_weight * 0.80)}–{int(exp_weight * 0.89)}: Excellent — meets/exceeds years; strong domain fit; clear achievements
+  • {int(exp_weight * 0.69)}–{int(exp_weight * 0.77)}: Very Good — adequate years; good domain fit; solid responsibilities
+  • {int(exp_weight * 0.57)}–{int(exp_weight * 0.66)}: Good — reasonable experience; relevant domain; some achievements
+  • {int(exp_weight * 0.43)}–{int(exp_weight * 0.54)}: Fair — some gaps but shows clear potential and transferable skills
+  • {int(exp_weight * 0.29)}–{int(exp_weight * 0.40)}: Basic — limited experience but relevant direction shown
+  • {int(exp_weight * 0.14)}–{int(exp_weight * 0.26)}: Entry Level — minimal experience; strong potential only
+  • 0–{int(exp_weight * 0.11)}: Insufficient — major gaps; no transferable evidence
 
-**Skills Scoring Framework ({skills_weight} points max):**
-- {int(skills_weight * 0.93)}-{skills_weight}: Outstanding (90%+ required skills + expert proficiency + recent usage)
-- {int(skills_weight * 0.80)}-{int(skills_weight * 0.90)}: Excellent (80%+ required skills + advanced proficiency)
-- {int(skills_weight * 0.67)}-{int(skills_weight * 0.77)}: Very Good (70%+ required skills + good proficiency)
-- {int(skills_weight * 0.53)}-{int(skills_weight * 0.63)}: Good (60%+ required skills + adequate proficiency)
-- {int(skills_weight * 0.40)}-{int(skills_weight * 0.50)}: Fair (50%+ required skills + basic proficiency OR strong learning ability)
-- {int(skills_weight * 0.27)}-{int(skills_weight * 0.37)}: Basic (40%+ skills OR strong foundational skills with growth potential)
-- {int(skills_weight * 0.13)}-{int(skills_weight * 0.23)}: Limited (30%+ skills but shows willingness to learn)
-- 0-{int(skills_weight * 0.10)}: Insufficient (<30% skills with no evidence of learning ability)
+NOTE: Internships, freelance projects, and open-source contributions count as valid experience.
 
-**Keyword Scoring Framework ({keyword_weight} points max):**
-- {int(keyword_weight * 0.90)}-{keyword_weight}: Excellent optimization (85%+ critical terms + industry language)
-- {int(keyword_weight * 0.80)}: Very Good (75%+ critical terms + good industry awareness)
-- {int(keyword_weight * 0.60)}-{int(keyword_weight * 0.70)}: Good (65%+ critical terms + adequate industry knowledge)
-- {int(keyword_weight * 0.40)}-{int(keyword_weight * 0.50)}: Fair (50%+ critical terms + some industry understanding)
-- {int(keyword_weight * 0.20)}-{int(keyword_weight * 0.30)}: Basic (35%+ critical terms + basic awareness)
-- {int(keyword_weight * 0.10)}: Limited (20%+ critical terms)
-- 0: Poor (<20% critical terms)
+**🛠️ Skills Score ({skills_weight} points max):**
 
-**EVALUATION INSTRUCTIONS (Tech-Focused):**
-- Always credit **projects, GitHub repos, hackathons, Kaggle competitions, blockchain DApps, cloud deployments, AI model training, open-source contributions**.
-- Emphasize **cutting-edge skills**: LLMs, Generative AI, Web3, Smart Contracts, DeFi, Cloud-Native tools, MLOps, Vector DBs.
-- Highlight both **industry experience** and **hands-on learning** (projects, MOOCs, certifications).
-- Be encouraging but factual: focus on **growth potential + adaptability**.
+Match each listed skill against job description requirements. Reward:
+  • Hard skills: programming languages, frameworks, tools, platforms
+  • Certifications: AWS, GCP, Azure, Kubernetes, Terraform, etc.
+  • Emerging skills: LLMs, GenAI, Vector DBs, Web3, MLOps, DeFi, Smart Contracts
 
-**EVALUATION INSTRUCTIONS - BE ENCOURAGING BUT HONEST:**
+  • {int(skills_weight * 0.93)}–{skills_weight}: Outstanding — 90%+ required skills; expert proficiency; recent hands-on usage
+  • {int(skills_weight * 0.80)}–{int(skills_weight * 0.90)}: Excellent — 80%+ required skills; advanced proficiency
+  • {int(skills_weight * 0.67)}–{int(skills_weight * 0.77)}: Very Good — 70%+ required skills; competent usage
+  • {int(skills_weight * 0.53)}–{int(skills_weight * 0.63)}: Good — 60%+ required skills; working knowledge
+  • {int(skills_weight * 0.40)}–{int(skills_weight * 0.50)}: Fair — 50%+ skills OR strong foundational skills
+  • {int(skills_weight * 0.27)}–{int(skills_weight * 0.37)}: Basic — 40%+ skills; clear learning trajectory
+  • {int(skills_weight * 0.13)}–{int(skills_weight * 0.23)}: Limited — 30%+ skills; self-learning evident
+  • 0–{int(skills_weight * 0.10)}: Insufficient — fewer than 30% required skills
 
-Follow this exact structure and be **specific with evidence while highlighting strengths**:
+**🔑 Keyword Score ({keyword_weight} points max):**
+
+Systematically extract ALL critical terms from the job description:
+technical tools, frameworks, methodologies, role titles, industry terms, certification names.
+Compare against resume. Credit synonyms and equivalent terms.
+
+  • {int(keyword_weight * 0.90)}–{keyword_weight}: Excellent — 85%+ critical terms; strong industry vocabulary
+  • {int(keyword_weight * 0.80)}: Very Good — 75%+ critical terms
+  • {int(keyword_weight * 0.60)}–{int(keyword_weight * 0.70)}: Good — 65%+ critical terms
+  • {int(keyword_weight * 0.40)}–{int(keyword_weight * 0.50)}: Fair — 50%+ critical terms
+  • {int(keyword_weight * 0.20)}–{int(keyword_weight * 0.30)}: Basic — 35%+ critical terms
+  • {int(keyword_weight * 0.10)}: Limited — 20%+ critical terms
+  • 0: Poor — fewer than 20% critical terms
+
+═══════════════════════════════════════════════════
+📋 REQUIRED OUTPUT FORMAT
+═══════════════════════════════════════════════════
+
+Follow this EXACT structure. Do not skip any section:
 
 ### 🏷️ Candidate Name
-<Extract full name clearly - check resume header, contact section, or first few lines>
+<Extract full name from resume header or contact section>
 
 ### 🏫 Education Analysis
 **Score:** <0–{edu_weight}> / {edu_weight}
 
 **Scoring Rationale:**
-- Degree Level & Relevance: <Check if degree qualifies for minimum 15 points rule - BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS/IT>
-- Completion Status: <Apply 2025 cutoff rule and keyword overrides>
-- Academic Foundation: <Assess degree relevance to technical roles>
-- **Score Justification:** <Apply minimum 15 points if relevant degree detected; pursuing status not penalized; score based only on degree relevance>
+- Degree Level & Relevance: <Does it qualify for minimum {int(edu_weight * 0.75)}-pt rule? Which degree?>
+- Completion Status: <Apply strict 2025 cutoff rule; state year and final status>
+- Academic Quality Indicators: <GPA, honors, relevant coursework if mentioned>
+- **Score Justification:** <Explain exact score with evidence from resume>
 
-
-### 💼 Experience Analysis  
+### 💼 Experience Analysis
 **Score:** <0–{exp_weight}> / {exp_weight}
 
 **Experience Breakdown:**
-- Total Years: <X years - consider quality over quantity>
-- Role Progression: <Look for growth, even if not linear>
-- Domain Relevance: <Consider transferable skills from related fields>
-- Leadership Evidence: <Include informal leadership, mentoring, project ownership>
-- Quantified Achievements: <Value any metrics, even small improvements>
-- Technology/Tools Usage: <Credit learning new tools, adaptability>
-- Transferable Skills: <Highlight skills that apply across domains>
-- **Score Justification:** <Emphasize growth potential and adaptability>
+- Total Years of Relevant Experience: <X years — include internships, freelance, open-source>
+- Role Progression & Seniority: <Entry → Mid → Senior trajectory>
+- Domain Alignment: <How well does background match job domain?>
+- Quantified Achievements: <List metrics found: % improvement, $ savings, users served, etc.>
+- Leadership & Ownership Evidence: <Managed teams? Led projects? Mentored?>
+- Technology Currency: <Are skills/tools recent and relevant (last 3 years)?>
+- **Score Justification:** <Explain score with specific resume evidence>
 
 ### 🛠 Skills Analysis
 **Score:** <0–{skills_weight}> / {skills_weight}
 
 **Skills Assessment:**
-- Technical Skills Present: <List with evidence, include learning in progress>
-- Soft Skills Demonstrated: <Value communication, teamwork, problem-solving>
-- Domain-Specific Expertise: <Consider related domain knowledge>
-- Skill Currency: <Value recent learning and adaptation>
-- Learning Ability: <Evidence of picking up new skills>
+- Core Technical Skills Matched: <List matched skills with evidence>
+- Emerging/Cutting-Edge Skills: <LLMs, GenAI, Web3, MLOps, Cloud, etc.>
+- Certifications Detected: <List any certifications found>
+- Soft Skills with Evidence: <Only count if backed by concrete examples>
+- Proficiency Depth: <Surface knowledge vs. demonstrated project usage>
 
-**Skills Gaps (Opportunities for Growth):**
-- <Skill 1 - frame as development opportunity>
-- <Skill 2 - suggest how existing skills could transfer>  
-- <Skill 3 - note if easily learnable>
-- <Skill 4 - additional growth areas>
-- <Skill 5 - more opportunities if applicable>
+**Skills Gaps (Development Opportunities):**
+- <Gap 1 — specific missing skill from job description>
+- <Gap 2 — specific missing skill>
+- <Gap 3 — specific missing skill>
+- <Gap 4 — specific missing skill>
+- <Gap 5 — specific missing skill>
 
-**Score Justification:** <Focus on existing strengths + learning potential>
+**Score Justification:** <Explain with matched vs. required skills ratio>
 
 ### 🗣 Language Quality Analysis
 **Score:** {grammar_score} / {lang_weight}
 **Grammar & Professional Tone:** {grammar_feedback}
-**Assessment:** <Be constructive - focus on communication effectiveness>
+**Assessment:** <Specific feedback on action verb usage, clarity, tense consistency, and ATS language>
 
 ### 🔑 Keyword Analysis
 **Score:** <0–{keyword_weight}> / {keyword_weight}
 
 **Keyword Assessment:**
-- Industry Terminology: <Credit related industry knowledge>
-- Role-Specific Terms: <Look for equivalent terms, not just exact matches>
-- Technical Vocabulary: <Value understanding even if different tools>
+- Industry Terminology Match: <Percentage and specific matches found>
+- Role-Specific Keywords Present: <List matched keywords>
+- Technical Vocabulary: <Tools, frameworks, platforms found in both>
+- Keyword Density Quality: <Natural integration vs. stuffing>
 
 **Keyword Enhancement Opportunities:**
-- <Keyword 1 from job description>
-- <Keyword 2 from job description>
-- <Keyword 3 from job description>
-- <Keyword 4 from job description>
-- <Keyword 5 from job description>
-- <Keyword 6 from job description>
-- <Keyword 7 from job description>
-- <Keyword 8 from job description>
+- <Critical keyword 1 from job description — not in resume>
+- <Critical keyword 2>
+- <Critical keyword 3>
+- <Critical keyword 4>
+- <Critical keyword 5>
+- <Critical keyword 6>
+- <Critical keyword 7>
+- <Critical keyword 8>
 
-**INSTRUCTION**: Extract ALL important keywords, technical terms, industry jargon, tool names, certification names, and role-specific terminology from the job description that are missing from the resume. Include variations and synonyms.
-
-**Score Justification:** <Credit understanding of concepts even if terminology differs>
+**Score Justification:** <Evidence-based explanation>
 
 ### ✅ Final Assessment
 
 **Overall Evaluation:**
-<4-6 sentences covering:>
-- Primary strengths and unique value proposition
-- Growth areas framed as development opportunities
-- Cultural/team fit indicators and soft skills
-- Clear recommendation with constructive reasoning
+<5–7 sentences covering: candidate's unique value proposition, strongest evidence-backed qualifications, key gaps, culture/team fit signals, and a clear hire/interview recommendation>
 
-**Development Areas:** <Frame gaps as growth opportunities, not failures>
-**Key Strengths:** <Highlight what makes this candidate valuable>
-**Recommendation:** <Be specific about interview potential and role fit>
+**Top 3 Strengths (with evidence):**
+1. <Strength 1 — backed by resume evidence>
+2. <Strength 2 — backed by resume evidence>
+3. <Strength 3 — backed by resume evidence>
+
+**Top 3 Development Areas:**
+1. <Gap 1 framed as a growth opportunity>
+2. <Gap 2 framed as a growth opportunity>
+3. <Gap 3 framed as a growth opportunity>
+
+**Hiring Recommendation:** <Strongly Recommend / Recommend / Recommend with Reservations / Do Not Recommend> — <2-sentence reasoning>
 
 ---
 
-**IMPORTANT REMINDERS FOR BALANCED EVALUATION:**
-- Look for potential, not just perfect matches
-- Value diverse backgrounds and transferable skills
-- Consider the candidate's career stage and growth trajectory
-- Credit all forms of learning and skill development
-- Be constructive in feedback - focus on opportunities
-- Recognize that great employees come from varied backgrounds
-- LIST ALL missing skills and keywords comprehensively (aim for 5-8 items each if gaps exist)
-- Be thorough in identifying development opportunities from the job description
-- **CRITICAL**: Analyze the ENTIRE job description systematically - go through each requirement, skill, and qualification mentioned
-- **KEYWORD EXTRACTION**: Identify ALL technical terms, tools, frameworks, methodologies, certifications mentioned in job description
-- **SKILL MAPPING**: Compare each job requirement against resume content - if not found, list it as missing
-- **CONTEXT UNDERSTANDING**: Consider synonyms and related terms (e.g., "JavaScript" and "JS", "Machine Learning" and "ML")
-- **PRIORITY RANKING**: Focus on must-have vs nice-to-have requirements from job description
-- **EXPERIENCE MATCHING**: Look for similar roles, projects, or responsibilities even if not exact title matches
-- **EDUCATION PRIORITY**: Apply minimum 15 points rule for BSc/MSc CS, BSc/MSc Maths, MCA, BE/BTech CS/IT degrees
-Context for Evaluation:
+**EVALUATION CONTEXT:**
 - Current Date: {datetime.datetime.now().strftime('%B %Y')} (Year: {current_year}, Month: {current_month})
-- Grammar Score: {grammar_score} / {lang_weight}
-- Grammar Feedback: {grammar_feedback}  
-- Resume Domain: {resume_domain}
-- Job Domain: {job_domain}
-- Domain Mismatch Penalty: {domain_penalty} points (similarity: {similarity_score:.2f})
+- Grammar Score Pre-evaluated: {grammar_score} / {lang_weight} — {grammar_feedback}
+- Resume Domain Detected: {resume_domain}
+- Target Job Domain: {job_domain}
+- Domain Similarity Score: {similarity_score:.2f}/1.0
+- Domain Mismatch Penalty Applied: {domain_penalty}/{MAX_DOMAIN_PENALTY} pts
 
 ---
 
-📄 **Job Description:**
+📄 **JOB DESCRIPTION:**
 {job_description}
 
-📄 **Resume Text:**
+📄 **RESUME TEXT:**
 {resume_text}
 
 {logic_score_note}
@@ -2706,14 +3617,14 @@ Context for Evaluation:
     total_score = min(total_score, 100)
     total_score = max(total_score, 15)  # Minimum score of 15 to avoid completely crushing candidates
 
-    # ✅ IMPROVED: More encouraging score formatting with better thresholds
+    # ✅ Industry-standard score labels with clear hiring signal
     formatted_score = (
-        "🌟 Exceptional Match" if total_score >= 85 else  # Lowered from 90
-        "✅ Strong Match" if total_score >= 70 else       # Lowered from 75
-        "🟡 Good Potential" if total_score >= 55 else    # Lowered from 60
-        "⚠️ Fair Match" if total_score >= 40 else        # Lowered from 45
-        "🔄 Needs Development" if total_score >= 25 else # New category
-        "❌ Poor Match"
+        "🌟 Exceptional Match — Top 10% Candidate" if total_score >= 85 else
+        "✅ Strong Match — Recommend for Interview" if total_score >= 70 else
+        "🟡 Good Potential — Competitive Candidate" if total_score >= 55 else
+        "⚠️ Fair Match — Needs Resume Optimization" if total_score >= 40 else
+        "🔄 Developing — Significant Skill Gaps" if total_score >= 25 else
+        "❌ Poor Match — Major Role Misalignment"
     )
 
     # ✅ Format suggestions nicely
@@ -2727,20 +3638,29 @@ Context for Evaluation:
 <br><b>Improvement Suggestions:</b> {suggestions_html}
 """
 
-    # Enhanced final thoughts with domain analysis
+    # Enhanced final thoughts with domain analysis and industry benchmarks
     final_thoughts += f"""
 
-**📊 Technical Assessment Details:**
-- Domain Similarity Score: {similarity_score:.2f}/1.0  
-- Domain Penalty Applied: {domain_penalty}/{MAX_DOMAIN_PENALTY} points
-- Resume Domain: {resume_domain}
+**📊 Technical Evaluation Details:**
+- Domain Similarity Score: {similarity_score:.2f}/1.0 ({int(similarity_score * 100)}% domain alignment)
+- Domain Penalty Applied: -{domain_penalty} pts (out of max -{MAX_DOMAIN_PENALTY} pts)
+- Resume Domain Detected: {resume_domain}
 - Target Job Domain: {job_domain}
+- Grammar & Language Pre-Score: {grammar_score}/{lang_weight}
 
-**💡 Balanced Scoring Notes:**
-- Minimum score thresholds applied to prevent overly harsh penalties
-- Transferable skills and learning potential considered
-- Growth opportunities highlighted rather than just gaps identified
-- **Date Logic Applied**: Year-only ranges properly classified as completed/ongoing based on current date context
+**📈 Score Interpretation (Industry Benchmarks):**
+- 85–100: 🌟 Top 10% candidates — Strong interview recommendation
+- 70–84: ✅ Above average — Likely to advance past ATS screening
+- 55–69: 🟡 Competitive — May advance with strong cover letter
+- 40–54: ⚠️ Below average — Needs resume optimization before applying
+- 25–39: 🔄 Significant gaps — Upskilling recommended
+- 0–24: ❌ Major misalignment — Not suitable for this specific role
+
+**🔍 ATS Scoring Notes:**
+- Minimum score thresholds applied to prevent unfair penalization
+- Transferable skills, projects, and open-source contributions were credited
+- Career stage (entry/mid/senior) considered in experience scoring
+- Date parsing uses 2025 cutoff for education completion determination
 """
 
     return ats_result, {
@@ -2799,7 +3719,19 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 # ---------------- Sidebar Layout with Inline Images ----------------
-st.sidebar.markdown("### 🏷️ Job Information")
+st.sidebar.markdown("""
+<p style='
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: #4a5568;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+'>🏷️ Job Configuration</p>
+""", unsafe_allow_html=True)
 
 # ---------------- Job Information Dropdown ----------------
 with st.sidebar.expander("![Job](https://img.icons8.com/ios-filled/20/briefcase.png) Enter Job Details", expanded=False):
@@ -2833,20 +3765,21 @@ with st.sidebar.expander("![Settings](https://img.icons8.com/ios-filled/20/setti
     if total_weight != 100:
         st.markdown(
             f"""
-            <div style="display:flex;align-items:center;gap:6px;
-                        border:1px solid #fca5a5;
-                        background:#fee2e2;
-                        padding:8px;
-                        border-radius:6px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="red" viewBox="0 0 24 24">
+            <div style="display:flex;align-items:center;gap:8px;
+                        border:1px solid rgba(251,113,133,0.3);
+                        background:linear-gradient(135deg,rgba(251,113,133,0.12) 0%,rgba(251,113,133,0.05) 100%);
+                        padding:10px 14px;
+                        border-radius:10px;
+                        backdrop-filter:blur(12px);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#fb7185" viewBox="0 0 24 24">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10
                              10-4.48 10-10S17.52 2 12 2zm0 15
                              c-.83 0-1.5.67-1.5 1.5S11.17 20
                              12 20s1.5-.67 1.5-1.5S12.83 17
                              12 17zm1-4V7h-2v6h2z"/>
                 </svg>
-                <span style="color:#b91c1c;font-weight:500;">
-                    Total = {total_weight}. Please make it exactly 100.
+                <span style="color:#fca5a5;font-weight:600;font-size:0.8rem;font-family:-apple-system,sans-serif;">
+                    Total = {total_weight}. Adjust to exactly 100.
                 </span>
             </div>
             """,
@@ -2855,17 +3788,18 @@ with st.sidebar.expander("![Settings](https://img.icons8.com/ios-filled/20/setti
     else:
         st.markdown(
             f"""
-            <div style="display:flex;align-items:center;gap:6px;
-                        border:1px solid #86efac;
-                        background:#dcfce7;
-                        padding:8px;
-                        border-radius:6px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="green" viewBox="0 0 24 24">
+            <div style="display:flex;align-items:center;gap:8px;
+                        border:1px solid rgba(52,211,153,0.28);
+                        background:linear-gradient(135deg,rgba(52,211,153,0.12) 0%,rgba(52,211,153,0.05) 100%);
+                        padding:10px 14px;
+                        border-radius:10px;
+                        backdrop-filter:blur(12px);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#34d399" viewBox="0 0 24 24">
                     <path d="M9 16.2l-3.5-3.5-1.4 1.4L9
                              19 20.3 7.7l-1.4-1.4z"/>
                 </svg>
-                <span style="color:#166534;font-weight:500;">
-                    Total weight = 100
+                <span style="color:#6ee7b7;font-weight:600;font-size:0.8rem;font-family:-apple-system,sans-serif;">
+                    Weights balanced · Total = 100
                 </span>
             </div>
             """,
@@ -2873,36 +3807,7 @@ with st.sidebar.expander("![Settings](https://img.icons8.com/ios-filled/20/setti
         )
 
 with tab1:
-    # 🎨 CSS for sliding success message
-    st.markdown("""
-    <style>
-    .slide-message {
-      position: relative;
-      overflow: hidden;
-      margin: 10px 0;
-      padding: 10px 15px;
-      border-radius: 10px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      animation: slideIn 0.8s ease forwards;
-    }
-    .slide-message svg {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-    }
-    .success-msg { background: rgba(0,255,127,0.12); border-left: 5px solid #00FF7F; color:#00FF7F; }
-    .error-msg   { background: rgba(255,99,71,0.12);  border-left: 5px solid #FF6347; color:#FF6347; }
-    .warn-msg    { background: rgba(255,215,0,0.12); border-left: 5px solid #FFD700; color:#FFD700; }
-
-    @keyframes slideIn {
-      0%   { transform: translateX(100%); opacity: 0; }
-      100% { transform: translateX(0); opacity: 1; }
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    # Slide message styles already defined in global CSS — no extra block needed
 
     uploaded_files = st.file_uploader(
         "📄 Upload PDF Resumes",
@@ -3529,7 +4434,7 @@ with tab1:
         avg_bias = round(np.mean([r.get("Bias Score (0 = Fair, 1 = Biased)", 0) for r in resume_data]), 2)
         total_resumes = len(resume_data)
 
-        st.markdown("### 📊 Summary Statistics")
+        st.markdown("<p class='section-label'>📊 Session Summary</p>", unsafe_allow_html=True)
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.metric("📄 Resumes Uploaded", total_resumes)
@@ -3540,7 +4445,7 @@ with tab1:
         with col4:
             st.metric("🔴 Total Feminine Words", total_fem)
 
-        st.markdown("### 🗂️ Resumes Overview")
+        st.markdown("<p class='section-label'>🗂️ Resumes Overview</p>", unsafe_allow_html=True)
         df = pd.DataFrame(resume_data)
 
         # ✅ Add calculated count columns safely
@@ -3555,27 +4460,44 @@ with tab1:
 
         st.dataframe(df[overview_cols], use_container_width=True)
 
-        st.markdown("### 📊 Visual Analysis")
+        st.markdown("<p class='section-label'>📊 Visual Analysis</p>", unsafe_allow_html=True)
         chart_tab1, chart_tab2 = st.tabs(["📉 Bias Score Chart", "⚖ Gender-Coded Words"])
         with chart_tab1:
             st.subheader("Bias Score Comparison Across Resumes")
-            st.bar_chart(df.set_index("Resume Name")[["Bias Score (0 = Fair, 1 = Biased)"]])
+            bias_chart_df = df[["Resume Name", "Bias Score (0 = Fair, 1 = Biased)"]].copy()
+            bias_chart_df.columns = ["Resume", "Bias Score"]
+            bias_altair = alt.Chart(bias_chart_df).mark_bar(
+                cornerRadiusTopLeft=4,
+                cornerRadiusTopRight=4,
+                color="#4f8cff"
+            ).encode(
+                x=alt.X("Resume:N", sort=None, axis=alt.Axis(labelAngle=-35, labelFontSize=11, titleFontSize=12)),
+                y=alt.Y("Bias Score:Q", scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(titleFontSize=12)),
+                tooltip=["Resume", alt.Tooltip("Bias Score:Q", format=".2f")]
+            ).properties(height=260).configure_view(strokeWidth=0).configure_axis(
+                grid=False, domainColor="#2d3748"
+            )
+            st.altair_chart(bias_altair, use_container_width=True)
         with chart_tab2:
             st.subheader("Masculine vs Feminine Word Usage")
-            fig, ax = plt.subplots(figsize=(10, 5))
-            index = np.arange(len(df))
-            bar_width = 0.35
-            ax.bar(index, df["Masculine Words Count"], bar_width, label="Masculine", color="#3498db")
-            ax.bar(index + bar_width, df["Feminine Words Count"], bar_width, label="Feminine", color="#e74c3c")
-            ax.set_xlabel("Resumes", fontsize=12)
-            ax.set_ylabel("Word Count", fontsize=12)
-            ax.set_title("Gender-Coded Word Usage per Resume", fontsize=14)
-            ax.set_xticks(index + bar_width / 2)
-            ax.set_xticklabels(df["Resume Name"], rotation=45, ha='right')
-            ax.legend()
-            st.pyplot(fig)
+            gender_df = pd.DataFrame({
+                "Resume": list(df["Resume Name"]) * 2,
+                "Type": ["Masculine"] * len(df) + ["Feminine"] * len(df),
+                "Count": list(df["Masculine Words Count"]) + list(df["Feminine Words Count"])
+            })
+            color_scale = alt.Scale(domain=["Masculine", "Feminine"], range=["#4f8cff", "#fb7185"])
+            gender_altair = alt.Chart(gender_df).mark_bar(cornerRadiusTopLeft=3, cornerRadiusTopRight=3).encode(
+                x=alt.X("Resume:N", sort=None, axis=alt.Axis(labelAngle=-35, labelFontSize=11, titleFontSize=12)),
+                y=alt.Y("Count:Q", axis=alt.Axis(titleFontSize=12)),
+                color=alt.Color("Type:N", scale=color_scale, legend=alt.Legend(orient="top", titleFontSize=11)),
+                xOffset="Type:N",
+                tooltip=["Resume", "Type", "Count"]
+            ).properties(height=260).configure_view(strokeWidth=0).configure_axis(
+                grid=False, domainColor="#2d3748"
+            )
+            st.altair_chart(gender_altair, use_container_width=True)
 
-        st.markdown("### 📝 Detailed Resume Reports")
+        st.markdown("<p class='section-label'>📝 Detailed Resume Reports</p>", unsafe_allow_html=True)
         for resume in resume_data:
             candidate_name = resume.get("Candidate Name", "Not Found")
             resume_name = resume.get("Resume Name", "Unknown")
@@ -3583,36 +4505,76 @@ with tab1:
             missing_skills = resume.get("Missing Skills", [])
 
             with st.expander(f"📄 {resume_name} | {candidate_name}"):
-                st.markdown(f"### 📊 ATS Evaluation for: **{candidate_name}**")
+                st.markdown(f"""
+                <div style="
+                    background: linear-gradient(135deg, rgba(56,189,248,0.10) 0%, rgba(79,163,227,0.05) 100%);
+                    border: 1px solid rgba(56,189,248,0.18);
+                    border-radius: 14px;
+                    padding: 18px 22px;
+                    margin-bottom: 20px;
+                ">
+                    <div style="
+                        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+                        font-size: 1rem;
+                        font-weight: 700;
+                        color: #f0f4f8;
+                        letter-spacing: -0.01em;
+                    ">ATS Evaluation — <span style='color:#38bdf8;'>{candidate_name}</span></div>
+                    <div style="font-size:0.75rem; color:#64748b; margin-top:4px; font-family: -apple-system, sans-serif; text-transform:uppercase; letter-spacing:0.05em;">Resume Intelligence Report</div>
+                </div>
+                """, unsafe_allow_html=True)
+                def ats_card(icon, label, value, tooltip=None):
+                    tooltip_attr = f'title="{tooltip}"' if tooltip else ""
+                    tooltip_style = "cursor:help;" if tooltip else ""
+                    return f"""
+                    <div style="
+                        background: rgba(15,23,42,0.85);
+                        border: 1px solid rgba(56,189,248,0.25);
+                        border-radius: 12px;
+                        padding: 14px 16px;
+                        margin-bottom: 8px;
+                        min-width: 0;
+                        box-sizing: border-box;
+                        height: 80px;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        overflow: hidden;
+                    ">
+                        <div style="font-size:0.75rem; color:#94a3b8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{icon} {label}</div>
+                        <div {tooltip_attr} style="font-size:1.4rem; font-weight:700; color:#f0f4f8; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; {tooltip_style}">{value}</div>
+                    </div>"""
+
                 score_col1, score_col2, score_col3 = st.columns(3)
+                formatted_val = resume.get("Formatted Score", "N/A")
                 with score_col1:
-                    st.metric("📈 Overall Match", f"{resume.get('ATS Match %', 'N/A')}%")
+                    st.markdown(ats_card("📈", "Overall Match", f"{resume.get('ATS Match %', 'N/A')}%"), unsafe_allow_html=True)
                 with score_col2:
-                    st.metric("🏆 Formatted Score", resume.get("Formatted Score", "N/A"))
+                    st.markdown(ats_card("🏆", "Formatted Score", formatted_val, tooltip=formatted_val), unsafe_allow_html=True)
                 with score_col3:
-                    st.metric("🧠 Language Quality", f"{resume.get('Language Score', 'N/A')} / {lang_weight}")
+                    st.markdown(ats_card("🧠", "Language Quality", f"{resume.get('Language Score', 'N/A')} / {lang_weight}"), unsafe_allow_html=True)
 
                 col_a, col_b, col_c, col_d = st.columns(4)
                 with col_a:
-                    st.metric("🎓 Education Score", f"{resume.get('Education Score', 'N/A')} / {edu_weight}")
+                    st.markdown(ats_card("🎓", "Education Score", f"{resume.get('Education Score', 'N/A')} / {edu_weight}"), unsafe_allow_html=True)
                 with col_b:
-                    st.metric("💼 Experience Score", f"{resume.get('Experience Score', 'N/A')} / {exp_weight}")
+                    st.markdown(ats_card("💼", "Experience Score", f"{resume.get('Experience Score', 'N/A')} / {exp_weight}"), unsafe_allow_html=True)
                 with col_c:
-                    st.metric("🛠 Skills Score", f"{resume.get('Skills Score', 'N/A')} / {skills_weight}")
+                    st.markdown(ats_card("🛠", "Skills Score", f"{resume.get('Skills Score', 'N/A')} / {skills_weight}"), unsafe_allow_html=True)
                 with col_d:
-                    st.metric("🔍 Keyword Score", f"{resume.get('Keyword Score', 'N/A')} / {keyword_weight}")
+                    st.markdown(ats_card("🔍", "Keyword Score", f"{resume.get('Keyword Score', 'N/A')} / {keyword_weight}"), unsafe_allow_html=True)
 
                 # Fit summary
-                st.markdown("### 📝 Fit Summary")
+                st.markdown("<p class='section-label'>📝 Fit Summary</p>", unsafe_allow_html=True)
                 st.write(resume.get('Final Thoughts', 'N/A'))
 
                 # ATS Report
                 if resume.get("ATS Report"):
-                    st.markdown("### 📋 ATS Evaluation Report")
+                    st.markdown("<p class='section-label'>📋 ATS Evaluation Report</p>", unsafe_allow_html=True)
                     st.markdown(resume["ATS Report"], unsafe_allow_html=True)
 
                 # ATS Chart
-                st.markdown("### 📊 ATS Score Breakdown Chart")
+                st.markdown("<p class='section-label'>📊 ATS Score Breakdown</p>", unsafe_allow_html=True)
                 ats_df = pd.DataFrame({
                     'Component': ['Education', 'Experience', 'Skills', 'Language', 'Keywords'],
                     'Score': [
@@ -3635,15 +4597,14 @@ with tab1:
                 )
                 st.altair_chart(ats_chart, use_container_width=True)
 
-                # 🔷 Detailed ATS Analysis Cards
-                st.markdown("### 🔍 Detailed ATS Section Analyses")
+                st.markdown("<p class='section-label'>🔍 Detailed ATS Section Analyses</p>", unsafe_allow_html=True)
                 for section_title, key in [
                     ("🏫 Education Analysis", "Education Analysis"),
                     ("💼 Experience Analysis", "Experience Analysis"),
                     ("🛠 Skills Analysis", "Skills Analysis"),
-                    ("🗣 Language Quality Analysis", "Language Analysis"),
+                    ("🗣 Language Quality", "Language Analysis"),
                     ("🔑 Keyword Analysis", "Keyword Analysis"),
-                    ("✅ Final Thoughts", "Final Thoughts")
+                    ("✅ Final Assessment", "Final Thoughts")
                 ]:
                     analysis_content = resume.get(key, "N/A")
                     if "**Score:**" in analysis_content:
@@ -3651,18 +4612,14 @@ with tab1:
                         rest = parts[1].split("**", 1)
                         score_text = rest[0].strip()
                         remaining = rest[1].strip() if len(rest) > 1 else ""
-                        formatted_score = f"<div style='background:#4c1d95;color:white;padding:8px;border-radius:6px;margin-bottom:5px;'><b>Score:</b> {score_text}</div>"
-                        analysis_html = formatted_score + f"<p>{remaining}</p>"
+                        score_html = f"<span class='score-badge'>Score: {score_text}</span>"
+                        body_html = f"{score_html}<div style='margin-top:8px;'>{remaining}</div>"
                     else:
-                        analysis_html = f"<p>{analysis_content}</p>"
+                        body_html = f"<div>{analysis_content}</div>"
 
                     st.markdown(f"""
-<div style="background:#5b3cc4; color:white; padding:10px; border-radius:6px;">
-  <h3>{section_title}</h3>
-</div>
-<div style="background:#2d2d3a; color:white; padding:10px; border-radius:6px;">
-{analysis_html}
-</div>
+<div class="ats-section-header">{section_title}</div>
+<div class="ats-section-body">{body_html}</div>
 """, unsafe_allow_html=True)
 
                 st.divider()
@@ -3670,16 +4627,16 @@ with tab1:
                 detail_tab1, detail_tab2 = st.tabs(["🔎 Bias Analysis", "✅ Rewritten Resume"])
 
                 with detail_tab1:
-                    st.markdown("#### Bias-Highlighted Original Text")
+                    st.markdown("<p class='section-label'>🔍 Bias-Highlighted Original Text</p>", unsafe_allow_html=True)
                     st.markdown(resume["Highlighted Text"], unsafe_allow_html=True)
 
-                    st.markdown("### 📌 Gender-Coded Word Counts:")
+                    st.markdown("<p class='section-label'>📌 Gender-Coded Word Counts</p>", unsafe_allow_html=True)
                     bias_col1, bias_col2 = st.columns(2)
 
                     with bias_col1:
                         st.metric("🔵 Masculine Words", len(resume["Detected Masculine Words"]))
                         if resume["Detected Masculine Words"]:
-                            st.markdown("### 📚 Detected Masculine Words with Context:")
+                            st.markdown("<p class='section-label'>Masculine Words with Context</p>", unsafe_allow_html=True)
                             for item in resume["Detected Masculine Words"]:
                                 word = item['word']
                                 sentence = item['sentence']
@@ -3690,7 +4647,7 @@ with tab1:
                     with bias_col2:
                         st.metric("🔴 Feminine Words", len(resume["Detected Feminine Words"]))
                         if resume["Detected Feminine Words"]:
-                            st.markdown("### 📚 Detected Feminine Words with Context:")
+                            st.markdown("<p class='section-label'>Feminine Words with Context</p>", unsafe_allow_html=True)
                             for item in resume["Detected Feminine Words"]:
                                 word = item['word']
                                 sentence = item['sentence']
@@ -3699,7 +4656,7 @@ with tab1:
                             st.info("No feminine words detected.")
 
                 with detail_tab2:
-                    st.markdown("#### ✨ Bias-Free Rewritten Resume")
+                    st.markdown("<p class='section-label'>✨ Bias-Free Rewritten Resume</p>", unsafe_allow_html=True)
                     st.write(resume["Rewritten Text"])
                     docx_file = generate_docx(resume["Rewritten Text"])
                     st.download_button(
@@ -3724,7 +4681,6 @@ with tab1:
 
     else:           
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
-
 from xhtml2pdf import pisa
 from io import BytesIO
 
@@ -3791,6 +4747,97 @@ def html_to_pdf_bytes(html_string):
     pisa.CreatePDF(styled_html, dest=pdf_io)
     pdf_io.seek(0)
     return pdf_io
+
+def _fmt_desc(text, font_size="14px", color="#374151", line_height="1.75"):
+    """
+    ATS-friendly, readable description formatter shared by all 9 templates.
+
+    Rules:
+    - Lines starting with  - / • / * / · / > become proper <li> bullet items
+      wrapped in a <ul> block (consecutive bullets are grouped).
+    - Blank lines produce paragraph breaks (<p> spacing).
+    - Non-bullet, non-blank lines become plain <p> paragraphs.
+    - Never outputs raw <br> soup — every line gets a proper container.
+    """
+    if not text or not text.strip():
+        return ""
+
+    BULLET_PREFIXES = ("-", "•", "*", "·", ">", "–", "—")
+
+    def is_bullet(line):
+        stripped = line.strip()
+        for p in BULLET_PREFIXES:
+            if stripped.startswith(p):
+                return stripped[len(p):].strip()
+        return None
+
+    lines = text.replace('\r\n', '\n').replace('\r', '\n').split('\n')
+
+    base_style = (
+        f"font-size:{font_size};"
+        f"color:{color};"
+        f"line-height:{line_height};"
+        f"margin:0 0 6px 0;"
+        f"padding:0;"
+    )
+    p_style   = f"style='{base_style}'"
+    ul_style  = f"style='margin:0 0 8px 0;padding-left:20px;list-style-type:disc;'"
+    li_style  = (
+        f"style='"
+        f"font-size:{font_size};"
+        f"color:{color};"
+        f"line-height:{line_height};"
+        f"margin-bottom:4px;"
+        f"'"
+    )
+
+    segments   = []   # list of ('p', text) | ('bullets', [text, ...]) | ('blank',)
+    bullet_buf = []
+
+    def flush_bullets():
+        if bullet_buf:
+            segments.append(('bullets', list(bullet_buf)))
+            bullet_buf.clear()
+
+    for raw in lines:
+        line = raw.rstrip()
+        if not line.strip():
+            flush_bullets()
+            segments.append(('blank',))
+            continue
+        b = is_bullet(line)
+        if b is not None:
+            bullet_buf.append(b)
+        else:
+            flush_bullets()
+            segments.append(('p', line.strip()))
+
+    flush_bullets()
+
+    # Collapse consecutive blanks
+    out_segs = []
+    prev_blank = False
+    for seg in segments:
+        if seg[0] == 'blank':
+            if not prev_blank and out_segs:
+                out_segs.append(seg)
+            prev_blank = True
+        else:
+            prev_blank = False
+            out_segs.append(seg)
+
+    html_parts = []
+    for seg in out_segs:
+        if seg[0] == 'blank':
+            html_parts.append(f"<div style='height:6px;'></div>")
+        elif seg[0] == 'p':
+            html_parts.append(f"<p {p_style}>{seg[1]}</p>")
+        elif seg[0] == 'bullets':
+            items = "".join(f"<li {li_style}>{item}</li>" for item in seg[1])
+            html_parts.append(f"<ul {ul_style}>{items}</ul>")
+
+    return "".join(html_parts)
+
 
 def render_template_default(session_state, profile_img_html=""):
     """Default professional template - keeps the exact same design as before"""
@@ -3887,12 +4934,8 @@ def render_template_default(session_state, profile_img_html=""):
     experience_html = ""
     for exp in session_state.experience_entries:
         if exp["company"] or exp["title"]:
-            # Handle paragraphs and single line breaks
-            description_lines = [line.strip() for line in exp["description"].strip().split("\n\n")]
-            description_html = "".join(
-                f"<div style='margin-bottom: 10px; line-height: 1.6;'>{line.replace(chr(10), '<br>')}</div>"
-                for line in description_lines if line
-            )
+            # Handle paragraphs and single line breaks using ATS-friendly formatter
+            description_html = _fmt_desc(exp["description"], font_size="15px", color="#374151", line_height="1.75")
 
             experience_html += f"""
             <div style='
@@ -4007,7 +5050,7 @@ def render_template_default(session_state, profile_img_html=""):
 
     # Convert experience to list if multiple lines
     # Escape HTML and convert line breaks
-    summary_html = session_state['summary'].replace('\n', '<br>')
+    summary_html = _fmt_desc(session_state['summary'], font_size="15px", color="#374151", line_height="1.8")
 
     # Enhanced EDUCATION with professional styling
     education_html = ""
@@ -4154,10 +5197,7 @@ def render_template_default(session_state, profile_img_html=""):
             </div>
             """ if tech_val else ""
 
-            description_items = ""
-            if proj.get("description"):
-                description_lines = [line.strip() for line in proj["description"].splitlines() if line.strip()]
-                description_items = "".join(f"<li style='margin-bottom: 6px; line-height: 1.6;'>{line}</li>" for line in description_lines)
+            description_items = _fmt_desc(proj.get("description",""), font_size="15px", color="#334155", line_height="1.75") if proj.get("description") else ""
 
             projects_html += f"""
             <div style='
@@ -4237,31 +5277,9 @@ def render_template_default(session_state, profile_img_html=""):
                     padding: 18px;
                     border-radius: 8px;
                     border: 1px solid rgba(229, 231, 235, 0.6);
+                    line-height: 1.75;
                 '>
-                    <div style='
-                        font-weight: 600; 
-                        margin-bottom: 12px;
-                        color: #1e293b;
-                        display: flex;
-                        align-items: center;
-                    '>
-                        <div style='
-                            width: 4px; 
-                            height: 4px; 
-                            background: #64748b;
-                            border-radius: 50%; 
-                            margin-right: 10px;
-                        '></div>
-                        Description:
-                    </div>
-                    <ul style='
-                        margin-top: 8px; 
-                        padding-left: 24px; 
-                        color: #334155;
-                        list-style-type: none;
-                    '>
-                        {description_items}
-                    </ul>
+                    {description_items}
                 </div>
             </div>
             """
@@ -4313,7 +5331,7 @@ def render_template_default(session_state, profile_img_html=""):
                     font-weight: 600; 
                     text-decoration: none;
                     font-size: 15px;
-                '>🔗 Project {i+1}</a>
+                '><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Project {i+1}</a>
             </div>
             """
             for i, link in enumerate(session_state.project_links)
@@ -4342,7 +5360,7 @@ def render_template_default(session_state, profile_img_html=""):
         """
         for cert in session_state.certificate_links:
             if cert["name"] and cert["link"]:
-                description = cert.get('description', '').replace('\n', '<br>')
+                description = _fmt_desc(cert.get('description', ''), font_size="15px", color="#374151", line_height="1.75")
                 name = cert['name']
                 link = cert['link']
                 duration = cert.get('duration', '')
@@ -4455,730 +5473,297 @@ def render_template_default(session_state, profile_img_html=""):
                 """
                 certificate_links_html += card_html
 
-    # Main HTML content - exactly as before
-    html_content = f"""
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{session_state['name']} - Professional Resume</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * {{
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }}
-        
-        body {{
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            line-height: 1.6;
-            color: #1a202c;
-            background: #ffffff;
-            min-height: 100vh;
-        }}
-        
-        .resume-container {{
-            width: 100%;
-            min-height: 100vh;
-            background: #ffffff;
-        }}
-        
-        .resume-container::before {{
-            content: '';
-            display: block;
-            height: 4px;
-            background: linear-gradient(90deg, #6b7280, #9ca3af);
-        }}
-        
-        .header-section {{
-            background: #f8fafc;
-            padding: 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #e2e8f0;
-        }}
-        
-        .name-title {{
-            flex: 1;
-        }}
-        
-        .name-title h1 {{
-            font-size: 42px;
-            font-weight: 800;
-            color: #1a202c;
-            margin-bottom: 8px;
-        }}
-        
-        .name-title h2 {{
-            font-size: 24px;
-            font-weight: 600;
-            color: #4a5568;
-            margin: 0;
-        }}
-        
-        .profile-image {{
-            flex-shrink: 0;
-            margin-left: 40px;
-        }}
-        
-        .main-content {{
-            display: flex;
-            min-height: 800px;
-        }}
-        
-        .sidebar {{
-            width: 350px;
-            background: #f7fafc;
-            padding: 40px 30px;
-            border-right: 1px solid #e2e8f0;
-        }}
-        
-        .main-section {{
-            flex: 1;
-            padding: 40px;
-            background: #ffffff;
-        }}
-        
-        .contact-info {{
-            margin-bottom: 40px;
-        }}
-        
-        .contact-item {{
-            display: flex;
-            align-items: center;
-            margin-bottom: 12px;
-            padding: 8px 0;
-        }}
-        
-        .contact-icon {{
-            width: 20px;
-            height: 20px;
-            margin-right: 15px;
-            opacity: 0.8;
-        }}
-        
-        .contact-item span, .contact-item a {{
-            font-size: 14px;
-            color: #4a5568;
-            text-decoration: none;
-            font-weight: 500;
-        }}
-        
-        .contact-item a:hover {{
-            color: #6b7280;
-            transition: color 0.3s ease;
-        }}
-        
-        .section-title {{
-            font-size: 22px;
-            font-weight: 700;
-            color: #2d3748;
-            margin: 35px 0 15px 0;
-        }}
-        
-        .section-content {{
-            margin-bottom: 30px;
-        }}
-        
-        .summary-text {{
-            font-size: 16px;
-            line-height: 1.8;
-            color: #4a5568;
-            background: #f8fafc;
-            padding: 25px;
-            border-radius: 8px;
-            border-left: 3px solid #9ca3af;
-        }}
-        
-        @media (max-width: 768px) {{
-            .main-content {{
-                flex-direction: column;
-            }}
-            
-            .sidebar {{
-                width: 100%;
-            }}
-            
-            .header-section {{
-                flex-direction: column;
-                text-align: center;
-            }}
-            
-            .profile-image {{
-                margin: 20px 0 0 0;
-            }}
-            
-            .name-title h1 {{
-                font-size: 32px;
-            }}
-        }}
-        
-        @media (max-width: 480px) {{
-            .header-section, .sidebar, .main-section {{
-                padding: 20px;
-            }}
-        }}
-    </style>
+    # ── SVG icons for contact ──────────────────────────────────────────
+    SVG_DEFAULT = {
+        'email':    '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
+        'phone':    '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.37 2 2 0 0 1 3.64 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.8a16 16 0 0 0 6.29 6.29l.98-.98a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+        'location': '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+        'linkedin': '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>',
+        'portfolio': '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+    }
+
+    def _badge_default(item, bg="rgba(255,255,255,0.2)", color="#ffffff"):
+        return (f"<span style='display:inline-block;background:{bg};color:{color};border-radius:4px;"
+                f"padding:3px 10px;margin:3px 3px 3px 0;font-size:12px;font-weight:600;border:1px solid rgba(255,255,255,0.3);'>{item.strip()}</span>")
+
+    def _badges_default(items_str, bg="rgba(255,255,255,0.2)", color="#ffffff"):
+        return "".join(_badge_default(s, bg, color) for s in items_str.split(',') if s.strip())
+
+    contact_html_default = ""
+    for _key in ['location', 'phone', 'email', 'linkedin', 'portfolio']:
+        val = session_state.get(_key, '')
+        if not val:
+            continue
+        if _key == 'email':
+            val_html = f"<a href='mailto:{val}' style='color:#ffffff;text-decoration:none;word-break:break-all;font-weight:500;'>{val}</a>"
+        elif _key in ('linkedin', 'portfolio'):
+            href = val if val.startswith('http') else f"https://{val}"
+            val_html = f"<a href='{href}' target='_blank' style='color:#ffffff;text-decoration:none;word-break:break-all;font-weight:500;'>{val}</a>"
+        else:
+            val_html = f"<span style='color:#ffffff;word-break:break-all;'>{val}</span>"
+        contact_html_default += (
+            f"<div style='margin-bottom:9px;font-size:13px;color:#ffffff;"
+            f"display:flex;align-items:center;gap:8px;'>"
+            f"<span style='flex-shrink:0;opacity:0.9;'>{SVG_DEFAULT.get(_key,'')}</span>{val_html}</div>"
+        )
+
+    def _main_sec_default(title, body):
+        return (f"<div style='margin-bottom:26px;'>"
+                f"<h3 style='font-size:13px;letter-spacing:2px;text-transform:uppercase;font-weight:700;"
+                f"color:#374151;border-bottom:2px solid #9ca3af;padding-bottom:5px;margin-bottom:14px;'>{title}</h3>"
+                f"{body}</div>")
+
+    def _side_sec_default(title, body):
+        return (f"<div style='margin-bottom:24px;'>"
+                f"<h3 style='font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#ffffff;"
+                f"font-weight:800;border-bottom:1px solid rgba(255,255,255,0.35);padding-bottom:6px;margin-bottom:12px;'>{title}</h3>"
+                f"{body}</div>")
+
+    # Fix profile image to standard circle size
+    import re as _re_default
+    fixed_img_default = ""
+    if profile_img_html:
+        _img_m = _re_default.search(r'<img[^>]*>', profile_img_html)
+        if _img_m:
+            _img_tag = _img_m.group(0)
+            _img_tag = _re_default.sub(r"style=['\"][^'\"]*['\"]", "", _img_tag)
+            _img_tag = _img_tag.replace("<img ", "<img style='width:108px;height:108px;border-radius:50%;object-fit:cover;object-position:center;border:3px solid rgba(255,255,255,0.5);display:block;margin:0 auto;' ")
+            fixed_img_default = _img_tag
+
+    # Cert sidebar (white text on dark bg)
+    cert_default_html = ""
+    for cert in session_state.certificate_links:
+        if cert.get('name'):
+            cert_default_html += (
+                f"<div style='margin-bottom:10px;padding:8px;background:rgba(255,255,255,0.1);border-radius:6px;border:1px solid rgba(255,255,255,0.2);'>"
+                f"<a href='{cert.get('link','#')}' style='color:#ffffff;font-size:13px;font-weight:600;text-decoration:none;'>{cert.get('name','')}</a>"
+                f"<div style='font-size:11px;color:rgba(255,255,255,0.8);'>{cert.get('duration','')}</div></div>"
+            )
+
+    proj_links_default_html = ""
+    if session_state.project_links:
+        proj_links_default_html = "".join(
+            f"<div style='margin-bottom:6px;'><a href='{lnk}' target='_blank' style='color:#ffffff;font-size:12px;font-weight:600;'>&#128279; Project {i+1}</a></div>"
+            for i, lnk in enumerate(session_state.project_links)
+        )
+
+    html_content = f"""<!DOCTYPE html>
+<html lang='en'>
+<head><meta charset='UTF-8'><title>{session_state.get('name','')} - Professional Resume</title>
+<style>* {{ box-sizing:border-box; margin:0; padding:0; }} body {{ font-family:'Segoe UI',sans-serif; background:#fff; }}</style>
 </head>
 <body>
-    <div class="resume-container">
-        <div class="header-section">
-            <div class="name-title">
-                <h1>{session_state['name']}</h1>
-                <h2>{session_state['job_title']}</h2>
-            </div>
-            <div class="profile-image">
-                {profile_img_html}
-            </div>
-        </div>
+<table role='presentation' style='width:100%;min-height:100vh;border-collapse:collapse;table-layout:fixed;'>
+<tr>
+  <td style='width:300px;background:linear-gradient(180deg,#374151,#4b5563);color:#ffffff;padding:36px 24px;vertical-align:top;'>
+    {'<div style="margin:0 auto 14px;text-align:center;">' + fixed_img_default + '</div>' if fixed_img_default else ''}
+    <h1 style='font-size:21px;font-weight:800;color:#ffffff;text-align:center;margin-bottom:4px;'>{session_state.get('name','')}</h1>
+    <div style='font-size:13px;color:#e5e7eb;text-align:center;margin-bottom:24px;font-weight:600;letter-spacing:1px;text-transform:uppercase;'>{session_state.get('job_title','')}</div>
+    {_side_sec_default("Contact", contact_html_default)}
+    {_side_sec_default("Skills", _badges_default(session_state.get('skills',''),'rgba(255,255,255,0.18)','#ffffff')) if session_state.get('skills') else ''}
+    {_side_sec_default("Soft Skills", _badges_default(session_state.get('Softskills',''),'rgba(255,255,255,0.18)','#ffffff')) if session_state.get('Softskills') else ''}
+    {_side_sec_default("Languages", _badges_default(session_state.get('languages',''),'rgba(255,255,255,0.18)','#ffffff')) if session_state.get('languages') else ''}
+    {_side_sec_default("Interests", _badges_default(session_state.get('interests',''),'rgba(255,255,255,0.18)','#ffffff')) if session_state.get('interests') else ''}
+    {_side_sec_default("Certifications", cert_default_html) if cert_default_html else ''}
+    {_side_sec_default("Project Links", proj_links_default_html) if proj_links_default_html else ''}
+  </td>
+  <td style='padding:40px 44px;background:#fff;vertical-align:top;'>
+    {_main_sec_default("Professional Summary", summary_html) if summary_html else ''}
+    {_main_sec_default("Work Experience", experience_html) if experience_html else ''}
+    {_main_sec_default("Education", education_html) if education_html else ''}
+    {_main_sec_default("Projects", projects_html) if projects_html else ''}
+  </td>
+</tr>
+</table>
+</body></html>"""
 
-        <div class="main-content">
-            <div class="sidebar">
-                <div class="contact-info">
-                    <div class="contact-item">
-                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
-                        </svg>
-                        <span>{session_state['location']}</span>
-                    </div>
-                    <div class="contact-item">
-                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path>
-                        </svg>
-                        <span>{session_state['phone']}</span>
-                    </div>
-                    <div class="contact-item">
-                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
-                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
-                        </svg>
-                        <a href="mailto:{session_state['email']}">{session_state['email']}</a>
-                    </div>
-                    <div class="contact-item">
-                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                        </svg>
-                        <a href="{session_state['linkedin']}" target="_blank">LinkedIn</a>
-                    </div>
-                    <div class="contact-item">
-                        <svg class="contact-icon" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.498-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z" clip-rule="evenodd"></path>
-                        </svg>
-                        <a href="{session_state['portfolio']}" target="_blank">Portfolio</a>
-                    </div>
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Skills</h3>
-                    <div>{skills_html}</div>
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Languages</h3>
-                    <div>{languages_html}</div>
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Interests</h3>
-                    <div>{interests_html}</div>
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Soft Skills</h3>
-                    <div>{Softskills_html}</div>
-                </div>
-            </div>
-
-            <div class="main-section">
-                <div class="section-content">
-                    <h3 class="section-title">Professional Summary</h3>
-                    <div class="summary-text">{summary_html}</div>
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Work Experience</h3>
-                    {experience_html}
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Education</h3>
-                    {education_html}
-                </div>
-
-                <div class="section-content">
-                    <h3 class="section-title">Projects</h3>
-                    {projects_html}
-                </div>
-
-                <div class="section-content">
-                    {project_links_html}
-                </div>
-
-                <div class="section-content">
-                    {certificate_links_html}
-                </div>
-            </div>
-        </div>
-    </div>
-</body>
-</html>
-"""
-    
     return html_content
 
 def render_template_modern(session_state, profile_img_html=""):
-    """Modern minimal template with clean design, pill-style tags for enhanced visual appeal"""
-    
-    # Process lists into pill tags instead of plain lists
-    skills_list = [s.strip() for s in session_state['skills'].split(',') if s.strip()]
-    languages_list = [l.strip() for l in session_state['languages'].split(',') if l.strip()]
-    interests_list = [i.strip() for i in session_state['interests'].split(',') if i.strip()]
-    softskills_list = [s.strip() for s in session_state['Softskills'].split(',') if s.strip()]
-    
-    # Create unified pill-style tags for all sections
-    skills_pills = "".join([
-        f"""<span style="
-            display: inline-block;
-            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-            color: #0c4a6e;
-            padding: 8px 16px;
-            margin: 4px 6px 4px 0;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            box-shadow: 0 2px 4px rgba(8, 145, 178, 0.1);
-            border: 1px solid rgba(14, 165, 233, 0.2);
-        ">{skill}</span>""" for skill in skills_list
-    ])
-    
-    # Create unified pill-style tags for languages
-    languages_pills = "".join([
-        f"""<span style="
-            display: inline-block;
-            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-            color: #0c4a6e;
-            padding: 8px 16px;
-            margin: 4px 6px 4px 0;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            box-shadow: 0 2px 4px rgba(8, 145, 178, 0.1);
-            border: 1px solid rgba(14, 165, 233, 0.2);
-        ">{lang}</span>""" for lang in languages_list
-    ])
-    
-    # Create unified pill-style tags for interests
-    interests_pills = "".join([
-        f"""<span style="
-            display: inline-block;
-            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-            color: #0c4a6e;
-            padding: 8px 16px;
-            margin: 4px 6px 4px 0;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            box-shadow: 0 2px 4px rgba(8, 145, 178, 0.1);
-            border: 1px solid rgba(14, 165, 233, 0.2);
-        ">{interest}</span>""" for interest in interests_list
-    ])
-    
-    # Create unified pill-style tags for soft skills
-    softskills_pills = "".join([
-        f"""<span style="
-            display: inline-block;
-            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-            color: #0c4a6e;
-            padding: 8px 16px;
-            margin: 4px 6px 4px 0;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            box-shadow: 0 2px 4px rgba(8, 145, 178, 0.1);
-            border: 1px solid rgba(14, 165, 233, 0.2);
-        ">{skill}</span>""" for skill in softskills_list
-    ])
-    
-    html_content = f"""
-<!DOCTYPE html>
+    """Modern Minimal template - ATS-friendly single-column layout with clean inline styles"""
+    import re as _re_mod
+
+    # Fix profile image: extract <img> only, apply clean inline styles
+    fixed_img_mod = ""
+    if profile_img_html:
+        _img_m = _re_mod.search(r'<img[^>]*>', profile_img_html)
+        if _img_m:
+            _img_tag = _img_m.group(0)
+            _img_tag = _re_mod.sub(r"style=['\"][^'\"]*['\"]", "", _img_tag)
+            _img_tag = _img_tag.replace(
+                "<img ",
+                "<img style='width:100px;height:100px;border-radius:50%;object-fit:cover;"
+                "object-position:center;border:3px solid #2563eb;display:block;margin:0 auto 12px;' "
+            )
+            fixed_img_mod = _img_tag
+
+    # Helper: build a comma-separated tag list (ATS-safe plain spans)
+    def _tag_list(items_str, bg="#eff6ff", color="#1e3a8a", border="#bfdbfe"):
+        return "".join(
+            f"<span style='display:inline-block;background:{bg};color:{color};"
+            f"border:1px solid {border};border-radius:4px;padding:4px 12px;"
+            f"margin:3px 4px 3px 0;font-size:13px;font-weight:600;'>{s.strip()}</span>"
+            for s in items_str.split(',') if s.strip()
+        )
+
+    # Section header helper (left-aligned, underlined — ATS parses left-to-right)
+    def _section(title, body):
+        return (
+            f"<div style='margin-bottom:28px;'>"
+            f"<h3 style='font-size:15px;font-weight:700;color:#1e3a8a;text-transform:uppercase;"
+            f"letter-spacing:1.5px;border-bottom:2px solid #2563eb;padding-bottom:5px;"
+            f"margin-bottom:14px;text-align:left;'>{title}</h3>"
+            f"{body}</div>"
+        )
+
+    # Contact line
+    contact_parts = []
+    for key, label in [('location', ''), ('phone', ''), ('email', ''), ('linkedin', 'LinkedIn'), ('portfolio', 'Portfolio')]:
+        val = session_state.get(key, '')
+        if not val:
+            continue
+        if key == 'email':
+            contact_parts.append(f"<a href='mailto:{val}' style='color:#1e3a8a;text-decoration:none;font-weight:500;'>{val}</a>")
+        elif key in ('linkedin', 'portfolio'):
+            href = val if val.startswith('http') else f"https://{val}"
+            contact_parts.append(f"<a href='{href}' target='_blank' style='color:#1e3a8a;text-decoration:none;font-weight:500;'>{label}: {val}</a>")
+        else:
+            contact_parts.append(f"<span style='color:#1f2937;'>{val}</span>")
+    contact_html = " &nbsp;|&nbsp; ".join(contact_parts)
+
+    # Work Experience
+    exp_html = ""
+    for exp in session_state.experience_entries:
+        if exp.get('company') or exp.get('title'):
+            desc = _fmt_desc(exp.get('description', ''), font_size='14px', color='#1f2937', line_height='1.75')
+            exp_html += (
+                f"<div style='margin-bottom:20px;padding:16px 18px;border-left:3px solid #2563eb;"
+                f"background:#f8faff;border-radius:0 8px 8px 0;'>"
+                f"<div style='display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;margin-bottom:4px;'>"
+                f"<strong style='font-size:15px;color:#1e3a8a;'>{exp.get('title','')}</strong>"
+                f"<span style='font-size:13px;color:#374151;background:#e0e7ff;padding:2px 10px;"
+                f"border-radius:6px;font-weight:600;border:1px solid #c7d2fe;'>{exp.get('duration','')}</span>"
+                f"</div>"
+                f"<div style='font-size:14px;color:#374151;font-weight:600;margin-bottom:8px;'>{exp.get('company','')}</div>"
+                f"<div style='font-size:14px;color:#1f2937;line-height:1.7;'>{desc}</div>"
+                f"</div>"
+            )
+
+    # Education
+    edu_html = ""
+    for edu in session_state.education_entries:
+        if edu.get('institution') or edu.get('degree'):
+            degree_val = edu.get('degree', '')
+            if isinstance(degree_val, list):
+                degree_val = ", ".join(degree_val)
+            edu_html += (
+                f"<div style='margin-bottom:16px;padding:14px 16px;border-left:3px solid #2563eb;"
+                f"background:#f8faff;border-radius:0 8px 8px 0;'>"
+                f"<div style='display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;margin-bottom:4px;'>"
+                f"<strong style='font-size:15px;color:#1e3a8a;'>{edu.get('institution','')}</strong>"
+                f"<span style='font-size:13px;color:#374151;background:#e0e7ff;padding:2px 10px;"
+                f"border-radius:6px;font-weight:600;border:1px solid #c7d2fe;'>{edu.get('year','')}</span>"
+                f"</div>"
+                f"<div style='font-size:14px;color:#374151;font-weight:600;margin-bottom:4px;'>{degree_val}</div>"
+                f"<div style='font-size:13px;color:#374151;'>{edu.get('details','')}</div>"
+                f"</div>"
+            )
+
+    # Projects
+    proj_html = ""
+    proj_links_all = getattr(session_state, 'project_links', []) or []
+    for idx, proj in enumerate(session_state.project_entries):
+        if proj.get('title'):
+            desc = _fmt_desc(proj.get('description', ''), font_size='14px', color='#1f2937', line_height='1.75')
+            proj_link_html = ""
+            if idx < len(proj_links_all) and proj_links_all[idx]:
+                proj_link_html = (
+                    f"<div style='margin-top:6px;'>"
+                    f"<a href='{proj_links_all[idx]}' target='_blank' style='color:#2563eb;"
+                    f"font-size:13px;font-weight:600;'>View Project / GitHub</a></div>"
+                )
+            proj_html += (
+                f"<div style='margin-bottom:18px;padding:14px 16px;border-left:3px solid #2563eb;"
+                f"background:#f8faff;border-radius:0 8px 8px 0;'>"
+                f"<div style='display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;margin-bottom:4px;'>"
+                f"<strong style='font-size:15px;color:#1e3a8a;'>{proj.get('title','')}</strong>"
+                f"<span style='font-size:13px;color:#374151;background:#e0e7ff;padding:2px 10px;"
+                f"border-radius:6px;font-weight:600;border:1px solid #c7d2fe;'>{proj.get('duration','')}</span>"
+                f"</div>"
+                f"<div style='font-size:13px;color:#374151;font-weight:600;margin-bottom:6px;'>Tech Stack: {proj.get('tech','')}</div>"
+                f"<div style='font-size:14px;color:#1f2937;'>{desc}</div>"
+                f"{proj_link_html}</div>"
+            )
+
+    # Certifications
+    cert_html = ""
+    for cert in session_state.certificate_links:
+        if cert.get('name'):
+            cert_desc = _fmt_desc(cert.get('description', ''), font_size='13px', color='#1f2937', line_height='1.7')
+            cert_html += (
+                f"<div style='margin-bottom:14px;padding:12px 14px;border-left:3px solid #2563eb;"
+                f"background:#f8faff;border-radius:0 8px 8px 0;'>"
+                f"<div style='display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;margin-bottom:4px;'>"
+                f"<a href='{cert.get('link','#')}' target='_blank' style='font-size:14px;font-weight:700;"
+                f"color:#1e3a8a;text-decoration:none;'>{cert.get('name','')}</a>"
+                f"<span style='font-size:12px;color:#374151;background:#e0e7ff;padding:2px 8px;"
+                f"border-radius:6px;font-weight:600;border:1px solid #c7d2fe;'>{cert.get('duration','')}</span>"
+                f"</div>"
+                f"<div style='font-size:13px;color:#1f2937;'>{cert_desc}</div>"
+                f"</div>"
+            )
+
+    # Summary
+    summary_mod = _fmt_desc(session_state.get('summary', ''), font_size='14px', color='#1f2937', line_height='1.8')
+
+    # Skills and tags
+    skills_str = session_state.get('skills', '')
+    softskills_str = session_state.get('Softskills', '')
+    languages_str = session_state.get('languages', '')
+    interests_str = session_state.get('interests', '')
+
+    # Project links section
+    proj_links_section = ""
+    if proj_links_all:
+        links_body = "".join(
+            f"<div style='margin-bottom:6px;'>"
+            f"<a href='{lnk}' target='_blank' style='color:#2563eb;font-size:14px;font-weight:600;'>Project {i+1}: {lnk}</a>"
+            f"</div>"
+            for i, lnk in enumerate(proj_links_all) if lnk
+        )
+        proj_links_section = _section("Project Links", links_body) if links_body else ""
+
+    html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{session_state['name']} - Modern Resume</title>
-    <style>
-        * {{
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }}
-        
-        body {{
-            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: #374151;
-            background: #ffffff;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }}
-        
-        .header {{
-            text-align: center;
-            margin-bottom: 50px;
-            padding: 40px 0;
-            position: relative;
-        }}
-        
-        .header::after {{
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px;
-            height: 3px;
-            background: linear-gradient(90deg, #3b82f6, #06b6d4);
-            border-radius: 2px;
-        }}
-        
-        .profile-image-container {{
-            margin-bottom: 25px;
-        }}
-        
-        .profile-image-container img {{
-            width: 160px;
-            height: 160px;
-            border-radius: 50%;
-            object-fit: cover;
-            object-position: center;
-            border: 4px solid #3b82f6;
-            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3), 0 0 0 8px rgba(59, 130, 246, 0.1);
-            display: block;
-            margin: 0 auto;
-        }}
-        
-        .header h1 {{
-            font-size: 2.75rem;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 12px;
-            letter-spacing: -0.025em;
-        }}
-        
-        .header h2 {{
-            font-size: 1.35rem;
-            font-weight: 500;
-            color: #6b7280;
-            margin-bottom: 25px;
-        }}
-        
-        .contact-info {{
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 25px;
-            font-size: 0.95rem;
-            color: #4b5563;
-        }}
-        
-        .contact-info a {{
-            color: #3b82f6;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.2s ease;
-        }}
-        
-        .contact-info a:hover {{
-            color: #1d4ed8;
-        }}
-        
-        .section {{
-            margin-bottom: 40px;
-        }}
-        
-        .section h3 {{
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 20px;
-            position: relative;
-            padding-bottom: 10px;
-            text-align: center;
-        }}
-        
-        .section h3::after {{
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 50px;
-            height: 2px;
-            background: linear-gradient(90deg, #3b82f6, #06b6d4);
-            border-radius: 1px;
-        }}
-        
-        .project-links {{
-            text-align: center;
-        }}
-        
-        .summary {{
-            font-size: 1.1rem;
-            line-height: 1.8;
-            color: #4b5563;
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            padding: 30px;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            position: relative;
-        }}
-        
-        .summary::before {{
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #3b82f6, #06b6d4);
-            border-radius: 12px 12px 0 0;
-        }}
-        
-        .experience-item, .education-item, .project-item {{
-            margin-bottom: 30px;
-            padding: 25px;
-            background: linear-gradient(135deg, #fafbfc 0%, #f4f6f8 100%);
-            border-radius: 12px;
-            border: 1px solid #e5e7eb;
-            position: relative;
-        }}
-        
-        .experience-item::before, .education-item::before, .project-item::before {{
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #6b7280, #9ca3af);
-            border-radius: 12px 12px 0 0;
-        }}
-        
-        .item-header {{
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 8px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }}
-        
-        .item-title {{
-            font-weight: 700;
-            color: #1f2937;
-            font-size: 1.2rem;
-        }}
-        
-        .item-duration {{
-            color: #6b7280;
-            font-size: 0.95rem;
-            font-weight: 600;
-            background: linear-gradient(135deg, #f9fafb, #f3f4f6);
-            padding: 6px 14px;
-            border-radius: 16px;
-            border: 1px solid #d1d5db;
-        }}
-        
-        .item-subtitle {{
-            color: #3b82f6;
-            font-size: 1.05rem;
-            margin-bottom: 12px;
-            font-weight: 600;
-        }}
-        
-        .item-description {{
-            color: #4b5563;
-            line-height: 1.7;
-            font-size: 1rem;
-        }}
-        
-        .pills-container {{
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 10px;
-        }}
-        
-        .links a {{
-            display: inline-block;
-            color: #3b82f6;
-            text-decoration: none;
-            margin-right: 20px;
-            margin-bottom: 8px;
-            font-weight: 500;
-            padding: 8px 16px;
-            background: linear-gradient(135deg, #eff6ff, #dbeafe);
-            border-radius: 8px;
-            border: 1px solid #bfdbfe;
-            transition: all 0.2s ease;
-        }}
-        
-        .links a:hover {{
-            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-            transform: translateY(-1px);
-        }}
-        
-        @media (max-width: 768px) {{
-            body {{
-                padding: 20px 15px;
-            }}
-            
-            .contact-info {{
-                flex-direction: column;
-                align-items: center;
-                gap: 8px;
-            }}
-            
-            .item-header {{
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }}
-            
-            .header h1 {{
-                font-size: 2.2rem;
-            }}
-            
-            .experience-item, .education-item, .project-item {{
-                padding: 20px;
-            }}
-        }}
-    </style>
+<meta charset="UTF-8">
+<title>{session_state.get('name', '')} - Resume</title>
 </head>
-<body>
-    <div class="header">
-        <div class="profile-image-container">
-            {profile_img_html}
-        </div>
-        <h1>{session_state['name']}</h1>
-        <h2>{session_state['job_title']}</h2>
-        <div class="contact-info">
-            <span>📍 {session_state['location']}</span>
-            <span>📞 {session_state['phone']}</span>
-            <a href="mailto:{session_state['email']}">✉️ {session_state['email']}</a>
-            <a href="{session_state['linkedin']}" target="_blank">🔗 LinkedIn</a>
-            <a href="{session_state['portfolio']}" target="_blank">🌐 Portfolio</a>
-        </div>
-    </div>
+<body style="font-family:'Segoe UI',Arial,Helvetica,sans-serif;line-height:1.6;color:#1f2937;background:#ffffff;max-width:860px;margin:0 auto;padding:36px 32px;">
 
-    <div class="section">
-        <h3>Professional Summary</h3>
-        <div class="summary">{session_state['summary'].replace(chr(10), '<br>')}</div>
-    </div>
+  <!-- HEADER -->
+  <div style="text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:3px solid #2563eb;">
+    {fixed_img_mod if fixed_img_mod else ''}
+    <h1 style="font-size:28px;font-weight:800;color:#1e3a8a;margin-bottom:6px;">{session_state.get('name', '')}</h1>
+    <div style="font-size:16px;color:#374151;font-weight:600;margin-bottom:12px;">{session_state.get('job_title', '')}</div>
+    <div style="font-size:13px;color:#374151;line-height:2;">{contact_html}</div>
+  </div>
 
-    <div class="section">
-        <h3>Work Experience</h3>
-        {"".join([f'''
-        <div class="experience-item">
-            <div class="item-header">
-                <div class="item-title">{exp.get('title', '')}</div>
-                <div class="item-duration">{exp.get('duration', '')}</div>
-            </div>
-            <div class="item-subtitle">{exp.get('company', '')}</div>
-            <div class="item-description">{exp.get('description', '').replace(chr(10), '<br>')}</div>
-        </div>
-        ''' for exp in session_state.experience_entries if exp.get('company') or exp.get('title')])}
-    </div>
-
-    <div class="section">
-        <h3>Education</h3>
-        {"".join([f'''
-        <div class="education-item">
-            <div class="item-header">
-                <div class="item-title">{edu.get('degree', '')}</div>
-                <div class="item-duration">{edu.get('year', '')}</div>
-            </div>
-            <div class="item-subtitle">{edu.get('institution', '')}</div>
-            <div class="item-description">{edu.get('details', '')}</div>
-        </div>
-        ''' for edu in session_state.education_entries if edu.get('institution') or edu.get('degree')])}
-    </div>
-
-    <div class="section">
-        <h3>Projects</h3>
-        {"".join([f'''
-        <div class="project-item">
-            <div class="item-header">
-                <div class="item-title">{proj.get('title', '')}</div>
-                <div class="item-duration">{proj.get('duration', '')}</div>
-            </div>
-            <div class="item-subtitle">Technologies: {proj.get('tech', '')}</div>
-            <div class="item-description">{proj.get('description', '').replace(chr(10), '<br>')}</div>
-        </div>
-        ''' for proj in session_state.project_entries if proj.get('title')])}
-    </div>
-
-    <div class="section">
-        <h3>Technical Skills</h3>
-        <div class="pills-container">
-            {skills_pills}
-        </div>
-    </div>
-
-    <div class="section">
-        <h3>Languages</h3>
-        <div class="pills-container">
-            {languages_pills}
-        </div>
-    </div>
-
-    <div class="section">
-        <h3>Professional Interests</h3>
-        <div class="pills-container">
-            {interests_pills}
-        </div>
-    </div>
-
-    <div class="section">
-        <h3>Core Competencies</h3>
-        <div class="pills-container">
-            {softskills_pills}
-        </div>
-    </div>
-
-    {f'''
-    <div class="section">
-        <h3>Project Links</h3>
-        <div class="links project-links">
-            {"".join([f'<a href="{link}" target="_blank">🔗 Project {i+1}</a>' for i, link in enumerate(session_state.project_links)])}
-        </div>
-    </div>
-    ''' if session_state.project_links else ''}
-
-    {f'''
-    <div class="section">
-        <h3>Professional Certifications</h3>
-        {"".join([f'''
-        <div class="project-item">
-            <div class="item-header">
-                <div class="item-title"><a href="{cert['link']}" target="_blank" style="color: #1f2937; text-decoration: none;">{cert['name']}</a></div>
-                <div class="item-duration">{cert.get('duration', '')}</div>
-            </div>
-            <div class="item-description">{cert.get('description', '')}</div>
-        </div>
-        ''' for cert in session_state.certificate_links if cert.get('name')])}
-    </div>
-    ''' if any(cert.get('name') for cert in session_state.certificate_links) else ''}
+  <!-- BODY -->
+  {_section("Professional Summary", f"<div style='font-size:14px;color:#1f2937;line-height:1.8;padding:14px 16px;background:#f8faff;border-radius:8px;border:1px solid #e0e7ff;'>{summary_mod}</div>") if summary_mod else ''}
+  {_section("Work Experience", exp_html) if exp_html else ''}
+  {_section("Education", edu_html) if edu_html else ''}
+  {_section("Projects", proj_html) if proj_html else ''}
+  {_section("Technical Skills", f"<div style='padding:8px 0;'>{_tag_list(skills_str)}</div>") if skills_str.strip() else ''}
+  {_section("Core Competencies", f"<div style='padding:8px 0;'>{_tag_list(softskills_str, '#fef3c7', '#92400e', '#fde68a')}</div>") if softskills_str.strip() else ''}
+  {_section("Languages", f"<div style='padding:8px 0;'>{_tag_list(languages_str, '#f0fdf4', '#14532d', '#bbf7d0')}</div>") if languages_str.strip() else ''}
+  {_section("Interests", f"<div style='padding:8px 0;'>{_tag_list(interests_str, '#fdf4ff', '#581c87', '#e9d5ff')}</div>") if interests_str.strip() else ''}
+  {_section("Professional Certifications", cert_html) if cert_html else ''}
+  {proj_links_section}
 
 </body>
-</html>
-"""
-    
+</html>"""
+
     return html_content
 
 def render_template_sidebar(session_state, profile_img_html=""):
@@ -5194,14 +5779,14 @@ def render_template_sidebar(session_state, profile_img_html=""):
     skills_pills = "".join([
         f"""<div style="
             display: inline-block;
-            background: rgba(56, 189, 248, 0.15);
-            color: #e0f2fe;
+            background: rgba(56, 189, 248, 0.25);
+            color: #ffffff;
             padding: 8px 16px;
             margin: 5px 8px 5px 0;
             border-radius: 18px;
             font-size: 0.85rem;
             font-weight: 600;
-            border: 1px solid rgba(56, 189, 248, 0.3);
+            border: 1px solid rgba(56, 189, 248, 0.5);
             box-shadow: 0 2px 4px rgba(56, 189, 248, 0.1);
         ">{skill}</div>""" for skill in skills_list
     ])
@@ -5209,14 +5794,14 @@ def render_template_sidebar(session_state, profile_img_html=""):
     languages_pills = "".join([
         f"""<div style="
             display: inline-block;
-            background: rgba(34, 197, 94, 0.15);
-            color: #dcfce7;
+            background: rgba(34, 197, 94, 0.25);
+            color: #ffffff;
             padding: 8px 16px;
             margin: 5px 8px 5px 0;
             border-radius: 18px;
             font-size: 0.85rem;
             font-weight: 600;
-            border: 1px solid rgba(34, 197, 94, 0.3);
+            border: 1px solid rgba(34, 197, 94, 0.5);
             box-shadow: 0 2px 4px rgba(34, 197, 94, 0.1);
         ">{lang}</div>""" for lang in languages_list
     ])
@@ -5224,14 +5809,14 @@ def render_template_sidebar(session_state, profile_img_html=""):
     interests_pills = "".join([
         f"""<div style="
             display: inline-block;
-            background: rgba(245, 158, 11, 0.15);
-            color: #fef3c7;
+            background: rgba(245, 158, 11, 0.25);
+            color: #ffffff;
             padding: 8px 16px;
             margin: 5px 8px 5px 0;
             border-radius: 18px;
             font-size: 0.85rem;
             font-weight: 600;
-            border: 1px solid rgba(245, 158, 11, 0.3);
+            border: 1px solid rgba(245, 158, 11, 0.5);
             box-shadow: 0 2px 4px rgba(245, 158, 11, 0.1);
         ">{interest}</div>""" for interest in interests_list
     ])
@@ -5239,464 +5824,1111 @@ def render_template_sidebar(session_state, profile_img_html=""):
     softskills_pills = "".join([
         f"""<div style="
             display: inline-block;
-            background: rgba(168, 85, 247, 0.15);
-            color: #f3e8ff;
+            background: rgba(168, 85, 247, 0.25);
+            color: #ffffff;
             padding: 8px 16px;
             margin: 5px 8px 5px 0;
             border-radius: 18px;
             font-size: 0.85rem;
             font-weight: 600;
-            border: 1px solid rgba(168, 85, 247, 0.3);
+            border: 1px solid rgba(168, 85, 247, 0.5);
             box-shadow: 0 2px 4px rgba(168, 85, 247, 0.1);
         ">{skill}</div>""" for skill in softskills_list
     ])
     
-    # Enhanced profile image styling
-    enhanced_profile_img = ""
+    # Fix profile image to standard circle size
+    import re as _re_sb
+    fixed_img_sb = ""
     if profile_img_html:
-        # Extract the img tag and enhance it
-        import re
-        img_match = re.search(r'<img[^>]*>', profile_img_html)
-        if img_match:
-            enhanced_profile_img = img_match.group(0).replace(
-                'style="',
-                'style="width: 160px; height: 160px; border-radius: 50%; object-fit: cover; object-position: center; border: 4px solid #38bdf8; box-shadow: 0 8px 32px rgba(56, 189, 248, 0.3), 0 0 0 8px rgba(56, 189, 248, 0.1); margin-bottom: 20px; '
+        _img_m = _re_sb.search(r'<img[^>]*>', profile_img_html)
+        if _img_m:
+            _img_tag = _img_m.group(0)
+            _img_tag = _re_sb.sub(r"style=['\"][^'\"]*['\"]", "", _img_tag)
+            _img_tag = _img_tag.replace("<img ", "<img style='width:108px;height:108px;border-radius:50%;object-fit:cover;object-position:center;border:3px solid #38bdf8;display:block;margin:0 auto;' ")
+            fixed_img_sb = _img_tag
+
+    SVG_SB = {
+        'email':    '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
+        'phone':    '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.37 2 2 0 0 1 3.64 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.8a16 16 0 0 0 6.29 6.29l.98-.98a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+        'location': '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+        'linkedin': '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>',
+        'portfolio': '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+    }
+
+    contact_html_sb = ""
+    for _key in ['location', 'phone', 'email', 'linkedin', 'portfolio']:
+        val = session_state.get(_key, '')
+        if not val:
+            continue
+        if _key == 'email':
+            val_html = f"<a href='mailto:{val}' style='color:#ffffff;text-decoration:none;word-break:break-all;font-weight:500;'>{val}</a>"
+        elif _key in ('linkedin', 'portfolio'):
+            href = val if val.startswith('http') else f"https://{val}"
+            val_html = f"<a href='{href}' target='_blank' style='color:#ffffff;text-decoration:none;word-break:break-all;font-weight:500;'>{val}</a>"
+        else:
+            val_html = f"<span style='color:#ffffff;word-break:break-all;'>{val}</span>"
+        contact_html_sb += (
+            f"<div style='margin-bottom:9px;font-size:13px;color:#ffffff;"
+            f"display:flex;align-items:center;gap:8px;'>"
+            f"<span style='flex-shrink:0;opacity:0.9;'>{SVG_SB.get(_key,'')}</span>{val_html}</div>"
+        )
+
+    def _badge_sb(item, bg="rgba(56,189,248,0.25)", color="#ffffff"):
+        return (f"<span style='display:inline-block;background:{bg};color:{color};border-radius:4px;"
+                f"padding:3px 10px;margin:3px 3px 3px 0;font-size:12px;font-weight:600;border:1px solid rgba(56,189,248,0.4);'>{item.strip()}</span>")
+
+    def _badges_sb(items_str, bg="rgba(56,189,248,0.25)", color="#ffffff"):
+        return "".join(_badge_sb(s, bg, color) for s in items_str.split(',') if s.strip())
+
+    def _main_sec_sb(title, body):
+        return (f"<div style='margin-bottom:26px;'>"
+                f"<h3 style='font-size:13px;letter-spacing:2px;text-transform:uppercase;font-weight:700;"
+                f"color:#0c4a6e;border-bottom:2px solid #38bdf8;padding-bottom:5px;margin-bottom:14px;'>{title}</h3>"
+                f"{body}</div>")
+
+    def _side_sec_sb(title, body):
+        return (f"<div style='margin-bottom:24px;'>"
+                f"<h3 style='font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#ffffff;"
+                f"font-weight:800;border-bottom:1px solid rgba(56,189,248,0.4);padding-bottom:6px;margin-bottom:12px;'>{title}</h3>"
+                f"{body}</div>")
+
+    cert_sb_html = ""
+    for cert in session_state.certificate_links:
+        if cert.get('name'):
+            cert_sb_html += (
+                f"<div style='margin-bottom:10px;padding:8px;background:rgba(255,255,255,0.1);border-radius:6px;border:1px solid rgba(56,189,248,0.3);'>"
+                f"<a href='{cert.get('link','#')}' style='color:#ffffff;font-size:13px;font-weight:600;text-decoration:none;'>{cert.get('name','')}</a>"
+                f"<div style='font-size:11px;color:rgba(255,255,255,0.8);'>{cert.get('duration','')}</div></div>"
             )
-    
-    html_content = f"""
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{session_state['name']} - Elegant Resume</title>
-    <style>
-        * {{
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }}
-        
-        body {{
-            font-family: 'Inter', 'Segoe UI', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: #f8fafc;
-        }}
-        
-        .resume-container {{
-            width: 100%;
-            display: flex;
-            min-height: 100vh;
-            background: white;
-            box-shadow: 0 0 30px rgba(0,0,0,0.1);
-        }}
-        
-        .sidebar {{
-            width: 350px;
-            background: linear-gradient(180deg, #1e293b 0%, #334155 100%);
-            color: white;
-            padding: 40px 30px;
-            position: relative;
-        }}
-        
-        .sidebar::before {{
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 4px;
-            height: 100%;
-            background: linear-gradient(180deg, #38bdf8, #06b6d4);
-        }}
-        
-        .main-content {{
-            flex: 1;
-            padding: 40px 50px;
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-        }}
-        
-        .profile-section {{
-            text-align: center;
-            margin-bottom: 45px;
-            position: relative;
-        }}
-        
-        .profile-section::after {{
-            content: '';
-            position: absolute;
-            bottom: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 60px;
-            height: 3px;
-            background: linear-gradient(90deg, #38bdf8, #06b6d4);
-            border-radius: 2px;
-        }}
-        
-        .profile-section h1 {{
-            font-size: 1.95rem;
-            margin-bottom: 12px;
-            color: #f8fafc;
-            font-weight: 700;
-            letter-spacing: -0.025em;
-        }}
-        
-        .profile-section h2 {{
-            font-size: 1.1rem;
-            color: #cbd5e1;
-            margin-bottom: 25px;
-            font-weight: 500;
-        }}
-        
-        .contact-section {{
-            margin-bottom: 40px;
-        }}
-        
-        .contact-item {{
-            display: flex;
-            align-items: center;
-            margin-bottom: 18px;
-            padding: 12px;
-            background: rgba(56, 189, 248, 0.1);
-            border-radius: 10px;
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            transition: all 0.3s ease;
-        }}
-        
-        .contact-item:hover {{
-            background: rgba(56, 189, 248, 0.15);
-            transform: translateX(5px);
-        }}
-        
-        .contact-icon {{
-            margin-right: 15px;
-            font-size: 1.1rem;
-            color: #38bdf8;
-            width: 20px;
-            text-align: center;
-        }}
-        
-        .contact-item span, .contact-item a {{
-            color: #e2e8f0;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.9rem;
-            word-break: break-word;
-            overflow-wrap: anywhere;
-            max-width: 100%;
-            display: inline-block;
-        }}
-        
-        .contact-item a:hover {{
-            color: #38bdf8;
-            transition: color 0.3s ease;
-        }}
-        
-        .sidebar-section {{
-            margin-bottom: 40px;
-        }}
-        
-        .sidebar-section h3 {{
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            color: #38bdf8;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 700;
-            position: relative;
-            padding-bottom: 10px;
-        }}
-        
-        .sidebar-section h3::after {{
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 40px;
-            height: 2px;
-            background: linear-gradient(90deg, #38bdf8, #06b6d4);
-            border-radius: 1px;
-        }}
-        
-        .main-section {{
-            margin-bottom: 40px;
-        }}
-        
-        .main-section h3 {{
-            font-size: 1.65rem;
-            color: #1e293b;
-            margin-bottom: 25px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 700;
-            position: relative;
-            padding-bottom: 15px;
-        }}
-        
-        .main-section h3::after {{
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 60px;
-            height: 3px;
-            background: linear-gradient(90deg, #3b82f6, #06b6d4);
-            border-radius: 2px;
-        }}
-        
-        .summary {{
-            font-size: 1.1rem;
-            line-height: 1.8;
-            color: #4b5563;
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            padding: 30px;
-            border-radius: 15px;
-            border: 1px solid #bae6fd;
-            position: relative;
-            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.05);
-        }}
-        
-        .summary::before {{
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #3b82f6, #06b6d4);
-            border-radius: 15px 15px 0 0;
-        }}
-        
-        .content-item {{
-            margin-bottom: 30px;
-            padding: 30px;
-            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-            border-radius: 15px;
-            border: 1px solid #e5e7eb;
-            position: relative;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }}
-        
-        .content-item::before {{
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #6b7280, #9ca3af);
-            border-radius: 15px 15px 0 0;
-        }}
-        
-        .content-item:last-child {{
-            margin-bottom: 0;
-        }}
-        
-        .item-header {{
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }}
-        
-        .item-title {{
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #1e293b;
-        }}
-        
-        .item-duration {{
-            color: #6b7280;
-            font-size: 0.95rem;
-            font-weight: 600;
-            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: 1px solid #cbd5e1;
-        }}
-        
-        .item-company {{
-            color: #3b82f6;
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-            font-weight: 700;
-        }}
-        
-        .item-description {{
-            color: #4b5563;
-            line-height: 1.7;
-            font-size: 1rem;
-        }}
-        
-        .project-tech {{
-            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-            color: #1e40af;
-            padding: 10px 18px;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            margin-bottom: 15px;
-            display: inline-block;
-            font-weight: 600;
-            border: 1px solid #93c5fd;
-        }}
-        
-        @media (max-width: 768px) {{
-            .resume-container {{
-                flex-direction: column;
-            }}
-            
-            .sidebar {{
-                width: 100%;
-            }}
-            
-            .item-header {{
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }}
-            
-            .main-content {{
-                padding: 30px 25px;
-            }}
-            
-            .sidebar {{
-                padding: 30px 25px;
-            }}
-        }}
-    </style>
+
+    proj_links_sb = ""
+    if session_state.project_links:
+        proj_links_sb = "".join(
+            f"<div style='margin-bottom:6px;'><a href='{lnk}' target='_blank' style='color:#ffffff;font-size:12px;font-weight:600;'>&#128279; Project {i+1}</a></div>"
+            for i, lnk in enumerate(session_state.project_links)
+        )
+
+    exp_sb = ""
+    for exp in session_state.experience_entries:
+        if exp.get('company') or exp.get('title'):
+            desc = _fmt_desc(exp.get('description', ''), font_size='13px', color='#374151', line_height='1.75')
+            exp_sb += (
+                f"<div style='margin-bottom:20px;border-left:3px solid #38bdf8;padding-left:14px;'>"
+                f"<div style='display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;'>"
+                f"<strong style='font-size:15px;color:#0c4a6e;'>{exp.get('company','')}</strong>"
+                f"<span style='font-size:12px;color:#64748b;background:#f0f9ff;padding:2px 8px;border-radius:8px;'>{exp.get('duration','')}</span>"
+                f"</div>"
+                f"<div style='font-size:13px;color:#0284c7;font-weight:700;margin-bottom:5px;'>{exp.get('title','')}</div>"
+                f"<div style='font-size:13px;color:#374151;line-height:1.7;'>{desc}</div></div>"
+                f"<div style='border-bottom:1px dashed #bae6fd;margin-bottom:12px;'></div>"
+            )
+
+    edu_sb = ""
+    for edu in session_state.education_entries:
+        if edu.get('institution'):
+            degree_val = edu.get('degree', '')
+            if isinstance(degree_val, list):
+                degree_val = ", ".join(degree_val)
+            edu_sb += (
+                f"<div style='margin-bottom:14px;border-left:3px solid #38bdf8;padding-left:12px;'>"
+                f"<strong style='font-size:14px;color:#0c4a6e;'>{edu.get('institution','')}</strong>"
+                f"<span style='float:right;font-size:12px;color:#64748b;'>{edu.get('year','')}</span>"
+                f"<div style='clear:both;font-size:13px;color:#0284c7;font-style:italic;font-weight:600;'>{degree_val}</div>"
+                f"<div style='font-size:12px;color:#6b7280;'>{edu.get('details','')}</div></div>"
+            )
+
+    proj_sb = ""
+    proj_links_all_sb = getattr(session_state, 'project_links', []) or []
+    for idx, proj in enumerate(session_state.project_entries):
+        if proj.get('title'):
+            desc = _fmt_desc(proj.get('description', ''), font_size='13px', color='#374151', line_height='1.75')
+            proj_link_html = ""
+            if idx < len(proj_links_all_sb) and proj_links_all_sb[idx]:
+                proj_link_html = f"<div style='margin-top:5px;'><a href='{proj_links_all_sb[idx]}' target='_blank' style='color:#0284c7;font-size:12px;font-weight:600;'>&#128279; View Project / GitHub</a></div>"
+            proj_sb += (
+                f"<div style='margin-bottom:14px;padding:12px 14px;background:#f0f9ff;border-radius:6px;border-left:3px solid #38bdf8;'>"
+                f"<div style='display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;'>"
+                f"<strong style='font-size:14px;color:#0c4a6e;'>{proj.get('title','')}</strong>"
+                f"<span style='font-size:12px;color:#64748b;'>{proj.get('duration','')}</span>"
+                f"</div>"
+                f"<div style='font-size:12px;color:#0284c7;font-weight:600;margin-bottom:4px;'>{proj.get('tech','')}</div>"
+                f"<div style='font-size:13px;color:#374151;'>{desc}</div>"
+                f"{proj_link_html}</div>"
+            )
+
+    summary_sb = _fmt_desc(session_state.get('summary', ''), font_size='13px', color='#374151', line_height='1.8')
+    job_title_sb = session_state.get('job_title', '') or session_state.get('title', '')
+
+    html_content = f"""<!DOCTYPE html>
+<html lang='en'>
+<head><meta charset='UTF-8'><title>{session_state.get('name','')} - Resume</title>
+<style>* {{ box-sizing:border-box; margin:0; padding:0; }} body {{ font-family:'Segoe UI',sans-serif; background:#fff; }}</style>
 </head>
 <body>
-    <div class="resume-container">
-        <div class="sidebar">
-            <div class="profile-section">
-                {enhanced_profile_img}
-                <h1>{session_state['name']}</h1>
-                <h2>{session_state['job_title']}</h2>
-            </div>
-            
-            <div class="contact-section">
-                <div class="contact-item">
-                    <div class="contact-icon">📍</div>
-                    <span>{session_state['location']}</span>
-                </div>
-                <div class="contact-item">
-                    <div class="contact-icon">📞</div>
-                    <span>{session_state['phone']}</span>
-                </div>
-                <div class="contact-item">
-                    <div class="contact-icon">✉️</div>
-                    <a href="mailto:{session_state['email']}">{session_state['email']}</a>
-                </div>
-                <div class="contact-item">
-                    <div class="contact-icon">🔗</div>
-                    <a href="{session_state['linkedin']}" target="_blank">LinkedIn Profile</a>
-                </div>
-                <div class="contact-item">
-                    <div class="contact-icon">🌐</div>
-                    <a href="{session_state['portfolio']}" target="_blank">Portfolio Website</a>
-                </div>
-            </div>
-            
-            <div class="sidebar-section">
-                <h3>Technical Skills</h3>
-                <div>{skills_pills}</div>
-            </div>
-            
-            <div class="sidebar-section">
-                <h3>Languages</h3>
-                <div>{languages_pills}</div>
-            </div>
-            
-            <div class="sidebar-section">
-                <h3>Interests</h3>
-                <div>{interests_pills}</div>
-            </div>
-            
-            <div class="sidebar-section">
-                <h3>Core Competencies</h3>
-                <div>{softskills_pills}</div>
-            </div>
-        </div>
-        
-        <div class="main-content">
-            <div class="main-section">
-                <h3>Professional Summary</h3>
-                <div class="summary">{session_state['summary'].replace(chr(10), '<br>')}</div>
-            </div>
-            
-            <div class="main-section">
-                <h3>Professional Experience</h3>
-                {"".join([f'''
-                <div class="content-item">
-                    <div class="item-header">
-                        <div class="item-title">{exp.get('title', '')}</div>
-                        <div class="item-duration">{exp.get('duration', '')}</div>
-                    </div>
-                    <div class="item-company">{exp.get('company', '')}</div>
-                    <div class="item-description">{exp.get('description', '').replace(chr(10), '<br>')}</div>
-                </div>
-                ''' for exp in session_state.experience_entries if exp.get('company') or exp.get('title')])}
-            </div>
-            
-            <div class="main-section">
-                <h3>Education & Qualifications</h3>
-                {"".join([f'''
-                <div class="content-item">
-                    <div class="item-header">
-                        <div class="item-title">{edu.get('degree', '')}</div>
-                        <div class="item-duration">{edu.get('year', '')}</div>
-                    </div>
-                    <div class="item-company">{edu.get('institution', '')}</div>
-                    <div class="item-description">{edu.get('details', '')}</div>
-                </div>
-                ''' for edu in session_state.education_entries if edu.get('institution') or edu.get('degree')])}
-            </div>
-            
-            <div class="main-section">
-                <h3>Key Projects</h3>
-                {"".join([f'''
-                <div class="content-item">
-                    <div class="item-header">
-                        <div class="item-title">{proj.get('title', '')}</div>
-                        <div class="item-duration">{proj.get('duration', '')}</div>
-                    </div>
-                    <div class="project-tech">Technologies: {proj.get('tech', '')}</div>
-                    <div class="item-description">{proj.get('description', '').replace(chr(10), '<br>')}</div>
-                </div>
-                ''' for proj in session_state.project_entries if proj.get('title')])}
-            </div>
-            
-            {f'''
-            <div class="main-section">
-                <h3>Project Portfolio</h3>
-                {"".join([f'''<div class="content-item" style="padding: 20px;"><a href="{link}" target="_blank" style="color: #3b82f6; text-decoration: none; font-weight: 600; font-size: 1.1rem;">🔗 Project Repository {i+1}</a></div>''' for i, link in enumerate(session_state.project_links)])}
-            </div>
-            ''' if session_state.project_links else ''}
-            
-            {f'''
-            <div class="main-section">
-                <h3>Professional Certifications</h3>
-                {"".join([f'''
-                <div class="content-item">
-                    <div class="item-header">
-                        <div class="item-title"><a href="{cert['link']}" target="_blank" style="color: #1e293b; text-decoration: none;">{cert['name']}</a></div>
-                        <div class="item-duration">{cert.get('duration', '')}</div>
-                    </div>
-                    <div class="item-description">{cert.get('description', '')}</div>
-                </div>
-                ''' for cert in session_state.certificate_links if cert.get('name')])}
-            </div>
-            ''' if any(cert.get('name') for cert in session_state.certificate_links) else ''}
-        </div>
-    </div>
-</body>
-</html>
-"""
-    
+<table role='presentation' style='width:100%;min-height:100vh;border-collapse:collapse;table-layout:fixed;'>
+<tr>
+  <td style='width:300px;background:linear-gradient(180deg,#1e293b,#334155);color:white;padding:36px 24px;vertical-align:top;'>
+    {'<div style="margin:0 auto 14px;text-align:center;">' + fixed_img_sb + '</div>' if fixed_img_sb else ''}
+    <h1 style='font-size:21px;font-weight:800;color:#ffffff;text-align:center;margin-bottom:4px;'>{session_state.get('name','')}</h1>
+    <div style='font-size:13px;color:#38bdf8;text-align:center;margin-bottom:24px;font-weight:600;letter-spacing:1px;text-transform:uppercase;'>{job_title_sb}</div>
+    {_side_sec_sb("Contact", contact_html_sb)}
+    {_side_sec_sb("Skills", _badges_sb(session_state.get('skills',''),'rgba(56,189,248,0.25)','#ffffff')) if session_state.get('skills') else ''}
+    {_side_sec_sb("Soft Skills", _badges_sb(session_state.get('Softskills',''),'rgba(255,255,255,0.12)','#ffffff')) if session_state.get('Softskills') else ''}
+    {_side_sec_sb("Languages", _badges_sb(session_state.get('languages',''),'rgba(255,255,255,0.12)','#ffffff')) if session_state.get('languages') else ''}
+    {_side_sec_sb("Interests", _badges_sb(session_state.get('interests',''),'rgba(255,255,255,0.12)','#ffffff')) if session_state.get('interests') else ''}
+    {_side_sec_sb("Certifications", cert_sb_html) if cert_sb_html else ''}
+    {_side_sec_sb("Project Links", proj_links_sb) if proj_links_sb else ''}
+  </td>
+  <td style='padding:40px 44px;background:#fff;vertical-align:top;'>
+    {_main_sec_sb("Professional Summary", summary_sb) if summary_sb else ''}
+    {_main_sec_sb("Work Experience", exp_sb) if exp_sb else ''}
+    {_main_sec_sb("Education", edu_sb) if edu_sb else ''}
+    {_main_sec_sb("Projects", proj_sb) if proj_sb else ''}
+  </td>
+</tr>
+</table>
+</body></html>"""
+
     return html_content
+    
+
+
+# ─────────────────────────────────────────────────────────────
+# NEW TEMPLATE 1: Classic Clean (Single Column)
+# ─────────────────────────────────────────────────────────────
+def render_template_classic(session_state, profile_img_html=""):
+    """Classic Clean — single-column, black & white, ATS-friendly"""
+    import re as _re
+
+    def pills(items_str, color="#1e3a5f"):
+        return "".join(
+            f"<span style='display:inline-block;background:#f0f4f8;color:{color};border:1px solid #c7d2e0;"
+            f"border-radius:4px;padding:4px 12px;margin:4px 4px 4px 0;font-size:13px;font-weight:600;'>{s.strip()}</span>"
+            for s in items_str.split(',') if s.strip()
+        )
+
+    # Fix image: extract just the <img> tag, strip all styles, apply clean circle styles
+    def _fix_img(html, size=88):
+        if not html:
+            return ""
+        img_match = _re.search(r'<img[^>]*>', html)
+        if not img_match:
+            return ""
+        img_tag = img_match.group(0)
+        img_tag = _re.sub(r"style=['\"][^'\"]*['\"]", "", img_tag)
+        img_tag = img_tag.replace("<img ", f"<img style='width:{size}px;height:{size}px;border-radius:50%;object-fit:cover;object-position:center;display:block;margin:0 auto 10px;border:2px solid #1e3a5f;' ")
+        return img_tag
+
+    experience_html = ""
+    for exp in session_state.experience_entries:
+        if exp.get("company") or exp.get("title"):
+            desc = _fmt_desc(exp.get('description',''), font_size='14px', color='#374151', line_height='1.75')
+            experience_html += f"""
+            <div style='margin-bottom:18px;'>
+                <div style='display:flex;justify-content:space-between;align-items:baseline;'>
+                    <strong style='font-size:16px;color:#1a1a1a;'>{exp.get('company','')}</strong>
+                    <span style='font-size:13px;color:#555;'>{exp.get('duration','')}</span>
+                </div>
+                <div style='font-size:14px;color:#1e3a5f;font-weight:600;font-style:italic;margin-bottom:6px;'>{exp.get('title','')}</div>
+                <div style='font-size:14px;color:#333;line-height:1.7;'>{desc}</div>
+            </div>
+            <hr style='border:none;border-top:1px solid #e5e7eb;margin:12px 0;'>"""
+
+    education_html = ""
+    for edu in session_state.education_entries:
+        if edu.get("institution") or edu.get("degree"):
+            degree_val = edu.get("degree","")
+            if isinstance(degree_val, list): degree_val = ", ".join(degree_val)
+            education_html += f"""
+            <div style='margin-bottom:14px;'>
+                <div style='display:flex;justify-content:space-between;'>
+                    <strong style='font-size:15px;'>{edu.get('institution','')}</strong>
+                    <span style='font-size:13px;color:#555;'>{edu.get('year','')}</span>
+                </div>
+                <div style='font-size:14px;color:#555;font-style:italic;'>{degree_val}</div>
+                <div style='font-size:13px;color:#666;'>{edu.get('details','')}</div>
+            </div>"""
+
+    projects_html = ""
+    for idx, proj in enumerate(session_state.project_entries):
+        if proj.get("title"):
+            desc = _fmt_desc(proj.get('description',''), font_size='14px', color='#374151', line_height='1.75')
+            # Per-project links
+            proj_link_html = ""
+            proj_links = getattr(session_state, 'project_links', []) or []
+            if idx < len(proj_links) and proj_links[idx]:
+                proj_link_html = f"<div style='margin-top:5px;font-size:13px;'><a href='{proj_links[idx]}' target='_blank' style='color:#1e3a5f;font-weight:600;'>&#128279; View Project / GitHub</a></div>"
+            projects_html += f"""
+            <div style='margin-bottom:16px;'>
+                <div style='display:flex;justify-content:space-between;'>
+                    <strong style='font-size:15px;color:#1e3a5f;'>{proj.get('title','')}</strong>
+                    <span style='font-size:13px;color:#555;'>{proj.get('duration','')}</span>
+                </div>
+                <div style='font-size:13px;color:#555;margin-bottom:4px;'><b>Tech:</b> {proj.get('tech','')}</div>
+                <div style='font-size:14px;color:#333;line-height:1.6;'>{desc}</div>
+                {proj_link_html}
+            </div>"""
+
+    # All project links section
+    all_links_html = ""
+    proj_links_all = getattr(session_state, 'project_links', []) or []
+    if proj_links_all:
+        links_items = "".join(
+            f"<div style='margin-bottom:6px;'><a href='{lnk}' target='_blank' style='color:#1e3a5f;font-weight:600;font-size:14px;'>&#128279; Project {i+1}: {lnk}</a></div>"
+            for i, lnk in enumerate(proj_links_all)
+        )
+        all_links_html = links_items
+
+    cert_html = ""
+    for cert in session_state.certificate_links:
+        if cert.get("name"):
+            desc = _fmt_desc(cert.get('description',''), font_size='13px', color='#444', line_height='1.7')
+            cert_html += f"""
+            <div style='margin-bottom:12px;'>
+                <div style='display:flex;justify-content:space-between;'>
+                    <a href='{cert.get("link","#")}' target='_blank' style='font-weight:600;color:#1e3a5f;font-size:15px;text-decoration:none;'>{cert.get("name","")}</a>
+                    <span style='font-size:13px;color:#555;'>{cert.get("duration","")}</span>
+                </div>
+                <div style='font-size:13px;color:#444;'>{desc}</div>
+            </div>"""
+
+    def section(title, content):
+        return f"""
+        <div style='margin-bottom:24px;'>
+            <h2 style='font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+                color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:4px;margin-bottom:14px;'>{title}</h2>
+            {content}
+        </div>"""
+
+    # Contact line with portfolio & github — hyperlinked where applicable
+    def _contact_link(key, val):
+        if key == 'email':
+            return f"<a href='mailto:{val}' style='color:#1e3a5f;text-decoration:none;'>{val}</a>"
+        elif key in ('linkedin', 'portfolio', 'github'):
+            href = val if val.startswith('http') else f"https://{val}"
+            return f"<a href='{href}' target='_blank' style='color:#1e3a5f;text-decoration:none;'>{val}</a>"
+        else:
+            return val
+
+    contact_parts = []
+    for key in ['email','phone','location','linkedin','portfolio','github']:
+        val = session_state.get(key,'')
+        if val:
+            contact_parts.append(_contact_link(key, val))
+    contact_line = " &nbsp;|&nbsp; ".join(contact_parts)
+
+    summary_html = _fmt_desc(session_state.get('summary',''), font_size='14px', color='#374151', line_height='1.8')
+    fixed_img = _fix_img(profile_img_html)
+    job_title_line = f"<div style='font-size:16px;color:#1e3a5f;font-weight:600;margin-top:4px;'>{session_state.get('job_title','')}</div>" if session_state.get('job_title','') else ""
+
+    html_content = f"""<!DOCTYPE html>
+<html lang='en'>
+<head><meta charset='UTF-8'><title>{session_state.get('name','')} - Resume</title>
+<style>
+  * {{ box-sizing:border-box; margin:0; padding:0; }}
+  body {{ font-family:'Georgia',serif; color:#1a1a1a; background:#fff; padding:40px 60px; line-height:1.6; }}
+  a {{ color:#1e3a5f; }}
+</style>
+</head>
+<body>
+  <div style='text-align:center;margin-bottom:6px;'>
+    {fixed_img}
+    <h1 style='font-size:32px;font-weight:700;letter-spacing:1px;color:#1a1a1a;'>{session_state.get('name','')}</h1>
+    {job_title_line}
+    <div style='font-size:13px;color:#666;margin-top:6px;'>{contact_line}</div>
+  </div>
+  <hr style='border:none;border-top:3px solid #1e3a5f;margin:16px 0 24px 0;'>
+
+  {section("Professional Summary", summary_html) if summary_html else ''}
+  {section("Work Experience", experience_html) if experience_html else ''}
+  {section("Education", education_html) if education_html else ''}
+  {section("Technical Skills", pills(session_state.get('skills',''))) if session_state.get('skills') else ''}
+  {section("Soft Skills", pills(session_state.get('Softskills',''), '#2d6a4f')) if session_state.get('Softskills') else ''}
+  {section("Languages", pills(session_state.get('languages',''), '#5c3d11')) if session_state.get('languages') else ''}
+  {section("Interests", pills(session_state.get('interests',''), '#4a1942')) if session_state.get('interests') else ''}
+  {section("Projects", projects_html) if projects_html else ''}
+  {section("Project Links", all_links_html) if all_links_html else ''}
+  {section("Certifications", cert_html) if cert_html else ''}
+</body></html>"""
+    return html_content
+
+
+# ─────────────────────────────────────────────────────────────
+# NEW TEMPLATE 2: Executive (Single Column, Dark Header)
+# ─────────────────────────────────────────────────────────────
+def render_template_executive(session_state, profile_img_html=""):
+    """Executive — single-column with bold dark header band and clean body"""
+    import re as _re
+
+    def tag_row(items_str, bg="#eef2ff", color="#3730a3"):
+        return "".join(
+            f"<span style='display:inline-block;background:{bg};color:{color};border-radius:3px;"
+            f"padding:3px 10px;margin:3px 3px 3px 0;font-size:13px;font-weight:600;'>{s.strip()}</span>"
+            for s in items_str.split(',') if s.strip()
+        )
+
+    # Fix image properly: extract just <img> tag, strip existing styles, apply contained fixed-size circle
+    def _fix_img(html, size=96):
+        if not html:
+            return ""
+        img_match = _re.search(r'<img[^>]*>', html)
+        if not img_match:
+            return ""
+        img_tag = img_match.group(0)
+        img_tag = _re.sub(r"style=['\"][^'\"]*['\"]", "", img_tag)
+        img_tag = img_tag.replace(
+            "<img ",
+            f"<img style='width:{size}px;height:{size}px;border-radius:50%;object-fit:cover;object-position:center;border:3px solid #fff;display:block;' "
+        )
+        return img_tag
+
+    exp_html = ""
+    for exp in session_state.experience_entries:
+        if exp.get("company") or exp.get("title"):
+            desc = _fmt_desc(exp.get("description",""), font_size='14px', color='#374151', line_height='1.75')
+            exp_html += f"""
+            <div style='margin-bottom:20px;padding-left:16px;border-left:3px solid #3730a3;'>
+                <div style='display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;'>
+                    <div><span style='font-size:16px;font-weight:700;color:#111;'>{exp.get('company','')}</span>
+                    &nbsp;<span style='font-size:14px;color:#3730a3;font-weight:600;font-style:italic;'>— {exp.get('title','')}</span></div>
+                    <span style='font-size:13px;color:#777;white-space:nowrap;'>{exp.get('duration','')}</span>
+                </div>
+                <div style='font-size:14px;color:#333;margin-top:6px;line-height:1.7;'>{desc}</div>
+            </div>"""
+
+    edu_html = ""
+    for edu in session_state.education_entries:
+        if edu.get("institution"):
+            degree_val = edu.get("degree","")
+            if isinstance(degree_val, list): degree_val = ", ".join(degree_val)
+            edu_html += f"""
+            <div style='margin-bottom:12px;padding-left:16px;border-left:3px solid #3730a3;'>
+                <div style='display:flex;justify-content:space-between;'>
+                    <strong style='font-size:15px;'>{edu.get('institution','')}</strong>
+                    <span style='font-size:13px;color:#777;'>{edu.get('year','')}</span>
+                </div>
+                <div style='font-size:14px;color:#3730a3;font-style:italic;font-weight:600;'>{degree_val}</div>
+                <div style='font-size:13px;color:#666;'>{edu.get('details','')}</div>
+            </div>"""
+
+    proj_html = ""
+    for idx, proj in enumerate(session_state.project_entries):
+        if proj.get("title"):
+            desc = _fmt_desc(proj.get('description',''), font_size='14px', color='#374151', line_height='1.75')
+            proj_links = getattr(session_state, 'project_links', []) or []
+            proj_link_html = ""
+            if idx < len(proj_links) and proj_links[idx]:
+                proj_link_html = f"<div style='margin-top:5px;'><a href='{proj_links[idx]}' target='_blank' style='color:#3730a3;font-size:13px;font-weight:600;'>&#128279; View Project / GitHub</a></div>"
+            proj_html += f"""
+            <div style='margin-bottom:14px;padding-left:16px;border-left:3px solid #3730a3;'>
+                <div style='display:flex;justify-content:space-between;'>
+                    <strong style='font-size:15px;color:#1a1a1a;'>{proj.get('title','')}</strong>
+                    <span style='font-size:13px;color:#777;'>{proj.get('duration','')}</span>
+                </div>
+                <div style='font-size:13px;color:#3730a3;font-weight:600;'><b>Stack:</b> {proj.get('tech','')}</div>
+                <div style='font-size:14px;margin-top:4px;'>{desc}</div>
+                {proj_link_html}
+            </div>"""
+
+    # All project links
+    proj_links_all = getattr(session_state, 'project_links', []) or []
+    proj_links_section = ""
+    if proj_links_all:
+        items = "".join(
+            f"<div style='margin-bottom:6px;'><a href='{lnk}' target='_blank' style='color:#3730a3;font-size:14px;font-weight:600;'>&#128279; Project {i+1}: {lnk}</a></div>"
+            for i, lnk in enumerate(proj_links_all)
+        )
+        proj_links_section = items
+
+    cert_html = ""
+    for cert in session_state.certificate_links:
+        if cert.get("name"):
+            cert_html += f"""
+            <div style='margin-bottom:10px;'>
+                <a href='{cert.get("link","#")}' target='_blank' style='font-weight:600;font-size:15px;color:#3730a3;text-decoration:none;'>{cert.get("name","")}</a>
+                <span style='font-size:13px;color:#777;'> &nbsp;·&nbsp; {cert.get("duration","")}</span>
+                <div style='font-size:13px;color:#444;'>{cert.get("description","").replace(chr(10),"<br>")}</div>
+            </div>"""
+
+    def sec(title, body):
+        return f"""
+        <div style='margin-bottom:28px;'>
+            <h2 style='font-size:13px;letter-spacing:2.5px;text-transform:uppercase;font-weight:700;
+                color:#3730a3;margin-bottom:12px;padding-bottom:5px;border-bottom:1px solid #c7d7f5;'>{title}</h2>
+            {body}
+        </div>"""
+
+    # SVG icons for contact
+    SVG_EMAIL = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>'
+    SVG_PHONE = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.37 2 2 0 0 1 3.64 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.8a16 16 0 0 0 6.29 6.29l.98-.98a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>'
+    SVG_LOCATION = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>'
+    SVG_LINKEDIN = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>'
+    SVG_GITHUB = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>'
+    SVG_PORTFOLIO = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>'
+
+    contact_items = [
+        (session_state.get('email',''), SVG_EMAIL, 'email'),
+        (session_state.get('phone',''), SVG_PHONE, 'phone'),
+        (session_state.get('location',''), SVG_LOCATION, 'location'),
+        (session_state.get('linkedin',''), SVG_LINKEDIN, 'linkedin'),
+        (session_state.get('portfolio',''), SVG_PORTFOLIO, 'portfolio'),
+        (session_state.get('github',''), SVG_GITHUB, 'github'),
+    ]
+    def _exec_contact_item(val, icon, key):
+        if key == 'email':
+            return f"<span>{icon}<a href='mailto:{val}' style='color:#a5b4fc;text-decoration:none;'>{val}</a></span>"
+        elif key == 'phone' or key == 'location':
+            return f"<span>{icon}{val}</span>"
+        else:
+            href = val if val.startswith('http') else f"https://{val}"
+            return f"<span>{icon}<a href='{href}' target='_blank' style='color:#a5b4fc;text-decoration:none;'>{val}</a></span>"
+    contact_html = " &nbsp; ".join(
+        _exec_contact_item(val, icon, key) for val, icon, key in contact_items if val
+    )
+
+    summary_html = _fmt_desc(session_state.get('summary',''), font_size='14px', color='#374151', line_height='1.8')
+    fixed_img = _fix_img(profile_img_html)
+    job_title_val = session_state.get('job_title','') or session_state.get('title','')
+
+    return f"""<!DOCTYPE html>
+<html lang='en'>
+<head><meta charset='UTF-8'><title>{session_state.get('name','')} - Executive Resume</title>
+<style>* {{ box-sizing:border-box; margin:0; padding:0; }} body {{ font-family:'Segoe UI',Arial,sans-serif; color:#1a1a1a; background:#fff; line-height:1.6; }}</style>
+</head>
+<body>
+  <!-- Header Band -->
+  <div style='background:linear-gradient(135deg,#1e1b4b 0%,#3730a3 100%);color:white;padding:36px 50px;'>
+    <table role='presentation' style='width:100%;border-collapse:collapse;'>
+    <tr>
+      <td style='vertical-align:middle;'>
+        <h1 style='font-size:34px;font-weight:800;letter-spacing:-0.5px;'>{session_state.get('name','')}</h1>
+        <div style='font-size:17px;color:#c7d2fe;margin-top:6px;font-weight:600;'>{job_title_val}</div>
+        <div style='font-size:13px;color:#a5b4fc;margin-top:10px;'>{contact_html}</div>
+      </td>
+      {'<td style="vertical-align:middle;text-align:right;width:110px;">' + fixed_img + '</td>' if fixed_img else ''}
+    </tr>
+    </table>
+  </div>
+  <!-- Body -->
+  <div style='padding:36px 50px;'>
+    {sec("Summary", summary_html) if summary_html else ''}
+    {sec("Experience", exp_html) if exp_html else ''}
+    {sec("Education", edu_html) if edu_html else ''}
+    {sec("Skills", tag_row(session_state.get('skills',''))) if session_state.get('skills') else ''}
+    {sec("Soft Skills", tag_row(session_state.get('Softskills',''),'#ecfdf5','#065f46')) if session_state.get('Softskills') else ''}
+    {sec("Languages", tag_row(session_state.get('languages',''),'#fef9ee','#78350f')) if session_state.get('languages') else ''}
+    {sec("Interests", tag_row(session_state.get('interests',''),'#fdf4ff','#7e22ce')) if session_state.get('interests') else ''}
+    {sec("Projects", proj_html) if proj_html else ''}
+    {sec("Project Links", proj_links_section) if proj_links_section else ''}
+    {sec("Certifications", cert_html) if cert_html else ''}
+  </div>
+</body></html>"""
+
+
+# ─────────────────────────────────────────────────────────────
+# NEW TEMPLATE 3: Timeline (Single Column, Timeline Design)
+# ─────────────────────────────────────────────────────────────
+def render_template_timeline(session_state, profile_img_html=""):
+    """Timeline — single-column with vertical timeline for experience & education"""
+    import re as _re
+
+    def chips(items_str, bg="#fef3c7", color="#92400e"):
+        return "".join(
+            f"<span style='display:inline-block;background:{bg};color:{color};border-radius:20px;"
+            f"padding:4px 14px;margin:4px 4px 4px 0;font-size:13px;font-weight:600;'>{s.strip()}</span>"
+            for s in items_str.split(',') if s.strip()
+        )
+
+    def _fix_img(html, size=95):
+        if not html:
+            return ""
+        img_match = _re.search(r'<img[^>]*>', html)
+        if not img_match:
+            return ""
+        img_tag = img_match.group(0)
+        img_tag = _re.sub(r"style=['\"][^'\"]*['\"]", "", img_tag)
+        img_tag = img_tag.replace(
+            "<img ",
+            f"<img style='width:{size}px;height:{size}px;border-radius:50%;object-fit:cover;object-position:center;border:4px solid #0d9488;display:block;' "
+        )
+        return img_tag
+
+    def timeline_item(title, subtitle, date, body, accent="#0d9488", proj_link=""):
+        link_html = f"<div style='margin-top:5px;'><a href='{proj_link}' target='_blank' style='color:{accent};font-size:13px;font-weight:600;'>&#128279; View Project / GitHub</a></div>" if proj_link else ""
+        return f"""
+        <div style='display:flex;margin-bottom:24px;position:relative;'>
+            <div style='flex-shrink:0;display:flex;flex-direction:column;align-items:center;margin-right:20px;'>
+                <div style='width:14px;height:14px;background:{accent};border-radius:50%;border:3px solid white;box-shadow:0 0 0 2px {accent};z-index:1;'></div>
+                <div style='width:2px;flex:1;background:#e2e8f0;margin-top:4px;'></div>
+            </div>
+            <div style='flex:1;padding-bottom:10px;'>
+                <div style='display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;'>
+                    <strong style='font-size:16px;color:#1a1a1a;'>{title}</strong>
+                    <span style='font-size:12px;color:#64748b;background:#f1f5f9;padding:2px 10px;border-radius:10px;'>{date}</span>
+                </div>
+                <div style='font-size:14px;color:{accent};font-weight:600;margin-bottom:5px;'>{subtitle}</div>
+                <div style='font-size:14px;color:#374151;line-height:1.7;'>{body}</div>
+                {link_html}
+            </div>
+        </div>"""
+
+    exp_items = "".join(
+        timeline_item(
+            e.get('company',''), e.get('title',''), e.get('duration',''),
+            _fmt_desc(e.get('description',''), font_size='14px', color='#374151', line_height='1.75'), "#0d9488"
+        )
+        for e in session_state.experience_entries if e.get('company') or e.get('title')
+    )
+
+    edu_items = "".join(
+        timeline_item(
+            e.get('institution',''),
+            (e.get('degree','') if not isinstance(e.get('degree',''),list) else ', '.join(e.get('degree',[]))),
+            e.get('year',''), e.get('details',''), "#6366f1"
+        )
+        for e in session_state.education_entries if e.get('institution')
+    )
+
+    proj_links_all = getattr(session_state, 'project_links', []) or []
+    proj_items = "".join(
+        timeline_item(
+            p.get('title',''), f"Stack: {p.get('tech','')}",  p.get('duration',''),
+            _fmt_desc(p.get('description',''), font_size='14px', color='#374151', line_height='1.75'),
+            "#f59e0b",
+            proj_links_all[i] if i < len(proj_links_all) else ""
+        )
+        for i, p in enumerate(session_state.project_entries) if p.get('title')
+    )
+
+    all_links_html = ""
+    if proj_links_all:
+        items = "".join(
+            f"<div style='margin-bottom:8px;'><a href='{lnk}' target='_blank' style='color:#0d9488;font-size:14px;font-weight:600;'>&#128279; Project {i+1}: {lnk}</a></div>"
+            for i, lnk in enumerate(proj_links_all)
+        )
+        all_links_html = items
+
+    cert_items = "".join(
+        f"<div style='margin-bottom:10px;display:flex;align-items:center;gap:10px;'>"
+        f"<span style='width:8px;height:8px;background:#0d9488;border-radius:50%;flex-shrink:0;'></span>"
+        f"<a href='{c.get('link','#')}' target='_blank' style='font-weight:600;color:#0d9488;font-size:14px;text-decoration:none;'>{c.get('name','')}</a>"
+        f"<span style='font-size:12px;color:#64748b;'>· {c.get('duration','')}</span></div>"
+        for c in session_state.certificate_links if c.get('name')
+    )
+
+    def sec(title, body, accent="#0d9488"):
+        return f"""
+        <div style='margin-bottom:30px;'>
+            <h2 style='font-size:18px;font-weight:700;color:{accent};margin-bottom:16px;
+                padding-bottom:6px;border-bottom:2px solid {accent};letter-spacing:0.5px;'>{title}</h2>
+            {body}
+        </div>"""
+
+    fixed_img = _fix_img(profile_img_html)
+    job_title_val = session_state.get('job_title','') or session_state.get('title','')
+
+    contact_parts = []
+    for key in ['email','phone','location','linkedin','portfolio','github']:
+        val = session_state.get(key,'')
+        if val:
+            if key == 'email':
+                contact_parts.append(f"<a href='mailto:{val}' style='color:#64748b;text-decoration:none;'>{val}</a>")
+            elif key in ('linkedin', 'portfolio', 'github'):
+                href = val if val.startswith('http') else f"https://{val}"
+                contact_parts.append(f"<a href='{href}' target='_blank' style='color:#64748b;text-decoration:none;'>{val}</a>")
+            else:
+                contact_parts.append(val)
+    contact_line = " · ".join(contact_parts)
+    summary_html = _fmt_desc(session_state.get('summary',''), font_size='14px', color='#374151', line_height='1.8')
+
+    return f"""<!DOCTYPE html>
+<html lang='en'>
+<head><meta charset='UTF-8'><title>{session_state.get('name','')} - Timeline Resume</title>
+<style>* {{ box-sizing:border-box; margin:0; padding:0; }} body {{ font-family:'Segoe UI',sans-serif; background:#fff; color:#1a1a1a; }}</style>
+</head>
+<body>
+  <div style='background:#0d9488;height:6px;'></div>
+  <div style='padding:36px 50px 24px;border-bottom:1px solid #e2e8f0;'>
+    <table role='presentation' style='width:100%;border-collapse:collapse;'>
+    <tr>
+      <td style='vertical-align:middle;'>
+        <h1 style='font-size:36px;font-weight:800;color:#134e4a;letter-spacing:-1px;'>{session_state.get('name','')}</h1>
+        <div style='font-size:17px;color:#0d9488;font-weight:700;margin-top:4px;'>{job_title_val}</div>
+        <div style='font-size:13px;color:#64748b;margin-top:8px;'>{contact_line}</div>
+      </td>
+      {'<td style="vertical-align:middle;text-align:right;width:110px;">' + fixed_img + '</td>' if fixed_img else ''}
+    </tr>
+    </table>
+  </div>
+  <div style='padding:30px 50px;'>
+    {sec("About Me", summary_html) if summary_html else ''}
+    {sec("Experience", exp_items) if exp_items else ''}
+    {sec("Education", edu_items, "#6366f1") if edu_items else ''}
+    {sec("Projects", proj_items, "#f59e0b") if proj_items else ''}
+    {sec("Project Links", all_links_html) if all_links_html else ''}
+    {sec("Skills", chips(session_state.get('skills',''),'#ccfbf1','#134e4a')) if session_state.get('skills') else ''}
+    {sec("Soft Skills", chips(session_state.get('Softskills',''),'#ede9fe','#4c1d95')) if session_state.get('Softskills') else ''}
+    {sec("Languages", chips(session_state.get('languages',''),'#fef9c3','#713f12')) if session_state.get('languages') else ''}
+    {sec("Interests", chips(session_state.get('interests',''),'#fee2e2','#991b1b')) if session_state.get('interests') else ''}
+    {sec("Certifications", cert_items) if cert_items else ''}
+  </div>
+</body></html>"""
+# ─────────────────────────────────────────────────────────────
+# NEW TEMPLATE 4: Corporate Two-Column (Blue Theme)
+# ─────────────────────────────────────────────────────────────
+def render_template_corporate(session_state, profile_img_html=""):
+    """Corporate Blue Two-Column — ATS-friendly, advanced blue accent sidebar"""
+    import re as _re
+
+    def _fix_img(html, size=108):
+        if not html:
+            return ""
+        img_match = _re.search(r'<img[^>]*>', html)
+        if not img_match:
+            return ""
+        img_tag = img_match.group(0)
+        img_tag = _re.sub(r"style=['\"][^\'\"]*['\"]", "", img_tag)
+        img_tag = img_tag.replace("<img ", f"<img style='width:{size}px;height:{size}px;border-radius:50%;object-fit:cover;object-position:center;border:3px solid #93c5fd;display:block;margin:0 auto;' ")
+        return img_tag
+
+    def badge(item, bg="#1d4ed8", color="#fff"):
+        return (f"<span style='display:inline-block;background:{bg};color:{color};border-radius:4px;"
+                f"padding:3px 10px;margin:3px 3px 3px 0;font-size:12px;font-weight:600;'>{item.strip()}</span>")
+
+    def badges(items_str, bg="#1d4ed8", color="#fff"):
+        return "".join(badge(s, bg, color) for s in items_str.split(',') if s.strip())
+
+    exp_html = ""
+    for exp in session_state.experience_entries:
+        if exp.get('company') or exp.get('title'):
+            desc = _fmt_desc(exp.get('description',''), font_size='13px', color='#374151', line_height='1.75')
+            exp_html += f"""
+            <div style='margin-bottom:20px;border-left:3px solid #1d4ed8;padding-left:14px;'>
+                <div style='display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px;'>
+                    <strong style='font-size:15px;color:#1e3a8a;'>{exp.get('company','')}</strong>
+                    <span style='font-size:12px;color:#64748b;background:#eff6ff;padding:2px 8px;border-radius:8px;'>{exp.get('duration','')}</span>
+                </div>
+                <div style='font-size:13px;color:#3b82f6;font-weight:700;margin-bottom:5px;'>{exp.get('title','')}</div>
+                <div style='font-size:13px;color:#374151;line-height:1.7;'>{desc}</div>
+            </div>
+            <div style='border-bottom:1px dashed #bfdbfe;margin-bottom:12px;'></div>"""
+
+    edu_html = ""
+    for edu in session_state.education_entries:
+        if edu.get('institution'):
+            degree_val = edu.get('degree','')
+            if isinstance(degree_val, list): degree_val = ", ".join(degree_val)
+            edu_html += f"""
+            <div style='margin-bottom:14px;border-left:3px solid #1d4ed8;padding-left:12px;'>
+                <strong style='font-size:14px;color:#1e3a8a;'>{edu.get('institution','')}</strong>
+                <span style='float:right;font-size:12px;color:#64748b;'>{edu.get('year','')}</span>
+                <div style='clear:both;font-size:13px;color:#3b82f6;font-style:italic;font-weight:600;'>{degree_val}</div>
+                <div style='font-size:12px;color:#6b7280;'>{edu.get('details','')}</div>
+            </div>"""
+
+    proj_html = ""
+    proj_links_all = getattr(session_state, 'project_links', []) or []
+    for idx, proj in enumerate(session_state.project_entries):
+        if proj.get('title'):
+            desc = _fmt_desc(proj.get('description',''), font_size='13px', color='#374151', line_height='1.75')
+            proj_link_html = ""
+            if idx < len(proj_links_all) and proj_links_all[idx]:
+                proj_link_html = f"<div style='margin-top:5px;'><a href='{proj_links_all[idx]}' target='_blank' style='color:#1d4ed8;font-size:12px;font-weight:600;'>&#128279; View Project / GitHub</a></div>"
+            proj_html += f"""
+            <div style='margin-bottom:14px;padding:12px 14px;background:#eff6ff;border-radius:6px;border-left:3px solid #1d4ed8;'>
+                <div style='display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;'>
+                    <strong style='font-size:14px;color:#1e3a8a;'>{proj.get('title','')}</strong>
+                    <span style='font-size:12px;color:#64748b;'>{proj.get('duration','')}</span>
+                </div>
+                <div style='font-size:12px;color:#3b82f6;font-weight:600;margin-bottom:4px;'>{proj.get('tech','')}</div>
+                <div style='font-size:13px;color:#374151;'>{desc}</div>
+                {proj_link_html}
+            </div>"""
+
+    cert_sidebar = ""
+    for cert in session_state.certificate_links:
+        if cert.get('name'):
+            cert_sidebar += f"""
+            <div style='margin-bottom:10px;padding:8px;background:rgba(255,255,255,0.1);border-radius:6px;'>
+                <a href='{cert.get("link","#")}' style='color:#93c5fd;font-size:13px;font-weight:600;text-decoration:none;'>{cert.get('name','')}</a>
+                <div style='font-size:11px;color:#bfdbfe;'>{cert.get('duration','')}</div>
+            </div>"""
+
+    all_links_html = ""
+    if proj_links_all:
+        items = "".join(
+            f"<div style='margin-bottom:6px;'><a href='{lnk}' target='_blank' style='color:#93c5fd;font-size:12px;font-weight:600;'>&#128279; Project {i+1}</a></div>"
+            for i, lnk in enumerate(proj_links_all)
+        )
+        all_links_html = items
+
+    SVG_ICONS = {
+        'email': '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
+        'phone': '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.37 2 2 0 0 1 3.64 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.8a16 16 0 0 0 6.29 6.29l.98-.98a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+        'location': '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+        'linkedin': '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>',
+        'portfolio': '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+        'github': '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>'
+    }
+
+    contact_html = ""
+    for key in ['email','phone','location','linkedin','portfolio','github']:
+        val = session_state.get(key,'')
+        if val:
+            if key == 'email':
+                val_html = f"<a href='mailto:{val}' style='color:#bfdbfe;text-decoration:none;word-break:break-all;'>{val}</a>"
+            elif key in ('linkedin', 'portfolio', 'github'):
+                href = val if val.startswith('http') else f"https://{val}"
+                val_html = f"<a href='{href}' target='_blank' style='color:#bfdbfe;text-decoration:none;word-break:break-all;'>{val}</a>"
+            else:
+                val_html = f"<span style='word-break:break-all;'>{val}</span>"
+            contact_html += f"<div style='margin-bottom:8px;font-size:12px;color:#bfdbfe;display:flex;align-items:center;gap:5px;'><span style='flex-shrink:0;'>{SVG_ICONS[key]}</span>{val_html}</div>"
+
+    summary_html = _fmt_desc(session_state.get('summary',''), font_size='13px', color='#374151', line_height='1.8')
+    fixed_img = _fix_img(profile_img_html)
+    job_title_val = session_state.get('job_title','') or session_state.get('title','')
+
+    def main_sec(title, body):
+        return f"""<div style='margin-bottom:26px;'>
+            <h3 style='font-size:13px;letter-spacing:2px;text-transform:uppercase;font-weight:700;color:#1e3a8a;
+                border-bottom:2px solid #3b82f6;padding-bottom:5px;margin-bottom:14px;'>{title}</h3>{body}</div>"""
+
+    def side_sec(title, body):
+        return f"""<div style='margin-bottom:24px;'>
+            <h3 style='font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#93c5fd;font-weight:700;
+                border-bottom:1px solid rgba(147,197,253,0.3);padding-bottom:5px;margin-bottom:12px;'>{title}</h3>{body}</div>"""
+
+    return f"""<!DOCTYPE html>
+<html lang='en'>
+<head><meta charset='UTF-8'><title>{session_state.get('name','')} - Corporate Resume</title>
+<style>* {{ box-sizing:border-box; margin:0; padding:0; }} body {{ font-family:'Segoe UI',sans-serif; background:#fff; }}</style>
+</head>
+<body>
+<table role='presentation' style='width:100%;min-height:100vh;border-collapse:collapse;table-layout:fixed;'>
+<tr>
+  <td style='width:300px;background:linear-gradient(180deg,#1e3a8a,#1d4ed8);color:white;padding:36px 24px;vertical-align:top;'>
+    {'<div style="margin:0 auto 14px;text-align:center;">' + fixed_img + '</div>' if fixed_img else ''}
+    <h1 style='font-size:21px;font-weight:800;color:#fff;text-align:center;margin-bottom:4px;'>{session_state.get('name','')}</h1>
+    <div style='font-size:13px;color:#93c5fd;text-align:center;margin-bottom:24px;font-weight:600;'>{job_title_val}</div>
+    {side_sec("Contact", contact_html)}
+    {side_sec("Skills", badges(session_state.get('skills',''),'rgba(255,255,255,0.15)','#e0f2fe')) if session_state.get('skills') else ''}
+    {side_sec("Soft Skills", badges(session_state.get('Softskills',''),'rgba(255,255,255,0.1)','#ddd6fe')) if session_state.get('Softskills') else ''}
+    {side_sec("Languages", badges(session_state.get('languages',''),'rgba(255,255,255,0.1)','#fef3c7')) if session_state.get('languages') else ''}
+    {side_sec("Interests", badges(session_state.get('interests',''),'rgba(255,255,255,0.1)','#fce7f3')) if session_state.get('interests') else ''}
+    {side_sec("Certifications", cert_sidebar) if cert_sidebar else ''}
+    {side_sec("Project Links", all_links_html) if all_links_html else ''}
+  </td>
+  <td style='padding:40px 44px;background:#fff;vertical-align:top;'>
+    {main_sec("Professional Summary", summary_html) if summary_html else ''}
+    {main_sec("Work Experience", exp_html) if exp_html else ''}
+    {main_sec("Education", edu_html) if edu_html else ''}
+    {main_sec("Projects", proj_html) if proj_html else ''}
+  </td>
+</tr>
+</table>
+</body></html>"""
+
+
+def render_template_creative_green(session_state, profile_img_html=""):
+    """Creative Green Two-Column — ATS-friendly, fresh green accents"""
+    import re as _re
+
+    def _fix_img(html, size=100):
+        if not html:
+            return ""
+        img_match = _re.search(r'<img[^>]*>', html)
+        if not img_match:
+            return ""
+        img_tag = img_match.group(0)
+        img_tag = _re.sub(r"style=['\"][^\'\"]*['\"]", "", img_tag)
+        img_tag = img_tag.replace("<img ", f"<img style='width:{size}px;height:{size}px;border-radius:50%;object-fit:cover;object-position:center;border:4px solid #059669;display:block;margin:0 auto;' ")
+        return img_tag
+
+    def pill(s, bg="#d1fae5", color="#065f46"):
+        return (f"<span style='display:inline-block;background:{bg};color:{color};border-radius:20px;"
+                f"padding:4px 12px;margin:3px 3px 3px 0;font-size:12px;font-weight:600;'>{s.strip()}</span>")
+
+    def pills(items_str, bg="#d1fae5", color="#065f46"):
+        return "".join(pill(s, bg, color) for s in items_str.split(',') if s.strip())
+
+    exp_html = ""
+    for exp in session_state.experience_entries:
+        if exp.get('company') or exp.get('title'):
+            desc = _fmt_desc(exp.get('description',''), font_size='13px', color='#374151', line_height='1.75')
+            exp_html += f"""
+            <div style='margin-bottom:18px;padding:14px;border-radius:8px;background:#f0fdf4;border-left:4px solid #059669;'>
+                <div style='display:flex;justify-content:space-between;flex-wrap:wrap;gap:5px;'>
+                    <strong style='font-size:15px;color:#064e3b;'>{exp.get('company','')}</strong>
+                    <span style='font-size:12px;color:#6b7280;background:#dcfce7;padding:2px 8px;border-radius:10px;'>{exp.get('duration','')}</span>
+                </div>
+                <div style='font-size:13px;color:#059669;font-weight:700;margin:3px 0 6px;'>{exp.get('title','')}</div>
+                <div style='font-size:13px;color:#374151;line-height:1.7;'>{desc}</div>
+            </div>"""
+
+    edu_html = ""
+    for edu in session_state.education_entries:
+        if edu.get('institution'):
+            degree_val = edu.get('degree','')
+            if isinstance(degree_val,list): degree_val = ", ".join(degree_val)
+            edu_html += f"""
+            <div style='margin-bottom:14px;padding:12px;background:#f0fdf4;border-radius:6px;border-left:3px solid #059669;'>
+                <div style='display:flex;justify-content:space-between;'>
+                    <strong style='font-size:14px;color:#064e3b;'>{edu.get('institution','')}</strong>
+                    <span style='font-size:12px;color:#6b7280;'>{edu.get('year','')}</span>
+                </div>
+                <div style='font-size:13px;color:#059669;font-style:italic;font-weight:600;'>{degree_val}</div>
+                <div style='font-size:12px;color:#6b7280;'>{edu.get('details','')}</div>
+            </div>"""
+
+    proj_html = ""
+    proj_links_all = getattr(session_state, 'project_links', []) or []
+    for idx, proj in enumerate(session_state.project_entries):
+        if proj.get('title'):
+            desc = _fmt_desc(proj.get('description',''), font_size='13px', color='#374151', line_height='1.75')
+            proj_link_html = ""
+            if idx < len(proj_links_all) and proj_links_all[idx]:
+                proj_link_html = f"<div style='margin-top:5px;'><a href='{proj_links_all[idx]}' target='_blank' style='color:#059669;font-size:12px;font-weight:600;'>&#128279; View Project / GitHub</a></div>"
+            proj_html += f"""
+            <div style='margin-bottom:14px;padding:12px;background:#fff;border:1px solid #a7f3d0;border-radius:8px;'>
+                <div style='display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;'>
+                    <strong style='font-size:14px;color:#064e3b;'>{proj.get('title','')}</strong>
+                    <span style='font-size:12px;color:#6b7280;'>{proj.get('duration','')}</span>
+                </div>
+                <div style='font-size:12px;color:#059669;font-weight:600;margin-bottom:4px;'>{proj.get('tech','')}</div>
+                <div style='font-size:13px;color:#374151;'>{desc}</div>
+                {proj_link_html}
+            </div>"""
+
+    contact_html = ""
+    SVG_ICONS = {
+        'email': '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
+        'phone': '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.37 2 2 0 0 1 3.64 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.8a16 16 0 0 0 6.29 6.29l.98-.98a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+        'location': '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+        'linkedin': '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>',
+        'portfolio': '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+        'github': '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>'
+    }
+    for key in ['email','phone','location','linkedin','portfolio','github']:
+        val = session_state.get(key,'')
+        if val:
+            if key == 'email':
+                val_html = f"<a href='mailto:{val}' style='color:#059669;text-decoration:none;word-break:break-all;'>{val}</a>"
+            elif key in ('linkedin', 'portfolio', 'github'):
+                href = val if val.startswith('http') else f"https://{val}"
+                val_html = f"<a href='{href}' target='_blank' style='color:#059669;text-decoration:none;word-break:break-all;'>{val}</a>"
+            else:
+                val_html = f"<span style='word-break:break-all;'>{val}</span>"
+            contact_html += f"<div style='display:flex;align-items:center;margin-bottom:8px;font-size:13px;color:#374151;gap:6px;'><span style='flex-shrink:0;color:#059669;'>{SVG_ICONS[key]}</span>{val_html}</div>"
+
+    cert_html = ""
+    for cert in session_state.certificate_links:
+        if cert.get('name'):
+            cert_html += (f"<div style='margin-bottom:8px;'>"
+                          f"<a href='{cert.get('link','#')}' style='color:#059669;font-size:13px;font-weight:600;text-decoration:none;'>{cert.get('name','')}</a>"
+                          f"<span style='font-size:12px;color:#6b7280;'> · {cert.get('duration','')}</span>"
+                          f"</div>")
+
+    all_links_html = ""
+    if proj_links_all:
+        items = "".join(
+            f"<div style='margin-bottom:6px;'><a href='{lnk}' target='_blank' style='color:#059669;font-size:12px;font-weight:600;'>&#128279; Project {i+1}</a></div>"
+            for i, lnk in enumerate(proj_links_all)
+        )
+        all_links_html = items
+
+    fixed_img = _fix_img(profile_img_html)
+    job_title_val = session_state.get('job_title','') or session_state.get('title','')
+    summary_html = _fmt_desc(session_state.get('summary',''), font_size='13px', color='#374151', line_height='1.8')
+
+    def side_sec(title, body):
+        return f"""<div style='margin-bottom:22px;'>
+            <h3 style='font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#059669;font-weight:700;
+                border-bottom:2px solid #a7f3d0;padding-bottom:4px;margin-bottom:10px;'>{title}</h3>{body}</div>"""
+
+    def main_sec(title, body):
+        return f"""<div style='margin-bottom:26px;'>
+            <h3 style='font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:#064e3b;font-weight:700;
+                border-bottom:2px solid #059669;padding-bottom:4px;margin-bottom:12px;'>{title}</h3>{body}</div>"""
+
+    return f"""<!DOCTYPE html>
+<html lang='en'>
+<head><meta charset='UTF-8'><title>{session_state.get('name','')} - Creative Resume</title>
+<style>* {{ box-sizing:border-box; margin:0; padding:0; }} body {{ font-family:'Segoe UI',sans-serif; background:#f0fdf4; }}</style>
+</head>
+<body>
+<table role='presentation' style='width:100%;min-height:100vh;border-collapse:collapse;table-layout:fixed;'>
+<tr>
+  <td style='width:280px;background:#fff;border-right:2px solid #a7f3d0;padding:32px 22px;vertical-align:top;'>
+    {'<div style="margin:0 auto 14px;text-align:center;">' + fixed_img + '</div>' if fixed_img else ''}
+    <h1 style='font-size:20px;font-weight:800;color:#064e3b;text-align:center;margin-bottom:4px;'>{session_state.get('name','')}</h1>
+    <div style='font-size:13px;color:#059669;text-align:center;font-weight:700;margin-bottom:22px;'>{job_title_val}</div>
+    {side_sec("Contact", contact_html)}
+    {side_sec("Skills", pills(session_state.get('skills',''))) if session_state.get('skills') else ''}
+    {side_sec("Soft Skills", pills(session_state.get('Softskills',''),'#ede9fe','#5b21b6')) if session_state.get('Softskills') else ''}
+    {side_sec("Languages", pills(session_state.get('languages',''),'#fef3c7','#92400e')) if session_state.get('languages') else ''}
+    {side_sec("Interests", pills(session_state.get('interests',''),'#fce7f3','#9d174d')) if session_state.get('interests') else ''}
+    {side_sec("Certifications", cert_html) if cert_html else ''}
+    {side_sec("Project Links", all_links_html) if all_links_html else ''}
+  </td>
+  <td style='padding:36px 40px;background:#f0fdf4;vertical-align:top;'>
+    {main_sec("About Me", summary_html) if summary_html else ''}
+    {main_sec("Experience", exp_html) if exp_html else ''}
+    {main_sec("Education", edu_html) if edu_html else ''}
+    {main_sec("Projects", proj_html) if proj_html else ''}
+  </td>
+</tr>
+</table>
+</body></html>"""
+
+
+def render_template_terracotta(session_state, profile_img_html=""):
+    """Warm Terracotta Two-Column — ATS-friendly, warm professional tones"""
+    import re as _re
+
+    def _fix_img(html, size=105):
+        if not html:
+            return ""
+        img_match = _re.search(r'<img[^>]*>', html)
+        if not img_match:
+            return ""
+        img_tag = img_match.group(0)
+        img_tag = _re.sub(r"style=['\"][^\'\"]*['\"]", "", img_tag)
+        img_tag = img_tag.replace("<img ", f"<img style='width:{size}px;height:{size}px;border-radius:50%;object-fit:cover;object-position:center;border:3px solid #fde68a;display:block;margin:0 auto;' ")
+        return img_tag
+
+    def chip(s, bg="#fef3c7", color="#78350f"):
+        return (f"<span style='display:inline-block;background:{bg};color:{color};border-radius:3px;"
+                f"padding:3px 10px;margin:3px 3px 3px 0;font-size:12px;font-weight:600;border:1px solid {bg};'>{s.strip()}</span>")
+
+    def chips(items_str, bg="#fef3c7", color="#78350f"):
+        return "".join(chip(s, bg, color) for s in items_str.split(',') if s.strip())
+
+    exp_html = ""
+    for exp in session_state.experience_entries:
+        if exp.get('company') or exp.get('title'):
+            desc = _fmt_desc(exp.get('description',''), font_size='13px', color='#374151', line_height='1.75')
+            exp_html += f"""
+            <div style='margin-bottom:18px;border-left:3px solid #d97706;padding-left:14px;'>
+                <div style='display:flex;justify-content:space-between;flex-wrap:wrap;gap:5px;'>
+                    <strong style='font-size:15px;color:#292524;'>{exp.get('company','')}</strong>
+                    <span style='font-size:12px;color:#a8a29e;background:#fafaf9;padding:2px 8px;border-radius:4px;'>{exp.get('duration','')}</span>
+                </div>
+                <div style='font-size:13px;color:#b45309;font-weight:700;margin:3px 0 5px;'>{exp.get('title','')}</div>
+                <div style='font-size:13px;color:#44403c;line-height:1.7;'>{desc}</div>
+            </div>"""
+
+    edu_html = ""
+    for edu in session_state.education_entries:
+        if edu.get('institution'):
+            degree_val = edu.get('degree','')
+            if isinstance(degree_val,list): degree_val = ", ".join(degree_val)
+            edu_html += f"""
+            <div style='margin-bottom:14px;padding:10px;background:#fafaf9;border-radius:6px;border:1px solid #e7e5e4;border-left:3px solid #d97706;'>
+                <div style='display:flex;justify-content:space-between;'>
+                    <strong style='font-size:14px;color:#292524;'>{edu.get('institution','')}</strong>
+                    <span style='font-size:12px;color:#a8a29e;'>{edu.get('year','')}</span>
+                </div>
+                <div style='font-size:13px;color:#b45309;font-style:italic;font-weight:600;'>{degree_val}</div>
+                <div style='font-size:12px;color:#78716c;'>{edu.get('details','')}</div>
+            </div>"""
+
+    proj_html = ""
+    proj_links_all = getattr(session_state, 'project_links', []) or []
+    for idx, proj in enumerate(session_state.project_entries):
+        if proj.get('title'):
+            desc = _fmt_desc(proj.get('description',''), font_size='13px', color='#374151', line_height='1.75')
+            proj_link_html = ""
+            if idx < len(proj_links_all) and proj_links_all[idx]:
+                proj_link_html = f"<div style='margin-top:5px;'><a href='{proj_links_all[idx]}' target='_blank' style='color:#b45309;font-size:12px;font-weight:600;'>&#128279; View Project / GitHub</a></div>"
+            proj_html += f"""
+            <div style='margin-bottom:14px;padding:12px;background:#fafaf9;border-radius:6px;border:1px solid #d6d3d1;border-left:3px solid #d97706;'>
+                <div style='display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;'>
+                    <strong style='font-size:14px;color:#292524;'>{proj.get('title','')}</strong>
+                    <span style='font-size:12px;color:#a8a29e;'>{proj.get('duration','')}</span>
+                </div>
+                <div style='font-size:12px;color:#b45309;font-weight:600;margin-bottom:4px;'>{proj.get('tech','')}</div>
+                <div style='font-size:13px;color:#44403c;'>{desc}</div>
+                {proj_link_html}
+            </div>"""
+
+    contact_html = ""
+    SVG_ICONS = {
+        'email': '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
+        'phone': '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.37 2 2 0 0 1 3.64 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.8a16 16 0 0 0 6.29 6.29l.98-.98a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+        'location': '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+        'linkedin': '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>',
+        'portfolio': '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+        'github': '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>'
+    }
+    for key in ['email','phone','location','linkedin','portfolio','github']:
+        val = session_state.get(key,'')
+        if val:
+            if key == 'email':
+                val_html = f"<a href='mailto:{val}' style='color:#fde68a;text-decoration:none;word-break:break-all;'>{val}</a>"
+            elif key in ('linkedin', 'portfolio', 'github'):
+                href = val if val.startswith('http') else f"https://{val}"
+                val_html = f"<a href='{href}' target='_blank' style='color:#fde68a;text-decoration:none;word-break:break-all;'>{val}</a>"
+            else:
+                val_html = f"<span style='word-break:break-all;'>{val}</span>"
+            contact_html += f"<div style='margin-bottom:9px;font-size:12px;color:#e7e5e4;display:flex;align-items:center;gap:5px;'><span style='flex-shrink:0;'>{SVG_ICONS[key]}</span>{val_html}</div>"
+
+    cert_html = ""
+    for cert in session_state.certificate_links:
+        if cert.get('name'):
+            cert_html += f"<div style='margin-bottom:9px;padding:8px;background:rgba(255,255,255,0.1);border-radius:5px;'><a href='{cert.get('link','#')}' style='color:#fde68a;font-size:12px;font-weight:600;text-decoration:none;'>{cert.get('name','')}</a><div style='font-size:11px;color:#d4b896;'>{cert.get('duration','')}</div></div>"
+
+    all_links_html = ""
+    if proj_links_all:
+        items = "".join(
+            f"<div style='margin-bottom:6px;'><a href='{lnk}' target='_blank' style='color:#fde68a;font-size:12px;font-weight:600;'>&#128279; Project {i+1}</a></div>"
+            for i, lnk in enumerate(proj_links_all)
+        )
+        all_links_html = items
+
+    fixed_img = _fix_img(profile_img_html)
+    job_title_val = session_state.get('job_title','') or session_state.get('title','')
+    summary_html = _fmt_desc(session_state.get('summary',''), font_size='13px', color='#374151', line_height='1.8')
+
+    def side_sec(title, body):
+        return f"""<div style='margin-bottom:22px;'>
+            <h3 style='font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:#fde68a;font-weight:700;
+                border-bottom:1px solid rgba(253,230,138,0.3);padding-bottom:5px;margin-bottom:10px;'>{title}</h3>{body}</div>"""
+
+    def main_sec(title, body):
+        return f"""<div style='margin-bottom:26px;'>
+            <h3 style='font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:#b45309;font-weight:700;
+                border-bottom:2px solid #d97706;padding-bottom:4px;margin-bottom:12px;'>{title}</h3>{body}</div>"""
+
+    return f"""<!DOCTYPE html>
+<html lang='en'>
+<head><meta charset='UTF-8'><title>{session_state.get('name','')} - Terracotta Resume</title>
+<style>* {{ box-sizing:border-box; margin:0; padding:0; }} body {{ font-family:'Segoe UI',sans-serif; background:#fafaf9; }}</style>
+</head>
+<body>
+<table role='presentation' style='width:100%;min-height:100vh;border-collapse:collapse;table-layout:fixed;'>
+<tr>
+  <td style='width:290px;background:linear-gradient(180deg,#7c2d12,#b45309);color:white;padding:34px 22px;vertical-align:top;'>
+    {'<div style="margin:0 auto 14px;text-align:center;">' + fixed_img + '</div>' if fixed_img else ''}
+    <h1 style='font-size:20px;font-weight:800;color:#fff;text-align:center;margin-bottom:4px;letter-spacing:-0.3px;'>{session_state.get('name','')}</h1>
+    <div style='font-size:13px;color:#fde68a;text-align:center;font-weight:700;margin-bottom:24px;'>{job_title_val}</div>
+    {side_sec("Contact", contact_html)}
+    {side_sec("Skills", chips(session_state.get('skills',''),'rgba(253,230,138,0.2)','#fef3c7')) if session_state.get('skills') else ''}
+    {side_sec("Soft Skills", chips(session_state.get('Softskills',''),'rgba(255,255,255,0.1)','#f3f4f6')) if session_state.get('Softskills') else ''}
+    {side_sec("Languages", chips(session_state.get('languages',''),'rgba(255,255,255,0.1)','#e0f2fe')) if session_state.get('languages') else ''}
+    {side_sec("Interests", chips(session_state.get('interests',''),'rgba(255,255,255,0.1)','#fce7f3')) if session_state.get('interests') else ''}
+    {side_sec("Certifications", cert_html) if cert_html else ''}
+    {side_sec("Project Links", all_links_html) if all_links_html else ''}
+  </td>
+  <td style='padding:38px 42px;background:#fafaf9;vertical-align:top;'>
+    {main_sec("Professional Summary", summary_html) if summary_html else ''}
+    {main_sec("Work Experience", exp_html) if exp_html else ''}
+    {main_sec("Education", edu_html) if edu_html else ''}
+    {main_sec("Projects", proj_html) if proj_html else ''}
+  </td>
+</tr>
+</table>
+</body></html>"""
+
 
 def generate_cover_letter_from_resume_builder():
     import streamlit as st
@@ -5842,6 +7074,87 @@ with tab2:
 
     st.markdown("<hr style='border-top: 2px solid rgba(0,200,255,0.4);'>", unsafe_allow_html=True)
 
+    # ---------- Anti-Flicker / Smooth Rerun CSS ----------
+    st.markdown("""
+        <style>
+        /* Prevent white flash and blinking on Streamlit reruns */
+        [data-testid="stAppViewContainer"],
+        [data-testid="stVerticalBlock"],
+        [data-testid="stForm"],
+        [data-testid="stSidebar"],
+        section.main > div {
+            transition: opacity 0.15s ease-in-out !important;
+        }
+
+        /* Suppress the brief layout jump when widgets remount */
+        iframe, [data-testid="stIFrame"] {
+            transition: none !important;
+        }
+
+        /* Prevent scrollbar flicker */
+        html {
+            overflow-y: scroll !important;
+            scrollbar-gutter: stable !important;
+        }
+
+        /* Smooth button press — no jump */
+        button[kind="formSubmit"],
+        button[kind="secondary"],
+        .stButton > button {
+            transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease !important;
+        }
+        .stButton > button:active {
+            transform: scale(0.98) !important;
+        }
+
+        /* Prevent input field flicker on focus/blur */
+        input, textarea, select {
+            transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+        }
+
+        /* Prevent expander flicker */
+        details summary {
+            transition: background 0.2s ease !important;
+        }
+
+        /* Prevent layout shift during widget remounts */
+        [data-testid="stVerticalBlock"] > div {
+            min-height: 0 !important;
+        }
+
+        /* Smooth fade-in for newly rendered blocks */
+        @keyframes fadeInBlock {
+            from { opacity: 0.6; }
+            to   { opacity: 1; }
+        }
+        [data-testid="stVerticalBlock"] {
+            animation: fadeInBlock 0.12s ease-out !important;
+        }
+        </style>
+
+        <script>
+        (function() {
+            var lastScrollY = 0;
+            var ticking = false;
+            var observer = new MutationObserver(function() {
+                if (!ticking) {
+                    requestAnimationFrame(function() {
+                        if (Math.abs(window.scrollY - lastScrollY) > 200) {
+                            window.scrollTo({ top: lastScrollY, behavior: 'instant' });
+                        }
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            });
+            observer.observe(document.body, { childList: true, subtree: false });
+            window.addEventListener('scroll', function() {
+                lastScrollY = window.scrollY;
+            }, { passive: true });
+        })();
+        </script>
+    """, unsafe_allow_html=True)
+
     # ---------- Global Styles (Glassmorphism + Glow + Shine) ----------
     st.markdown("""
         <style>
@@ -5938,7 +7251,17 @@ with tab2:
     st.markdown("### 🎨 Choose Resume Template")
     selected_template = st.selectbox(
         "🎨 Choose Resume Template",
-        ["Default (Professional)", "Modern Minimal", "Elegant Sidebar"],
+        [
+            "Default (Professional)",
+            "Modern Minimal",
+            "Elegant Sidebar",
+            "Classic Clean (Single Column)",
+            "Executive (Single Column)",
+            "Timeline (Single Column)",
+            "Corporate Blue (Two Column)",
+            "Creative Green (Two Column)",
+            "Warm Terracotta (Two Column)",
+        ],
         key="template_selector"
     )
 
@@ -5987,8 +7310,35 @@ with tab2:
     st.session_state.setdefault("project_entries", [{"title": "", "tech": "", "duration": "", "description": ""}])
     st.session_state.setdefault("project_links", [])
     st.session_state.setdefault("certificate_links", [{"name": "", "link": "", "duration": "", "description": ""}])
+    st.session_state.setdefault("form_key_counter", 0)
 
     # ---------------- Sidebar (ONLY in Tab 2) ----------------
+    # Process any pending section mutations BEFORE rendering the sidebar
+    # so the form fields re-render immediately without a visual jump.
+    _pending = st.session_state.pop("_pending_section_action", None)
+    if _pending:
+        _action, _section = _pending
+        if _section == "exp":
+            if _action == "add":
+                st.session_state.experience_entries.append({"title": "", "company": "", "duration": "", "description": ""})
+            elif _action == "del" and len(st.session_state.experience_entries) > 1:
+                st.session_state.experience_entries.pop()
+        elif _section == "edu":
+            if _action == "add":
+                st.session_state.education_entries.append({"degree": "", "institution": "", "year": "", "details": ""})
+            elif _action == "del" and len(st.session_state.education_entries) > 1:
+                st.session_state.education_entries.pop()
+        elif _section == "proj":
+            if _action == "add":
+                st.session_state.project_entries.append({"title": "", "tech": "", "duration": "", "description": ""})
+            elif _action == "del" and len(st.session_state.project_entries) > 1:
+                st.session_state.project_entries.pop()
+        elif _section == "cert":
+            if _action == "add":
+                st.session_state.certificate_links.append({"name": "", "link": "", "duration": "", "description": ""})
+            elif _action == "del" and len(st.session_state.certificate_links) > 1:
+                st.session_state.certificate_links.pop()
+
     with st.sidebar:
         st.markdown("### ✨ Manage Resume Sections")
 
@@ -5999,130 +7349,151 @@ with tab2:
         st.session_state.edit_mode = mode
         st.markdown("---")
 
+        _action_key = "add" if mode == "Add" else "del"
+
         # 💼 Experience
         with st.expander("💼 Experience"):
             if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Experience", key="exp_btn"):
-                if mode == "Add":
-                    st.session_state.experience_entries.append(
-                        {"title": "", "company": "", "duration": "", "description": ""}
-                    )
-                elif mode == "Delete" and len(st.session_state.experience_entries) > 1:
-                    st.session_state.experience_entries.pop()
+                st.session_state["_pending_section_action"] = (_action_key, "exp")
+                st.rerun()
 
         # 🎓 Education
         with st.expander("🎓 Education"):
             if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Education", key="edu_btn"):
-                if mode == "Add":
-                    st.session_state.education_entries.append(
-                        {"degree": "", "institution": "", "year": "", "details": ""}
-                    )
-                elif mode == "Delete" and len(st.session_state.education_entries) > 1:
-                    st.session_state.education_entries.pop()
+                st.session_state["_pending_section_action"] = (_action_key, "edu")
+                st.rerun()
 
         # 🛠 Projects
         with st.expander("🛠 Projects"):
             if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Project", key="proj_btn"):
-                if mode == "Add":
-                    st.session_state.project_entries.append(
-                        {"title": "", "tech": "", "duration": "", "description": ""}
-                    )
-                elif mode == "Delete" and len(st.session_state.project_entries) > 1:
-                    st.session_state.project_entries.pop()
+                st.session_state["_pending_section_action"] = (_action_key, "proj")
+                st.rerun()
 
         # 📜 Certificates
         with st.expander("📜 Certificates"):
             if st.button(f"{'➕ Add' if mode=='Add' else '❌ Delete'} Certificate", key="cert_btn"):
-                if mode == "Add":
-                    st.session_state.certificate_links.append(
-                        {"name": "", "link": "", "duration": "", "description": ""}
-                    )
-                elif mode == "Delete" and len(st.session_state.certificate_links) > 1:
-                    st.session_state.certificate_links.pop()
+                st.session_state["_pending_section_action"] = (_action_key, "cert")
+                st.rerun()
 
     # ---------------- Resume Form ----------------
-    with st.form("resume_form", clear_on_submit=False):
-        st.markdown("### 👤 <u>Personal Information</u>", unsafe_allow_html=True)
-        col1, col2 = st.columns(2)
-        with col1:
-            st.session_state.name = st.text_input("👤 Full Name", value=st.session_state.name, key="name_input")
-            st.session_state.phone = st.text_input("📞 Phone Number", value=st.session_state.phone, key="phone_input")
-            st.session_state.location = st.text_input("📍 Location", value=st.session_state.location, key="loc_input")
-        with col2:
-            st.session_state.email = st.text_input("📧 Email", value=st.session_state.email, key="email_input")
-            st.session_state.linkedin = st.text_input("🔗 LinkedIn", value=st.session_state.linkedin, key="ln_input")
-            st.session_state.portfolio = st.text_input("🌐 Portfolio", value=st.session_state.portfolio, key="port_input")
-            st.session_state.job_title = st.text_input("💼 Job Title", value=st.session_state.job_title, key="job_input")
+    @st.fragment
+    def _resume_form():
+        # ---------------- Resume Form ----------------
+        fk = st.session_state["form_key_counter"]
+        with st.form(f"resume_form_{fk}", clear_on_submit=False):
+            st.markdown("### 👤 <u>Personal Information</u>", unsafe_allow_html=True)
+            col1, col2 = st.columns(2)
+            with col1:
+                st.session_state.name = st.text_input("👤 Full Name", value=st.session_state.name, key=f"name_input_{fk}")
+                st.session_state.phone = st.text_input("📞 Phone Number", value=st.session_state.phone, key=f"phone_input_{fk}")
+                st.session_state.location = st.text_input("📍 Location", value=st.session_state.location, key=f"loc_input_{fk}")
+            with col2:
+                st.session_state.email = st.text_input("📧 Email", value=st.session_state.email, key=f"email_input_{fk}")
+                st.session_state.linkedin = st.text_input("🔗 LinkedIn", value=st.session_state.linkedin, key=f"ln_input_{fk}")
+                st.session_state.portfolio = st.text_input("🌐 Portfolio", value=st.session_state.portfolio, key=f"port_input_{fk}")
+                st.session_state.job_title = st.text_input("💼 Job Title", value=st.session_state.job_title, key=f"job_input_{fk}")
 
-        st.markdown("### 📝 <u>Professional Summary</u>", unsafe_allow_html=True)
-        st.session_state.summary = st.text_area("Summary", value=st.session_state.summary, key="summary_input")
+            st.markdown("### 📝 <u>Professional Summary</u>", unsafe_allow_html=True)
+            st.session_state.summary = st.text_area("Summary", value=st.session_state.summary, key=f"summary_input_{fk}")
 
-        st.markdown("### 💼 <u>Skills, Languages, Interests & Soft Skills</u>", unsafe_allow_html=True)
-        st.session_state.skills = st.text_area("Skills (comma-separated)", value=st.session_state.skills, key="skills_input")
-        st.session_state.languages = st.text_area("Languages (comma-separated)", value=st.session_state.languages, key="lang_input")
-        st.session_state.interests = st.text_area("Interests (comma-separated)", value=st.session_state.interests, key="int_input")
-        st.session_state.Softskills = st.text_area("Softskills (comma-separated)", value=st.session_state.Softskills, key="soft_input")
+            st.markdown("### 💼 <u>Skills, Languages, Interests & Soft Skills</u>", unsafe_allow_html=True)
+            st.session_state.skills = st.text_area("Skills (comma-separated)", value=st.session_state.skills, key=f"skills_input_{fk}")
+            st.session_state.languages = st.text_area("Languages (comma-separated)", value=st.session_state.languages, key=f"lang_input_{fk}")
+            st.session_state.interests = st.text_area("Interests (comma-separated)", value=st.session_state.interests, key=f"int_input_{fk}")
+            st.session_state.Softskills = st.text_area("Softskills (comma-separated)", value=st.session_state.Softskills, key=f"soft_input_{fk}")
 
-        st.markdown("### 🧱 <u>Work Experience</u>", unsafe_allow_html=True)
-        for idx, exp in enumerate(st.session_state.experience_entries):
-            with st.expander(f"Experience #{idx+1}", expanded=True):
-                exp["title"] = st.text_input("Job Title", value=exp.get("title", ""), key=f"title_{idx}_{len(st.session_state.experience_entries)}")
-                exp["company"] = st.text_input("Company", value=exp.get("company", ""), key=f"company_{idx}_{len(st.session_state.experience_entries)}")
-                exp["duration"] = st.text_input("Duration", value=exp.get("duration", ""), key=f"duration_{idx}_{len(st.session_state.experience_entries)}")
-                exp["description"] = st.text_area("Description", value=exp.get("description", ""), key=f"description_{idx}_{len(st.session_state.experience_entries)}")
+            st.markdown("### 🧱 <u>Work Experience</u>", unsafe_allow_html=True)
+            for idx, exp in enumerate(st.session_state.experience_entries):
+                with st.expander(f"Experience #{idx+1}", expanded=True):
+                    exp["title"] = st.text_input("Job Title", value=exp.get("title", ""), key=f"title_{idx}_{len(st.session_state.experience_entries)}_{fk}")
+                    exp["company"] = st.text_input("Company", value=exp.get("company", ""), key=f"company_{idx}_{len(st.session_state.experience_entries)}_{fk}")
+                    exp["duration"] = st.text_input("Duration", value=exp.get("duration", ""), key=f"duration_{idx}_{len(st.session_state.experience_entries)}_{fk}")
+                    exp["description"] = st.text_area("Description", value=exp.get("description", ""), key=f"description_{idx}_{len(st.session_state.experience_entries)}_{fk}")
 
-        st.markdown("### 🎓 <u>Education</u>", unsafe_allow_html=True)
-        for idx, edu in enumerate(st.session_state.education_entries):
-            with st.expander(f"Education #{idx+1}", expanded=True):
-                edu["degree"] = st.text_input("Degree", value=edu.get("degree", ""), key=f"degree_{idx}_{len(st.session_state.education_entries)}")
-                edu["institution"] = st.text_input("Institution", value=edu.get("institution", ""), key=f"institution_{idx}_{len(st.session_state.education_entries)}")
-                edu["year"] = st.text_input("Year", value=edu.get("year", ""), key=f"edu_year_{idx}_{len(st.session_state.education_entries)}")
-                edu["details"] = st.text_area("Details", value=edu.get("details", ""), key=f"edu_details_{idx}_{len(st.session_state.education_entries)}")
+            st.markdown("### 🎓 <u>Education</u>", unsafe_allow_html=True)
+            for idx, edu in enumerate(st.session_state.education_entries):
+                with st.expander(f"Education #{idx+1}", expanded=True):
+                    edu["degree"] = st.text_input("Degree", value=edu.get("degree", ""), key=f"degree_{idx}_{len(st.session_state.education_entries)}_{fk}")
+                    edu["institution"] = st.text_input("Institution", value=edu.get("institution", ""), key=f"institution_{idx}_{len(st.session_state.education_entries)}_{fk}")
+                    edu["year"] = st.text_input("Year", value=edu.get("year", ""), key=f"edu_year_{idx}_{len(st.session_state.education_entries)}_{fk}")
+                    edu["details"] = st.text_area("Details", value=edu.get("details", ""), key=f"edu_details_{idx}_{len(st.session_state.education_entries)}_{fk}")
 
-        st.markdown("### 🛠 <u>Projects</u>", unsafe_allow_html=True)
-        for idx, proj in enumerate(st.session_state.project_entries):
-            with st.expander(f"Project #{idx+1}", expanded=True):
-                proj["title"] = st.text_input("Project Title", value=proj.get("title", ""), key=f"proj_title_{idx}_{len(st.session_state.project_entries)}")
-                proj["tech"] = st.text_input("Tech Stack", value=proj.get("tech", ""), key=f"proj_tech_{idx}_{len(st.session_state.project_entries)}")
-                proj["duration"] = st.text_input("Duration", value=proj.get("duration", ""), key=f"proj_duration_{idx}_{len(st.session_state.project_entries)}")
-                proj["description"] = st.text_area("Description", value=proj.get("description", ""), key=f"proj_desc_{idx}_{len(st.session_state.project_entries)}")
+            st.markdown("### 🛠 <u>Projects</u>", unsafe_allow_html=True)
+            for idx, proj in enumerate(st.session_state.project_entries):
+                with st.expander(f"Project #{idx+1}", expanded=True):
+                    proj["title"] = st.text_input("Project Title", value=proj.get("title", ""), key=f"proj_title_{idx}_{len(st.session_state.project_entries)}_{fk}")
+                    proj["tech"] = st.text_input("Tech Stack", value=proj.get("tech", ""), key=f"proj_tech_{idx}_{len(st.session_state.project_entries)}_{fk}")
+                    proj["duration"] = st.text_input("Duration", value=proj.get("duration", ""), key=f"proj_duration_{idx}_{len(st.session_state.project_entries)}_{fk}")
+                    proj["description"] = st.text_area("Description", value=proj.get("description", ""), key=f"proj_desc_{idx}_{len(st.session_state.project_entries)}_{fk}")
 
-        st.markdown("### 🔗 Project Links")
-        project_links_input = st.text_area("Enter one project link per line:", value="\n".join(st.session_state.project_links), key="proj_links_input")
-        if project_links_input:
-            st.session_state.project_links = [link.strip() for link in project_links_input.splitlines() if link.strip()]
+            st.markdown("### 🔗 Project Links")
+            project_links_input = st.text_area("Enter one project link per line:", value="\n".join(st.session_state.project_links), key=f"proj_links_input_{fk}")
+            if project_links_input:
+                st.session_state.project_links = [link.strip() for link in project_links_input.splitlines() if link.strip()]
 
-        st.markdown("### 🧾 <u>Certificates</u>", unsafe_allow_html=True)
-        for idx, cert in enumerate(st.session_state.certificate_links):
-            with st.expander(f"Certificate #{idx+1}", expanded=True):
-                cert["name"] = st.text_input("Certificate Name", value=cert.get("name", ""), key=f"cert_name_{idx}_{len(st.session_state.certificate_links)}")
-                cert["link"] = st.text_input("Certificate Link", value=cert.get("link", ""), key=f"cert_link_{idx}_{len(st.session_state.certificate_links)}")
-                cert["duration"] = st.text_input("Duration", value=cert.get("duration", ""), key=f"cert_duration_{idx}_{len(st.session_state.certificate_links)}")
-                cert["description"] = st.text_area("Description", value=cert.get("description", ""), key=f"cert_description_{idx}_{len(st.session_state.certificate_links)}")
+            st.markdown("### 🧾 <u>Certificates</u>", unsafe_allow_html=True)
+            for idx, cert in enumerate(st.session_state.certificate_links):
+                with st.expander(f"Certificate #{idx+1}", expanded=True):
+                    cert["name"] = st.text_input("Certificate Name", value=cert.get("name", ""), key=f"cert_name_{idx}_{len(st.session_state.certificate_links)}_{fk}")
+                    cert["link"] = st.text_input("Certificate Link", value=cert.get("link", ""), key=f"cert_link_{idx}_{len(st.session_state.certificate_links)}_{fk}")
+                    cert["duration"] = st.text_input("Duration", value=cert.get("duration", ""), key=f"cert_duration_{idx}_{len(st.session_state.certificate_links)}_{fk}")
+                    cert["description"] = st.text_area("Description", value=cert.get("description", ""), key=f"cert_description_{idx}_{len(st.session_state.certificate_links)}_{fk}")
 
-        submitted = st.form_submit_button("📑 Generate Resume")
+            btn_col1, btn_col2 = st.columns([1, 1])
+            with btn_col1:
+                submitted = st.form_submit_button("📑 Generate Resume", use_container_width=True)
+            with btn_col2:
+                clear_clicked = st.form_submit_button("🗑️ Clear Form", use_container_width=True)
 
-        if submitted:
-            st.success("✅ Resume Generated Successfully! Scroll down to preview or download.")
+            if submitted:
+                st.success("✅ Resume Generated Successfully! Scroll down to preview or download.")
+                st.session_state["_form_submitted"] = True
+                st.rerun(scope="app")
 
-        st.markdown("""
-        <style>
-            .heading-large {
-                font-size: 36px;
-                font-weight: bold;
-                color: #336699;
-            }
-            .subheading-large {
-                font-size: 30px;
-                font-weight: bold;
-                color: #336699;
-            }
-            .tab-section {
-                margin-top: 20px;
-            }
-        </style>
-        """, unsafe_allow_html=True)
+            if clear_clicked:
+                # Reset only resume-related keys — do NOT clear() or rerun() as that
+                # wipes tab context and navigates back to the main/home page.
+                # Instead, reset values in-place and bump the form key counter so
+                # all widgets re-render empty on this same run, no page jump.
+                _new_counter = st.session_state.get("form_key_counter", 0) + 1
+                resume_fields = ["name", "email", "phone", "linkedin", "location",
+                                 "portfolio", "summary", "skills", "languages",
+                                 "interests", "Softskills", "job_title"]
+                for _f in resume_fields:
+                    st.session_state[_f] = ""
+                st.session_state["experience_entries"] = [{"title": "", "company": "", "duration": "", "description": ""}]
+                st.session_state["education_entries"] = [{"degree": "", "institution": "", "year": "", "details": ""}]
+                st.session_state["project_entries"] = [{"title": "", "tech": "", "duration": "", "description": ""}]
+                st.session_state["project_links"] = []
+                st.session_state["certificate_links"] = [{"name": "", "link": "", "duration": "", "description": ""}]
+                for _key in ["generated_html", "ai_output", "cover_letter",
+                             "cover_letter_html", "encoded_profile_image"]:
+                    st.session_state.pop(_key, None)
+                st.session_state["form_key_counter"] = _new_counter
+                st.rerun(scope="app")
 
-        # --- Visual Resume Preview Section ---
+    _resume_form()
+
+    st.markdown("""
+    <style>
+        .heading-large {
+            font-size: 36px;
+            font-weight: bold;
+            color: #336699;
+        }
+        .subheading-large {
+            font-size: 30px;
+            font-weight: bold;
+            color: #336699;
+        }
+        .tab-section {
+            margin-top: 20px;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # --- Visual Resume Preview Section (only shown after form is submitted) ---
+    if "generated_html" in st.session_state:
         st.markdown("## 🧾 <span style='color:#336699;'>Resume Preview</span>", unsafe_allow_html=True)
         st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
 
@@ -6132,7 +7503,6 @@ with tab2:
             st.markdown(f"""
                 <h2 style='color:#2f2f2f;margin-bottom:0;'>{st.session_state['name']}</h2>
                 <h4 style='margin-top:5px;color:#444;'>{st.session_state['job_title']}</h4>
-
                 <p style='font-size:14px;'>
                 📍 {st.session_state['location']}<br>
                 📞 {st.session_state['phone']}<br>
@@ -6148,19 +7518,19 @@ with tab2:
 
             st.markdown("<h4 style='color:#336699;'>Languages</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
             for lang in [l.strip() for l in st.session_state["languages"].split(",") if l.strip()]:
-               st.markdown(f"<div style='margin-left:10px;'>• {lang}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='margin-left:10px;'>• {lang}</div>", unsafe_allow_html=True)
 
             st.markdown("<h4 style='color:#336699;'>Interests</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
             for interest in [i.strip() for i in st.session_state["interests"].split(",") if i.strip()]:
-               st.markdown(f"<div style='margin-left:10px;'>• {interest}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='margin-left:10px;'>• {interest}</div>", unsafe_allow_html=True)
 
             st.markdown("<h4 style='color:#336699;'>Softskills</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            for Softskills  in [i.strip() for i in st.session_state["Softskills"].split(",") if i.strip()]:
-               st.markdown(f"<div style='margin-left:10px;'>• {Softskills}</div>", unsafe_allow_html=True)   
+            for ss in [i.strip() for i in st.session_state["Softskills"].split(",") if i.strip()]:
+                st.markdown(f"<div style='margin-left:10px;'>• {ss}</div>", unsafe_allow_html=True)
 
         with right:
             st.markdown("<h4 style='color:#336699;'>Summary</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-            summary_text = st.session_state['summary'].replace('\n', '<br>')
+            summary_text = st.session_state["summary"].replace("\n", "<br>")
             st.markdown(f"<p style='font-size:17px;'>{summary_text}</p>", unsafe_allow_html=True)
 
             st.markdown("<h4 style='color:#336699;'>Experience</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
@@ -6169,7 +7539,7 @@ with tab2:
                     st.markdown(f"""
                     <div style='margin-bottom:15px; padding:10px; border-radius:8px;'>
                         <div style='display:flex; justify-content:space-between;'>
-                            <b>🏢 {exp['company']}</b><span style='color:gray;'>📆  {exp['duration']}</span>
+                            <b>🏢 {exp['company']}</b><span style='color:gray;'>📆 {exp['duration']}</span>
                         </div>
                         <div style='font-size:14px;'>💼 <i>{exp['title']}</i></div>
                         <div style='font-size:17px;'>📝 {exp['description']}</div>
@@ -6180,28 +7550,27 @@ with tab2:
             for edu in st.session_state.education_entries:
                 if edu["institution"] or edu["degree"]:
                     st.markdown(f"""
-                    <div style='margin-bottom: 15px; padding: 10px 15px;color: white; border-radius: 8px;'>
-                        <div style='display: flex; justify-content: space-between; font-size: 16px; font-weight: bold;'>
+                    <div style='margin-bottom:15px; padding:10px 15px; border-radius:8px;'>
+                        <div style='display:flex; justify-content:space-between; font-size:16px; font-weight:bold;'>
                             <span>🏫 {edu['institution']}</span>
-                            <span style='color: gray;'>📅 {edu['year']}</span>
+                            <span style='color:gray;'>📅 {edu['year']}</span>
                         </div>
-                        <div style='font-size: 14px; margin-top: 5px;'>🎓 <i>{edu['degree']}</i></div>
-                        <div style='font-size: 14px;'>📄 {edu['details']}</div>
+                        <div style='font-size:14px;'>🎓 <i>{edu['degree']}</i></div>
+                        <div style='font-size:14px;'>📄 {edu['details']}</div>
                     </div>
                     """, unsafe_allow_html=True)
 
             st.markdown("<h4 style='color:#336699;'>Projects</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
             for proj in st.session_state.project_entries:
-                st.markdown(f"""
-                <div style='margin-bottom:15px; padding: 10px;'>
-                <strong style='font-size:16px;'>{proj['title']}</strong><br>
-                <span style='font-size:14px; word-wrap:break-word; overflow-wrap:break-word; white-space:normal;'>
-                   🛠️ <strong>Tech Stack:</strong> {proj['tech']}
-             </span><br>
-            <span style='font-size:14px;'>⏳ <strong>Duration:</strong> {proj['duration']}</span><br>
-            <span style='font-size:17px;'>📝 <strong>Description:</strong> {proj['description']}</span>
-            </div>
-            """, unsafe_allow_html=True)
+                if proj.get("title"):
+                    st.markdown(f"""
+                    <div style='margin-bottom:15px; padding:10px;'>
+                        <strong style='font-size:16px;'>{proj['title']}</strong><br>
+                        <span style='font-size:14px;'>🛠️ <strong>Tech Stack:</strong> {proj['tech']}</span><br>
+                        <span style='font-size:14px;'>⏳ <strong>Duration:</strong> {proj['duration']}</span><br>
+                        <span style='font-size:17px;'>📝 <strong>Description:</strong> {proj['description']}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
 
             if st.session_state.project_links:
                 st.markdown("<h4 style='color:#336699;'>Project Links</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
@@ -6210,12 +7579,12 @@ with tab2:
 
             if st.session_state.certificate_links:
                 st.markdown("<h4 style='color:#336699;'>Certificates</h4><hr style='margin-top:-10px;'>", unsafe_allow_html=True)
-                
                 for cert in st.session_state.certificate_links:
                     if cert["name"] and cert["link"]:
                         st.markdown(f"""
                         <div style='display:flex; justify-content:space-between;'>
-                            <a href="{cert['link']}" target="_blank"><b>📄 {cert['name']}</b></a><span style='color:gray;'>{cert['duration']}</span>
+                            <a href="{cert['link']}" target="_blank"><b>📄 {cert['name']}</b></a>
+                            <span style='color:gray;'>{cert['duration']}</span>
                         </div>
                         <div style='margin-bottom:10px; font-size:14px;'>{cert['description']}</div>
                         """, unsafe_allow_html=True)
@@ -6234,6 +7603,10 @@ with tab2:
 
     with col2:
         if st.button("🚀 Generate AI Resume Preview"):
+            st.session_state["_run_ai_generate"] = True
+
+    if st.session_state.pop("_run_ai_generate", False):
+        if True:
             # Normalize and ensure at least 2 experience entries
             experience_entries = st.session_state.get('experience_entries', [])
             normalized_experience_entries = []
@@ -6640,8 +8013,8 @@ with tab2:
                 for i, link in enumerate(st.session_state.project_links):
                     st.markdown(f"[🔗 Project {i+1}]({link})", unsafe_allow_html=True)
 
-    # Generate HTML content based on selected template
-    if submitted:
+    # Generate HTML content based on selected template — only on submit, stored in session_state
+    if st.session_state.pop("_form_submitted", False):
         # Determine which template to use
         if selected_template == "Default (Professional)":
             html_content = render_template_default(st.session_state, profile_img_html)
@@ -6649,6 +8022,18 @@ with tab2:
             html_content = render_template_modern(st.session_state, profile_img_html)
         elif selected_template == "Elegant Sidebar":
             html_content = render_template_sidebar(st.session_state, profile_img_html)
+        elif selected_template == "Classic Clean (Single Column)":
+            html_content = render_template_classic(st.session_state, profile_img_html)
+        elif selected_template == "Executive (Single Column)":
+            html_content = render_template_executive(st.session_state, profile_img_html)
+        elif selected_template == "Timeline (Single Column)":
+            html_content = render_template_timeline(st.session_state, profile_img_html)
+        elif selected_template == "Corporate Blue (Two Column)":
+            html_content = render_template_corporate(st.session_state, profile_img_html)
+        elif selected_template == "Creative Green (Two Column)":
+            html_content = render_template_creative_green(st.session_state, profile_img_html)
+        elif selected_template == "Warm Terracotta (Two Column)":
+            html_content = render_template_terracotta(st.session_state, profile_img_html)
         else:
             # Fallback to default
             html_content = render_template_default(st.session_state, profile_img_html)
@@ -6779,6 +8164,72 @@ with tab2:
             <a href="https://www.sejda.com/html-to-pdf" target="_blank" style="color:#2f4f6f; text-decoration:none;">
             convert it to PDF using Sejda's free online tool</a>.
             """, unsafe_allow_html=True)
+JOB_TITLES = [
+    "Software Engineering",
+    "Full Stack Development",
+    "Frontend Development",
+    "Backend Development",
+    "Mobile Development",
+    "Game Development",
+    "Data Science",
+    "AI / Machine Learning",
+    "Data Engineering",
+    "Business Intelligence",
+    "Analytics Engineering",
+    "Cloud Engineering",
+    "DevOps / Infrastructure",
+    "Site Reliability Engineering",
+    "System Architecture",
+    "Platform Engineering",
+    "Cybersecurity",
+    "Application Security",
+    "Network Security",
+    "Ethical Hacking",
+    "Product Management",
+    "Project Management",
+    "Agile Coaching",
+    "Business Analysis",
+    "Technical Program Management",
+    "UI/UX Design",
+    "Product Design",
+    "Interaction Design",
+    "Blockchain Development",
+    "IoT Development",
+    "AR / VR Development",
+    "Embedded Systems",
+    "Database Management",
+    "Networking",
+    "Quality Assurance / Testing",
+    "Fintech",
+    "Healthcare Tech",
+    "EdTech",
+    "E-commerce",
+    "Digital Marketing",
+    "Technical Sales",
+    "Technical Writing"
+]
+
+LOCATIONS = [
+    "Bangalore",
+    "Hyderabad",
+    "Mumbai",
+    "Delhi NCR",
+    "Pune",
+    "Chennai",
+    "Kolkata",
+    "Ahmedabad",
+    "Jaipur",
+    "Chandigarh",
+    "Coimbatore",
+    "Indore",
+    "Bhubaneswar",
+    "Noida",
+    "Gurgaon",
+    "Thiruvananthapuram",
+    "Visakhapatnam",
+    "Remote (India)"
+]
+
 FEATURED_COMPANIES = {
     "tech": [
         {
@@ -6835,7 +8286,7 @@ FEATURED_COMPANIES = {
     "indian_tech": [
         {
             "name": "TCS",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/f/f6/TCS_New_Logo.svg",
+            "logo_url": "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 60'%3E%3Crect width='200' height='60' fill='%230070C0' rx='6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial,sans-serif' font-size='26' font-weight='900' fill='white' letter-spacing='3'%3ETCS%3C/text%3E%3C/svg%3E",
             "color": "#0070C0",
             "careers_url": "https://www.tcs.com/careers",
             "description": "India's largest IT services company",
@@ -6843,7 +8294,7 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "Infosys",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/5/55/Infosys_logo.svg",
+            "logo_url": "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 60'%3E%3Crect width='240' height='60' fill='%23007CC3' rx='6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial,sans-serif' font-size='22' font-weight='700' fill='white' letter-spacing='1'%3EInfosys%3C/text%3E%3C/svg%3E",
             "color": "#007CC3",
             "careers_url": "https://www.infosys.com/careers",
             "description": "Global leader in digital services and consulting",
@@ -6851,15 +8302,15 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "Wipro",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/8/80/Wipro_Primary_Logo_Color_RGB.svg",
+            "logo_url": "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 60'%3E%3Crect width='220' height='60' fill='%23341F65' rx='6'/%3E%3Ccircle cx='28' cy='30' r='16' fill='%2300BFFF' opacity='0.9'/%3E%3Ccircle cx='28' cy='30' r='10' fill='%23341F65'/%3E%3Ccircle cx='28' cy='30' r='5' fill='%2300BFFF' opacity='0.7'/%3E%3Ctext x='118' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial,sans-serif' font-size='22' font-weight='700' fill='white'%3EWipro%3C/text%3E%3C/svg%3E",
             "color": "#341F65",
             "careers_url": "https://careers.wipro.com",
             "description": "Leading global information technology company",
             "categories": ["IT Services", "Consulting", "Digital"]
         },
         {
-            "name": "HCL",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/5/5e/HCL_Technologies_logo.svg",
+            "name": "HCLTech",
+            "logo_url": "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 60'%3E%3Crect width='220' height='60' fill='%230075C9' rx='6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial,sans-serif' font-size='22' font-weight='900' fill='white' letter-spacing='1'%3EHCLTech%3C/text%3E%3C/svg%3E",
             "color": "#0075C9",
             "careers_url": "https://www.hcltech.com/careers",
             "description": "Global technology company",
@@ -6879,7 +8330,7 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "Accenture",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/8/80/Accenture_Logo.svg",
+            "logo_url": "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 60'%3E%3Crect width='240' height='60' fill='%23111' rx='6'/%3E%3Cpolygon points='22,10 38,30 22,50 30,50 46,30 30,10' fill='%23A100FF'/%3E%3Ctext x='135' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial,sans-serif' font-size='19' font-weight='700' fill='white' letter-spacing='0.5'%3EAccenture%3C/text%3E%3C/svg%3E",
             "color": "#A100FF",
             "careers_url": "https://www.accenture.com/careers",
             "description": "Global professional services company",
@@ -6887,7 +8338,7 @@ FEATURED_COMPANIES = {
         },
         {
             "name": "Cognizant",
-            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/6/6e/Cognizant_logo_2022.svg",
+            "logo_url": "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 260 60'%3E%3Crect width='260' height='60' fill='%231299D8' rx='6'/%3E%3Ccircle cx='22' cy='30' r='14' fill='white' opacity='0.15'/%3E%3Ccircle cx='22' cy='30' r='8' fill='white' opacity='0.9'/%3E%3Ctext x='148' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial,sans-serif' font-size='19' font-weight='700' fill='white'%3ECognizant%3C/text%3E%3C/svg%3E",
             "color": "#1299D8",
             "careers_url": "https://careers.cognizant.com",
             "description": "Leading professional services company",
@@ -6940,7 +8391,8 @@ JOB_MARKET_INSIGHTS = {
 def get_featured_companies(category=None):
     """Get featured companies with original logos, optionally filtered by category"""
     def has_valid_logo(company):
-        return "logo_url" in company and company["logo_url"].startswith("https://upload.wikimedia.org/")
+        url = company.get("logo_url", "")
+        return url.startswith("https://") or url.startswith("data:image/")
 
     if category and category in FEATURED_COMPANIES:
         return [company for company in FEATURED_COMPANIES[category] if has_valid_logo(company)]
@@ -7285,14 +8737,14 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
     Returns:
         tuple: (html_string, estimated_height)
     """
-    # Platform icon mapping
+    # Platform icon mapping — inline SVG
     icon_map = {
-        "LinkedIn": "🔵",
-        "Naukri": "🏢",
-        "FoundIt (Monster)": "🌐",
-        "RapidAPI (Live)": "⚡"
+        "LinkedIn": '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#0A66C2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>',
+        "Naukri": '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#FF5722"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>',
+        "FoundIt (Monster)": '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#7C4DFF"><circle cx="12" cy="12" r="10"/><path fill="white" d="M12 6a6 6 0 100 12A6 6 0 0012 6zm0 2a4 4 0 110 8 4 4 0 010-8zm0 2a2 2 0 100 4 2 2 0 000-4z"/></svg>',
+        "RapidAPI (Live)": '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#00FF88"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>'
     }
-    icon = icon_map.get(platform_name, "📄")
+    icon = icon_map.get(platform_name, '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#94a3b8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/></svg>')
 
     # Build metadata section and calculate height
     metadata_html = ""
@@ -7300,24 +8752,27 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
 
     if company:
         metadata_html += f"""
-        <div style="color: #aaaaaa; font-size: 14px; margin-bottom: 8px; z-index: 2; position: relative;">
-            🏢 <b>{company}</b>
+        <div style="color: #aaaaaa; font-size: 14px; margin-bottom: 8px; z-index: 2; position: relative; display:flex; align-items:center; gap:6px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <b>{company}</b>
         </div>
         """
         estimated_height += 30
 
     if location:
         metadata_html += f"""
-        <div style="color: #aaaaaa; font-size: 14px; margin-bottom: 8px; z-index: 2; position: relative;">
-            📍 {location}
+        <div style="color: #aaaaaa; font-size: 14px; margin-bottom: 8px; z-index: 2; position: relative; display:flex; align-items:center; gap:6px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 018 8c0 5.25-8 14-8 14S4 15.25 4 10a8 8 0 018-8z"/></svg>
+            {location}
         </div>
         """
         estimated_height += 30
 
     if salary and salary not in ["Check site", "N/A - N/A "]:
         metadata_html += f"""
-        <div style="color: #aaaaaa; font-size: 14px; margin-bottom: 8px; z-index: 2; position: relative;">
-            💰 {salary}
+        <div style="color: #aaaaaa; font-size: 14px; margin-bottom: 8px; z-index: 2; position: relative; display:flex; align-items:center; gap:6px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+            {salary}
         </div>
         """
         estimated_height += 30
@@ -7403,7 +8858,7 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
     <div class="shimmer-overlay"></div>
 
     <!-- Platform Badge -->
-    <div style="font-size: 20px; margin-bottom: 12px; z-index: 2; position: relative; font-weight: bold; color: {brand_color};">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom: 12px; z-index: 2; position: relative; font-weight: bold; color: {brand_color}; font-size:15px;">
         {icon} {platform_name}
     </div>
 
@@ -7418,7 +8873,7 @@ def render_job_card(title, link, platform_name, brand_color, platform_gradient, 
     <!-- Apply Button -->
     <a href="{link}" target="_blank" style="text-decoration: none; z-index: 2; position: relative;">
         <button class="job-button">
-            <span style="position: relative; z-index: 2;">🚀 Apply Now →</span>
+            <span style="position: relative; z-index: 2; display:flex; align-items:center; gap:6px;"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg> Apply Now</span>
         </button>
     </a>
 </div>
@@ -7461,8 +8916,16 @@ def search_jobs(job_role, location, experience_level=None, job_type=None, foundi
         "Temporary": "T", "Volunteer": "V", "Internship": "I"
     }
 
-    # LinkedIn URL
-    linkedin_url = f"https://www.linkedin.com/jobs/search/?keywords={role_encoded}&location={loc_encoded}"
+    # LinkedIn URL (always scoped to India to prevent geo-ambiguity)
+    # e.g. "Delhi NCR" → "Delhi NCR, India" so LinkedIn doesn't resolve to Delhi, Ohio
+    # "Remote (India)" already contains "india" so it is left as-is
+    if "india" not in location.strip().lower():
+        linkedin_location = f"{location.strip()}, India"
+    else:
+        linkedin_location = location.strip()
+    linkedin_loc_encoded = urllib.parse.quote_plus(linkedin_location)
+
+    linkedin_url = f"https://www.linkedin.com/jobs/search/?keywords={role_encoded}&location={linkedin_loc_encoded}"
     if experience_level in linkedin_exp_map:
         linkedin_url += f"&f_E={linkedin_exp_map[experience_level]}"
     if job_type in job_type_map:
@@ -7551,154 +9014,234 @@ def add_hyperlink(paragraph, url, text, color="0000FF", underline=True):
 init_job_search_db()
 
 # Your existing tab3 code with enhanced CSS styling
-with tab3:
-    st.markdown("<h1 style='text-align: center; color: #ffffff; margin-bottom: 30px;'>🟦 Job Search Hub</h1>", unsafe_allow_html=True)
+
+@st.fragment
+def _job_search_interactive():
+    st.markdown("""
+    <div class="t3-page-header">
+        <div class="t3-page-title">Job <span>Search Hub</span></div>
+        <div class="t3-page-sub">Find your next opportunity across live listings, LinkedIn, Naukri, and more</div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Initialize session state for search mode
     if 'search_mode' not in st.session_state:
         st.session_state.search_mode = "External Platforms"
 
-    # Modern Toggle Switch with Circular Indicator
     is_external = st.session_state.search_mode == "External Platforms"
 
-    toggle_html = f"""
-    <style>
-    .toggle-switch-container {{
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-bottom: 30px;
-        gap: 0;
-    }}
-    .toggle-option {{
-        background: rgba(40, 40, 40, 0.95);
-        padding: 18px 35px;
-        color: rgba(255, 255, 255, 0.4);
-        font-size: 15px;
-        font-weight: 600;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        position: relative;
-    }}
-    .toggle-option.left {{
-        border-radius: 16px 0 0 16px;
-        border-right: none;
-    }}
-    .toggle-option.right {{
-        border-radius: 0 16px 16px 0;
-        border-left: none;
-    }}
-    .toggle-option.active {{
-        color: #ffffff;
-    }}
-    .toggle-option.active.external {{
-        background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-        border-color: #1976D2;
-    }}
-    .toggle-option.active.rapid {{
-        background: linear-gradient(135deg, #00E676 0%, #00C853 100%);
-        border-color: #00C853;
-    }}
-    .toggle-circle {{
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        border: 2px solid rgba(255, 255, 255, 0.4);
-        background: transparent;
-        transition: all 0.3s ease;
-    }}
-    .toggle-option.active .toggle-circle {{
-        background: #ffffff;
-        border-color: #ffffff;
-    }}
-    .toggle-option:hover:not(.active) {{
-        background: rgba(55, 55, 55, 0.95);
-        color: rgba(255, 255, 255, 0.7);
-    }}
-    .active-badge {{
-        text-align: center;
-        padding: 15px;
-        margin-bottom: 25px;
-    }}
-    .badge {{
-        background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-        padding: 10px 25px;
-        border-radius: 20px;
-        color: white;
-        font-weight: 600;
-        font-size: 14px;
-        display: inline-block;
-    }}
-    .badge.rapid {{
-        background: linear-gradient(135deg, #00E676 0%, #00C853 100%);
-    }}
-    </style>
+    badge_color  = "linear-gradient(135deg,#2196F3,#1565C0)" if is_external else "linear-gradient(135deg,#00E676,#00A550)"
+    badge_tcolor = "#ffffff" if is_external else "#002a18"
+    badge_text_ext  = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>  External Platforms Mode Active'
+    badge_text_rap  = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="display:inline;vertical-align:middle;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>  RapidAPI Jobs Mode Active'
+    badge_text = badge_text_ext if is_external else badge_text_rap
 
-    <div class="toggle-switch-container">
-        <div class="toggle-option left {'active external' if is_external else ''}" id="toggle-external">
-            <div class="toggle-circle"></div>
-            <span>🌐 External Platforms (LinkedIn, Naukri, FoundIt)</span>
-        </div>
-        <div class="toggle-option right {'active rapid' if not is_external else ''}" id="toggle-rapid">
-            <div class="toggle-circle"></div>
-            <span>⚡ RapidAPI Jobs (India Only)</span>
-        </div>
-    </div>
+    ext_bg      = "linear-gradient(135deg,#2196F3,#1565C0)" if is_external     else "rgba(35,35,35,0.95)"
+    rapid_bg    = "linear-gradient(135deg,#00E676,#00A550)"  if not is_external else "rgba(35,35,35,0.95)"
+    ext_color   = "#ffffff"  if is_external     else "rgba(255,255,255,0.45)"
+    rapid_color = "#002a18"  if not is_external else "rgba(255,255,255,0.45)"
+    ext_shadow  = "0 4px 20px rgba(33,150,243,0.5)"  if is_external     else "none"
+    rapid_shadow= "0 4px 20px rgba(0,200,100,0.45)"  if not is_external else "none"
 
-    <div class="active-badge">
-        <span class="badge {'rapid' if not is_external else ''}">
-            {'🌐 External Platforms Mode Active' if is_external else '⚡ RapidAPI Jobs Mode Active'}
+    # ── Badge first ──
+    badge_bg = "linear-gradient(135deg,rgba(56,189,248,0.18) 0%,rgba(79,163,227,0.10) 100%)" if is_external else "linear-gradient(135deg,rgba(52,211,153,0.18) 0%,rgba(52,211,153,0.08) 100%)"
+    badge_border = "rgba(56,189,248,0.30)" if is_external else "rgba(52,211,153,0.28)"
+    badge_col = "#7dd3fc" if is_external else "#6ee7b7"
+
+    st.markdown(f"""
+    <div class="mode-badge-wrap">
+        <span class="mode-badge" style="background:{badge_bg};border-color:{badge_border};color:{badge_col};">
+            {badge_text}
         </span>
     </div>
-    """
+    """, unsafe_allow_html=True)
 
-    st.markdown(toggle_html, unsafe_allow_html=True)
+    # ── Pill toggle: components.html renders the styled visual AND handles clicks ──
+    # On click it calls window.parent.postMessage. A companion <script> injected by
+    # components.html itself (same iframe) fires the message, and we catch it via
+    # a polling mechanism that sets sessionStorage, which a Streamlit button re-checks.
+    # SIMPLEST working pattern: put both visual div AND a real <button> inside the iframe;
+    # clicking the styled div triggers a form submit that postMessages to parent.
+    # Parent catches it → clicks the relevant hidden real Streamlit button.
+    #
+    # BUT: st.markdown strips <script>. So instead we use components.html for EVERYTHING:
+    # visual pill + JS that directly clicks Streamlit buttons in the parent DOM.
+    # This works because components.html uses allow-same-origin in its sandbox.
 
-    # Create clickable buttons (hidden but functional)
-    col_btn1, col_btn2 = st.columns(2)
+    import streamlit.components.v1 as components
+    components.html(f"""<!DOCTYPE html>
+<html>
+<head>
+<style>
+  *{{margin:0;padding:0;box-sizing:border-box;}}
+  body{{background:transparent;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:2px 0 6px;}}
+  .toggle{{display:flex;justify-content:center;}}
+  .btn{{
+    width:260px;padding:15px 10px;font-size:15px;font-weight:700;
+    letter-spacing:.3px;border:1px solid rgba(255,255,255,0.13);
+    display:flex;align-items:center;justify-content:center;gap:9px;
+    cursor:pointer;user-select:none;transition:filter .18s ease;
+  }}
+  .btn:hover{{filter:brightness(1.14);}}
+  .btn-left{{border-radius:50px 0 0 50px;border-right:none;
+    background:{ext_bg};color:{ext_color};box-shadow:{ext_shadow};}}
+  .btn-right{{border-radius:0 50px 50px 0;border-left:none;
+    background:{rapid_bg};color:{rapid_color};box-shadow:{rapid_shadow};}}
+  .dot{{width:12px;height:12px;border-radius:50%;border:2px solid currentColor;flex-shrink:0;}}
+  .active .dot{{background:currentColor;}}
+</style>
+</head>
+<body>
+  <div class="toggle">
+    <div class="btn btn-left {'active' if is_external else ''}" id="btn-ext">
+      <span class="dot"></span><span><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg> External Platforms</span>
+    </div>
+    <div class="btn btn-right {'active' if not is_external else ''}" id="btn-rapid">
+      <span class="dot"></span><span><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> RapidAPI Jobs</span>
+    </div>
+  </div>
+  <script>
+    function clickParentButton(labelFragment) {{
+      // Walk the parent document for Streamlit buttons matching the label
+      var parentDoc = window.parent.document;
+      var buttons = parentDoc.querySelectorAll('button');
+      for (var i = 0; i < buttons.length; i++) {{
+        if (buttons[i].innerText && buttons[i].innerText.indexOf(labelFragment) !== -1) {{
+          buttons[i].click();
+          return;
+        }}
+      }}
+    }}
+    document.getElementById('btn-ext').addEventListener('click', function() {{
+      clickParentButton('External Platforms Mode');
+    }});
+    document.getElementById('btn-rapid').addEventListener('click', function() {{
+      clickParentButton('RapidAPI Jobs Mode');
+    }});
+  </script>
+</body>
+</html>""", height=65)
 
-    with col_btn1:
-        if st.button("Switch to External Platforms", key="btn_external"):
+    # ── The real Streamlit buttons — styled small but visible and always functional ──
+    # components.html JS clicks these; user can also click them directly as fallback.
+    col_l, col_r = st.columns(2)
+    with col_l:
+        if st.button("External Platforms Mode", key="btn_mode_external", use_container_width=True):
+            if st.session_state.search_mode != "External Platforms":
+                st.session_state.rapid_role_val = None
+                st.session_state.rapid_loc_val  = None
             st.session_state.search_mode = "External Platforms"
-            st.rerun()
-
-    with col_btn2:
-        if st.button("Switch to RapidAPI Jobs", key="btn_rapid"):
+            st.rerun(scope="fragment")
+    with col_r:
+        if st.button("RapidAPI Jobs Mode", key="btn_mode_rapid", use_container_width=True):
+            if st.session_state.search_mode != "RapidAPI Jobs":
+                st.session_state.ext_role_val    = None
+                st.session_state.ext_loc_val     = None
+                st.session_state.ext_exp_val     = ""
+                st.session_state.ext_type_val    = ""
+                st.session_state.ext_foundit_val = ""
+                st.session_state["_ext_clear_count"] = st.session_state.get("_ext_clear_count", 0) + 1
             st.session_state.search_mode = "RapidAPI Jobs"
-            st.rerun()
+            st.rerun(scope="fragment")
 
+    st.markdown("<div style='margin-top:10px'></div>", unsafe_allow_html=True)
     search_mode = st.session_state.search_mode
 
     if search_mode == "External Platforms":
-        # External Platforms Section
-        col1, col2 = st.columns(2)
+        # Shadow keys for clear — never set widget keys directly
+        if "ext_role_val" not in st.session_state:
+            st.session_state.ext_role_val = None
+        if "ext_loc_val" not in st.session_state:
+            st.session_state.ext_loc_val = None
+        if "ext_exp_val" not in st.session_state:
+            st.session_state.ext_exp_val = ""
+        if "ext_type_val" not in st.session_state:
+            st.session_state.ext_type_val = ""
+        if "ext_foundit_val" not in st.session_state:
+            st.session_state.ext_foundit_val = ""
+        if "_ext_clear_count" not in st.session_state:
+            st.session_state["_ext_clear_count"] = 0
 
-        with col1:
-            job_role = st.text_input("💼 Job Title / Skills", placeholder="e.g., Data Scientist", key="external_role")
-            experience_level = st.selectbox(
-                "📈 Experience Level",
-                ["", "Internship", "Entry Level", "Associate", "Mid-Senior Level", "Director", "Executive"],
-                key="external_exp"
-            )
+        # Compute index from shadow values
+        _ext_role_idx  = JOB_TITLES.index(st.session_state.ext_role_val) if st.session_state.ext_role_val in JOB_TITLES else None
+        _ext_loc_idx   = LOCATIONS.index(st.session_state.ext_loc_val)   if st.session_state.ext_loc_val  in LOCATIONS  else None
+        _ext_exp_list  = ["", "Internship", "Entry Level", "Associate", "Mid-Senior Level", "Director", "Executive"]
+        _ext_type_list = ["", "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship"]
+        _ext_exp_idx   = _ext_exp_list.index(st.session_state.ext_exp_val)   if st.session_state.ext_exp_val   in _ext_exp_list   else 0
+        _ext_type_idx  = _ext_type_list.index(st.session_state.ext_type_val) if st.session_state.ext_type_val  in _ext_type_list  else 0
+        _ext_c = st.session_state["_ext_clear_count"]
 
-        with col2:
-            location = st.text_input("📍 Location", placeholder="e.g., Bangalore, India", key="external_loc")
-            job_type = st.selectbox(
-                "📋 Job Type",
-                ["", "Full-time", "Part-time", "Contract", "Temporary", "Volunteer", "Internship"],
-                key="external_type"
-            )
+        with st.expander("🌐 External Job Search — LinkedIn, Naukri, FoundIt", expanded=True):
+            with st.form(f"external_search_form_{_ext_c}", clear_on_submit=False):
+                job_role = st.selectbox(
+                    "💼 Job Domain",
+                    JOB_TITLES,
+                    index=_ext_role_idx,
+                    placeholder="Select Job Domain",
+                    key=f"external_role_{_ext_c}"
+                )
 
-        foundit_experience = st.text_input("🔢 FoundIt Experience (Years)", placeholder="e.g., 1", key="external_foundit")
+                location = st.selectbox(
+                    "📍 Location",
+                    LOCATIONS,
+                    index=_ext_loc_idx,
+                    placeholder="Select Location",
+                    key=f"external_location_{_ext_c}"
+                )
 
-        search_clicked = st.button("🔎 Search External Jobs", key="search_external")
+                col1, col2 = st.columns(2)
+                with col1:
+                    experience_level = st.selectbox(
+                        "📈 Experience Level",
+                        _ext_exp_list,
+                        index=_ext_exp_idx,
+                        key=f"external_exp_{_ext_c}"
+                    )
+                with col2:
+                    job_type = st.selectbox(
+                        "📋 Job Type",
+                        _ext_type_list,
+                        index=_ext_type_idx,
+                        key=f"external_type_{_ext_c}"
+                    )
 
+                foundit_experience = st.text_input(
+                    "🔢 FoundIt Experience (Years)",
+                    value=st.session_state.ext_foundit_val,
+                    placeholder="e.g., 1",
+                    key=f"external_foundit_{_ext_c}"
+                )
+
+                col_btn1, col_btn2 = st.columns(2)
+                with col_btn1:
+                    search_clicked = st.form_submit_button("🔍 Search Jobs")
+                with col_btn2:
+                    clear_clicked = st.form_submit_button("🧹 Clear Form")
+
+        # Handle clear — reset shadow keys + bump clear counter to re-render widgets fresh
+        if clear_clicked:
+            st.session_state.ext_role_val    = None
+            st.session_state.ext_loc_val     = None
+            st.session_state.ext_exp_val     = ""
+            st.session_state.ext_type_val    = ""
+            st.session_state.ext_foundit_val = ""
+            st.session_state["_ext_clear_count"] = st.session_state.get("_ext_clear_count", 0) + 1
+            st.rerun(scope="fragment")
+
+        # Sync shadow keys from widget values on search
         if search_clicked:
-            if job_role.strip() and location.strip():
+            st.session_state.ext_role_val    = job_role
+            st.session_state.ext_loc_val     = location
+            st.session_state.ext_exp_val     = experience_level
+            st.session_state.ext_type_val    = job_type
+            st.session_state.ext_foundit_val = foundit_experience
+
+        if search_clicked and not job_role:
+            st.warning("⚠️ Please select a Job Domain to search.")
+        elif search_clicked and not location:
+            st.warning("⚠️ Please select a Location to search.")
+
+        if search_clicked and job_role and location:
                 # Call search_jobs function for external platforms
                 results = search_jobs(job_role, location, experience_level, job_type, foundit_experience)
 
@@ -7748,47 +9291,89 @@ with tab3:
                         description="Open this platform to view full details."
                     )
                     st.components.v1.html(job_card_html, height=card_height, scrolling=False)
-            else:
-                st.warning("⚠️ Please enter both the Job Title and Location to perform the search.")
+        elif search_clicked:
+            st.warning("⚠️ Please select both a Job Domain and Location to perform the search.")
 
     else:
-        # RapidAPI Jobs Section
-        col1, col2 = st.columns(2)
+        # Shadow keys for RapidAPI clear
+        if "rapid_role_val" not in st.session_state:
+            st.session_state.rapid_role_val = None
+        if "rapid_loc_val" not in st.session_state:
+            st.session_state.rapid_loc_val = None
+        if "_rapid_clear_count" not in st.session_state:
+            st.session_state["_rapid_clear_count"] = 0
 
-        with col1:
-            rapid_job_role = st.text_input("💼 Job Title / Skills", placeholder="e.g., Python Developer", key="rapid_role")
+        _rapid_role_idx = JOB_TITLES.index(st.session_state.rapid_role_val) if st.session_state.rapid_role_val in JOB_TITLES else None
+        _rapid_loc_idx  = LOCATIONS.index(st.session_state.rapid_loc_val)   if st.session_state.rapid_loc_val  in LOCATIONS  else None
+        _rapid_c = st.session_state["_rapid_clear_count"]
 
-        with col2:
-            rapid_location = st.text_input("📍 Location", placeholder="e.g., Mumbai", key="rapid_loc")
+        # RapidAPI Jobs Section — collapsible expander
+        with st.expander("⚡ RapidAPI Live Job Search", expanded=True):
+            with st.form(f"rapid_search_form_{_rapid_c}", clear_on_submit=False):
+                rapid_job_role = st.selectbox(
+                    "💼 Job Domain",
+                    JOB_TITLES,
+                    index=_rapid_role_idx,
+                    placeholder="Select Job Domain",
+                    key=f"rapid_role_{_rapid_c}"
+                )
 
-        # Number of results
-        num_results = st.slider("📊 Number of Jobs to Fetch", min_value=5, max_value=50, value=10, step=5, key="rapid_num_results")
+                rapid_location = st.selectbox(
+                    "📍 Location",
+                    LOCATIONS,
+                    index=_rapid_loc_idx,
+                    placeholder="Select Location",
+                    key=f"rapid_location_{_rapid_c}"
+                )
 
-        # Advanced Filters
-        with st.expander("🔧 Advanced Filters"):
-            date_posted = st.selectbox(
-                "📅 Date Posted",
-                ["all", "today", "3days", "week", "month"],
-                key="rapid_date"
-            )
-            rapid_job_type = st.selectbox(
-                "📋 Job Type",
-                ["", "Full-time", "Part-time", "Contract", "Internship"],
-                key="rapid_type"
-            )
-            remote_only = st.checkbox("🏠 Remote Only", key="rapid_remote")
-            radius = st.number_input("📏 Radius (km)", min_value=0, max_value=200, value=50, key="rapid_radius")
-            job_requirements = st.multiselect(
-                "📝 Job Requirements",
-                ["under_3_years_experience", "more_than_3_years_experience", "no_experience", "no_degree"],
-                key="rapid_req"
-            )
+                # Number of results
+                num_results = st.slider("📊 Number of Jobs to Fetch", min_value=5, max_value=50, value=10, step=5, key="rapid_num_results")
 
-        search_rapid_clicked = st.button("🔎 Search Rapid Jobs", key="search_rapid")
+                # Advanced Filters
+                with st.expander("🔧 Advanced Filters"):
+                    date_posted = st.selectbox(
+                        "📅 Date Posted",
+                        ["all", "today", "3days", "week", "month"],
+                        key="rapid_date"
+                    )
+                    rapid_job_type = st.selectbox(
+                        "📋 Job Type",
+                        ["", "Full-time", "Part-time", "Contract", "Internship"],
+                        key="rapid_type"
+                    )
+                    remote_only = st.checkbox("🏠 Remote Only", key="rapid_remote")
+                    radius = st.number_input("📏 Radius (km)", min_value=0, max_value=200, value=50, key="rapid_radius")
+                    job_requirements = st.multiselect(
+                        "📝 Job Requirements",
+                        ["under_3_years_experience", "more_than_3_years_experience", "no_experience", "no_degree"],
+                        key="rapid_req"
+                    )
 
-        if search_rapid_clicked:
-            if rapid_job_role.strip() and rapid_location.strip():
-                # Call fetch_live_jobs with parameters
+                col_btn1, col_btn2 = st.columns(2)
+                with col_btn1:
+                    rapid_search_clicked = st.form_submit_button("⚡ Search Live Jobs")
+                with col_btn2:
+                    rapid_clear_clicked = st.form_submit_button("🧹 Clear Form")
+
+        # Handle clear — reset shadow keys + bump clear counter to re-render widgets fresh
+        if rapid_clear_clicked:
+            st.session_state.rapid_role_val = None
+            st.session_state.rapid_loc_val  = None
+            st.session_state["_rapid_clear_count"] = st.session_state.get("_rapid_clear_count", 0) + 1
+            st.rerun(scope="fragment")
+
+        # Sync shadow keys on search
+        if rapid_search_clicked:
+            st.session_state.rapid_role_val = rapid_job_role
+            st.session_state.rapid_loc_val  = rapid_location
+
+        if rapid_search_clicked and not rapid_job_role:
+            st.warning("⚠️ Please select a Job Domain to search.")
+        elif rapid_search_clicked and not rapid_location:
+            st.warning("⚠️ Please select a Location to search.")
+
+        if rapid_search_clicked and rapid_job_role and rapid_location:
+            with st.spinner("⚡ Fetching live jobs from RapidAPI..."):
                 results = fetch_live_jobs(
                     rapid_job_role,
                     rapid_location,
@@ -7797,45 +9382,51 @@ with tab3:
                     results=num_results
                 )
 
-                # Save search results if user is logged in
-                if hasattr(st.session_state, 'username') and st.session_state.username:
-                    formatted_results = []
-                    for job in results:
-                        formatted_results.append({
-                            "platform": "RapidAPI (Live)",
-                            "apply_link": job.get("job_apply_link", "#")
-                        })
-                    save_job_search(st.session_state.username, rapid_job_role, rapid_location, formatted_results)
+            # Save search results if user is logged in
+            if hasattr(st.session_state, 'username') and st.session_state.username:
+                formatted_results = []
+                for job in results:
+                    formatted_results.append({
+                        "platform": "RapidAPI (Live)",
+                        "apply_link": job.get("job_apply_link", "#")
+                    })
+                save_job_search(
+                    st.session_state.username,
+                    rapid_job_role,
+                    rapid_location,
+                    formatted_results
+                )
 
-                st.markdown("## 🎯 RapidAPI Job Results")
+            st.markdown("## 🎯 RapidAPI Job Results")
 
-                if results:
-                    for job in results:
-                        # Clean all job fields
-                        job_title = clean_html(job.get("job_title", "N/A"))
-                        job_company = clean_html(job.get("employer_name", "Unknown"))
-                        job_location = f"{job.get('job_city','')}, {job.get('job_country','')}"
-                        job_salary = f"{job.get('job_min_salary','None')} - {job.get('job_max_salary','None')} {job.get('job_salary_currency','')}"
-                        job_type = job.get("job_employment_type", "N/A")
-                        job_mode = "Remote" if job.get("job_is_remote") else "On-site"
-                        job_publisher = clean_html(job.get("job_publisher", "N/A"))
-                        job_description = clean_html(job.get("job_description", ""))[:250] + "..."
 
-                        # Format date
-                        formatted_date = "N/A"
-                        if job.get("job_posted_at_datetime_utc") and job["job_posted_at_datetime_utc"] != "N/A":
-                            try:
-                                date_obj = datetime.datetime.fromisoformat(job["job_posted_at_datetime_utc"].replace('Z', '+00:00'))
-                                formatted_date = date_obj.strftime("%b %d, %Y")
-                            except:
-                                formatted_date = job["job_posted_at_datetime_utc"]
+            if results:
+                for job in results:
+                    # Clean all job fields
+                    job_title = clean_html(job.get("job_title", "N/A"))
+                    job_company = clean_html(job.get("employer_name", "Unknown"))
+                    job_location = f"{job.get('job_city','')}, {job.get('job_country','')}"
+                    job_salary = f"{job.get('job_min_salary','None')} - {job.get('job_max_salary','None')} {job.get('job_salary_currency','')}"
+                    job_type = job.get("job_employment_type", "N/A")
+                    job_mode = "Remote" if job.get("job_is_remote") else "On-site"
+                    job_publisher = clean_html(job.get("job_publisher", "N/A"))
+                    job_description = clean_html(job.get("job_description", ""))[:250] + "..."
 
-                        # Colors
-                        btn_color = "#00ff88"
-                        platform_gradient = "linear-gradient(135deg, #00ff88 0%, #00cc6f 100%)"
+                    # Format date
+                    formatted_date = "N/A"
+                    if job.get("job_posted_at_datetime_utc") and job["job_posted_at_datetime_utc"] != "N/A":
+                        try:
+                            date_obj = datetime.datetime.fromisoformat(job["job_posted_at_datetime_utc"].replace('Z', '+00:00'))
+                            formatted_date = date_obj.strftime("%b %d, %Y")
+                        except:
+                            formatted_date = job["job_posted_at_datetime_utc"]
 
-                        # Custom HTML card
-                        job_card_html = f"""
+                    # Colors
+                    btn_color = "#00ff88"
+                    platform_gradient = "linear-gradient(135deg, #00ff88 0%, #00cc6f 100%)"
+
+                    # Custom HTML card
+                    job_card_html = f"""
 <div class="job-result-card" style="
     background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
     padding: 25px;
@@ -7850,8 +9441,8 @@ with tab3:
     <div class="shimmer-overlay"></div>
 
     <!-- Platform Badge -->
-    <div style="font-size: 18px; margin-bottom: 15px; color: {btn_color}; font-weight: bold;">
-        ⚡ RapidAPI (Live)
+    <div style="display:flex; align-items:center; gap:8px; font-size: 15px; margin-bottom: 15px; color: {btn_color}; font-weight: bold;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="{btn_color}"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> RapidAPI (Live)
     </div>
 
     <!-- Job Title -->
@@ -7860,18 +9451,19 @@ with tab3:
     </div>
 
     <!-- Company -->
-    <div style="color: #aaaaaa; font-size: 16px; margin-bottom: 15px;">
-        🏢 <b>{job_company}</b>
+    <div style="color: #aaaaaa; font-size: 16px; margin-bottom: 15px; display:flex; align-items:center; gap:6px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <b>{job_company}</b>
     </div>
 
     <!-- Job Details Grid -->
     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px;">
-        <div style="color: #cccccc; font-size: 14px;">📍 <b>Location:</b> {job_location}</div>
-        <div style="color: #cccccc; font-size: 14px;">💰 <b>Salary:</b> {job_salary}</div>
-        <div style="color: #cccccc; font-size: 14px;">📋 <b>Type:</b> {job_type}</div>
-        <div style="color: #cccccc; font-size: 14px;">🌍 <b>Mode:</b> {job_mode}</div>
-        <div style="color: #cccccc; font-size: 14px;">📅 <b>Posted:</b> {formatted_date}</div>
-        <div style="color: #cccccc; font-size: 14px;">📰 <b>Source:</b> {job_publisher}</div>
+        <div style="color: #cccccc; font-size: 14px; display:flex; align-items:center; gap:5px;"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 018 8c0 5.25-8 14-8 14S4 15.25 4 10a8 8 0 018-8z"/></svg> <b>Location:</b> {job_location}</div>
+        <div style="color: #cccccc; font-size: 14px; display:flex; align-items:center; gap:5px;"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> <b>Salary:</b> {job_salary}</div>
+        <div style="color: #cccccc; font-size: 14px; display:flex; align-items:center; gap:5px;"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg> <b>Type:</b> {job_type}</div>
+        <div style="color: #cccccc; font-size: 14px; display:flex; align-items:center; gap:5px;"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg> <b>Mode:</b> {job_mode}</div>
+        <div style="color: #cccccc; font-size: 14px; display:flex; align-items:center; gap:5px;"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> <b>Posted:</b> {formatted_date}</div>
+        <div style="color: #cccccc; font-size: 14px; display:flex; align-items:center; gap:5px;"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg> <b>Source:</b> {job_publisher}</div>
     </div>
 
     <!-- Description -->
@@ -7892,20 +9484,21 @@ with tab3:
             cursor: pointer;
             box-shadow: 0 4px 15px {btn_color}50;
             transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
         ">
-            🚀 Apply Now →
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg> Apply Now
         </button>
     </a>
 </div>
 """
-                        
-                        st.components.v1.html(job_card_html, height=450, scrolling=False)
+                    st.components.v1.html(job_card_html, height=450, scrolling=False)
 
-
-                else:
-                    st.info("No jobs found. Try adjusting your search criteria.")
             else:
-                st.warning("⚠️ Please enter both the Job Title and Location to perform the search.")
+                st.info("No jobs found. Try adjusting your search criteria.")
+        elif rapid_search_clicked:
+            st.warning("⚠️ Please select both a Job Domain and Location to perform the search.")
 
     # Display saved job searches if user is logged in
     if hasattr(st.session_state, 'username') and st.session_state.username:
@@ -7916,7 +9509,7 @@ with tab3:
         # Get total count of searches
         total_searches = get_total_saved_searches_count(st.session_state.username)
 
-        st.markdown("### 📌 Your Saved Job Searches")
+        st.markdown("""<p class='t3-section-label' style='display:flex;align-items:center;gap:6px;'><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg> Your Saved Job Searches</p>""", unsafe_allow_html=True)
 
         if total_searches > 0:
             # Controls for filtering and pagination
@@ -7979,62 +9572,78 @@ with tab3:
                     platform_lower = search["platform"].lower()
                     if "rapidapi" in platform_lower or "live" in platform_lower:
                         platform_color = "#00ff88"
-                        platform_icon = "⚡"
+                        platform_icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#00ff88"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>'
                     elif platform_lower == "linkedin":
                         platform_color = "#0e76a8"
-                        platform_icon = "🔵"
+                        platform_icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#0A66C2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>'
                     elif platform_lower == "naukri":
                         platform_color = "#ff5722"
-                        platform_icon = "🏢"
+                        platform_icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#FF5722"><path d="M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.06 15.96 0 13.36 0c-1.4 0-2.72.6-3.64 1.6L8 3.34 6.28 1.6C5.36.6 4.04 0 2.64 0 1.04 0 0 1.04 0 2.64c0 .48.08.92.18 1.36H0v16a2 2 0 002 2h20a2 2 0 002-2V8a2 2 0 00-2-2z"/></svg>'
                     elif "foundit" in platform_lower:
                         platform_color = "#7c4dff"
-                        platform_icon = "🌐"
+                        platform_icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#7C4DFF"><circle cx="12" cy="12" r="10"/><path fill="white" d="M10 8h4v4h-4zm0 6h4v2h-4z"/></svg>'
                     else:
                         platform_color = "#00c4cc"
-                        platform_icon = "📄"
+                        platform_icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00c4cc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
 
                     # Create columns for the card content and delete button
                     card_col, delete_col = st.columns([10, 1])
 
                     with card_col:
                         st.markdown(f"""
-<div class="job-result-card" style="
-    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-    padding: 20px;
-    border-radius: 15px;
-    margin-bottom: 15px;
-    border-left: 4px solid {platform_color};
-    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-    position: relative;
-    overflow: hidden;
-">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+<div class="saved-search-card" style="border-left: 3px solid {platform_color};">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
         <div>
-            <div style="color: #ffffff; font-size: 16px; font-weight: 600; margin-bottom: 5px;">
+            <div style="
+                color: #f0f4f8;
+                font-size: 0.9rem;
+                font-weight: 600;
+                margin-bottom: 3px;
+                font-family: var(--t3-font);
+                letter-spacing: -0.01em;
+            ">
                 {platform_icon} {search['role']} in {search['location']}
             </div>
-            <div style="color: {platform_color}; font-size: 14px; font-weight: 500;">
+            <div style="
+                color: {platform_color};
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                font-family: var(--t3-font);
+            ">
                 {search['platform']}
             </div>
         </div>
-        <div style="color: #888; font-size: 12px; text-align: right;">
+        <div style="
+            color: #334155;
+            font-size: 0.72rem;
+            text-align: right;
+            font-family: var(--t3-font);
+            letter-spacing: 0.02em;
+        ">
             {formatted_time}
         </div>
     </div>
     <a href="{search['url']}" target="_blank" style="text-decoration: none;">
-        <button class="job-button" style="
-            background: linear-gradient(135deg, {platform_color} 0%, {platform_color}dd 100%);
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
+        <div style="
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, {platform_color}22 0%, {platform_color}11 100%);
+            color: {platform_color};
+            padding: 7px 16px;
+            border: 1px solid {platform_color}44;
+            border-radius: 99px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            font-family: var(--t3-font);
+            letter-spacing: 0.03em;
+            transition: all 0.2s ease;
             cursor: pointer;
-            transition: all 0.3s ease;
         ">
-            🔗 View Jobs →
-        </button>
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> View Jobs
+        </div>
     </a>
 </div>
 """, unsafe_allow_html=True)
@@ -8043,347 +9652,1080 @@ with tab3:
                         # Delete button
                         if st.button("🗑", key=f"delete_{search['id']}", help="Delete this search"):
                             delete_saved_job_search(search['id'])
-                            st.rerun()
+                            st.rerun(scope="fragment")
             else:
-                # No results for the current filter
                 st.markdown(f"""
-<div style="
-    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-    padding: 20px;
-    border-radius: 15px;
-    text-align: center;
-    color: #888;
-    border: 2px dashed #444;
-">
-    <div style="font-size: 24px; margin-bottom: 10px;">🔍</div>
-    <div>No saved searches found for {platform_filter if platform_filter != 'All' else 'this page'}.</div>
+<div class="empty-state">
+    <div class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+    <div class="title">No results found</div>
+    <div class="sub">No saved searches for {platform_filter if platform_filter != 'All' else 'this page'}.</div>
 </div>
 """, unsafe_allow_html=True)
         else:
             # No saved searches at all
             st.markdown("""
-<div style="
-    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-    padding: 20px;
-    border-radius: 15px;
-    text-align: center;
-    color: #888;
-    border: 2px dashed #444;
-">
-    <div style="font-size: 24px; margin-bottom: 10px;">📭</div>
-    <div>No saved job searches yet. Start searching to see your history here!</div>
+<div class="empty-state">
+    <div class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.1 1.18 2 2 0 012.11 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></div>
+    <div class="title">No saved searches yet</div>
+    <div class="sub">Start searching to see your job history here.</div>
 </div>
 """, unsafe_allow_html=True)
 
-    # Enhanced CSS with advanced animations and effects
+    # ============================================================
+    # 📊 SEARCH ANALYTICS DASHBOARD  (v2 — IST time + Advanced UI)
+    # ============================================================
+    import pandas as pd
+    import plotly.graph_objects as go
+    import plotly.express as px
+
+    # ── Plotly dark theme base config ────────────────────────────
+    _PLOTLY_BASE = dict(
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(15,15,26,0.6)",
+        font=dict(family="Inter, sans-serif", color="#cccccc", size=12),
+        margin=dict(l=10, r=55, t=35, b=10),
+    )
+    _XAXIS = dict(
+        gridcolor="rgba(255,255,255,0.06)",
+        zerolinecolor="rgba(255,255,255,0.08)",
+        tickfont=dict(size=11, color="#999"),
+    )
+    _YAXIS = dict(
+        gridcolor="rgba(255,255,255,0.06)",
+        zerolinecolor="rgba(255,255,255,0.08)",
+        tickfont=dict(size=11, color="#999"),
+    )
+
+    st.markdown("---")
+    st.markdown("""
+    <div class="analytics-header">
+        <div style='display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:4px;'>
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="url(#ganal)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><defs><linearGradient id="ganal" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#818cf8"/></linearGradient></defs><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <h2>Search Analytics Dashboard</h2>
+        </div>
+        <p>Real-time insights from your job search history · All times in <b style="color:#38bdf8">IST (UTC+5:30)</b></p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Analytics Scope Toggle ────────────────────────────────────
+    analytics_scope = st.radio(
+        "📡 Analytics Scope",
+        ["🙋 My Analytics", "🌐 Global Analytics"],
+        horizontal=True,
+        key="analytics_scope_toggle"
+    )
+    is_my_analytics = analytics_scope == "🙋 My Analytics"
+
+    # ── Helper: fetch data from DB with IST conversion ───────────
+    def fetch_analytics_data(scope_username=None):
+        """
+        Fetch user_jobs rows and convert timestamps to IST (UTC+5:30).
+        Returns a pandas DataFrame or empty DataFrame on error.
+        """
+        try:
+            conn = sqlite3.connect('resume_data.db')
+            if scope_username:
+                query = "SELECT role, location, platform, timestamp FROM user_jobs WHERE username = ?"
+                df = pd.read_sql_query(query, conn, params=(scope_username,))
+            else:
+                query = "SELECT role, location, platform, timestamp FROM user_jobs"
+                df = pd.read_sql_query(query, conn)
+            conn.close()
+
+            if not df.empty:
+                # Parse as UTC then convert to IST (+05:30) — fixes 5-6 hour offset
+                df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce', utc=True)
+                df = df.dropna(subset=['timestamp'])
+                df['timestamp_ist'] = df['timestamp'].dt.tz_convert('Asia/Kolkata')
+                df['date'] = df['timestamp_ist'].dt.date.astype(str)
+                df['hour'] = df['timestamp_ist'].dt.hour          # IST hour (0-23)
+                df['weekday'] = df['timestamp_ist'].dt.day_name() # IST weekday
+            return df
+        except Exception:
+            return pd.DataFrame(columns=['role', 'location', 'platform', 'timestamp', 'date', 'hour', 'weekday'])
+
+    # Determine scope
+    current_user = st.session_state.username if hasattr(st.session_state, 'username') and st.session_state.username else None
+    scope_user = current_user if is_my_analytics else None
+
+    if is_my_analytics and not current_user:
+        st.warning("⚠️ Please log in to view your personal analytics.")
+    else:
+        df_analytics = fetch_analytics_data(scope_username=scope_user)
+
+        # ── Empty State Guard ──────────────────────────────────────
+        if df_analytics.empty:
+            st.markdown("""
+            <div class="empty-state">
+                <div class="icon">📭</div>
+                <div class="title">No Data Yet</div>
+                <div class="sub">Perform job searches to populate your analytics dashboard.</div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            # ── Compute KPIs ───────────────────────────────────────
+            total_searches      = len(df_analytics)
+            unique_roles        = df_analytics['role'].nunique()
+            unique_locations    = df_analytics['location'].nunique()
+            top_platform_series = df_analytics['platform'].value_counts()
+            most_used_platform  = top_platform_series.index[0] if not top_platform_series.empty else "N/A"
+            top_plat_count      = int(top_platform_series.iloc[0]) if not top_platform_series.empty else 0
+
+            # ── KPI Cards — custom HTML (no truncation) ───────────
+            st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+            kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+
+            def _kpi_card(col, icon, label, value, sub, accent):
+                col.markdown(f"""
+                <div class="kpi-card" style="border-color:{accent}22;">
+                    <div style='font-size:22px; margin-bottom:5px;'>{icon}</div>
+                    <div style='
+                        color:{accent};
+                        font-size:0.68rem;
+                        font-weight:700;
+                        letter-spacing:0.09em;
+                        text-transform:uppercase;
+                        margin-bottom:5px;
+                        font-family:var(--t3-font);
+                    '>{label}</div>
+                    <div style='
+                        color:#f0f4f8;
+                        font-size:1.6rem;
+                        font-weight:800;
+                        line-height:1;
+                        margin-bottom:5px;
+                        word-break:break-word;
+                        font-family:var(--t3-font);
+                        letter-spacing:-0.02em;
+                    '>{value}</div>
+                    <div style='color:#334155; font-size:0.72rem; font-family:var(--t3-font);'>{sub}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            _kpi_card(kpi1, "🔎", "Total Searches",    f"{total_searches:,}",   "all recorded",              "#00c4cc")
+            _kpi_card(kpi2, "💼", "Unique Roles",       f"{unique_roles:,}",     "distinct job titles",       "#7c4dff")
+            _kpi_card(kpi3, "📍", "Unique Locations",   f"{unique_locations:,}", "distinct cities/regions",   "#34d399")
+            _kpi_card(kpi4, "🏆", "Top Platform",       most_used_platform,      f"{top_plat_count} searches","#fbbf24")
+
+            st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
+
+            # ── SECTION HEADER helper ─────────────────────────────
+            def _section_header(icon, title, subtitle, accent):
+                st.markdown(f"""
+                <div style='
+                    display:flex; align-items:center; gap:10px;
+                    margin-bottom:14px; padding-bottom:10px;
+                    border-bottom: 1px solid rgba(255,255,255,0.06);
+                    font-family:var(--t3-font);
+                '>
+                    <span style='font-size:18px;'>{icon}</span>
+                    <div>
+                        <div style='
+                            color:{accent};
+                            font-size:0.875rem;
+                            font-weight:700;
+                            letter-spacing:-0.01em;
+                        '>{title}</div>
+                        <div style='color:#334155; font-size:0.72rem; letter-spacing:0.04em; text-transform:uppercase;'>{subtitle}</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            # ── ROW 1: Top Roles + Top Locations ─────────────────
+            col_roles, col_locs = st.columns(2)
+
+            with col_roles:
+                _section_header("🎯", "Top 5 Most Searched Roles", "by search frequency", "#00c4cc")
+                roles_orient = st.radio("Orientation", ["↔ Horizontal", "↕ Vertical"], index=0, horizontal=True, key="roles_orient")
+                top_roles = (
+                    df_analytics['role'].value_counts().head(5)
+                    .reset_index()
+                )
+                top_roles.columns = ['Role', 'Count']
+                top_roles = top_roles.sort_values('Count')
+                _ROLE_COLORS = ['#00c4cc', '#7c4dff', '#34d399', '#fbbf24', '#f87171']
+                _role_bar_colors = [_ROLE_COLORS[i % len(_ROLE_COLORS)] for i in range(len(top_roles))]
+                if roles_orient == "↔ Horizontal":
+                    fig_roles = go.Figure(go.Bar(
+                        x=top_roles['Count'],
+                        y=top_roles['Role'],
+                        orientation='h',
+                        marker=dict(
+                            color=_role_bar_colors,
+                            line=dict(color='rgba(255,255,255,0.15)', width=1),
+                        ),
+                        text=top_roles['Count'],
+                        textposition='outside',
+                        textfont=dict(color='#ffffff', size=12, family='Inter'),
+                        hovertemplate='<b>%{y}</b><br>Searches: %{x}<extra></extra>',
+                        cliponaxis=False,
+                    ))
+                    _roles_h_max = int(top_roles['Count'].max()) if not top_roles.empty else 1
+                    fig_roles.update_layout(
+                        **_PLOTLY_BASE, height=260, showlegend=False,
+                        xaxis_title=None, yaxis_title=None,
+                        xaxis=dict(**_XAXIS, showgrid=True, range=[0, _roles_h_max * 1.25]),
+                        yaxis=dict(**_YAXIS, showgrid=False),
+                    )
+                else:
+                    fig_roles = go.Figure(go.Bar(
+                        x=top_roles['Role'],
+                        y=top_roles['Count'],
+                        orientation='v',
+                        marker=dict(
+                            color=_role_bar_colors,
+                            line=dict(color='rgba(255,255,255,0.15)', width=1),
+                        ),
+                        text=top_roles['Count'],
+                        textposition='outside',
+                        textfont=dict(color='#ffffff', size=12, family='Inter'),
+                        hovertemplate='<b>%{x}</b><br>Searches: %{y}<extra></extra>',
+                        cliponaxis=False,
+                    ))
+                    _roles_v_max = int(top_roles['Count'].max()) if not top_roles.empty else 1
+                    fig_roles.update_layout(
+                        **_PLOTLY_BASE, height=260, showlegend=False,
+                        xaxis_title=None, yaxis_title=None,
+                        xaxis=dict(**_XAXIS, tickangle=-25),
+                        yaxis=dict(**_YAXIS, showgrid=True, range=[0, _roles_v_max * 1.25]),
+                    )
+                st.plotly_chart(fig_roles, use_container_width=True, config={
+                    "displayModeBar": True,
+                    "displaylogo": False,
+                    "modeBarButtonsToRemove": ["select2d", "lasso2d", "autoScale2d"],
+                    "toImageButtonOptions": {"format": "png", "filename": "top_roles"},
+                    "scrollZoom": False,
+                })
+
+            with col_locs:
+                _section_header("📍", "Top 5 Most Searched Locations", "by search frequency", "#7c4dff")
+                locs_orient = st.radio("Orientation", ["↔ Horizontal", "↕ Vertical"], index=0, horizontal=True, key="locs_orient")
+                top_locs = (
+                    df_analytics['location'].value_counts().head(5)
+                    .reset_index()
+                )
+                top_locs.columns = ['Location', 'Count']
+                top_locs = top_locs.sort_values('Count')
+                _LOC_COLORS = ['#7c4dff', '#f87171', '#fbbf24', '#34d399', '#00c4cc']
+                _loc_bar_colors = [_LOC_COLORS[i % len(_LOC_COLORS)] for i in range(len(top_locs))]
+                if locs_orient == "↔ Horizontal":
+                    fig_locs = go.Figure(go.Bar(
+                        x=top_locs['Count'],
+                        y=top_locs['Location'],
+                        orientation='h',
+                        marker=dict(
+                            color=_loc_bar_colors,
+                            line=dict(color='rgba(255,255,255,0.15)', width=1),
+                        ),
+                        text=top_locs['Count'],
+                        textposition='outside',
+                        textfont=dict(color='#ffffff', size=12, family='Inter'),
+                        hovertemplate='<b>%{y}</b><br>Searches: %{x}<extra></extra>',
+                        cliponaxis=False,
+                    ))
+                    _locs_h_max = int(top_locs['Count'].max()) if not top_locs.empty else 1
+                    fig_locs.update_layout(
+                        **_PLOTLY_BASE, height=260, showlegend=False,
+                        xaxis_title=None, yaxis_title=None,
+                        xaxis=dict(**_XAXIS, showgrid=True, range=[0, _locs_h_max * 1.25]),
+                        yaxis=dict(**_YAXIS, showgrid=False),
+                    )
+                else:
+                    fig_locs = go.Figure(go.Bar(
+                        x=top_locs['Location'],
+                        y=top_locs['Count'],
+                        orientation='v',
+                        marker=dict(
+                            color=_loc_bar_colors,
+                            line=dict(color='rgba(255,255,255,0.15)', width=1),
+                        ),
+                        text=top_locs['Count'],
+                        textposition='outside',
+                        textfont=dict(color='#ffffff', size=12, family='Inter'),
+                        hovertemplate='<b>%{x}</b><br>Searches: %{y}<extra></extra>',
+                        cliponaxis=False,
+                    ))
+                    _locs_v_max = int(top_locs['Count'].max()) if not top_locs.empty else 1
+                    fig_locs.update_layout(
+                        **_PLOTLY_BASE, height=260, showlegend=False,
+                        xaxis_title=None, yaxis_title=None,
+                        xaxis=dict(**_XAXIS, tickangle=-25),
+                        yaxis=dict(**_YAXIS, showgrid=True, range=[0, _locs_v_max * 1.25]),
+                    )
+                st.plotly_chart(fig_locs, use_container_width=True, config={
+                    "displayModeBar": True,
+                    "displaylogo": False,
+                    "modeBarButtonsToRemove": ["select2d", "lasso2d", "autoScale2d"],
+                    "toImageButtonOptions": {"format": "png", "filename": "top_locations"},
+                    "scrollZoom": False,
+                })
+
+            # ── ROW 2: Platform Distribution (donut) + Trend (area line) ──
+            col_plat, col_trend = st.columns(2)
+
+            with col_plat:
+                _section_header("🏢", "Platform Usage Distribution", "share of all searches", "#fbbf24")
+                plat_orient = st.radio("Orientation", ["↕ Vertical", "↔ Horizontal"], index=0, horizontal=True, key="plat_orient")
+                plat_dist = (
+                    df_analytics.groupby('platform').size()
+                    .reset_index(name='Count')
+                    .sort_values('Count', ascending=False)
+                )
+                _PLAT_COLOR_MAP = {
+                    'rapidapi (live)': '#00ff88',
+                    'linkedin':        '#0e76a8',
+                    'naukri':          '#ff5722',
+                    'foundit (monster)': '#7c4dff',
+                }
+                _PLAT_FALLBACKS = ['#fbbf24', '#f87171', '#00c4cc', '#34d399', '#a78bfa']
+                def _plat_color(name, idx):
+                    return _PLAT_COLOR_MAP.get(name.lower(), _PLAT_FALLBACKS[idx % len(_PLAT_FALLBACKS)])
+
+                if plat_orient == "↕ Vertical":
+                    _pv_colors = [_plat_color(p, i) for i, p in enumerate(plat_dist['platform'])]
+                    fig_plat = go.Figure(go.Bar(
+                        x=plat_dist['platform'],
+                        y=plat_dist['Count'],
+                        orientation='v',
+                        marker=dict(
+                            color=_pv_colors,
+                            line=dict(color='rgba(255,255,255,0.15)', width=1),
+                        ),
+                        text=plat_dist['Count'],
+                        textposition='outside',
+                        textfont=dict(color='#ffffff', size=11, family='Inter'),
+                        hovertemplate='<b>%{x}</b><br>Searches: %{y}<extra></extra>',
+                        cliponaxis=False,
+                    ))
+                    _plat_v_max = int(plat_dist['Count'].max()) if not plat_dist.empty else 1
+                    fig_plat.update_layout(
+                        **_PLOTLY_BASE, height=270, showlegend=False,
+                        xaxis=dict(**_XAXIS, tickangle=-25),
+                        yaxis=dict(**_YAXIS, range=[0, _plat_v_max * 1.25]),
+                        bargap=0.3,
+                    )
+                else:
+                    plat_dist_h = plat_dist.sort_values('Count')
+                    _ph_colors = [_plat_color(p, i) for i, p in enumerate(plat_dist_h['platform'])]
+                    fig_plat = go.Figure(go.Bar(
+                        x=plat_dist_h['Count'],
+                        y=plat_dist_h['platform'],
+                        orientation='h',
+                        marker=dict(
+                            color=_ph_colors,
+                            line=dict(color='rgba(255,255,255,0.15)', width=1),
+                        ),
+                        text=plat_dist_h['Count'],
+                        textposition='outside',
+                        textfont=dict(color='#ffffff', size=11, family='Inter'),
+                        hovertemplate='<b>%{y}</b><br>Searches: %{x}<extra></extra>',
+                        cliponaxis=False,
+                    ))
+                    _plat_h_max = int(plat_dist_h['Count'].max()) if not plat_dist_h.empty else 1
+                    fig_plat.update_layout(
+                        **_PLOTLY_BASE, height=270, showlegend=False,
+                        xaxis=dict(**_XAXIS, showgrid=True, range=[0, _plat_h_max * 1.25]),
+                        yaxis=dict(**_YAXIS, showgrid=False),
+                        bargap=0.3,
+                    )
+                st.plotly_chart(fig_plat, use_container_width=True, config={
+                    "displayModeBar": True,
+                    "displaylogo": False,
+                    "modeBarButtonsToRemove": ["select2d", "lasso2d", "autoScale2d"],
+                    "toImageButtonOptions": {"format": "png", "filename": "platform_distribution"},
+                    "scrollZoom": False,
+                })
+
+            with col_trend:
+                _section_header("📈", "Search Trend Over Time (IST)", "daily activity", "#34d399")
+                trend_data = (
+                    df_analytics.groupby('date').size()
+                    .reset_index(name='Searches')
+                    .sort_values('date')
+                )
+
+                fig_trend = go.Figure()
+                # Area fill
+                fig_trend.add_trace(go.Scatter(
+                    x=trend_data['date'],
+                    y=trend_data['Searches'],
+                    mode='lines+markers',
+                    line=dict(color='#34d399', width=2.5, shape='spline'),
+                    marker=dict(size=7, color='#34d399', line=dict(color='#0f1f18', width=2)),
+                    fill='tozeroy',
+                    fillcolor='rgba(52,211,153,0.08)',
+                    hovertemplate='<b>%{x}</b><br>Searches: %{y}<extra></extra>',
+                    name='Searches',
+                ))
+                fig_trend.update_layout(
+                    **_PLOTLY_BASE,
+                    height=270,
+                    showlegend=False,
+                    xaxis=dict(**_XAXIS, tickangle=-25),
+                    yaxis=dict(**_YAXIS),
+                )
+                st.plotly_chart(fig_trend, use_container_width=True, config={
+                                    "displayModeBar": True,
+                                    "displaylogo": False,
+                                    "modeBarButtonsToRemove": ["select2d", "lasso2d", "autoScale2d"],
+                                    "toImageButtonOptions": {"format": "png", "filename": "search_trend"},
+                                    "scrollZoom": False,
+                                })
+
+            # ── ROW 3: Peak Hour (IST, full width) ───────────────
+            _section_header("🕐", "Peak Search Hour — IST (0–23 Distribution)", "when you search most — converted to Indian Standard Time", "#f87171")
+            hour_orient = st.radio("Orientation", ["↕ Vertical", "↔ Horizontal"], index=0, horizontal=True, key="hour_orient")
+
+            # Build full 0-23 with IST hours
+            hour_counts = df_analytics.groupby('hour').size().reset_index(name='Searches')
+            all_hours   = pd.DataFrame({'hour': range(24)})
+            hour_dist   = (
+                all_hours.merge(hour_counts, on='hour', how='left').fillna(0).astype({'Searches': int})
+            )
+            hour_dist['Label'] = hour_dist['hour'].apply(lambda h: f"{h:02d}:00")
+            peak_hour = int(hour_dist.loc[hour_dist['Searches'].idxmax(), 'hour'])
+
+            # Color bars: highlight peak hour in bright red
+            bar_colors = [
+                '#f87171' if h == peak_hour else '#4a1515'
+                for h in hour_dist['hour']
+            ]
+            bar_opacities = [1.0 if h == peak_hour else 0.65 for h in hour_dist['hour']]
+
+            if hour_orient == "↕ Vertical":
+                fig_hour = go.Figure(go.Bar(
+                    x=hour_dist['Label'],
+                    y=hour_dist['Searches'],
+                    marker_color=bar_colors,
+                    marker_opacity=bar_opacities,
+                    marker_line=dict(color='rgba(248,113,113,0.3)', width=0.5),
+                    text=[str(v) if v > 0 else '' for v in hour_dist['Searches']],
+                    textposition='outside',
+                    textfont=dict(color='#f87171', size=10, family='Inter'),
+                    hovertemplate='<b>%{x} IST</b><br>Searches: %{y}<extra></extra>',
+                    cliponaxis=False,
+                ))
+                # Annotation for peak
+                if hour_dist['Searches'].max() > 0:
+                    fig_hour.add_annotation(
+                        x=f"{peak_hour:02d}:00",
+                        y=hour_dist['Searches'].max(),
+                        text=f"⚡ Peak: {peak_hour:02d}:00 IST",
+                        showarrow=True, arrowhead=2, arrowcolor='#f87171',
+                        font=dict(color='#f87171', size=12, family='Inter'),
+                        bgcolor='rgba(248,113,113,0.15)',
+                        bordercolor='#f87171', borderwidth=1, borderpad=5, yshift=10,
+                    )
+                _hour_v_max = int(hour_dist['Searches'].max()) if hour_dist['Searches'].max() > 0 else 1
+                fig_hour.update_layout(
+                    **_PLOTLY_BASE, height=290, showlegend=False, bargap=0.15,
+                    xaxis=dict(**{**_XAXIS, "tickfont": dict(size=10, color="#999"), "tickangle": -45}),
+                    yaxis=dict(**_YAXIS, range=[0, _hour_v_max * 1.3]),
+                )
+            else:
+                fig_hour = go.Figure(go.Bar(
+                    x=hour_dist['Searches'],
+                    y=hour_dist['Label'],
+                    orientation='h',
+                    marker_color=bar_colors,
+                    marker_opacity=bar_opacities,
+                    marker_line=dict(color='rgba(248,113,113,0.3)', width=0.5),
+                    text=[str(v) if v > 0 else '' for v in hour_dist['Searches']],
+                    textposition='outside',
+                    textfont=dict(color='#f87171', size=10, family='Inter'),
+                    hovertemplate='<b>%{y} IST</b><br>Searches: %{x}<extra></extra>',
+                    cliponaxis=False,
+                ))
+                if hour_dist['Searches'].max() > 0:
+                    fig_hour.add_annotation(
+                        y=f"{peak_hour:02d}:00",
+                        x=hour_dist['Searches'].max(),
+                        text=f"⚡ Peak: {peak_hour:02d}:00 IST",
+                        showarrow=True, arrowhead=2, arrowcolor='#f87171',
+                        font=dict(color='#f87171', size=12, family='Inter'),
+                        bgcolor='rgba(248,113,113,0.15)',
+                        bordercolor='#f87171', borderwidth=1, borderpad=5, xshift=10,
+                    )
+                _hour_h_max = int(hour_dist['Searches'].max()) if hour_dist['Searches'].max() > 0 else 1
+                fig_hour.update_layout(
+                    **_PLOTLY_BASE, height=600, showlegend=False, bargap=0.15,
+                    xaxis=dict(**_XAXIS, showgrid=True, range=[0, _hour_h_max * 1.25]),
+                    yaxis=dict(**{**_YAXIS, "tickfont": dict(size=10, color="#999")}),
+                )
+            st.plotly_chart(fig_hour, use_container_width=True, config={
+                "displayModeBar": True,
+                "displaylogo": False,
+                "modeBarButtonsToRemove": ["select2d", "lasso2d", "autoScale2d"],
+                "toImageButtonOptions": {"format": "png", "filename": "peak_hour"},
+                "scrollZoom": False,
+            })
+
+            # ── Footer ────────────────────────────────────────────
+            scope_label = f"@{current_user}" if is_my_analytics else "all users"
+            ist_now = datetime.datetime.now(ZoneInfo('Asia/Kolkata')).strftime("%b %d, %Y %I:%M %p IST")
+            st.markdown(f"""
+            <div class="analytics-footer">
+                {total_searches:,} records · {scope_label} · Updated {ist_now} · resume_data.db
+            </div>
+            """, unsafe_allow_html=True)
+
+    # ============================================================
+    # END OF SEARCH ANALYTICS DASHBOARD
+    # ============================================================
+
+    # ── Premium Apple-style CSS for Job Search tab ──────────────
     st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    /* ═══════════════════════════════════════════════════════════
+       TAB3 — Job Search Hub  · Premium Dark Theme
+       Inherits global variables from tab1 CSS. Re-declares
+       only the component classes specific to this tab.
+       ═══════════════════════════════════════════════════════════ */
 
-    /* Global Enhancements */
-    .stApp {
-        font-family: 'Inter', sans-serif;
+    :root {
+        --t3-bg:          #080c12;
+        --t3-surface:     rgba(255,255,255,0.04);
+        --t3-border:      rgba(255,255,255,0.07);
+        --t3-border-acc:  rgba(56,189,248,0.28);
+        --t3-cyan:        #38bdf8;
+        --t3-violet:      #818cf8;
+        --t3-emerald:     #34d399;
+        --t3-amber:       #fbbf24;
+        --t3-rose:        #fb7185;
+        --t3-text:        #f0f4f8;
+        --t3-muted:       #64748b;
+        --t3-font:        -apple-system, BlinkMacSystemFont, "SF Pro Display", "DM Sans", "Segoe UI", Roboto, sans-serif;
+        --t3-ease:        cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Advanced Glow Animation */
-    @keyframes glow {
-        0% {
-            box-shadow: 0 0 5px rgba(255,255,255,0.1), 0 0 10px rgba(0,255,255,0.1), 0 0 15px rgba(0,255,255,0.1);
-        }
-        50% {
-            box-shadow: 0 0 10px rgba(255,255,255,0.2), 0 0 20px rgba(0,255,255,0.4), 0 0 30px rgba(0,255,255,0.3);
-        }
-        100% {
-            box-shadow: 0 0 5px rgba(255,255,255,0.1), 0 0 10px rgba(0,255,255,0.1), 0 0 15px rgba(0,255,255,0.1);
-        }
-    }
+    /* ── Keyframes ── */
+    @keyframes t3-fadeUp   { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes t3-shimmer  { 0% { transform:translateX(-100%) skewX(-12deg); } 100% { transform:translateX(220%) skewX(-12deg); } }
+    @keyframes t3-floatY   { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-5px); } }
+    @keyframes t3-pulse    { 0%,100% { opacity:1; } 50% { opacity:0.75; } }
 
-    /* Shimmer Effect */
-    @keyframes shimmer {
-        0% {
-            transform: translateX(-100%);
-        }
-        100% {
-            transform: translateX(100%);
-        }
-    }
-
-    .shimmer-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
-        transform: translateX(-100%);
-        animation: shimmer 3s infinite;
-        z-index: 1;
-    }
-
-    /* Floating Animation */
-    @keyframes float {
-        0%, 100% {
-            transform: translateY(0px);
-        }
-        50% {
-            transform: translateY(-5px);
-        }
-    }
-
-    /* Pulse Animation */
-    @keyframes pulse {
-        0%, 100% {
-            transform: scale(1);
-        }
-        50% {
-            transform: scale(1.02);
-        }
-    }
-
-    /* Enhanced Company Cards */
-    .company-card {
-        background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
-        color: #ffffff;
-        border-radius: 20px;
-        padding: 25px;
-        margin-bottom: 25px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        cursor: pointer;
-        text-decoration: none;
-        display: block;
-        animation: glow 4s infinite alternate, float 6s ease-in-out infinite;
-        position: relative;
-        overflow: hidden;
-        border: 1px solid rgba(255,255,255,0.1);
-    }
-
-    .company-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(135deg, rgba(0,255,255,0.1) 0%, rgba(255,0,255,0.1) 100%);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        z-index: 1;
-    }
-
-    .company-card:hover::before {
-        opacity: 1;
-    }
-
-    .company-card:hover {
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 30px rgba(0, 255, 255, 0.3);
-        border-color: rgba(0,255,255,0.5);
-    }
-
-    /* Job Result Cards */
-    .job-result-card:hover {
-        transform: translateY(-5px) scale(1.01);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.4) !important;
-    }
-
-    /* Enhanced Buttons */
-    .job-button::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        transition: left 0.5s;
-        z-index: 1;
-    }
-
-    .job-button:hover::before {
-        left: 100%;
-    }
-
-    .job-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-    }
-
-    /* Enhanced Pills */
-    .pill {
-        display: inline-block;
-        background: linear-gradient(135deg, #333 0%, #444 100%);
-        padding: 8px 16px;
-        border-radius: 25px;
-        margin: 6px 8px 0 0;
-        font-size: 13px;
-        font-weight: 500;
-        border: 1px solid rgba(255,255,255,0.1);
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .pill::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(135deg, rgba(0,255,255,0.2) 0%, rgba(255,0,255,0.2) 100%);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .pill:hover::before {
-        opacity: 1;
-    }
-
-    .pill:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,255,255,0.3);
-    }
-
-    /* Enhanced Title Headers */
-    .title-header {
-        color: #ffffff;
-        font-size: 28px;
-        margin-top: 50px;
-        margin-bottom: 30px;
-        font-weight: 700;
+    /* ══════════════════════════════════
+       JOB SEARCH PAGE HEADER
+       ══════════════════════════════════ */
+    .t3-page-header {
         text-align: center;
-        background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
+        padding: 36px 24px 28px;
+        position: relative;
+    }
+    .t3-page-title {
+        font-family: var(--t3-font);
+        font-size: 2rem;
+        font-weight: 800;
+        letter-spacing: -0.035em;
+        color: var(--t3-text);
+        line-height: 1.15;
+        margin: 0 0 8px;
+    }
+    .t3-page-title span {
+        background: linear-gradient(135deg, var(--t3-cyan) 0%, var(--t3-violet) 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        position: relative;
-        animation: pulse 3s infinite;
     }
-
-    .title-header::after {
+    .t3-page-sub {
+        font-family: var(--t3-font);
+        font-size: 0.875rem;
+        color: var(--t3-muted);
+        letter-spacing: 0.02em;
+    }
+    .t3-page-header::after {
         content: '';
-        position: absolute;
-        bottom: -10px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 60px;
-        height: 3px;
-        background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
+        display: block;
+        width: 48px;
+        height: 2px;
+        background: linear-gradient(90deg, var(--t3-cyan), var(--t3-violet));
+        margin: 18px auto 0;
         border-radius: 2px;
     }
 
-    /* Company Logo Enhancement */
-    .company-logo {
-        font-size: 28px;
-        margin-right: 12px;
-        filter: drop-shadow(0 0 8px rgba(255,255,255,0.3));
-        animation: float 4s ease-in-out infinite;
+    /* ══════════════════════════════════
+       MODE BADGE
+       ══════════════════════════════════ */
+    .mode-badge-wrap { text-align: center; margin: 0 0 10px 0; }
+    .mode-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 22px;
+        border-radius: 99px;
+        font-family: var(--t3-font);
+        font-weight: 700;
+        font-size: 0.8rem;
+        letter-spacing: 0.04em;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(56,189,248,0.22);
+        background: linear-gradient(135deg, rgba(56,189,248,0.14) 0%, rgba(129,140,248,0.08) 100%);
+        color: var(--t3-cyan);
+        transition: all 0.22s var(--t3-ease);
     }
 
+    /* ══════════════════════════════════
+       SECTION TITLE HEADERS
+       ══════════════════════════════════ */
+    .title-header {
+        font-family: var(--t3-font) !important;
+        font-size: 1.35rem !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.025em !important;
+        text-align: center !important;
+        margin: 40px 0 24px !important;
+        background: linear-gradient(135deg, var(--t3-cyan) 0%, var(--t3-violet) 100%) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        background-clip: text !important;
+        position: relative !important;
+        animation: none !important;
+    }
+    .title-header::after {
+        content: '' !important;
+        position: absolute !important;
+        bottom: -8px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: 40px !important;
+        height: 2px !important;
+        background: linear-gradient(90deg, var(--t3-cyan), var(--t3-violet)) !important;
+        border-radius: 2px !important;
+    }
+
+    /* ══════════════════════════════════
+       COMPANY CARDS
+       ══════════════════════════════════ */
+    .company-card {
+        background: var(--t3-surface);
+        backdrop-filter: blur(24px) saturate(160%);
+        -webkit-backdrop-filter: blur(24px) saturate(160%);
+        color: var(--t3-text);
+        border: 1px solid var(--t3-border);
+        border-radius: 18px;
+        padding: 24px;
+        margin-bottom: 18px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+        transition: transform 0.26s var(--t3-ease),
+                    box-shadow 0.26s var(--t3-ease),
+                    border-color 0.26s var(--t3-ease);
+        cursor: pointer;
+        text-decoration: none;
+        display: block;
+        position: relative;
+        overflow: hidden;
+        animation: t3-fadeUp 0.5s ease forwards;
+    }
+    .company-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: -100%;
+        width: 55%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(56,189,248,0.05), transparent);
+        animation: t3-shimmer 4s infinite;
+        pointer-events: none;
+    }
+    .company-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 16px 48px rgba(0,0,0,0.45), 0 0 36px rgba(56,189,248,0.10);
+        border-color: var(--t3-border-acc);
+        text-decoration: none;
+        color: var(--t3-text);
+    }
+
+    /* ── Company card inner elements ── */
     .company-header {
-        font-size: 24px;
+        font-family: var(--t3-font);
+        font-size: 1.05rem;
         font-weight: 700;
+        letter-spacing: -0.01em;
         display: flex;
         align-items: center;
-        margin-bottom: 15px;
+        margin-bottom: 10px;
         position: relative;
         z-index: 2;
+        color: var(--t3-text);
+    }
+    .company-logo {
+        height: 32px;
+        width: auto;
+        max-width: 90px;
+        object-fit: contain;
+        margin-right: 12px;
+        flex-shrink: 0;
+    }
+    /* External logos (Google, Microsoft etc) get subtle dark-mode treatment */
+    .company-card img[src^="https"] {
+        filter: brightness(0.92) contrast(1.05);
+        transition: filter 0.2s ease;
+    }
+    .company-card:hover img[src^="https"] {
+        filter: brightness(1) contrast(1.1);
+    }
+    /* Data URI badge logos — no filter, already styled */
+    .company-card img[src^="data"] {
+        border-radius: 6px;
+        filter: none;
     }
 
-    /* Responsive Enhancements */
-    @media (max-width: 768px) {
-        .company-card, .job-result-card {
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .title-header {
-            font-size: 24px;
-        }
-
-        .company-header {
-            font-size: 20px;
-        }
+    /* ══════════════════════════════════
+       CATEGORY PILLS
+       ══════════════════════════════════ */
+    .pill {
+        display: inline-flex;
+        align-items: center;
+        background: rgba(255,255,255,0.05);
+        padding: 4px 12px;
+        border-radius: 99px;
+        margin: 5px 6px 0 0;
+        font-family: var(--t3-font);
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        border: 1px solid rgba(255,255,255,0.09);
+        color: var(--t3-muted);
+        transition: all 0.2s var(--t3-ease);
+        position: relative;
+        overflow: hidden;
+    }
+    .pill:hover {
+        background: rgba(56,189,248,0.10);
+        border-color: rgba(56,189,248,0.30);
+        color: var(--t3-cyan);
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(56,189,248,0.12);
     }
 
-    /* Scrollbar Styling */
-    ::-webkit-scrollbar {
-        width: 8px;
+    /* ══════════════════════════════════
+       JOB RESULT CARDS (iframed cards)
+       ══════════════════════════════════ */
+    .job-result-card {
+        transition: transform 0.22s var(--t3-ease), box-shadow 0.22s var(--t3-ease) !important;
+    }
+    .job-result-card:hover {
+        transform: translateY(-4px) !important;
+        box-shadow: 0 14px 40px rgba(0,0,0,0.5) !important;
     }
 
-    ::-webkit-scrollbar-track {
-        background: #1e1e1e;
+    /* ── Apply button shimmer ── */
+    .job-button::before {
+        content: '';
+        position: absolute;
+        top: 0; left: -100%;
+        width: 55%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+        transition: left 0.45s ease;
+        z-index: 1;
+    }
+    .job-button:hover::before { left: 150%; }
+    .job-button:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.1);
     }
 
+    /* ══════════════════════════════════
+       SAVED SEARCH CARDS
+       ══════════════════════════════════ */
+    .saved-search-card {
+        background: var(--t3-surface);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin-bottom: 12px;
+        border: 1px solid var(--t3-border);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        transition: all 0.22s var(--t3-ease);
+        position: relative;
+        overflow: hidden;
+        font-family: var(--t3-font);
+    }
+    .saved-search-card:hover {
+        border-color: var(--t3-border-acc);
+        transform: translateX(3px);
+        box-shadow: 0 6px 28px rgba(0,0,0,0.3);
+    }
+
+    /* ══════════════════════════════════
+       ANALYTICS DASHBOARD HEADER
+       ══════════════════════════════════ */
+    .analytics-header {
+        background: linear-gradient(160deg,
+            rgba(14,20,32,0.95) 0%,
+            rgba(8,12,18,0.98) 100%);
+        backdrop-filter: blur(28px);
+        -webkit-backdrop-filter: blur(28px);
+        padding: 28px 32px 22px;
+        border-radius: 20px;
+        border: 1px solid rgba(56,189,248,0.14);
+        margin-bottom: 24px;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .analytics-header::before {
+        content: '';
+        position: absolute;
+        top: -40%; left: -20%;
+        width: 60%; height: 180%;
+        background: radial-gradient(ellipse, rgba(56,189,248,0.06) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    .analytics-header h2 {
+        font-family: var(--t3-font) !important;
+        font-size: 1.5rem !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.025em !important;
+        background: linear-gradient(135deg, var(--t3-cyan) 0%, var(--t3-violet) 55%, var(--t3-rose) 100%);
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        background-clip: text !important;
+        margin: 0 !important;
+    }
+    .analytics-header p {
+        color: var(--t3-muted) !important;
+        font-size: 0.8rem !important;
+        letter-spacing: 0.03em !important;
+        margin: 6px 0 0 !important;
+        font-family: var(--t3-font) !important;
+    }
+
+    /* ══════════════════════════════════
+       KPI CARDS (analytics)
+       ══════════════════════════════════ */
+    .kpi-card {
+        background: linear-gradient(145deg,
+            rgba(14,20,32,0.90) 0%,
+            rgba(20,28,43,0.95) 100%);
+        border: 1px solid var(--t3-border);
+        border-radius: 16px;
+        padding: 20px 16px 18px;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.04);
+        transition: all 0.24s var(--t3-ease);
+        min-height: 110px;
+        font-family: var(--t3-font);
+    }
+    .kpi-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 36px rgba(0,0,0,0.4);
+        border-color: var(--t3-border-acc);
+    }
+
+    /* ══════════════════════════════════
+       MARKET INSIGHT CARDS (skills/locations/salary)
+       ══════════════════════════════════ */
+    .insight-card {
+        background: var(--t3-surface);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--t3-border);
+        border-radius: 14px;
+        padding: 16px 18px;
+        margin-bottom: 12px;
+        transition: all 0.22s var(--t3-ease);
+        position: relative;
+        overflow: hidden;
+    }
+    .insight-card::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 3px;
+        background: linear-gradient(180deg, var(--t3-cyan) 0%, var(--t3-violet) 100%);
+        border-radius: 0 0 0 14px;
+    }
+    .insight-card:hover {
+        border-color: var(--t3-border-acc);
+        transform: translateX(4px);
+        background: rgba(255,255,255,0.055);
+    }
+    .insight-card h4 {
+        font-family: var(--t3-font) !important;
+        font-size: 0.875rem !important;
+        font-weight: 600 !important;
+        margin: 0 0 6px !important;
+        letter-spacing: -0.01em !important;
+    }
+    .insight-card p {
+        font-family: var(--t3-font) !important;
+        font-size: 0.8rem !important;
+        margin: 0 !important;
+        color: var(--t3-muted) !important;
+    }
+
+    /* ══════════════════════════════════
+       EMPTY STATE PLACEHOLDERS
+       ══════════════════════════════════ */
+    .empty-state {
+        background: var(--t3-surface);
+        backdrop-filter: blur(16px);
+        border: 1.5px dashed rgba(255,255,255,0.10);
+        border-radius: 18px;
+        padding: 48px 32px;
+        text-align: center;
+        color: var(--t3-muted);
+        font-family: var(--t3-font);
+        animation: t3-fadeUp 0.5s ease forwards;
+    }
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: 14px; }
+    .empty-state .title { font-size: 1rem; font-weight: 700; color: #94a3b8; margin-bottom: 6px; }
+    .empty-state .sub   { font-size: 0.8rem; color: var(--t3-muted); }
+
+    /* ══════════════════════════════════
+       SECTION DIVIDER
+       ══════════════════════════════════ */
+    .t3-section-label {
+        font-family: var(--t3-font) !important;
+        font-size: 0.7rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.12em !important;
+        text-transform: uppercase !important;
+        color: #334155 !important;
+        border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+        padding-bottom: 8px !important;
+        margin: 28px 0 16px !important;
+    }
+
+    /* ══════════════════════════════════
+       ANALYTICS FOOTER
+       ══════════════════════════════════ */
+    .analytics-footer {
+        color: #2d3748 !important;
+        font-size: 0.7rem !important;
+        text-align: right !important;
+        margin-top: 14px !important;
+        padding-top: 10px !important;
+        border-top: 1px solid rgba(255,255,255,0.05) !important;
+        font-family: var(--t3-font) !important;
+        letter-spacing: 0.02em !important;
+    }
+
+    /* ══════════════════════════════════
+       SCROLLBAR
+       ══════════════════════════════════ */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
     ::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, #00c4cc 0%, #7c4dff 100%);
-        border-radius: 4px;
+        background: rgba(56,189,248,0.3);
+        border-radius: 99px;
     }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(56,189,248,0.55); }
 
-    ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(135deg, #26d0ce 0%, #9c64ff 100%);
+    /* ══════════════════════════════════
+       RESPONSIVE
+       ══════════════════════════════════ */
+    @media (max-width: 768px) {
+        .company-card { padding: 18px; margin-bottom: 14px; }
+        .t3-page-title { font-size: 1.5rem !important; }
+        .company-header { font-size: 0.95rem; }
+        .title-header { font-size: 1.1rem !important; }
     }
     </style>
     """, unsafe_allow_html=True)
 
+
+with tab3:
+    _job_search_interactive()
     # ---------- Company Lookup by Domain ----------
 
 
     # ---------- Featured Companies ----------
-    st.markdown("### <div class='title-header'>🏢 Featured Companies</div>", unsafe_allow_html=True)
+    st.markdown("""### <div class='title-header'><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#g1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:8px;"><defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#818cf8"/></linearGradient></defs><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Featured Companies</div>""", unsafe_allow_html=True)
 
-    selected_category = st.selectbox("📂 Browse Featured Companies By Category", ["All", "tech", "indian_tech", "global_corps"])
+    selected_category = st.selectbox("Browse Featured Companies By Category", ["All", "tech", "indian_tech", "global_corps"])
     companies_to_show = get_featured_companies() if selected_category == "All" else get_featured_companies(selected_category)
 
     for company in companies_to_show:
         category_tags = ''.join([f"<span class='pill'>{cat}</span>" for cat in company['categories']])
+        logo_url = company.get('logo_url', '')
+        company_color = company.get('color', '#38bdf8')
+        logo_html = f'<img src="{logo_url}" alt="{company["name"]} logo" style="height:32px; width:auto; max-width:90px; object-fit:contain; margin-right:12px; flex-shrink:0; filter:brightness(1) contrast(1);" />' if logo_url else f'<span style="width:32px;height:32px;border-radius:8px;background:{company_color}22;display:inline-flex;align-items:center;justify-content:center;margin-right:12px;flex-shrink:0;"><svg xmlns=\'http://www.w3.org/2000/svg\' width=\'18\' height=\'18\' viewBox=\'0 0 24 24\' fill=\'{company_color}\'><path d=\'M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z\'/></svg></span>'
         st.markdown(f"""
         <a href="{company['careers_url']}" class="company-card" target="_blank">
             <div class="company-header">
-                <span class="company-logo">{company.get('emoji', '🏢')}</span>
-                {company['name']}
+                {logo_html}
+                <span style="color:var(--t3-text); font-size:1.05rem; font-weight:700;">{company['name']}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto; flex-shrink:0;"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
             </div>
-            <p style="margin-bottom: 15px; line-height: 1.6; position: relative; z-index: 2;">{company['description']}</p>
+            <p style="
+                margin-bottom: 14px;
+                line-height: 1.6;
+                position: relative;
+                z-index: 2;
+                color: #64748b;
+                font-size: 0.85rem;
+                font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            ">{company['description']}</p>
             <div style="position: relative; z-index: 2;">{category_tags}</div>
         </a>
         """, unsafe_allow_html=True)
 
     # ---------- Market Insights ----------
-    st.markdown("### <div class='title-header'>📈 Job Market Trends</div>", unsafe_allow_html=True)
+    st.markdown("""### <div class='title-header'><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#g2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:8px;"><defs><linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#818cf8"/></linearGradient></defs><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> Job Market Trends</div>""", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("#### <div style='color: #00c4cc; font-size: 20px; font-weight: 600; margin-bottom: 20px;'>🚀 Trending Skills</div>", unsafe_allow_html=True)
+        st.markdown("""
+        <p style='
+            font-size:0.7rem; font-weight:700; letter-spacing:0.10em;
+            text-transform:uppercase; color:#334155;
+            border-bottom:1px solid rgba(255,255,255,0.06);
+            padding-bottom:8px; margin-bottom:14px;
+            font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;
+            display:flex; align-items:center; gap:6px;
+        '><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="#38bdf8"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Trending Skills</p>
+        """, unsafe_allow_html=True)
         for skill in JOB_MARKET_INSIGHTS["trending_skills"]:
             st.markdown(f"""
-            <div class="company-card">
-                <h4 style="color: #00c4cc; margin-bottom: 10px; position: relative; z-index: 2;">🔧 {skill['name']}</h4>
-                <p style="position: relative; z-index: 2;">📈 Growth Rate: <span style="color: #4ade80; font-weight: 600;">{skill['growth']}</span></p>
+            <div class="insight-card">
+                <h4 style="color:#38bdf8; display:flex; align-items:center; gap:7px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+                    {skill['name']}
+                </h4>
+                <p>Growth Rate: <span style="color:#34d399; font-weight:700;">{skill['growth']}</span></p>
             </div>
             """, unsafe_allow_html=True)
 
     with col2:
-        st.markdown("#### <div style='color: #7c4dff; font-size: 20px; font-weight: 600; margin-bottom: 20px;'>🌍 Top Job Locations</div>", unsafe_allow_html=True)
+        st.markdown("""
+        <p style='
+            font-size:0.7rem; font-weight:700; letter-spacing:0.10em;
+            text-transform:uppercase; color:#334155;
+            border-bottom:1px solid rgba(255,255,255,0.06);
+            padding-bottom:8px; margin-bottom:14px;
+            font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;
+            display:flex; align-items:center; gap:6px;
+        '><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 018 8c0 5.25-8 14-8 14S4 15.25 4 10a8 8 0 018-8z"/></svg> Top Job Locations</p>
+        """, unsafe_allow_html=True)
         for loc in JOB_MARKET_INSIGHTS["top_locations"]:
             st.markdown(f"""
-            <div class="company-card">
-                <h4 style="color: #7c4dff; margin-bottom: 10px; position: relative; z-index: 2;">📍 {loc['name']}</h4>
-                <p style="position: relative; z-index: 2;">💼 Openings: <span style="color: #fbbf24; font-weight: 600;">{loc['jobs']}</span></p>
+            <div class="insight-card" style="--left-bar: var(--t3-violet);">
+                <h4 style="color:#818cf8; display:flex; align-items:center; gap:7px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="#818cf8"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 018 8c0 5.25-8 14-8 14S4 15.25 4 10a8 8 0 018-8z"/></svg>
+                    {loc['name']}
+                </h4>
+                <p>Openings: <span style="color:#fbbf24; font-weight:700;">{loc['jobs']}</span></p>
             </div>
             """, unsafe_allow_html=True)
 
     # ---------- Salary Insights ----------
-    st.markdown("### <div class='title-header'>💰 Salary Insights</div>", unsafe_allow_html=True)
+    st.markdown("""### <div class='title-header'><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="url(#g3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:8px;"><defs><linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#34d399"/></linearGradient></defs><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> Salary Insights</div>""", unsafe_allow_html=True)
     for role in JOB_MARKET_INSIGHTS["salary_insights"]:
         st.markdown(f"""
-        <div class="company-card">
-            <h4 style="color: #10b981; margin-bottom: 10px; position: relative; z-index: 2;">💼 {role['role']}</h4>
-            <p style="margin-bottom: 8px; position: relative; z-index: 2;">📅 Experience: <span style="color: #60a5fa; font-weight: 500;">{role['experience']}</span></p>
-            <p style="position: relative; z-index: 2;">💵 Salary Range: <span style="color: #34d399; font-weight: 600;">{role['range']}</span></p>
+        <div class="insight-card">
+            <h4 style="color:#34d399; display:flex; align-items:center; gap:7px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+                {role['role']}
+            </h4>
+            <p style="margin-bottom:5px !important;">
+                Experience: <span style="color:#7dd3fc; font-weight:600;">{role['experience']}</span>
+            </p>
+            <p>Salary Range: <span style="color:#34d399; font-weight:700;">{role['range']}</span></p>
         </div>
         """, unsafe_allow_html=True)
-
 def evaluate_interview_answer(answer: str, question: str = None):
     """
     Uses an LLM to strictly evaluate an interview answer.
@@ -8446,6 +10788,25 @@ def evaluate_interview_answer(answer: str, question: str = None):
     return score, feedback
 
 
+def format_score(score) -> str:
+    """
+    Uniform score formatter for all UI display.
+    Always returns a 2-decimal-place string (e.g. 6.47, 6.50, 6.00).
+    Returns 'N/A' for None / NaN values.
+    Raw database values are never modified — formatting is display-layer only.
+    """
+    import math
+    if score is None:
+        return "N/A"
+    try:
+        val = float(score)
+        if math.isnan(val):
+            return "N/A"
+        return f"{val:.2f}"
+    except (TypeError, ValueError):
+        return "N/A"
+
+
 def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty: str, role: str = "", domain: str = ""):
     """
     UPGRADED: Intelligent evaluation with chain-of-thought reasoning and structured feedback.
@@ -8497,25 +10858,66 @@ def evaluate_interview_answer_for_scores(answer: str, question: str, difficulty:
         }
 
     # Difficulty-based evaluation guidance
+    # TEXT-INTERVIEW-OPTIMISED difficulty guidance.
+    # Hard is senior-level but scoped to ONE focused challenge — not whiteboard mega-design.
     difficulty_guidance = {
         "Easy": {
-            "tone": "encouraging and forgiving",
-            "expectations": "basic understanding and general concepts",
-            "scoring": "Give partial credit for effort. Score 5-10 for reasonable attempts, 3-4 for weak but present answers, 0-2 for irrelevant/junk.",
-            "feedback_style": "positive and encouraging with gentle improvement tips"
+            "tone": "encouraging and patient",
+            "expectations": (
+                "Concept clarity and accurate definitions. The candidate should explain WHAT something is, "
+                "WHY it exists, and give a simple real-world example. No implementation depth required."
+            ),
+            "scoring": (
+                "5-10 for clear definitions with a correct example. "
+                "3-4 for partially correct or vague answers that show some understanding. "
+                "0-2 for wrong definitions or no answer."
+            ),
+            "feedback_style": (
+                "Encouraging. Praise correct parts. Point out the one or two missing elements "
+                "with a simple suggestion. Keep feedback under 3 paragraphs."
+            ),
+            "answer_scope": "3-5 structured paragraphs",
         },
         "Medium": {
-            "tone": "balanced and realistic",
-            "expectations": "scenario-based thinking, some technical depth, and practical examples",
-            "scoring": "Score 6-10 for good answers, 3-5 for incomplete/basic answers, 0-2 for poor/irrelevant.",
-            "feedback_style": "constructive and specific with clear improvement areas"
+            "tone": "balanced and scenario-focused",
+            "expectations": (
+                "Scenario reasoning with ONE practical constraint. The candidate should describe their "
+                "approach, make ONE explicit decision or tradeoff, and briefly justify it with a real example. "
+                "No multi-layer system design required."
+            ),
+            "scoring": (
+                "7-10 for answers that frame the scenario, make a clear decision, and justify it with reasoning. "
+                "4-6 for answers that address the scenario but miss the decision logic or give only conceptual responses. "
+                "0-3 for answers that treat it like an Easy question (pure definition) or are off-topic."
+            ),
+            "feedback_style": (
+                "Constructive. Acknowledge the scenario framing they used, then identify the ONE key "
+                "reasoning step they missed. Give a concrete direction for improvement in 4-5 paragraphs."
+            ),
+            "answer_scope": "5-6 structured paragraphs",
         },
         "Hard": {
-            "tone": "strict and technical",
-            "expectations": "deep technical knowledge, system design thinking, edge cases, and comprehensive understanding",
-            "scoring": "Score 7-10 for excellent answers, 4-6 for adequate but incomplete, 0-3 for weak/incorrect.",
-            "feedback_style": "concise and technical with precise critique"
-        }
+            "tone": "precise and technically demanding",
+            "expectations": (
+                "Deep technical reasoning on ONE focused challenge — either a tradeoff analysis, a failure handling "
+                "scenario, or an optimisation under constraint. NOT a full system design. "
+                "The candidate should: state their reasoning framework, analyse the core challenge, "
+                "explain their decision with specific technical justification, and mention one edge case or risk. "
+                "Answerable in 6-8 paragraphs — no whiteboard required."
+            ),
+            "scoring": (
+                "8-10 for answers that isolate the core challenge, reason through it with technical specifics, "
+                "make a justified decision, and acknowledge a risk or edge case. "
+                "5-7 for answers that address the challenge but stay too high-level or skip justification. "
+                "0-4 for vague, off-topic, or purely conceptual answers."
+            ),
+            "feedback_style": (
+                "Precise and senior-level. Identify exactly WHERE the reasoning stopped — was it before the tradeoff, "
+                "before the edge case, or before quantification? Give one concrete example of what a strong answer "
+                "would have added. 5-6 focused paragraphs."
+            ),
+            "answer_scope": "6-8 structured paragraphs",
+        },
     }
 
     guidance = difficulty_guidance.get(difficulty, difficulty_guidance["Medium"])
@@ -8530,35 +10932,38 @@ QUESTION: {question}
 CANDIDATE'S ANSWER: {answer}
 DIFFICULTY LEVEL: {difficulty}
 
-EVALUATION APPROACH ({guidance['tone']}):
-Expected: {guidance['expectations']}
-Scoring: {guidance['scoring']}
-Feedback Style: {guidance['feedback_style']}
+EVALUATION APPROACH — {difficulty.upper()} MODE ({guidance['tone']}):
+What to expect: {guidance['expectations']}
+Scoring guide: {guidance['scoring']}
+Feedback style: {guidance['feedback_style']}
+Expected answer scope: {guidance['answer_scope']}
 
 STEP-BY-STEP EVALUATION PROCESS:
 
-STEP 1 - EXTRACT KEY CONCEPTS FROM THE QUESTION:
-List 3-5 technical concepts, keywords, or expected topics the question is asking about.
+STEP 1 — IDENTIFY THE QUESTION'S CORE CHALLENGE:
+State in one sentence what this question is actually testing (concept recall / scenario reasoning / focused technical analysis).
+List 3-5 key concepts or reasoning moves a strong answer must include.
 
-STEP 2 - ANALYZE THE ANSWER:
-✅ STRENGTHS: What did the candidate do well? Which concepts did they cover? What was clear or correct?
-⚠️ GAPS/IMPROVEMENTS: What's missing? What's incorrect? What could be clearer?
+STEP 2 — ANALYSE THE CANDIDATE'S ANSWER:
+✅ WHAT THEY GOT RIGHT: Which key concepts did they cover? What reasoning was correct or well-expressed?
+⚠️ WHAT IS MISSING OR WEAK: Which expected concepts or reasoning steps are absent, shallow, or wrong?
+🔴 SCOPE CHECK: Did the answer stay within the question's scope, or did it over-engineer / under-explain?
 
-STEP 3 - SCORE THE ANSWER (1-10 scale):
-- Knowledge: Technical correctness, depth, and completeness (did they cover key concepts?)
-- Communication: Clarity, structure, and articulation (was it easy to follow?)
-- Relevance: How directly does this answer the question? Is it on-topic?
+STEP 3 — SCORE ON 3 DIMENSIONS (1-10 each):
+- Knowledge: Correctness and depth of technical content for THIS difficulty tier.
+- Communication: Clarity, logical structure, and how easy it is to follow the reasoning.
+- Relevance: How directly the answer addresses the specific question asked — not adjacent topics.
 
-STEP 4 - GENERATE DETAILED FEEDBACK (2-4 comprehensive paragraphs):
-Provide detailed, flowing feedback that covers:
-- Specific strengths: What they did well, which concepts they covered correctly, and what was clear
-- Specific gaps or areas for improvement: What key concepts or details they missed, what could be more accurate
-- Actionable recommendations: Concrete suggestions for improvement with examples
-- Overall assessment: A brief summary of their understanding level
+STEP 4 — WRITE FEEDBACK ({guidance['answer_scope']} equivalent):
+Write {{"Easy": "2-3", "Medium": "3-4", "Hard": "4-5"}}.get(difficulty, "3-4") flowing paragraphs that:
+1. Start with what the candidate did well (be specific — quote or paraphrase their answer)
+2. Identify the ONE or TWO most important gaps for this difficulty level
+3. Give a concrete, actionable suggestion — what would a stronger answer have included?
+4. For Hard: note whether the answer stayed text-answerable and focused, or drifted into vague system design
 
-Write feedback as natural, flowing paragraphs (not bullet points). Make it detailed, specific to their answer, and constructive.
+Do NOT write bullet points. Write as a knowledgeable interviewer giving verbal feedback.
 
-{"STEP 5 - FOLLOW-UP QUESTION: Generate ONE probing follow-up question that digs deeper based on their answer." if difficulty == "Hard" else ""}
+{"STEP 5 — FOLLOW-UP: Generate ONE tightly scoped follow-up question. It must: (a) directly reference something in their answer, (b) probe ONE specific gap identified above, (c) be answerable in 4-6 paragraphs of text — not a whiteboard exercise. Choose from: Metric Justification, Tradeoff Challenge, Edge Case Scenario, Failure Handling, Constraint Injection, or Depth Probe." if difficulty == "Hard" else ""}
 
 OUTPUT FORMAT (strict JSON):
 {{
@@ -8614,6 +11019,34 @@ Provide ONLY the JSON output, no additional text."""
         if not feedback or len(feedback.strip()) < 50:
             feedback = "Your answer shows some understanding, but could benefit from more technical depth and specific examples. Consider structuring your response more clearly and providing concrete details from your experience. Focus on addressing all aspects of the question comprehensively."
 
+        # ── POST-PROCESSING CALIBRATION ──────────────────────────────────────────
+        # Safeguard 1: keyword overlap check — clamp knowledge/relevance if answer
+        # contains almost none of the question's key terms
+        key_terms = [kw.lower() for kw in question.split() if len(kw) > 3]
+        match_count = sum(1 for t in key_terms if t in answer.lower())
+        if key_terms and match_count < max(2, len(key_terms) // 10):
+            knowledge = min(knowledge, 3)
+            relevance = min(relevance, 3)
+
+        # Safeguard 2: off-topic or low-relevance signal from LLM
+        if "off-topic" in feedback.lower() or relevance < 4:
+            knowledge = min(knowledge, 4)
+            relevance = min(relevance, 4)
+
+        # Safeguard 3: if average would be >4 but relevance is very low, enforce ceiling
+        raw_avg = (knowledge + communication + relevance) / 3
+        if relevance <= 2 and raw_avg > 4.0:
+            # Wrong/irrelevant answers: all scores clamped to ≤ 2
+            knowledge = min(knowledge, 2)
+            communication = min(communication, 2)
+            relevance = min(relevance, 2)
+        elif relevance < 4 and raw_avg > 5.0:
+            # Generic/partially relevant: clamp average ≤ 5
+            excess = raw_avg - 5.0
+            knowledge = max(0, min(knowledge, knowledge - int(excess * 1.5 + 0.5)))
+            relevance = max(0, min(relevance, relevance - 1))
+        # ─────────────────────────────────────────────────────────────────────────
+
         # Extract follow-up question
         followup = result.get("followup", "") if difficulty == "Hard" else ""
 
@@ -8647,10 +11080,33 @@ Provide ONLY the JSON output, no additional text."""
                 else:
                     feedback = "Answer evaluated but formatting unclear. Provide more structured responses with clear examples and explanations."
 
+            # Apply same post-processing calibration to fallback path
+            knowledge = max(0, min(10, knowledge))
+            communication = max(0, min(10, communication))
+            relevance = max(0, min(10, relevance))
+
+            key_terms_fb = [kw.lower() for kw in question.split() if len(kw) > 3]
+            match_count_fb = sum(1 for t in key_terms_fb if t in answer.lower())
+            if key_terms_fb and match_count_fb < max(2, len(key_terms_fb) // 10):
+                knowledge = min(knowledge, 3)
+                relevance = min(relevance, 3)
+            if "off-topic" in feedback.lower() if isinstance(feedback, str) else False or relevance < 4:
+                knowledge = min(knowledge, 4)
+                relevance = min(relevance, 4)
+            raw_avg_fb = (knowledge + communication + relevance) / 3
+            if relevance <= 2 and raw_avg_fb > 4.0:
+                knowledge = min(knowledge, 2)
+                communication = min(communication, 2)
+                relevance = min(relevance, 2)
+            elif relevance < 4 and raw_avg_fb > 5.0:
+                excess_fb = raw_avg_fb - 5.0
+                knowledge = max(0, min(knowledge, knowledge - int(excess_fb * 1.5 + 0.5)))
+                relevance = max(0, min(relevance, relevance - 1))
+
             return {
-                "knowledge": max(0, min(10, knowledge)),
-                "communication": max(0, min(10, communication)),
-                "relevance": max(0, min(10, relevance)),
+                "knowledge": knowledge,
+                "communication": communication,
+                "relevance": relevance,
                 "feedback": feedback if isinstance(feedback, str) else "\n\n".join(feedback[:5]),
                 "followup": ""
             }
@@ -8691,7 +11147,7 @@ def log_user_action(username: str, action: str):
 
 
 def create_interview_database():
-    """Create interview_results table if not exists"""
+    """Create interview_results table if not exists, safely migrate new columns"""
     import sqlite3
     try:
         conn = sqlite3.connect('resume_data.db')
@@ -8709,25 +11165,178 @@ def create_interview_database():
             )
         """)
         conn.commit()
+
+        # Safe migration: add new columns only if they don't exist
+        existing_columns = [row[1] for row in cursor.execute("PRAGMA table_info(interview_results)").fetchall()]
+
+        migrations = [
+            ("knowledge_avg", "REAL"),
+            ("communication_avg", "REAL"),
+            ("relevance_avg", "REAL"),
+            ("difficulty", "TEXT"),
+            ("duration_seconds", "INTEGER"),
+            ("interview_mode", "TEXT"),
+            ("created_timestamp", "DATETIME DEFAULT CURRENT_TIMESTAMP"),
+            ("weighted_score", "REAL"),
+            ("raw_avg_score", "REAL"),
+            ("follow_up_count", "INTEGER DEFAULT 0"),
+            ("depth_score", "REAL"),
+            ("behavior_class", "TEXT"),
+        ]
+
+        for col_name, col_type in migrations:
+            if col_name not in existing_columns:
+                try:
+                    cursor.execute(f"ALTER TABLE interview_results ADD COLUMN {col_name} {col_type}")
+                    conn.commit()
+                except Exception:
+                    pass
+
         conn.close()
+        # Also ensure interview_questions table exists
+        create_interview_questions_table()
     except Exception as e:
         import streamlit as st
         st.error(f"Database error: {e}")
 
 
-def save_interview_result(username: str, role: str, domain: str, avg_score: float, total_questions: int, feedback_summary: str):
-    """Save interview result to database"""
+def create_interview_questions_table():
+    """
+    Create interview_questions table for storing every question and answer with full context.
+    This is the SINGLE SOURCE OF TRUTH for PDF generation.
+    """
+    import sqlite3
+    try:
+        conn = sqlite3.connect('resume_data.db')
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS interview_questions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                interview_id TEXT NOT NULL,
+                question_text TEXT NOT NULL,
+                answer_text TEXT,
+                difficulty TEXT,
+                is_follow_up INTEGER DEFAULT 0,
+                parent_question_id INTEGER,
+                timestamp TEXT NOT NULL,
+                score_breakdown TEXT,
+                question_order INTEGER DEFAULT 0
+            )
+        """)
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        import streamlit as st
+        st.error(f"Failed to create interview_questions table: {e}")
+
+
+def save_interview_question(interview_id: str, question_text: str, answer_text: str = None,
+                             difficulty: str = "Medium", is_follow_up: bool = False,
+                             parent_question_id: int = None, score_breakdown: dict = None,
+                             question_order: int = 0) -> int:
+    """
+    Save a single question (and optionally its answer) to the interview_questions table.
+    Returns the row id of the inserted record, or -1 on failure.
+    This must be called immediately when a question is answered.
+    """
+    import sqlite3
+    import json
+    try:
+        conn = sqlite3.connect('resume_data.db')
+        cursor = conn.cursor()
+        score_json = json.dumps(score_breakdown) if score_breakdown else None
+        timestamp = get_ist_time()
+        cursor.execute("""
+            INSERT INTO interview_questions
+                (interview_id, question_text, answer_text, difficulty, is_follow_up,
+                 parent_question_id, timestamp, score_breakdown, question_order)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (interview_id, question_text, answer_text,
+              difficulty, 1 if is_follow_up else 0,
+              parent_question_id, timestamp, score_json, question_order))
+        conn.commit()
+        row_id = cursor.lastrowid
+        conn.close()
+        return row_id
+    except Exception as e:
+        import streamlit as st
+        st.error(f"Failed to save interview question: {e}")
+        return -1
+
+
+def get_interview_questions_from_db(interview_id: str) -> list:
+    """
+    Fetch all questions for an interview from DB, ordered by timestamp then question_order.
+    Returns list of dicts with keys: id, question_text, answer_text, difficulty,
+    is_follow_up, parent_question_id, timestamp, score_breakdown, question_order.
+    """
+    import sqlite3
+    import json
+    try:
+        conn = sqlite3.connect('resume_data.db')
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, question_text, answer_text, difficulty, is_follow_up,
+                   parent_question_id, timestamp, score_breakdown, question_order
+            FROM interview_questions
+            WHERE interview_id = ?
+            ORDER BY question_order ASC, timestamp ASC
+        """, (interview_id,))
+        rows = cursor.fetchall()
+        conn.close()
+
+        result = []
+        for row in rows:
+            score = None
+            if row[7]:
+                try:
+                    score = json.loads(row[7])
+                except Exception:
+                    score = None
+            result.append({
+                "id": row[0],
+                "question_text": row[1],
+                "answer_text": row[2] or "",
+                "difficulty": row[3],
+                "is_follow_up": bool(row[4]),
+                "parent_question_id": row[5],
+                "timestamp": row[6],
+                "score_breakdown": score,
+                "question_order": row[8],
+            })
+        return result
+    except Exception as e:
+        import streamlit as st
+        st.error(f"Failed to fetch interview questions: {e}")
+        return []
+
+
+def save_interview_result(username: str, role: str, domain: str, avg_score: float, total_questions: int, feedback_summary: str,
+                          knowledge_avg: float = None, communication_avg: float = None, relevance_avg: float = None,
+                          difficulty: str = None, duration_seconds: int = None, interview_mode: str = None,
+                          weighted_score: float = None, raw_avg_score: float = None,
+                          follow_up_count: int = 0, depth_score: float = None, behavior_class: str = None):
+    """Save interview result to database with extended columns"""
     import sqlite3
     try:
         conn = sqlite3.connect('resume_data.db')
         cursor = conn.cursor()
         completed_on = get_ist_time()
         cursor.execute("""
-            INSERT INTO interview_results (username, role, domain, avg_score, total_questions, completed_on, feedback_summary)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (username, role, domain, avg_score, total_questions, completed_on, feedback_summary))
+            INSERT INTO interview_results (username, role, domain, avg_score, total_questions, completed_on, feedback_summary,
+                                          knowledge_avg, communication_avg, relevance_avg, difficulty, duration_seconds, interview_mode, created_timestamp,
+                                          weighted_score, raw_avg_score, follow_up_count, depth_score, behavior_class)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?)
+        """, (username, role, domain, avg_score, total_questions, completed_on, feedback_summary,
+              knowledge_avg, communication_avg, relevance_avg, difficulty, duration_seconds, interview_mode,
+              weighted_score, raw_avg_score, follow_up_count, depth_score, behavior_class))
         conn.commit()
         conn.close()
+        # Invalidate dashboard data cache so next visit shows fresh results
+        _dirty_key = f"_dashboard_dirty_{username}"
+        import streamlit as _st_cache
+        if hasattr(_st_cache, 'session_state'):
+            _st_cache.session_state[_dirty_key] = True
         return True
     except Exception as e:
         import streamlit as st
@@ -8752,16 +11361,23 @@ def format_feedback_text(feedback):
     return formatted
 
 
-def generate_interview_pdf_report(username, role, domain, completed_on, questions, answers, scores, feedbacks, overall_avg, badge, difficulty="Medium"):
+def generate_interview_pdf_report(username, role, domain, completed_on, questions, answers, scores, feedbacks, overall_avg, badge, difficulty="Medium", interview_id=None):
     """
-    Generate PDF report for interview using xhtml2pdf
+    Generate PDF report for interview using xhtml2pdf.
 
-    FIXED: Now shows full answers (up to 2000 chars) instead of truncating at 500
-    FIXED: Added follow-up questions for Hard difficulty interviews
+    ARCHITECTURE FIX: When interview_id is provided, fetches ALL Q&A data exclusively
+    from the interview_questions DB table (the single source of truth).
+    Never regenerates follow-up questions. Preserves original order via timestamp/question_order.
+    Falls back to passed-in arrays only when interview_id is unavailable (legacy).
     """
     try:
         from xhtml2pdf import pisa
         from io import BytesIO
+
+        # ── SINGLE SOURCE OF TRUTH: fetch from DB when interview_id is available ──
+        db_rows = []
+        if interview_id:
+            db_rows = get_interview_questions_from_db(interview_id)
 
         # Build XHTML content
         xhtml = f"""
@@ -8775,12 +11391,14 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
                 h2 {{ color: #0099cc; margin-top: 20px; }}
                 .header {{ background: #f0f0f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; }}
                 .question-block {{ margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; page-break-inside: avoid; }}
+                .followup-block {{ margin: 10px 0 20px 30px; padding: 15px; border: 1px solid #ffc107; border-radius: 8px; background: #fffdf0; page-break-inside: avoid; }}
                 .score {{ font-weight: bold; color: #00c3ff; }}
                 .feedback {{ color: #666; margin-top: 10px; padding: 10px; background: #f9f9f9; border-left: 3px solid #00c3ff; }}
                 .feedback ul {{ margin: 5px 0 0 0; padding-left: 20px; }}
                 .feedback li {{ margin: 8px 0; line-height: 1.5; }}
                 .summary {{ background: #fffacd; padding: 15px; border-radius: 8px; margin: 20px 0; }}
                 .answer-text {{ white-space: pre-wrap; word-wrap: break-word; margin: 10px 0; }}
+                .followup-label {{ color: #b8860b; font-weight: bold; font-size: 13px; margin-bottom: 6px; }}
             </style>
         </head>
         <body>
@@ -8793,66 +11411,132 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
             </div>
             <div class="summary">
                 <h2>Overall Performance</h2>
-                <p class="score">Average Score: {overall_avg:.1f}/10</p>
+                <p class="score">Average Score: {overall_avg:.2f}/10</p>
                 <p><strong>Badge Earned:</strong> {badge}</p>
             </div>
-            <h2>Detailed Q&A Review</h2>
+            <h2>Detailed Q&amp;A Review</h2>
         """
 
-        # CRITICAL FIX: Add each question/answer/score/feedback with FULL answer (no truncation)
-        for i, (q, a, score_dict, f) in enumerate(zip(questions, answers, scores, feedbacks), 1):
-            # Ensure score_dict is a dictionary
-            if isinstance(score_dict, dict):
-                avg_q_score = (score_dict.get('knowledge', 5) + score_dict.get('communication', 5) + score_dict.get('relevance', 5)) / 3
-            else:
-                # Fallback if score_dict is not a dict
-                avg_q_score = 5.0
-                score_dict = {'knowledge': 5, 'communication': 5, 'relevance': 5}
+        if db_rows:
+            # ── DB-backed path: use ONLY stored data, never regenerate ──
+            # Separate main questions and follow-ups
+            main_questions = [r for r in db_rows if not r["is_follow_up"]]
+            followup_map = {}  # parent_question_id -> list of follow-up rows
+            for r in db_rows:
+                if r["is_follow_up"] and r["parent_question_id"] is not None:
+                    followup_map.setdefault(r["parent_question_id"], []).append(r)
 
-            # Escape HTML special characters to prevent rendering issues
-            q_escaped = q.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-            a_escaped = a.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-
-            # Handle feedback as string (convert list to paragraphs if needed)
-            if isinstance(f, list):
-                f_text = "\n\n".join(f)
-            else:
-                f_text = str(f)
-
-            # Format feedback into bullet points
             import re
-            sentences = re.split(r'(?<=\.)\s+', f_text.strip())
-            sentences = [sent.strip() for sent in sentences if len(sent.strip()) > 0]
-            bullet_feedback = "<b>💡 Improvement Tips:</b><ul>"
-            for sent in sentences:
-                sent_escaped = sent.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-                bullet_feedback += f"<li>{sent_escaped}</li>"
-            bullet_feedback += "</ul>"
-            f_escaped = bullet_feedback
+            for idx, row in enumerate(main_questions, 1):
+                q_escaped = row["question_text"].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                a_escaped = row["answer_text"].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
-            # SHOW FULL ANSWER - NO TRUNCATION IN PDF
-            answer_display = a_escaped
+                score_dict = row["score_breakdown"] or {}
+                if isinstance(score_dict, dict) and score_dict:
+                    avg_q_score = (score_dict.get('knowledge', 5) + score_dict.get('communication', 5) + score_dict.get('relevance', 5)) / 3
+                else:
+                    avg_q_score = 5.0
+                    score_dict = {'knowledge': 5, 'communication': 5, 'relevance': 5}
 
-            # Get follow-up question if exists (for Hard difficulty)
-            followup_text = ""
-            if difficulty == "Hard" and isinstance(score_dict, dict) and score_dict.get('followup'):
-                followup_escaped = score_dict['followup'].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-                followup_text = f"""<div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px;">
-                    <strong>Follow-up Question (for Hard interviews):</strong><br/>
-                    {followup_escaped}
-                </div>"""
+                feedback_raw = score_dict.get("feedback", "") if isinstance(score_dict, dict) else ""
+                if isinstance(feedback_raw, list):
+                    feedback_raw = "\n\n".join(feedback_raw)
+                sentences = re.split(r'(?<=\.)\s+', str(feedback_raw).strip())
+                sentences = [s.strip() for s in sentences if len(s.strip()) > 0]
+                bullet_feedback = "<b>💡 Improvement Tips:</b><ul>"
+                for sent in sentences:
+                    sent_esc = sent.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                    bullet_feedback += f"<li>{sent_esc}</li>"
+                bullet_feedback += "</ul>"
 
-            xhtml += f"""
+                xhtml += f"""
+            <div class="question-block">
+                <h3>Question {idx}</h3>
+                <p><strong>Q:</strong> {q_escaped}</p>
+                <div class="answer-text"><strong>Your Answer:</strong><br/>{a_escaped}</div>
+                <p class="score">Knowledge: {score_dict.get('knowledge', 0)}/10 | Communication: {score_dict.get('communication', 0)}/10 | Relevance: {score_dict.get('relevance', 0)}/10</p>
+                <p class="score">Question Score: {avg_q_score:.2f}/10</p>
+                <div class="feedback">{bullet_feedback}</div>
+            </div>
+                """
+
+                # Nest follow-up questions under this main question
+                for fu in followup_map.get(row["id"], []):
+                    fu_q_esc = fu["question_text"].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                    fu_a_esc = fu["answer_text"].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                    fu_score = fu["score_breakdown"] or {}
+                    if isinstance(fu_score, dict) and fu_score:
+                        fu_avg = (fu_score.get('knowledge', 5) + fu_score.get('communication', 5) + fu_score.get('relevance', 5)) / 3
+                    else:
+                        fu_avg = 5.0
+                        fu_score = {'knowledge': 5, 'communication': 5, 'relevance': 5}
+
+                    fu_feedback_raw = fu_score.get("feedback", "") if isinstance(fu_score, dict) else ""
+                    if isinstance(fu_feedback_raw, list):
+                        fu_feedback_raw = "\n\n".join(fu_feedback_raw)
+                    fu_sentences = re.split(r'(?<=\.)\s+', str(fu_feedback_raw).strip())
+                    fu_sentences = [s.strip() for s in fu_sentences if len(s.strip()) > 0]
+                    fu_bullets = "<b>💡 Improvement Tips:</b><ul>"
+                    for s in fu_sentences:
+                        s_esc = s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                        fu_bullets += f"<li>{s_esc}</li>"
+                    fu_bullets += "</ul>"
+
+                    xhtml += f"""
+            <div class="followup-block">
+                <div class="followup-label">↳ Follow-Up Question (Hard Mode)</div>
+                <p><strong>Q:</strong> {fu_q_esc}</p>
+                <div class="answer-text"><strong>Your Answer:</strong><br/>{fu_a_esc}</div>
+                <p class="score">Knowledge: {fu_score.get('knowledge', 0)}/10 | Communication: {fu_score.get('communication', 0)}/10 | Relevance: {fu_score.get('relevance', 0)}/10</p>
+                <p class="score">Follow-Up Score: {fu_avg:.2f}/10</p>
+                <div class="feedback">{fu_bullets}</div>
+            </div>
+                    """
+        else:
+            # ── Legacy fallback: use passed-in arrays (no interview_id) ──
+            import re
+            for i, (q, a, score_dict, f) in enumerate(zip(questions, answers, scores, feedbacks), 1):
+                if isinstance(score_dict, dict):
+                    avg_q_score = (score_dict.get('knowledge', 5) + score_dict.get('communication', 5) + score_dict.get('relevance', 5)) / 3
+                else:
+                    avg_q_score = 5.0
+                    score_dict = {'knowledge': 5, 'communication': 5, 'relevance': 5}
+
+                q_escaped = q.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                a_escaped = a.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
+                if isinstance(f, list):
+                    f_text = "\n\n".join(f)
+                else:
+                    f_text = str(f)
+
+                sentences = re.split(r'(?<=\.)\s+', f_text.strip())
+                sentences = [sent.strip() for sent in sentences if len(sent.strip()) > 0]
+                bullet_feedback = "<b>💡 Improvement Tips:</b><ul>"
+                for sent in sentences:
+                    sent_escaped = sent.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                    bullet_feedback += f"<li>{sent_escaped}</li>"
+                bullet_feedback += "</ul>"
+
+                followup_text = ""
+                if difficulty == "Hard" and isinstance(score_dict, dict) and score_dict.get('followup'):
+                    followup_escaped = score_dict['followup'].replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                    followup_text = f"""<div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px;">
+                        <strong>Follow-up Question (for Hard interviews):</strong><br/>
+                        {followup_escaped}
+                    </div>"""
+
+                xhtml += f"""
             <div class="question-block">
                 <h3>Question {i}</h3>
                 <p><strong>Q:</strong> {q_escaped}</p>
-                <div class="answer-text"><strong>Your Answer:</strong><br/>{answer_display}</div>
+                <div class="answer-text"><strong>Your Answer:</strong><br/>{a_escaped}</div>
                 <p class="score">Knowledge: {score_dict.get('knowledge', 0)}/10 | Communication: {score_dict.get('communication', 0)}/10 | Relevance: {score_dict.get('relevance', 0)}/10</p>
-                <p class="score">Question Score: {avg_q_score:.1f}/10</p>
-                <div class="feedback">{f_escaped}</div>
+                <p class="score">Question Score: {avg_q_score:.2f}/10</p>
+                <div class="feedback">{bullet_feedback}</div>
                 {followup_text}
             </div>
-            """
+                """
 
         xhtml += """
         </body>
@@ -8875,6 +11559,7 @@ def generate_interview_pdf_report(username, role, domain, completed_on, question
         return None
 
 
+
 import streamlit as st
 import plotly.graph_objects as go
 from courses import COURSES_BY_CATEGORY, RESUME_VIDEOS, INTERVIEW_VIDEOS, get_courses_for_role
@@ -8888,6 +11573,2002 @@ import json
 import time
 import re
 import streamlit as st
+
+# =============================================================================
+# ARCHITECTURAL FIX 1: DOMAIN AUTHORITY LAYER
+# =============================================================================
+# Problem: Resume context dominates LLM prompts, causing Full Stack resumes to
+# produce Full Stack questions even when "Data Analyst" is selected.
+# Solution: Strip and suppress resume content that contradicts the selected domain,
+# then inject domain-specific mandatory keywords into every question generation prompt.
+
+DOMAIN_AUTHORITY_CONFIG = {
+    "Data Science & Analytics": {
+        "aliases": ["data analyst", "data science", "analytics", "business intelligence", "bi", "ml", "machine learning"],
+        "mandatory_topics": [
+            # Core Python data stack
+            "pandas", "NumPy", "SciPy", "Matplotlib", "Seaborn", "Plotly",
+            # SQL & querying
+            "SQL", "window functions", "CTEs", "query optimization", "joins", "GROUP BY aggregations",
+            # Statistical foundations
+            "descriptive statistics", "inferential statistics", "hypothesis testing", "p-values",
+            "confidence intervals", "A/B testing", "statistical significance", "effect size",
+            "probability distributions", "Bayesian reasoning",
+            # EDA & data quality
+            "exploratory data analysis", "data cleaning", "missing value imputation",
+            "outlier detection", "data profiling", "feature distributions",
+            # Classical ML
+            "linear regression", "logistic regression", "decision trees", "random forests",
+            "gradient boosting", "XGBoost", "LightGBM", "k-means clustering", "PCA",
+            "bias-variance tradeoff", "cross-validation", "regularization (L1/L2)",
+            # Model evaluation
+            "precision", "recall", "F1 score", "ROC-AUC", "confusion matrix",
+            "RMSE", "MAE", "R-squared", "lift curves",
+            # BI & visualization
+            "Tableau", "Power BI", "Looker", "dashboard design", "data storytelling",
+            "KPI definition", "metric frameworks", "cohort analysis",
+            # Data pipelines
+            "ETL pipelines", "data warehousing", "OLAP vs OLTP", "star schema",
+            "dbt", "Apache Airflow", "data lineage",
+            # Advanced / modern
+            "time series forecasting", "ARIMA", "Prophet", "feature engineering",
+            "dimensionality reduction", "class imbalance handling", "SMOTE",
+        ],
+        "forbidden_resume_keywords": [
+            "react", "angular", "vue", "next.js", "nuxt", "svelte",
+            "node.js", "express", "fastify", "django", "flask", "spring boot",
+            "frontend", "css", "html", "tailwind", "bootstrap", "figma",
+            "mobile app", "swift", "kotlin", "flutter", "react native",
+            "graphql", "REST API design", "OAuth", "JWT authentication",
+        ],
+        "context_override": (
+            "This is a Data Science & Analytics interview. Focus EXCLUSIVELY on data analysis, "
+            "statistical reasoning, SQL, Python data libraries (pandas/numpy/scikit-learn), "
+            "model evaluation, data visualization, A/B testing, EDA, and business intelligence tools. "
+            "Probe for depth on statistical rigour, evaluation metric selection, and data storytelling — "
+            "not just tool familiarity."
+        ),
+    },
+
+    "Full Stack Development": {
+        "aliases": ["full stack", "fullstack", "web developer", "mern", "mean", "full-stack engineer"],
+        "mandatory_topics": [
+            # Frontend
+            "React", "Vue.js", "Angular", "Next.js", "TypeScript", "JavaScript (ES6+)",
+            "state management", "Redux", "Zustand", "Pinia", "component lifecycle",
+            "virtual DOM", "server-side rendering", "static site generation",
+            "CSS-in-JS", "Tailwind CSS", "responsive design", "accessibility (WCAG)",
+            "browser performance", "lazy loading", "code splitting", "web vitals",
+            # Backend
+            "Node.js", "Express", "NestJS", "Django", "FastAPI", "Spring Boot",
+            "REST API design", "GraphQL", "API versioning", "rate limiting",
+            "middleware patterns", "input validation", "error handling",
+            # Databases
+            "PostgreSQL", "MySQL", "MongoDB", "Redis", "database indexing",
+            "query optimization", "ORM (Prisma/Sequelize/SQLAlchemy)", "N+1 problem",
+            "transactions and ACID", "database migrations",
+            # Auth & security
+            "JWT", "OAuth 2.0", "session management", "CORS", "CSRF", "XSS", "SQL injection",
+            "HTTPS", "secrets management", "RBAC",
+            # DevOps basics
+            "Docker", "CI/CD", "environment variables", "12-factor app",
+            "Nginx", "reverse proxy", "load balancing basics",
+            # Testing
+            "unit testing", "integration testing", "Jest", "React Testing Library",
+            "end-to-end testing", "Cypress", "Playwright", "test coverage",
+            # Architecture
+            "monolith vs microservices", "BFF pattern", "caching strategies",
+            "WebSockets", "real-time updates", "message queues basics",
+        ],
+        "forbidden_resume_keywords": [
+            "tensorflow", "pytorch", "sklearn", "scikit-learn", "pandas",
+            "regression model", "clustering", "NLP pipeline", "deep learning model",
+            "Kubernetes operator", "Terraform modules", "Ansible playbooks",
+            "pen testing", "SIEM", "SOC analyst",
+        ],
+        "context_override": (
+            "This is a Full Stack Development interview. Cover the entire request lifecycle: "
+            "browser → frontend framework → API layer → database → response. "
+            "Focus on React/Next.js or Vue, Node.js or Django backends, PostgreSQL/MongoDB, "
+            "authentication patterns, caching, testing strategies, and deployment pipelines. "
+            "Probe for real decisions: state management choices, API contract design, N+1 fixes, "
+            "and security hardening — not just stack enumeration."
+        ),
+    },
+
+    "Backend Development": {
+        "aliases": ["backend", "server-side", "api developer", "java developer", "python developer",
+                    "golang developer", "backend engineer", "software engineer backend"],
+        "mandatory_topics": [
+            # API design
+            "REST API design principles", "GraphQL", "gRPC", "API versioning",
+            "idempotency", "pagination", "rate limiting", "API gateway",
+            "OpenAPI / Swagger documentation",
+            # Databases
+            "PostgreSQL", "MySQL", "database indexing", "query execution plans",
+            "EXPLAIN ANALYZE", "N+1 problem", "connection pooling",
+            "transactions", "ACID properties", "isolation levels", "deadlocks",
+            "database migrations", "schema design", "normalization",
+            "Redis", "caching patterns (cache-aside, write-through)", "cache invalidation",
+            # System design
+            "horizontal vs vertical scaling", "load balancing", "reverse proxy",
+            "microservices", "service mesh", "event-driven architecture",
+            "message queues (RabbitMQ, Kafka, SQS)", "pub/sub patterns",
+            "circuit breaker", "bulkhead pattern", "retry with backoff",
+            "CAP theorem", "eventual consistency", "distributed transactions",
+            # Auth & security
+            "JWT", "OAuth 2.0", "OpenID Connect", "RBAC", "ABAC",
+            "password hashing (bcrypt/argon2)", "secrets management",
+            "input validation", "SQL injection", "OWASP Top 10 for APIs",
+            # Performance
+            "async programming", "concurrency models", "thread pools",
+            "profiling", "bottleneck identification", "background jobs",
+            "batch processing", "streaming",
+            # Testing
+            "unit testing", "integration testing", "contract testing",
+            "mocking dependencies", "test isolation", "CI test pipelines",
+            # Languages & runtimes
+            "Python (asyncio/FastAPI/Django)", "Node.js (event loop)",
+            "Java (Spring Boot, JVM tuning)", "Go (goroutines, channels)",
+        ],
+        "forbidden_resume_keywords": [
+            "react", "css", "html", "angular", "vue", "next.js", "tailwind",
+            "figma", "photoshop", "sketch", "frontend", "ui design",
+            "pandas", "sklearn", "tensorflow", "pytorch",
+            "mobile app", "swift", "kotlin", "flutter",
+        ],
+        "context_override": (
+            "This is a Backend Development interview. Focus on server-side engineering: "
+            "REST/GraphQL/gRPC API design, relational and NoSQL databases (including indexing, "
+            "transactions, and query optimisation), caching strategies, message queues, "
+            "distributed system patterns, authentication/authorisation, and backend testing. "
+            "Push candidates to explain WHY they made design decisions, not just WHAT they used."
+        ),
+    },
+
+    "Frontend Development": {
+        "aliases": ["frontend", "ui developer", "react developer", "angular developer",
+                    "vue developer", "frontend engineer", "web ui engineer"],
+        "mandatory_topics": [
+            # Core JavaScript
+            "JavaScript (ES6+)", "TypeScript", "closures", "event loop", "async/await",
+            "Promises", "prototypal inheritance", "hoisting", "debounce/throttle",
+            "Web APIs (Fetch, localStorage, IntersectionObserver)",
+            # Frameworks
+            "React (hooks, context, reconciliation)", "Vue.js (Options API vs Composition API)",
+            "Angular (dependency injection, change detection)",
+            "Next.js (SSR vs SSG vs ISR)", "Nuxt.js",
+            # State management
+            "Redux (flux architecture)", "Redux Toolkit", "Zustand", "Recoil",
+            "React Query / TanStack Query", "SWR", "Pinia",
+            # CSS & styling
+            "CSS specificity", "flexbox", "CSS Grid", "responsive design",
+            "CSS-in-JS (styled-components, Emotion)", "Tailwind CSS",
+            "CSS custom properties", "animations and transitions",
+            # Performance
+            "Core Web Vitals (LCP, CLS, FID/INP)", "code splitting",
+            "lazy loading", "tree shaking", "bundle analysis (Webpack, Vite)",
+            "image optimisation", "caching strategies (HTTP cache, service workers)",
+            "virtual DOM and reconciliation", "memoization (useMemo, useCallback, React.memo)",
+            # Testing
+            "Jest", "React Testing Library", "Vitest",
+            "end-to-end testing (Cypress, Playwright)",
+            "snapshot testing", "accessibility testing",
+            # Accessibility
+            "WCAG 2.1 guidelines", "ARIA attributes", "keyboard navigation",
+            "screen reader compatibility", "semantic HTML",
+            # Architecture
+            "micro-frontends", "module federation", "design systems",
+            "component composition patterns", "render props vs HOC vs hooks",
+            "Storybook", "monorepo (Nx, Turborepo)",
+            # Security
+            "XSS prevention", "CSP headers", "CSRF in SPAs", "sanitisation",
+        ],
+        "forbidden_resume_keywords": [
+            "kubernetes", "docker-compose", "terraform", "ansible",
+            "CI/CD pipeline design", "microservices orchestration", "kafka",
+            "grpc", "tensorflow", "pytorch", "pandas", "sklearn",
+            "SQL joins", "database schema design", "backend API design",
+            "pen testing", "SIEM", "firewall rules",
+        ],
+        "context_override": (
+            "This is a Frontend Development interview. Focus on deep JavaScript/TypeScript knowledge, "
+            "React or Vue framework internals (reconciliation, hooks, reactivity), state management "
+            "tradeoffs, Core Web Vitals and performance optimisation, CSS layout and architecture, "
+            "accessibility standards, testing strategies, and client-side security. "
+            "Go beyond tool lists — probe for understanding of browser behaviour, "
+            "render performance, and component design decisions."
+        ),
+    },
+
+    "Machine Learning & AI": {
+        "aliases": ["machine learning", "ml engineer", "ai engineer", "deep learning",
+                    "nlp engineer", "computer vision engineer", "mlops engineer", "ai researcher"],
+        "mandatory_topics": [
+            # Foundations
+            "supervised vs unsupervised vs reinforcement learning",
+            "bias-variance tradeoff", "overfitting", "underfitting", "regularisation (L1/L2/dropout)",
+            "cross-validation (k-fold, stratified)", "train/val/test split strategy",
+            "data leakage", "target encoding pitfalls",
+            # Feature engineering
+            "feature selection (mutual information, SHAP)", "feature scaling (standardisation, normalisation)",
+            "handling missing values", "categorical encoding (one-hot, ordinal, target)",
+            "dimensionality reduction (PCA, t-SNE, UMAP)", "class imbalance (SMOTE, cost-sensitive learning)",
+            # Classical ML
+            "linear/logistic regression", "decision trees and ensemble methods",
+            "random forests", "gradient boosting (XGBoost, LightGBM, CatBoost)",
+            "SVMs", "k-means clustering", "DBSCAN",
+            # Deep learning
+            "neural network architecture", "backpropagation", "gradient descent variants (Adam, SGD)",
+            "batch normalisation", "dropout", "learning rate scheduling",
+            "CNNs (convolution, pooling)", "RNNs / LSTMs", "attention mechanism",
+            "Transformer architecture", "transfer learning", "fine-tuning",
+            "BERT, GPT, and LLM fundamentals",
+            # Evaluation metrics
+            "precision, recall, F1", "ROC-AUC, PR-AUC", "NDCG", "MAP",
+            "RMSE, MAE, MAPE", "calibration", "offline vs online evaluation",
+            # MLOps
+            "ML pipelines (Kubeflow, MLflow, SageMaker Pipelines)",
+            "experiment tracking (MLflow, Weights & Biases)",
+            "model versioning", "model registry", "feature stores",
+            "data drift detection", "model monitoring in production",
+            "A/B testing for ML models", "shadow deployment", "canary deployment",
+            # Deployment
+            "model serialisation (ONNX, pickle, TorchScript)",
+            "serving (TensorFlow Serving, Triton, FastAPI)", "batch vs real-time inference",
+            "latency-throughput tradeoffs", "model quantisation", "pruning", "distillation",
+            # LLM-specific
+            "prompt engineering", "RAG (retrieval-augmented generation)",
+            "vector databases (Pinecone, Weaviate, FAISS)", "embedding models",
+            "LLM fine-tuning (LoRA, PEFT)", "hallucination mitigation",
+            "LLM evaluation (BERTScore, RAGAS)", "token context windows",
+        ],
+        "forbidden_resume_keywords": [
+            "react", "angular", "vue", "next.js", "tailwind",
+            "node.js", "express", "spring boot", "django REST framework",
+            "frontend", "css", "html", "figma", "mobile app",
+            "swift", "kotlin", "flutter", "react native",
+        ],
+        "context_override": (
+            "This is a Machine Learning & AI interview. Cover the full ML lifecycle: "
+            "problem framing, data preparation, feature engineering, model selection and evaluation, "
+            "production deployment, and monitoring. For senior roles, probe on MLOps maturity, "
+            "LLM engineering, and system design for ML (feature stores, serving infrastructure). "
+            "Demand technical depth — evaluation metric justification, tradeoff reasoning, "
+            "and real failure scenarios, not just algorithm definitions."
+        ),
+    },
+
+    "DevOps & Cloud": {
+        "aliases": ["devops", "cloud engineer", "platform engineer", "sre", "site reliability",
+                    "infrastructure engineer", "cloud architect", "devsecops"],
+        "mandatory_topics": [
+            # CI/CD
+            "CI/CD pipeline design (GitHub Actions, GitLab CI, Jenkins, CircleCI)",
+            "pipeline stages (build, test, security scan, deploy)",
+            "artifact management", "deployment strategies (blue-green, canary, rolling)",
+            "feature flags", "rollback strategies", "trunk-based development",
+            # Containers & orchestration
+            "Docker (images, layers, multi-stage builds, registry)",
+            "Kubernetes (pods, deployments, services, ingress, namespaces)",
+            "Kubernetes resource requests/limits", "HPA and VPA",
+            "Helm charts", "operators", "StatefulSets", "PersistentVolumes",
+            "service mesh (Istio, Linkerd)", "container security scanning",
+            # Infrastructure as Code
+            "Terraform (state management, modules, workspaces)",
+            "Ansible", "Pulumi", "CloudFormation / CDK",
+            "GitOps (ArgoCD, Flux)", "drift detection",
+            # Cloud platforms
+            "AWS (EC2, ECS/EKS, Lambda, S3, RDS, CloudFront, IAM, VPC, Route53)",
+            "Azure (AKS, App Service, Azure Functions, Blob Storage, AAD)",
+            "GCP (GKE, Cloud Run, Cloud Functions, BigQuery, IAM, VPC)",
+            "multi-cloud and hybrid cloud patterns",
+            "cloud cost optimisation (reserved instances, spot/preemptible, rightsizing)",
+            # Observability
+            "metrics (Prometheus, CloudWatch, Datadog)", "logging (ELK stack, Loki, CloudWatch Logs)",
+            "tracing (Jaeger, Zipkin, AWS X-Ray, OpenTelemetry)",
+            "alerting (PagerDuty, OpsGenie)", "SLOs, SLAs, SLIs, error budgets",
+            "on-call practices", "incident management (runbooks, postmortems)",
+            # Networking
+            "DNS", "load balancers (ALB, NLB, HAProxy)", "CDN",
+            "VPC design (subnets, NACLs, security groups)", "VPN and Direct Connect",
+            "service discovery", "network policies in Kubernetes",
+            # Security & compliance
+            "IAM least privilege", "secrets management (Vault, AWS Secrets Manager)",
+            "SAST/DAST in pipelines", "image vulnerability scanning (Trivy, Snyk)",
+            "CIS benchmarks", "SOC2/PCI compliance automation",
+            # Reliability
+            "chaos engineering", "fault injection", "disaster recovery",
+            "RTO and RPO", "backup strategies", "multi-region failover",
+        ],
+        "forbidden_resume_keywords": [
+            "react", "angular", "vue", "next.js", "tailwind", "figma",
+            "pandas", "sklearn", "tensorflow", "pytorch",
+            "mobile app", "swift", "kotlin", "flutter",
+            "SEO optimisation", "UI component library",
+        ],
+        "context_override": (
+            "This is a DevOps & Cloud interview. Cover CI/CD pipeline design, container orchestration "
+            "(Kubernetes internals and production operations), Infrastructure as Code (Terraform/GitOps), "
+            "cloud platform services (AWS/GCP/Azure), observability (metrics/logs/traces/SLOs), "
+            "networking, and cloud security. Probe for real operational experience: "
+            "incident response war stories, cost optimisation decisions, and reliability engineering "
+            "— not just tool enumerations."
+        ),
+    },
+
+    "Cybersecurity": {
+        "aliases": ["cybersecurity", "security engineer", "pen tester", "information security",
+                    "appsec", "application security", "cloud security", "devsecops engineer",
+                    "soc analyst", "threat intelligence"],
+        "mandatory_topics": [
+            # Fundamentals
+            "CIA triad (confidentiality, integrity, availability)",
+            "defence in depth", "principle of least privilege", "zero trust architecture",
+            "threat modelling (STRIDE, PASTA, attack trees)",
+            "risk assessment and risk scoring (CVSS)", "security controls taxonomy",
+            # Application security
+            "OWASP Top 10 (SQLi, XSS, SSRF, IDOR, broken auth, etc.)",
+            "input validation and output encoding", "parameterised queries",
+            "authentication flows (OAuth 2.0, OIDC, SAML)", "JWT security pitfalls",
+            "session management", "CSRF", "clickjacking", "security headers (CSP, HSTS)",
+            "API security (rate limiting, auth, mass assignment)",
+            "SAST and DAST", "software composition analysis (SCA)", "secret scanning",
+            # Network security
+            "TCP/IP fundamentals", "TLS/SSL (handshake, certificate chains, HSTS)",
+            "firewalls and WAFs", "IDS/IPS", "VPN and Zero Trust Network Access",
+            "DNS security (DNSSEC, DNS poisoning)", "DDoS mitigation",
+            "network segmentation and micro-segmentation",
+            # Penetration testing
+            "OWASP Testing Guide", "recon and OSINT", "exploitation frameworks (Metasploit)",
+            "web app pen testing (Burp Suite)", "privilege escalation techniques",
+            "post-exploitation and lateral movement", "reporting and severity classification",
+            # Cloud security
+            "IAM misconfiguration", "S3 bucket exposure", "AWS security best practices",
+            "cloud security posture management (CSPM)", "container security",
+            "secrets management (Vault, AWS Secrets Manager)", "CWPP",
+            # Incident response
+            "incident response lifecycle (preparation, detection, containment, eradication, recovery)",
+            "digital forensics basics", "log analysis and SIEM (Splunk, Microsoft Sentinel, Chronicle)",
+            "threat hunting", "IoCs and IoAs", "MITRE ATT&CK framework",
+            # Cryptography
+            "symmetric vs asymmetric encryption", "AES, RSA, ECC",
+            "hashing (SHA-256, bcrypt, argon2)", "PKI and certificate management",
+            "key management", "TLS configuration best practices",
+            # Compliance & governance
+            "GDPR", "SOC 2", "ISO 27001", "PCI-DSS", "HIPAA",
+            "security policies and standards", "vulnerability management lifecycle",
+        ],
+        "forbidden_resume_keywords": [
+            "react", "angular", "vue", "pandas", "sklearn",
+            "mobile app", "ui design", "figma", "photoshop",
+            "CSS animations", "frontend state management",
+        ],
+        "context_override": (
+            "This is a Cybersecurity interview. Cover application security (OWASP Top 10, "
+            "auth flows, API security), network security, penetration testing methodology, "
+            "cloud security, incident response, and cryptography fundamentals. "
+            "Probe for offensive AND defensive mindset: threat modelling, exploit chaining, "
+            "detection engineering, and security architecture decisions — not just tool familiarity."
+        ),
+    },
+
+    "UI/UX Design": {
+        "aliases": ["ui designer", "ux designer", "product designer", "interaction designer",
+                    "ux researcher", "design lead", "experience designer"],
+        "mandatory_topics": [
+            # Research methods
+            "user interviews", "contextual inquiry", "diary studies",
+            "surveys (quantitative vs qualitative)", "usability testing (moderated/unmoderated)",
+            "card sorting", "tree testing", "A/B testing for UX",
+            "affinity mapping", "persona development", "jobs-to-be-done framework",
+            # Information architecture & flows
+            "information architecture", "site maps", "user flows", "task flows",
+            "mental models", "navigation patterns", "progressive disclosure",
+            # Wireframing & prototyping
+            "low-fidelity wireframes", "high-fidelity mockups",
+            "interactive prototyping (Figma, Axure, ProtoPie)",
+            "design handoff (Figma Dev Mode, Zeplin)",
+            "micro-interactions and animation principles",
+            # Design systems
+            "design tokens", "component libraries", "atomic design",
+            "responsive and adaptive design", "platform guidelines (HIG, Material Design)",
+            "version control for design (Figma branching, Abstract)",
+            # Visual design
+            "typography hierarchy", "colour theory and accessible colour contrast (WCAG AA/AAA)",
+            "gestalt principles", "visual hierarchy and layout grids",
+            "icon design", "illustration style consistency",
+            # Accessibility
+            "WCAG 2.1 / 2.2 guidelines", "ARIA roles and labels",
+            "keyboard navigation design", "screen reader compatibility",
+            "colour blindness considerations", "inclusive design principles",
+            # Metrics & measurement
+            "usability metrics (task completion, error rate, time-on-task)",
+            "NPS and CSAT", "System Usability Scale (SUS)",
+            "funnel analysis", "heatmaps and session recordings",
+            "design iteration cycles", "OKRs tied to UX outcomes",
+            # Collaboration
+            "design critique facilitation", "stakeholder alignment",
+            "design sprints", "cross-functional collaboration with engineering",
+            "documenting design decisions and rationale",
+        ],
+        "forbidden_resume_keywords": [
+            "tensorflow", "docker", "kubernetes", "SQL queries",
+            "backend API design", "microservices", "CI/CD pipelines",
+            "server infrastructure", "network security", "penetration testing",
+        ],
+        "context_override": (
+            "This is a UI/UX Design interview. Cover the full design process from research "
+            "(user interviews, usability testing) through information architecture, wireframing, "
+            "high-fidelity prototyping, design systems, and accessibility. "
+            "Probe for research rigour, design decision justification, stakeholder communication, "
+            "and how the candidate measures design impact — not just tool proficiency."
+        ),
+    },
+
+    "Project Management": {
+        "aliases": ["project manager", "product manager", "scrum master", "agile coach",
+                    "program manager", "technical program manager", "delivery manager"],
+        "mandatory_topics": [
+            # Methodologies
+            "Agile (Scrum, Kanban, SAFe, LeSS)", "Waterfall and hybrid approaches",
+            "sprint planning", "backlog refinement", "sprint retrospectives",
+            "definition of done vs definition of ready", "velocity and story points",
+            "epic, story, task hierarchy", "release planning",
+            # Product management
+            "product vision and strategy", "product roadmapping (now/next/later, theme-based)",
+            "OKRs and KPI definition", "prioritisation frameworks (RICE, MoSCoW, Kano, WSJF)",
+            "product discovery", "opportunity sizing", "market research",
+            "customer journey mapping", "user story writing",
+            "go-to-market planning", "launch checklists",
+            # Stakeholder management
+            "stakeholder mapping", "RACI matrix", "executive communication",
+            "managing up vs managing down", "conflict resolution",
+            "requirements gathering and sign-off", "change management",
+            # Risk & delivery
+            "risk identification and RAID log", "risk mitigation strategies",
+            "dependency mapping", "critical path analysis",
+            "scope creep management", "escalation paths",
+            "delivery metrics (cycle time, lead time, throughput)",
+            # Technical program management
+            "technical debt management", "cross-team dependency management",
+            "technical roadmap alignment", "engineering capacity planning",
+            "incident retrospectives", "architecture decision records (ADRs)",
+            # Data & metrics
+            "funnel metrics", "retention metrics", "activation, engagement, churn",
+            "hypothesis-driven development", "experiment design",
+            "dashboard creation", "reporting to leadership",
+            # Tools
+            "Jira", "Linear", "Confluence", "Notion", "Asana",
+            "Miro / FigJam for workshops", "ProductBoard", "Amplitude / Mixpanel",
+        ],
+        "forbidden_resume_keywords": [
+            "react", "tensorflow", "docker", "SQL joins", "API development",
+            "frontend CSS", "kubernetes", "penetration testing",
+            "SIEM tools", "malware analysis",
+        ],
+        "context_override": (
+            "This is a Project/Product Management interview. Cover planning methodologies (Agile/Scrum), "
+            "prioritisation frameworks (RICE, MoSCoW, WSJF), stakeholder communication, risk management, "
+            "product discovery and roadmapping, delivery metrics, and data-driven decision making. "
+            "For PM roles, probe for customer empathy and impact measurement. "
+            "For TPM roles, probe for technical dependency management and engineering collaboration. "
+            "Demand specific examples — STAR method, not generic process descriptions."
+        ),
+    },
+}
+
+# Generic fallback for domains not explicitly configured
+_DEFAULT_DOMAIN_CONFIG = {
+    "mandatory_topics": [],
+    "forbidden_resume_keywords": [],
+    "context_override": "",
+}
+
+# =============================================================================
+# TASK 1: DOMAIN → ROLE MAPPING
+# Used to validate and synchronise selected_domain and target_role in session_state.
+# Always pass these together: st.session_state.selected_domain + st.session_state.target_role
+# =============================================================================
+DOMAIN_ROLES = {
+    "Software Development and Engineering": [
+        "Frontend Developer",
+        "Backend Developer",
+        "Full Stack Developer",
+        "Mobile App Developer",
+        "Game Developer",
+    ],
+    "Data Science and Analytics": [
+        "Data Scientist",
+        "Data Analyst",
+        "Machine Learning Engineer",
+    ],
+    "Cloud Computing and DevOps": [
+        "Cloud Architect",
+        "DevOps Engineer",
+        "Site Reliability Engineer",
+    ],
+    "Cybersecurity": [
+        "Security Analyst",
+        "Penetration Tester",
+    ],
+    "UI/UX Design": [
+        "UI Designer",
+        "UX Designer",
+    ],
+    "Project Management": [
+        "Project Manager",
+        "Product Manager",
+    ],
+}
+
+
+def get_valid_role_for_domain(domain: str, current_role: str = None) -> str:
+    """
+    Returns a valid role for the given domain.
+    If current_role is already valid for the domain, returns it unchanged.
+    Otherwise returns the first valid role for the domain.
+    Always call this when domain changes to keep selected_domain and target_role in sync.
+    """
+    roles = DOMAIN_ROLES.get(domain, [])
+    if not roles:
+        return current_role or ""
+    if current_role and current_role in roles:
+        return current_role
+    return roles[0]
+
+
+# =============================================================================
+# TASK 2: EXPANDED KEY_TOPICS_IN_SCOPE
+# Comprehensive interview topic bank per domain and role.
+# Structure: { "Domain": { "Role": ["topic1", "topic2", ...] } }
+# Compatible with existing generate_key_topics() and get_domain_config() logic.
+# =============================================================================
+KEY_TOPICS_IN_SCOPE = {
+    "Software Development and Engineering": {
+        "Frontend Developer": [
+            "HTML5 semantics and accessibility",
+            "CSS3 layouts: Flexbox and Grid",
+            "JavaScript ES6+ features (arrow functions, destructuring, spread/rest)",
+            "TypeScript fundamentals and type safety",
+            "DOM manipulation and event handling",
+            "Responsive and adaptive design",
+            "React hooks (useState, useEffect, useContext, useMemo, useCallback)",
+            "React component lifecycle and reconciliation",
+            "State management (Redux, Zustand, Recoil)",
+            "React Query / TanStack Query for async state",
+            "Next.js: SSR vs SSG vs ISR",
+            "API integration with Fetch and Axios",
+            "Frontend performance optimisation (Core Web Vitals, LCP, CLS, INP)",
+            "Code splitting and lazy loading",
+            "Bundle analysis and tree shaking (Webpack, Vite)",
+            "CSS-in-JS (styled-components, Emotion)",
+            "Tailwind CSS utility-first approach",
+            "Accessibility (WCAG 2.1, ARIA attributes, keyboard navigation)",
+            "Cross-browser compatibility and polyfills",
+            "Unit testing with Jest and React Testing Library",
+            "End-to-end testing with Cypress or Playwright",
+            "Web security basics (XSS, CSRF, CSP headers)",
+            "Browser storage (localStorage, sessionStorage, IndexedDB)",
+            "Micro-frontend architecture and module federation",
+            "Design systems and component libraries",
+            "Storybook for component documentation",
+            "Progressive Web Apps (PWA) and service workers",
+            "WebSockets and real-time UI updates",
+            "Internationalisation (i18n) and localisation",
+            "Monorepo tooling (Nx, Turborepo)",
+        ],
+        "Backend Developer": [
+            "REST API design principles (CRUD, statelessness, versioning)",
+            "GraphQL schema design, resolvers, and N+1 problem",
+            "gRPC and Protocol Buffers",
+            "Node.js event loop and async programming",
+            "Python (FastAPI, Django, Flask) backend patterns",
+            "Java Spring Boot and dependency injection",
+            "Go goroutines and channels",
+            "PostgreSQL indexing, query optimisation, EXPLAIN ANALYZE",
+            "MySQL transactions and ACID properties",
+            "MongoDB schema design and aggregation pipelines",
+            "Redis caching strategies (cache-aside, write-through, cache invalidation)",
+            "Database connection pooling and N+1 prevention",
+            "Microservices architecture and inter-service communication",
+            "Message queues (RabbitMQ, Kafka, AWS SQS)",
+            "Event-driven architecture and pub/sub patterns",
+            "Circuit breaker and bulkhead patterns",
+            "CAP theorem and eventual consistency",
+            "Horizontal vs vertical scaling",
+            "Load balancing and reverse proxy (Nginx)",
+            "Authentication (JWT, OAuth 2.0, OpenID Connect)",
+            "Role-based access control (RBAC) and ABAC",
+            "Input validation and OWASP Top 10 for APIs",
+            "Secrets management (Vault, AWS Secrets Manager)",
+            "Background jobs and task queues (Celery, BullMQ)",
+            "Unit testing and integration testing with mocking",
+            "Contract testing (Pact)",
+            "API rate limiting and throttling",
+            "Idempotency in distributed systems",
+            "Database migrations and schema evolution",
+            "OpenAPI / Swagger documentation",
+        ],
+        "Full Stack Developer": [
+            "Full request lifecycle: browser → frontend → API → database → response",
+            "React or Vue.js frontend framework internals",
+            "Next.js or Nuxt.js full-stack routing and data fetching",
+            "Node.js or Django/FastAPI backend API design",
+            "PostgreSQL and MongoDB data modelling",
+            "REST API and GraphQL API integration",
+            "JWT and session-based authentication",
+            "OAuth 2.0 social login flows",
+            "CORS configuration and security headers",
+            "State management (Redux, Zustand, Pinia)",
+            "Frontend performance (Core Web Vitals, lazy loading)",
+            "Backend performance (connection pooling, caching, async workers)",
+            "Docker containerisation for local development",
+            "CI/CD pipelines (GitHub Actions, GitLab CI)",
+            "Deployment to Vercel, Railway, AWS, or GCP",
+            "Environment variables and 12-factor app principles",
+            "WebSockets for real-time features",
+            "Serverless functions and edge computing",
+            "Unit, integration, and end-to-end testing across the stack",
+            "Database ORM usage (Prisma, Sequelize, SQLAlchemy)",
+            "API error handling and validation",
+            "Monorepo structure for shared frontend/backend code",
+            "TypeScript across frontend and backend",
+            "BFF (Backend For Frontend) pattern",
+            "Feature flags and A/B testing",
+            "Accessibility (WCAG) and SEO basics",
+            "Web security: XSS, CSRF, SQL injection prevention",
+            "Logging and error monitoring (Sentry, Datadog)",
+            "Agile development and sprint workflows",
+            "Code review practices and pull request workflows",
+        ],
+        "Mobile App Developer": [
+            "React Native architecture (bridge, JSI, Hermes engine)",
+            "Flutter widgets and Dart language fundamentals",
+            "Swift UIKit and SwiftUI for iOS",
+            "Kotlin Jetpack Compose for Android",
+            "Mobile navigation patterns (stack, tab, drawer)",
+            "State management in mobile (Redux, MobX, Provider, Riverpod)",
+            "Offline-first architecture and local data persistence (SQLite, Realm, MMKV)",
+            "Mobile networking (REST APIs, GraphQL, WebSockets)",
+            "Push notifications (FCM, APNs)",
+            "Deep linking and universal links",
+            "Authentication in mobile (biometrics, OAuth, Keychain/Keystore)",
+            "Mobile performance optimisation (FlatList, image caching, lazy rendering)",
+            "Mobile accessibility (VoiceOver, TalkBack)",
+            "App store submission and code signing (iOS and Android)",
+            "Over-the-air updates (CodePush, EAS Update)",
+            "Mobile testing (unit, integration, E2E with Detox or Maestro)",
+            "Mobile CI/CD (Fastlane, Bitrise, EAS Build)",
+            "Native modules and bridging to platform APIs",
+            "Responsive layouts for different screen sizes and orientations",
+            "Background processing and app lifecycle management",
+            "Camera, GPS, and sensor integration",
+            "Mobile security (certificate pinning, secure storage, jailbreak detection)",
+            "Analytics and crash reporting (Firebase, Mixpanel, Crashlytics)",
+            "Mobile design patterns (MVVM, Clean Architecture)",
+            "App size optimisation and ProGuard/R8 for Android",
+        ],
+        "Game Developer": [
+            "Unity engine architecture (GameObjects, Components, Scenes)",
+            "Unreal Engine Blueprints and C++ gameplay programming",
+            "Game loop design (update, render, fixed update)",
+            "Physics engine integration (Rigidbody, colliders, raycasting)",
+            "2D sprite animation and skeletal animation systems",
+            "3D mesh, material, and shader fundamentals",
+            "Shader programming (HLSL, GLSL, ShaderLab)",
+            "Lighting models (PBR, baked vs real-time lighting)",
+            "Camera systems (third-person, first-person, cinematic)",
+            "AI for games (finite state machines, behaviour trees, NavMesh pathfinding)",
+            "Multiplayer networking (authoritative server, client-side prediction, lag compensation)",
+            "Game data persistence (save systems, PlayerPrefs, serialisation)",
+            "Audio integration (FMOD, Wwise, Unity Audio)",
+            "UI/UX for games (HUD design, menu flows, accessibility)",
+            "Memory management and garbage collection in game engines",
+            "Performance profiling (frame time, draw calls, batching)",
+            "Level of Detail (LOD) and occlusion culling",
+            "Procedural content generation",
+            "Particle systems and VFX",
+            "Game design patterns (object pooling, observer, command)",
+            "Input systems (keyboard, controller, touch)",
+            "Asset pipeline and version control with large binary files (Git LFS)",
+            "Platform publishing (Steam, App Stores, console certification)",
+            "Monetisation mechanics (IAP, ads, battle pass)",
+            "Testing in games (unit tests for game logic, QA playtesting)",
+        ],
+    },
+
+    "Data Science and Analytics": {
+        "Data Scientist": [
+            "Exploratory data analysis (EDA) and data profiling",
+            "Data cleaning and missing value imputation",
+            "Feature engineering and feature selection",
+            "Pandas, NumPy, and SciPy for data manipulation",
+            "Linear regression and logistic regression",
+            "Decision trees, random forests, and gradient boosting (XGBoost, LightGBM)",
+            "Bias-variance tradeoff and regularisation (L1/L2, ElasticNet)",
+            "Cross-validation (k-fold, stratified, time-series split)",
+            "Model evaluation metrics (precision, recall, F1, ROC-AUC, RMSE, MAE)",
+            "Hypothesis testing (t-test, chi-squared, ANOVA)",
+            "A/B testing design and statistical significance",
+            "Bayesian reasoning and confidence intervals",
+            "SQL for analytical queries (window functions, CTEs, GROUP BY)",
+            "Time series forecasting (ARIMA, Prophet, SARIMA)",
+            "Clustering algorithms (k-means, DBSCAN, hierarchical)",
+            "Dimensionality reduction (PCA, t-SNE, UMAP)",
+            "Class imbalance handling (SMOTE, cost-sensitive learning)",
+            "Natural language processing basics (TF-IDF, word embeddings)",
+            "Data visualisation with Matplotlib, Seaborn, and Plotly",
+            "Dashboard design and data storytelling",
+            "Business communication of technical findings",
+            "Experiment design and causal inference",
+            "Data ethics and bias detection in models",
+            "ETL pipelines and data warehouse basics",
+            "Cloud-based data platforms (BigQuery, Redshift, Snowflake)",
+            "Jupyter notebooks and reproducible research practices",
+            "Model interpretability (SHAP, LIME, feature importance)",
+            "Deployment of models as APIs (Flask, FastAPI)",
+            "Version control for data science (DVC, MLflow)",
+            "Regulatory considerations (GDPR, data privacy in ML)",
+        ],
+        "Data Analyst": [
+            "SQL proficiency (joins, subqueries, window functions, CTEs)",
+            "Query optimisation and execution plans",
+            "Descriptive statistics (mean, median, mode, variance, standard deviation)",
+            "Data cleaning: handling nulls, duplicates, and outliers",
+            "Pandas for tabular data manipulation",
+            "Exploratory data analysis workflows",
+            "Data visualisation principles (chart selection, colour, labelling)",
+            "Tableau dashboard design and calculated fields",
+            "Power BI reports, DAX formulas, and data modelling",
+            "Looker and LookML basics",
+            "Google Sheets and Excel advanced formulas (VLOOKUP, pivot tables)",
+            "KPI definition and metric frameworks",
+            "Cohort analysis and retention metrics",
+            "Funnel analysis and conversion rate optimisation",
+            "A/B test result interpretation",
+            "Statistical significance and practical significance",
+            "Business intelligence and self-serve analytics culture",
+            "Data storytelling and executive presentations",
+            "ETL processes and data pipeline basics",
+            "Data warehouse concepts (star schema, OLAP, OLTP)",
+            "dbt for data transformation",
+            "Stakeholder requirements gathering for analytical projects",
+            "Data governance and data quality standards",
+            "Python scripting for data tasks (pandas, matplotlib)",
+            "Working with APIs to pull data",
+            "Time series trend analysis",
+            "Segmentation and customer analytics",
+            "Hypothesis formation and testing for business decisions",
+            "Reporting automation and scheduled reports",
+            "Data documentation and lineage tracking",
+        ],
+        "Machine Learning Engineer": [
+            "Supervised vs unsupervised vs reinforcement learning paradigms",
+            "Feature engineering, scaling, and encoding",
+            "Scikit-learn pipelines for reproducible ML workflows",
+            "Gradient boosting: XGBoost, LightGBM, CatBoost",
+            "Deep learning with PyTorch and TensorFlow",
+            "CNN architecture (convolution, pooling, stride)",
+            "RNN, LSTM, and GRU for sequential data",
+            "Transformer architecture and self-attention mechanism",
+            "Transfer learning and fine-tuning pre-trained models",
+            "BERT, GPT, and LLM fundamentals",
+            "Prompt engineering and RAG (retrieval-augmented generation)",
+            "Vector databases (Pinecone, Weaviate, FAISS, pgvector)",
+            "MLOps: experiment tracking with MLflow and Weights & Biases",
+            "ML pipelines: Kubeflow, SageMaker Pipelines, Vertex AI",
+            "Feature stores (Feast, Tecton)",
+            "Model versioning and model registry",
+            "Data drift and concept drift detection",
+            "Model monitoring in production (performance, latency, quality)",
+            "A/B testing and shadow deployment for ML models",
+            "Model serialisation (ONNX, TorchScript, pickle)",
+            "Model serving (TensorFlow Serving, Triton, FastAPI inference)",
+            "Batch vs real-time inference tradeoffs",
+            "Model quantisation, pruning, and distillation",
+            "GPU utilisation and distributed training (DDP, FSDP)",
+            "Hyperparameter tuning (Optuna, Ray Tune, Hyperopt)",
+            "LLM fine-tuning (LoRA, QLoRA, PEFT)",
+            "Responsible AI: fairness, explainability, and bias auditing",
+            "Data labelling workflows and annotation quality",
+            "Cloud ML platforms (AWS SageMaker, GCP Vertex AI, Azure ML)",
+            "Cost optimisation for ML workloads",
+        ],
+    },
+
+    "Cloud Computing and DevOps": {
+        "Cloud Architect": [
+            "Cloud service models: IaaS, PaaS, SaaS, FaaS",
+            "AWS core services: EC2, S3, RDS, Lambda, VPC, IAM, CloudFront",
+            "Azure core services: AKS, App Service, Azure Functions, Blob Storage, AAD",
+            "GCP core services: GKE, Cloud Run, BigQuery, Cloud Functions, IAM",
+            "Multi-cloud and hybrid cloud architectures",
+            "Cloud networking: VPC design, subnets, security groups, NACLs, peering",
+            "DNS management and Route 53 / Cloud DNS",
+            "Content delivery networks (CDN) and edge caching",
+            "Load balancing: ALB, NLB, Global Load Balancer",
+            "Auto-scaling groups and elasticity patterns",
+            "Serverless architecture design and cold start optimisation",
+            "Containerisation with Docker and orchestration with Kubernetes (EKS, GKE, AKS)",
+            "Infrastructure as Code: Terraform state management, modules, workspaces",
+            "AWS CloudFormation and CDK",
+            "GitOps workflows (ArgoCD, Flux)",
+            "Cloud cost optimisation (reserved instances, spot/preemptible, rightsizing)",
+            "Cloud storage options (object, block, file) and their tradeoffs",
+            "Database cloud services: RDS, DynamoDB, Firestore, Cloud Spanner",
+            "Data streaming and analytics (Kinesis, Pub/Sub, Dataflow, EMR)",
+            "Cloud security: IAM least privilege, KMS, Secrets Manager, CSPM",
+            "Disaster recovery: RTO, RPO, multi-region failover, backup strategies",
+            "Well-Architected Framework (reliability, security, performance, cost, ops)",
+            "Cloud migration strategies (6 Rs: rehost, replatform, refactor, etc.)",
+            "Cloud compliance and governance (SOC 2, ISO 27001, PCI-DSS)",
+            "Landing zone design and account/organisation structure",
+        ],
+        "DevOps Engineer": [
+            "CI/CD pipeline design (GitHub Actions, GitLab CI, Jenkins, CircleCI)",
+            "Pipeline stages: build, test, security scan, deploy",
+            "Deployment strategies: blue-green, canary, rolling, feature flags",
+            "Rollback strategies and release management",
+            "Trunk-based development and branching strategies",
+            "Docker: image layers, multi-stage builds, registry management",
+            "Kubernetes: pods, deployments, services, ingress, ConfigMaps, Secrets",
+            "Kubernetes resource requests/limits, HPA, and VPA",
+            "Helm charts for Kubernetes packaging",
+            "Service mesh (Istio, Linkerd) and mTLS",
+            "Terraform for infrastructure provisioning",
+            "Ansible for configuration management",
+            "GitOps with ArgoCD or Flux",
+            "AWS/GCP/Azure DevOps toolchain integration",
+            "Observability: Prometheus metrics, Grafana dashboards",
+            "Centralized logging: ELK stack, Loki, CloudWatch Logs",
+            "Distributed tracing: Jaeger, Zipkin, OpenTelemetry",
+            "Alerting and on-call: PagerDuty, OpsGenie, SLOs, SLAs, error budgets",
+            "Secrets management: HashiCorp Vault, AWS Secrets Manager",
+            "SAST/DAST and vulnerability scanning in pipelines (Trivy, Snyk, Sonar)",
+            "Container security and CIS benchmarks",
+            "Network policies and Kubernetes security contexts",
+            "Chaos engineering and fault injection (Chaos Monkey, LitmusChaos)",
+            "Incident management: runbooks, postmortems, blameless culture",
+            "Developer experience: internal developer platforms, golden paths",
+            "Platform engineering and self-service infrastructure",
+        ],
+        "Site Reliability Engineer": [
+            "SLO, SLA, SLI definitions and error budget calculation",
+            "Toil reduction and automation philosophy",
+            "Incident management: response, escalation, and postmortems",
+            "On-call runbook creation and maintenance",
+            "Capacity planning and demand forecasting",
+            "Observability stack: metrics (Prometheus), logs (ELK/Loki), traces (Jaeger)",
+            "Alerting strategy: avoiding alert fatigue, symptom-based alerts",
+            "Distributed systems failure modes (network partition, split brain, cascading failures)",
+            "Chaos engineering and game days",
+            "Kubernetes cluster operations and node management",
+            "Service mesh for traffic management and canary analysis",
+            "Blue-green and canary deployments with automated rollback",
+            "Database reliability: replication, failover, backup/restore testing",
+            "Load testing and performance benchmarking (k6, Locust, JMeter)",
+            "Cache reliability and Redis/Memcached HA patterns",
+            "CDN configuration and origin shield strategies",
+            "DDoS mitigation and rate limiting at the infrastructure level",
+            "Secret rotation and certificate lifecycle management",
+            "Cloud cost attribution and chargeback models",
+            "Multi-region active-active and active-passive architectures",
+            "Terraform and GitOps for infrastructure changes",
+            "Change management and progressive delivery",
+            "Engineering reliability into system design (redundancy, bulkheads)",
+            "Communication of reliability metrics to product and leadership",
+            "Developer enablement and reliability culture building",
+        ],
+    },
+
+    "Cybersecurity": {
+        "Security Analyst": [
+            "CIA triad: confidentiality, integrity, availability",
+            "Defence in depth and zero trust architecture principles",
+            "OWASP Top 10 vulnerabilities and mitigations",
+            "Threat modelling (STRIDE, PASTA, attack trees)",
+            "Risk assessment and CVSS scoring",
+            "SIEM tools: Splunk, Microsoft Sentinel, Chronicle",
+            "Log analysis: identifying IOCs and IOAs",
+            "MITRE ATT&CK framework: tactics, techniques, procedures",
+            "Threat intelligence: feeds, indicators, and enrichment",
+            "Incident response lifecycle: preparation, detection, containment, eradication, recovery",
+            "Digital forensics basics: disk imaging, memory forensics, chain of custody",
+            "Network traffic analysis (Wireshark, Zeek, Suricata)",
+            "Endpoint detection and response (EDR) tools (CrowdStrike, SentinelOne)",
+            "Vulnerability management lifecycle: scan, prioritise, remediate, verify",
+            "Patch management processes",
+            "Authentication security: MFA, OAuth 2.0, SAML, JWT pitfalls",
+            "Cloud security: IAM misconfiguration, S3 exposure, CSPM tools",
+            "Container security scanning (Trivy, Snyk, Aqua Security)",
+            "Secrets management (Vault, AWS Secrets Manager)",
+            "Security awareness and phishing simulation",
+            "Compliance frameworks: GDPR, SOC 2, ISO 27001, PCI-DSS",
+            "Security policies, procedures, and governance",
+            "SOAR platforms and playbook automation",
+            "Cryptography basics: AES, RSA, TLS/SSL, PKI",
+            "Secure SDLC integration and DevSecOps practices",
+        ],
+        "Penetration Tester": [
+            "Penetration testing methodology (planning, recon, scanning, exploitation, reporting)",
+            "OWASP Testing Guide for web applications",
+            "Recon and OSINT techniques (Shodan, theHarvester, Maltego)",
+            "Network scanning with Nmap (service enumeration, OS detection)",
+            "Vulnerability scanning (Nessus, OpenVAS)",
+            "Web application testing with Burp Suite (intercept, scanner, intruder)",
+            "SQL injection: manual and automated exploitation",
+            "Cross-site scripting (XSS): reflected, stored, DOM-based",
+            "SSRF, IDOR, and business logic flaws",
+            "Authentication bypass and session management attacks",
+            "Exploitation frameworks: Metasploit, ExploitDB",
+            "Privilege escalation techniques: Linux (SUID, cron, sudo) and Windows (token impersonation, registry)",
+            "Post-exploitation: persistence, lateral movement, pivoting",
+            "Active Directory attacks: Kerberoasting, Pass-the-Hash, BloodHound",
+            "API penetration testing (REST, GraphQL, broken object level auth)",
+            "Cloud penetration testing (AWS, GCP, Azure misconfigurations)",
+            "Mobile app penetration testing (SSL pinning bypass, insecure storage)",
+            "Wireless security testing (WPA2 cracking, rogue AP)",
+            "Social engineering and phishing campaign design",
+            "Buffer overflow and memory corruption basics",
+            "Reporting: severity classification, CVSS scoring, executive summary writing",
+            "Red team vs blue team vs purple team concepts",
+            "Bug bounty platforms and responsible disclosure",
+            "Legal and ethical considerations in penetration testing",
+            "Defensive mindset: hardening recommendations after assessment",
+        ],
+    },
+
+    "UI/UX Design": {
+        "UI Designer": [
+            "Visual design principles: hierarchy, contrast, alignment, proximity, repetition",
+            "Typography: typeface selection, scale, line height, readability",
+            "Colour theory: hue, saturation, value, accessible contrast (WCAG AA/AAA)",
+            "Grid systems and layout composition",
+            "Iconography: consistency, clarity, and scalability",
+            "Illustration style definition and usage guidelines",
+            "Figma: components, variants, auto-layout, design tokens",
+            "Design system creation: component libraries and token architecture",
+            "Atomic design methodology (atoms, molecules, organisms)",
+            "Responsive and adaptive design: breakpoints, fluid grids",
+            "Platform-specific guidelines: iOS HIG and Material Design 3",
+            "Interactive prototyping in Figma (smart animate, overlays)",
+            "Micro-interactions and animation principles (easing, duration, feedback)",
+            "Design handoff: Figma Dev Mode, Zeplin, annotated specs",
+            "Version control for design (Figma branching, Abstract)",
+            "Dark mode and theme support in design systems",
+            "Accessibility in UI: touch target size, colour contrast, motion sensitivity",
+            "ARIA roles and semantic HTML from a design perspective",
+            "High-fidelity mockup production workflow",
+            "Design critique facilitation and feedback incorporation",
+            "Cross-functional collaboration with developers and product managers",
+            "Motion design and after-effects basics for UI transitions",
+            "Brand consistency across digital products",
+            "Measuring design quality: visual QA and pixel-perfection standards",
+            "Design documentation and decision rationale recording",
+        ],
+        "UX Designer": [
+            "User research methods: interviews, contextual inquiry, diary studies, surveys",
+            "Research synthesis: affinity mapping, thematic analysis, insight generation",
+            "Persona development and jobs-to-be-done framework",
+            "Customer journey mapping and service blueprinting",
+            "Information architecture: site maps, card sorting, tree testing",
+            "User flows, task flows, and decision trees",
+            "Mental models and progressive disclosure",
+            "Low-fidelity wireframing and rapid sketching",
+            "High-fidelity mockups and interactive prototyping (Figma, ProtoPie, Axure)",
+            "Usability testing: moderated and unmoderated, think-aloud protocol",
+            "A/B testing for UX decisions",
+            "Heuristic evaluation (Nielsen's 10 heuristics)",
+            "Accessibility: WCAG 2.1/2.2, inclusive design, keyboard navigation",
+            "System Usability Scale (SUS) and usability metrics",
+            "NPS, CSAT, task completion rate, and error rate measurement",
+            "Funnel analysis and heatmaps (Hotjar, FullStory)",
+            "Design sprints and rapid ideation workshops",
+            "Stakeholder alignment and design strategy communication",
+            "OKR-tied UX outcomes and design impact measurement",
+            "Design systems usage from a UX consistency perspective",
+            "Responsive design considerations for UX flows",
+            "Mobile UX patterns (bottom navigation, gestures, thumb zones)",
+            "Ethical design: dark patterns, consent, and privacy by design",
+            "Cross-cultural UX and localisation considerations",
+            "Continuous discovery and product-led growth thinking",
+        ],
+    },
+
+    "Project Management": {
+        "Project Manager": [
+            "Agile frameworks: Scrum, Kanban, SAFe, LeSS",
+            "Waterfall and hybrid project management approaches",
+            "Sprint planning, backlog refinement, and sprint retrospectives",
+            "Definition of Done vs Definition of Ready",
+            "Velocity, story points, and capacity planning",
+            "Epic, story, and task hierarchy",
+            "Release planning and roadmap management",
+            "Risk identification and RAID log management",
+            "Risk mitigation strategies and contingency planning",
+            "Dependency mapping and critical path analysis",
+            "Scope creep management and change control",
+            "Stakeholder mapping and stakeholder communication plans",
+            "RACI matrix and accountability frameworks",
+            "Managing up: executive communication and status reporting",
+            "Conflict resolution and team facilitation",
+            "Requirements gathering and sign-off process",
+            "Delivery metrics: cycle time, lead time, throughput, burndown",
+            "Budget management and earned value analysis",
+            "Cross-team dependency management",
+            "Technical debt management and negotiation with engineering",
+            "Incident retrospectives and process improvement",
+            "Tools: Jira, Confluence, Linear, Asana, Notion",
+            "Miro / FigJam for workshops and planning sessions",
+            "Escalation paths and decision-making frameworks",
+            "Agile transformation and coaching teams",
+        ],
+        "Product Manager": [
+            "Product vision and strategy definition",
+            "Product roadmapping: now/next/later, theme-based roadmaps",
+            "OKR definition and product KPI frameworks",
+            "Prioritisation frameworks: RICE, MoSCoW, Kano, WSJF",
+            "Product discovery: user interviews, problem validation, opportunity sizing",
+            "Market research and competitive analysis",
+            "Customer journey mapping and pain point identification",
+            "User story writing (as a user, I want... so that...)",
+            "Acceptance criteria and definition of done",
+            "Go-to-market planning and launch checklists",
+            "Hypothesis-driven development and experiment design",
+            "A/B testing and feature flag rollouts",
+            "Funnel metrics: activation, engagement, retention, churn",
+            "NPS, CSAT, and product analytics (Amplitude, Mixpanel)",
+            "Dashboard creation and data-driven decision making",
+            "Working with engineering: technical feasibility and effort estimation",
+            "Working with design: UX research integration and design feedback",
+            "Stakeholder management and executive buy-in",
+            "Product-led growth (PLG) principles",
+            "Platform vs product thinking",
+            "Agile ceremonies as product manager (sprint planning, review, retro)",
+            "Business model understanding: revenue, margins, unit economics",
+            "Regulatory and compliance considerations for product decisions",
+            "Technical literacy: APIs, databases, system architecture basics",
+            "ProductBoard and roadmap communication tools",
+        ],
+    },
+}
+
+
+def get_domain_config(domain: str) -> dict:
+    """Return domain config by exact name or alias match."""
+    if domain in DOMAIN_AUTHORITY_CONFIG:
+        return DOMAIN_AUTHORITY_CONFIG[domain]
+    domain_lower = domain.lower()
+    for key, cfg in DOMAIN_AUTHORITY_CONFIG.items():
+        if any(alias in domain_lower for alias in cfg.get("aliases", [])):
+            return cfg
+    return _DEFAULT_DOMAIN_CONFIG
+
+
+def generate_key_topics(resume_context: dict, domain_config: dict, selected_role: str) -> list:
+    """
+    Generate a ranked, deduplicated list of up to 10 key topics in scope for the
+    interview, combining three sources in priority order:
+
+        1. Resume technologies  (most specific to the candidate)
+        2. Resume skills        (secondary candidate signal)
+        3. Domain mandatory_topics (domain-level fundamentals, fill remaining slots)
+
+    Parameters
+    ----------
+    resume_context : dict
+        Parsed resume data with keys: "technologies", "skills", "projects", "experience".
+        May be None or empty — function degrades gracefully to domain topics only.
+    domain_config : dict
+        Output of get_domain_config() for the selected domain.
+    selected_role : str
+        The sub-role chosen by the user (e.g. "Frontend Developer", "ML Engineer").
+        Used as a tiebreaker to surface more relevant domain topics when the resume
+        is sparse.
+
+    Returns
+    -------
+    list[str]
+        Between 1 and 10 topic strings, never empty.
+    """
+    MAX_TOPICS = 10
+
+    # ── Normalise inputs ──────────────────────────────────────────────────────
+    rc = resume_context or {}
+    domain_mandatory = domain_config.get("mandatory_topics", [])
+    forbidden = [kw.lower() for kw in domain_config.get("forbidden_resume_keywords", [])]
+
+    def _clean(items):
+        """Deduplicate, strip empties, remove items that are forbidden in this domain."""
+        seen = set()
+        out = []
+        for item in items:
+            norm = item.strip()
+            if not norm:
+                continue
+            # Drop resume items that conflict with the selected domain
+            if any(f in norm.lower() for f in forbidden):
+                continue
+            key = norm.lower()
+            if key not in seen:
+                seen.add(key)
+                out.append(norm)
+        return out
+
+    # ── Source 1: resume technologies ────────────────────────────────────────
+    resume_techs = _clean(rc.get("technologies", []))
+
+    # ── Source 2: resume skills ───────────────────────────────────────────────
+    # Exclude anything already captured from technologies
+    tech_keys = {t.lower() for t in resume_techs}
+    resume_skills = _clean(
+        [s for s in rc.get("skills", []) if s.strip().lower() not in tech_keys]
+    )
+
+    # ── Source 3: domain mandatory topics ────────────────────────────────────
+    # Prioritise mandatory topics whose text overlaps with the selected role name,
+    # so a "Frontend Developer" sees React/CSS before obscure backend topics.
+    role_lower = selected_role.lower()
+    role_keywords = set(role_lower.replace("-", " ").split())
+
+    def _role_relevance(topic: str) -> int:
+        """Higher = more relevant to the selected role."""
+        t_lower = topic.lower()
+        return sum(1 for kw in role_keywords if kw in t_lower)
+
+    already_seen = {t.lower() for t in resume_techs + resume_skills}
+    domain_topics_filtered = [
+        t for t in domain_mandatory if t.strip().lower() not in already_seen
+    ]
+    domain_topics_sorted = sorted(
+        domain_topics_filtered,
+        key=_role_relevance,
+        reverse=True
+    )
+
+    # ── Merge in priority order ───────────────────────────────────────────────
+    combined = resume_techs[:MAX_TOPICS]
+    remaining = MAX_TOPICS - len(combined)
+
+    if remaining > 0:
+        combined += resume_skills[:remaining]
+        remaining = MAX_TOPICS - len(combined)
+
+    if remaining > 0:
+        combined += domain_topics_sorted[:remaining]
+
+    # ── Guarantee non-empty list ──────────────────────────────────────────────
+    if not combined:
+        combined = domain_mandatory[:MAX_TOPICS] or [selected_role + " fundamentals"]
+
+    return combined[:MAX_TOPICS]
+
+
+def filter_resume_for_domain(resume_context: dict, selected_domain: str) -> dict:
+    """
+    DOMAIN AUTHORITY LAYER — Core Function.
+
+    Strips resume skills/technologies that are IRRELEVANT to the selected domain
+    and flags that domain override is active. This prevents a Full Stack resume
+    from contaminating a Data Analyst interview prompt.
+
+    Returns a modified resume_context dict safe to pass to question generators.
+    """
+    cfg = get_domain_config(selected_domain)
+    forbidden = [kw.lower() for kw in cfg.get("forbidden_resume_keywords", [])]
+
+    if not forbidden:
+        # No filtering needed for this domain
+        return resume_context
+
+    def clean_list(items: list) -> list:
+        cleaned = []
+        for item in items:
+            item_lower = item.lower()
+            if not any(f in item_lower for f in forbidden):
+                cleaned.append(item)
+        return cleaned
+
+    filtered = {
+        "skills": clean_list(resume_context.get("skills", [])),
+        "technologies": clean_list(resume_context.get("technologies", [])),
+        # Keep projects/experience but append a domain caveat so LLM understands the interview scope
+        "projects": resume_context.get("projects", []),
+        "experience": resume_context.get("experience", []),
+        "_domain_override": True,
+        "_domain_name": selected_domain,
+    }
+
+    # If filtering removed everything, add a note so LLM doesn't get empty context
+    if not filtered["skills"]:
+        filtered["skills"] = [f"Candidate background may differ from {selected_domain} domain"]
+    if not filtered["technologies"]:
+        filtered["technologies"] = [f"Domain: {selected_domain}"]
+
+    return filtered
+
+
+def build_domain_authority_block(selected_domain: str, selected_role: str) -> str:
+    """
+    Returns a strong domain-authority instruction block to prepend to ALL
+    question-generation prompts. Forces LLM to stay domain-aligned regardless
+    of resume content.
+    """
+    cfg = get_domain_config(selected_domain)
+    override = cfg.get("context_override", "")
+    mandatory = cfg.get("mandatory_topics", [])
+
+    block = f"""
+⚠️ DOMAIN AUTHORITY OVERRIDE — HIGHEST PRIORITY ⚠️
+The candidate has SELECTED to be interviewed as: {selected_role} in {selected_domain}.
+Even if the resume shows different experience, ALL questions MUST be about {selected_domain}.
+{override}
+
+MANDATORY TOPIC POOL (draw from these for every question):
+{', '.join(mandatory) if mandatory else selected_domain + ' core concepts'}
+
+STRICT RULE: Do NOT ask about technologies or concepts outside {selected_domain}.
+If resume content conflicts with the selected domain, IGNORE the resume content.
+"""
+    return block.strip()
+
+
+# =============================================================================
+# ARCHITECTURAL FIX 2: STRUCTURED DIFFICULTY ENFORCER
+# =============================================================================
+# Problem: Easy/Medium/Hard produce stylistically different questions but not
+# structurally different ones. They all look similar in depth.
+# Solution: Define a strict question-type contract per difficulty level, enforced
+# at the prompt level with explicit templates and forbidden patterns.
+
+# =============================================================================
+# TEXT-INTERVIEW-OPTIMISED DIFFICULTY CONTRACTS
+# =============================================================================
+# Core design principle: every question must be answerable in 3-8 structured
+# paragraphs of text. Hard is senior-level but scoped to ONE focused challenge.
+# No whiteboard mega-design prompts. No combining scaling + tradeoff + failure
+# + architecture in a single question. One core challenge per question.
+# =============================================================================
+
+DIFFICULTY_CONTRACTS = {
+    "Easy": {
+        # ── What it tests ──────────────────────────────────────────────────────
+        "label": "Concept Clarity",
+        "description": (
+            "Concept clarity questions only. The candidate explains WHAT something is, "
+            "WHY it exists, and gives a grounded real-world example. "
+            "No architecture, no scaling, no tradeoffs, no production scenarios."
+        ),
+        "answer_scope": "3-5 paragraphs",
+
+        # ── Question structural templates ──────────────────────────────────────
+        # LLM must pick ONE of these patterns and fill in the domain-specific topic.
+        # Templates are written at the question-generation level — they set structure,
+        # not just tone.
+        "question_templates": [
+            "What is [concept] and why does it exist? Give a concrete example of where you would use it.",
+            "Explain the difference between [concept A] and [concept B]. When would you choose one over the other?",
+            "Walk me through how [concept] works at a high level. What problem does it solve?",
+            "What are the core properties or guarantees of [concept]? Why do those properties matter in practice?",
+            "Describe a situation where [concept] would be the right tool and one where it would be the wrong choice.",
+        ],
+
+        # ── Hard constraints — these must NEVER appear in Easy questions ────────
+        "forbidden_patterns": [
+            "design a system", "design an architecture", "at scale", "1 million",
+            "production outage", "failure scenario", "optimize for latency",
+            "handle 10x", "migrate from", "distributed", "multi-region",
+            "zero downtime", "fault tolerance", "SLA", "tradeoff between",
+            "compare and contrast in a production context",
+        ],
+
+        # ── Scoring calibration ────────────────────────────────────────────────
+        "scoring_note": (
+            "Award full marks for a clear, correct definition with one real-world example. "
+            "Do NOT penalise for missing implementation detail — that belongs to Medium/Hard. "
+            "Deduct marks for wrong definitions or examples that show misunderstanding."
+        ),
+        "followup_allowed": False,
+        "cognitive_load": "LOW",
+        "cognitive_load_detail": "Definition → Example → One simple comparison. No design decisions.",
+
+        # ── Fallback questions (used when LLM fails) ──────────────────────────
+        "fallback_questions": [
+            "What is [topic] and why is it important in {domain}?",
+            "Explain the difference between two core concepts in {domain} that are often confused.",
+            "Give an example of when you would use [concept] in a real project.",
+        ],
+    },
+
+    "Medium": {
+        # ── What it tests ──────────────────────────────────────────────────────
+        "label": "Scenario Reasoning",
+        "description": (
+            "Scenario-based questions with ONE practical constraint or decision point. "
+            "The candidate must describe their approach, make one explicit decision or tradeoff, "
+            "and briefly justify it. No multi-layer system design. No combined scaling + failure + architecture."
+        ),
+        "answer_scope": "5-6 paragraphs",
+
+        # ── Question structural templates ──────────────────────────────────────
+        "question_templates": [
+            "You're implementing [feature/component] for a small production service. "
+            "Walk through your approach and explain the ONE key decision you'd make and why.",
+
+            "Your team is choosing between [option A] and [option B] for [use case]. "
+            "What factors would you evaluate, and which would you recommend for this context?",
+
+            "You've been asked to add [capability] to an existing codebase without breaking current behaviour. "
+            "Describe your implementation strategy and one challenge you'd anticipate.",
+
+            "A junior engineer on your team is confused about when to use [concept]. "
+            "How would you explain it, and what example would you use to make it concrete?",
+
+            "You notice [specific problem/smell] in a codebase you've just joined. "
+            "What's your diagnosis, and what's the first concrete step you'd take to address it?",
+        ],
+
+        # ── Hard constraints ───────────────────────────────────────────────────
+        "forbidden_patterns": [
+            "design a system from scratch", "handle 1 million concurrent users",
+            "multi-region active-active", "full microservices migration",
+            "design the entire architecture", "production outage at peak traffic",
+            "compare all possible approaches", "list every tradeoff",
+        ],
+
+        # ── Scoring calibration ────────────────────────────────────────────────
+        "scoring_note": (
+            "Award high marks for scenario framing + one clear decision + concrete justification. "
+            "Penalise answers that stay purely definitional (no scenario engagement) or that jump to "
+            "full system design without scoping to the constraint given. "
+            "A good Medium answer reads like a thoughtful Slack message from a mid-level engineer."
+        ),
+        "followup_allowed": True,
+        "cognitive_load": "MEDIUM",
+        "cognitive_load_detail": "Scenario → ONE decision → Justification → One risk or alternative considered.",
+
+        "fallback_questions": [
+            "Describe a specific implementation challenge you faced with {domain} and how you resolved it.",
+            "How would you approach adding [feature] to an existing {role} project without breaking existing behaviour?",
+            "A teammate proposes using [technology] for [use case]. What questions would you ask before agreeing?",
+        ],
+    },
+
+    "Hard": {
+        # ── What it tests ──────────────────────────────────────────────────────
+        "label": "Focused Technical Depth",
+        "description": (
+            "Deep technical reasoning on ONE focused high-impact challenge. "
+            "Pick EXACTLY ONE of: tradeoff analysis, failure handling, or optimisation under constraint. "
+            "Do NOT combine all three in one question. "
+            "The candidate must reason at a senior level but the question must remain "
+            "text-answerable in 6-8 paragraphs — no whiteboard, no full system diagram."
+        ),
+        "answer_scope": "6-8 paragraphs",
+
+        # ── Question structural templates (one per challenge type) ─────────────
+        # Each template is intentionally NARROW — one challenge, one decision axis.
+        "question_templates": [
+            # Tradeoff Analysis (one axis only)
+            "You need to choose between [approach A] and [approach B] for [specific use case]. "
+            "Both are technically valid. Walk through your decision framework: what data or signals "
+            "would drive your choice, and what would you accept as a known limitation of your decision?",
+
+            # Failure Handling (one failure mode only)
+            "Your [component/service] starts returning elevated error rates under normal load — "
+            "no obvious upstream failures. Walk through your diagnostic process step by step: "
+            "what would you check first, what signals would you look for, and how would you isolate the cause?",
+
+            # Optimisation under a single constraint
+            "You're asked to reduce [specific metric: latency / cost / memory] for [component] "
+            "by 40% without changing its external interface. What's your investigation process, "
+            "what are the two or three highest-leverage changes you'd consider, and what would you measure to validate success?",
+
+            # Edge case / correctness challenge
+            "Describe a non-obvious edge case or failure mode in [concept/system component] "
+            "that a developer might miss during implementation. How would you detect it, "
+            "handle it gracefully, and prevent it from recurring?",
+
+            # Depth probe on a specific technical decision
+            "You've used [technology/pattern] in production. What is the single most important "
+            "limitation or risk of that choice that most engineers underestimate? "
+            "How did you mitigate it, or how would you mitigate it if given the chance?",
+        ],
+
+        # ── Hard constraints — what must NEVER appear in Hard questions ─────────
+        "forbidden_patterns": [
+            # These turn a Hard question into an unanswerable whiteboard session
+            "design a complete system", "design the entire architecture",
+            "design and implement X from scratch handling Y million users",
+            "walk through every layer of the stack",
+            "describe all possible failure modes", "list every tradeoff",
+            "design for global scale with multi-region active-active",
+            "design + implement + monitor + scale + secure",
+            # Scope combiners — pick ONE axis, not all
+            "tradeoff AND failure AND scaling AND security",
+            "compare all alternatives AND handle failures AND optimize",
+        ],
+
+        # ── Scoring calibration ────────────────────────────────────────────────
+        "scoring_note": (
+            "Award 8-10 for answers that: isolate the core challenge clearly, reason with technical specifics "
+            "(not just buzzwords), make a justified decision, and acknowledge one concrete risk or edge case. "
+            "Award 5-7 for correct but high-level answers that skip quantification or justification. "
+            "Award 0-4 for answers that treat the question like an Easy/Medium or give purely theoretical responses. "
+            "A strong Hard answer reads like a well-structured Slack thread from a senior engineer explaining "
+            "a decision to their team — not a conference talk or architecture document."
+        ),
+        "followup_allowed": True,
+        "cognitive_load": "HIGH",
+        "cognitive_load_detail": (
+            "ONE challenge axis → Reasoning framework → Technical specifics → Justified decision → "
+            "ONE edge case or risk. Answerable in text. No diagram needed."
+        ),
+
+        "fallback_questions": [
+            "Describe the most counterintuitive technical tradeoff you've encountered in {domain}. "
+            "What made it hard, and how did you ultimately decide?",
+            "Walk through how you would diagnose an unexpected performance regression "
+            "in a {domain} system you own. What would you check and in what order?",
+            "What is the single most dangerous assumption developers make when using "
+            "[core technology in {domain}], and how would you guard against it?",
+        ],
+    },
+}
+
+
+def get_difficulty_instruction_block(difficulty: str) -> str:
+    """
+    Returns a structured, text-interview-optimised difficulty instruction block.
+
+    This block is injected into EVERY question-generation prompt. It enforces:
+    - The correct question TYPE (not just tone)
+    - Structural templates the LLM must follow
+    - Hard forbidden patterns that prevent mega system-design questions
+    - Scope reminders so Hard questions stay text-answerable (6-8 paragraphs)
+    """
+    contract = DIFFICULTY_CONTRACTS.get(difficulty, DIFFICULTY_CONTRACTS["Medium"])
+
+    templates = "\n".join(f"  TEMPLATE {i+1}: {t}" for i, t in enumerate(contract["question_templates"]))
+    forbidden = contract.get("forbidden_patterns", [])
+    forbidden_str = (
+        "\n⛔ THESE PATTERNS ARE FORBIDDEN — never generate questions that contain:\n"
+        + "\n".join(f"  - {p}" for p in forbidden)
+        if forbidden else ""
+    )
+
+    scope_reminder = ""
+    if difficulty == "Hard":
+        scope_reminder = """
+⚠️  TEXT-INTERVIEW SCOPE RULE FOR HARD:
+The question must be answerable in 6-8 paragraphs of text.
+Pick EXACTLY ONE challenge axis: tradeoff OR failure handling OR optimisation OR edge case.
+Do NOT combine multiple axes (e.g. "design + scale + handle failures + secure" = INVALID).
+A well-formed Hard question targets one decision, one failure mode, or one constraint.
+"""
+
+    block = f"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DIFFICULTY CONTRACT: {difficulty.upper()} — {contract["label"]}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+What this level tests: {contract["description"]}
+
+Cognitive load: {contract["cognitive_load"]} — {contract["cognitive_load_detail"]}
+Expected answer scope: {contract["answer_scope"]}
+
+STRUCTURAL TEMPLATES — choose the ONE template that best fits the topic:
+{templates}
+{forbidden_str}
+{scope_reminder}
+Scoring context: {contract["scoring_note"]}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+    return block.strip()
+
+
+# =============================================================================
+# ARCHITECTURAL FIX 3: SMART ESCALATION ENGINE
+# =============================================================================
+# Problem: Escalation layer doesn't increase dynamically, weakness detection is
+# keyword-based, and Hard mode doesn't increase cognitive pressure per follow-up.
+# Solution: Layer-based escalation map with LLM-scored weakness analysis that
+# selects strategy from a deterministic mapping of score + answer quality signals.
+
+ESCALATION_LAYER_MAP = {
+    1: {
+        "name": "Clarification",
+        "instruction": "Ask the candidate to clarify or expand on a specific part of their answer that was vague or ambiguous.",
+        "trigger": "Used when the answer lacks depth or contains unclear statements.",
+        "cognitive_pressure": "LOW",
+    },
+    2: {
+        "name": "Metrics",
+        "instruction": "Ask the candidate to justify their answer with specific numbers, benchmarks, or measurable outcomes. Push for concrete data.",
+        "trigger": "Used when the answer is conceptually correct but lacks evidence or quantification.",
+        "cognitive_pressure": "MEDIUM",
+    },
+    3: {
+        "name": "Tradeoff",
+        "instruction": "Challenge the candidate with a direct tradeoff: their approach vs. an alternative. Ask them to defend their choice with clear pros/cons.",
+        "trigger": "Used when no tradeoffs were mentioned or the answer seems too one-sided.",
+        "cognitive_pressure": "MEDIUM-HIGH",
+    },
+    4: {
+        "name": "Scalability",
+        "instruction": "Inject a scale constraint (10x traffic, 100x data volume, global users) and ask how their approach holds up. Push for architectural changes.",
+        "trigger": "Used after tradeoffs are discussed or to pressure-test their design thinking.",
+        "cognitive_pressure": "HIGH",
+    },
+    5: {
+        "name": "Failure Simulation",
+        "instruction": "Simulate a production failure related to their approach. Describe a realistic incident and ask them to diagnose, mitigate, and prevent it.",
+        "trigger": "Maximum pressure — only at layer 5. Tests crisis thinking and system ownership.",
+        "cognitive_pressure": "MAXIMUM",
+    },
+}
+
+# Strategy → Layer mapping (which layer best fits each strategy)
+STRATEGY_TO_LAYER = {
+    "Clarification": 1,
+    "Metric Justification": 2,
+    "Tradeoff Challenge": 3,
+    "Alternative Design Comparison": 3,
+    "Scalability Challenge": 4,
+    "Constraint Injection": 4,
+    "Failure Simulation": 5,
+    "Security Consideration": 5,
+    "Depth Probe": 1,
+    "Edge Case Scenario": 3,
+    "Architecture Breakdown": 4,
+}
+
+
+def analyze_answer_weaknesses_smart(answer_text: str, scoring: dict, escalation_layer: int = 1) -> dict:
+    """
+    UPGRADED Weakness Analyzer — replaces keyword-matching with score-driven
+    multi-signal strategy selection.
+
+    Signal priority (in order):
+    1. Score deltas between knowledge/communication/relevance
+    2. Answer length and structural quality signals
+    3. Current escalation layer (forces progression through layers 1→5)
+    4. Keyword presence as secondary signals (not sole determinant)
+
+    Returns:
+        weaknesses (list): detected weakness signals
+        strategy (str): selected follow-up strategy
+        next_layer (int): escalation layer for this follow-up
+        reasoning (str): human-readable explanation of strategy choice
+    """
+    knowledge = scoring.get("knowledge", 5)
+    communication = scoring.get("communication", 5)
+    relevance = scoring.get("relevance", 5)
+    avg_score = (knowledge + communication + relevance) / 3
+    word_count = len(answer_text.split())
+    answer_lower = answer_text.lower()
+
+    weaknesses = []
+    reasoning = ""
+
+    # === Score-based signals (primary) ===
+    if relevance < 4:
+        weaknesses.append("off_topic")
+    if knowledge < 4:
+        weaknesses.append("weak_knowledge")
+    if communication < 5:
+        weaknesses.append("weak_communication")
+    if word_count < 40:
+        weaknesses.append("too_brief")
+    if avg_score >= 7.5:
+        weaknesses.append("strong_answer")  # Good answer — escalate harder
+
+    # === Structural signals (secondary) ===
+    has_metrics = any(kw in answer_lower for kw in [
+        "%", "percent", "ms", "milliseconds", "seconds", "users", "requests",
+        "throughput", "latency", "uptime", "million", "thousand", "tps", "rps", "gb", "tb"
+    ])
+    has_tradeoff = any(kw in answer_lower for kw in [
+        "tradeoff", "trade-off", "versus", "vs ", "compared to", "alternative",
+        "however", "but the downside", "pros and cons", "on the other hand"
+    ])
+    has_example = any(kw in answer_lower for kw in [
+        "for example", "in my project", "we built", "at my", "when i", "i implemented",
+        "for instance", "specifically", "in production"
+    ])
+    has_failure = any(kw in answer_lower for kw in [
+        "failure", "outage", "bottleneck", "failed", "bug", "incident", "crash", "timeout"
+    ])
+
+    if not has_metrics:
+        weaknesses.append("no_metrics")
+    if not has_tradeoff:
+        weaknesses.append("no_tradeoff")
+    if not has_example:
+        weaknesses.append("no_concrete_example")
+
+    # === Layer-forced strategy progression ===
+    # Escalation layer ALWAYS moves forward regardless of answer quality.
+    # Strategy is chosen by combining layer position with weakest signal.
+    next_layer = min(5, escalation_layer)  # current layer determines this follow-up's type
+
+    layer_info = ESCALATION_LAYER_MAP[next_layer]
+
+    # Within the layer, pick the best-fitting strategy based on weakness signals
+    if next_layer == 1:
+        if "too_brief" in weaknesses or "weak_communication" in weaknesses:
+            strategy = "Clarification"
+        else:
+            strategy = "Depth Probe"
+        reasoning = f"Layer 1 (Clarification): Answer was {'too brief' if 'too_brief' in weaknesses else 'unclear in places'}."
+
+    elif next_layer == 2:
+        strategy = "Metric Justification"
+        reasoning = "Layer 2 (Metrics): Pushing for quantifiable evidence — numbers, benchmarks, or success criteria."
+
+    elif next_layer == 3:
+        if "no_tradeoff" in weaknesses:
+            strategy = "Tradeoff Challenge"
+            reasoning = "Layer 3 (Tradeoff): No tradeoffs mentioned — forcing comparison with alternative approach."
+        else:
+            strategy = "Edge Case Scenario"
+            reasoning = "Layer 3 (Tradeoff): Tradeoffs present — challenging with edge case to deepen analysis."
+
+    elif next_layer == 4:
+        if "strong_answer" in weaknesses:
+            strategy = "Architecture Breakdown"
+            reasoning = "Layer 4 (Scalability): Strong answer — forcing architectural decomposition under scale."
+        else:
+            strategy = "Scalability Challenge"
+            reasoning = "Layer 4 (Scalability): Testing how their solution holds up under 10x load."
+
+    elif next_layer == 5:
+        if has_failure:
+            strategy = "Security Consideration"
+            reasoning = "Layer 5 (Failure): Candidate mentioned failures — pivoting to security implications."
+        else:
+            strategy = "Failure Simulation"
+            reasoning = "Layer 5 (Failure): Maximum pressure — simulating a production incident."
+
+    else:
+        strategy = "Depth Probe"
+        reasoning = "Default: probing for deeper explanation."
+
+    depth_score = min(10.0, max(0.0, avg_score))
+
+    return {
+        "weaknesses": weaknesses,
+        "strategy": strategy,
+        "next_layer": next_layer,
+        "reasoning": reasoning,
+        "depth_score": depth_score,
+        "layer_name": layer_info["name"],
+        "cognitive_pressure": layer_info["cognitive_pressure"],
+    }
+
+
+def generate_adaptive_followup_v2(
+    question: str, answer: str, strategy: str,
+    escalation_layer: int, role: str, domain: str,
+    difficulty: str = "Hard"
+) -> str:
+    """
+    UPGRADED adaptive follow-up generator.
+
+    Key improvements over v1:
+    - Uses ESCALATION_LAYER_MAP for precise per-layer instructions
+    - Injects domain authority block into follow-up prompts
+    - Adds cognitive pressure signal matching the difficulty
+    - Hard mode adds explicit pressure framing ("In a live production system...")
+    """
+    from llm_manager import call_llm
+
+    layer_info = ESCALATION_LAYER_MAP.get(escalation_layer, ESCALATION_LAYER_MAP[3])
+    domain_block = build_domain_authority_block(domain, role)
+
+    # Text-interview-optimised strategy instructions.
+    # Each follow-up must be answerable in 4-6 paragraphs. No whiteboard scope.
+    strategy_instructions = {
+        "Clarification": (
+            "Ask the candidate to clarify ONE specific statement that was ambiguous or vague. "
+            "Reference the exact phrase or claim from their answer."
+        ),
+        "Depth Probe": (
+            "Ask them to explain HOW one specific part of their answer works internally. "
+            "Target the mechanism behind ONE claim they made — not the whole answer."
+        ),
+        "Metric Justification": (
+            "Ask them to support ONE specific claim in their answer with concrete numbers or signals. "
+            "e.g. 'You mentioned this approach is faster — what metric would you use to validate that, "
+            "and what threshold would you consider acceptable?'"
+        ),
+        "Tradeoff Challenge": (
+            "Present ONE specific alternative to the approach they described and ask them to compare: "
+            "what does their approach do better, and what does it sacrifice? "
+            "Keep the comparison to these two options only — not a full landscape review."
+        ),
+        "Edge Case Scenario": (
+            "Describe ONE specific edge case or unusual input condition their solution might not handle gracefully. "
+            "Ask: how would they detect it at runtime, and how would they handle it without breaking normal flow?"
+        ),
+        "Scalability Challenge": (
+            "Inject a single scale constraint — for example, 10x the current load — and ask which ONE component "
+            "in their described approach would be the first to break, and what they'd change first. "
+            "This is NOT a full re-architecture question."
+        ),
+        "Constraint Injection": (
+            "Add one realistic constraint they didn't mention — e.g. a latency SLA, a budget cap, "
+            "or a dependency on a legacy system — and ask how they'd adapt their described approach. "
+            "One constraint. One adaptation. Text-answerable."
+        ),
+        "Failure Simulation": (
+            "Describe ONE specific failure mode relevant to what they described — "
+            "e.g. the component they mentioned starts returning errors under normal load. "
+            "Ask: what are the first three things they'd check, and what would a successful mitigation look like?"
+        ),
+        "Security Consideration": (
+            "Ask about ONE specific security risk in the approach they described. "
+            "e.g. 'You mentioned storing X — what's the highest-risk way that could be exploited, "
+            "and what's the simplest effective mitigation?'"
+        ),
+        "Architecture Breakdown": (
+            "Ask them to walk through ONE specific data flow or interaction in their described approach — "
+            "not the full architecture. e.g. 'Walk me through exactly what happens from the point "
+            "the request hits [component] to when the response is returned.'"
+        ),
+        "Alternative Design Comparison": (
+            "Ask them to propose ONE alternative approach to what they described — "
+            "just one, not a full survey — and compare the two specifically on reliability and complexity. "
+            "Text-answerable: 4-6 paragraphs."
+        ),
+    }
+
+    strategy_instruction = strategy_instructions.get(strategy, "Ask a deeper technical question that increases cognitive load.")
+
+    # Hard mode: add cognitive pressure but keep it text-answerable.
+    # We do NOT ask for full system redesigns. One axis. One focused challenge.
+    pressure_framing = ""
+    if difficulty == "Hard":
+        pressure_framing = f"""
+COGNITIVE PRESSURE LEVEL: {layer_info["cognitive_pressure"]}
+TEXT-SCOPE ENFORCEMENT: This follow-up must be answerable in 4-6 paragraphs.
+Focus on ONE specific gap from their answer — not a full redesign.
+Frame with a concrete, realistic scenario (not "millions of users" at scale).
+Examples of valid Hard follow-up framings:
+  - "You mentioned X — what happens when Y occurs? Walk me through your response."
+  - "How would you validate that your approach actually solves the problem? What metric matters most?"
+  - "What's the one failure mode in your described approach that you'd lose sleep over?"
+Do NOT ask them to redesign the whole system or address every possible failure.
+"""
+
+    prompt = f"""You are a senior technical interviewer for {role} in {domain}.
+
+{domain_block}
+
+The candidate just answered this question:
+ORIGINAL QUESTION: {question}
+CANDIDATE ANSWER: {answer[:600]}
+
+ESCALATION LAYER: {escalation_layer}/5 — {layer_info["name"]}
+Layer objective: {layer_info["instruction"]}
+
+STRATEGY: {strategy}
+Strategy instruction: {strategy_instruction}
+{pressure_framing}
+
+Generate EXACTLY ONE follow-up question. It MUST:
+1. Reference ONE specific thing from their answer (name or paraphrase it directly)
+2. Target ONE gap, ONE failure mode, ONE metric, or ONE decision point — not everything at once
+3. Be answerable in 4-6 paragraphs of text — no whiteboard, no full system redesign
+4. Be harder and more targeted than the original question
+5. Be 1-3 sentences — concise, precise, not a multi-part essay prompt
+6. NOT contain instructions like "design a complete system", "walk through every layer",
+   or "handle all possible failure modes"
+
+Output ONLY the follow-up question. No numbering, labels, or explanations.
+
+Follow-up question:"""
+
+    try:
+        return call_llm(prompt, session=st.session_state).strip()
+    except Exception:
+        first_words = " ".join(answer.split()[:6]) if answer and answer.split() else "your described approach"
+        return f'You mentioned "{first_words}..." — what is the ONE failure mode in that approach you would be most concerned about, and how would you detect it before it caused user impact?'
+
+
+# =============================================================================
+# DOMAIN-AWARE QUESTION GENERATORS (upgraded wrappers)
+# =============================================================================
+
+def generate_resume_based_questions_domain_aware(
+    resume_context: dict, role: str, domain: str,
+    difficulty: str, num_questions: int = 3, weakness_bias: str = "balanced",
+    interview_type: str = "technical"
+) -> list:
+    """
+    Drop-in replacement for generate_resume_based_questions_enhanced.
+    Applies Domain Authority Layer + Structured Difficulty Enforcement.
+    Supports interview_type ("technical" or "behavioral") for distinct question styles.
+    """
+    import random
+    from llm_manager import call_llm
+
+    # FIX 1: Apply domain filter to resume context
+    filtered_context = filter_resume_for_domain(resume_context, domain)
+
+    skills = filtered_context.get("skills", [])
+    projects = filtered_context.get("projects", [])
+    experience = filtered_context.get("experience", [])
+    technologies = filtered_context.get("technologies", [])
+
+    # FIX 1: Domain authority block
+    domain_block = build_domain_authority_block(domain, role)
+
+    # FIX 2: Structured difficulty enforcement
+    difficulty_block = get_difficulty_instruction_block(difficulty)
+
+    # Interview type block — drives Technical vs Behavioral question framing
+    interview_type_block = (
+        "⚙️ This is a TECHNICAL interview. Focus on technical depth, implementation details, tradeoffs, and reasoning."
+        if interview_type.lower() == "technical"
+        else "💬 This is a BEHAVIORAL interview. Focus on past experiences, teamwork, challenges, leadership, decision-making, and communication."
+    )
+
+    # Topic variation hint — reduces repetition across resume uploads
+    variation_hint = random.choice([
+        "Focus more on algorithms and data structures relevant to this resume.",
+        "Include one question about troubleshooting or debugging a real issue.",
+        "Add one question about collaboration or decision-making under pressure.",
+        "Include one scenario-based question referencing tools or skills from the resume.",
+        "Add one reflective question about learning or adapting to new technologies.",
+    ])
+
+    # Weakness bias instruction
+    bias_map = {
+        "technical depth": "Prioritize questions that expose gaps in technical depth — ask about internals, edge cases, and implementation specifics.",
+        "explanation clarity": "Prioritize questions that require the candidate to explain complex concepts step-by-step.",
+        "answer precision": "Prioritize questions that require very specific, targeted answers directly tied to their resume.",
+        "balanced": "",
+    }
+    bias_instruction = bias_map.get(weakness_bias, "")
+
+    prompt = f"""You are a senior technical interviewer.
+
+{interview_type_block}
+
+{domain_block}
+
+{difficulty_block}
+
+RESUME CONTEXT (filtered for domain relevance):
+- Skills: {', '.join(skills[:5]) if skills else 'None relevant to ' + domain}
+- Projects: {', '.join(projects[:3]) if projects else 'None specified'}
+- Experience: {', '.join(experience[:3]) if experience else 'None specified'}
+- Technologies: {', '.join(technologies[:5]) if technologies else 'None relevant to ' + domain}
+
+{bias_instruction}
+
+Generate EXACTLY {num_questions} interview questions. Each question MUST:
+1. Be about {domain} — not the candidate's previous domain if it differs
+2. Reference their resume only if resume content is relevant to {domain}
+3. Match the difficulty type specified above (structural enforcement, not just tone)
+4. Be a single, clear question (1-2 sentences)
+5. Reflect the interview type above — technical questions probe implementation/tradeoffs; behavioral questions probe experience/judgment
+
+Output ONLY the questions, one per line, no numbering or prefixes.
+
+{variation_hint}
+
+Questions:"""
+
+    try:
+        response = call_llm(prompt, session=st.session_state)
+        raw = [q.strip() for q in response.split("\n") if q.strip()]
+        cleaned = []
+        for q in raw:
+            q = re.sub(r'^[\d\)\.\-•\*]+\s*', '', q).strip()
+            if len(q) > 15:
+                cleaned.append(q)
+            if len(cleaned) >= num_questions:
+                break
+
+        # Fallback fill
+        while len(cleaned) < num_questions:
+            contract = DIFFICULTY_CONTRACTS.get(difficulty, DIFFICULTY_CONTRACTS["Medium"])
+            diff_label = contract["label"]
+            fallbacks = contract.get("fallback_questions", [])
+            if fallbacks:
+                import random
+                fb = random.choice(fallbacks).replace("{domain}", domain).replace("{role}", role)
+                cleaned.append(fb)
+            else:
+                cleaned.append(
+                    f"[{diff_label}] Describe a specific challenge you faced with {domain} and how you resolved it."
+                )
+        return cleaned[:num_questions]
+
+    except Exception:
+        return [f"Explain a core {domain} concept you've worked with recently."] * num_questions
+
+
+def generate_domain_questions_with_llm(
+    domain: str, role: str, interview_type: str,
+    num_questions: int, difficulty: str = "Medium"
+) -> list:
+    """
+    Domain-authority-enforced replacement for generate_interview_questions_with_llm.
+    Ensures generic questions also respect the selected domain and difficulty contract.
+    """
+    from llm_manager import call_llm
+
+    domain_block = build_domain_authority_block(domain, role)
+    difficulty_block = get_difficulty_instruction_block(difficulty)
+
+    prompt = f"""You are an expert interviewer at a top-tier tech company.
+
+{domain_block}
+
+{difficulty_block}
+
+Generate EXACTLY {num_questions} unique {interview_type} interview questions for a {role} candidate.
+
+RULES:
+- Every question MUST be about {domain} — no exceptions
+- Match the exact difficulty type defined above (not just tone)
+- Avoid duplicates and generic filler questions
+- Keep each question concise: 1-2 sentences maximum
+- Output ONLY the questions, one per line
+- NO numbering, bullets, prefixes, or explanatory text
+
+Generate {num_questions} questions now:"""
+
+    try:
+        response = call_llm(prompt, session=st.session_state)
+        raw = [q.strip() for q in response.split('\n') if q.strip()]
+        cleaned = []
+        for q in raw:
+            clean_q = re.sub(r'^[\d\)\.\-•\*]+\s*', '', q).strip()
+            clean_q = re.sub(r'^Question\s*\d*\s*:?\s*', '', clean_q, flags=re.IGNORECASE).strip()
+            if clean_q and len(clean_q) > 15:
+                cleaned.append(clean_q)
+            if len(cleaned) >= num_questions:
+                break
+
+        # Fallback with difficulty-appropriate templates
+        while len(cleaned) < num_questions:
+            contract = DIFFICULTY_CONTRACTS.get(difficulty, DIFFICULTY_CONTRACTS["Medium"])
+            fallbacks = contract.get("fallback_questions", [])
+            import random
+            if fallbacks:
+                fb = random.choice(fallbacks).replace("{domain}", domain).replace("{role}", role)
+                cleaned.append(fb)
+            else:
+                templates = contract.get("question_templates", [])
+                template = random.choice(templates) if templates else "Explain a core {domain} concept."
+                cleaned.append(template.replace("{domain}", domain).replace("{role}", role).replace("[concept]", domain))
+
+        return cleaned[:num_questions]
+
+    except Exception:
+        # Text-answerable fallback questions per difficulty
+        import random
+        contract = DIFFICULTY_CONTRACTS.get(difficulty, DIFFICULTY_CONTRACTS["Medium"])
+        fallbacks = contract.get("fallback_questions", [])
+        if fallbacks:
+            return [
+                random.choice(fallbacks).replace("{domain}", domain).replace("{role}", role)
+                for _ in range(num_questions)
+            ]
+        if difficulty == "Easy":
+            return [f"What is {domain} and why is it important? Give a real-world example." for _ in range(num_questions)]
+        elif difficulty == "Medium":
+            return [f"Describe a specific implementation decision you made in {domain} and why you made it." for _ in range(num_questions)]
+        else:
+            return [
+                f"Describe the most significant tradeoff you've encountered in {domain}. "
+                f"What were the two options and what drove your final decision?"
+                for _ in range(num_questions)
+            ]
+
 
 # ======================================================
 # RESUME TEXT EXTRACTION (pdfplumber + OCR fallback)
@@ -9107,7 +13788,7 @@ def show_resume_scanning_animation():
 
     for text, value in steps:
         status.markdown(
-            f"<h4 style='text-align:center;color:#00c3ff'>{text}</h4>",
+            f"<h4 style='text-align:center;color:#38bdf8;font-family:-apple-system,BlinkMacSystemFont,\"SF Pro Display\",sans-serif;font-weight:600;letter-spacing:-0.02em;'>{text}</h4>",
             unsafe_allow_html=True
         )
         progress.progress(value)
@@ -9117,416 +13798,630 @@ def show_resume_scanning_animation():
     progress.empty()
 
 
+
+# =============================================================================
+# PART 1-9: UPGRADED ENGINE FUNCTIONS
+# =============================================================================
+
+HARD_FOLLOWUP_STRATEGIES = [
+    "Depth Probe",
+    "Tradeoff Challenge",
+    "Edge Case Scenario",
+    "Scalability Challenge",
+    "Constraint Injection",
+    "Failure Simulation",
+    "Security Consideration",
+    "Architecture Breakdown",
+    "Metric Justification",
+    "Alternative Design Comparison",
+]
+
+DIFFICULTY_MULTIPLIERS = {"Easy": 1.0, "Medium": 1.1, "Hard": 1.25}
+
+
+def analyze_answer_weaknesses(answer_text: str, scoring: dict) -> dict:
+    """
+    UPGRADED (Fix 3): Delegates to analyze_answer_weaknesses_smart.
+    Backward-compatible — existing callers continue to work.
+    Escalation layer is read from session_state to drive layer progression.
+    """
+    try:
+        current_layer = st.session_state.get("escalation_layer", 1)
+    except Exception:
+        current_layer = 1
+    result = analyze_answer_weaknesses_smart(answer_text, scoring, escalation_layer=current_layer)
+    # Backward-compat keys
+    result["follow_up_count"] = getattr(st.session_state, "follow_up_count", 0) if hasattr(st, "session_state") else 0
+    return result
+
+
+def generate_adaptive_followup(question: str, answer: str, strategy: str, escalation_layer: int, role: str, domain: str) -> str:
+    """
+    UPGRADED (Fix 3): Delegates to generate_adaptive_followup_v2.
+    Backward-compatible wrapper — all existing callers work unchanged.
+    """
+    diff = getattr(st.session_state, "interview_difficulty", "Hard") if hasattr(st, "session_state") else "Hard"
+    return generate_adaptive_followup_v2(
+        question=question, answer=answer, strategy=strategy,
+        escalation_layer=escalation_layer, role=role, domain=domain, difficulty=diff
+    )
+
+
+def get_user_weakness_history(username: str) -> dict:
+    """
+    PART 5: Weakness Memory Engine.
+    Query ALL past interviews for total count and detect recurring weak skill.
+    Uses all interviews for avg score computation and shows true total count.
+    Returns dict with weakest_skill and bias recommendation.
+    """
+    import sqlite3
+    try:
+        conn = sqlite3.connect('resume_data.db')
+        import pandas as pd
+        # Fetch ALL interviews (no LIMIT) so count and averages reflect full history
+        df = pd.read_sql_query(
+            "SELECT knowledge_avg, communication_avg, relevance_avg FROM interview_results WHERE username=? ORDER BY id DESC",
+            conn, params=(username,)
+        )
+        conn.close()
+
+        if df.empty or len(df) < 1:
+            return {"weakest_skill": None, "bias": "balanced"}
+
+        total_count = len(df)
+
+        avgs = {
+            "knowledge": df["knowledge_avg"].mean(),
+            "communication": df["communication_avg"].mean(),
+            "relevance": df["relevance_avg"].mean(),
+        }
+        weakest = min(avgs, key=avgs.get)
+        bias_map = {
+            "knowledge": "technical depth",
+            "communication": "explanation clarity",
+            "relevance": "answer precision",
+        }
+        return {"weakest_skill": weakest, "bias": bias_map.get(weakest, "balanced"), "averages": avgs, "interview_count": total_count}
+    except Exception:
+        return {"weakest_skill": None, "bias": "balanced"}
+
+
+def compute_weighted_score(raw_avg: float, difficulty: str) -> float:
+    """PART 3: Apply difficulty multiplier to raw average score."""
+    multiplier = DIFFICULTY_MULTIPLIERS.get(difficulty, 1.0)
+    return round(min(10.0, raw_avg * multiplier), 2)
+
+
+def compute_trend_slope(scores: list) -> float:
+    """PART 6: Compute linear regression slope over score list."""
+    n = len(scores)
+    if n < 2:
+        return 0.0
+    try:
+        x = list(range(n))
+        x_mean = sum(x) / n
+        y_mean = sum(scores) / n
+        numerator = sum((x[i] - x_mean) * (scores[i] - y_mean) for i in range(n))
+        denominator = sum((x[i] - x_mean) ** 2 for i in range(n))
+        return numerator / denominator if denominator != 0 else 0.0
+    except Exception:
+        return 0.0
+
+
+def classify_behavior(avg_duration_mins, score_std, hard_delta) -> str:
+    """PART 6: Behavioral classification based on performance patterns."""
+    if avg_duration_mins is not None and avg_duration_mins < 8:
+        return "⚡ Rushed"
+    elif avg_duration_mins is not None and avg_duration_mins > 40:
+        return "🤔 Overthinking"
+    elif score_std < 0.8 and hard_delta is not None and hard_delta > -1:
+        return "🎯 Adaptive Learner"
+    else:
+        return "⚖️ Balanced"
+
+
+def generate_resume_based_questions_enhanced(resume_context: dict, role: str, domain: str, difficulty: str, num_questions: int = 3, weakness_bias: str = "balanced") -> list:
+    """
+    PART 7: Enhanced resume intelligence — asks architecture, decisions, tradeoffs, outcomes, and scale.
+    """
+    from llm_manager import call_llm
+
+    skills = resume_context.get("skills", [])
+    projects = resume_context.get("projects", [])
+    experience = resume_context.get("experience", [])
+    technologies = resume_context.get("technologies", [])
+
+    bias_instruction = ""
+    if weakness_bias == "explanation clarity":
+        bias_instruction = "Focus on questions that require the candidate to explain complex concepts clearly, describe their reasoning process, and articulate decisions step-by-step."
+    elif weakness_bias == "technical depth":
+        bias_instruction = "Focus on questions that require deep technical knowledge, architecture reasoning, and internal mechanism understanding."
+    elif weakness_bias == "answer precision":
+        bias_instruction = "Focus on questions that require precise, targeted answers directly relevant to the role and their stated experience."
+
+    # TEXT-INTERVIEW-OPTIMISED difficulty guidance for resume-based questions.
+    # Hard: one focused challenge per question — NOT "design entire system + tradeoffs + scale".
+    difficulty_map = {
+        "Easy": (
+            "Ask about concepts, tools, or technologies visible in their resume. "
+            "Questions must be answerable by explaining WHAT something is and giving ONE example. "
+            "No architecture, no scaling, no tradeoff decisions."
+        ),
+        "Medium": (
+            "Ask about a specific decision, implementation approach, or challenge from their resume. "
+            "Frame it as a small scenario with ONE constraint. "
+            "The candidate should explain their approach and justify ONE key choice. "
+            "No multi-layer design, no full-system architecture."
+        ),
+        "Hard": (
+            "Ask about a focused technical challenge from their resume. Pick EXACTLY ONE axis: "
+            "either (a) a tradeoff between two specific approaches they may have faced, "
+            "or (b) a failure or edge case relevant to what they built, "
+            "or (c) an optimisation under a specific constraint. "
+            "Do NOT combine all three. The question must be answerable in 6-8 text paragraphs."
+        ),
+    }
+
+    prompt = f"""You are a senior technical interviewer for {role} in {domain}.
+
+Generate EXACTLY {num_questions} interview questions based on the candidate's actual resume.
+
+RESUME CONTEXT:
+- Skills: {', '.join(skills[:5])}
+- Projects: {', '.join(projects[:3])}
+- Experience: {', '.join(experience[:3])}
+- Technologies: {', '.join(technologies[:5])}
+
+DIFFICULTY GUIDANCE: {difficulty}
+{difficulty_map.get(difficulty, '')}
+
+{bias_instruction}
+
+QUESTION FOCUS RULES:
+- Each question must reference ONE specific item from the resume context above
+- Each question must test exactly ONE of: concept understanding / decision reasoning / implementation approach / focused tradeoff / single failure mode
+- Do NOT combine multiple challenge axes in one question
+- Hard questions must be text-answerable (6-8 paragraphs) — no whiteboard system design
+- One question per line, no numbering or prefixes
+
+Generate {num_questions} questions:"""
+
+    try:
+        response = call_llm(prompt, session=st.session_state)
+        raw = [q.strip() for q in response.split("\n") if q.strip()]
+        cleaned = []
+        for q in raw:
+            q = re.sub(r'^[\d\)\.\-•\*]+\s*', '', q).strip()
+            if len(q) > 15:
+                cleaned.append(q)
+            if len(cleaned) >= num_questions:
+                break
+        while len(cleaned) < num_questions:
+            cleaned.append(f"Walk me through your most technically challenging project and the specific decisions you made.")
+        return cleaned[:num_questions]
+    except Exception:
+        return [
+            "Walk me through the architecture of your most complex project and the decisions you made.",
+            "What tradeoffs did you face and how did you justify your technology choices?",
+            "How would you scale your largest project to handle 10x the load?"
+        ]
+
+
 with tab4:
-    # Inject CSS styles (keeping existing styles)
+    # Inject CSS styles — Apple-style SaaS dark theme (matching tab1.py HIRELYZER design language)
     st.markdown("""
         <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        * {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        /* ═══════════════════════════════════════════════════════════════
+           HIRELYZER — Premium Apple-Style Dark Theme (Tab 4)
+           Font Stack: SF Pro Display → DM Sans → Segoe UI → sans-serif
+           Design Language: Glassmorphism · Soft gradients · Refined motion
+           ═══════════════════════════════════════════════════════════════ */
+
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --t4-bg-primary:      #080c12;
+            --t4-bg-secondary:    #0e1420;
+            --t4-bg-tertiary:     #141c2b;
+            --t4-surface-01:      rgba(255,255,255,0.04);
+            --t4-surface-02:      rgba(255,255,255,0.07);
+            --t4-surface-hover:   rgba(255,255,255,0.10);
+            --t4-border-subtle:   rgba(255,255,255,0.07);
+            --t4-border-accent:   rgba(99,179,237,0.30);
+            --t4-accent-blue:     #4fa3e3;
+            --t4-accent-cyan:     #38bdf8;
+            --t4-accent-violet:   #818cf8;
+            --t4-accent-emerald:  #34d399;
+            --t4-accent-amber:    #fbbf24;
+            --t4-accent-rose:     #fb7185;
+            --t4-text-primary:    #f0f4f8;
+            --t4-text-secondary:  #94a3b8;
+            --t4-text-muted:      #4a5568;
+            --t4-radius-sm:       8px;
+            --t4-radius-md:       14px;
+            --t4-radius-lg:       20px;
+            --t4-radius-xl:       28px;
+            --t4-shadow-glow:     0 0 30px rgba(79,163,227,0.15);
+            --t4-shadow-card:     0 8px 40px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.06) inset;
+            --t4-font:            -apple-system, BlinkMacSystemFont, "SF Pro Display", "DM Sans", "Segoe UI", Roboto, sans-serif;
+            --t4-ease-fast:       0.18s cubic-bezier(0.4,0,0.2,1);
+            --t4-ease-base:       0.28s cubic-bezier(0.4,0,0.2,1);
+            --t4-ease-slow:       0.45s cubic-bezier(0.4,0,0.2,1);
         }
 
+        /* ── Animations ── */
+        @keyframes t4-fadeSlideUp  { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes t4-shimmer      { 0% { transform:translateX(-100%) skewX(-12deg); } 100% { transform:translateX(220%) skewX(-12deg); } }
+        @keyframes t4-pulseGlow    { 0%,100% { box-shadow: var(--t4-shadow-card); } 50% { box-shadow: var(--t4-shadow-card), var(--t4-shadow-glow); } }
+        @keyframes t4-gradientFlow { 0%,100% { background-position:0% 50%; } 50% { background-position:100% 50%; } }
+        @keyframes t4-subtlePulse  { 0%,100% { opacity:1; } 50% { opacity:0.82; } }
+
+        /* ── Header Box ── */
         .header-box {
-            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 25%, #2d3561 50%, #3f4787 75%, #5158ae 100%);
-            border: 2px solid transparent;
-            background-clip: padding-box;
-            position: relative;
-            padding: 25px;
-            border-radius: 20px;
+            background: linear-gradient(160deg, rgba(14,20,32,0.97) 0%, rgba(8,12,18,0.99) 100%);
+            backdrop-filter: blur(32px) saturate(160%);
+            -webkit-backdrop-filter: blur(32px) saturate(160%);
+            border: 1px solid rgba(99,179,237,0.20);
+            border-radius: var(--t4-radius-xl);
+            padding: 32px 28px;
             text-align: center;
-            margin-bottom: 35px;
-            box-shadow: 
-                0 8px 32px rgba(0, 195, 255, 0.15),
-                0 4px 16px rgba(0, 195, 255, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            margin-bottom: 32px;
+            box-shadow: var(--t4-shadow-card), 0 0 60px rgba(79,163,227,0.07);
+            position: relative;
             overflow: hidden;
+            animation: t4-fadeSlideUp 0.65s cubic-bezier(0.22,1,0.36,1) forwards;
         }
-
-        .header-box::before {
+        .header-box::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(45deg, #00c3ff, #0066cc, #00c3ff, #0066cc);
-            background-size: 400% 400%;
-            animation: gradientShift 8s ease infinite;
-            z-index: -1;
-            border-radius: 20px;
-            padding: 2px;
-            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            mask-composite: exclude;
+            top: 0; left: -100%;
+            width: 60%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(79,163,227,0.06), transparent);
+            animation: t4-shimmer 3.5s ease-in-out infinite;
         }
-
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-
         .header-box h2 {
-            font-size: 32px;
-            color: #ffffff;
-            margin: 0;
-            font-weight: 700;
-            text-shadow: 
-                0 0 20px rgba(0, 195, 255, 0.5),
-                0 2px 4px rgba(0, 0, 0, 0.3);
-            letter-spacing: -0.5px;
+            font-family: var(--t4-font) !important;
+            font-size: 1.85rem !important;
+            font-weight: 700 !important;
+            color: var(--t4-text-primary) !important;
+            letter-spacing: -0.03em !important;
+            margin: 0 !important;
+            text-shadow: none !important;
         }
 
+        /* ── Glow Header ── */
         .glow-header {
-            font-size: 24px;
+            font-family: var(--t4-font);
+            font-size: 1.25rem;
             text-align: center;
-            color: #00c3ff;
-            text-shadow: 
-                0 0 20px rgba(0, 195, 255, 0.8),
-                0 0 40px rgba(0, 195, 255, 0.4);
-            margin: 20px 0 15px 0;
+            color: var(--t4-accent-cyan);
             font-weight: 600;
-            letter-spacing: -0.3px;
-            animation: pulse 3s ease-in-out infinite;
+            letter-spacing: -0.02em;
+            margin: 20px 0 12px 0;
+            animation: t4-subtlePulse 3.5s ease-in-out infinite;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.9; transform: scale(1.02); }
-        }
-
-        .stRadio > div {
-            flex-direction: row !important;
-            justify-content: center !important;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-
-        .stRadio label {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            border: 2px solid #00c3ff;
-            color: #00c3ff;
-            padding: 14px 24px;
-            margin: 6px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            font-weight: 500;
-            min-width: 190px;
+        /* ── Learning Path Container ── */
+        .learning-path-container {
             text-align: center;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 
-                0 4px 15px rgba(0, 195, 255, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            margin: 24px 0 18px 0;
+            padding: 14px 20px;
+            background: var(--t4-surface-01);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: var(--t4-radius-md);
+            border: 1px solid var(--t4-border-subtle);
+            transition: border-color var(--t4-ease-base);
         }
-
-        .stRadio label::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 195, 255, 0.2), transparent);
-            transition: left 0.5s;
+        .learning-path-container:hover {
+            border-color: var(--t4-border-accent);
         }
-
-        .stRadio label:hover {
-            background: linear-gradient(135deg, #00c3ff15 0%, #00c3ff25 100%);
-            transform: translateY(-2px);
-            box-shadow: 
-                0 8px 25px rgba(0, 195, 255, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        }
-
-        .stRadio label:hover::before {
-            left: 100%;
-        }
-
-        .stRadio input:checked + div > label {
-            background: linear-gradient(135deg, #00c3ff 0%, #0099cc 100%);
-            color: #000000;
+        .learning-path-text {
+            font-family: var(--t4-font);
+            color: var(--t4-text-secondary);
             font-weight: 600;
-            transform: scale(1.05);
-            box-shadow: 
-                0 8px 30px rgba(0, 195, 255, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
         }
 
+        /* ── Card ── */
         .card {
-            background: linear-gradient(135deg, #0f1419 0%, #1a2332 25%, #253447 50%, #30455c 75%, #3b5671 100%);
-            border: 2px solid transparent;
-            border-radius: 16px;
-            padding: 20px 25px;
-            margin: 12px 0;
+            background: var(--t4-surface-01);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid var(--t4-border-subtle);
+            border-radius: var(--t4-radius-lg);
+            padding: 20px 24px;
+            margin: 10px 0;
             position: relative;
             overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 
-                0 4px 20px rgba(0, 195, 255, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transition: transform var(--t4-ease-base), box-shadow var(--t4-ease-base), border-color var(--t4-ease-base);
+            box-shadow: var(--t4-shadow-card);
+            animation: t4-fadeSlideUp 0.5s ease forwards;
         }
-
         .card::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(45deg, #00c3ff, #0066cc);
-            z-index: -1;
-            border-radius: 16px;
-            padding: 2px;
-            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            mask-composite: exclude;
-            opacity: 0.8;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 60%);
+            pointer-events: none;
+            border-radius: inherit;
         }
-
         .card::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transition: left 0.6s;
+            top: 0; left: -100%;
+            width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(79,163,227,0.05), transparent);
+            transition: left 0.6s ease;
         }
-
         .card:hover {
-            transform: translateY(-4px) scale(1.02);
-            box-shadow: 
-                0 12px 40px rgba(0, 195, 255, 0.25),
-                0 8px 20px rgba(0, 195, 255, 0.15),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transform: translateY(-4px);
+            box-shadow: var(--t4-shadow-card), 0 0 50px rgba(79,163,227,0.10);
+            border-color: var(--t4-border-accent);
         }
-
-        .card:hover::after {
-            left: 100%;
-        }
-
+        .card:hover::after { left: 150%; }
         .card a {
-            color: #00c3ff;
+            font-family: var(--t4-font);
+            color: var(--t4-accent-cyan);
             font-weight: 600;
-            font-size: 16px;
+            font-size: 0.95rem;
             text-decoration: none;
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: all 0.3s ease;
-            text-shadow: 0 0 10px rgba(0, 195, 255, 0.3);
+            transition: all var(--t4-ease-fast);
         }
-
         .card a:hover {
-            color: #ffffff;
+            color: var(--t4-text-primary);
             text-decoration: none;
-            text-shadow: 
-                0 0 15px rgba(255, 255, 255, 0.5),
-                0 0 30px rgba(0, 195, 255, 0.3);
-            transform: translateX(4px);
+            transform: translateX(3px);
         }
 
-        /* Enhanced selectbox styling */
-        .stSelectbox > div > div {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            border: 2px solid #00c3ff;
-            border-radius: 10px;
-            color: #00c3ff;
-        }
-
-        .stSelectbox > div > div:hover {
-            box-shadow: 0 0 15px rgba(0, 195, 255, 0.3);
-        }
-
-        /* Enhanced subheader styling */
-        .stApp h3 {
-            color: #00c3ff;
-            text-shadow: 0 0 10px rgba(0, 195, 255, 0.5);
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
-
-        /* Learning path container */
-        .learning-path-container {
-            text-align: center;
-            margin: 30px 0 20px 0;
-            padding: 15px;
-            background: linear-gradient(135deg, rgba(0, 195, 255, 0.05) 0%, rgba(0, 195, 255, 0.1) 100%);
-            border-radius: 12px;
-            border: 1px solid rgba(0, 195, 255, 0.2);
-        }
-
-        .learning-path-text {
-            color: #00c3ff;
-            font-weight: 600;
-            font-size: 20px;
-            text-shadow: 0 0 15px rgba(0, 195, 255, 0.6);
-            letter-spacing: -0.3px;
-        }
-
-        /* Video container enhancements */
-        .stVideo {
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s ease;
-        }
-
-        .stVideo:hover {
-            transform: scale(1.02);
-        }
-
-        /* Info message styling */
-        .stAlert {
-            background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%);
-            border: 1px solid rgba(0, 195, 255, 0.3);
-            border-radius: 10px;
-        }
-
-        /* New styles for quiz and interview sections */
-        .quiz-card {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            border: 2px solid #00c3ff;
-            border-radius: 15px;
-            padding: 20px;
-            margin: 15px 0;
-            box-shadow: 0 4px 20px rgba(0, 195, 255, 0.15);
-        }
-
-        .badge-container {
-            text-align: center;
-            padding: 30px;
-            background: linear-gradient(135deg, rgba(0, 195, 255, 0.12) 0%, rgba(0, 195, 255, 0.06) 100%);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-radius: 16px;
-            border: 1px solid rgba(0, 195, 255, 0.25);
-            margin: 20px 0;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-        }
-
-        .score-display {
-            font-size: 64px;
-            font-weight: bold;
-            color: #00d4ff;
-            text-shadow: 0 0 30px rgba(0, 212, 255, 0.6);
-            letter-spacing: 2px;
-        }
-
-        .role-selector {
-            background: linear-gradient(135deg, rgba(0, 195, 255, 0.05) 0%, rgba(0, 195, 255, 0.1) 100%);
-            border: 1px solid rgba(0, 195, 255, 0.2);
-            border-radius: 12px;
-            padding: 20px;
-            margin: 15px 0;
-        }
-
-        /* Course tile styling */
+        /* ── Course Tile ── */
         .course-tile {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            border: 2px solid #00c3ff;
-            border-radius: 15px;
+            background: var(--t4-surface-01);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--t4-border-subtle);
+            border-radius: var(--t4-radius-lg);
             padding: 20px;
-            margin: 15px 0;
-            transition: all 0.3s ease;
+            margin: 12px 0;
+            transition: all var(--t4-ease-base);
             position: relative;
             overflow: hidden;
+            box-shadow: var(--t4-shadow-card);
         }
-
         .course-tile:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 195, 255, 0.3);
+            transform: translateY(-4px);
+            border-color: var(--t4-border-accent);
+            box-shadow: var(--t4-shadow-card), var(--t4-shadow-glow);
         }
-
         .course-title {
-            color: #00c3ff;
-            font-size: 18px;
+            font-family: var(--t4-font);
+            color: var(--t4-accent-cyan);
+            font-size: 1rem;
             font-weight: 600;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
         }
-
         .course-description {
-            color: #ffffff;
-            font-size: 14px;
-            margin-bottom: 15px;
-            line-height: 1.4;
+            font-family: var(--t4-font);
+            color: var(--t4-text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 14px;
+            line-height: 1.55;
         }
 
+        /* ── Difficulty Badges ── */
         .difficulty-badge {
             display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
-            margin-bottom: 15px;
+            padding: 3px 10px;
+            border-radius: 99px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            font-family: var(--t4-font);
         }
+        .difficulty-beginner    { background: rgba(52,211,153,0.15); color: var(--t4-accent-emerald); border: 1px solid rgba(52,211,153,0.3); }
+        .difficulty-intermediate{ background: rgba(251,191,36,0.12); color: var(--t4-accent-amber);   border: 1px solid rgba(251,191,36,0.28); }
+        .difficulty-advanced    { background: rgba(251,113,133,0.12); color: var(--t4-accent-rose);   border: 1px solid rgba(251,113,133,0.28); }
 
-        .difficulty-beginner {
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-            color: white;
-        }
-
-        .difficulty-intermediate {
-            background: linear-gradient(135deg, #FF9800, #f57c00);
-            color: white;
-        }
-
-        .difficulty-advanced {
-            background: linear-gradient(135deg, #f44336, #d32f2f);
-            color: white;
-        }
-
+        /* ── Course Link Button ── */
         .course-link-btn {
-            background: linear-gradient(135deg, #00c3ff, #0099cc);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(56,189,248,0.18) 0%, rgba(79,163,227,0.12) 100%);
+            color: var(--t4-accent-cyan);
+            border: 1px solid rgba(56,189,248,0.30);
+            padding: 7px 16px;
+            border-radius: var(--t4-radius-sm);
             text-decoration: none;
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 0.825rem;
+            font-family: var(--t4-font);
             display: inline-block;
-            transition: all 0.3s ease;
+            transition: all var(--t4-ease-fast);
+            backdrop-filter: blur(8px);
         }
-
         .course-link-btn:hover {
-            background: linear-gradient(135deg, #0099cc, #007acc);
-            transform: translateX(2px);
+            background: linear-gradient(135deg, rgba(56,189,248,0.28) 0%, rgba(79,163,227,0.22) 100%);
+            border-color: rgba(56,189,248,0.55);
+            transform: translateY(-1px);
             text-decoration: none;
-            color: white;
+            color: #e0f6ff;
         }
 
-        /* Radar chart container */
-        .radar-container {
-            background: linear-gradient(135deg, rgba(0, 195, 255, 0.05) 0%, rgba(0, 195, 255, 0.1) 100%);
-            border: 1px solid rgba(0, 195, 255, 0.2);
-            border-radius: 15px;
+        /* ── Quiz Card ── */
+        .quiz-card {
+            background: var(--t4-surface-01);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--t4-border-subtle);
+            border-radius: var(--t4-radius-lg);
             padding: 20px;
-            margin: 20px 0;
+            margin: 14px 0;
+            box-shadow: var(--t4-shadow-card);
+            transition: all var(--t4-ease-base);
+        }
+        .quiz-card:hover {
+            border-color: var(--t4-border-accent);
         }
 
-        /* Timer styling */
-        .timer-container {
-            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
-            border: 1px solid rgba(255, 193, 7, 0.3);
-            border-radius: 12px;
-            padding: 15px;
-            margin: 15px 0;
+        /* ── Badge Container ── */
+        .badge-container {
             text-align: center;
+            padding: 28px;
+            background: var(--t4-surface-01);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border-radius: var(--t4-radius-lg);
+            border: 1px solid var(--t4-border-subtle);
+            margin: 18px 0;
+            box-shadow: var(--t4-shadow-card);
+            animation: t4-fadeSlideUp 0.5s ease forwards;
         }
 
+        /* ── Score Display ── */
+        .score-display {
+            font-family: var(--t4-font);
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--t4-accent-cyan);
+            letter-spacing: -0.04em;
+            line-height: 1;
+        }
+
+        /* ── Role Selector ── */
+        .role-selector {
+            background: var(--t4-surface-01);
+            border: 1px solid var(--t4-border-subtle);
+            border-radius: var(--t4-radius-md);
+            padding: 18px;
+            margin: 12px 0;
+            backdrop-filter: blur(16px);
+            transition: border-color var(--t4-ease-fast);
+        }
+        .role-selector:hover { border-color: var(--t4-border-accent); }
+
+        /* ── Radar Container ── */
+        .radar-container {
+            background: var(--t4-surface-01);
+            border: 1px solid var(--t4-border-subtle);
+            border-radius: var(--t4-radius-lg);
+            padding: 20px;
+            margin: 18px 0;
+            backdrop-filter: blur(16px);
+        }
+
+        /* ── Timer ── */
+        .timer-container {
+            background: linear-gradient(135deg, rgba(251,191,36,0.08) 0%, rgba(251,191,36,0.04) 100%);
+            border: 1px solid rgba(251,191,36,0.25);
+            border-radius: var(--t4-radius-md);
+            padding: 14px;
+            margin: 14px 0;
+            text-align: center;
+            backdrop-filter: blur(16px);
+        }
         .timer-display {
-            font-size: 24px;
-            font-weight: bold;
-            color: #ffd700;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            font-family: var(--t4-font);
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--t4-accent-amber);
+            letter-spacing: -0.01em;
+        }
+        .timer-urgent {
+            color: var(--t4-accent-rose);
+            animation: t4-subtlePulse 1s ease-in-out infinite;
         }
 
-        .timer-urgent {
-            color: #ff4444;
-            text-shadow: 0 0 15px rgba(255, 68, 68, 0.8);
-            animation: pulse 1s ease-in-out infinite;
+        /* ── Selectbox ── */
+        .stSelectbox > div > div {
+            background: var(--t4-surface-01) !important;
+            border: 1px solid var(--t4-border-subtle) !important;
+            border-radius: var(--t4-radius-sm) !important;
+            color: var(--t4-text-primary) !important;
+            font-family: var(--t4-font) !important;
+            transition: border-color var(--t4-ease-fast) !important;
         }
+        .stSelectbox > div > div:hover {
+            border-color: rgba(79,163,227,0.35) !important;
+            box-shadow: 0 0 0 3px rgba(79,163,227,0.08) !important;
+        }
+
+        /* ── Subheaders ── */
+        .stApp h3 {
+            font-family: var(--t4-font) !important;
+            color: var(--t4-text-primary) !important;
+            font-weight: 600 !important;
+            letter-spacing: -0.02em !important;
+            margin-bottom: 16px !important;
+        }
+
+        /* ── Alert/Info ── */
+        .stAlert {
+            background: var(--t4-surface-01) !important;
+            border: 1px solid var(--t4-border-subtle) !important;
+            border-radius: var(--t4-radius-md) !important;
+            backdrop-filter: blur(16px) !important;
+            font-family: var(--t4-font) !important;
+            font-size: 0.875rem !important;
+        }
+
+        /* ── Video ── */
+        .stVideo {
+            border-radius: var(--t4-radius-md);
+            overflow: hidden;
+            box-shadow: var(--t4-shadow-card);
+            transition: transform var(--t4-ease-base);
+        }
+        .stVideo:hover { transform: scale(1.01); }
+
+        /* ── Radio buttons ── */
+        .stRadio > div {
+            flex-direction: row !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            flex-wrap: wrap !important;
+        }
+        .stRadio label {
+            background: var(--t4-surface-01) !important;
+            border: 1px solid var(--t4-border-subtle) !important;
+            color: var(--t4-text-secondary) !important;
+            padding: 10px 20px !important;
+            border-radius: var(--t4-radius-sm) !important;
+            cursor: pointer !important;
+            transition: all var(--t4-ease-fast) !important;
+            font-family: var(--t4-font) !important;
+            font-weight: 500 !important;
+            font-size: 0.875rem !important;
+            text-align: center !important;
+            backdrop-filter: blur(12px) !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+        }
+        .stRadio label:hover {
+            background: var(--t4-surface-hover) !important;
+            border-color: rgba(79,163,227,0.35) !important;
+            color: var(--t4-text-primary) !important;
+            transform: translateY(-2px) !important;
+        }
+        .stRadio input:checked + div > label {
+            background: linear-gradient(135deg, rgba(56,189,248,0.18) 0%, rgba(79,163,227,0.12) 100%) !important;
+            color: var(--t4-accent-cyan) !important;
+            border: 1px solid rgba(56,189,248,0.30) !important;
+            font-weight: 600 !important;
+            box-shadow: 0 2px 12px rgba(56,189,248,0.12) !important;
+        }
+
+        /* ── Score badge classes for table ── */
+        .badge-excellent { background:rgba(52,211,153,0.15); color:#34d399; border:1px solid rgba(52,211,153,0.3); padding:2px 8px; border-radius:99px; font-size:12px; font-weight:600; }
+        .badge-good      { background:rgba(56,189,248,0.12); color:#38bdf8; border:1px solid rgba(56,189,248,0.28); padding:2px 8px; border-radius:99px; font-size:12px; font-weight:600; }
+        .badge-average   { background:rgba(251,191,36,0.12); color:#fbbf24; border:1px solid rgba(251,191,36,0.28); padding:2px 8px; border-radius:99px; font-size:12px; font-weight:600; }
+        .badge-weak      { background:rgba(251,113,133,0.10); color:#fb7185; border:1px solid rgba(251,113,133,0.25); padding:2px 8px; border-radius:99px; font-size:12px; font-weight:600; }
+        .badge-poor      { background:rgba(100,116,139,0.12); color:#64748b; border:1px solid rgba(100,116,139,0.25); padding:2px 8px; border-radius:99px; font-size:12px; font-weight:600; }
+
         </style>
     """, unsafe_allow_html=True)
 
@@ -9539,7 +14434,7 @@ with tab4:
 
     # Subheader (keeping existing)
     st.markdown('<div class="glow-header">🎓 Explore Career Resources</div>', unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:#ccc; font-size: 16px; margin-bottom: 25px;'>Curated courses and videos for your career growth, resume tips, and interview success.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#94a3b8; font-family:-apple-system,BlinkMacSystemFont,\"SF Pro Display\",sans-serif; font-size: 0.95rem; margin-bottom: 22px; letter-spacing:-0.01em;'>Curated courses and videos for your career growth, resume tips, and interview success.</p>", unsafe_allow_html=True)
 
     # Learning path label (keeping existing)
     st.markdown("""
@@ -9561,7 +14456,7 @@ with tab4:
 
     page = st.radio(
         label="Select Learning Option",
-        options=["Courses by Role", "Resume Videos", "Interview Videos",  "AI Interview Coach 🤖"],
+        options=["Courses by Role", "Resume Videos", "Interview Videos", "AI Interview Coach 🤖", "My Progress 📊"],
         horizontal=True,
         key="page_selection",
         label_visibility="collapsed"
@@ -10021,17 +14916,39 @@ with tab4:
                 f"What are your career goals as a {role}?"
             ]
         elif difficulty == "Hard":
+            # Text-answerable Hard fallbacks — one challenge axis per question.
             base_questions = [
-                f"Design a scalable system architecture for a {role} project handling millions of users.",
-                f"Explain the trade-offs between different approaches in {domain} and when to use each.",
-                f"How would you troubleshoot a critical production issue in a {role} context?",
-                f"Describe your approach to mentoring junior team members as a {role}.",
-                f"What are the biggest technical challenges facing {role} professionals today?",
-                f"How would you architect a distributed system for {domain}?",
-                f"Explain how you would optimize performance in a complex {role} project.",
-                f"What advanced techniques do you use in {domain}?",
-                f"Describe a time you made a critical technical decision as a {role}.",
-                f"How do you approach system design for high availability in {domain}?"
+                f"Describe the most significant technical tradeoff you've encountered as a {role}. "
+                f"What were the two options, what data drove your decision, and what limitation did you accept?",
+
+                f"Walk through how you would diagnose an unexpected latency spike in a {domain} system you own. "
+                f"What signals would you look for first, and what would be your isolation process?",
+
+                f"What is the single most dangerous assumption developers make when working in {domain}, "
+                f"and how would you build a guardrail against it?",
+
+                f"You're asked to reduce the memory footprint of a {role} component by 30% "
+                f"without changing its public interface. Describe your investigation process and the "
+                f"two or three changes you'd prioritise.",
+
+                f"Describe a non-obvious edge case in {domain} that is easy to miss in code review. "
+                f"How would you detect it, handle it, and prevent its recurrence?",
+
+                f"You need to choose between two technically valid approaches to implement "
+                f"[a core {domain} feature]. What framework do you use to make that call, "
+                f"and what would make you revisit the decision later?",
+
+                f"A {domain} service you maintain starts failing intermittently under normal load. "
+                f"There are no upstream alerts. Walk through your debugging approach step by step.",
+
+                f"What optimisation would have the highest impact on the reliability of a typical {domain} system? "
+                f"Justify your choice with specific reasoning, not just general best practices.",
+
+                f"Describe one {domain} pattern or technology that is frequently misused in production. "
+                f"What is the misuse pattern, and how do you recognise it in a codebase?",
+
+                f"You've inherited a {domain} codebase with no tests and unclear ownership. "
+                f"What is the first concrete technical action you take, and why that over other options?",
             ]
         else:  # Medium
             base_questions = [
@@ -10056,35 +14973,54 @@ with tab4:
         FIXED: Now difficulty is passed into LLM prompt and affects question complexity
         """
         # Define difficulty-specific instructions
+        # TEXT-INTERVIEW-OPTIMISED difficulty specifications.
+        # Every level is scoped so the candidate can answer in structured paragraphs — no whiteboard.
         difficulty_instructions = {
-            "Easy": "Generate BASIC and INTRODUCTORY level questions. Focus on fundamental concepts, definitions, and simple scenarios. Questions should be suitable for entry-level candidates or those new to the field.",
-            "Medium": "Generate SCENARIO-BASED and MODERATELY TECHNICAL questions. Include situational questions that require practical thinking and intermediate technical knowledge. Suitable for candidates with some experience.",
-            "Hard": "Generate DEEP TECHNICAL, SYSTEM DESIGN, and COMPLEX PROBLEM-SOLVING questions. Include architecture decisions, trade-offs, scalability concerns, and advanced concepts. Suitable for senior-level candidates."
+            "Easy": (
+                "Generate CONCEPT CLARITY questions only. "
+                "Each question asks the candidate to define or explain ONE concept, "
+                "state why it exists, and give a real-world example of where they'd use it. "
+                "Questions must be answerable in 3-5 paragraphs. "
+                "FORBIDDEN: system design, scaling, tradeoffs, production failures, architecture."
+            ),
+            "Medium": (
+                "Generate SCENARIO REASONING questions. "
+                "Each question presents a small, realistic scenario with ONE constraint or decision point. "
+                "The candidate must describe their approach and justify ONE key implementation choice. "
+                "Questions must be answerable in 5-6 paragraphs. "
+                "FORBIDDEN: full system design, multi-layer architecture, handling 1M+ users, "
+                "combined scaling + tradeoff + failure in one question."
+            ),
+            "Hard": (
+                "Generate FOCUSED TECHNICAL DEPTH questions targeting ONE challenge axis. "
+                "Choose EXACTLY ONE of: (a) a specific tradeoff between two concrete approaches, "
+                "(b) diagnosing and handling one specific failure mode, "
+                "or (c) optimising one metric under one constraint. "
+                "Questions must be answerable in 6-8 text paragraphs — no diagram, no whiteboard. "
+                "FORBIDDEN: 'design the entire system', 'walk through every layer', "
+                "'handle X million users AND secure it AND handle failures AND optimise'. "
+                "One axis. One decision. Senior depth, text-answerable scope."
+            ),
         }
 
-        prompt = f"""You are an expert interviewer.
+        prompt = f"""You are an expert technical interviewer building a text-based interview simulator.
 
 Generate EXACTLY {num_questions} unique {interview_type} interview questions
 for the role of {role} in {domain}.
 
-DIFFICULTY LEVEL: {difficulty}
+DIFFICULTY CONTRACT: {difficulty}
 {difficulty_instructions.get(difficulty, difficulty_instructions["Medium"])}
 
-CRITICAL REQUIREMENTS:
-- Generate EXACTLY {num_questions} questions - no more, no less
-- Keep each question concise (1-2 sentences max)
-- Avoid duplicates
-- Match the difficulty level specified above
+GENERATION RULES:
+- EXACTLY {num_questions} questions — no more, no less
+- Each question must be self-contained (1-3 sentences), answerable in text paragraphs
+- Each question must focus on ONE concept, ONE scenario, or ONE challenge axis
+- For Hard: do NOT combine design + scale + failure + tradeoff in one question
+- Avoid duplicates and generic filler
 - Output ONLY the questions, one per line
-- DO NOT add numbering, bullet points, or any prefixes
-- DO NOT add any introductory text or explanations
+- NO numbering, NO bullet points, NO prefixes, NO introductory text
 
-Output format example:
-What is your experience with cloud technologies?
-How would you handle a system outage?
-Describe your approach to code reviews.
-
-Generate exactly {num_questions} questions now:
+Generate {num_questions} questions now:
 """
 
         try:
@@ -10133,12 +15069,22 @@ Generate exactly {num_questions} questions now:
                     f"Why do you want to work as a {role}?"
                 ]
             elif difficulty == "Hard":
+                # Text-answerable Hard fallbacks — one challenge axis each.
                 fallback_questions = [
-                    f"Design a scalable system architecture for a {role} project handling millions of users.",
-                    f"Explain the trade-offs between different approaches in {domain} and when to use each.",
-                    f"How would you troubleshoot a critical production issue in a {role} context?",
-                    f"Describe your approach to mentoring junior team members as a {role}.",
-                    f"What are the biggest technical challenges facing {role} professionals today?"
+                    f"Describe the most significant tradeoff you've faced in {domain}. "
+                    f"What were the options, and what drove your final decision?",
+
+                    f"Walk through how you would diagnose an unexpected performance regression "
+                    f"in a {domain} system you own. What would you check first?",
+
+                    f"What is one non-obvious edge case in {domain} that developers frequently "
+                    f"miss? How would you detect and handle it?",
+
+                    f"You are asked to reduce latency for a {role} component by 40% "
+                    f"without changing its interface. Describe your investigation and top two changes.",
+
+                    f"Describe a {domain} pattern or tool that is often misused in production. "
+                    f"How do you recognise the misuse, and what would you do instead?",
                 ]
             else:  # Medium
                 fallback_questions = [
@@ -10425,7 +15371,7 @@ Generate exactly {num_questions} questions now:
             
             # Add hover tooltip information
             st.markdown("""
-                <div style="text-align: center; color: #00c3ff; margin-top: 10px;">
+                <div style="text-align: center; color: #38bdf8; margin-top: 10px;">
                     💡 Hover over the chart points to see skill importance ratings!
                 </div>
             """, unsafe_allow_html=True)
@@ -10488,7 +15434,7 @@ Generate exactly {num_questions} questions now:
 
         # RESUME UPLOAD SECTION (MANDATORY)
         st.markdown("---")
-        st.markdown("<h3 style='color: #00c3ff;'>📄 Step 1: Upload Your Resume</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color:#38bdf8;font-family:-apple-system,BlinkMacSystemFont,\"SF Pro Display\",sans-serif;font-weight:600;letter-spacing:-0.02em;'>📄 Step 1: Upload Your Resume</h3>", unsafe_allow_html=True)
 
         if st.session_state.resume_file is None:
             uploaded_resume = st.file_uploader(
@@ -10528,34 +15474,68 @@ Generate exactly {num_questions} questions now:
                 st.session_state.resume_context = None
                 st.session_state.dynamic_interview_started = False
                 st.session_state.dynamic_interview_completed = False
+                st.session_state.interview_result_saved = False
+                st.session_state.interview_final_duration_seconds = None
+                st.session_state.interview_actual_start_time = None
                 st.rerun()
 
         # Only show domain/role selection if resume is uploaded
         if st.session_state.resume_file is not None:
             st.markdown("---")
-            st.markdown("<h3 style='color: #00c3ff;'>👔 Step 2: Select Target Role</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='color:#38bdf8;font-family:-apple-system,BlinkMacSystemFont,\"SF Pro Display\",sans-serif;font-weight:600;letter-spacing:-0.02em;'>👔 Step 2: Select Target Role</h3>", unsafe_allow_html=True)
 
             # Domain and Role selection
             st.markdown('<div class="role-selector">', unsafe_allow_html=True)
 
+            # ── TASK 1 FIX: Domain → Role override bug ───────────────────────
+            # Initialize domain/role session_state on first run
+            _domain_options = list(COURSES_BY_CATEGORY.keys())
+            if "selected_domain" not in st.session_state or st.session_state.selected_domain not in _domain_options:
+                st.session_state.selected_domain = _domain_options[0] if _domain_options else None
+
+            def _on_domain_change():
+                """Reset role whenever domain changes so stale roles never persist."""
+                new_domain = st.session_state._domain_picker
+                if new_domain in COURSES_BY_CATEGORY:
+                    st.session_state.selected_domain = new_domain
+                    _new_roles = list(COURSES_BY_CATEGORY[new_domain].keys())
+                    st.session_state.target_role = _new_roles[0] if _new_roles else None
+                    # Also reset interview state when domain changes
+                    st.session_state.interview_domain = new_domain
+                    st.session_state.interview_role = st.session_state.target_role
+
             col1, col2 = st.columns(2)
             with col1:
+                _current_domain_idx = _domain_options.index(st.session_state.selected_domain) if st.session_state.selected_domain in _domain_options else 0
                 selected_domain = st.selectbox(
                     "Select Career Domain",
-                    options=list(COURSES_BY_CATEGORY.keys()),
-                    key="interview_domain_selection"
+                    options=_domain_options,
+                    index=_current_domain_idx,
+                    key="_domain_picker",
+                    on_change=_on_domain_change
                 )
+                # Keep selected_domain session_state in sync on initial render
+                st.session_state.selected_domain = selected_domain
 
             with col2:
                 if selected_domain:
                     roles = list(COURSES_BY_CATEGORY[selected_domain].keys())
+                    # Ensure stored target_role is valid for this domain; reset if not
+                    if "target_role" not in st.session_state or st.session_state.target_role not in roles:
+                        st.session_state.target_role = roles[0] if roles else None
+                    _current_role_idx = roles.index(st.session_state.target_role) if st.session_state.target_role in roles else 0
                     selected_role = st.selectbox(
                         "Select Target Role",
                         options=roles,
+                        index=_current_role_idx,
                         key="interview_role_selection"
                     )
+                    # Keep target_role session_state in sync
+                    st.session_state.target_role = selected_role
                 else:
                     selected_role = None
+                    st.session_state.target_role = None
+            # ── END TASK 1 FIX ────────────────────────────────────────────────
 
             st.markdown('</div>', unsafe_allow_html=True)
         else:
@@ -10587,22 +15567,43 @@ Generate exactly {num_questions} questions now:
                 st.session_state.interview_role = selected_role
                 st.session_state.dynamic_interview_started = False
                 st.session_state.dynamic_interview_completed = False
+                st.session_state.interview_result_saved = False
+                st.session_state.interview_final_duration_seconds = None
+                st.session_state.interview_actual_start_time = None
             if 'question_timer_start' not in st.session_state:
                 st.session_state.question_timer_start = None
             if 'timer_seconds' not in st.session_state:
                 st.session_state.timer_seconds = 120
             if 'interview_difficulty' not in st.session_state:
                 st.session_state.interview_difficulty = "Medium"
+            if 'interview_mode' not in st.session_state:
+                st.session_state.interview_mode = "mixed"
             if 'original_num_questions' not in st.session_state:
                 st.session_state.original_num_questions = 6
             if 'resume_based_questions' not in st.session_state:
                 st.session_state.resume_based_questions = []
             if 'generic_questions' not in st.session_state:
                 st.session_state.generic_questions = []
+            if 'current_interview_id' not in st.session_state:
+                st.session_state.current_interview_id = None
+            # Track DB row ids for parent_question_id linkage: list of row ids per question answered
+            if 'question_db_ids' not in st.session_state:
+                st.session_state.question_db_ids = []
 
             # Start interview setup
             if not st.session_state.dynamic_interview_started:
                 st.markdown(f"### Practice interview for: {selected_role}")
+
+                # PART 5: Show weakness memory insight
+                _username_wm = st.session_state.get("username", "Guest")
+                _wm = get_user_weakness_history(_username_wm)
+                if _wm.get("weakest_skill"):
+                    _wm_avgs = _wm.get("averages", {})
+                    _wm_skill = _wm["weakest_skill"].title()
+                    _wm_score = _wm_avgs.get(_wm["weakest_skill"], 0)
+                    _wm_count = _wm.get("interview_count", 0)
+                    _wm_label = f"last {_wm_count} interview{'s' if _wm_count != 1 else ''}"
+                    st.info(f"🧠 **Weakness Memory:** Based on your {_wm_label}, your weakest recurring skill is **{_wm_skill}** (avg: {_wm_score:.2f}/10). Questions will be biased toward improving this.")
 
                 col1, col2 = st.columns(2)
 
@@ -10629,18 +15630,164 @@ Generate exactly {num_questions} questions now:
                 with col4:
                     timer_seconds = st.slider("Time per question (seconds):", 60, 300, 120, step=30)
 
+                # ── DOMAIN AUTHORITY: Show mismatch warning if resume ≠ selected domain ──
+                if st.session_state.get("resume_context"):
+                    _rc = st.session_state.resume_context
+                    _resume_techs = " ".join(_rc.get("technologies", []) + _rc.get("skills", [])).lower()
+                    _domain_cfg = get_domain_config(selected_domain)
+                    _forbidden = _domain_cfg.get("forbidden_resume_keywords", [])
+                    _mandatory = _domain_cfg.get("mandatory_topics", [])
+                    _has_mismatch = any(kw.lower() in _resume_techs for kw in _forbidden)
+                    _matched_forbidden = [kw for kw in _forbidden if kw.lower() in _resume_techs]
+
+                    # Always show domain scope card; escalate to warning if mismatch detected
+                    _context_note = _domain_cfg.get("context_override", "")
+
+                    if _has_mismatch:
+                        # Domain override is active — topics come purely from domain config
+                        # (resume technologies are suppressed because they conflict with the
+                        # selected domain, so we pass an empty resume context to the function).
+                        _key_topics = generate_key_topics({}, _domain_cfg, selected_role)
+
+                        # Identify which resume skills are being suppressed
+                        _suppressed = list(dict.fromkeys(
+                            kw for kw in _matched_forbidden
+                            if any(kw.lower() in s.lower() for s in (_rc.get("technologies", []) + _rc.get("skills", [])))
+                        ))[:4]
+                        _suppressed_str = (
+                            "".join(
+                                f'<span style="background:rgba(244,67,54,0.15);color:#ef9a9a;'
+                                f'border:1px solid rgba(244,67,54,0.3);border-radius:4px;'
+                                f'padding:2px 8px;font-size:11px;margin:2px 3px;display:inline-block;">'
+                                f'{kw}</span>'
+                                for kw in _suppressed
+                            )
+                            if _suppressed else
+                            '<span style="color:#aaa;font-size:12px;">none detected in top skills</span>'
+                        )
+                        _domain_pills = "".join(
+                            f'<span style="background:rgba(56,189,248,0.12);color:#38bdf8;'
+                            f'border:1px solid rgba(0,195,255,0.25);border-radius:4px;'
+                            f'padding:2px 8px;font-size:11px;margin:2px 3px;display:inline-block;">'
+                            f'{t}</span>'
+                            for t in _key_topics
+                        )
+                        st.markdown(f"""
+                        <div style="background:linear-gradient(135deg,rgba(255,152,0,0.08) 0%,rgba(255,87,34,0.06) 100%);
+                                    border:1px solid rgba(255,152,0,0.35);border-left:4px solid #ff9800;
+                                    border-radius:10px;padding:16px 20px;margin:10px 0;">
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                                <span style="font-size:20px;">🔄</span>
+                                <div>
+                                    <strong style="color:#ffb74d;font-size:15px;">Domain Override Active</strong>
+                                    <span style="color:#aaa;font-size:12px;margin-left:8px;">
+                                        Career pivot simulation enabled
+                                    </span>
+                                </div>
+                            </div>
+                            <p style="color:#e0e0e0;font-size:13px;margin:0 0 10px 0;line-height:1.6;">
+                                Your resume contains skills outside <strong style="color:#ffb74d;">{selected_domain}</strong>.
+                                All questions will be strictly scoped to your <em>target domain</em>, regardless of your
+                                existing background. This mirrors what a real interviewer would focus on when you apply
+                                to a new domain.
+                            </p>
+                            <div style="margin-bottom:10px;">
+                                <span style="color:#ef9a9a;font-size:11px;font-weight:600;text-transform:uppercase;
+                                            letter-spacing:0.06em;">Resume skills excluded from question scope:</span><br/>
+                                <div style="margin-top:5px;">{_suppressed_str}</div>
+                            </div>
+                            <div>
+                                <span style="color:#38bdf8;font-size:11px;font-weight:600;text-transform:uppercase;
+                                            letter-spacing:0.06em;">Questions will draw from these topics:</span><br/>
+                                <div style="margin-top:5px;">{_domain_pills}
+                                    <span style="color:#aaa;font-size:11px;margin-left:4px;">
+                                        + {max(0, len(_mandatory) - len(_key_topics))} more domain topics
+                                    </span>
+                                </div>
+                            </div>
+                            <p style="color:#aaa;font-size:11px;margin:10px 0 0 0;font-style:italic;">
+                                💡 Treat this as authentic interview prep for breaking into {selected_domain}.
+                                Focus on fundamentals, not your existing stack.
+                            </p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        # Resume aligns with domain — blend resume content with domain topics
+                        _key_topics = generate_key_topics(_rc, _domain_cfg, selected_role)
+                        _domain_pills = "".join(
+                            f'<span style="background:rgba(56,189,248,0.10);color:#38bdf8;'
+                            f'border:1px solid rgba(0,195,255,0.2);border-radius:4px;'
+                            f'padding:2px 8px;font-size:11px;margin:2px 3px;display:inline-block;">'
+                            f'{t}</span>'
+                            for t in _key_topics
+                        )
+                        st.markdown(f"""
+                        <div style="background:rgba(0,195,255,0.05);border:1px solid rgba(0,195,255,0.2);
+                                    border-left:4px solid #38bdf8;border-radius:10px;
+                                    padding:14px 18px;margin:10px 0;">
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                                <span style="font-size:18px;">✅</span>
+                                <strong style="color:#38bdf8;font-size:14px;">
+                                    Domain Aligned — {selected_domain}
+                                </strong>
+                            </div>
+                            <p style="color:#ccc;font-size:12px;margin:0 0 8px 0;line-height:1.5;">
+                                Your resume aligns with the selected domain. Questions will leverage your
+                                background and probe for <strong style="color:#e0e0e0;">depth and decision-making</strong>,
+                                not just familiarity.
+                            </p>
+                            <div>
+                                <span style="color:#aaa;font-size:11px;font-weight:600;text-transform:uppercase;
+                                            letter-spacing:0.06em;">Key topics in scope:</span><br/>
+                                <div style="margin-top:5px;">{_domain_pills}
+                                    <span style="color:#666;font-size:11px;margin-left:4px;">
+                                        + {max(0, len(_mandatory) - len(_key_topics))} more
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                # ── DIFFICULTY CONTRACT: Show what each level means ──
+                _diff_contract = DIFFICULTY_CONTRACTS.get(interview_difficulty, {})
+                if _diff_contract:
+                    _diff_colors = {"Easy": "#69f0ae", "Medium": "#ffcc02", "Hard": "#f44336"}
+                    _diff_icons = {"Easy": "📗", "Medium": "📙", "Hard": "📕"}
+                    _dc = _diff_colors.get(interview_difficulty, "#aaa")
+                    _di = _diff_icons.get(interview_difficulty, "📋")
+                    _scope = _diff_contract.get("answer_scope", "")
+                    _cog = _diff_contract.get("cognitive_load_detail", _diff_contract.get("cognitive_load", ""))
+                    _desc = _diff_contract.get("description", "")
+                    st.markdown(
+                        f'<div style="background:rgba(0,195,255,0.07);border-left:4px solid {_dc};'
+                        f'padding:12px 16px;border-radius:0 8px 8px 0;margin:8px 0;">'
+                        f'<strong style="color:{_dc};font-size:15px;">{_di} {interview_difficulty} Mode — {_diff_contract.get("label","")}</strong><br/>'
+                        f'<span style="color:#ddd;font-size:13px;">{_desc}</span><br/>'
+                        f'<span style="color:#aaa;font-size:12px;margin-top:4px;display:block;">'
+                        f'Expected answer scope: <strong style="color:{_dc}">{_scope}</strong> &nbsp;|&nbsp; {_cog}'
+                        f'</span>'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
+
                 if st.button("🚀 Start Mock Interview"):
                     with st.spinner("Generating personalized questions using AI..."):
                         # Generate resume-based questions
                         resume_based_qs = []
                         if st.session_state.resume_context:
                             with st.spinner("Creating resume-based questions..."):
-                                resume_based_qs = generate_resume_based_questions(
+                                # PART 5: Get user weakness for bias
+                                _username_for_bias = st.session_state.get("username", "Guest")
+                                _weakness_data = get_user_weakness_history(_username_for_bias)
+                                _bias = _weakness_data.get("bias", "balanced")
+                                resume_based_qs = generate_resume_based_questions_domain_aware(
                                     st.session_state.resume_context,
                                     selected_role,
                                     selected_domain,
                                     interview_difficulty,
-                                    num_questions=2
+                                    num_questions=2,
+                                    weakness_bias=_bias,
+                                    interview_type=interview_type
                                 )
 
                         # Generate generic questions
@@ -10648,7 +15795,7 @@ Generate exactly {num_questions} questions now:
                         remaining_questions = num_questions - len(resume_based_qs)
                         if remaining_questions > 0:
                             with st.spinner("Creating generic interview questions..."):
-                                generic_qs = generate_interview_questions_with_llm(
+                                generic_qs = generate_domain_questions_with_llm(
                                     selected_domain,
                                     selected_role,
                                     interview_type,
@@ -10662,6 +15809,9 @@ Generate exactly {num_questions} questions now:
 
                         if all_questions:
                             # Reset ALL interview state variables properly
+                            import uuid
+                            st.session_state.current_interview_id = str(uuid.uuid4())
+                            st.session_state.question_db_ids = []
                             st.session_state.dynamic_interview_questions = all_questions
                             st.session_state.resume_based_questions = resume_based_qs
                             st.session_state.generic_questions = generic_qs
@@ -10672,12 +15822,18 @@ Generate exactly {num_questions} questions now:
                             st.session_state.dynamic_interview_feedbacks = []
                             st.session_state.dynamic_interview_completed = False
                             st.session_state.dynamic_interview_started = True
+                            st.session_state.interview_actual_start_time = time.time()
                             st.session_state.dynamic_answer_submitted = False
                             st.session_state.current_interview_question_text = all_questions[0]
                             st.session_state.question_timer_start = time.time()
                             st.session_state.timer_seconds = timer_seconds
                             st.session_state.interview_difficulty = interview_difficulty
+                            st.session_state.interview_mode = interview_type
                             st.session_state.interview_phase = "resume" if resume_based_qs else "generic"
+                            # PART 4: Escalation ladder tracking
+                            st.session_state.escalation_layer = 1
+                            st.session_state.follow_up_count = 0
+                            st.session_state.follow_up_strategy = "Depth Probe"
 
                             # Show resume scanning animation if resume questions exist
                             if resume_based_qs:
@@ -10749,12 +15905,12 @@ Generate exactly {num_questions} questions now:
                     phase_badge = "📄 Resume-Based Question" if current_index <= num_resume_qs else "💼 Generic Interview Question"
                     st.markdown(f"""
                     <div class="quiz-card">
-                        <h3 style="color: #00c3ff;">Question {questions_answered + 1} of {st.session_state.original_num_questions}</h3>
-                        <div style="background: rgba(0, 195, 255, 0.15); padding: 8px 12px; border-radius: 6px; margin: 10px 0; display: inline-block;">
-                            <span style="color: #00c3ff; font-weight: 600;">{phase_badge}</span>
+                        <h3 style="color:#38bdf8;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;font-weight:600;letter-spacing:-0.02em;">Question {questions_answered + 1} of {st.session_state.original_num_questions}</h3>
+                        <div style="background:rgba(56,189,248,0.10);padding:6px 12px;border-radius:99px;margin:10px 0;display:inline-block;border:1px solid rgba(56,189,248,0.22);">
+                            <span style="color:#38bdf8;font-weight:600;font-size:0.8rem;letter-spacing:0.03em;text-transform:uppercase;">{phase_badge}</span>
                         </div>
-                        <h4 style="color: #ffffff; margin: 15px 0;">Role: {selected_role} | Difficulty: {st.session_state.interview_difficulty}</h4>
-                        <p style="font-size: 18px; color: #ffffff; margin: 15px 0;">{question}</p>
+                        <h4 style="color:#94a3b8;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;font-weight:500;font-size:0.875rem;margin:12px 0;letter-spacing:0.02em;">Role: {selected_role} | Difficulty: {st.session_state.interview_difficulty}</h4>
+                        <p style="font-size:1rem;color:#f0f4f8;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;line-height:1.6;margin:14px 0;">{question}</p>
                     </div>
                     """, unsafe_allow_html=True)
 
@@ -10773,6 +15929,15 @@ Generate exactly {num_questions} questions now:
                             st.session_state.dynamic_answer_submitted = False
                             st.session_state.current_interview_question_text = ""
                             st.session_state.question_timer_start = None
+                            st.session_state.interview_result_saved = False
+                            st.session_state.interview_final_duration_seconds = None
+                            st.session_state.interview_actual_start_time = None
+                            st.session_state.pending_followup_display = ""
+                            st.session_state.pending_followup_strategy = ""
+                            st.session_state.escalation_layer = 1
+                            st.session_state.follow_up_count = 0
+                            st.session_state.current_interview_id = None
+                            st.session_state.question_db_ids = []
                             # Force regeneration
                             st.rerun()
 
@@ -10787,37 +15952,107 @@ Generate exactly {num_questions} questions now:
                         help="Maximum 2000 characters"
                     )
 
+                    # ── SINGLE helper: evaluate + inject follow-up (called from both submit paths) ──
+                    def _process_submission(ans_text, q_text, q_idx, n_answered):
+                        """
+                        Evaluate the answer, store results, and inject the follow-up question
+                        into the question list.  The exact same follow-up text is stored in
+                        session_state.pending_followup_display so the preview shown to the user
+                        is always identical to the question that will appear next.
+
+                        ARCHITECTURE FIX: Every answered question is immediately saved to the
+                        interview_questions DB table so the PDF can use it as single source of truth.
+                        """
+                        diff = st.session_state.interview_difficulty
+                        eval_res = evaluate_interview_answer_for_scores(
+                            ans_text, q_text, diff,
+                            role=selected_role, domain=selected_domain
+                        )
+
+                        st.session_state.dynamic_interview_answers.append(ans_text)
+                        st.session_state.dynamic_interview_scores.append(eval_res)
+                        st.session_state.dynamic_interview_feedbacks.append(eval_res["feedback"])
+                        st.session_state.dynamic_answer_submitted = True
+                        st.session_state.pending_followup_display = ""   # reset
+                        st.session_state.pending_followup_strategy = ""
+
+                        # ── IMMEDIATELY save to DB (single source of truth for PDF) ──
+                        interview_id = st.session_state.get('current_interview_id')
+                        parent_db_id = None
+                        is_fu = False
+                        # Determine if this is a follow-up: index beyond original questions
+                        original_count = len(st.session_state.get('resume_based_questions', [])) + len(st.session_state.get('generic_questions', []))
+                        if q_idx >= original_count and len(st.session_state.question_db_ids) > 0:
+                            # It's a follow-up — find the parent: the main question that triggered it
+                            # The parent is the last main question before this follow-up
+                            # We store follow-ups linked to the most recent main question db id
+                            parent_db_id = st.session_state.question_db_ids[-1]
+                            is_fu = True
+
+                        db_row_id = -1
+                        if interview_id:
+                            score_to_save = dict(eval_res)
+                            db_row_id = save_interview_question(
+                                interview_id=interview_id,
+                                question_text=q_text,
+                                answer_text=ans_text,
+                                difficulty=diff,
+                                is_follow_up=is_fu,
+                                parent_question_id=parent_db_id,
+                                score_breakdown=score_to_save,
+                                question_order=q_idx,
+                            )
+                        # Track db row id - only for main questions (used as parent for follow-ups)
+                        if not is_fu and db_row_id != -1:
+                            st.session_state.question_db_ids.append(db_row_id)
+
+                        can_add_followup = n_answered < st.session_state.original_num_questions - 1
+
+                        if diff == "Hard" and can_add_followup:
+                            # ── Hard mode: use adaptive engine (single source of truth) ──
+                            weakness_data = analyze_answer_weaknesses(ans_text, eval_res)
+                            strategy = weakness_data["strategy"]
+                            layer = getattr(st.session_state, 'escalation_layer', 1)
+                            followup_q = generate_adaptive_followup(
+                                q_text, ans_text, strategy, layer, selected_role, selected_domain
+                            )
+                            followup_q = followup_q.strip() if followup_q else ""
+                            if followup_q:
+                                st.session_state.dynamic_interview_questions.insert(
+                                    q_idx + 1, followup_q
+                                )
+                                st.session_state.follow_up_count = getattr(st.session_state, 'follow_up_count', 0) + 1
+                                st.session_state.escalation_layer = min(5, layer + 1)
+                                st.session_state.follow_up_strategy = strategy
+                                # ★ Store SAME text for preview ★
+                                st.session_state.pending_followup_display = followup_q
+                                st.session_state.pending_followup_strategy = strategy
+
+                        elif diff in ("Easy", "Medium") and can_add_followup:
+                            # ── Easy/Medium: only inject if LLM returned a valid followup ──
+                            # The evaluation prompt does NOT ask for a follow-up for Easy/Medium,
+                            # so eval_res["followup"] is always "".  We deliberately do NOT inject
+                            # anything — this prevents mismatched questions.
+                            pass   # No follow-up for Easy/Medium
+
+                        return eval_res
+
+                    # ── initialise session key on first load ──
+                    if 'pending_followup_display' not in st.session_state:
+                        st.session_state.pending_followup_display = ""
+                    if 'pending_followup_strategy' not in st.session_state:
+                        st.session_state.pending_followup_strategy = ""
+
                     # Auto-submit logic when timer expires
                     if remaining_time <= 0 and not st.session_state.dynamic_answer_submitted:
                         if not answer.strip():
                             answer = "⚠️ No Answer"
-
-                        # Evaluate answer using enhanced evaluation with role/domain context
                         with st.spinner("Evaluating your answer..."):
-                            eval_result = evaluate_interview_answer_for_scores(
-                                answer,
-                                question,
-                                st.session_state.interview_difficulty,
-                                role=selected_role,
-                                domain=selected_domain
+                            _process_submission(
+                                answer, question,
+                                st.session_state.current_dynamic_interview_question,
+                                questions_answered
                             )
-
-                        # FIXED: Store answer, scores, and feedback - ensuring all are tracked properly
-                        st.session_state.dynamic_interview_answers.append(answer)
-                        st.session_state.dynamic_interview_scores.append(eval_result)
-                        st.session_state.dynamic_interview_feedbacks.append(eval_result["feedback"])
-                        st.session_state.dynamic_answer_submitted = True
-
-                        # FIXED: Handle follow-up for Hard difficulty without breaking indexing
-                        # Follow-ups are added but don't count toward original_num_questions
-                        if st.session_state.interview_difficulty == "Hard" and eval_result.get("followup") and eval_result["followup"].strip():
-                            # Only add follow-up if we haven't reached the end
-                            if questions_answered < st.session_state.original_num_questions - 1:
-                                st.session_state.dynamic_interview_questions.insert(
-                                    st.session_state.current_dynamic_interview_question + 1,
-                                    eval_result["followup"]
-                                )
-
                         st.warning("⏰ Time's up! Answer auto-submitted.")
                         st.rerun()
 
@@ -10826,31 +16061,12 @@ Generate exactly {num_questions} questions now:
                         if st.button("Submit Answer & Get Feedback"):
                             if answer.strip():
                                 with st.spinner("Evaluating your answer..."):
-                                    # Evaluate answer using enhanced evaluation with role/domain context
-                                    eval_result = evaluate_interview_answer_for_scores(
-                                        answer,
-                                        question,
-                                        st.session_state.interview_difficulty,
-                                        role=selected_role,
-                                        domain=selected_domain
+                                    _process_submission(
+                                        answer, question,
+                                        st.session_state.current_dynamic_interview_question,
+                                        questions_answered
                                     )
-
-                                    # FIXED: Store answer, scores, and feedback ensuring proper tracking
-                                    st.session_state.dynamic_interview_answers.append(answer)
-                                    st.session_state.dynamic_interview_scores.append(eval_result)
-                                    st.session_state.dynamic_interview_feedbacks.append(eval_result["feedback"])
-                                    st.session_state.dynamic_answer_submitted = True
-
-                                    # FIXED: Handle follow-up for Hard difficulty without breaking indexing
-                                    if st.session_state.interview_difficulty == "Hard" and eval_result.get("followup") and eval_result["followup"].strip():
-                                        # Only add follow-up if we haven't reached the end
-                                        if questions_answered < st.session_state.original_num_questions - 1:
-                                            st.session_state.dynamic_interview_questions.insert(
-                                                st.session_state.current_dynamic_interview_question + 1,
-                                                eval_result["followup"]
-                                            )
-
-                                    st.rerun()
+                                st.rerun()
                             else:
                                 st.warning("Please provide an answer before proceeding.")
 
@@ -10866,24 +16082,56 @@ Generate exactly {num_questions} questions now:
                         st.markdown(f"""
                         <div style="background: linear-gradient(135deg, rgba(0, 195, 255, 0.1) 0%, rgba(0, 195, 255, 0.05) 100%);
                                     border: 1px solid rgba(0, 195, 255, 0.3); border-radius: 10px; padding: 15px; margin: 15px 0;">
-                            <h4 style="color: #00c3ff;">Immediate Feedback:</h4>
+                            <h4 style="color:#38bdf8;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;font-weight:600;letter-spacing:-0.02em;">Immediate Feedback:</h4>
                             <p style="color: #ffffff;">📊 Knowledge: {current_score_dict["knowledge"]}/10 | Communication: {current_score_dict["communication"]}/10 | Relevance: {current_score_dict["relevance"]}/10</p>
-                            <p style="color: #ffffff;">⭐ Question Score: {avg_q_score:.1f}/10</p>
+                            <p style="color: #ffffff;">⭐ Question Score: {avg_q_score:.2f}/10</p>
                             <div style="color: #ffffff; margin-top: 10px;">
                                 {formatted_feedback}
                             </div>
                         </div>
                         """, unsafe_allow_html=True)
 
-                        # Show follow-up question for Hard difficulty
-                        if st.session_state.interview_difficulty == "Hard" and current_score_dict.get("followup"):
-                            st.info(f"🔎 Follow-Up Question: {current_score_dict['followup']}")
+                        # ★ Show follow-up preview using SAME text that was injected ★
+                        _preview_fq = st.session_state.get('pending_followup_display', '')
+                        _preview_strategy = st.session_state.get('pending_followup_strategy', '')
+                        if st.session_state.interview_difficulty == "Hard" and _preview_fq:
+                            _esc_layer = st.session_state.get("escalation_layer", 1)
+                            _layer_info = ESCALATION_LAYER_MAP.get(_esc_layer, {})
+                            _layer_name = _layer_info.get("name", "")
+                            _pressure = _layer_info.get("cognitive_pressure", "")
+                            _pressure_colors = {
+                                "LOW": "#69f0ae", "MEDIUM": "#ffcc02",
+                                "MEDIUM-HIGH": "#ff9800", "HIGH": "#ff5722", "MAXIMUM": "#f44336"
+                            }
+                            _pc = _pressure_colors.get(_pressure, "#ffa500")
+                            st.markdown(f"""
+                            <div style="background: linear-gradient(135deg, rgba(255,165,0,0.12), rgba(255,165,0,0.06));
+                                        border: 1px solid rgba(255,165,0,0.4); border-radius: 10px;
+                                        padding: 14px 18px; margin: 12px 0;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                    <span style="color: #ffa500; font-weight: 600;">
+                                        🔎 Follow-Up — {_preview_strategy}
+                                    </span>
+                                    <span style="color:{_pc};font-size:12px;font-weight:600;
+                                                 background:rgba(0,0,0,0.3);padding:2px 8px;border-radius:12px;">
+                                        Layer {_esc_layer}/5: {_layer_name} | Pressure: {_pressure}
+                                    </span>
+                                </div>
+                                <p style="color: #ffffff; margin: 0; font-size: 15px;">{_preview_fq}</p>
+                            </div>
+                            """, unsafe_allow_html=True)
 
                         # Continue/Complete button
                         # CRITICAL FIX: Check if we've answered all original questions
                         if questions_answered >= st.session_state.original_num_questions:
                             # All questions answered, mark as complete
                             if st.button("Complete Interview 🏁"):
+                                # Capture exact duration at completion moment
+                                if st.session_state.get('interview_actual_start_time'):
+                                    st.session_state.interview_final_duration_seconds = int(time.time() - st.session_state.interview_actual_start_time)
+                                else:
+                                    st.session_state.interview_final_duration_seconds = None
+                                st.session_state.interview_result_saved = False
                                 st.session_state.dynamic_interview_completed = True
                                 st.rerun()
                         else:
@@ -10891,6 +16139,8 @@ Generate exactly {num_questions} questions now:
                             if st.button("Continue to Next Question ➡️"):
                                 st.session_state.current_dynamic_interview_question += 1
                                 st.session_state.dynamic_answer_submitted = False
+                                st.session_state.pending_followup_display = ""
+                                st.session_state.pending_followup_strategy = ""
                                 if st.session_state.current_dynamic_interview_question < len(st.session_state.dynamic_interview_questions):
                                     st.session_state.current_interview_question_text = st.session_state.dynamic_interview_questions[st.session_state.current_dynamic_interview_question]
                                 else:
@@ -10924,7 +16174,7 @@ Generate exactly {num_questions} questions now:
 
                                     st.markdown(f"**Question {i+1}:** {prev_question}")
                                     st.markdown(f"**Your Answer:** {answer_preview}")
-                                    st.markdown(f"**Score:** {prev_avg:.1f}/10")
+                                    st.markdown(f"**Score:** {prev_avg:.2f}/10")
                                     if i < num_to_show - 1:  # Don't add separator after last item
                                         st.markdown("---")
 
@@ -10934,6 +16184,12 @@ Generate exactly {num_questions} questions now:
                         st.rerun()
                 else:
                     # CRITICAL FIX: All questions answered, move to completion automatically
+                    # Capture exact duration at auto-completion moment
+                    if st.session_state.get('interview_actual_start_time'):
+                        st.session_state.interview_final_duration_seconds = int(time.time() - st.session_state.interview_actual_start_time)
+                    else:
+                        st.session_state.interview_final_duration_seconds = None
+                    st.session_state.interview_result_saved = False
                     st.session_state.dynamic_interview_completed = True
                     st.success(f"✅ Completed all {st.session_state.original_num_questions} questions!")
                     time.sleep(1)
@@ -10950,6 +16206,12 @@ Generate exactly {num_questions} questions now:
                 avg_communication = sum(communication_scores) / len(communication_scores)
                 avg_relevance = sum(relevance_scores) / len(relevance_scores)
                 overall_avg = (avg_knowledge + avg_communication + avg_relevance) / 3
+
+                # PART 3: Compute weighted score using difficulty multiplier
+                _raw_avg = overall_avg
+                _weighted_avg = compute_weighted_score(_raw_avg, st.session_state.interview_difficulty)
+                _follow_up_count = getattr(st.session_state, 'follow_up_count', 0)
+                _depth_score = (avg_knowledge + avg_relevance) / 2
 
                 # Determine badge based on overall average
                 if overall_avg >= 8.5:
@@ -10969,11 +16231,13 @@ Generate exactly {num_questions} questions now:
                 <div class="badge-container">
                     <h2 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">🎉 Mock Interview Complete!</h2>
                     <div style="margin: 30px 0;">
-                        <div class="score-display">{overall_avg:.1f}/10</div>
+                        <div class="score-display">{overall_avg:.2f}/10</div>
                         <h3 style="color: #ffffff; margin: 15px 0; font-size: 24px; font-weight: 500;">{badge_emoji} {badge}</h3>
                     </div>
                     <p style="color: rgba(255, 255, 255, 0.85); font-size: 16px; margin: 8px 0;">Role: {selected_role} in {selected_domain}</p>
                     <p style="color: rgba(255, 255, 255, 0.85); font-size: 16px; margin: 8px 0;">Difficulty: {st.session_state.interview_difficulty}</p>
+                    <p style="color: rgba(0, 195, 255, 0.9); font-size: 15px; margin: 8px 0;">⚡ Weighted Score: {_weighted_avg:.2f}/10 (×{DIFFICULTY_MULTIPLIERS.get(st.session_state.interview_difficulty, 1.0)} difficulty multiplier)</p>
+                    <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px; margin: 4px 0;">Follow-up Probes: {_follow_up_count} | Depth Score: {_depth_score:.2f}/10</p>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -11036,12 +16300,12 @@ Generate exactly {num_questions} questions now:
                 with col1:
                     st.markdown("**🌟 Strengths:**")
                     for name, score in metrics_sorted[:2]:
-                        st.markdown(f"- {name}: {score:.1f}/10")
+                        st.markdown(f"- {name}: {score:.2f}/10")
 
                 with col2:
                     st.markdown("**📈 Areas to Improve:**")
                     for name, score in metrics_sorted[-2:]:
-                        st.markdown(f"- {name}: {score:.1f}/10")
+                        st.markdown(f"- {name}: {score:.2f}/10")
 
                 # FIXED: Show detailed Q&A results with full answers and proper matching
                 st.markdown("---")
@@ -11063,7 +16327,7 @@ Generate exactly {num_questions} questions now:
 
                     q_avg = (score_dict["knowledge"] + score_dict["communication"] + score_dict["relevance"]) / 3
 
-                    with st.expander(f"Question {i+1}: Score {q_avg:.1f}/10"):
+                    with st.expander(f"Question {i+1}: Score {q_avg:.2f}/10"):
                         st.write(f"**Question:** {question}")
                         st.write(f"**Your Answer:** {answer}")  # Show full answer
                         st.write(f"**Scores:** Knowledge: {score_dict['knowledge']}/10 | Communication: {score_dict['communication']}/10 | Relevance: {score_dict['relevance']}/10")
@@ -11073,12 +16337,25 @@ Generate exactly {num_questions} questions now:
                         formatted_feedback = format_feedback_text(feedback_text)
                         st.markdown(formatted_feedback, unsafe_allow_html=True)
 
-                # Save to database
+                # Save to database — guarded by flag so it only runs ONCE
                 username = st.session_state.get("username", "Guest")
                 feedback_summary = f"Strengths: {metrics_sorted[0][0]}, {metrics_sorted[1][0]}. Weaknesses: {metrics_sorted[-1][0]}, {metrics_sorted[-2][0]}."
 
-                if save_interview_result(username, selected_role, selected_domain, overall_avg, st.session_state.original_num_questions, feedback_summary):
-                    log_user_action(username, "completed_interview")
+                if not st.session_state.get('interview_result_saved', False):
+                    # Capture duration at the exact moment of first save, not on reruns
+                    _interview_duration = st.session_state.get('interview_final_duration_seconds', None)
+                    _interview_mode = st.session_state.get('interview_mode', None)
+                    # PART 6: Compute behavior class
+                    _dur_mins = (_interview_duration / 60.0) if _interview_duration else None
+                    _b_class = classify_behavior(_dur_mins, 0.0, None)
+                    if save_interview_result(username, selected_role, selected_domain, overall_avg, st.session_state.original_num_questions, feedback_summary,
+                                             knowledge_avg=avg_knowledge, communication_avg=avg_communication, relevance_avg=avg_relevance,
+                                             difficulty=st.session_state.interview_difficulty, duration_seconds=_interview_duration,
+                                             interview_mode=_interview_mode,
+                                             weighted_score=_weighted_avg, raw_avg_score=_raw_avg,
+                                             follow_up_count=_follow_up_count, depth_score=_depth_score, behavior_class=_b_class):
+                        st.session_state.interview_result_saved = True
+                        log_user_action(username, "completed_interview")
 
                 # Generate PDF report
                 st.markdown("---")
@@ -11105,7 +16382,8 @@ Generate exactly {num_questions} questions now:
                     st.session_state.dynamic_interview_feedbacks[:num_complete],
                     overall_avg,
                     badge,
-                    difficulty=st.session_state.interview_difficulty
+                    difficulty=st.session_state.interview_difficulty,
+                    interview_id=st.session_state.get('current_interview_id')
                 )
 
                 if pdf_bytes:
@@ -11148,9 +16426,1063 @@ Generate exactly {num_questions} questions now:
                     st.session_state.resume_based_questions = []
                     st.session_state.generic_questions = []
                     st.session_state.interview_phase = "resume"
+                    st.session_state.interview_result_saved = False
+                    st.session_state.interview_final_duration_seconds = None
+                    st.session_state.interview_actual_start_time = None
+                    st.session_state.interview_mode = "mixed"
+                    st.session_state.pending_followup_display = ""
+                    st.session_state.pending_followup_strategy = ""
+                    st.session_state.escalation_layer = 1
+                    st.session_state.follow_up_count = 0
+                    st.session_state.current_interview_id = None
+                    st.session_state.question_db_ids = []
                     st.rerun()
         else:
             st.info("Please select both a career domain and target role to start the interview practice.")
+    # Section 5: My Progress 📊
+    elif page == "My Progress 📊":
+        import sqlite3
+        import pandas as pd
+        import numpy as np
+        import matplotlib.pyplot as plt
+        import matplotlib
+        matplotlib.use('Agg')
+        import plotly.graph_objects as go
+        import plotly.express as px
+        from plotly.subplots import make_subplots
+
+        # ── Dashboard CSS ──────────────────────────────────────────────────────
+        st.markdown("""
+        <style>
+        /* Metric cards */
+        .metric-card {
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            padding: 18px 20px;
+            margin: 6px 0;
+            transition: transform 0.18s cubic-bezier(0.4,0,0.2,1), box-shadow 0.18s cubic-bezier(0.4,0,0.2,1), border-color 0.18s cubic-bezier(0.4,0,0.2,1);
+        }
+        .metric-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(99,179,237,0.30);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.45), 0 0 30px rgba(79,163,227,0.15);
+        }
+        .metric-card .metric-label {
+            color: #94a3b8;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin: 0 0 6px 0;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+        }
+        .metric-card .metric-value {
+            color: #38bdf8;
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 0;
+            line-height: 1.2;
+            letter-spacing: -0.03em;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+        }
+        .metric-card .metric-sub {
+            color: rgba(148,163,184,0.6);
+            font-size: 0.72rem;
+            margin: 4px 0 0 0;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+        }
+        /* Score badges — Apple SaaS style */
+        .badge-excellent { background:rgba(52,211,153,0.15); color:#34d399; border:1px solid rgba(52,211,153,0.30); border-radius:99px; padding:2px 10px; font-weight:600; font-size:12px; }
+        .badge-good      { background:rgba(56,189,248,0.12); color:#38bdf8; border:1px solid rgba(56,189,248,0.28); border-radius:99px; padding:2px 10px; font-weight:600; font-size:12px; }
+        .badge-average   { background:rgba(251,191,36,0.12); color:#fbbf24; border:1px solid rgba(251,191,36,0.28); border-radius:99px; padding:2px 10px; font-weight:600; font-size:12px; }
+        .badge-weak      { background:rgba(251,113,133,0.10); color:#fb7185; border:1px solid rgba(251,113,133,0.25); border-radius:99px; padding:2px 10px; font-weight:600; font-size:12px; }
+        .badge-poor      { background:rgba(100,116,139,0.12); color:#64748b; border:1px solid rgba(100,116,139,0.25); border-radius:99px; padding:2px 10px; font-weight:600; font-size:12px; }
+        /* Highlighted best row */
+        .best-row { background: rgba(0,230,118,0.12) !important; }
+        /* Section divider */
+        .section-header {
+            font-size: 1.1rem; font-weight: 700; color: #38bdf8;
+            border-left: 4px solid #38bdf8; padding-left: 12px;
+            margin: 24px 0 4px 0;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+        st.subheader("📊 My Progress Dashboard")
+        st.markdown("Track how you're improving over time, spot your strengths, and find exactly what to work on next.")
+
+        username = st.session_state.get("username", "Guest")
+
+        # Ensure DB and columns exist
+        create_interview_database()
+
+        # ── Load dashboard data with session_state caching ──────────────────────
+        # Only re-query the DB when the user navigates to this page fresh, or when
+        # a new interview has been saved (signalled by clearing _dashboard_cache_key).
+        # This prevents a full DB round-trip (and visible flicker) on every widget
+        # interaction that triggers a Streamlit rerun.
+        _cache_key = f"_dashboard_df_{username}"
+        _cache_dirty_key = f"_dashboard_dirty_{username}"
+
+        if st.session_state.get(_cache_dirty_key, True) or _cache_key not in st.session_state:
+            try:
+                conn = sqlite3.connect('resume_data.db')
+                df = pd.read_sql_query(
+                    "SELECT * FROM interview_results WHERE username = ? ORDER BY id ASC",
+                    conn, params=(username,)
+                )
+                conn.close()
+            except Exception as e:
+                st.error(f"Error loading data: {e}")
+                df = pd.DataFrame()
+            st.session_state[_cache_key] = df
+            st.session_state[_cache_dirty_key] = False
+        else:
+            df = st.session_state[_cache_key]
+
+        # Refresh button — invalidates cache without a full page rerun
+        if st.button("🔄 Refresh Dashboard", key="_dashboard_refresh_btn"):
+            st.session_state[_cache_dirty_key] = True
+            st.rerun()
+
+        if df.empty:
+            st.info("👋 You haven't completed any interviews yet. Head over to the **AI Interview Coach** tab, do your first practice session, and come back here to see your results!")
+        else:
+            # Ensure numeric types
+            for col in ['avg_score', 'knowledge_avg', 'communication_avg', 'relevance_avg', 'duration_seconds', 'total_questions', 'weighted_score', 'raw_avg_score', 'depth_score', 'follow_up_count']:
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors='coerce')
+
+            if 'difficulty' not in df.columns:
+                df['difficulty'] = 'Unknown'
+            df['difficulty'] = df['difficulty'].fillna('Unknown')
+
+            # Backfill weighted_score if missing
+            if 'weighted_score' not in df.columns or df['weighted_score'].isna().all():
+                df['weighted_score'] = df['avg_score']
+            else:
+                df['weighted_score'] = df['weighted_score'].fillna(df['avg_score'])
+
+            # =====================================================
+            # SECTION A — EXECUTIVE SUMMARY METRICS
+            # =====================================================
+            st.markdown("---")
+            st.markdown("### 🏆 Your Progress at a Glance")
+            st.caption("Here's a quick overview of everything you've accomplished so far.")
+
+            total_interviews = len(df)
+            highest_score = df['avg_score'].max()
+            lowest_score = df['avg_score'].min()
+            overall_avg = df['avg_score'].mean()
+            total_questions = int(df['total_questions'].fillna(0).sum()) if 'total_questions' in df.columns else 0
+
+            # Improvement %
+            if total_interviews >= 2:
+                try:
+                    first_score = float(df['avg_score'].dropna().iloc[0])
+                    latest_score = float(df['avg_score'].dropna().iloc[-1])
+                    improvement_pct = ((latest_score - first_score) / first_score) * 100 if first_score > 0 else 0.0
+                except Exception:
+                    improvement_pct = 0.0
+            else:
+                improvement_pct = 0.0
+
+            # Consistency score based on std deviation
+            score_std = df['avg_score'].std() if total_interviews > 1 else 0.0
+            if score_std < 0.5:
+                consistency_label = "🟢 Very Consistent"
+            elif score_std < 1.5:
+                consistency_label = "🟡 Fairly Consistent"
+            else:
+                consistency_label = "🔴 Varies a Lot"
+
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.markdown(f"""<div class="metric-card">
+                    <p class="metric-label">Interviews Completed</p>
+                    <p class="metric-value">{total_interviews}</p>
+                    <p class="metric-sub">Total sessions</p>
+                </div>""", unsafe_allow_html=True)
+            with col2:
+                best_val = f"{format_score(highest_score)}/10" if not pd.isna(highest_score) else "N/A"
+                st.markdown(f"""<div class="metric-card">
+                    <p class="metric-label">Best Score Ever</p>
+                    <p class="metric-value">{best_val}</p>
+                    <p class="metric-sub">Personal best</p>
+                </div>""", unsafe_allow_html=True)
+            with col3:
+                low_val = f"{format_score(lowest_score)}/10" if not pd.isna(lowest_score) else "N/A"
+                st.markdown(f"""<div class="metric-card">
+                    <p class="metric-label">Lowest Score</p>
+                    <p class="metric-value" style="color:#ff9800;">{low_val}</p>
+                    <p class="metric-sub">Room to grow</p>
+                </div>""", unsafe_allow_html=True)
+            with col4:
+                avg_val = f"{format_score(overall_avg)}/10" if not pd.isna(overall_avg) else "N/A"
+                st.markdown(f"""<div class="metric-card">
+                    <p class="metric-label">Average Score</p>
+                    <p class="metric-value">{avg_val}</p>
+                    <p class="metric-sub">All-time average</p>
+                </div>""", unsafe_allow_html=True)
+
+            st.markdown("<div style='margin-top:10px'></div>", unsafe_allow_html=True)
+
+            col5, col6, col7 = st.columns(3)
+            with col5:
+                st.markdown(f"""<div class="metric-card">
+                    <p class="metric-label">Total Questions Answered</p>
+                    <p class="metric-value">{total_questions}</p>
+                    <p class="metric-sub">Real practice time</p>
+                </div>""", unsafe_allow_html=True)
+            with col6:
+                sign = "+" if improvement_pct >= 0 else ""
+                imp_color = "#00e676" if improvement_pct >= 0 else "#f44336"
+                st.markdown(f"""<div class="metric-card">
+                    <p class="metric-label">How Much You've Improved</p>
+                    <p class="metric-value" style="color:{imp_color};">{sign}{improvement_pct:.1f}%</p>
+                    <p class="metric-sub">vs. your first interview</p>
+                </div>""", unsafe_allow_html=True)
+            with col7:
+                cons_color = "#00e676" if "Very" in consistency_label else ("#ffcc02" if "Fairly" in consistency_label else "#f44336")
+                st.markdown(f"""<div class="metric-card">
+                    <p class="metric-label">Score Consistency</p>
+                    <p class="metric-value" style="color:{cons_color};font-size:18px;">{consistency_label}</p>
+                    <p class="metric-sub">Std dev: {score_std:.2f}</p>
+                </div>""", unsafe_allow_html=True)
+
+            # =====================================================
+            # SECTION B — SCORE TREND INTELLIGENCE
+            # =====================================================
+            st.markdown("---")
+            st.markdown("### 📈 Are You Getting Better Over Time?")
+            st.caption("This chart shows how your scores have changed across every interview you've done. The smoother line helps filter out one-off good or bad days.")
+
+            trend_df = df[['avg_score', 'weighted_score']].copy().reset_index(drop=True)
+            trend_df.index = trend_df.index + 1
+            trend_df.index.name = "Interview #"
+
+            # 3-point moving average
+            trend_df['Smoothed Performance Trend'] = trend_df['avg_score'].rolling(window=3, min_periods=1).mean()
+            trend_df = trend_df.rename(columns={
+                'avg_score': 'Your Score',
+                'weighted_score': 'Adjusted Score (Hard Interviews Count More)'
+            })
+
+            # ── Interactive Plotly trend chart ───────────────────────────────
+            _x_vals = list(trend_df.index)
+            _raw_scores = trend_df['Your Score'].tolist()
+            _adj_scores = trend_df['Adjusted Score (Hard Interviews Count More)'].tolist()
+            _smooth_scores = trend_df['Smoothed Performance Trend'].tolist()
+
+            # Find best and worst interview indices
+            _best_idx = int(np.argmax(_raw_scores))
+            _worst_idx = int(np.argmin(_raw_scores))
+
+            # Build difficulty labels for hover if available
+            _diff_labels = df['difficulty'].tolist() if 'difficulty' in df.columns else [''] * len(_x_vals)
+            _role_labels = df['role'].tolist() if 'role' in df.columns else [''] * len(_x_vals)
+            _date_labels = df['completed_on'].tolist() if 'completed_on' in df.columns else [''] * len(_x_vals)
+
+            _hover_text = [
+                f"<b>Interview #{x}</b><br>Score: {float(s):.2f}/10<br>Role: {r}<br>Difficulty: {d}<br>Date: {dt}"
+                for x, s, r, d, dt in zip(_x_vals, _raw_scores, _role_labels, _diff_labels, _date_labels)
+            ]
+
+            fig_trend = go.Figure()
+
+            # Adjusted score area fill
+            fig_trend.add_trace(go.Scatter(
+                x=_x_vals, y=_adj_scores,
+                name='Adjusted Score',
+                mode='lines',
+                line=dict(color='rgba(102,187,106,0.7)', width=1.5, dash='dot'),
+                fill='tozeroy',
+                fillcolor='rgba(102,187,106,0.05)',
+                hovertemplate='Interview #%{x}<br>Adjusted: %{y:.2f}/10<extra></extra>'
+            ))
+
+            # Raw score line
+            fig_trend.add_trace(go.Scatter(
+                x=_x_vals, y=_raw_scores,
+                name='Your Score',
+                mode='lines+markers',
+                line=dict(color='#00c3ff', width=2.5),
+                marker=dict(size=7, color='#00c3ff', line=dict(width=1.5, color='white')),
+                hovertext=_hover_text,
+                hoverinfo='text',
+            ))
+
+            # Smoothed trend
+            fig_trend.add_trace(go.Scatter(
+                x=_x_vals, y=_smooth_scores,
+                name='3-Interview Trend',
+                mode='lines',
+                line=dict(color='#ff9800', width=2, dash='dash'),
+                hovertemplate='Interview #%{x}<br>Trend: %{y:.2f}/10<extra></extra>'
+            ))
+
+            # Best interview marker
+            fig_trend.add_trace(go.Scatter(
+                x=[_x_vals[_best_idx]], y=[_raw_scores[_best_idx]],
+                name='🏆 Best',
+                mode='markers+text',
+                marker=dict(size=14, color='#00e676', symbol='star', line=dict(width=1.5, color='white')),
+                text=[f" Best: {_raw_scores[_best_idx]:.2f}"],
+                textposition='top right',
+                textfont=dict(color='#00e676', size=11),
+                hovertemplate=f'<b>🏆 Best Interview!</b><br>Score: {_raw_scores[_best_idx]:.2f}/10<extra></extra>'
+            ))
+
+            # Worst interview marker
+            fig_trend.add_trace(go.Scatter(
+                x=[_x_vals[_worst_idx]], y=[_raw_scores[_worst_idx]],
+                name='⚠️ Lowest',
+                mode='markers+text',
+                marker=dict(size=14, color='#f44336', symbol='x', line=dict(width=2, color='white')),
+                text=[f" Low: {_raw_scores[_worst_idx]:.2f}"],
+                textposition='bottom right',
+                textfont=dict(color='#f44336', size=11),
+                hovertemplate=f'<b>⚠️ Lowest Interview</b><br>Score: {_raw_scores[_worst_idx]:.2f}/10<extra></extra>'
+            ))
+
+            # Average reference line
+            fig_trend.add_hline(
+                y=float(np.mean(_raw_scores)),
+                line_dash='dot', line_color='rgba(255,255,255,0.25)',
+                annotation_text=f'  Avg: {float(np.mean(_raw_scores)):.2f}',
+                annotation_font_color='rgba(255,255,255,0.5)',
+                annotation_position='right'
+            )
+
+            fig_trend.update_layout(
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(15,20,25,0.8)',
+                font=dict(color='white', family='Inter, sans-serif'),
+                legend=dict(
+                    bgcolor='rgba(15,20,35,0.85)',
+                    bordercolor='rgba(0,195,255,0.3)',
+                    borderwidth=1,
+                    orientation='h',
+                    yanchor='bottom', y=1.02, xanchor='right', x=1
+                ),
+                xaxis=dict(
+                    title='Interview #',
+                    gridcolor='rgba(255,255,255,0.07)',
+                    tickmode='linear', dtick=1,
+                    showline=True, linecolor='rgba(0,195,255,0.3)'
+                ),
+                yaxis=dict(
+                    title='Score (/10)',
+                    range=[0, 10.5],
+                    gridcolor='rgba(255,255,255,0.07)',
+                    showline=True, linecolor='rgba(0,195,255,0.3)'
+                ),
+                hovermode='x unified',
+                margin=dict(l=10, r=10, t=30, b=10),
+                height=380,
+                transition_duration=500
+            )
+            st.plotly_chart(fig_trend, use_container_width=True)
+            st.caption("💡 **Adjusted Score** gives a little extra credit for completing harder interviews. **Smoothed Trend** is the average of your last 3 interviews — it shows your real direction without single-interview spikes.")
+
+            # Detect trend direction using linear regression slope
+            if total_interviews >= 3:
+                _scores_list = df['avg_score'].dropna().tolist()
+                _slope = compute_trend_slope(_scores_list)
+                if _slope > 0.15:
+                    trend_badge = "🟢 **You're Improving!** Your scores are going up across your recent interviews. Keep it up!"
+                elif _slope < -0.15:
+                    trend_badge = "🔴 **Scores Are Slipping.** Your recent interviews scored lower than earlier ones. Try reviewing feedback from your past sessions."
+                else:
+                    trend_badge = "🟡 **Holding Steady.** Your scores are staying about the same. Try harder difficulty levels to push your growth."
+                # Stagnation detection
+                if abs(_slope) < 0.05 and total_interviews >= 5:
+                    trend_badge += " — ⚠️ **You may be in a plateau.** Switch to Hard mode or try a new topic to break through."
+            else:
+                _slope = 0.0
+                trend_badge = "ℹ️ **Complete at least 3 interviews** to see your improvement trend here."
+            st.markdown(trend_badge)
+
+            # =====================================================
+            # SECTION C — DOMAIN & ROLE ANALYTICS
+            # =====================================================
+            st.markdown("---")
+            st.markdown("### 🌐 Where Are You Strongest?")
+            st.caption("See which career areas and job roles you score highest in — and which ones need more practice.")
+
+            if 'domain' in df.columns:
+                col_l, col_r = st.columns(2)
+
+                domain_counts = df.groupby('domain').size().rename('Interviews')
+                domain_avg = df.groupby('domain')['avg_score'].mean().rename('Avg Score')
+
+                with col_l:
+                    st.markdown("**Interviews Done per Career Area**")
+                    _fig_dc = px.bar(
+                        x=domain_counts.index.tolist(), y=domain_counts.values.tolist(),
+                        labels={'x': 'Career Area', 'y': 'Interviews'},
+                        color=domain_counts.values.tolist(),
+                        color_continuous_scale=[[0,'rgba(0,195,255,0.4)'],[1,'#00c3ff']],
+                        text=domain_counts.values.tolist()
+                    )
+                    _fig_dc.update_traces(
+                        texttemplate='%{text}', textposition='outside',
+                        hovertemplate='<b>%{x}</b><br>Interviews: %{y}<extra></extra>'
+                    )
+                    _fig_dc.update_layout(
+                        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(15,20,25,0.8)',
+                        font=dict(color='white'), coloraxis_showscale=False,
+                        xaxis=dict(gridcolor='rgba(255,255,255,0.06)'),
+                        yaxis=dict(gridcolor='rgba(255,255,255,0.06)'),
+                        margin=dict(l=5,r=5,t=10,b=5), height=280
+                    )
+                    st.plotly_chart(_fig_dc, use_container_width=True)
+
+                with col_r:
+                    st.markdown("**Average Score per Career Area**")
+                    _fig_da = px.bar(
+                        x=domain_avg.index.tolist(), y=domain_avg.values.tolist(),
+                        labels={'x': 'Career Area', 'y': 'Avg Score'},
+                        color=domain_avg.values.tolist(),
+                        color_continuous_scale=[[0,'#f44336'],[0.5,'#ffcc02'],[1,'#00e676']],
+                        text=[f"{v:.2f}" for v in domain_avg.values.tolist()]
+                    )
+                    _fig_da.update_traces(
+                        texttemplate='%{text}', textposition='outside',
+                        hovertemplate='<b>%{x}</b><br>Avg Score: %{y:.2f}/10<extra></extra>'
+                    )
+                    _fig_da.update_layout(
+                        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(15,20,25,0.8)',
+                        font=dict(color='white'), coloraxis_showscale=False,
+                        xaxis=dict(gridcolor='rgba(255,255,255,0.06)'),
+                        yaxis=dict(range=[0,10.5], gridcolor='rgba(255,255,255,0.06)'),
+                        margin=dict(l=5,r=5,t=10,b=5), height=280
+                    )
+                    st.plotly_chart(_fig_da, use_container_width=True)
+
+                # Strongest / Weakest Domain
+                if len(domain_avg) >= 1:
+                    strongest_domain = domain_avg.idxmax()
+                    weakest_domain = domain_avg.idxmin()
+                    st.markdown(f"🏆 **You shine in:** {strongest_domain} — avg score {domain_avg[strongest_domain]:.2f}/10")
+                    st.markdown(f"📌 **Room to grow in:** {weakest_domain} — avg score {domain_avg[weakest_domain]:.2f}/10. Spend more time practising here.")
+
+            # Role breakdown — bar chart + pie chart + styled table
+            if 'role' in df.columns:
+                role_perf = df.groupby('role').agg(
+                    Attempts=('avg_score', 'count'),
+                    Avg_Score=('avg_score', 'mean'),
+                    Best_Score=('avg_score', 'max'),
+                    Latest_Score=('avg_score', 'last')
+                ).reset_index()
+                role_perf.columns = ['Role', 'Times Practised', 'Avg Score', 'Best Score', 'Last Score']
+                role_perf = role_perf.round(2)
+
+                st.markdown("**Role Performance Analytics**")
+                col_rb1, col_rb2 = st.columns(2)
+
+                with col_rb1:
+                    # Interactive bar chart — Avg Score by Role
+                    _colors_bar = ['#00e676' if v == role_perf['Avg Score'].max() else '#00c3ff' for v in role_perf['Avg Score']]
+                    _fig_rb = go.Figure(go.Bar(
+                        x=role_perf['Role'], y=role_perf['Avg Score'],
+                        marker_color=_colors_bar,
+                        text=[f"{v:.2f}" for v in role_perf['Avg Score']],
+                        textposition='outside',
+                        hovertemplate='<b>%{x}</b><br>Avg Score: %{y:.2f}/10<extra></extra>'
+                    ))
+                    _fig_rb.update_layout(
+                        title=dict(text='Avg Score by Role', font=dict(color='#00c3ff', size=14)),
+                        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(15,20,25,0.8)',
+                        font=dict(color='white'),
+                        xaxis=dict(gridcolor='rgba(255,255,255,0.06)'),
+                        yaxis=dict(range=[0,10.5], gridcolor='rgba(255,255,255,0.06)'),
+                        margin=dict(l=5,r=5,t=40,b=5), height=280
+                    )
+                    st.plotly_chart(_fig_rb, use_container_width=True)
+
+                with col_rb2:
+                    # Interactive pie chart — Interview distribution by role
+                    _fig_pie = go.Figure(go.Pie(
+                        labels=role_perf['Role'],
+                        values=role_perf['Times Practised'],
+                        hole=0.42,
+                        marker=dict(
+                            colors=px.colors.sequential.Blues_r[:len(role_perf)],
+                            line=dict(color='rgba(0,0,0,0.5)', width=1.5)
+                        ),
+                        textinfo='label+percent',
+                        textfont=dict(color='white', size=11),
+                        hovertemplate='<b>%{label}</b><br>Interviews: %{value}<br>Share: %{percent}<extra></extra>'
+                    ))
+                    _fig_pie.update_layout(
+                        title=dict(text='Interview Distribution by Role', font=dict(color='#00c3ff', size=14)),
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        font=dict(color='white'),
+                        legend=dict(font=dict(color='white', size=10), bgcolor='rgba(0,0,0,0)'),
+                        margin=dict(l=5,r=5,t=40,b=5), height=280,
+                        annotations=[dict(text='Roles', x=0.5, y=0.5, font_size=13, showarrow=False, font_color='#aaa')]
+                    )
+                    st.plotly_chart(_fig_pie, use_container_width=True)
+
+                # Styled role table
+                st.markdown("**Your Scores by Job Role**")
+                _rp_styled = role_perf.copy()
+                def _score_badge(v):
+                    if v >= 8.5: return f'<span class="badge-excellent">{v:.2f}</span>'
+                    elif v >= 7.0: return f'<span class="badge-good">{v:.2f}</span>'
+                    elif v >= 5.5: return f'<span class="badge-average">{v:.2f}</span>'
+                    elif v >= 4.0: return f'<span class="badge-weak">{v:.2f}</span>'
+                    else: return f'<span class="badge-poor">{v:.2f}</span>'
+                _best_role_idx = role_perf['Avg Score'].idxmax()
+                _table_rows = ""
+                for i, row in role_perf.iterrows():
+                    _row_style = 'background:rgba(0,230,118,0.08);' if i == _best_role_idx else ''
+                    _crown = ' 🏆' if i == _best_role_idx else ''
+                    _table_rows += f"""<tr style="{_row_style}">
+                        <td style="padding:8px 12px;color:#fff;">{row['Role']}{_crown}</td>
+                        <td style="padding:8px 12px;color:#aaa;text-align:center;">{int(row['Times Practised'])}</td>
+                        <td style="padding:8px 12px;text-align:center;">{_score_badge(row['Avg Score'])}</td>
+                        <td style="padding:8px 12px;text-align:center;">{_score_badge(row['Best Score'])}</td>
+                        <td style="padding:8px 12px;text-align:center;">{_score_badge(row['Last Score'])}</td>
+                    </tr>"""
+                st.markdown(f"""
+                <div style="overflow-x:auto;border-radius:10px;border:1px solid rgba(0,195,255,0.2);">
+                <table style="width:100%;border-collapse:collapse;background:rgba(15,20,25,0.8);">
+                  <thead>
+                    <tr style="border-bottom:1px solid rgba(0,195,255,0.3);">
+                      <th style="padding:10px 12px;color:#38bdf8;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:0.07em;">Role</th>
+                      <th style="padding:10px 12px;color:#38bdf8;text-align:center;font-size:12px;text-transform:uppercase;letter-spacing:0.07em;">Times</th>
+                      <th style="padding:10px 12px;color:#38bdf8;text-align:center;font-size:12px;text-transform:uppercase;letter-spacing:0.07em;">Avg Score</th>
+                      <th style="padding:10px 12px;color:#38bdf8;text-align:center;font-size:12px;text-transform:uppercase;letter-spacing:0.07em;">Best</th>
+                      <th style="padding:10px 12px;color:#38bdf8;text-align:center;font-size:12px;text-transform:uppercase;letter-spacing:0.07em;">Last</th>
+                    </tr>
+                  </thead>
+                  <tbody>{_table_rows}</tbody>
+                </table></div>
+                """, unsafe_allow_html=True)
+
+            # =====================================================
+            # SECTION D — DIFFICULTY PERFORMANCE
+            # =====================================================
+            st.markdown("---")
+            st.markdown("### 🎯 How You Handle Different Difficulty Levels")
+            st.caption("Easy interviews build confidence. Medium tests your thinking. Hard interviews push your limits — and show real growth.")
+
+            if 'difficulty' in df.columns:
+                # Only show rows where difficulty is known
+                df_diff = df[df['difficulty'].notna() & (df['difficulty'] != 'Unknown') & (df['difficulty'] != '')]
+                if df_diff.empty:
+                    st.info("⚠️ No difficulty data yet. Complete a few more interviews and this section will fill up!")
+                else:
+                    diff_counts = df_diff.groupby('difficulty').size().rename('Attempts')
+                    diff_avg = df_diff.groupby('difficulty')['avg_score'].mean().rename('Avg Score')
+
+                    col_dl, col_dr = st.columns(2)
+                    # Difficulty color map
+                    _diff_colors = {'Easy': '#69f0ae', 'Medium': '#ffcc02', 'Hard': '#f44336'}
+                    with col_dl:
+                        st.markdown("**How Many Times You Tried Each Level**")
+                        _fig_dfc = go.Figure(go.Bar(
+                            x=diff_counts.index.tolist(), y=diff_counts.values.tolist(),
+                            marker_color=[_diff_colors.get(d, '#00c3ff') for d in diff_counts.index],
+                            text=diff_counts.values.tolist(), textposition='outside',
+                            hovertemplate='<b>%{x}</b><br>Attempts: %{y}<extra></extra>'
+                        ))
+                        _fig_dfc.update_layout(
+                            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(15,20,25,0.8)',
+                            font=dict(color='white'),
+                            xaxis=dict(gridcolor='rgba(255,255,255,0.06)'),
+                            yaxis=dict(gridcolor='rgba(255,255,255,0.06)'),
+                            margin=dict(l=5,r=5,t=10,b=5), height=250
+                        )
+                        st.plotly_chart(_fig_dfc, use_container_width=True)
+                    with col_dr:
+                        st.markdown("**Your Average Score at Each Level**")
+                        _fig_dfa = go.Figure(go.Bar(
+                            x=diff_avg.index.tolist(), y=diff_avg.values.tolist(),
+                            marker_color=[_diff_colors.get(d, '#00c3ff') for d in diff_avg.index],
+                            text=[f"{v:.2f}" for v in diff_avg.values], textposition='outside',
+                            hovertemplate='<b>%{x}</b><br>Avg Score: %{y:.2f}/10<extra></extra>'
+                        ))
+                        _fig_dfa.update_layout(
+                            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(15,20,25,0.8)',
+                            font=dict(color='white'),
+                            xaxis=dict(gridcolor='rgba(255,255,255,0.06)'),
+                            yaxis=dict(range=[0,10.5], gridcolor='rgba(255,255,255,0.06)'),
+                            margin=dict(l=5,r=5,t=10,b=5), height=250
+                        )
+                        st.plotly_chart(_fig_dfa, use_container_width=True)
+
+                    # Analysis
+                    hard_count = int(diff_counts.get('Hard', 0))
+                    total_count = int(diff_counts.sum())
+                    if total_count > 0 and hard_count / total_count < 0.2:
+                        st.warning("⚠️ You haven't tried many Hard interviews yet. Pushing yourself to Hard level is one of the fastest ways to improve!")
+
+                    hard_avg = float(diff_avg['Hard']) if 'Hard' in diff_avg.index else None
+                    medium_avg = float(diff_avg['Medium']) if 'Medium' in diff_avg.index else None
+                    if hard_avg is not None and medium_avg is not None:
+                        if hard_avg >= medium_avg - 0.5:
+                            st.success("✅ You're holding up well even in Hard interviews — that's a great sign of real progress!")
+                        else:
+                            st.info("💡 Your Hard interview scores are a bit lower than Medium, which is totally normal. Keep practising Hard mode to close the gap.")
+
+            # =====================================================
+            # SECTION E — SKILL INTELLIGENCE (RADAR CHART)
+            # =====================================================
+            st.markdown("---")
+            st.markdown("### 🕸️ Your Skill Strengths")
+            st.caption("This chart shows how you're performing across three key interview skills. The bigger the shape, the stronger you are overall.")
+
+            skill_cols = ['knowledge_avg', 'communication_avg', 'relevance_avg']
+            skill_labels = ['Knowledge', 'Communication', 'Relevance']
+
+            # Use actual columns if available, else fallback to avg_score
+            skill_avgs = []
+            for col in skill_cols:
+                if col in df.columns and df[col].notna().any():
+                    skill_avgs.append(df[col].mean())
+                else:
+                    skill_avgs.append(df['avg_score'].mean())
+
+            # Draw radar with matplotlib
+            categories = skill_labels + [skill_labels[0]]
+            values = skill_avgs + [skill_avgs[0]]
+            angles = np.linspace(0, 2 * np.pi, len(skill_labels), endpoint=False).tolist()
+            angles += angles[:1]
+
+            fig_radar, ax_radar = plt.subplots(figsize=(5, 5), subplot_kw=dict(polar=True))
+            fig_radar.patch.set_facecolor('#0f1419')
+            ax_radar.set_facecolor('#1a2332')
+            ax_radar.plot(angles, values, color='#00c3ff', linewidth=2)
+            ax_radar.fill(angles, values, color='#00c3ff', alpha=0.25)
+            ax_radar.set_xticks(angles[:-1])
+            ax_radar.set_xticklabels(skill_labels, color='white', size=12)
+            ax_radar.set_ylim(0, 10)
+            ax_radar.set_yticks([2, 4, 6, 8, 10])
+            ax_radar.set_yticklabels(['2', '4', '6', '8', '10'], color='gray', size=8)
+            ax_radar.tick_params(colors='white')
+            ax_radar.spines['polar'].set_color('#00c3ff')
+            ax_radar.grid(color='gray', alpha=0.3)
+            ax_radar.set_title("Skill Radar", color='#00c3ff', pad=20, size=14)
+
+            col_radar, col_skill_info = st.columns([1, 1])
+            with col_radar:
+                st.pyplot(fig_radar)
+            plt.close(fig_radar)
+
+            with col_skill_info:
+                weakest_skill_idx = skill_avgs.index(min(skill_avgs))
+                weakest_skill = skill_labels[weakest_skill_idx]
+                strongest_skill_idx = skill_avgs.index(max(skill_avgs))
+                strongest_skill = skill_labels[strongest_skill_idx]
+
+                st.markdown(f"🌟 **You're best at:** {strongest_skill} ({skill_avgs[strongest_skill_idx]:.2f}/10)")
+                st.markdown(f"📌 **Focus area:** {weakest_skill} ({skill_avgs[weakest_skill_idx]:.2f}/10) — this is where more practice will help the most")
+                st.markdown("")
+                for lbl, val in zip(skill_labels, skill_avgs):
+                    st.markdown(f"**{lbl}:** {val:.2f}/10")
+                    st.progress(val / 10.0)
+
+            # =====================================================
+            # SECTION F — BEHAVIORAL ANALYTICS
+            # =====================================================
+            st.markdown("---")
+            st.markdown("### 🧠 Your Interview Style")
+            st.caption("This section looks at how you behave during interviews — how long you spend, how that affects your score, and what kind of interviewer you are.")
+
+            col_b1, col_b2, col_b3 = st.columns(3)
+
+            dur_available = 'duration_seconds' in df.columns and df['duration_seconds'].notna().any()
+            _dur_series = df['duration_seconds'].dropna() if dur_available else None
+            avg_duration_mins = (float(_dur_series.mean()) / 60.0) if (dur_available and len(_dur_series) > 0) else None
+            avg_score_per_q = float((df['avg_score'] / df['total_questions'].replace(0, 1)).mean()) if ('total_questions' in df.columns and df['total_questions'].notna().any()) else None
+
+            with col_b1:
+                if avg_duration_mins is not None:
+                    st.markdown(f"""<div class="metric-card">
+                        <p class="metric-label">Average Time Per Interview</p>
+                        <p class="metric-value">{avg_duration_mins:.1f}<span style="font-size:16px;color:#aaa"> min</span></p>
+                        <p class="metric-sub">Typical session length</p>
+                    </div>""", unsafe_allow_html=True)
+                else:
+                    st.markdown("""<div class="metric-card">
+                        <p class="metric-label">Average Time Per Interview</p>
+                        <p class="metric-value" style="font-size:18px;color:#666;">N/A</p>
+                    </div>""", unsafe_allow_html=True)
+
+            with col_b2:
+                if avg_score_per_q is not None:
+                    st.markdown(f"""<div class="metric-card">
+                        <p class="metric-label">Score Per Question</p>
+                        <p class="metric-value">{avg_score_per_q:.2f}</p>
+                        <p class="metric-sub">Avg per individual question</p>
+                    </div>""", unsafe_allow_html=True)
+                else:
+                    st.markdown("""<div class="metric-card">
+                        <p class="metric-label">Score Per Question</p>
+                        <p class="metric-value" style="font-size:18px;color:#666;">N/A</p>
+                    </div>""", unsafe_allow_html=True)
+
+            with col_b3:
+                # Score vs duration correlation — convert to human badge
+                if dur_available and len(df) >= 3:
+                    corr = df[['avg_score', 'duration_seconds']].dropna().corr().iloc[0, 1]
+                    if corr > 0.4:
+                        corr_badge = "⚡ Yes — more time = better"
+                    elif corr < -0.2:
+                        corr_badge = "🤔 No — time isn't helping"
+                    else:
+                        corr_badge = "⚖️ Not much difference"
+                    st.markdown(f"""<div class="metric-card">
+                        <p class="metric-label">Does More Time Help?</p>
+                        <p class="metric-value" style="font-size:16px;">{corr_badge}</p>
+                        <p class="metric-sub">Based on all your interviews</p>
+                    </div>""", unsafe_allow_html=True)
+                else:
+                    st.markdown("""<div class="metric-card">
+                        <p class="metric-label">Does More Time Help?</p>
+                        <p class="metric-value" style="font-size:16px;color:#666;">Need 3+ interviews</p>
+                    </div>""", unsafe_allow_html=True)
+
+            # Candidate type classification
+            if dur_available and avg_duration_mins is not None:
+                if avg_duration_mins < 10:
+                    candidate_type = "⚡ **You tend to answer quickly.** That's great for pace, but try spending a bit more time structuring your answers — quality over speed!"
+                elif avg_duration_mins > 35:
+                    candidate_type = "🤔 **You take your time — sometimes too much.** Try to be more concise and direct. Interviewers appreciate clear, structured answers."
+                else:
+                    candidate_type = "⚖️ **Great balance!** You're pacing your interviews well — not too rushed, not too slow."
+                st.info(candidate_type)
+
+            # PART 6: Enhanced behavior classification using stored data
+            if 'behavior_class' in df.columns and df['behavior_class'].notna().any():
+                _bc_counts = df['behavior_class'].value_counts()
+                _dominant_class = _bc_counts.index[0] if len(_bc_counts) > 0 else None
+                if _dominant_class:
+                    st.markdown(f"**🎭 Your Typical Interview Style:** {_dominant_class}")
+
+            # Hard mode delta analysis
+            if 'difficulty' in df.columns and 'Hard' in df['difficulty'].values and 'Medium' in df['difficulty'].values:
+                _hard_avg_b = df[df['difficulty'] == 'Hard']['avg_score'].mean()
+                _med_avg_b = df[df['difficulty'] == 'Medium']['avg_score'].mean()
+                _hard_delta = _hard_avg_b - _med_avg_b
+                st.markdown("#### 💪 How You Perform in Hard Interviews")
+                st.caption("Hard interviews are more demanding — it's normal to score a little lower. Here's how you're doing.")
+                col_hd1, col_hd2 = st.columns(2)
+                with col_hd1:
+                    st.markdown(f"""<div class="metric-card">
+                        <p class="metric-label">Your Hard Interview Score</p>
+                        <p class="metric-value">{_hard_avg_b:.2f}<span style="font-size:16px;color:#aaa">/10</span></p>
+                        <p class="metric-sub">Average on Hard difficulty</p>
+                    </div>""", unsafe_allow_html=True)
+                with col_hd2:
+                    if _hard_delta >= 0:
+                        _delta_display = f"⬆️ {abs(_hard_delta):.1f} pts above Medium"
+                        _dc = "#00e676"
+                    elif _hard_delta >= -1.0:
+                        _delta_display = f"Slightly below Medium (–{abs(_hard_delta):.1f} pts)"
+                        _dc = "#ffcc02"
+                    else:
+                        _delta_display = f"Below Medium (–{abs(_hard_delta):.1f} pts)"
+                        _dc = "#f44336"
+                    st.markdown(f"""<div class="metric-card">
+                        <p class="metric-label">Compared to Medium</p>
+                        <p class="metric-value" style="color:{_dc};font-size:16px;">{_delta_display}</p>
+                        <p class="metric-sub">Hard vs Medium gap</p>
+                    </div>""", unsafe_allow_html=True)
+                if _hard_delta < -1.5:
+                    st.warning("⚠️ Hard interviews are noticeably tougher for you right now. That's okay — keep practising Hard mode and you'll build the muscle for it.")
+                elif _hard_delta >= -0.5:
+                    st.success("✅ You're doing great under pressure! Your Hard interview scores are close to your Medium ones — a real strength.")
+
+            # =====================================================
+            # SECTION G — CLASSIFICATION ENGINE
+            # =====================================================
+            st.markdown("---")
+            st.markdown("### 🎖️ Where Do You Stand Right Now?")
+            st.caption("Based on all your interviews, here's an honest picture of where you are today — and where you're headed.")
+
+            if not pd.isna(overall_avg):
+                if overall_avg < 5:
+                    classification = "🔵 Just Getting Started"
+                    cls_color = "#4fc3f7"
+                    cls_desc = "Every expert was once a beginner. Focus on understanding the basics and practise regularly — you'll improve fast!"
+                elif overall_avg < 6.5:
+                    classification = "🟡 Building Momentum"
+                    cls_color = "#ffcc02"
+                    cls_desc = "You're making real progress! Work on giving more detailed answers and communicating your ideas more clearly."
+                elif overall_avg < 7.5:
+                    classification = "🟠 Looking Strong"
+                    cls_color = "#ff9800"
+                    cls_desc = "Solid work! You're getting there. Keep sharpening your answers and push yourself with harder interview levels."
+                elif overall_avg < 8.5:
+                    classification = "🟢 Almost There!"
+                    cls_color = "#66bb6a"
+                    cls_desc = "You're performing at a high level. A little more polish and you'll be fully interview-ready!"
+                else:
+                    classification = "🏆 Interview Ready!"
+                    cls_color = "#00e676"
+                    cls_desc = "Outstanding! You're ready to walk into real interviews with confidence. Go get that job!"
+
+                st.markdown(f"""
+                <div style="background: linear-gradient(135deg, rgba(0,195,255,0.1), rgba(0,195,255,0.05));
+                            border: 2px solid {cls_color}; border-radius: 12px; padding: 20px; text-align: center; margin: 10px 0;">
+                    <h2 style="color: {cls_color}; margin: 0;">{classification}</h2>
+                    <p style="color: #ffffff; margin: 10px 0 0 0;">{cls_desc}</p>
+                    <p style="color: #aaaaaa; margin: 5px 0 0 0;">Overall Average: {overall_avg:.2f}/10</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+            # =====================================================
+            # SECTION H — AI GENERATED PERFORMANCE SUMMARY
+            # =====================================================
+            st.markdown("---")
+            st.markdown("### 📝 Your Personal Progress Report")
+            st.caption("Here's a plain-English summary of everything your data is telling us about your interview journey so far.")
+
+            # Generate programmatic summary from real data
+            summary_parts = []
+
+            _domain_avg_safe = df.groupby('domain')['avg_score'].mean() if 'domain' in df.columns else None
+            if _domain_avg_safe is not None and len(_domain_avg_safe) >= 1:
+                _s_domain = _domain_avg_safe.idxmax()
+                _w_domain = _domain_avg_safe.idxmin()
+                summary_parts.append(f"You perform best in **{_s_domain}** — that's where your confidence and knowledge really shows, with an average score of {_domain_avg_safe[_s_domain]:.2f}/10.")
+                if len(_domain_avg_safe) > 1:
+                    summary_parts.append(f"**{_w_domain}** is the area that needs the most attention right now ({_domain_avg_safe[_w_domain]:.2f}/10). A little focused practice there will go a long way.")
+
+            summary_parts.append(f"Across all your interviews, **{strongest_skill}** is your strongest skill ({skill_avgs[strongest_skill_idx]:.2f}/10). **{weakest_skill}** is the skill to focus on next ({skill_avgs[weakest_skill_idx]:.2f}/10) — even small improvements here will lift your overall scores.")
+
+            # Trend direction — fully plain English, no slope values shown
+            if total_interviews >= 3:
+                _scores_for_summary = df['avg_score'].dropna().tolist()
+                _slope_summary = compute_trend_slope(_scores_for_summary)
+                if _slope_summary > 0.15:
+                    summary_parts.append("The great news? **Your scores are going up** across your recent interviews. Whatever you're doing, keep doing it — it's working!")
+                elif _slope_summary < -0.15:
+                    summary_parts.append("Your recent scores have dipped a little compared to earlier interviews. Don't worry — this is normal. Try revisiting the feedback from your past sessions and focus on one skill at a time.")
+                else:
+                    summary_parts.append("Your scores have been fairly steady. That's a stable foundation to build on. To move to the next level, try bumping up to a harder difficulty or exploring a new topic area.")
+
+            summary_parts.append(f"So far, you've completed **{total_interviews} interview{'s' if total_interviews != 1 else ''}** and answered **{total_questions} questions** in total — that's real practice time that adds up!")
+
+            # Weighted score — explained simply
+            _w_avg = df['weighted_score'].mean() if 'weighted_score' in df.columns else overall_avg
+            summary_parts.append(f"Your adjusted score — which gives a little extra credit for harder interviews — is **{_w_avg:.2f}/10**. Hard interviews count more because they're more demanding.")
+
+            if improvement_pct > 5:
+                summary_parts.append(f"Since your very first interview, you've improved by **{improvement_pct:.1f}%**. That's a meaningful jump — you should feel great about that progress!")
+            elif improvement_pct > 0:
+                summary_parts.append(f"You're up **{improvement_pct:.1f}%** since your first interview. You're moving in the right direction — keep the momentum going.")
+            elif improvement_pct < 0:
+                summary_parts.append(f"Your score has dipped **{abs(improvement_pct):.1f}%** since your first interview. A small setback is part of learning. Try revisiting easier difficulty levels to rebuild your confidence, then push back up.")
+
+            # Performance under pressure — plain English
+            if 'difficulty' in df.columns and 'Hard' in df['difficulty'].values:
+                _hard_avg_s = df[df['difficulty'] == 'Hard']['avg_score'].mean()
+                if _hard_avg_s < overall_avg - 1.0:
+                    summary_parts.append(f"Hard interviews are a challenge for you right now — you average {_hard_avg_s:.2f}/10 there, which is lower than your overall average. That's completely normal. The more you practise Hard mode, the more comfortable you'll get with tough questions.")
+                else:
+                    summary_parts.append(f"You're handling Hard interviews really well — averaging {_hard_avg_s:.2f}/10 even under pressure. That kind of resilience is exactly what real interviews reward.")
+
+            # Behavior class — explained naturally
+            if 'behavior_class' in df.columns and df['behavior_class'].notna().any():
+                _bc = df['behavior_class'].mode().iloc[0] if not df['behavior_class'].dropna().empty else None
+                _bc_descriptions = {
+                    "⚡ Rushed": "You tend to answer quickly. Slowing down a little and structuring your thoughts before speaking can really lift your scores.",
+                    "🤔 Overthinking": "You tend to take more time than needed. Practise giving focused, direct answers — interviewers love clarity.",
+                    "⚖️ Balanced": "You have a great natural rhythm in interviews — not too fast, not too slow. That's a real skill.",
+                    "🎯 Adaptive Learner": "You're adapting well as interviews get harder. That's a sign of someone who learns fast under pressure.",
+                }
+                if _bc:
+                    _bc_desc = _bc_descriptions.get(_bc, f"Your typical style is: {_bc}.")
+                    summary_parts.append(_bc_desc)
+
+            full_summary = " ".join(summary_parts)
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, rgba(0,195,255,0.08), rgba(0,195,255,0.03));
+                        border: 1px solid rgba(0,195,255,0.3); border-radius: 12px; padding: 20px; margin: 10px 0;">
+                <p style="color: #ffffff; font-size: 15px; line-height: 1.8; margin: 0;">{full_summary}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # =====================================================
+            # SECTION I — RECOMMENDATION ENGINE
+            # =====================================================
+            st.markdown("---")
+            st.markdown("### 💡 What You Should Do Next")
+            st.caption("These suggestions are personalised based on your actual interview history. Follow them and you'll see real improvement.")
+
+            recommendations = []
+
+            # Skill-based recommendations
+            if weakest_skill == "Communication":
+                recommendations.append("🗣️ **Work on explaining yourself more clearly.** Your communication scores are your lowest right now. Try practising with the STAR method: describe the Situation, your Task, the Action you took, and the Result. Even better — record yourself answering a question out loud and listen back.")
+            elif weakest_skill == "Knowledge":
+                recommendations.append("📚 **Deepen your technical knowledge.** Your knowledge scores suggest there are some topic gaps. Go back to basics in your target field, review common interview questions for your role, and spend time on real-world concepts like system design and best practices.")
+            elif weakest_skill == "Relevance":
+                recommendations.append("🎯 **Stay on-topic when you answer.** Your answers sometimes drift away from what was asked. Before you respond, mentally note the 2–3 key points that directly answer the question — then expand from there.")
+
+            # Difficulty-based recommendations
+            if 'difficulty' in df.columns:
+                _diff_vals = df['difficulty'].dropna().values
+                hard_avg_val = float(df[df['difficulty'] == 'Hard']['avg_score'].mean()) if 'Hard' in _diff_vals else None
+                medium_avg_val = float(df[df['difficulty'] == 'Medium']['avg_score'].mean()) if 'Medium' in _diff_vals else None
+                if hard_avg_val is not None and medium_avg_val is not None and hard_avg_val < medium_avg_val - 1.0:
+                    recommendations.append("💪 **Practise more Hard interviews.** There's a noticeable gap between your Medium and Hard scores. The best way to close it is to get comfortable with the discomfort — book a few Hard mode sessions and treat each one as a learning experience, not a test.")
+                hard_c = int((df['difficulty'] == 'Hard').sum())
+                if total_interviews >= 3 and hard_c == 0:
+                    recommendations.append("🔥 **Try your first Hard interview!** You haven't attempted Hard level yet. It's challenging, but one Hard interview teaches you more than three Easy ones. Give it a go — you're ready.")
+
+            # Stagnation detection
+            if total_interviews >= 5 and abs(improvement_pct) < 5:
+                recommendations.append("📖 **Your scores have plateaued — it's time to shake things up.** Try a structured 2-week plan: spend week one revisiting technical concepts, and week two on behavioural questions. Finish each week with a full mock interview to test yourself.")
+
+            # More interviews
+            if total_interviews < 3:
+                recommendations.append("📅 **Complete at least 5 interviews to unlock full insights.** Right now you don't have enough data for detailed trend analysis. The more you practise, the more personalised your recommendations become.")
+
+            if recommendations:
+                for rec in recommendations:
+                    st.markdown(f"""
+                    <div style="background: rgba(56,189,248,0.07); border-left: 4px solid #38bdf8;
+                                padding: 12px 16px; margin: 8px 0; border-radius: 0 8px 8px 0;">
+                        <p style="color: #ffffff; margin: 0;">{rec}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.success("🎉 You're on track! Keep practising consistently and the results will keep coming.")
+
+            # Raw data expander
+            # Mode breakdown if available
+            if 'interview_mode' in df.columns and df['interview_mode'].notna().any():
+                st.markdown("---")
+                st.markdown("### 🎮 Which Interview Type Do You Prefer?")
+                st.caption("See how you perform across technical, behavioural, and mixed interview formats.")
+                _mode_df = df[df['interview_mode'].notna() & (df['interview_mode'] != '')]
+                if not _mode_df.empty:
+                    col_m1, col_m2 = st.columns(2)
+                    with col_m1:
+                        st.markdown("**How Many Times You Tried Each Format**")
+                        _mode_cnt = _mode_df.groupby('interview_mode').size().rename('Times Tried')
+                        _fig_mc = go.Figure(go.Bar(
+                            x=_mode_cnt.index.tolist(), y=_mode_cnt.values.tolist(),
+                            marker_color='#00c3ff',
+                            text=_mode_cnt.values.tolist(), textposition='outside',
+                            hovertemplate='<b>%{x}</b><br>Times: %{y}<extra></extra>'
+                        ))
+                        _fig_mc.update_layout(
+                            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(15,20,25,0.8)',
+                            font=dict(color='white'),
+                            xaxis=dict(gridcolor='rgba(255,255,255,0.06)'),
+                            yaxis=dict(gridcolor='rgba(255,255,255,0.06)'),
+                            margin=dict(l=5,r=5,t=10,b=5), height=250
+                        )
+                        st.plotly_chart(_fig_mc, use_container_width=True)
+                    with col_m2:
+                        st.markdown("**Your Average Score by Format**")
+                        _mode_avg = _mode_df.groupby('interview_mode')['avg_score'].mean().rename('Avg Score')
+                        _fig_ma = go.Figure(go.Bar(
+                            x=_mode_avg.index.tolist(), y=_mode_avg.values.tolist(),
+                            marker_color=[f'rgba(0,195,255,{0.5 + 0.5*(v/10)})' for v in _mode_avg.values],
+                            text=[f"{v:.2f}" for v in _mode_avg.values], textposition='outside',
+                            hovertemplate='<b>%{x}</b><br>Avg Score: %{y:.2f}/10<extra></extra>'
+                        ))
+                        _fig_ma.update_layout(
+                            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(15,20,25,0.8)',
+                            font=dict(color='white'),
+                            xaxis=dict(gridcolor='rgba(255,255,255,0.06)'),
+                            yaxis=dict(range=[0,10.5], gridcolor='rgba(255,255,255,0.06)'),
+                            margin=dict(l=5,r=5,t=10,b=5), height=250
+                        )
+                        st.plotly_chart(_fig_ma, use_container_width=True)
+
+            with st.expander("📋 See All Your Interview Records"):
+                # Exclude raw DB 'id' — inject a clean per-user sequential # instead
+                display_cols = [c for c in ['role', 'domain', 'avg_score', 'weighted_score', 'knowledge_avg', 'communication_avg',
+                                             'relevance_avg', 'difficulty', 'interview_mode', 'total_questions', 'duration_seconds',
+                                             'follow_up_count', 'depth_score', 'behavior_class', 'completed_on']
+                                if c in df.columns]
+                rename_map = {
+                    'avg_score': 'Score', 'weighted_score': 'Adjusted Score', 'knowledge_avg': 'Knowledge',
+                    'communication_avg': 'Communication', 'relevance_avg': 'Relevance',
+                    'difficulty': 'Level', 'interview_mode': 'Format',
+                    'total_questions': 'Questions', 'duration_seconds': 'Duration (s)',
+                    'completed_on': 'Date', 'role': 'Role', 'domain': 'Career Area',
+                    'follow_up_count': 'Follow-ups', 'depth_score': 'Depth', 'behavior_class': 'Style'
+                }
+                display_df = df[display_cols].rename(columns=rename_map)
+                # Per-user sequential numbering: always starts at 1 regardless of DB id
+                display_df.insert(0, '#', range(1, len(display_df) + 1))
+
+                # Build enhanced HTML table with score badges, trend arrows, best-row highlight
+                _score_col = 'Score'
+                _scores_list_disp = display_df[_score_col].tolist() if _score_col in display_df.columns else []
+                _best_score_val = max(_scores_list_disp) if _scores_list_disp else None
+
+                def _badge(v):
+                    if pd.isna(v): return '<span style="color:#666">N/A</span>'
+                    v = float(v)
+                    if v >= 8.5: return f'<span class="badge-excellent">{v:.2f}</span>'
+                    elif v >= 7.0: return f'<span class="badge-good">{v:.2f}</span>'
+                    elif v >= 5.5: return f'<span class="badge-average">{v:.2f}</span>'
+                    elif v >= 4.0: return f'<span class="badge-weak">{v:.2f}</span>'
+                    else: return f'<span class="badge-poor">{v:.2f}</span>'
+
+                def _trend_arrow(current, prev):
+                    if prev is None or pd.isna(prev): return ''
+                    delta = float(current) - float(prev)
+                    if delta > 0.3: return f'<span style="color:#00e676;font-size:14px;" title="+{delta:.2f}">▲</span>'
+                    elif delta < -0.3: return f'<span style="color:#f44336;font-size:14px;" title="{delta:.2f}">▼</span>'
+                    else: return f'<span style="color:#ffcc02;font-size:14px;" title="~{delta:.2f}">●</span>'
+
+                _th_style = "padding:9px 12px;color:#38bdf8;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.07em;border-bottom:1px solid rgba(0,195,255,0.3);white-space:nowrap;"
+                _td_style = "padding:8px 12px;color:#e0e0e0;font-size:13px;white-space:nowrap;"
+
+                _headers = list(display_df.columns)
+                _header_row = "".join([f'<th style="{_th_style}">{h}</th>' for h in _headers]) + f'<th style="{_th_style}">Trend</th>'
+
+                _body_rows = ""
+                _prev_score = None
+                for i, row in display_df.iterrows():
+                    _cur_score = row.get('Score', None)
+                    _is_best = (not pd.isna(_cur_score) and not pd.isna(_best_score_val) and float(_cur_score) == float(_best_score_val))
+                    _row_bg = 'background:rgba(0,230,118,0.10);' if _is_best else ('background:rgba(255,255,255,0.02);' if i % 2 == 0 else '')
+                    _cells = ""
+                    for col_name in _headers:
+                        val = row[col_name]
+                        if col_name in ('Score', 'Adjusted Score', 'Knowledge', 'Communication', 'Relevance'):
+                            _cells += f'<td style="{_td_style}text-align:center;">{_badge(val)}</td>'
+                        elif col_name == 'Level':
+                            _lc = {'Easy':'#69f0ae','Medium':'#ffcc02','Hard':'#f44336'}.get(str(val), '#aaa')
+                            _cells += f'<td style="{_td_style}"><span style="color:{_lc};font-weight:600;">{val}</span></td>'
+                        elif col_name == '#':
+                            _crown = ' 🏆' if _is_best else ''
+                            _cells += f'<td style="{_td_style}font-weight:600;">{val}{_crown}</td>'
+                        else:
+                            _disp_val = str(val) if not pd.isna(val) else '—'
+                            _cells += f'<td style="{_td_style}">{_disp_val}</td>'
+                    _arrow = _trend_arrow(_cur_score, _prev_score) if not pd.isna(_cur_score) else ''
+                    _cells += f'<td style="{_td_style}text-align:center;">{_arrow}</td>'
+                    _body_rows += f'<tr style="{_row_bg}">{_cells}</tr>'
+                    if not pd.isna(_cur_score):
+                        _prev_score = _cur_score
+
+                st.markdown(f"""
+                <div style="overflow-x:auto;border-radius:10px;border:1px solid rgba(0,195,255,0.2);margin-top:8px;">
+                <table style="width:100%;border-collapse:collapse;background:rgba(15,20,25,0.85);">
+                  <thead><tr>{_header_row}</tr></thead>
+                  <tbody>{_body_rows}</tbody>
+                </table></div>
+                <p style="color:rgba(255,255,255,0.4);font-size:11px;margin-top:6px;">
+                  🏆 Gold rows = personal best &nbsp;|&nbsp; ▲ improved &nbsp;▼ dipped &nbsp;● steady vs previous interview
+                </p>
+                """, unsafe_allow_html=True)
 if tab5:
 	with tab5:
 		import sqlite3

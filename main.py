@@ -4684,7 +4684,6 @@ with tab1:
 from xhtml2pdf import pisa
 from io import BytesIO
 
-@st.cache_data(show_spinner=False)
 def html_to_pdf_bytes(html_string):
     styled_html = f"""
     <html>
@@ -7135,38 +7134,9 @@ with tab2:
 
         <script>
         (function() {
-            // ── Block Enter / Ctrl+Enter from triggering any button ──────────
-            // Streamlit's default: pressing Enter in a text input fires the
-            // nearest button (causing a full rerun/page reload).
-            // We intercept keydown at capture phase on the whole document and
-            // prevent that for EVERY input and textarea so only an explicit
-            // mouse-click on "Generate Resume" can submit.
-            function blockEnterSubmit(e) {
-                if (e.key === 'Enter') {
-                    var tag = e.target && e.target.tagName;
-                    if (tag === 'INPUT' || tag === 'TEXTAREA') {
-                        // Allow Shift+Enter in textarea (newline) — block everything else
-                        if (tag === 'TEXTAREA' && !e.ctrlKey && !e.metaKey) return;
-                        e.preventDefault();
-                        e.stopPropagation();
-                    }
-                }
-            }
-            // Use capture=true so we intercept before Streamlit's own handlers
-            document.addEventListener('keydown', blockEnterSubmit, true);
-
-            // Re-attach after every Streamlit DOM mutation (Streamlit re-mounts
-            // the widget tree on each rerun, which could re-enable the default)
-            var _enterObserver = new MutationObserver(function() {
-                document.removeEventListener('keydown', blockEnterSubmit, true);
-                document.addEventListener('keydown', blockEnterSubmit, true);
-            });
-            _enterObserver.observe(document.body, { childList: true, subtree: true });
-
-            // ── Scroll preservation ──────────────────────────────────────────
             var lastScrollY = 0;
             var ticking = false;
-            var _scrollObserver = new MutationObserver(function() {
+            var observer = new MutationObserver(function() {
                 if (!ticking) {
                     requestAnimationFrame(function() {
                         if (Math.abs(window.scrollY - lastScrollY) > 200) {
@@ -7177,7 +7147,7 @@ with tab2:
                     ticking = true;
                 }
             });
-            _scrollObserver.observe(document.body, { childList: true, subtree: false });
+            observer.observe(document.body, { childList: true, subtree: false });
             window.addEventListener('scroll', function() {
                 lastScrollY = window.scrollY;
             }, { passive: true });
@@ -7393,419 +7363,96 @@ with tab2:
                 elif mode == "Delete" and len(st.session_state.certificate_links) > 1:
                     st.session_state.certificate_links.pop()
 
-    # ---------------- Resume Form (Pure HTML iframe — zero Streamlit contact until Generate) ----------------
-    # Architecture:
-    #   • All inputs live inside st.components.v1.html (sandboxed iframe).
-    #     Streamlit NEVER sees keystrokes, blur events, or tab-switches inside it.
-    #   • A hidden st.text_input("", key="resume_form_payload") acts as the data pipe.
-    #   • When user clicks Generate or Clear inside the iframe, JS serialises all
-    #     field values to JSON, finds the hidden Streamlit input via DOM traversal,
-    #     sets its value, and fires input+change events — triggering exactly ONE rerun.
-    #   • Python reads the JSON from session_state["resume_form_payload"] and acts.
+    # ---------------- Resume Form ----------------
+    fk = st.session_state["form_key_counter"]
+    with st.form(f"resume_form_{fk}", clear_on_submit=False):
+        st.markdown("### 👤 <u>Personal Information</u>", unsafe_allow_html=True)
+        col1, col2 = st.columns(2)
+        with col1:
+            st.session_state.name = st.text_input("👤 Full Name", value=st.session_state.name, key=f"name_input_{fk}")
+            st.session_state.phone = st.text_input("📞 Phone Number", value=st.session_state.phone, key=f"phone_input_{fk}")
+            st.session_state.location = st.text_input("📍 Location", value=st.session_state.location, key=f"loc_input_{fk}")
+        with col2:
+            st.session_state.email = st.text_input("📧 Email", value=st.session_state.email, key=f"email_input_{fk}")
+            st.session_state.linkedin = st.text_input("🔗 LinkedIn", value=st.session_state.linkedin, key=f"ln_input_{fk}")
+            st.session_state.portfolio = st.text_input("🌐 Portfolio", value=st.session_state.portfolio, key=f"port_input_{fk}")
+            st.session_state.job_title = st.text_input("💼 Job Title", value=st.session_state.job_title, key=f"job_input_{fk}")
 
-    import streamlit.components.v1 as _components
-    import json as _json
+        st.markdown("### 📝 <u>Professional Summary</u>", unsafe_allow_html=True)
+        st.session_state.summary = st.text_area("Summary", value=st.session_state.summary, key=f"summary_input_{fk}")
 
-    _ne  = len(st.session_state.experience_entries)
-    _ned = len(st.session_state.education_entries)
-    _np  = len(st.session_state.project_entries)
-    _nc  = len(st.session_state.certificate_links)
+        st.markdown("### 💼 <u>Skills, Languages, Interests & Soft Skills</u>", unsafe_allow_html=True)
+        st.session_state.skills = st.text_area("Skills (comma-separated)", value=st.session_state.skills, key=f"skills_input_{fk}")
+        st.session_state.languages = st.text_area("Languages (comma-separated)", value=st.session_state.languages, key=f"lang_input_{fk}")
+        st.session_state.interests = st.text_area("Interests (comma-separated)", value=st.session_state.interests, key=f"int_input_{fk}")
+        st.session_state.Softskills = st.text_area("Softskills (comma-separated)", value=st.session_state.Softskills, key=f"soft_input_{fk}")
 
-    # Build pre-fill data from session_state so the iframe shows existing values
-    _prefill = {
-        "name":       st.session_state.get("name", ""),
-        "phone":      st.session_state.get("phone", ""),
-        "location":   st.session_state.get("location", ""),
-        "email":      st.session_state.get("email", ""),
-        "linkedin":   st.session_state.get("linkedin", ""),
-        "portfolio":  st.session_state.get("portfolio", ""),
-        "job_title":  st.session_state.get("job_title", ""),
-        "summary":    st.session_state.get("summary", ""),
-        "skills":     st.session_state.get("skills", ""),
-        "languages":  st.session_state.get("languages", ""),
-        "interests":  st.session_state.get("interests", ""),
-        "Softskills": st.session_state.get("Softskills", ""),
-        "experience_entries":  st.session_state.experience_entries,
-        "education_entries":   st.session_state.education_entries,
-        "project_entries":     st.session_state.project_entries,
-        "project_links":       st.session_state.project_links,
-        "certificate_links":   st.session_state.certificate_links,
-    }
-    _prefill_json = _json.dumps(_prefill, ensure_ascii=False)
+        st.markdown("### 🧱 <u>Work Experience</u>", unsafe_allow_html=True)
+        for idx, exp in enumerate(st.session_state.experience_entries):
+            with st.expander(f"Experience #{idx+1}", expanded=True):
+                exp["title"] = st.text_input("Job Title", value=exp.get("title", ""), key=f"title_{idx}_{len(st.session_state.experience_entries)}_{fk}")
+                exp["company"] = st.text_input("Company", value=exp.get("company", ""), key=f"company_{idx}_{len(st.session_state.experience_entries)}_{fk}")
+                exp["duration"] = st.text_input("Duration", value=exp.get("duration", ""), key=f"duration_{idx}_{len(st.session_state.experience_entries)}_{fk}")
+                exp["description"] = st.text_area("Description", value=exp.get("description", ""), key=f"description_{idx}_{len(st.session_state.experience_entries)}_{fk}")
 
-    # Hidden pipe: Streamlit reads from this key after iframe posts to it
-    _pipe_key = "resume_form_payload"
-    st.session_state.setdefault(_pipe_key, "")
-    # Render the hidden input (label empty, label_visibility hidden)
-    st.text_input("hidden_pipe", key=_pipe_key, label_visibility="collapsed",
-                  help="Internal data pipe — do not edit")
+        st.markdown("### 🎓 <u>Education</u>", unsafe_allow_html=True)
+        for idx, edu in enumerate(st.session_state.education_entries):
+            with st.expander(f"Education #{idx+1}", expanded=True):
+                edu["degree"] = st.text_input("Degree", value=edu.get("degree", ""), key=f"degree_{idx}_{len(st.session_state.education_entries)}_{fk}")
+                edu["institution"] = st.text_input("Institution", value=edu.get("institution", ""), key=f"institution_{idx}_{len(st.session_state.education_entries)}_{fk}")
+                edu["year"] = st.text_input("Year", value=edu.get("year", ""), key=f"edu_year_{idx}_{len(st.session_state.education_entries)}_{fk}")
+                edu["details"] = st.text_area("Details", value=edu.get("details", ""), key=f"edu_details_{idx}_{len(st.session_state.education_entries)}_{fk}")
 
-    # Hide the pipe widget visually
-    st.markdown("""
-    <style>
-    div[data-testid="stTextInput"]:has(input[aria-label="hidden_pipe"]) {
-        display: none !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+        st.markdown("### 🛠 <u>Projects</u>", unsafe_allow_html=True)
+        for idx, proj in enumerate(st.session_state.project_entries):
+            with st.expander(f"Project #{idx+1}", expanded=True):
+                proj["title"] = st.text_input("Project Title", value=proj.get("title", ""), key=f"proj_title_{idx}_{len(st.session_state.project_entries)}_{fk}")
+                proj["tech"] = st.text_input("Tech Stack", value=proj.get("tech", ""), key=f"proj_tech_{idx}_{len(st.session_state.project_entries)}_{fk}")
+                proj["duration"] = st.text_input("Duration", value=proj.get("duration", ""), key=f"proj_duration_{idx}_{len(st.session_state.project_entries)}_{fk}")
+                proj["description"] = st.text_area("Description", value=proj.get("description", ""), key=f"proj_desc_{idx}_{len(st.session_state.project_entries)}_{fk}")
 
-    # Compute iframe height: base + per-section rows
-    _iframe_h = 2800 + _ne * 340 + _ned * 300 + _np * 340 + _nc * 320
+        st.markdown("### 🔗 Project Links")
+        project_links_input = st.text_area("Enter one project link per line:", value="\n".join(st.session_state.project_links), key=f"proj_links_input_{fk}")
+        if project_links_input:
+            st.session_state.project_links = [link.strip() for link in project_links_input.splitlines() if link.strip()]
 
-    _iframe_html = f"""<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<style>
-  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-  body {{
-    font-family: "Segoe UI", sans-serif;
-    background: transparent;
-    color: #e6f7ff;
-    padding: 12px 4px;
-  }}
-  h3 {{
-    color: #4da6ff;
-    font-size: 16px;
-    margin: 22px 0 10px;
-    border-bottom: 1px solid rgba(0,200,255,0.3);
-    padding-bottom: 6px;
-  }}
-  .row {{ display: flex; gap: 12px; flex-wrap: wrap; }}
-  .col {{ flex: 1; min-width: 200px; }}
-  label {{
-    display: block;
-    font-size: 12px;
-    color: #a0c4e0;
-    margin-bottom: 4px;
-    margin-top: 10px;
-  }}
-  input[type=text], textarea {{
-    width: 100%;
-    background: rgba(10,20,40,0.6);
-    border: 1px solid rgba(0,200,255,0.4);
-    border-radius: 8px;
-    color: #e6f7ff;
-    font-size: 14px;
-    padding: 8px 10px;
-    outline: none;
-    resize: vertical;
-    font-family: inherit;
-    transition: border-color 0.2s;
-  }}
-  input[type=text]:focus, textarea:focus {{
-    border-color: rgba(0,200,255,0.9);
-    box-shadow: 0 0 0 2px rgba(0,200,255,0.15);
-  }}
-  textarea {{ min-height: 80px; }}
-  .card {{
-    background: rgba(10,20,40,0.4);
-    border: 1px solid rgba(0,200,255,0.2);
-    border-radius: 12px;
-    padding: 14px;
-    margin-bottom: 12px;
-  }}
-  .card-title {{
-    font-size: 13px;
-    font-weight: 600;
-    color: #7dd3fc;
-    margin-bottom: 4px;
-  }}
-  .btn-row {{ display: flex; gap: 10px; margin-top: 24px; }}
-  button {{
-    flex: 1;
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px solid rgba(0,200,255,0.6);
-    background: rgba(10,20,40,0.5);
-    color: #e6f7ff;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-  }}
-  button:hover {{ background: rgba(0,200,255,0.15); box-shadow: 0 0 12px rgba(0,200,255,0.4); }}
-  button.danger {{ border-color: rgba(255,80,80,0.5); }}
-  button.danger:hover {{ background: rgba(255,80,80,0.12); }}
-  hr {{ border: none; border-top: 1px solid rgba(0,200,255,0.15); margin: 6px 0; }}
-</style>
-</head>
-<body>
+        st.markdown("### 🧾 <u>Certificates</u>", unsafe_allow_html=True)
+        for idx, cert in enumerate(st.session_state.certificate_links):
+            with st.expander(f"Certificate #{idx+1}", expanded=True):
+                cert["name"] = st.text_input("Certificate Name", value=cert.get("name", ""), key=f"cert_name_{idx}_{len(st.session_state.certificate_links)}_{fk}")
+                cert["link"] = st.text_input("Certificate Link", value=cert.get("link", ""), key=f"cert_link_{idx}_{len(st.session_state.certificate_links)}_{fk}")
+                cert["duration"] = st.text_input("Duration", value=cert.get("duration", ""), key=f"cert_duration_{idx}_{len(st.session_state.certificate_links)}_{fk}")
+                cert["description"] = st.text_area("Description", value=cert.get("description", ""), key=f"cert_description_{idx}_{len(st.session_state.certificate_links)}_{fk}")
 
-<h3>👤 Personal Information</h3>
-<div class="row">
-  <div class="col">
-    <label>👤 Full Name</label>
-    <input type="text" id="name" placeholder="Your full name">
-    <label>📞 Phone Number</label>
-    <input type="text" id="phone" placeholder="+91 XXXXX XXXXX">
-    <label>📍 Location</label>
-    <input type="text" id="location" placeholder="City, Country">
-  </div>
-  <div class="col">
-    <label>📧 Email</label>
-    <input type="text" id="email" placeholder="you@email.com">
-    <label>🔗 LinkedIn</label>
-    <input type="text" id="linkedin" placeholder="linkedin.com/in/...">
-    <label>🌐 Portfolio</label>
-    <input type="text" id="portfolio" placeholder="yoursite.com">
-    <label>💼 Job Title</label>
-    <input type="text" id="job_title" placeholder="e.g. Software Engineer">
-  </div>
-</div>
+        btn_col1, btn_col2 = st.columns([1, 1])
+        with btn_col1:
+            submitted = st.form_submit_button("📑 Generate Resume", use_container_width=True)
+        with btn_col2:
+            clear_clicked = st.form_submit_button("🗑️ Clear Form", use_container_width=True)
 
-<h3>📝 Professional Summary</h3>
-<textarea id="summary" rows="4" placeholder="Write a short professional summary..."></textarea>
+        if submitted:
+            st.success("✅ Resume Generated Successfully! Scroll down to preview or download.")
 
-<h3>💼 Skills, Languages, Interests & Soft Skills</h3>
-<label>Skills (comma-separated)</label>
-<textarea id="skills" rows="2" placeholder="Python, React, SQL, ..."></textarea>
-<label>Languages (comma-separated)</label>
-<textarea id="languages" rows="2" placeholder="English, Hindi, ..."></textarea>
-<label>Interests (comma-separated)</label>
-<textarea id="interests" rows="2" placeholder="Machine Learning, Open Source, ..."></textarea>
-<label>Soft Skills (comma-separated)</label>
-<textarea id="Softskills" rows="2" placeholder="Leadership, Communication, ..."></textarea>
-
-<h3>🧱 Work Experience</h3>
-<div id="exp_container"></div>
-
-<h3>🎓 Education</h3>
-<div id="edu_container"></div>
-
-<h3>🛠 Projects</h3>
-<div id="proj_container"></div>
-
-<h3>🔗 Project Links</h3>
-<textarea id="project_links" rows="3" placeholder="One link per line&#10;https://github.com/..."></textarea>
-
-<h3>🧾 Certificates</h3>
-<div id="cert_container"></div>
-
-<div class="btn-row">
-  <button onclick="submitForm('generate')">📑 Generate Resume</button>
-  <button class="danger" onclick="submitForm('clear')">🗑️ Clear Form</button>
-</div>
-
-<script>
-// ── Pre-fill data injected by Python ─────────────────────────────
-const PREFILL = {_prefill_json};
-
-// ── Build dynamic section cards ──────────────────────────────────
-function makeExpCard(idx, data) {{
-  data = data || {{}};
-  return `<div class="card">
-    <div class="card-title">Experience #${{idx+1}}</div>
-    <label>Job Title</label><input type="text" id="exp_title_${{idx}}" value="${{esc(data.title||'')}}">
-    <label>Company</label><input type="text" id="exp_company_${{idx}}" value="${{esc(data.company||'')}}">
-    <label>Duration</label><input type="text" id="exp_duration_${{idx}}" value="${{esc(data.duration||'')}}">
-    <label>Description</label><textarea id="exp_desc_${{idx}}" rows="3">${{esc(data.description||'')}}</textarea>
-  </div>`;
-}}
-function makeEduCard(idx, data) {{
-  data = data || {{}};
-  return `<div class="card">
-    <div class="card-title">Education #${{idx+1}}</div>
-    <label>Degree</label><input type="text" id="edu_degree_${{idx}}" value="${{esc(data.degree||'')}}">
-    <label>Institution</label><input type="text" id="edu_institution_${{idx}}" value="${{esc(data.institution||'')}}">
-    <label>Year</label><input type="text" id="edu_year_${{idx}}" value="${{esc(data.year||'')}}">
-    <label>Details</label><textarea id="edu_details_${{idx}}" rows="2">${{esc(data.details||'')}}</textarea>
-  </div>`;
-}}
-function makeProjCard(idx, data) {{
-  data = data || {{}};
-  return `<div class="card">
-    <div class="card-title">Project #${{idx+1}}</div>
-    <label>Project Title</label><input type="text" id="proj_title_${{idx}}" value="${{esc(data.title||'')}}">
-    <label>Tech Stack</label><input type="text" id="proj_tech_${{idx}}" value="${{esc(data.tech||'')}}">
-    <label>Duration</label><input type="text" id="proj_duration_${{idx}}" value="${{esc(data.duration||'')}}">
-    <label>Description</label><textarea id="proj_desc_${{idx}}" rows="3">${{esc(data.description||'')}}</textarea>
-  </div>`;
-}}
-function makeCertCard(idx, data) {{
-  data = data || {{}};
-  return `<div class="card">
-    <div class="card-title">Certificate #${{idx+1}}</div>
-    <label>Certificate Name</label><input type="text" id="cert_name_${{idx}}" value="${{esc(data.name||'')}}">
-    <label>Certificate Link</label><input type="text" id="cert_link_${{idx}}" value="${{esc(data.link||'')}}">
-    <label>Duration</label><input type="text" id="cert_duration_${{idx}}" value="${{esc(data.duration||'')}}">
-    <label>Description</label><textarea id="cert_desc_${{idx}}" rows="2">${{esc(data.description||'')}}</textarea>
-  </div>`;
-}}
-
-function esc(s) {{
-  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}}
-
-// Render sections from prefill
-function renderAll() {{
-  document.getElementById('name').value       = PREFILL.name       || '';
-  document.getElementById('phone').value      = PREFILL.phone      || '';
-  document.getElementById('location').value   = PREFILL.location   || '';
-  document.getElementById('email').value      = PREFILL.email      || '';
-  document.getElementById('linkedin').value   = PREFILL.linkedin   || '';
-  document.getElementById('portfolio').value  = PREFILL.portfolio  || '';
-  document.getElementById('job_title').value  = PREFILL.job_title  || '';
-  document.getElementById('summary').value    = PREFILL.summary    || '';
-  document.getElementById('skills').value     = PREFILL.skills     || '';
-  document.getElementById('languages').value  = PREFILL.languages  || '';
-  document.getElementById('interests').value  = PREFILL.interests  || '';
-  document.getElementById('Softskills').value = PREFILL.Softskills || '';
-  document.getElementById('project_links').value = (PREFILL.project_links||[]).join('\\n');
-
-  const expC = document.getElementById('exp_container');
-  expC.innerHTML = (PREFILL.experience_entries||[]).map((d,i) => makeExpCard(i,d)).join('');
-
-  const eduC = document.getElementById('edu_container');
-  eduC.innerHTML = (PREFILL.education_entries||[]).map((d,i) => makeEduCard(i,d)).join('');
-
-  const projC = document.getElementById('proj_container');
-  projC.innerHTML = (PREFILL.project_entries||[]).map((d,i) => makeProjCard(i,d)).join('');
-
-  const certC = document.getElementById('cert_container');
-  certC.innerHTML = (PREFILL.certificate_links||[]).map((d,i) => makeCertCard(i,d)).join('');
-}}
-renderAll();
-
-// ── Collect all values and send to Streamlit via the hidden pipe ──
-function val(id) {{
-  const el = document.getElementById(id);
-  return el ? el.value : '';
-}}
-
-function submitForm(action) {{
-  const ne   = document.querySelectorAll('#exp_container  .card').length;
-  const ned  = document.querySelectorAll('#edu_container  .card').length;
-  const np   = document.querySelectorAll('#proj_container .card').length;
-  const nc   = document.querySelectorAll('#cert_container .card').length;
-
-  const payload = {{
-    action: action,
-    name:       val('name'),
-    phone:      val('phone'),
-    location:   val('location'),
-    email:      val('email'),
-    linkedin:   val('linkedin'),
-    portfolio:  val('portfolio'),
-    job_title:  val('job_title'),
-    summary:    val('summary'),
-    skills:     val('skills'),
-    languages:  val('languages'),
-    interests:  val('interests'),
-    Softskills: val('Softskills'),
-    project_links: val('project_links').split('\\n').map(s=>s.trim()).filter(Boolean),
-    experience_entries: Array.from({{length: ne}}, (_,i) => ({{
-      title:       val(`exp_title_${{i}}`),
-      company:     val(`exp_company_${{i}}`),
-      duration:    val(`exp_duration_${{i}}`),
-      description: val(`exp_desc_${{i}}`),
-    }})),
-    education_entries: Array.from({{length: ned}}, (_,i) => ({{
-      degree:      val(`edu_degree_${{i}}`),
-      institution: val(`edu_institution_${{i}}`),
-      year:        val(`edu_year_${{i}}`),
-      details:     val(`edu_details_${{i}}`),
-    }})),
-    project_entries: Array.from({{length: np}}, (_,i) => ({{
-      title:       val(`proj_title_${{i}}`),
-      tech:        val(`proj_tech_${{i}}`),
-      duration:    val(`proj_duration_${{i}}`),
-      description: val(`proj_desc_${{i}}`),
-    }})),
-    certificate_links: Array.from({{length: nc}}, (_,i) => ({{
-      name:        val(`cert_name_${{i}}`),
-      link:        val(`cert_link_${{i}}`),
-      duration:    val(`cert_duration_${{i}}`),
-      description: val(`cert_desc_${{i}}`),
-    }})),
-  }};
-
-  // Write JSON into the hidden Streamlit text_input and fire events
-  // so Streamlit detects the change and does exactly ONE rerun.
-  const jsonStr = JSON.stringify(payload);
-  const stInputs = window.parent.document.querySelectorAll('input[type="text"]');
-  let pipe = null;
-  for (const inp of stInputs) {{
-    // The hidden pipe input has aria-label "hidden_pipe"
-    if (inp.getAttribute('aria-label') === 'hidden_pipe') {{
-      pipe = inp; break;
-    }}
-  }}
-  if (pipe) {{
-    const nativeInputSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-    nativeInputSetter.call(pipe, jsonStr);
-    pipe.dispatchEvent(new Event('input',  {{ bubbles: true }}));
-    pipe.dispatchEvent(new Event('change', {{ bubbles: true }}));
-  }}
-}}
-
-// Block Enter from doing anything inside the iframe too
-document.addEventListener('keydown', function(e) {{
-  if (e.key === 'Enter' && e.target.tagName === 'INPUT') {{
-    e.preventDefault();
-  }}
-}}, true);
-</script>
-</body>
-</html>"""
-
-    _components.html(_iframe_html, height=_iframe_h, scrolling=True)
-
-    # ── Read the pipe and act ────────────────────────────────────────────────
-    _raw = st.session_state.get(_pipe_key, "")
-    submitted    = False
-    clear_clicked = False
-
-    if _raw and _raw.startswith("{"):
-        try:
-            _data = _json.loads(_raw)
-            _action = _data.get("action", "")
-
-            if _action == "generate":
-                submitted = True
-                st.session_state.name       = _data.get("name", "")
-                st.session_state.phone      = _data.get("phone", "")
-                st.session_state.location   = _data.get("location", "")
-                st.session_state.email      = _data.get("email", "")
-                st.session_state.linkedin   = _data.get("linkedin", "")
-                st.session_state.portfolio  = _data.get("portfolio", "")
-                st.session_state.job_title  = _data.get("job_title", "")
-                st.session_state.summary    = _data.get("summary", "")
-                st.session_state.skills     = _data.get("skills", "")
-                st.session_state.languages  = _data.get("languages", "")
-                st.session_state.interests  = _data.get("interests", "")
-                st.session_state.Softskills = _data.get("Softskills", "")
-                st.session_state.experience_entries  = _data.get("experience_entries",  st.session_state.experience_entries)
-                st.session_state.education_entries   = _data.get("education_entries",   st.session_state.education_entries)
-                st.session_state.project_entries     = _data.get("project_entries",     st.session_state.project_entries)
-                st.session_state.project_links       = _data.get("project_links",       st.session_state.project_links)
-                st.session_state.certificate_links   = _data.get("certificate_links",   st.session_state.certificate_links)
-                # Clear pipe so next rerun doesn't re-trigger
-                st.session_state[_pipe_key] = ""
-                st.success("✅ Resume Generated Successfully! Scroll down to preview or download.")
-
-            elif _action == "clear":
-                clear_clicked = True
-                st.session_state[_pipe_key] = ""
-
-        except Exception:
-            pass
-
-    if clear_clicked:
-        _new_counter = st.session_state.get("form_key_counter", 0) + 1
-        for _f in ["name", "email", "phone", "linkedin", "location",
-                   "portfolio", "summary", "skills", "languages",
-                   "interests", "Softskills", "job_title"]:
-            st.session_state[_f] = ""
-        st.session_state["experience_entries"]  = [{"title": "", "company": "", "duration": "", "description": ""}]
-        st.session_state["education_entries"]   = [{"degree": "", "institution": "", "year": "", "details": ""}]
-        st.session_state["project_entries"]     = [{"title": "", "tech": "", "duration": "", "description": ""}]
-        st.session_state["project_links"]       = []
-        st.session_state["certificate_links"]   = [{"name": "", "link": "", "duration": "", "description": ""}]
-        for _key in ["generated_html", "ai_output", "cover_letter",
-                     "cover_letter_html", "encoded_profile_image"]:
-            st.session_state.pop(_key, None)
-        st.session_state["form_key_counter"] = _new_counter
+        if clear_clicked:
+            # Reset only resume-related keys — do NOT clear() or rerun() as that
+            # wipes tab context and navigates back to the main/home page.
+            # Instead, reset values in-place and bump the form key counter so
+            # all widgets re-render empty on this same run, no page jump.
+            _new_counter = st.session_state.get("form_key_counter", 0) + 1
+            resume_fields = ["name", "email", "phone", "linkedin", "location",
+                             "portfolio", "summary", "skills", "languages",
+                             "interests", "Softskills", "job_title"]
+            for _f in resume_fields:
+                st.session_state[_f] = ""
+            st.session_state["experience_entries"] = [{"title": "", "company": "", "duration": "", "description": ""}]
+            st.session_state["education_entries"] = [{"degree": "", "institution": "", "year": "", "details": ""}]
+            st.session_state["project_entries"] = [{"title": "", "tech": "", "duration": "", "description": ""}]
+            st.session_state["project_links"] = []
+            st.session_state["certificate_links"] = [{"name": "", "link": "", "duration": "", "description": ""}]
+            for _key in ["generated_html", "ai_output", "cover_letter",
+                         "cover_letter_html", "encoded_profile_image"]:
+                st.session_state.pop(_key, None)
+            st.session_state["form_key_counter"] = _new_counter
 
     st.markdown("""
     <style>
@@ -8404,7 +8051,7 @@ with tab2:
                 key="download_resume_html"
             )
 
-        # PDF Resume Download Button (lazy — only computed here, cached by @st.cache_data)
+        # PDF Resume Download Button
         pdf_resume_bytes = html_to_pdf_bytes(st.session_state["generated_html"])
         
         # ✅ Extra Help Note
@@ -8439,8 +8086,8 @@ with tab2:
             # ✅ Use already-rendered HTML from session (don't show again)
             styled_cover_letter = st.session_state.get("cover_letter_html", "")
 
-            # ✅ Generate PDF from styled HTML (lazy — cached by @st.cache_data)
-            pdf_file = html_to_pdf_bytes(styled_cover_letter) if styled_cover_letter else None
+            # ✅ Generate PDF from styled HTML
+            pdf_file = html_to_pdf_bytes(styled_cover_letter)
 
             # ✅ DOCX Generator (preserves line breaks)
             def create_docx_from_text(text, filename="cover_letter.docx"):

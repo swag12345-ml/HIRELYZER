@@ -2057,99 +2057,17 @@ if not st.session_state.get("authenticated", False):
                 # Normal registration form
                 st.markdown("<h3 style='color:#00BFFF; text-align:center;'>🧾 Register New User</h3>", unsafe_allow_html=True)
 
-                # ── CSS: premium compact register tab ──
+                # ── CSS: auto-fade validation badges (no time.sleep / no extra rerun) ──
                 st.markdown("""
                 <style>
-                /* Kill ALL excess vertical spacing in the register tab */
-                .stTabs [data-baseweb="tab-panel"] > div > div {
-                    gap: 0 !important;
+                @keyframes _fadeout_msg {
+                    0%   { opacity: 1; max-height: 60px; }
+                    70%  { opacity: 1; max-height: 60px; }
+                    100% { opacity: 0; max-height: 0; padding: 0; margin: 0; }
                 }
-                .stTabs [data-baseweb="tab-panel"] .element-container {
-                    margin-top: 0 !important;
-                    margin-bottom: 0 !important;
-                    padding-top: 0 !important;
-                    padding-bottom: 0 !important;
-                }
-                .stTabs [data-baseweb="tab-panel"] .stTextInput {
-                    margin-top: 0 !important;
-                    margin-bottom: 0 !important;
-                    padding-bottom: 0 !important;
-                }
-                /* Fixed-height pill card wrapper — reserves space, prevents shifts */
-                .reg-val-wrap {
-                    height: 30px;
-                    min-height: 30px;
-                    max-height: 30px;
+                .val-msg-autofade {
+                    animation: _fadeout_msg 3.5s ease forwards;
                     overflow: hidden;
-                    margin: 3px 0 4px 0;
-                    display: flex;
-                    align-items: center;
-                }
-                @keyframes _val_slidein {
-                    from { opacity: 0; transform: translateY(-4px); }
-                    to   { opacity: 1; transform: translateY(0); }
-                }
-                @keyframes _val_fadeout {
-                    0%   { opacity: 1; }
-                    65%  { opacity: 1; }
-                    100% { opacity: 0; }
-                }
-                .reg-val-pill {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 5px;
-                    padding: 4px 10px 4px 8px;
-                    border-radius: 6px;
-                    font-size: 0.74rem;
-                    font-weight: 600;
-                    font-family: var(--font-sans, -apple-system, sans-serif);
-                    letter-spacing: 0.01em;
-                    line-height: 1;
-                    animation: _val_slidein 0.22s cubic-bezier(0.34,1.56,0.64,1) forwards;
-                    backdrop-filter: blur(12px);
-                    -webkit-backdrop-filter: blur(12px);
-                    white-space: nowrap;
-                    max-width: 100%;
-                }
-                .reg-val-pill.autofade {
-                    animation: _val_slidein 0.22s cubic-bezier(0.34,1.56,0.64,1) forwards,
-                               _val_fadeout 3.2s 0.3s ease forwards;
-                }
-                .reg-val-pill.warn {
-                    background: rgba(251,191,36,0.12);
-                    border: 1px solid rgba(251,191,36,0.28);
-                    color: #fde68a;
-                    box-shadow: 0 2px 8px rgba(251,191,36,0.08);
-                }
-                .reg-val-pill.error {
-                    background: rgba(251,113,133,0.12);
-                    border: 1px solid rgba(251,113,133,0.28);
-                    color: #fca5a5;
-                    box-shadow: 0 2px 8px rgba(251,113,133,0.08);
-                }
-                .reg-val-pill.ok {
-                    background: rgba(52,211,153,0.12);
-                    border: 1px solid rgba(52,211,153,0.28);
-                    color: #6ee7b7;
-                    box-shadow: 0 2px 8px rgba(52,211,153,0.08);
-                }
-                /* Password hint — single line, muted */
-                .reg-hint {
-                    font-size: 0.7rem;
-                    color: #3d4f63;
-                    font-family: var(--font-sans, -apple-system, sans-serif);
-                    margin: 2px 0 3px 0;
-                    line-height: 1.2;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                }
-                /* Tab panel: stable, no resize */
-                .stTabs [data-baseweb="tab-panel"] {
-                    min-height: unset !important;
-                    overflow: visible !important;
-                    padding-top: 10px !important;
-                    padding-bottom: 0 !important;
                 }
                 </style>
                 """, unsafe_allow_html=True)
@@ -2195,19 +2113,17 @@ if not st.session_state.get("authenticated", False):
                 if "_pass_msg" not in st.session_state:
                     st.session_state._pass_msg = ("", "")
 
-                def _render_val_pill(state_key):
-                    """Render a fixed-height premium pill card that never shifts the layout."""
+                def _render_val_msg(state_key):
+                    """Render a validation badge that CSS-fades after ~3 s (no sleep, no rerun)."""
                     kind, text = st.session_state.get(state_key, ("", ""))
-                    css_kind = {"warn": "warn", "error": "error", "success": "ok"}.get(kind, "")
-                    autofade = " autofade" if kind == "success" else ""
-                    if kind and text:
-                        # Icon prefix per type
-                        icon = {"warn": "⚠", "error": "✕", "success": "✓"}.get(kind, "")
-                        inner = f'<span class="reg-val-pill {css_kind}{autofade}">{icon} {text}</span>'
-                    else:
-                        inner = ""  # empty but wrapper holds its height
+                    if not kind or not text:
+                        st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
+                        return
+                    css_class = {"warn": "warn-msg", "error": "error-msg", "success": "success-msg"}.get(kind, "info-msg")
+                    # autofade only on success messages; keep error/warn visible
+                    fade = " val-msg-autofade" if kind == "success" else ""
                     st.markdown(
-                        f'<div class="reg-val-wrap">{inner}</div>',
+                        f'<div class="slide-message {css_class}{fade}"><span class="slide-message-text">{text}</span></div>',
                         unsafe_allow_html=True
                     )
 
@@ -2217,23 +2133,20 @@ if not st.session_state.get("authenticated", False):
                     placeholder="your@email.com",
                     on_change=_validate_email
                 )
-                _render_val_pill("_email_msg")
+                _render_val_msg("_email_msg")
 
                 new_user = st.text_input(
                     "👤 Username", key="reg_user",
                     on_change=_validate_username
                 )
-                _render_val_pill("_user_msg")
+                _render_val_msg("_user_msg")
 
                 new_pass = st.text_input(
                     "🔑 Password", type="password", key="reg_pass",
                     on_change=_validate_password
                 )
-                st.markdown(
-                    '<p class="reg-hint">Min 8 chars&nbsp;·&nbsp;uppercase&nbsp;·&nbsp;lowercase&nbsp;·&nbsp;number&nbsp;·&nbsp;special char</p>',
-                    unsafe_allow_html=True
-                )
-                _render_val_pill("_pass_msg")
+                st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
+                _render_val_msg("_pass_msg")
 
                 # Render notification area (reserves space)
                 render_notification("register")

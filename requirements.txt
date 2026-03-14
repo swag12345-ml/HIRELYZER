@@ -7,6 +7,12 @@ streamlit-option-menu
 numpy
 pillow
 dnspython
+PyPDF2
+pdfplumber
+pytesseract
+pdf2image
+Pillow
+psycopg2-binary
 
 matplotlib
 pytz

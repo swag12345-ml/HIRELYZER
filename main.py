@@ -2057,33 +2057,64 @@ if not st.session_state.get("authenticated", False):
                 # Normal registration form
                 st.markdown("<h3 style='color:#00BFFF; text-align:center;'>🧾 Register New User</h3>", unsafe_allow_html=True)
 
-                # ── CSS: compact register form — fixed-height validation rows so tab never resizes ──
+                # ── CSS: compact register tab — fixed-height val slots, no layout shift ──
                 st.markdown("""
                 <style>
-                /* Tighten vertical spacing inside the register form */
-                div[data-testid="stVerticalBlock"] > div[data-testid="element-container"] {
-                    margin-bottom: 0 !important;
-                }
-                /* Fixed-height validation slot — always 22px tall, never grows/shrinks */
-                .val-slot {
-                    height: 22px;
-                    line-height: 22px;
-                    font-size: 0.78rem;
-                    padding: 0 2px;
-                    margin: 1px 0 4px 0;
-                    overflow: hidden;
-                    white-space: nowrap;
-                }
-                .val-slot.empty  { visibility: hidden; }
-                .val-slot.warn   { color: #f6c90e; }
-                .val-slot.error  { color: #ff6b6b; }
-                .val-slot.success{ color: #4caf82; }
                 @keyframes _fadeout_msg {
                     0%   { opacity: 1; }
                     70%  { opacity: 1; }
                     100% { opacity: 0; }
                 }
-                .val-msg-autofade { animation: _fadeout_msg 3.5s ease forwards; }
+                .val-msg-autofade {
+                    animation: _fadeout_msg 3.5s ease forwards;
+                }
+
+                /* Tighten Streamlit's default bottom margin on inputs inside the auth card */
+                .login-card .stTextInput {
+                    margin-bottom: 0 !important;
+                    padding-bottom: 0 !important;
+                }
+                /* Remove excess padding Streamlit injects below each widget in a tab panel */
+                .stTabs [data-baseweb="tab-panel"] .element-container {
+                    margin-bottom: 0 !important;
+                }
+                /* Fixed-height validation slot — always occupies the same vertical space */
+                .reg-val-slot {
+                    height: 22px;
+                    min-height: 22px;
+                    max-height: 22px;
+                    overflow: hidden;
+                    display: flex;
+                    align-items: center;
+                    margin: 2px 0 6px 0;
+                    line-height: 1;
+                }
+                /* Compact inline validation text — coloured micro-text, no full box */
+                .reg-val-text {
+                    font-size: 0.75rem;
+                    font-family: var(--font-sans, -apple-system, sans-serif);
+                    font-weight: 500;
+                    line-height: 1;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .reg-val-text.warn  { color: #fde68a; }
+                .reg-val-text.error { color: #fca5a5; }
+                .reg-val-text.ok    { color: #6ee7b7; }
+                /* Compact hint text — replaces st.caption to avoid its large margin */
+                .reg-field-hint {
+                    font-size: 0.72rem;
+                    color: #4a5568;
+                    font-family: var(--font-sans, -apple-system, sans-serif);
+                    margin: 1px 0 3px 0;
+                    line-height: 1.35;
+                }
+                /* Prevent the tab panel from growing dynamically when messages appear */
+                .stTabs [data-baseweb="tab-panel"] {
+                    min-height: unset !important;
+                    overflow: visible !important;
+                }
                 </style>
                 """, unsafe_allow_html=True)
 
@@ -2128,15 +2159,17 @@ if not st.session_state.get("authenticated", False):
                 if "_pass_msg" not in st.session_state:
                     st.session_state._pass_msg = ("", "")
 
-                def _render_val_msg(state_key, is_success_fade=False):
-                    """Render a fixed-height validation slot — tab layout never shifts."""
+                def _render_val_slot(state_key):
+                    """Render a fixed-height validation slot — never shifts the layout."""
                     kind, text = st.session_state.get(state_key, ("", ""))
-                    if not kind or not text:
-                        st.markdown("<div class='val-slot empty'>​</div>", unsafe_allow_html=True)
-                        return
-                    fade = " val-msg-autofade" if is_success_fade and kind == "success" else ""
+                    css_kind = {"warn": "warn", "error": "error", "success": "ok"}.get(kind, "")
+                    fade = " val-msg-autofade" if kind == "success" else ""
+                    inner = (
+                        f'<span class="reg-val-text {css_kind}{fade}">{text}</span>'
+                        if kind and text else ""
+                    )
                     st.markdown(
-                        f"<div class='val-slot {kind}{fade}'>{text}</div>",
+                        f'<div class="reg-val-slot">{inner}</div>',
                         unsafe_allow_html=True
                     )
 
@@ -2146,20 +2179,23 @@ if not st.session_state.get("authenticated", False):
                     placeholder="your@email.com",
                     on_change=_validate_email
                 )
-                _render_val_msg("_email_msg", is_success_fade=True)
+                _render_val_slot("_email_msg")
 
                 new_user = st.text_input(
                     "👤 Username", key="reg_user",
                     on_change=_validate_username
                 )
-                _render_val_msg("_user_msg", is_success_fade=True)
+                _render_val_slot("_user_msg")
 
                 new_pass = st.text_input(
                     "🔑 Password", type="password", key="reg_pass",
                     on_change=_validate_password
                 )
-                st.caption("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.")
-                _render_val_msg("_pass_msg", is_success_fade=True)
+                st.markdown(
+                    "<p class='reg-field-hint'>Min 8 chars · uppercase · lowercase · number · special character</p>",
+                    unsafe_allow_html=True
+                )
+                _render_val_slot("_pass_msg")
 
                 # Render notification area (reserves space)
                 render_notification("register")

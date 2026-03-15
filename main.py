@@ -2073,32 +2073,33 @@ if not st.session_state.get("authenticated", False):
                 # ── CSS: fixed-height validation slot — zero layout shift ──
                 st.markdown("""
                 <style>
-                /* Outer wrapper always reserves exactly 28px — never grows or shrinks */
+                /* Outer wrapper: zero document-flow height — no spacing contribution */
                 .val-slot {
-                    height: 28px;
+                    height: 0;
                     overflow: visible;
                     position: relative;
                     margin: 0;
                     padding: 0;
+                    line-height: 0;
                 }
-                /* The badge floats inside the slot without pushing anything */
+                /* The badge floats above the next field via negative top offset */
                 .val-badge {
                     position: absolute;
-                    top: 2px;
+                    top: -26px;
                     left: 0;
                     right: 0;
                     display: flex;
                     align-items: center;
                     gap: 6px;
-                    padding: 4px 10px;
-                    border-radius: 6px;
-                    font-size: 0.78rem;
+                    padding: 3px 10px;
+                    border-radius: 5px;
+                    font-size: 0.75rem;
                     font-weight: 500;
                     font-family: var(--font-sans), -apple-system, sans-serif;
                     line-height: 1.3;
                     opacity: 0;
-                    transform: translateY(-4px);
-                    transition: opacity 0.2s ease, transform 0.2s ease;
+                    transform: translateY(2px);
+                    transition: opacity 0.18s ease, transform 0.18s ease;
                     pointer-events: none;
                     white-space: nowrap;
                     overflow: hidden;

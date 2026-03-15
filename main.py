@@ -1,4 +1,13 @@
-import os
+
+with tab1:
+    st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Orbitron', sans-serif;
+        background-color: #0b0c10;
+        color: #c5c6c7;import os
 os.environ["STREAMLIT_WATCHDOG"] = "false"
 import json
 import random
@@ -307,16 +316,16 @@ def render_notification(tab):
         "info":    ("rgba(56,189,248,0.13)",  "rgba(56,189,248,0.28)",  "#7dd3fc"),
     }
 
-    # Always emit a fixed-height wrapper (48px) so nothing below ever moves
+    # Always emit a min-height wrapper so nothing below shifts on empty state
     if notif["type"] and time.time() < notif["expires"]:
         bg, border, color = _styles.get(notif["type"], _styles["info"])
         st.markdown(
-            f"""<div style='height:48px; display:flex; align-items:center;'>
+            f"""<div style='min-height:48px; display:flex; align-items:center;'>
                 <div style='width:100%; padding:8px 14px; border-radius:8px;
                             background:{bg}; border:1px solid {border};
                             color:{color}; font-size:0.85rem; font-weight:500;
-                            font-family:-apple-system,sans-serif; line-height:1.3;
-                            overflow:hidden; text-overflow:ellipsis; white-space:nowrap;'>
+                            font-family:-apple-system,sans-serif; line-height:1.4;
+                            white-space:normal; word-wrap:break-word; overflow:visible;'>
                     {notif["text"]}
                 </div>
             </div>""",
@@ -2386,15 +2395,6 @@ tab1, tab2, tab3, tab4 = tabs[:4]
 
 # Handle optional admin tab
 tab5 = tabs[4] if len(tabs) > 4 else None
-with tab1:
-    st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
-
-    html, body, [class*="css"] {
-        font-family: 'Orbitron', sans-serif;
-        background-color: #0b0c10;
-        color: #c5c6c7;
         scroll-behavior: smooth;
     }
 

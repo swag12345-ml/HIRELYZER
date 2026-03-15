@@ -1,13 +1,4 @@
-
-with tab1:
-    st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
-
-    html, body, [class*="css"] {
-        font-family: 'Orbitron', sans-serif;
-        background-color: #0b0c10;
-        color: #c5c6c7;import os
+import os
 os.environ["STREAMLIT_WATCHDOG"] = "false"
 import json
 import random
@@ -2395,6 +2386,15 @@ tab1, tab2, tab3, tab4 = tabs[:4]
 
 # Handle optional admin tab
 tab5 = tabs[4] if len(tabs) > 4 else None
+with tab1:
+    st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Orbitron', sans-serif;
+        background-color: #0b0c10;
+        color: #c5c6c7;
         scroll-behavior: smooth;
     }
 

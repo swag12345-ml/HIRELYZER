@@ -8094,8 +8094,10 @@ with tab2:
             # Fallback to default
             html_content = render_template_default(st.session_state, profile_img_html)
 
-        # Store the generated content
+        # Store the generated content and invalidate cached PDF so it's recomputed fresh
         st.session_state["generated_html"] = html_content
+        st.session_state.pop("pdf_resume_bytes", None)
+        st.session_state["show_template_preview"] = False
 
 with tab2:
     # ==========================
@@ -8116,7 +8118,13 @@ with tab2:
             unsafe_allow_html=True
         )
 
-        col1, = st.columns(1)
+        # Cache PDF bytes in session_state to avoid expensive recomputation on every rerun
+        if "pdf_resume_bytes" not in st.session_state:
+            st.session_state["pdf_resume_bytes"] = html_to_pdf_bytes(
+                st.session_state["generated_html"]
+            ).read()
+
+        col1, col2 = st.columns([1, 1])
 
         # HTML Resume Download Button
         with col1:
@@ -8131,8 +8139,29 @@ with tab2:
                 key="download_resume_html"
             )
 
-        # PDF Resume Download Button
-        pdf_resume_bytes = html_to_pdf_bytes(st.session_state["generated_html"])
+        # Preview Template Button
+        with col2:
+            if st.button("👁️ Preview Template", key="preview_template_btn"):
+                st.session_state["show_template_preview"] = not st.session_state.get(
+                    "show_template_preview", False
+                )
+
+        # Show/hide the template preview iframe
+        if st.session_state.get("show_template_preview", False):
+            import streamlit.components.v1 as components
+            st.markdown(
+                "<p style='color:#555; font-size:13px; margin-top:8px;'>"
+                "📄 Template Preview (scroll to explore):</p>",
+                unsafe_allow_html=True,
+            )
+            components.html(
+                st.session_state["generated_html"],
+                height=600,
+                scrolling=True,
+            )
+
+        # PDF Resume Download Button — use cached bytes
+        pdf_resume_bytes = BytesIO(st.session_state["pdf_resume_bytes"])
         
         # ✅ Extra Help Note
         st.markdown("""

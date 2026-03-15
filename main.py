@@ -295,24 +295,37 @@ def notify(tab, msg_type, text, duration=3.0):
     }
 
 def render_notification(tab):
-    """Render notification in a fixed center slot for specific tab (prevents button shifting)."""
+    """Render notification in a fixed-height slot — button position never shifts."""
     notification_key = f"{tab}_notification"
     notif = st.session_state[notification_key]
 
-    # Always reserve space for notification (60px height)
+    # Map type to inline style colours (avoids Streamlit's full-height alert boxes)
+    _styles = {
+        "success": ("rgba(52,211,153,0.13)", "rgba(52,211,153,0.28)", "#6ee7b7"),
+        "error":   ("rgba(251,113,133,0.13)", "rgba(251,113,133,0.28)", "#fca5a5"),
+        "warning": ("rgba(251,191,36,0.13)",  "rgba(251,191,36,0.28)",  "#fde68a"),
+        "info":    ("rgba(56,189,248,0.13)",  "rgba(56,189,248,0.28)",  "#7dd3fc"),
+    }
+
+    # Always emit a fixed-height wrapper (48px) so nothing below ever moves
     if notif["type"] and time.time() < notif["expires"]:
-        # Show active notification
-        if notif["type"] == "success":
-            st.success(notif["text"])
-        elif notif["type"] == "error":
-            st.error(notif["text"])
-        elif notif["type"] == "warning":
-            st.warning(notif["text"])
-        elif notif["type"] == "info":
-            st.info(notif["text"])
+        bg, border, color = _styles.get(notif["type"], _styles["info"])
+        st.markdown(
+            f"""<div style='height:48px; display:flex; align-items:center;'>
+                <div style='width:100%; padding:8px 14px; border-radius:8px;
+                            background:{bg}; border:1px solid {border};
+                            color:{color}; font-size:0.85rem; font-weight:500;
+                            font-family:-apple-system,sans-serif; line-height:1.3;
+                            overflow:hidden; text-overflow:ellipsis; white-space:nowrap;'>
+                    {notif["text"]}
+                </div>
+            </div>""",
+            unsafe_allow_html=True
+        )
     else:
-        # Reserve space with empty div to prevent layout shift
-        st.markdown("<div style='height:60px;'></div>", unsafe_allow_html=True)
+        # Reserved space — invisible, same height
+        st.markdown("<div style='height:48px;'></div>", unsafe_allow_html=True)
+
 
 def display_timer(remaining_seconds, expired=False, key_suffix=""):
     """
@@ -2057,17 +2070,68 @@ if not st.session_state.get("authenticated", False):
                 # Normal registration form
                 st.markdown("<h3 style='color:#00BFFF; text-align:center;'>🧾 Register New User</h3>", unsafe_allow_html=True)
 
-                # ── CSS: auto-fade validation badges (no time.sleep / no extra rerun) ──
+                # ── CSS: fixed-height validation slot — zero layout shift ──
                 st.markdown("""
                 <style>
-                @keyframes _fadeout_msg {
-                    0%   { opacity: 1; max-height: 60px; }
-                    70%  { opacity: 1; max-height: 60px; }
-                    100% { opacity: 0; max-height: 0; padding: 0; margin: 0; }
+                /* Outer wrapper always reserves exactly 28px — never grows or shrinks */
+                .val-slot {
+                    height: 28px;
+                    overflow: visible;
+                    position: relative;
+                    margin: 0;
+                    padding: 0;
                 }
-                .val-msg-autofade {
-                    animation: _fadeout_msg 3.5s ease forwards;
+                /* The badge floats inside the slot without pushing anything */
+                .val-badge {
+                    position: absolute;
+                    top: 2px;
+                    left: 0;
+                    right: 0;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 4px 10px;
+                    border-radius: 6px;
+                    font-size: 0.78rem;
+                    font-weight: 500;
+                    font-family: var(--font-sans), -apple-system, sans-serif;
+                    line-height: 1.3;
+                    opacity: 0;
+                    transform: translateY(-4px);
+                    transition: opacity 0.2s ease, transform 0.2s ease;
+                    pointer-events: none;
+                    white-space: nowrap;
                     overflow: hidden;
+                    text-overflow: ellipsis;
+                    z-index: 10;
+                }
+                .val-badge.val-visible {
+                    opacity: 1;
+                    transform: translateY(0);
+                    pointer-events: auto;
+                }
+                .val-badge.val-success {
+                    background: rgba(52,211,153,0.12);
+                    border: 1px solid rgba(52,211,153,0.25);
+                    color: #6ee7b7;
+                }
+                .val-badge.val-error {
+                    background: rgba(251,113,133,0.12);
+                    border: 1px solid rgba(251,113,133,0.25);
+                    color: #fca5a5;
+                }
+                .val-badge.val-warn {
+                    background: rgba(251,191,36,0.12);
+                    border: 1px solid rgba(251,191,36,0.25);
+                    color: #fde68a;
+                }
+                @keyframes _val_autofade {
+                    0%   { opacity: 1; }
+                    65%  { opacity: 1; }
+                    100% { opacity: 0; }
+                }
+                .val-badge.val-autofade {
+                    animation: _val_autofade 3.5s ease forwards;
                 }
                 </style>
                 """, unsafe_allow_html=True)
@@ -2114,16 +2178,20 @@ if not st.session_state.get("authenticated", False):
                     st.session_state._pass_msg = ("", "")
 
                 def _render_val_msg(state_key):
-                    """Render a validation badge that CSS-fades after ~3 s (no sleep, no rerun)."""
+                    """Render a compact validation badge in a fixed-height slot — zero layout shift."""
                     kind, text = st.session_state.get(state_key, ("", ""))
                     if not kind or not text:
-                        st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
+                        # Always emit the fixed-height wrapper, badge stays invisible
+                        st.markdown(
+                            '<div class="val-slot"><div class="val-badge"></div></div>',
+                            unsafe_allow_html=True
+                        )
                         return
-                    css_class = {"warn": "warn-msg", "error": "error-msg", "success": "success-msg"}.get(kind, "info-msg")
-                    # autofade only on success messages; keep error/warn visible
-                    fade = " val-msg-autofade" if kind == "success" else ""
+                    type_class = {"warn": "val-warn", "error": "val-error", "success": "val-success"}.get(kind, "val-warn")
+                    # Success messages auto-fade; errors/warnings stay visible
+                    fade_class = " val-autofade" if kind == "success" else ""
                     st.markdown(
-                        f'<div class="slide-message {css_class}{fade}"><span class="slide-message-text">{text}</span></div>',
+                        f'<div class="val-slot"><div class="val-badge {type_class} val-visible{fade_class}">{text}</div></div>',
                         unsafe_allow_html=True
                     )
 

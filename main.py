@@ -7511,7 +7511,7 @@ with tab2:
             clear_clicked = st.form_submit_button("🗑️ Clear Form", use_container_width=True)
 
         if submitted:
-            st.success("✅ Resume Generated Successfully! Scroll down to preview or download.")
+            st.session_state["_resume_generated_msg"] = True
 
         if clear_clicked:
             # Reset only resume-related keys — do NOT clear() or rerun() as that
@@ -7553,6 +7553,10 @@ with tab2:
     """, unsafe_allow_html=True)
 
     # --- Visual Resume Preview Section (only shown after form is submitted) ---
+    if st.session_state.get("_resume_generated_msg"):
+        st.success("✅ Resume Generated Successfully! Scroll down to preview or download.")
+        st.session_state["_resume_generated_msg"] = False  # show only once per submit
+
     if "generated_html" in st.session_state:
         st.markdown("## 🧾 <span style='color:#336699;'>Resume Preview</span>", unsafe_allow_html=True)
         st.markdown("<hr style='border-top: 2px solid #bbb;'>", unsafe_allow_html=True)
@@ -8095,8 +8099,10 @@ with tab2:
             html_content = render_template_default(st.session_state, profile_img_html)
 
         # Store the generated content and invalidate cached PDF so it's recomputed fresh
+        # NOTE: Use direct assignment instead of .pop() — .pop() on an existing key
+        # triggers an extra Streamlit rerun which causes visible page blinking.
         st.session_state["generated_html"] = html_content
-        st.session_state.pop("pdf_resume_bytes", None)
+        st.session_state["pdf_resume_bytes"] = None   # invalidate cache without extra rerun
         st.session_state["show_template_preview"] = False
 
 with tab2:
@@ -8119,7 +8125,7 @@ with tab2:
         )
 
         # Cache PDF bytes in session_state to avoid expensive recomputation on every rerun
-        if "pdf_resume_bytes" not in st.session_state:
+        if not st.session_state.get("pdf_resume_bytes"):
             st.session_state["pdf_resume_bytes"] = html_to_pdf_bytes(
                 st.session_state["generated_html"]
             ).read()

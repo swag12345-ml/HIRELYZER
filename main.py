@@ -2286,29 +2286,29 @@ if st.session_state.get("authenticated"):
         st.rerun()  # Force rerun to prevent stale UI
 
     # 🔑 GROQ API KEY SECTION (SIDEBAR)
-    ###st.sidebar.markdown("""
-    ####<p style='
-        ###font-size: 0.72rem;###
-        ###font-weight: 700;##
-        ###letter-spacing: 0.10em;###
-       ## text-transform: uppercase;###
-        ####color: #4a5568;####
-        ####border-bottom: 1px solid rgba(255,255,255,0.06);####
-        ###padding-bottom: 8px;####
-        ###margin-bottom: 12px;####
-        ###font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;###
-    ###'>🔑 Groq API Key</p>####
-    ##""", unsafe_allow_html=True)####
+    st.sidebar.markdown("""
+    <p style='
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.10em;
+        text-transform: uppercase;
+        color: #4a5568;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        padding-bottom: 8px;
+        margin-bottom: 12px;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    '>🔑 Groq API Key</p>
+    """, unsafe_allow_html=True)
 
     # ✅ Load saved key from DB (cached — won't re-query on every rerun)
     saved_key = _cached_user_api_key(st.session_state.username)
     masked_preview = f"****{saved_key[-6:]}" if saved_key else ""
 
-    ###user_api_key_input = st.sidebar.text_input(
-        ##"Your Groq API Key (Optional)",###
-        ###placeholder=masked_preview,###
-        ###type="password"###
-    ##)######
+    user_api_key_input = st.sidebar.text_input(
+        "Your Groq API Key (Optional)",
+        placeholder=masked_preview,
+        type="password"
+    )
 
     # ✅ Save or reuse key — guarded so save_user_api_key only fires once per
     #    new value, not on every rerun while the field holds a value.

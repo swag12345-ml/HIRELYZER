@@ -2767,6 +2767,429 @@ def safe_extract_text(uploaded_file):
         st.error(f"⚠️ Could not process this file: {e}")
         return None
 
+# ============================================================
+# 📐 Industry-Standard Resume Format Checker (v2 — Enhanced)
+# ============================================================
+
+def _detect_multicolumn_pdf(pdf_path: str) -> bool:
+    """
+    Detect multi-column layout by analysing raw text-block x-coordinates
+    from the first page of the PDF via PyMuPDF.
+    Returns True if two or more distinct horizontal content zones are found.
+    """
+    try:
+        doc = fitz.open(pdf_path)
+        page = doc[0]
+        blocks = page.get_text("blocks")   # (x0, y0, x1, y1, text, block_no, block_type)
+        page_width = page.rect.width
+        doc.close()
+
+        # Only consider blocks with meaningful text content
+        x_starts = [b[0] for b in blocks if len(b[4].strip()) > 10]
+        if len(x_starts) < 6:
+            return False
+
+        # Split the page width into left zone (< 45 %) and right zone (> 52 %)
+        left_zone  = [x for x in x_starts if x < page_width * 0.45]
+        right_zone = [x for x in x_starts if x > page_width * 0.52]
+
+        # Multi-column confirmed when both zones carry real content
+        return len(left_zone) >= 3 and len(right_zone) >= 3
+    except Exception:
+        return False
+
+
+def check_resume_format(text: str, num_pages: int = 1, pdf_path: str = None) -> dict:
+    """
+    Evaluates a resume against industry-standard ATS formatting rules.
+
+    Scoring model (100 pts total, deduction-based):
+      Section presence       — up to −42 pts  (critical ATS sections)
+      Contact completeness   — up to −8  pts
+      Resume length          — up to −14 pts
+      Action verb quality    — up to −8  pts
+      Quantified achievements— up to −8  pts
+      ATS red flags          — up to −14 pts  (multi-column, dates, objective)
+      Bonus credits          — up to +4  pts  (certifications, portfolio)
+
+    Returns a dict compatible with all existing callers (same keys as v1).
+    """
+    issues  = []
+    passes  = []
+    deductions = 0
+    bonuses    = 0
+
+    text_lower = text.lower() if text else ""
+
+    # ══════════════════════════════════════════════════════════════════════
+    # 1. CRITICAL SECTION PRESENCE  (max −42 pts)
+    #    Weights reflect real ATS auto-reject risk, not equal treatment.
+    # ══════════════════════════════════════════════════════════════════════
+    section_checks = {
+        # (label, detected, deduction_if_missing)
+        "Contact / Email": (
+            bool(re.search(r'[\w.+-]+@[\w.-]+\.[a-z]{2,}', text or "")),
+            15,   # ATS hard-rejects without contact info
+        ),
+        "Phone Number": (
+            bool(re.search(r'(\+?\d[\d\s\-\(\)]{7,}\d)', text or "")),
+            6,
+        ),
+        "Experience": (
+            any(w in text_lower for w in [
+                "experience", "employment", "work history", "career",
+                "professional experience", "work experience",
+                "positions held", "relevant experience", "professional background",
+            ]),
+            12,   # Core content section — high ATS weight
+        ),
+        "Education": (
+            any(w in text_lower for w in [
+                "education", "university", "college", "degree",
+                "bachelor", "master", "b.tech", "b.sc", "m.sc",
+                "mca", "bca", "phd", "diploma", "high school",
+                "graduated", "pursuing",
+            ]),
+            4,
+        ),
+        "Skills": (
+            any(w in text_lower for w in [
+                "skills", "technologies", "tech stack",
+                "competencies", "proficiencies", "tools",
+                "technical skills", "core competencies",
+            ]),
+            3,
+        ),
+        "Summary / Profile": (
+            any(w in text_lower for w in [
+                "summary", "objective", "profile",
+                "about me", "overview", "professional summary",
+                "career objective", "personal statement",
+            ]),
+            2,
+        ),
+    }
+
+    for section_name, (present, penalty) in section_checks.items():
+        if present:
+            passes.append(f"Section present: {section_name}")
+        else:
+            issues.append(
+                f"Missing section: '{section_name}' — "
+                f"ATS {'will likely reject' if penalty >= 10 else 'may penalise'} without it"
+            )
+            deductions += penalty
+
+    # ══════════════════════════════════════════════════════════════════════
+    # 2. CONTACT COMPLETENESS  (max −8 pts)
+    # ══════════════════════════════════════════════════════════════════════
+    if re.search(r'linkedin\.com/in/[\w\-]+', text_lower):
+        passes.append("LinkedIn profile URL detected")
+    else:
+        issues.append("No LinkedIn URL — recruiters expect it; many ATS rank it as a signal")
+        deductions += 5
+
+    if re.search(r'github\.com/[\w\-]+', text_lower):
+        passes.append("GitHub profile URL detected")
+        bonuses += 1   # bonus: shows technical proof of work
+    elif re.search(r'(portfolio|behance\.net|dribbble\.com|leetcode\.com|kaggle\.com)', text_lower):
+        passes.append("Portfolio / professional profile URL detected")
+        bonuses += 1
+    else:
+        issues.append("No GitHub or portfolio URL — especially important for technical roles")
+        deductions += 3
+
+    # ══════════════════════════════════════════════════════════════════════
+    # 3. RESUME LENGTH  (max −14 pts)
+    #    Sweet spot: 400–900 words for most roles.
+    # ══════════════════════════════════════════════════════════════════════
+    word_count = len(text.split()) if text else 0
+
+    if word_count < 150:
+        issues.append(
+            f"Resume critically short ({word_count} words) — "
+            "ATS expects 400–900 words; this will likely be filtered out"
+        )
+        deductions += 12
+    elif word_count < 400:
+        issues.append(
+            f"Resume too short ({word_count} words) — "
+            "aim for 400–900 words with detailed experience and skills"
+        )
+        deductions += 7
+    elif word_count > 1400:
+        issues.append(
+            f"Resume too long ({word_count} words) — "
+            "trim to under 1,000 words; ATS and recruiters prefer concise resumes"
+        )
+        deductions += 5
+    elif word_count > 1000:
+        issues.append(
+            f"Resume slightly long ({word_count} words) — "
+            "consider tightening to under 1,000 words"
+        )
+        deductions += 2
+    else:
+        passes.append(f"Optimal length ({word_count} words — within 400–1,000 word sweet spot)")
+
+    if num_pages > 2:
+        issues.append(
+            f"Resume is {num_pages} pages — "
+            "ATS industry standard is 1–2 pages; longer resumes are often truncated"
+        )
+        deductions += 4
+    elif num_pages == 2:
+        passes.append("Page count acceptable (2 pages — standard for 5+ years experience)")
+    else:
+        passes.append("Page count ideal (1 page — strong for early-career candidates)")
+
+    # ══════════════════════════════════════════════════════════════════════
+    # 4. ACTION VERB QUALITY  (max −8 pts)
+    #    Expanded to 54 verbs across all common resume categories.
+    # ══════════════════════════════════════════════════════════════════════
+    strong_verbs = [
+        # Engineering / technical
+        "architected", "engineered", "designed", "deployed", "optimized", "automated",
+        "built", "launched", "developed", "implemented", "integrated", "configured",
+        "migrated", "refactored", "debugged", "benchmarked", "containerized", "scaled",
+        "maintained", "upgraded", "tested", "validated",
+        # Leadership / management
+        "led", "managed", "directed", "oversaw", "supervised", "coordinated",
+        "spearheaded", "mentored", "trained", "guided", "facilitated",
+        # Business / impact
+        "reduced", "increased", "improved", "accelerated", "streamlined", "transformed",
+        "negotiated", "established", "executed", "delivered", "created",
+        "resolved", "analyzed", "collaborated", "authored", "published",
+        # Data / research
+        "researched", "evaluated", "identified", "modelled", "forecasted",
+        "presented", "reported", "drafted",
+    ]
+    found_verbs = [v for v in strong_verbs if re.search(rf'\b{v}\b', text_lower)]
+    verb_count = len(found_verbs)
+
+    if verb_count == 0:
+        issues.append(
+            "No strong action verbs found — ATS and recruiters expect bullet points "
+            "starting with verbs like 'Engineered', 'Led', 'Optimized'"
+        )
+        deductions += 8
+    elif verb_count < 3:
+        issues.append(
+            f"Weak action verb usage ({verb_count} found) — "
+            "aim for 5+ distinct strong verbs across experience bullet points"
+        )
+        deductions += 5
+    elif verb_count < 5:
+        issues.append(
+            f"Limited action verb variety ({verb_count} found) — "
+            "diversify verbs to better demonstrate range of contributions"
+        )
+        deductions += 2
+    else:
+        passes.append(f"Strong action verb usage ({verb_count} distinct verbs detected)")
+
+    # ══════════════════════════════════════════════════════════════════════
+    # 5. QUANTIFIED ACHIEVEMENTS  (max −8 pts)
+    #    Broader pattern set captures $, %, x, K, M, large numbers, etc.
+    # ══════════════════════════════════════════════════════════════════════
+    quant_patterns = []
+
+    # Percentage metrics: 35%, 2.5 percent
+    quant_patterns += re.findall(
+        r'\b\d+[\.,]?\d*\s*(%|percent)\b', text_lower
+    )
+    # Multiplier / scale: 10x, 3 times
+    quant_patterns += re.findall(
+        r'\b\d+[\.,]?\d*\s*(x|times)\b', text_lower
+    )
+    # Counts with units: 10K users, 500 clients, 3 projects, 50 hours
+    quant_patterns += re.findall(
+        r'\b\d+[,.]?\d*\s*(k|m)?\s*(users|clients|customers|projects|tickets|'
+        r'requests|transactions|queries|hrs|hours|days|weeks|months|years|'
+        r'engineers|developers|members|students|candidates|submissions)\b',
+        text_lower
+    )
+    # Technical metrics: 200ms, 50GB, 1TB
+    quant_patterns += re.findall(
+        r'\b\d+[\.,]?\d*\s*(ms|gb|tb|mb|rpm|rps|qps|wpm|tps)\b', text_lower
+    )
+    # Dollar amounts: $50K, $1.2M, $500
+    quant_patterns += re.findall(
+        r'\$\s*\d+[\d,.]*\s*[kKmMbB]?\b', text_lower
+    )
+    # Large bare numbers (10,000+) — likely meaningful scale references
+    quant_patterns += re.findall(
+        r'\b\d{1,3}[,]\d{3}\b', text_lower
+    )
+    # Qualitative scale indicators
+    quant_patterns += re.findall(
+        r'\b(doubled|tripled|halved|10x|100x)\b', text_lower
+    )
+    # "3+ years" style
+    quant_patterns += re.findall(
+        r'\b\d+\+\s*(years|yrs|months)\b', text_lower
+    )
+
+    metric_count = len(quant_patterns)
+    if metric_count == 0:
+        issues.append(
+            "No quantified achievements detected — add measurable impact "
+            "(e.g., 'reduced latency by 35%', 'served 10K users', 'saved $50K annually')"
+        )
+        deductions += 8
+    elif metric_count < 3:
+        issues.append(
+            f"Few quantified achievements ({metric_count} found) — "
+            "aim for 4+ metrics across your experience to demonstrate concrete impact"
+        )
+        deductions += 4
+    else:
+        passes.append(f"Quantified achievements present ({metric_count} metrics detected)")
+
+    # ══════════════════════════════════════════════════════════════════════
+    # 6. ATS RED FLAGS  (max −14 pts)
+    # ══════════════════════════════════════════════════════════════════════
+
+    # 6a. Multi-column layout detection
+    #     Priority: use real PDF block coordinates if pdf_path available,
+    #     fall back to tab-character heuristic for plain-text paths.
+    multicolumn_detected = False
+    if pdf_path:
+        try:
+            multicolumn_detected = _detect_multicolumn_pdf(pdf_path)
+        except Exception:
+            multicolumn_detected = False
+    if not multicolumn_detected and text:
+        # Fallback heuristic: heavy tab usage OR many pipe characters
+        multicolumn_detected = (
+            text.count('\t') > 8 or
+            text.count('|') > 12
+        )
+
+    if multicolumn_detected:
+        issues.append(
+            "Multi-column or table layout detected — "
+            "many ATS parsers read columns out of order, scrambling your resume content; "
+            "use a single-column layout"
+        )
+        deductions += 7
+    else:
+        passes.append("Single-column layout detected — ATS-safe structure")
+
+    # 6b. Outdated 'Objective' section
+    if "objective" in text_lower and "summary" not in text_lower and "professional summary" not in text_lower:
+        issues.append(
+            "Uses 'Objective' section — this is outdated; "
+            "replace with a modern 'Professional Summary' (2–3 targeted sentences)"
+        )
+        deductions += 3
+
+    # 6c. Employment dates
+    has_dates = bool(re.search(r'\b(19|20)\d{2}\b', text or ""))
+    if not has_dates:
+        issues.append(
+            "No employment dates detected — "
+            "ATS requires dates to build a timeline; "
+            "add month/year ranges (e.g., 'Jan 2021 – Mar 2023')"
+        )
+        deductions += 5
+    else:
+        passes.append("Employment dates detected — ATS can parse your timeline")
+
+    # 6d. Special characters / encoding issues that confuse ATS parsers
+    if text:
+        special_char_count = len(re.findall(r'[^\x00-\x7F]', text))
+        ratio = special_char_count / max(len(text), 1)
+        if ratio > 0.04:
+            issues.append(
+                f"High non-ASCII character density ({special_char_count} chars) — "
+                "special characters from stylised fonts or copy-paste can corrupt ATS parsing"
+            )
+            deductions += 3
+        else:
+            passes.append("Character encoding looks ATS-safe (low non-ASCII density)")
+
+    # 6e. Excessive repetition of buzzwords (keyword stuffing signal)
+    buzzwords = ["synergy", "passionate", "hardworking", "go-getter", "think outside the box",
+                 "detail-oriented", "team player", "results-driven", "dynamic", "proactive"]
+    stuffed = [bw for bw in buzzwords if text_lower.count(bw) >= 2]
+    if len(stuffed) >= 2:
+        issues.append(
+            f"Possible keyword stuffing detected ({', '.join(stuffed)}) — "
+            "overused buzzwords reduce credibility; replace with concrete examples"
+        )
+        deductions += 2
+
+    # ══════════════════════════════════════════════════════════════════════
+    # 7. BONUS CREDITS  (up to +4 pts)
+    #    Reward genuine ATS positive signals.
+    # ══════════════════════════════════════════════════════════════════════
+
+    # Certifications section
+    if any(w in text_lower for w in [
+        "certification", "certified", "certificate", "aws certified",
+        "google certified", "microsoft certified", "pmp", "cpa",
+        "cissp", "ceh", "comptia", "coursera", "udemy", "edx",
+    ]):
+        passes.append("Certifications / credentials detected — strong ATS positive signal")
+        bonuses += 1
+
+    # Projects section
+    if any(w in text_lower for w in [
+        "projects", "personal projects", "side projects",
+        "open source", "github.com", "hackathon",
+    ]):
+        passes.append("Projects section detected — demonstrates initiative beyond job roles")
+        bonuses += 1
+
+    # Consistent date format (month year)
+    month_year_dates = re.findall(
+        r'\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*(19|20)\d{2}\b',
+        text_lower
+    )
+    if len(month_year_dates) >= 2:
+        passes.append("Consistent Month-Year date format detected — preferred by ATS parsers")
+        bonuses += 1
+
+    # ══════════════════════════════════════════════════════════════════════
+    # 8. FINAL SCORE CALCULATION
+    # ══════════════════════════════════════════════════════════════════════
+    raw_score = max(0, min(100, 100 - deductions + bonuses))
+
+    if raw_score >= 90:
+        letter_grade = "A+"
+        label = "ATS-Optimized"
+    elif raw_score >= 80:
+        letter_grade = "A"
+        label = "Excellent Format"
+    elif raw_score >= 70:
+        letter_grade = "B+"
+        label = "Good Format"
+    elif raw_score >= 60:
+        letter_grade = "B"
+        label = "Acceptable"
+    elif raw_score >= 45:
+        letter_grade = "C"
+        label = "Needs Work"
+    else:
+        letter_grade = "D"
+        label = "Poor — Major Issues"
+
+    return {
+        "format_score":  raw_score,
+        "letter_grade":  letter_grade,
+        "label":         label,
+        "issues":        issues,
+        "passes":        passes,
+        "word_count":    word_count,
+        # Extended breakdown (available to callers that want sub-scores)
+        "deductions":    deductions,
+        "bonuses":       bonuses,
+        "verb_count":    verb_count,
+        "metric_count":  metric_count,
+        "multicolumn":   multicolumn_detected,
+    }
+
 # Detect bias in resume
 # Predefined gender-coded word lists
 gender_words = {
@@ -3320,7 +3743,7 @@ Suggestions:
     feedback_match = re.search(r"Feedback:\s*(.+)", response)
     suggestions = re.findall(r"- (.+)", response)
 
-    score = int(score_match.group(1)) if score_match else max(3, max_score-2)  # More generous default
+    score = int(score_match.group(1)) if score_match else max(0, min(max_score, max(3, max_score - 2)))  # Generous default, clamped to max_score
     feedback = feedback_match.group(1).strip() if feedback_match else "Language quality appears adequate for professional communication."
     return score, feedback, suggestions
 
@@ -3334,7 +3757,8 @@ def ats_percentage_score(
     exp_weight=35,
     skills_weight=30,
     lang_weight=5,
-    keyword_weight=10
+    keyword_weight=10,
+    format_data=None,   # ← NEW: pass pre-computed format check result
 ):
     import datetime
 
@@ -3370,48 +3794,7 @@ def ats_percentage_score(
     # ✅ FIXED: Stable education scoring with 2025 cutoff
     current_year = datetime.datetime.now().year
     current_month = datetime.datetime.now().month
-    
-    # ✅ FIXED: Education completion detection with 2025 cutoff
-    def determine_education_status(education_text, end_year_str):
-        """
-        Determine if education is completed or ongoing based on 2025 cutoff and keywords.
-        Returns 'completed' or 'ongoing'.
-        """
-        try:
-            end_year = int(end_year_str.strip())
-        except (ValueError, AttributeError):
-            # If we can't parse the year, default to ongoing
-            return "ongoing"
-        
-        # Apply 2025 cutoff rule (HARDCODED - NOT dynamic)
-        if end_year < 2025:
-            education_status = "completed"
-        elif end_year == 2025:
-            education_status = "completed"
-        else:  # end_year > 2025
-            education_status = "ongoing"
-        
-        # Check for explicit keywords that might override numeric rules
-        education_lower = education_text.lower()
-        ongoing_keywords = ["pursuing", "present", "ongoing", "currently enrolled", "in progress"]
-        completed_keywords = ["graduated", "completed", "finished"]
-        
-        # Override rule: If end year < 2025, always completed regardless of text
-        if end_year < 2025:
-            return "completed"
-        
-        # For years >= 2025, check keywords
-        if end_year < 2025:
-            return "completed"
-        
-        # For years >= 2025, check keywords
-        if any(keyword in education_lower for keyword in ongoing_keywords):
-            education_status = "ongoing"
-        elif any(keyword in education_lower for keyword in completed_keywords):
-            education_status = "completed"
-        
-        return education_status
-    
+
     # ✅ UPDATED: Stable education scoring with priority degrees minimum
     prompt = f"""
 You are a senior ATS (Applicant Tracking System) Evaluator and Technical Recruiter with 15+ years of experience at top-tier tech firms.
@@ -3579,6 +3962,31 @@ Follow this EXACT structure. Do not skip any section:
 
 **Score Justification:** <Evidence-based explanation>
 
+### 📐 Format & ATS Compatibility Analysis
+**Format Score:** {format_data.get("format_score", "N/A") if format_data else "N/A"} / 100  
+**Format Grade:** {format_data.get("letter_grade", "N/A") if format_data else "N/A"} — {format_data.get("label", "") if format_data else ""}
+
+⚠️ IMPORTANT: The Format Score and Format Grade above are SYSTEM-COMPUTED and LOCKED. Do NOT change these numbers. Only fill in the narrative fields below.
+
+**Structural Assessment:**
+- Section Completeness: <narrative only — do NOT include a score>
+- Contact Block: <narrative only>
+- Resume Length: {f"{format_data.get('word_count', 'N/A')} words — " + ("Optimal" if 300 <= (format_data.get('word_count') or 0) <= 1000 else "Too short" if (format_data.get('word_count') or 0) < 300 else "Too long") if format_data else "N/A"}
+- Action Verb Strength: <narrative only>
+- Quantification Quality: <narrative only>
+- ATS Red Flags: <narrative only>
+
+**Format Issues Detected:**
+{chr(10).join(f"- {issue}" for issue in (format_data.get("issues", []) or ["No issues detected"])) if format_data else "- Format data not available"}
+
+**Format Strengths:**
+{chr(10).join(f"- {p}" for p in (format_data.get("passes", []) or ["No specific passes noted"])) if format_data else "- Format data not available"}
+
+**Improvement Recommendations:**
+- <Top format fix 1 — specific and actionable>
+- <Top format fix 2>
+- <Top format fix 3>
+
 ### ✅ Final Assessment
 
 **Overall Evaluation:**
@@ -3620,6 +4028,25 @@ Follow this EXACT structure. Do not skip any section:
    
     ats_result = call_llm(prompt, session=st.session_state).strip()
 
+    # ── CRITICAL: Overwrite any LLM-modified Format Score/Grade lines ────
+    # The LLM sometimes rewrites these despite instructions. Force the true
+    # system-computed values back in so UI and narrative always match.
+    _true_fmt_score = format_data.get("format_score", 75) if format_data else 75
+    _true_fmt_grade = format_data.get("letter_grade", "N/A") if format_data else "N/A"
+    _true_fmt_label = format_data.get("label", "") if format_data else ""
+
+    ats_result = re.sub(
+        r'\*\*Format Score:\*\*.*',
+        f'**Format Score:** {_true_fmt_score} / 100',
+        ats_result
+    )
+    ats_result = re.sub(
+        r'\*\*Format Grade:\*\*.*',
+        f'**Format Grade:** {_true_fmt_grade} — {_true_fmt_label}',
+        ats_result
+    )
+    # ─────────────────────────────────────────────────────────────────────
+
     def extract_section(pattern, text, default="N/A"):
         match = re.search(pattern, text, re.DOTALL)
         return match.group(1).strip() if match else default
@@ -3635,28 +4062,34 @@ Follow this EXACT structure. Do not skip any section:
     skills_analysis = extract_section(r"### 🛠 Skills Analysis(.*?)###", ats_result)
     lang_analysis = extract_section(r"### 🗣 Language Quality Analysis(.*?)###", ats_result)
     keyword_analysis = extract_section(r"### 🔑 Keyword Analysis(.*?)###", ats_result)
+    format_analysis = extract_section(r"### 📐 Format & ATS Compatibility Analysis(.*?)###", ats_result)
     final_thoughts = extract_section(r"### ✅ Final Assessment(.*)", ats_result)
 
     # Extract scores with improved patterns (LLM now scores directly using sidebar weights)
-    edu_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis)
-    exp_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)
-    skills_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
+    edu_score     = extract_score(r"\*\*Score:\*\*\s*(\d+)", edu_analysis)
+    exp_score     = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)
+    skills_score  = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
     keyword_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis)
-    lang_score = grammar_score  # Grammar score already uses lang_weight
+    lang_score    = grammar_score  # Grammar score already capped to lang_weight
 
-    # ✅ Apply minimum thresholds to avoid overly harsh penalties
-    edu_score = max(edu_score, int(edu_weight * 0.15))  # Minimum 15% of weight
-    exp_score = max(exp_score, int(exp_weight * 0.15))  # Minimum 15% of weight
-    skills_score = max(skills_score, int(skills_weight * 0.15))  # Minimum 15% of weight
-    keyword_score = max(keyword_score, int(keyword_weight * 0.10))  # Minimum 10% of weight
+    # ── Clamp every score: min floor + hard upper cap to its own weight ──
+    # Upper cap prevents LLM hallucinating over-max scores (e.g. 25/20)
+    # which would silently push content_score above 100.
+    edu_score     = max(int(edu_weight * 0.15),     min(edu_score,     edu_weight))
+    exp_score     = max(int(exp_weight * 0.15),     min(exp_score,     exp_weight))
+    skills_score  = max(int(skills_weight * 0.15),  min(skills_score,  skills_weight))
+    keyword_score = max(int(keyword_weight * 0.10), min(keyword_score, keyword_weight))
+    lang_score    = max(0,                          min(lang_score,    lang_weight))
 
     # Extract missing items with better parsing - now called "opportunities"
     missing_keywords_section = extract_section(r"\*\*Keyword Enhancement Opportunities:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)
-    missing_skills_section = extract_section(r"\*\*Skills Gaps \(Opportunities for Growth\):\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
-    
+    missing_skills_section = extract_section(r"\*\*Skills Gaps \(Development Opportunities\):\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
+
     # Fallback to old patterns if new ones don't match
     if not missing_keywords_section.strip():
         missing_keywords_section = extract_section(r"\*\*Missing Critical Keywords:\*\*(.*?)(?:\*\*|###|\Z)", keyword_analysis)
+    if not missing_skills_section.strip():
+        missing_skills_section = extract_section(r"\*\*Skills Gaps \(Opportunities for Growth\):\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
     if not missing_skills_section.strip():
         missing_skills_section = extract_section(r"\*\*Missing Critical Skills:\*\*(.*?)(?:\*\*|###|\Z)", skills_analysis)
     
@@ -3687,24 +4120,42 @@ Follow this EXACT structure. Do not skip any section:
     missing_keywords = extract_list_items(missing_keywords_section)
     missing_skills = extract_list_items(missing_skills_section)
 
-    # ✅ IMPROVED: More balanced total score calculation
-    total_score = edu_score + exp_score + skills_score + lang_score + keyword_score
-    
-    # Apply domain penalty more gently
-    total_score = max(total_score - domain_penalty, int(total_score * 0.7))  # Never go below 70% of pre-penalty score
-    
-    # ✅ IMPROVED: More generous score caps and bonus for well-rounded candidates
-    total_score = min(total_score, 100)
-    total_score = max(total_score, 15)  # Minimum score of 15 to avoid completely crushing candidates
+    # ── Score assembly — fully deterministic integer arithmetic ──────────
+    # Step 1: sum the five LLM-scored components (clamped to their individual weights)
+    content_score = edu_score + exp_score + skills_score + lang_score + keyword_score
+
+    # Normalise LLM components to 90-pt scale (format takes the remaining 10 pts)
+    # This keeps total = 100 while giving format meaningful, visible weight.
+    weight_total = edu_weight + exp_weight + skills_weight + lang_weight + keyword_weight
+    if weight_total > 0:
+        content_score = round(content_score / weight_total * 90)
+    content_score = max(0, min(90, content_score))
+
+    # Step 2: format score (0–100) contributes a fixed 10-pt component
+    # Scaled proportionally: 100 format → 10 pts, 0 format → 0 pts
+    fmt_score_raw = format_data.get("format_score", 75) if format_data else 75
+    fmt_score_raw = max(0, min(100, int(fmt_score_raw)))
+    FORMAT_WEIGHT = 10
+    format_component = round(fmt_score_raw / 100 * FORMAT_WEIGHT)
+
+    # Step 3: combine content + format → pre-penalty total (0–100)
+    pre_penalty_score = content_score + format_component
+    pre_penalty_score = max(0, min(100, pre_penalty_score))
+
+    # Step 4: subtract domain mismatch penalty ONCE — straight subtraction
+    total_score = pre_penalty_score - domain_penalty
+
+    # Step 5: clamp final result 15–100
+    total_score = max(15, min(100, total_score))
 
     # ✅ Industry-standard score labels with clear hiring signal
     formatted_score = (
-        "🌟 Exceptional Match — Top 10% Candidate" if total_score >= 85 else
-        "✅ Strong Match — Recommend for Interview" if total_score >= 70 else
-        "🟡 Good Potential — Competitive Candidate" if total_score >= 55 else
-        "⚠️ Fair Match — Needs Resume Optimization" if total_score >= 40 else
-        "🔄 Developing — Significant Skill Gaps" if total_score >= 25 else
-        "❌ Poor Match — Major Role Misalignment"
+        "Exceptional Match — Top 10% Candidate"    if total_score >= 85 else
+        "Strong Match — Recommend for Interview"    if total_score >= 70 else
+        "Good Potential — Competitive Candidate"    if total_score >= 55 else
+        "Fair Match — Needs Resume Optimization"    if total_score >= 40 else
+        "Developing — Significant Skill Gaps"       if total_score >= 25 else
+        "Poor Match — Major Role Misalignment"
     )
 
     # ✅ Format suggestions nicely
@@ -3721,26 +4172,32 @@ Follow this EXACT structure. Do not skip any section:
     # Enhanced final thoughts with domain analysis and industry benchmarks
     final_thoughts += f"""
 
-**📊 Technical Evaluation Details:**
-- Domain Similarity Score: {similarity_score:.2f}/1.0 ({int(similarity_score * 100)}% domain alignment)
+**Technical Evaluation Details:**
+- Content Score (LLM components, 90-pt scale): {content_score}/90
+- Format Component (10-pt scale): {format_component}/10 (Format Score: {fmt_score_raw}/100)
+- Pre-Penalty Score: {pre_penalty_score}/100
 - Domain Penalty Applied: -{domain_penalty} pts (out of max -{MAX_DOMAIN_PENALTY} pts)
+- Final ATS Score: {total_score}/100
+- Domain Similarity: {similarity_score:.2f}/1.0 ({int(similarity_score * 100)}% alignment)
 - Resume Domain Detected: {resume_domain}
 - Target Job Domain: {job_domain}
-- Grammar & Language Pre-Score: {grammar_score}/{lang_weight}
+- Language Pre-Score: {grammar_score}/{lang_weight}
 
-**📈 Score Interpretation (Industry Benchmarks):**
-- 85–100: 🌟 Top 10% candidates — Strong interview recommendation
-- 70–84: ✅ Above average — Likely to advance past ATS screening
-- 55–69: 🟡 Competitive — May advance with strong cover letter
-- 40–54: ⚠️ Below average — Needs resume optimization before applying
-- 25–39: 🔄 Significant gaps — Upskilling recommended
-- 0–24: ❌ Major misalignment — Not suitable for this specific role
+**Score Interpretation (Industry Benchmarks):**
+- 85–100: Top 10% candidates — Strong interview recommendation
+- 70–84: Above average — Likely to advance past ATS screening
+- 55–69: Competitive — May advance with strong cover letter
+- 40–54: Below average — Needs resume optimization before applying
+- 25–39: Significant gaps — Upskilling recommended
+- 0–24: Major misalignment — Not suitable for this specific role
 
-**🔍 ATS Scoring Notes:**
-- Minimum score thresholds applied to prevent unfair penalization
+**ATS Scoring Notes:**
+- Scoring model: LLM components (90 pts) + Format (10 pts) − Domain penalty
+- Format score is a real 10-pt component (not a delta) — poor formatting meaningfully lowers the score
+- Domain penalty subtracted once as a flat deduction (max {MAX_DOMAIN_PENALTY} pts)
+- Format checker v2: uses PDF block-coordinate multi-column detection, tiered deductions, bonus credits
 - Transferable skills, projects, and open-source contributions were credited
 - Career stage (entry/mid/senior) considered in experience scoring
-- Date parsing uses 2025 cutoff for education completion determination
 """
 
     return ats_result, {
@@ -3750,6 +4207,11 @@ Follow this EXACT structure. Do not skip any section:
         "Skills Score": skills_score,
         "Language Score": lang_score,
         "Keyword Score": keyword_score,
+        "Format Score": fmt_score_raw,
+        "Format Grade": format_data.get("letter_grade", "N/A") if format_data else "N/A",
+        "Format Label": format_data.get("label", "") if format_data else "",
+        "Format Issues": format_data.get("issues", []) if format_data else [],
+        "Format Passes": format_data.get("passes", []) if format_data else [],
         "ATS Match %": total_score,
         "Formatted Score": formatted_score,
         "Education Analysis": edu_analysis,
@@ -3757,6 +4219,7 @@ Follow this EXACT structure. Do not skip any section:
         "Skills Analysis": skills_analysis,
         "Language Analysis": updated_lang_analysis,
         "Keyword Analysis": keyword_analysis,
+        "Format Analysis": format_analysis,
         "Final Thoughts": final_thoughts,
         "Missing Keywords": missing_keywords,
         "Missing Skills": missing_skills,
@@ -3833,16 +4296,22 @@ with st.sidebar.expander("![Job](https://img.icons8.com/ios-filled/20/briefcase.
 
 # ---------------- Advanced Weights Dropdown ----------------
 with st.sidebar.expander("![Settings](https://img.icons8.com/ios-filled/20/settings.png) Customize ATS Scoring Weights", expanded=False):
+    st.markdown(
+        "<div style='font-size:0.72rem;color:#64748b;margin-bottom:8px;font-family:-apple-system,sans-serif;'>"
+        "Format quality is scored automatically (10 pts fixed). "
+        "Adjust the remaining <b>90 pts</b> below.</div>",
+        unsafe_allow_html=True
+    )
     edu_weight = st.slider("![Education](https://img.icons8.com/ios-filled/20/graduation-cap.png) Education Weight", 0, 50, 20)
     exp_weight = st.slider("![Experience](https://img.icons8.com/ios-filled/20/portfolio.png) Experience Weight", 0, 50, 35)
-    skills_weight = st.slider("![Skills](https://img.icons8.com/ios-filled/20/gear.png) Skills Match Weight", 0, 50, 30)
+    skills_weight = st.slider("![Skills](https://img.icons8.com/ios-filled/20/gear.png) Skills Match Weight", 0, 50, 20)
     lang_weight = st.slider("![Language](https://img.icons8.com/ios-filled/20/language.png) Language Quality Weight", 0, 10, 5)
     keyword_weight = st.slider("![Keyword](https://img.icons8.com/ios-filled/20/key.png) Keyword Match Weight", 0, 20, 10)
 
     total_weight = edu_weight + exp_weight + skills_weight + lang_weight + keyword_weight
 
     # ---------------- Inline SVG Validation ----------------
-    if total_weight != 100:
+    if total_weight != 90:
         st.markdown(
             f"""
             <div style="display:flex;align-items:center;gap:8px;
@@ -3859,7 +4328,7 @@ with st.sidebar.expander("![Settings](https://img.icons8.com/ios-filled/20/setti
                              12 17zm1-4V7h-2v6h2z"/>
                 </svg>
                 <span style="color:#fca5a5;font-weight:600;font-size:0.8rem;font-family:-apple-system,sans-serif;">
-                    Total = {total_weight}. Adjust to exactly 100.
+                    Total = {total_weight}. Adjust to exactly 90 (Format = 10 pts fixed).
                 </span>
             </div>
             """,
@@ -3879,7 +4348,7 @@ with st.sidebar.expander("![Settings](https://img.icons8.com/ios-filled/20/setti
                              19 20.3 7.7l-1.4-1.4z"/>
                 </svg>
                 <span style="color:#6ee7b7;font-weight:600;font-size:0.8rem;font-family:-apple-system,sans-serif;">
-                    Weights balanced · Total = 100
+                    Weights balanced · Content = 90 pts · Format = 10 pts · Total = 100
                 </span>
             </div>
             """,
@@ -4137,6 +4606,15 @@ if uploaded_files and job_description:
             full_text, replacement_mapping, user_location
         )
 
+        # ✅ Format check (industry standard)
+        try:
+            doc_check = fitz.open(file_path)
+            num_pages = doc_check.page_count
+            doc_check.close()
+        except Exception:
+            num_pages = 1
+        format_data = check_resume_format(full_text, num_pages, pdf_path=file_path)
+
         # ✅ LLM-based ATS Evaluation
         ats_result, ats_scores = ats_percentage_score(
             resume_text=full_text,
@@ -4146,7 +4624,8 @@ if uploaded_files and job_description:
             exp_weight=exp_weight,
             skills_weight=skills_weight,
             lang_weight=lang_weight,
-            keyword_weight=keyword_weight
+            keyword_weight=keyword_weight,
+            format_data=format_data,
         )
 
         # ✅ Extract structured ATS values
@@ -4157,6 +4636,7 @@ if uploaded_files and job_description:
         skills_score = ats_scores.get("Skills Score", 0)
         lang_score = ats_scores.get("Language Score", 0)
         keyword_score = ats_scores.get("Keyword Score", 0)
+        fmt_score = ats_scores.get("Format Score", format_data.get("format_score", 0))
         formatted_score = ats_scores.get("Formatted Score", "N/A")
         fit_summary = ats_scores.get("Final Thoughts", "N/A")
         language_analysis_full = ats_scores.get("Language Analysis", "N/A")
@@ -4166,14 +4646,11 @@ if uploaded_files and job_description:
         missing_keywords = [kw.strip() for kw in missing_keywords_raw.split(",") if kw.strip()] if missing_keywords_raw != "N/A" else []
         missing_skills = [sk.strip() for sk in missing_skills_raw.split(",") if sk.strip()] if missing_skills_raw != "N/A" else []
 
-        domain = db_manager.detect_domain_llm(
-            job_title,
-            job_description,
-            session=st.session_state  # ✅ pass the Groq API key from session
-        )
+        bias_flag = "High Bias" if bias_score > 0.6 else "Fair"
+        ats_flag  = "Low ATS"   if ats_score < 50   else "Good ATS"
 
-        bias_flag = "🔴 High Bias" if bias_score > 0.6 else "🟢 Fair"
-        ats_flag = "⚠️ Low ATS" if ats_score < 50 else "✅ Good ATS"
+        # Reuse domain already detected inside ats_percentage_score — no extra LLM call
+        domain = ats_scores.get("Resume Domain", "Unknown")
 
         # ✅ Store everything in session state
         st.session_state.resume_data.append({
@@ -4187,11 +4664,17 @@ if uploaded_files and job_description:
             "Skills Score": skills_score,
             "Language Score": lang_score,
             "Keyword Score": keyword_score,
+            "Format Score": ats_scores.get("Format Score", 0),
+            "Format Grade": ats_scores.get("Format Grade", "N/A"),
+            "Format Label": ats_scores.get("Format Label", ""),
+            "Format Issues": ats_scores.get("Format Issues", []),
+            "Format Passes": ats_scores.get("Format Passes", []),
             "Education Analysis": ats_scores.get("Education Analysis", ""),
             "Experience Analysis": ats_scores.get("Experience Analysis", ""),
             "Skills Analysis": ats_scores.get("Skills Analysis", ""),
             "Language Analysis": language_analysis_full,
             "Keyword Analysis": ats_scores.get("Keyword Analysis", ""),
+            "Format Analysis": ats_scores.get("Format Analysis", ""),
             "Final Thoughts": fit_summary,
             "Missing Keywords": missing_keywords,
             "Missing Skills": missing_skills,
@@ -4204,7 +4687,11 @@ if uploaded_files and job_description:
             "Text Preview": full_text[:300] + "...",
             "Highlighted Text": highlighted_text,
             "Rewritten Text": rewritten_text,
-            "Domain": domain
+            "Domain": domain,
+            "Domain Penalty": ats_scores.get("Domain Penalty", 0),
+            "Domain Similarity Score": ats_scores.get("Domain Similarity Score", 1.0),
+            "Resume Domain": ats_scores.get("Resume Domain", domain),
+            "Job Domain": ats_scores.get("Job Domain", "Unknown"),
         })
 
         insert_candidate(
@@ -4217,7 +4704,8 @@ if uploaded_files and job_description:
                 skills_score,
                 lang_score,
                 keyword_score,
-                bias_score
+                bias_score,
+                fmt_score,   # ← format_score now saved to DB
             ),
             job_title=job_title,
             job_description=job_description
@@ -4396,6 +4884,9 @@ def generate_resume_report_html(resume):
     skills_score = resume.get('Skills Score', 'N/A')
     lang_score = resume.get('Language Score', 'N/A')
     keyword_score = resume.get('Keyword Score', 'N/A')
+    format_score = resume.get('Format Score', 'N/A')
+    format_grade = resume.get('Format Grade', 'N/A')
+    format_label = resume.get('Format Label', '')
     masculine_count = len(masculine_words_list)
     feminine_count = len(feminine_words_list)
     bias_score = resume.get('Bias Score (0 = Fair, 1 = Biased)', 'N/A')
@@ -4454,12 +4945,13 @@ def generate_resume_report_html(resume):
 
     <h2>ATS Evaluation</h2>
     <table>
-        <tr><td><b>ATS Match</b></td><td>{ats_match}%</td></tr>
-        <tr><td><b>Education</b></td><td>{edu_score}</td></tr>
-        <tr><td><b>Experience</b></td><td>{exp_score}</td></tr>
-        <tr><td><b>Skills</b></td><td>{skills_score}</td></tr>
-        <tr><td><b>Language</b></td><td>{lang_score}</td></tr>
-        <tr><td><b>Keyword</b></td><td>{keyword_score}</td></tr>
+        <tr><td><b>Overall ATS Match</b></td><td>{ats_match}%</td></tr>
+        <tr><td><b>Education Score</b></td><td>{edu_score}</td></tr>
+        <tr><td><b>Experience Score</b></td><td>{exp_score}</td></tr>
+        <tr><td><b>Skills Score</b></td><td>{skills_score}</td></tr>
+        <tr><td><b>Language Score</b></td><td>{lang_score}</td></tr>
+        <tr><td><b>Keyword Score</b></td><td>{keyword_score}</td></tr>
+        <tr><td><b>Format Score</b></td><td>{format_score}/100 — {format_grade} ({format_label})</td></tr>
     </table>
 
     <div class="section-title">ATS Report</div>
@@ -4514,18 +5006,18 @@ with tab1:
         avg_bias = round(np.mean([r.get("Bias Score (0 = Fair, 1 = Biased)", 0) for r in resume_data]), 2)
         total_resumes = len(resume_data)
 
-        st.markdown("<p class='section-label'>📊 Session Summary</p>", unsafe_allow_html=True)
+        st.markdown("<p class='section-label'>Session Summary</p>", unsafe_allow_html=True)
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric("📄 Resumes Uploaded", total_resumes)
+            st.metric("Resumes Uploaded", total_resumes)
         with col2:
-            st.metric("🔎 Avg. Bias Score", avg_bias)
+            st.metric("Avg. Bias Score", avg_bias)
         with col3:
-            st.metric("🔵 Total Masculine Words", total_masc)
+            st.metric("Total Masculine Words", total_masc)
         with col4:
-            st.metric("🔴 Total Feminine Words", total_fem)
+            st.metric("Total Feminine Words", total_fem)
 
-        st.markdown("<p class='section-label'>🗂️ Resumes Overview</p>", unsafe_allow_html=True)
+        st.markdown("<p class='section-label'>Resumes Overview</p>", unsafe_allow_html=True)
         df = pd.DataFrame(resume_data)
 
         # ✅ Add calculated count columns safely
@@ -4535,13 +5027,14 @@ with tab1:
         overview_cols = [
             "Resume Name", "Candidate Name", "ATS Match %", "Education Score",
             "Experience Score", "Skills Score", "Language Score", "Keyword Score",
+            "Format Score",
             "Bias Score (0 = Fair, 1 = Biased)", "Masculine Words Count", "Feminine Words Count"
         ]
 
         st.dataframe(df[overview_cols], use_container_width=True)
 
-        st.markdown("<p class='section-label'>📊 Visual Analysis</p>", unsafe_allow_html=True)
-        chart_tab1, chart_tab2 = st.tabs(["📉 Bias Score Chart", "⚖ Gender-Coded Words"])
+        st.markdown("<p class='section-label'>Visual Analysis</p>", unsafe_allow_html=True)
+        chart_tab1, chart_tab2 = st.tabs(["Bias Score Chart", "Gender-Coded Words"])
         with chart_tab1:
             st.subheader("Bias Score Comparison Across Resumes")
             bias_chart_df = df[["Resume Name", "Bias Score (0 = Fair, 1 = Biased)"]].copy()
@@ -4577,14 +5070,14 @@ with tab1:
             )
             st.altair_chart(gender_altair, use_container_width=True)
 
-        st.markdown("<p class='section-label'>📝 Detailed Resume Reports</p>", unsafe_allow_html=True)
+        st.markdown("<p class='section-label'>Detailed Resume Reports</p>", unsafe_allow_html=True)
         for resume in resume_data:
             candidate_name = resume.get("Candidate Name", "Not Found")
             resume_name = resume.get("Resume Name", "Unknown")
             missing_keywords = resume.get("Missing Keywords", [])
             missing_skills = resume.get("Missing Skills", [])
 
-            with st.expander(f"📄 {resume_name} | {candidate_name}"):
+            with st.expander(f"{resume_name} | {candidate_name}"):
                 st.markdown(f"""
                 <div style="
                     background: linear-gradient(135deg, rgba(56,189,248,0.10) 0%, rgba(79,163,227,0.05) 100%);
@@ -4603,9 +5096,23 @@ with tab1:
                     <div style="font-size:0.75rem; color:#64748b; margin-top:4px; font-family: -apple-system, sans-serif; text-transform:uppercase; letter-spacing:0.05em;">Resume Intelligence Report</div>
                 </div>
                 """, unsafe_allow_html=True)
-                def ats_card(icon, label, value, tooltip=None):
+
+                # ── SVG icon helper ──────────────────────────────────────────────
+                SVG_ICONS = {
+                    "overall": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+                    "grade":   '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+                    "edu":     '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>',
+                    "exp":     '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>',
+                    "skills":  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>',
+                    "lang":    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+                    "keyword": '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+                    "format":  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+                    "pass":    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>',
+                    "fail":    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+                }
+
+                def svg_ats_card(svg_key, label, value, tooltip=None):
                     tooltip_attr = f'title="{tooltip}"' if tooltip else ""
-                    tooltip_style = "cursor:help;" if tooltip else ""
                     return f"""
                     <div style="
                         background: rgba(15,23,42,0.85);
@@ -4613,78 +5120,252 @@ with tab1:
                         border-radius: 12px;
                         padding: 14px 16px;
                         margin-bottom: 8px;
-                        min-width: 0;
-                        box-sizing: border-box;
-                        height: 80px;
+                        height: 86px;
                         display: flex;
                         flex-direction: column;
                         justify-content: center;
                         overflow: hidden;
+                        box-sizing: border-box;
                     ">
-                        <div style="font-size:0.75rem; color:#94a3b8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{icon} {label}</div>
-                        <div {tooltip_attr} style="font-size:1.4rem; font-weight:700; color:#f0f4f8; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; {tooltip_style}">{value}</div>
+                        <div style="display:flex;align-items:center;gap:6px;font-size:0.72rem; color:#94a3b8;">
+                            <span style="color:#38bdf8;flex-shrink:0;">{SVG_ICONS.get(svg_key,"")}</span>
+                            <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{label}</span>
+                        </div>
+                        <div {tooltip_attr} style="font-size:1.35rem; font-weight:700; color:#f0f4f8; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{value}</div>
                     </div>"""
 
-                score_col1, score_col2, score_col3 = st.columns(3)
-                formatted_val = resume.get("Formatted Score", "N/A")
-                with score_col1:
-                    st.markdown(ats_card("📈", "Overall Match", f"{resume.get('ATS Match %', 'N/A')}%"), unsafe_allow_html=True)
-                with score_col2:
-                    st.markdown(ats_card("🏆", "Formatted Score", formatted_val, tooltip=formatted_val), unsafe_allow_html=True)
-                with score_col3:
-                    st.markdown(ats_card("🧠", "Language Quality", f"{resume.get('Language Score', 'N/A')} / {lang_weight}"), unsafe_allow_html=True)
+                # ── Overall Score Gauge (SVG) ────────────────────────────────────
+                overall_pct = resume.get("ATS Match %", 0)
+                fmt_score   = resume.get("Format Score", 0)
+                fmt_grade   = resume.get("Format Grade", "N/A")
+                fmt_label   = resume.get("Format Label", "")
 
+                # Gauge colour
+                if overall_pct >= 75:
+                    gauge_color = "#22c55e"
+                elif overall_pct >= 55:
+                    gauge_color = "#f59e0b"
+                else:
+                    gauge_color = "#ef4444"
+
+                # SVG arc gauge
+                radius = 70
+                cx, cy = 90, 90
+                circumference = 3.14159 * radius  # half-circle arc = π*r
+                arc_offset = circumference * (1 - overall_pct / 100)
+
+                st.markdown(f"""
+                <div style="display:flex;align-items:center;gap:32px;padding:20px 24px;
+                            background:rgba(15,23,42,0.9);border:1px solid rgba(56,189,248,0.2);
+                            border-radius:16px;margin-bottom:20px;flex-wrap:wrap;">
+                    <!-- Gauge -->
+                    <div style="flex-shrink:0;text-align:center;">
+                        <svg width="180" height="100" viewBox="0 0 180 100">
+                            <!-- Track -->
+                            <path d="M 20 90 A 70 70 0 0 1 160 90" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="12" stroke-linecap="round"/>
+                            <!-- Value arc -->
+                            <path d="M 20 90 A 70 70 0 0 1 160 90" fill="none"
+                                stroke="{gauge_color}" stroke-width="12" stroke-linecap="round"
+                                stroke-dasharray="{circumference}" stroke-dashoffset="{arc_offset}"
+                                style="transition:stroke-dashoffset 0.8s ease;"/>
+                            <!-- Score text -->
+                            <text x="90" y="80" text-anchor="middle" font-size="28" font-weight="700"
+                                fill="{gauge_color}" font-family="-apple-system,sans-serif">{overall_pct}</text>
+                            <text x="90" y="98" text-anchor="middle" font-size="11" fill="#64748b"
+                                font-family="-apple-system,sans-serif">/ 100</text>
+                        </svg>
+                        <div style="font-size:0.75rem;color:#64748b;margin-top:2px;font-family:-apple-system,sans-serif;letter-spacing:0.04em;text-transform:uppercase;">Overall ATS Score</div>
+                    </div>
+                    <!-- Label & Format quick-look -->
+                    <div style="flex:1;min-width:200px;">
+                        <div style="font-size:1.1rem;font-weight:700;color:#f0f4f8;font-family:-apple-system,sans-serif;">{resume.get("Formatted Score","N/A")}</div>
+                        <div style="margin-top:12px;display:flex;align-items:center;gap:10px;">
+                            <span style="color:#38bdf8;">{SVG_ICONS["format"]}</span>
+                            <span style="font-size:0.82rem;color:#94a3b8;">Format Score:</span>
+                            <span style="font-size:0.95rem;font-weight:700;color:#f0f4f8;">{fmt_score}/100</span>
+                            <span style="background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.25);
+                                        border-radius:6px;padding:2px 8px;font-size:0.75rem;font-weight:700;color:#38bdf8;">{fmt_grade}</span>
+                        </div>
+                        <div style="margin-top:6px;font-size:0.78rem;color:#64748b;">{fmt_label}</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                # ── Score cards row 1 ──────────────────────────────────────────
+                formatted_val = resume.get("Formatted Score", "N/A")
+                score_col1, score_col2, score_col3 = st.columns(3)
+                with score_col1:
+                    st.markdown(svg_ats_card("overall", "Overall ATS Match", f"{resume.get('ATS Match %', 'N/A')}%"), unsafe_allow_html=True)
+                with score_col2:
+                    st.markdown(svg_ats_card("grade", "Hire Signal", formatted_val, tooltip=formatted_val), unsafe_allow_html=True)
+                with score_col3:
+                    st.markdown(svg_ats_card("lang", "Language Quality", f"{resume.get('Language Score', 'N/A')} / {lang_weight}"), unsafe_allow_html=True)
+
+                # ── Score cards row 2 ──────────────────────────────────────────
                 col_a, col_b, col_c, col_d = st.columns(4)
                 with col_a:
-                    st.markdown(ats_card("🎓", "Education Score", f"{resume.get('Education Score', 'N/A')} / {edu_weight}"), unsafe_allow_html=True)
+                    st.markdown(svg_ats_card("edu", "Education", f"{resume.get('Education Score', 'N/A')} / {edu_weight}"), unsafe_allow_html=True)
                 with col_b:
-                    st.markdown(ats_card("💼", "Experience Score", f"{resume.get('Experience Score', 'N/A')} / {exp_weight}"), unsafe_allow_html=True)
+                    st.markdown(svg_ats_card("exp", "Experience", f"{resume.get('Experience Score', 'N/A')} / {exp_weight}"), unsafe_allow_html=True)
                 with col_c:
-                    st.markdown(ats_card("🛠", "Skills Score", f"{resume.get('Skills Score', 'N/A')} / {skills_weight}"), unsafe_allow_html=True)
+                    st.markdown(svg_ats_card("skills", "Skills", f"{resume.get('Skills Score', 'N/A')} / {skills_weight}"), unsafe_allow_html=True)
                 with col_d:
-                    st.markdown(ats_card("🔍", "Keyword Score", f"{resume.get('Keyword Score', 'N/A')} / {keyword_weight}"), unsafe_allow_html=True)
+                    st.markdown(svg_ats_card("keyword", "Keywords", f"{resume.get('Keyword Score', 'N/A')} / {keyword_weight}"), unsafe_allow_html=True)
+
+                # ── Score cards row 3: bias + domain status ────────────────────
+                SVG_BIAS  = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+                SVG_DOM   = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>'
+
+                bias_raw   = resume.get("Bias Score (0 = Fair, 1 = Biased)", 0)
+                bias_pct   = round(bias_raw * 100)
+                bias_label = "High Bias" if bias_raw > 0.6 else ("Moderate" if bias_raw > 0.3 else "Fair")
+                bias_color = "#ef4444" if bias_raw > 0.6 else ("#f59e0b" if bias_raw > 0.3 else "#22c55e")
+
+                dom_penalty = resume.get("Domain Penalty", 0)
+                dom_penalty = dom_penalty if isinstance(dom_penalty, (int, float)) else 0
+                dom_sim     = resume.get("Domain Similarity Score", 1.0)
+                dom_sim     = dom_sim if isinstance(dom_sim, (int, float)) else 1.0
+                dom_pct     = round(dom_sim * 100)
+                dom_label   = resume.get("Resume Domain", resume.get("Domain", "Unknown"))
+
+                r3c1, r3c2, r3c3, r3c4 = st.columns(4)
+                with r3c1:
+                    st.markdown(f"""
+                    <div style="background:rgba(15,23,42,0.85);border:1px solid rgba(56,189,248,0.25);
+                                border-radius:12px;padding:14px 16px;margin-bottom:8px;height:86px;
+                                display:flex;flex-direction:column;justify-content:center;overflow:hidden;">
+                        <div style="display:flex;align-items:center;gap:6px;font-size:0.72rem;color:#94a3b8;">
+                            <span style="color:{bias_color};flex-shrink:0;">{SVG_BIAS}</span>
+                            <span>Bias Status</span>
+                        </div>
+                        <div style="font-size:1.1rem;font-weight:700;color:{bias_color};margin-top:6px;">
+                            {bias_label} <span style="font-size:0.8rem;color:#64748b;">({bias_pct}%)</span>
+                        </div>
+                    </div>""", unsafe_allow_html=True)
+                with r3c2:
+                    st.markdown(f"""
+                    <div style="background:rgba(15,23,42,0.85);border:1px solid rgba(56,189,248,0.25);
+                                border-radius:12px;padding:14px 16px;margin-bottom:8px;height:86px;
+                                display:flex;flex-direction:column;justify-content:center;overflow:hidden;">
+                        <div style="display:flex;align-items:center;gap:6px;font-size:0.72rem;color:#94a3b8;">
+                            <span style="color:#38bdf8;flex-shrink:0;">{SVG_DOM}</span>
+                            <span>Domain Match</span>
+                        </div>
+                        <div style="font-size:1.1rem;font-weight:700;color:#f0f4f8;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                            {dom_pct}% <span style="font-size:0.75rem;color:#64748b;">(-{dom_penalty} pts)</span>
+                        </div>
+                    </div>""", unsafe_allow_html=True)
+                with r3c3:
+                    st.markdown(svg_ats_card("format", "Format Score", f"{resume.get('Format Score', 'N/A')}/100 · {resume.get('Format Grade','N/A')}"), unsafe_allow_html=True)
+                with r3c4:
+                    masc_c = len(resume.get("Detected Masculine Words", []))
+                    fem_c  = len(resume.get("Detected Feminine Words", []))
+                    SVG_WORDS = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
+                    st.markdown(f"""
+                    <div style="background:rgba(15,23,42,0.85);border:1px solid rgba(56,189,248,0.25);
+                                border-radius:12px;padding:14px 16px;margin-bottom:8px;height:86px;
+                                display:flex;flex-direction:column;justify-content:center;overflow:hidden;">
+                        <div style="display:flex;align-items:center;gap:6px;font-size:0.72rem;color:#94a3b8;">
+                            <span style="color:#38bdf8;flex-shrink:0;">{SVG_WORDS}</span>
+                            <span>Gender Words</span>
+                        </div>
+                        <div style="font-size:0.95rem;font-weight:700;color:#f0f4f8;margin-top:6px;">
+                            <span style="color:#60a5fa;">{masc_c} M</span>
+                            <span style="color:#64748b;margin:0 4px;">/</span>
+                            <span style="color:#f87171;">{fem_c} F</span>
+                        </div>
+                    </div>""", unsafe_allow_html=True)
+
+                # ── Format Checker Panel ───────────────────────────────────────
+                fmt_issues = resume.get("Format Issues", [])
+                fmt_passes = resume.get("Format Passes", [])
+                st.markdown("""
+                <div style="margin:16px 0 6px;font-size:0.72rem;font-weight:700;color:#64748b;
+                            letter-spacing:0.08em;text-transform:uppercase;font-family:-apple-system,sans-serif;">
+                    Format &amp; ATS Compatibility Check
+                </div>""", unsafe_allow_html=True)
+                
+                issues_html = "".join(
+                    f"<div style='display:flex;align-items:flex-start;gap:6px;margin-bottom:5px;font-size:0.8rem;color:#fca5a5;'>{SVG_ICONS['fail']}<span>{iss}</span></div>"
+                    for iss in fmt_issues
+                ) if fmt_issues else "<div style='font-size:0.8rem;color:#94a3b8;'>No critical issues detected.</div>"
+                passes_html = "".join(
+                    f"<div style='display:flex;align-items:flex-start;gap:6px;margin-bottom:5px;font-size:0.8rem;color:#6ee7b7;'>{SVG_ICONS['pass']}<span>{p}</span></div>"
+                    for p in fmt_passes
+                ) if fmt_passes else ""
+
+                fmt_col1, fmt_col2 = st.columns(2)
+                with fmt_col1:
+                    st.markdown(f"""
+                    <div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);
+                                border-radius:10px;padding:12px 14px;">
+                        <div style="font-size:0.72rem;font-weight:700;color:#f87171;text-transform:uppercase;
+                                    letter-spacing:0.06em;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+                            {SVG_ICONS['fail']} Issues ({len(fmt_issues)})
+                        </div>
+                        {issues_html}
+                    </div>""", unsafe_allow_html=True)
+                with fmt_col2:
+                    st.markdown(f"""
+                    <div style="background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.2);
+                                border-radius:10px;padding:12px 14px;">
+                        <div style="font-size:0.72rem;font-weight:700;color:#34d399;text-transform:uppercase;
+                                    letter-spacing:0.06em;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+                            {SVG_ICONS['pass']} Passed ({len(fmt_passes)})
+                        </div>
+                        {passes_html}
+                    </div>""", unsafe_allow_html=True)
 
                 # Fit summary
-                st.markdown("<p class='section-label'>📝 Fit Summary</p>", unsafe_allow_html=True)
+                st.markdown("""
+                <div style="margin:18px 0 6px;font-size:0.72rem;font-weight:700;color:#64748b;
+                            letter-spacing:0.08em;text-transform:uppercase;font-family:-apple-system,sans-serif;">
+                    Fit Summary
+                </div>""", unsafe_allow_html=True)
                 st.write(resume.get('Final Thoughts', 'N/A'))
 
                 # ATS Report
                 if resume.get("ATS Report"):
-                    st.markdown("<p class='section-label'>📋 ATS Evaluation Report</p>", unsafe_allow_html=True)
+                    st.markdown("<p class='section-label'>ATS Evaluation Report</p>", unsafe_allow_html=True)
                     st.markdown(resume["ATS Report"], unsafe_allow_html=True)
 
                 # ATS Chart
-                st.markdown("<p class='section-label'>📊 ATS Score Breakdown</p>", unsafe_allow_html=True)
+                st.markdown("<p class='section-label'>ATS Score Breakdown</p>", unsafe_allow_html=True)
+                # Normalize each component score to 0–100 scale for fair visual comparison
+                def _pct(score, weight):
+                    return round(score / weight * 100) if weight > 0 else 0
                 ats_df = pd.DataFrame({
-                    'Component': ['Education', 'Experience', 'Skills', 'Language', 'Keywords'],
+                    'Component': ['Education', 'Experience', 'Skills', 'Language', 'Keywords', 'Format'],
                     'Score': [
-                        resume.get("Education Score", 0),
-                        resume.get("Experience Score", 0),
-                        resume.get("Skills Score", 0),
-                        resume.get("Language Score", 0),
-                        resume.get("Keyword Score", 0)
+                        _pct(resume.get("Education Score", 0), edu_weight),
+                        _pct(resume.get("Experience Score", 0), exp_weight),
+                        _pct(resume.get("Skills Score", 0), skills_weight),
+                        _pct(resume.get("Language Score", 0), lang_weight) if lang_weight > 0 else 0,
+                        _pct(resume.get("Keyword Score", 0), keyword_weight),
+                        resume.get("Format Score", 0),  # Already on 0–100 scale
                     ]
                 })
                 ats_chart = alt.Chart(ats_df).mark_bar().encode(
                     x=alt.X('Component', sort=None),
-                    y=alt.Y('Score', scale=alt.Scale(domain=[0, 50])),
+                    y=alt.Y('Score', scale=alt.Scale(domain=[0, 100]), title='Score (% of weight)'),
                     color='Component',
                     tooltip=['Component', 'Score']
                 ).properties(
-                    title="ATS Evaluation Breakdown",
+                    title="ATS Evaluation Breakdown (All scores normalized to 0–100%)",
                     width=600,
                     height=300
                 )
                 st.altair_chart(ats_chart, use_container_width=True)
 
-                st.markdown("<p class='section-label'>🔍 Detailed ATS Section Analyses</p>", unsafe_allow_html=True)
+                st.markdown("<p class='section-label'>Detailed ATS Section Analyses</p>", unsafe_allow_html=True)
                 for section_title, key in [
-                    ("🏫 Education Analysis", "Education Analysis"),
-                    ("💼 Experience Analysis", "Experience Analysis"),
-                    ("🛠 Skills Analysis", "Skills Analysis"),
-                    ("🗣 Language Quality", "Language Analysis"),
-                    ("🔑 Keyword Analysis", "Keyword Analysis"),
-                    ("✅ Final Assessment", "Final Thoughts")
+                    ("Education Analysis", "Education Analysis"),
+                    ("Experience Analysis", "Experience Analysis"),
+                    ("Skills Analysis", "Skills Analysis"),
+                    ("Language Quality", "Language Analysis"),
+                    ("Keyword Analysis", "Keyword Analysis"),
+                    ("Format & ATS Compatibility", "Format Analysis"),
+                    ("Final Assessment", "Final Thoughts")
                 ]:
                     analysis_content = resume.get(key, "N/A")
                     if "**Score:**" in analysis_content:
@@ -4704,43 +5385,59 @@ with tab1:
 
                 st.divider()
 
-                detail_tab1, detail_tab2 = st.tabs(["🔎 Bias Analysis", "✅ Rewritten Resume"])
+                detail_tab1, detail_tab2 = st.tabs(["Bias Analysis", "Rewritten Resume"])
 
                 with detail_tab1:
-                    st.markdown("<p class='section-label'>🔍 Bias-Highlighted Original Text</p>", unsafe_allow_html=True)
+                    st.markdown("""
+                    <div style="display:flex;align-items:center;gap:8px;margin:12px 0 6px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <span class='section-label' style="margin:0;">Bias-Highlighted Original Text</span>
+                    </div>""", unsafe_allow_html=True)
                     st.markdown(resume["Highlighted Text"], unsafe_allow_html=True)
 
-                    st.markdown("<p class='section-label'>📌 Gender-Coded Word Counts</p>", unsafe_allow_html=True)
+                    st.markdown("""
+                    <div style="display:flex;align-items:center;gap:8px;margin:14px 0 6px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                        <span class='section-label' style="margin:0;">Gender-Coded Word Counts</span>
+                    </div>""", unsafe_allow_html=True)
                     bias_col1, bias_col2 = st.columns(2)
 
                     with bias_col1:
-                        st.metric("🔵 Masculine Words", len(resume["Detected Masculine Words"]))
+                        st.metric("Masculine Words", len(resume["Detected Masculine Words"]))
                         if resume["Detected Masculine Words"]:
                             st.markdown("<p class='section-label'>Masculine Words with Context</p>", unsafe_allow_html=True)
                             for item in resume["Detected Masculine Words"]:
                                 word = item['word']
                                 sentence = item['sentence']
-                                st.write(f"🔵 **{word}**: {sentence}", unsafe_allow_html=True)
+                                st.markdown(f"""<div style='margin-bottom:6px;font-size:0.85rem;'>
+                                    <span style='color:#60a5fa;font-weight:600;'>{word}</span>: {sentence}</div>""",
+                                    unsafe_allow_html=True)
                         else:
                             st.info("No masculine words detected.")
 
                     with bias_col2:
-                        st.metric("🔴 Feminine Words", len(resume["Detected Feminine Words"]))
+                        st.metric("Feminine Words", len(resume["Detected Feminine Words"]))
                         if resume["Detected Feminine Words"]:
                             st.markdown("<p class='section-label'>Feminine Words with Context</p>", unsafe_allow_html=True)
                             for item in resume["Detected Feminine Words"]:
                                 word = item['word']
                                 sentence = item['sentence']
-                                st.write(f"🔴 **{word}**: {sentence}", unsafe_allow_html=True)
+                                st.markdown(f"""<div style='margin-bottom:6px;font-size:0.85rem;'>
+                                    <span style='color:#f87171;font-weight:600;'>{word}</span>: {sentence}</div>""",
+                                    unsafe_allow_html=True)
                         else:
                             st.info("No feminine words detected.")
 
                 with detail_tab2:
-                    st.markdown("<p class='section-label'>✨ Bias-Free Rewritten Resume</p>", unsafe_allow_html=True)
+                    st.markdown("""
+                    <div style="display:flex;align-items:center;gap:8px;margin:12px 0 6px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                        <span class='section-label' style="margin:0;">Bias-Free Rewritten Resume</span>
+                    </div>""", unsafe_allow_html=True)
                     st.write(resume["Rewritten Text"])
                     docx_file = generate_docx(resume["Rewritten Text"])
                     st.download_button(
-                        label="📥 Download Bias-Free Resume (.docx)",
+                        label="Download Bias-Free Resume (.docx)",
                         data=docx_file,
                         file_name=f"{resume['Resume Name'].split('.')[0]}_bias_free.docx",
                         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -4748,16 +5445,15 @@ with tab1:
                         key=f"download_docx_{resume['Resume Name']}"
                     )
                     html_report = generate_resume_report_html(resume)
-                    
                     pdf_file = html_to_pdf_bytes(html_report)
                     st.download_button(
-                    label="📄 Download Full Analysis Report (.pdf)",
-                    data=pdf_file,
-                    file_name=f"{resume['Resume Name'].split('.')[0]}_report.pdf",
-                    mime="application/pdf",
-                    use_container_width=True,
-                    key=f"download_pdf_{resume['Resume Name']}"
-                    )               
+                        label="Download Full Analysis Report (.pdf)",
+                        data=pdf_file,
+                        file_name=f"{resume['Resume Name'].split('.')[0]}_report.pdf",
+                        mime="application/pdf",
+                        use_container_width=True,
+                        key=f"download_pdf_{resume['Resume Name']}"
+                    )
 
     else:           
         st.warning("⚠️ Please upload resumes to view dashboard analytics.")
@@ -17425,6 +18121,7 @@ if tab5:
 					'skills_score': '{:.0f}',
 					'lang_score': '{:.0f}',
 					'keyword_score': '{:.0f}',
+					'format_score': '{:.0f}',
 					'bias_score': '{:.3f}'
 				}),
 				use_container_width=True,
@@ -17884,8 +18581,9 @@ if tab5:
 					st.markdown("#### Comprehensive Domain Performance Metrics")
 					
 					# Performance heatmap
-					performance_cols = ['avg_ats_score', 'avg_edu_score', 'avg_exp_score', 
-								'avg_skills_score', 'avg_lang_score', 'avg_keyword_score']
+					performance_cols = ['avg_ats_score', 'avg_edu_score', 'avg_exp_score',
+								'avg_skills_score', 'avg_lang_score', 'avg_keyword_score',
+								'avg_format_score']
 					
 					if all(col in df_performance.columns for col in performance_cols):
 						heatmap_data = df_performance[['domain'] + performance_cols].set_index('domain')

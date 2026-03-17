@@ -117,7 +117,7 @@ class DatabaseManager:
         """Create tables and indexes if they don't already exist."""
         ddl = """
         CREATE TABLE IF NOT EXISTS candidates (
-            id          SERIAL PRIMARY KEY,
+            id            SERIAL PRIMARY KEY,
             resume_name   TEXT NOT NULL,
             candidate_name TEXT NOT NULL,
             ats_score     INTEGER NOT NULL CHECK (ats_score BETWEEN 0 AND 100),
@@ -126,10 +126,13 @@ class DatabaseManager:
             skills_score  INTEGER NOT NULL CHECK (skills_score BETWEEN 0 AND 100),
             lang_score    INTEGER NOT NULL CHECK (lang_score BETWEEN 0 AND 100),
             keyword_score INTEGER NOT NULL CHECK (keyword_score BETWEEN 0 AND 100),
+            format_score  INTEGER NOT NULL DEFAULT 0 CHECK (format_score BETWEEN 0 AND 100),
             bias_score    REAL    NOT NULL CHECK (bias_score BETWEEN 0.0 AND 1.0),
             domain        TEXT NOT NULL,
             timestamp     TIMESTAMP NOT NULL DEFAULT NOW()
         );
+        ALTER TABLE candidates ADD COLUMN IF NOT EXISTS
+            format_score INTEGER NOT NULL DEFAULT 0;
         CREATE INDEX IF NOT EXISTS idx_candidates_domain     ON candidates(domain);
         CREATE INDEX IF NOT EXISTS idx_candidates_ats_score  ON candidates(ats_score);
         CREATE INDEX IF NOT EXISTS idx_candidates_timestamp  ON candidates(timestamp);
@@ -649,23 +652,47 @@ Agile Coaching, Software Engineering]
 
             if len(data) < 9:
                 raise ValueError(f"Expected at least 9 data fields, got {len(data)}")
-            normalized_data = data[:9] + (detected_domain,)
 
-            for i, score in enumerate(normalized_data[2:8]):
-                if not isinstance(score, (int, float)) or not (0 <= score <= 100):
-                    raise ValueError(f"Score at position {i+2} must be between 0 and 100, got {score}")
-            bias_score = normalized_data[8]
+            # Unpack core fields (positions 0–8 are unchanged for backward compat)
+            # Position 9 is the new optional format_score (defaults to 0 if not supplied)
+            resume_name    = data[0]
+            candidate_name = data[1]
+            ats_score      = data[2]
+            edu_score      = data[3]
+            exp_score      = data[4]
+            skills_score   = data[5]
+            lang_score     = data[6]
+            keyword_score  = data[7]
+            bias_score     = data[8]
+            format_score   = int(data[9]) if len(data) >= 10 else 0
+
+            # Validate all integer scores (0–100)
+            for name, val in [
+                ("ats_score", ats_score), ("edu_score", edu_score),
+                ("exp_score", exp_score), ("skills_score", skills_score),
+                ("lang_score", lang_score), ("keyword_score", keyword_score),
+                ("format_score", format_score),
+            ]:
+                if not isinstance(val, (int, float)) or not (0 <= val <= 100):
+                    raise ValueError(f"{name} must be between 0 and 100, got {val}")
+
             if not isinstance(bias_score, (int, float)) or not (0.0 <= bias_score <= 1.0):
                 raise ValueError(f"Bias score must be between 0.0 and 1.0, got {bias_score}")
 
             sql = """
                 INSERT INTO candidates (
                     resume_name, candidate_name, ats_score, edu_score, exp_score,
-                    skills_score, lang_score, keyword_score, bias_score, domain, timestamp
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    skills_score, lang_score, keyword_score, format_score, bias_score,
+                    domain, timestamp
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
             """
-            row = self._execute(sql, normalized_data + (local_time,), fetch="one")
+            params = (
+                resume_name, candidate_name, ats_score, edu_score, exp_score,
+                skills_score, lang_score, keyword_score, format_score, bias_score,
+                detected_domain, local_time,
+            )
+            row = self._execute(sql, params, fetch="one")
             candidate_id = row["id"] if row else None
             logger.info(f"Inserted candidate with ID: {candidate_id}")
             return candidate_id
@@ -884,6 +911,7 @@ Agile Coaching, Software Engineering]
                     ROUND(AVG(skills_score)::numeric, 2)  AS avg_skills_score,
                     ROUND(AVG(lang_score)::numeric, 2)    AS avg_lang_score,
                     ROUND(AVG(keyword_score)::numeric, 2) AS avg_keyword_score,
+                    ROUND(AVG(format_score)::numeric, 2)  AS avg_format_score,
                     ROUND(AVG(bias_score)::numeric, 3)    AS avg_bias_score,
                     MAX(ats_score) AS max_ats_score,
                     MIN(ats_score) AS min_ats_score,

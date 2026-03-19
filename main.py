@@ -12,6 +12,7 @@ from io import BytesIO
 from collections import Counter
 from datetime import datetime
 import time
+import pytz
 
 # Third-party library imports
 import streamlit as st
@@ -25,7 +26,6 @@ import matplotlib.pyplot as plt
 import altair as alt
 from PIL import Image
 from pdf2image import convert_from_path
-from dotenv import load_dotenv
 from nltk.stem import WordNetLemmatizer
 from docx import Document
 from docx.shared import Pt, RGBColor, Inches
@@ -190,7 +190,7 @@ def generate_cover_letter_from_resume_builder():
     summary = st.session_state.get("summary", "")
     skills = st.session_state.get("skills", "")
     location = st.session_state.get("location", "")
-    today_date = datetime.today().strftime("%B %d, %Y")
+    today_date = datetime.now(pytz.timezone("Asia/Kolkata")).strftime("%B %d, %Y")
 
     # ✅ Input boxes for contact info
     company = st.text_input("🏢 Target Company", placeholder="e.g., Google")
@@ -2644,8 +2644,7 @@ with tab1:
     <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
     """, unsafe_allow_html=True)
 
-# Load environment variables
-load_dotenv()
+# Environment variables loaded via st.secrets (Streamlit Cloud)
 
 # Detect Device
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -3760,7 +3759,8 @@ def ats_percentage_score(
     keyword_weight=10,
     format_data=None,   # ← NEW: pass pre-computed format check result
 ):
-    import datetime
+    import pytz as _pytz
+    _now_ist = datetime.now(_pytz.timezone("Asia/Kolkata"))
 
     # ✅ Grammar evaluation
     grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(
@@ -3792,8 +3792,8 @@ def ats_percentage_score(
     )
 
     # ✅ FIXED: Stable education scoring with 2025 cutoff
-    current_year = datetime.datetime.now().year
-    current_month = datetime.datetime.now().month
+    current_year = _now_ist.year
+    current_month = _now_ist.month
 
     # ✅ UPDATED: Stable education scoring with priority degrees minimum
     prompt = f"""
@@ -4007,7 +4007,7 @@ Follow this EXACT structure. Do not skip any section:
 ---
 
 **EVALUATION CONTEXT:**
-- Current Date: {datetime.datetime.now().strftime('%B %Y')} (Year: {current_year}, Month: {current_month})
+- Current Date: {_now_ist.strftime('%B %Y')} (Year: {current_year}, Month: {current_month})
 - Grammar Score Pre-evaluated: {grammar_score} / {lang_weight} — {grammar_feedback}
 - Resume Domain Detected: {resume_domain}
 - Target Job Domain: {job_domain}

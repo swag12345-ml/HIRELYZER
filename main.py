@@ -17335,24 +17335,14 @@ Generate {num_questions} questions now:
                         can_add_followup = n_answered < st.session_state.original_num_questions - 1
 
                         if diff == "Hard" and can_add_followup:
-                            # ── Hard mode: reuse followup already in eval result ──
-                            # evaluate_interview_answer_for_scores already asks for a followup
-                            # in its JSON for Hard difficulty — no second LLM call needed.
-                            followup_q = (eval_res.get("followup") or "").strip()
-
-                            # Fallback: only call adaptive engine if eval didn't return one
-                            if not followup_q:
-                                weakness_data = analyze_answer_weaknesses(ans_text, eval_res)
-                                strategy = weakness_data["strategy"]
-                                layer = getattr(st.session_state, 'escalation_layer', 1)
-                                followup_q = generate_adaptive_followup(
-                                    q_text, ans_text, strategy, layer, selected_role, selected_domain
-                                )
-                                followup_q = followup_q.strip() if followup_q else ""
-                            else:
-                                strategy = "Depth Probe"
-                                layer = getattr(st.session_state, 'escalation_layer', 1)
-
+                            # ── Hard mode: use adaptive engine (single source of truth) ──
+                            weakness_data = analyze_answer_weaknesses(ans_text, eval_res)
+                            strategy = weakness_data["strategy"]
+                            layer = getattr(st.session_state, 'escalation_layer', 1)
+                            followup_q = generate_adaptive_followup(
+                                q_text, ans_text, strategy, layer, selected_role, selected_domain
+                            )
+                            followup_q = followup_q.strip() if followup_q else ""
                             if followup_q:
                                 st.session_state.dynamic_interview_questions.insert(
                                     q_idx + 1, followup_q

@@ -1,133 +1,54 @@
 import hashlib
 import os
 import random
-import psycopg2
-import psycopg2.extras
+import sqlite3
 from datetime import datetime, timedelta
 from langchain_groq import ChatGroq
 
 # ---- CONFIG ----
+WORKING_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_FILE = os.path.join(WORKING_DIR, "llm_data.sqlite")
 CACHE_EXPIRY_HOURS = 24
 FAILURE_COOLDOWN_MINUTES = 5
 QUOTA_COOLDOWN_MINUTES = 60
 DAILY_KEY_LIMIT = 800
-DEAD_KEY_REMOVE_DAYS = 3
+DEAD_KEY_REMOVE_DAYS = 3  # auto-remove permanently dead keys after X days
 
-
-# ---- Cached Connection (own singleton, no import from db_manager) ----
-# Uses the same @st.cache_resource pattern as db_manager to avoid
-# opening a new connection on every call, without causing a circular import.
-
-def _get_llm_connection():
-    """
-    Returns a single cached psycopg2 connection for llm_manager.
-    @st.cache_resource ensures it is NOT recreated on every Streamlit rerun.
-    Kept separate from db_manager's connection to avoid circular imports,
-    but uses the same pattern and credentials.
-    """
-    import streamlit as st
-    conn = psycopg2.connect(
-        host=st.secrets["SUPABASE_HOST"],
-        dbname=st.secrets["SUPABASE_DB"],
-        user=st.secrets["SUPABASE_USER"],
-        password=st.secrets["SUPABASE_PASSWORD"],
-        port=st.secrets["SUPABASE_PORT"],
-        connect_timeout=30,
-        keepalives=1,
-        keepalives_idle=30,
-        keepalives_interval=10,
-        keepalives_count=5,
-    )
-    conn.autocommit = False
-    return conn
-
-# Wrap with cache_resource at module level
-try:
-    import streamlit as st
-    _get_llm_connection = st.cache_resource(_get_llm_connection)
-except Exception:
-    pass  # Running outside Streamlit (tests/scripts) — no caching needed
-
-
-def get_conn():
-    """
-    Returns the cached connection.
-    Reconnects automatically if the connection was dropped.
-    """
-    conn = _get_llm_connection()
-    try:
-        conn.isolation_level  # lightweight liveness check
-    except Exception:
-        try:
-            import streamlit as st
-            st.cache_resource.clear()
-        except Exception:
-            pass
-        conn = _get_llm_connection()
-    return conn
-
-
-# ---- Table Setup ----
-# Run once via init_tables() OR paste into Supabase SQL Editor:
-#
-# CREATE TABLE IF NOT EXISTS llm_cache (
-#     prompt_hash TEXT PRIMARY KEY,
-#     response    TEXT,
-#     timestamp   TIMESTAMPTZ DEFAULT NOW()
-# );
-# CREATE TABLE IF NOT EXISTS key_failures (
-#     api_key   TEXT PRIMARY KEY,
-#     fail_time TIMESTAMPTZ,
-#     reason    TEXT
-# );
-# CREATE TABLE IF NOT EXISTS key_usage (
-#     api_key     TEXT PRIMARY KEY,
-#     usage_count INTEGER DEFAULT 0,
-#     last_reset  DATE
-# );
-
-def init_tables():
-    """Create the 3 llm_manager tables in Supabase if they don't exist."""
-    conn = get_conn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS llm_cache (
-                    prompt_hash TEXT PRIMARY KEY,
-                    response    TEXT,
-                    timestamp   TIMESTAMPTZ DEFAULT NOW()
-                );
-                CREATE TABLE IF NOT EXISTS key_failures (
-                    api_key   TEXT PRIMARY KEY,
-                    fail_time TIMESTAMPTZ,
-                    reason    TEXT
-                );
-                CREATE TABLE IF NOT EXISTS key_usage (
-                    api_key     TEXT PRIMARY KEY,
-                    usage_count INTEGER DEFAULT 0,
-                    last_reset  DATE
-                );
-            """)
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-        raise e
-
+# ---- DB Init ----
+def init_db():
+    with sqlite3.connect(DB_FILE, check_same_thread=False) as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS llm_cache (
+                prompt_hash TEXT PRIMARY KEY,
+                response TEXT,
+                timestamp DATETIME
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS key_failures (
+                api_key TEXT PRIMARY KEY,
+                fail_time DATETIME,
+                reason TEXT
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS key_usage (
+                api_key TEXT PRIMARY KEY,
+                usage_count INTEGER,
+                last_reset DATE
+            )
+        """)
+init_db()
 
 # ---- Auto-clean expired cache ----
 def cleanup_cache():
-    """Delete expired cache rows and permanently dead key records."""
-    cutoff      = datetime.utcnow() - timedelta(hours=CACHE_EXPIRY_HOURS)
+    cutoff = datetime.utcnow() - timedelta(hours=CACHE_EXPIRY_HOURS)
+    with sqlite3.connect(DB_FILE, check_same_thread=False) as conn:
+        conn.execute("DELETE FROM llm_cache WHERE timestamp < ?", (cutoff.strftime("%Y-%m-%d %H:%M:%S"),))
+    # Auto-remove dead keys older than DEAD_KEY_REMOVE_DAYS
     cutoff_dead = datetime.utcnow() - timedelta(days=DEAD_KEY_REMOVE_DAYS)
-    conn = get_conn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("DELETE FROM llm_cache    WHERE timestamp  < %s", (cutoff,))
-            cur.execute("DELETE FROM key_failures WHERE fail_time  < %s", (cutoff_dead,))
-        conn.commit()
-    except Exception:
-        conn.rollback()
-
+    with sqlite3.connect(DB_FILE, check_same_thread=False) as conn:
+        conn.execute("DELETE FROM key_failures WHERE fail_time < ?", (cutoff_dead.strftime("%Y-%m-%d %H:%M:%S"),))
 
 # ---- Load API Keys ----
 def load_groq_api_keys():
@@ -138,193 +59,110 @@ def load_groq_api_keys():
             keys = [k.strip() for k in secret_keys.split(",") if k.strip()]
             random.shuffle(keys)
             return keys
-    except Exception:
+    except:
         pass
-    env_keys = os.getenv("GROQ_API_KEYS", "")
+    env_keys = os.getenv("GROQ_API_KEYS")
     if env_keys:
         keys = [k.strip() for k in env_keys.split(",") if k.strip()]
         random.shuffle(keys)
         return keys
     raise ValueError("❌ No Groq API keys found.")
 
-
 # ---- Hash Prompt ----
 def hash_prompt(prompt: str, model: str) -> str:
+    """Create a unique hash for caching based on model + prompt"""
     return hashlib.sha256(f"{model}|{prompt}".encode("utf-8")).hexdigest()
-
 
 # ---- Cache Handling ----
 def get_cached_response(prompt: str, model: str):
-    """Return a valid cached LLM response, or None if not found / expired."""
-    key    = hash_prompt(prompt, model)
+    """Fetch cached response if still valid"""
+    key = hash_prompt(prompt, model)
     cutoff = datetime.utcnow() - timedelta(hours=CACHE_EXPIRY_HOURS)
-    conn   = get_conn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT response FROM llm_cache WHERE prompt_hash = %s AND timestamp >= %s",
-                (key, cutoff)
-            )
-            row = cur.fetchone()
-            return row[0] if row else None
-    except Exception:
-        return None
-
+    with sqlite3.connect(DB_FILE, check_same_thread=False) as conn:
+        row = conn.execute("SELECT response, timestamp FROM llm_cache WHERE prompt_hash = ?", (key,)).fetchone()
+    if row:
+        response, ts_str = row
+        if datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S") >= cutoff:
+            return response
+    return None
 
 def set_cached_response(prompt: str, model: str, response: str):
-    """Upsert LLM response into the cache table."""
-    key  = hash_prompt(prompt, model)
-    conn = get_conn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                INSERT INTO llm_cache (prompt_hash, response, timestamp)
-                VALUES (%s, %s, NOW())
-                ON CONFLICT (prompt_hash) DO UPDATE
-                    SET response  = EXCLUDED.response,
-                        timestamp = NOW()
-            """, (key, response))
-        conn.commit()
-    except Exception:
-        conn.rollback()
-
+    """Store response in cache"""
+    key = hash_prompt(prompt, model)
+    ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    with sqlite3.connect(DB_FILE, check_same_thread=False) as conn:
+        conn.execute("""
+            INSERT OR REPLACE INTO llm_cache (prompt_hash, response, timestamp)
+            VALUES (?, ?, ?)
+        """, (key, response, ts))
 
 # ---- Key Tracking ----
-def increment_key_usage(api_key: str):
-    """Increment daily usage for a key, resetting count if it's a new day."""
-    today = datetime.utcnow().date()
-    conn  = get_conn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT usage_count, last_reset FROM key_usage WHERE api_key = %s",
-                (api_key,)
-            )
-            row = cur.fetchone()
-            if row:
-                usage_count, last_reset = row
-                if isinstance(last_reset, str):
-                    last_reset = datetime.strptime(last_reset, "%Y-%m-%d").date()
-                if last_reset != today:
-                    cur.execute(
-                        "UPDATE key_usage SET usage_count = 1, last_reset = %s WHERE api_key = %s",
-                        (today, api_key)
-                    )
-                else:
-                    cur.execute(
-                        "UPDATE key_usage SET usage_count = usage_count + 1 WHERE api_key = %s",
-                        (api_key,)
-                    )
+def increment_key_usage(api_key):
+    """Track daily usage count per key"""
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    with sqlite3.connect(DB_FILE, check_same_thread=False) as conn:
+        row = conn.execute("SELECT usage_count, last_reset FROM key_usage WHERE api_key=?", (api_key,)).fetchone()
+        if row:
+            usage_count, last_reset = row
+            if last_reset != today:
+                conn.execute("UPDATE key_usage SET usage_count=1, last_reset=? WHERE api_key=?", (today, api_key))
             else:
-                cur.execute(
-                    "INSERT INTO key_usage (api_key, usage_count, last_reset) VALUES (%s, 1, %s)",
-                    (api_key, today)
-                )
-        conn.commit()
-    except Exception:
-        conn.rollback()
+                conn.execute("UPDATE key_usage SET usage_count=usage_count+1 WHERE api_key=?", (api_key,))
+        else:
+            conn.execute("INSERT INTO key_usage (api_key, usage_count, last_reset) VALUES (?, ?, ?)",
+                         (api_key, 1, today))
 
+def mark_key_failure(api_key, reason="error"):
+    """Mark a key as failed (with cooldown tracking)"""
+    with sqlite3.connect(DB_FILE, check_same_thread=False) as conn:
+        conn.execute("""
+            INSERT OR REPLACE INTO key_failures (api_key, fail_time, reason)
+            VALUES (?, ?, ?)
+        """, (api_key, datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"), reason))
 
-def mark_key_failure(api_key: str, reason: str = "error"):
-    """Record or update a key failure with timestamp and reason."""
-    conn = get_conn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                INSERT INTO key_failures (api_key, fail_time, reason)
-                VALUES (%s, NOW(), %s)
-                ON CONFLICT (api_key) DO UPDATE
-                    SET fail_time = NOW(),
-                        reason    = EXCLUDED.reason
-            """, (api_key, reason))
-        conn.commit()
-    except Exception:
-        conn.rollback()
+def clear_key_failure(api_key):
+    """Remove a key from failure list"""
+    with sqlite3.connect(DB_FILE, check_same_thread=False) as conn:
+        conn.execute("DELETE FROM key_failures WHERE api_key = ?", (api_key,))
 
-
-def clear_key_failure(api_key: str):
-    """Remove a key from the failures table after a successful call."""
-    conn = get_conn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("DELETE FROM key_failures WHERE api_key = %s", (api_key,))
-        conn.commit()
-    except Exception:
-        conn.rollback()
-
-
-def get_healthy_keys(api_keys: list) -> list:
-    """
-    Return keys not in active cooldown and under daily quota.
-    Uses 2 bulk queries to avoid N+1 database calls.
-    """
-    now   = datetime.utcnow()
-    today = now.date()
-    conn  = get_conn()
-
-    try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute("SELECT api_key, fail_time, reason FROM key_failures")
-            failures = {r["api_key"]: r for r in cur.fetchall()}
-
-            cur.execute("SELECT api_key, usage_count, last_reset FROM key_usage")
-            usage_map = {r["api_key"]: r for r in cur.fetchall()}
-    except Exception:
-        shuffled = list(api_keys)
-        random.shuffle(shuffled)
-        return shuffled
-
+def get_healthy_keys(api_keys):
+    """Return keys that are not in cooldown and under quota"""
+    now = datetime.utcnow()
     healthy = []
-    for key in api_keys:
-        # --- Cooldown check ---
-        if key in failures:
-            fail_time = failures[key]["fail_time"]
-            reason    = failures[key]["reason"]
-            if isinstance(fail_time, str):
-                fail_time = datetime.fromisoformat(fail_time)
-            if fail_time.tzinfo is not None:
-                fail_time = fail_time.replace(tzinfo=None)
-            cooldown_mins = QUOTA_COOLDOWN_MINUTES if reason == "quota" else FAILURE_COOLDOWN_MINUTES
-            if (now - fail_time).total_seconds() < cooldown_mins * 60:
-                continue
-
-        # --- Daily quota check ---
-        if key in usage_map:
-            usage_count = usage_map[key]["usage_count"]
-            last_reset  = usage_map[key]["last_reset"]
-            if isinstance(last_reset, str):
-                last_reset = datetime.strptime(last_reset, "%Y-%m-%d").date()
-            if last_reset == today and usage_count >= DAILY_KEY_LIMIT:
-                mark_key_failure(key, "quota")
-                continue
-
-        healthy.append(key)
-
+    with sqlite3.connect(DB_FILE, check_same_thread=False) as conn:
+        for key in api_keys:
+            # Check cooldown
+            row = conn.execute("SELECT fail_time, reason FROM key_failures WHERE api_key = ?", (key,)).fetchone()
+            if row:
+                fail_time, reason = row
+                fail_dt = datetime.strptime(fail_time, "%Y-%m-%d %H:%M:%S")
+                cooldown = QUOTA_COOLDOWN_MINUTES if reason == "quota" else FAILURE_COOLDOWN_MINUTES
+                if (now - fail_dt).total_seconds() < cooldown * 60:
+                    continue
+            # Check quota
+            usage = conn.execute("SELECT usage_count, last_reset FROM key_usage WHERE api_key=?", (key,)).fetchone()
+            if usage:
+                usage_count, last_reset = usage
+                if last_reset != now.strftime("%Y-%m-%d"):
+                    usage_count = 0
+                if usage_count >= DAILY_KEY_LIMIT:
+                    mark_key_failure(key, "quota")
+                    continue
+            healthy.append(key)
     random.shuffle(healthy)
     return healthy
 
-
 # ---- LLM Call ----
-def try_call_llm(prompt: str, api_key: str, model: str, temperature: float) -> str:
-    """Make a single LLM call via Groq."""
+def try_call_llm(prompt, api_key, model, temperature):
+    """Make a single LLM call"""
     llm = ChatGroq(model=model, temperature=temperature, groq_api_key=api_key)
     return llm.invoke(prompt).content
 
-
-# ---- Main Entry Point ----
-def call_llm(prompt: str, session, model: str = "llama-3.3-70b-versatile", temperature: float = 0) -> str:
-    """
-    Main LLM call with:
-    1. Cache check       (Supabase llm_cache table)
-    2. User key attempt  (from session["user_groq_key"])
-    3. Admin key rotation with per-key cooldown + daily quota tracking
-    """
-    # Step 1: Cleanup once per session
-    if not session.get("_cache_cleaned"):
-        cleanup_cache()
-        session["_cache_cleaned"] = True
-
-    # Step 2: Cache lookup
+# ---- Main ----
+def call_llm(prompt: str, session, model="llama-3.3-70b-versatile", temperature=0):
+    """Main entry: checks cache, tries user key, falls back to admin keys"""
+    # 🔹 Step 1: Cache first
+    cleanup_cache()
     cached = get_cached_response(prompt, model)
     if cached:
         return cached
@@ -332,11 +170,10 @@ def call_llm(prompt: str, session, model: str = "llama-3.3-70b-versatile", tempe
     if "key_index" not in session:
         session["key_index"] = 0
 
-    user_key   = session.get("user_groq_key", "")
-    user_key   = user_key.strip() if isinstance(user_key, str) else ""
+    user_key = session.get("user_groq_key", "").strip() if isinstance(session.get("user_groq_key"), str) else ""
     last_error = None
 
-    # Step 3: Try user-provided key first
+    # 🔹 Step 2: Try user-provided key
     if user_key:
         try:
             response = try_call_llm(prompt, user_key, model, temperature)
@@ -348,7 +185,7 @@ def call_llm(prompt: str, session, model: str = "llama-3.3-70b-versatile", tempe
             mark_key_failure(user_key, reason)
             last_error = e
 
-    # Step 4: Rotate through admin keys
+    # 🔹 Step 3: Rotate through admin keys
     admin_keys = get_healthy_keys(load_groq_api_keys())
     if admin_keys:
         start_index = session["key_index"] % len(admin_keys)
@@ -367,4 +204,4 @@ def call_llm(prompt: str, session, model: str = "llama-3.3-70b-versatile", tempe
                 mark_key_failure(key, reason)
                 last_error = e
 
-    return f"❌ LLM unavailable: {last_error or 'No healthy API keys available'}"
+    return f"❌ LLM unavailable: {last_error or 'No healthy API keys left'}"

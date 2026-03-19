@@ -25,6 +25,7 @@ import matplotlib.pyplot as plt
 import altair as alt
 from PIL import Image
 from pdf2image import convert_from_path
+from dotenv import load_dotenv
 from nltk.stem import WordNetLemmatizer
 from docx import Document
 from docx.shared import Pt, RGBColor, Inches
@@ -2643,7 +2644,8 @@ with tab1:
     <div class="header">💼 HIRELYZER - AI BASED ETHICAL RESUME ANALYZER</div>
     """, unsafe_allow_html=True)
 
-# Environment variables loaded via st.secrets (Streamlit Cloud)
+# Load environment variables
+load_dotenv()
 
 # Detect Device
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -3696,7 +3698,132 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
 
     return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
 
+# ✅ Combined pre-evaluation: grammar + both domain detections in ONE LLM call
+# This replaces 3 separate call_llm calls with a single request, cutting API key
+# usage from 5 → 2 per resume analysis (1 pre-eval + 1 ATS eval).
+def pre_evaluate_resume(resume_text, job_description, job_title, lang_weight=5):
+    # ⚠️ This list MUST match db_manager.detect_domain_llm's valid_domains exactly,
+    # because the returned values are passed directly to get_domain_similarity().
+    DOMAIN_LIST = [
+        "Data Science", "AI/Machine Learning", "UI/UX Design", "Mobile Development",
+        "Frontend Development", "Backend Development", "Full Stack Development",
+        "Cybersecurity", "Cloud Engineering", "DevOps/Infrastructure",
+        "Quality Assurance", "Game Development", "Blockchain Development",
+        "Embedded Systems", "System Architecture", "Database Management",
+        "Networking", "Site Reliability Engineering", "Product Management",
+        "Project Management", "Business Analysis", "Technical Writing",
+        "Digital Marketing", "E-commerce", "Fintech", "Healthcare Tech",
+        "EdTech", "IoT Development", "AR/VR Development", "Technical Sales",
+        "Agile Coaching", "Software Engineering"
+    ]
+    domain_list_str = "\n".join(f"- {d}" for d in DOMAIN_LIST)
+
+    prompt = f"""You are a senior technical HR evaluator. Perform THREE tasks on the inputs below and return ONLY the structured output shown — no extra commentary.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 1 — LANGUAGE QUALITY SCORE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Evaluate the RESUME TEXT across five dimensions:
+1. Grammar & Mechanics
+2. Clarity & Conciseness
+3. Professional Tone
+4. Action Verb Usage
+5. ATS Language Alignment
+
+Scoring scale (out of {lang_weight}):
+- {lang_weight}: Exceptional
+- {lang_weight-1}: Very Good
+- {lang_weight-2}: Good
+- {max(0, lang_weight-3)}: Fair
+- {max(0, lang_weight-4)}: Poor
+- 0-1: Very Poor
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 2 — RESUME DOMAIN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+From this list, pick the single best domain for the RESUME:
+{domain_list_str}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 3 — JOB DOMAIN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+From the same list, pick the single best domain for the JOB TITLE + JOB DESCRIPTION:
+Job Title: {job_title}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+REQUIRED OUTPUT FORMAT (copy exactly, fill in values):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Grammar_Score: <integer 0-{lang_weight}>
+Grammar_Feedback: <one sentence>
+Grammar_Suggestions:
+- <suggestion 1>
+- <suggestion 2>
+- <suggestion 3>
+- <suggestion 4>
+- <suggestion 5>
+Resume_Domain: <domain from list>
+Job_Domain: <domain from list>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RESUME TEXT:
+---
+{resume_text[:4000]}
+---
+
+JOB DESCRIPTION:
+---
+{job_description[:2000]}
+---
+"""
+
+    response = call_llm(prompt, session=st.session_state).strip()
+
+    # Parse grammar score
+    score_match = re.search(r"Grammar_Score:\s*(\d+)", response)
+    feedback_match = re.search(r"Grammar_Feedback:\s*(.+)", response)
+    suggestions = re.findall(r"^-\s+(.+)", response, re.MULTILINE)
+    resume_domain_match = re.search(r"Resume_Domain:\s*(.+)", response)
+    job_domain_match = re.search(r"Job_Domain:\s*(.+)", response)
+
+    grammar_score = int(score_match.group(1)) if score_match else max(0, min(lang_weight, lang_weight - 2))
+    grammar_score = max(0, min(lang_weight, grammar_score))
+    grammar_feedback = feedback_match.group(1).strip() if feedback_match else "Language quality appears adequate for professional communication."
+    # Exclude domain-name lines that may bleed into the suggestions block
+    grammar_suggestions = [s for s in suggestions if not s.strip().startswith((
+        "Data Science", "AI/Machine", "UI/UX", "Mobile Dev", "Frontend Dev",
+        "Backend Dev", "Full Stack", "Cybersecurity", "Cloud Eng", "DevOps",
+        "Quality Ass", "Game Dev", "Blockchain Dev", "Embedded", "System Arch",
+        "Database Man", "Networking", "Site Reli", "Product Man", "Project Man",
+        "Business An", "Technical Wri", "Digital Mar", "E-commerce", "Fintech",
+        "Healthcare", "EdTech", "IoT Dev", "AR/VR", "Technical Sales",
+        "Agile Coach", "Software Eng"
+    ))][:5]
+
+    DOMAIN_LIST = [
+        "Data Science", "AI/Machine Learning", "UI/UX Design", "Mobile Development",
+        "Frontend Development", "Backend Development", "Full Stack Development",
+        "Cybersecurity", "Cloud Engineering", "DevOps/Infrastructure",
+        "Quality Assurance", "Game Development", "Blockchain Development",
+        "Embedded Systems", "System Architecture", "Database Management",
+        "Networking", "Site Reliability Engineering", "Product Management",
+        "Project Management", "Business Analysis", "Technical Writing",
+        "Digital Marketing", "E-commerce", "Fintech", "Healthcare Tech",
+        "EdTech", "IoT Development", "AR/VR Development", "Technical Sales",
+        "Agile Coaching", "Software Engineering"
+    ]
+    resume_domain = resume_domain_match.group(1).strip() if resume_domain_match else "Software Engineering"
+    job_domain = job_domain_match.group(1).strip() if job_domain_match else "Software Engineering"
+    # Validate against known list — fall back to db_manager's default on mismatch
+    if resume_domain not in DOMAIN_LIST:
+        resume_domain = "Software Engineering"
+    if job_domain not in DOMAIN_LIST:
+        job_domain = "Software Engineering"
+
+    return grammar_score, grammar_feedback, grammar_suggestions, resume_domain, job_domain
+
+
 # ✅ Enhanced Grammar evaluation using LLM with suggestions
+# Kept for backward-compatibility but no longer called in the main analysis pipeline.
 def get_grammar_score_with_llm(text, max_score=5):
     grammar_prompt = f"""
 You are a senior HR language quality specialist and professional resume reviewer with 15+ years of experience evaluating resumes for Fortune 500 companies.
@@ -3756,13 +3883,36 @@ def ats_percentage_score(
     skills_weight=30,
     lang_weight=5,
     keyword_weight=10,
-    format_data=None,
+    format_data=None,   # ← NEW: pass pre-computed format check result
+    # ── Pre-computed values (pass these to skip 3 separate LLM calls) ──
+    grammar_score=None,
+    grammar_feedback=None,
+    grammar_suggestions=None,
+    resume_domain=None,
+    job_domain=None,
 ):
-    # ── Domain detection (rule-based, zero LLM calls) ────────────────────────
-    # Grammar scoring is folded into the ATS prompt below — saves 3 API calls
-    # per resume (was: grammar + resume_domain_llm + job_domain_llm = 3 calls).
-    resume_domain    = db_manager.detect_domain_from_title_and_description("Unknown", resume_text)
-    job_domain       = db_manager.detect_domain_from_title_and_description(job_title, job_description)
+    import datetime
+
+    # ✅ Use pre-computed grammar score if provided, else fall back to standalone call
+    if grammar_score is None or grammar_feedback is None or grammar_suggestions is None:
+        grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(
+            resume_text, max_score=lang_weight
+        )
+
+    # ✅ Use pre-computed domains if provided, else fall back to separate LLM calls
+    if resume_domain is None:
+        resume_domain = db_manager.detect_domain_llm(
+            "Unknown",
+            resume_text,
+            session=st.session_state
+        )
+    if job_domain is None:
+        job_domain = db_manager.detect_domain_llm(
+            job_title,
+            job_description,
+            session=st.session_state
+        )
+
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
     # ✅ Balanced domain penalty
@@ -3776,15 +3926,9 @@ def ats_percentage_score(
         if logic_profile_score else ""
     )
 
-    # IST-aware current date (no extra import needed — pytz already at top-level)
-    _now_ist      = datetime.now(pytz.timezone("Asia/Kolkata"))
-    current_year  = _now_ist.year
-    current_month = _now_ist.month
-
-    # Grammar score placeholder — will be extracted from the ATS LLM response below
-    grammar_score       = 0
-    grammar_feedback    = ""
-    grammar_suggestions = []
+    # ✅ FIXED: Stable education scoring with 2025 cutoff
+    current_year = datetime.datetime.now().year
+    current_month = datetime.datetime.now().month
 
     # ✅ UPDATED: Stable education scoring with priority degrees minimum
     prompt = f"""
@@ -3928,12 +4072,8 @@ Follow this EXACT structure. Do not skip any section:
 **Score Justification:** <Explain with matched vs. required skills ratio>
 
 ### 🗣 Language Quality Analysis
-**Score:** <0–{lang_weight}> / {lang_weight}
-**Grammar & Professional Tone:** <One sentence summarizing overall language quality and tone>
-**Suggestions:**
-- <Actionable improvement suggestion 1>
-- <Actionable improvement suggestion 2>
-- <Actionable improvement suggestion 3>
+**Score:** {grammar_score} / {lang_weight}
+**Grammar & Professional Tone:** {grammar_feedback}
 **Assessment:** <Specific feedback on action verb usage, clarity, tense consistency, and ATS language>
 
 ### 🔑 Keyword Analysis
@@ -4002,7 +4142,8 @@ Follow this EXACT structure. Do not skip any section:
 ---
 
 **EVALUATION CONTEXT:**
-- Current Date: {_now_ist.strftime('%B %Y')} (Year: {current_year}, Month: {current_month})
+- Current Date: {datetime.datetime.now().strftime('%B %Y')} (Year: {current_year}, Month: {current_month})
+- Grammar Score Pre-evaluated: {grammar_score} / {lang_weight} — {grammar_feedback}
 - Resume Domain Detected: {resume_domain}
 - Target Job Domain: {job_domain}
 - Domain Similarity Score: {similarity_score:.2f}/1.0
@@ -4021,26 +4162,6 @@ Follow this EXACT structure. Do not skip any section:
    
    
     ats_result = call_llm(prompt, session=st.session_state).strip()
-
-    # ── Extract grammar score/feedback from ATS response (no separate LLM call) ──
-    _lang_block = re.search(
-        r"### 🗣 Language Quality Analysis(.*?)###", ats_result, re.DOTALL
-    )
-    _lang_text = _lang_block.group(1) if _lang_block else ""
-
-    _gram_score_match = re.search(r"\*\*Score:\*\*\s*(\d+)", _lang_text)
-    grammar_score = int(_gram_score_match.group(1)) if _gram_score_match else max(0, lang_weight - 2)
-    grammar_score = max(0, min(lang_weight, grammar_score))
-
-    _gram_fb_match = re.search(r"\*\*Grammar & Professional Tone:\*\*\s*(.+)", _lang_text)
-    grammar_feedback = _gram_fb_match.group(1).strip() if _gram_fb_match else "Language quality adequate for professional communication."
-
-    _sugg_block = re.search(r"\*\*Suggestions:\*\*(.*?)\*\*Assessment", _lang_text, re.DOTALL)
-    grammar_suggestions = (
-        [s.strip() for s in re.findall(r"[-•]\s*(.+)", _sugg_block.group(1))]
-        if _sugg_block else []
-    )
-    # ─────────────────────────────────────────────────────────────────────────
 
     # ── CRITICAL: Overwrite any LLM-modified Format Score/Grade lines ────
     # The LLM sometimes rewrites these despite instructions. Force the true
@@ -4195,7 +4316,7 @@ Follow this EXACT structure. Do not skip any section:
 - Domain Similarity: {similarity_score:.2f}/1.0 ({int(similarity_score * 100)}% alignment)
 - Resume Domain Detected: {resume_domain}
 - Target Job Domain: {job_domain}
-- Language Score: {grammar_score}/{lang_weight} (extracted from ATS evaluation)
+- Language Pre-Score: {grammar_score}/{lang_weight}
 
 **Score Interpretation (Industry Benchmarks):**
 - 85–100: Top 10% candidates — Strong interview recommendation
@@ -4629,7 +4750,16 @@ if uploaded_files and job_description:
             num_pages = 1
         format_data = check_resume_format(full_text, num_pages, pdf_path=file_path)
 
-        # ✅ LLM-based ATS Evaluation
+        # ✅ Single combined pre-evaluation call (grammar + both domains)
+        # Replaces 3 separate LLM calls → reduces API key usage from 5 to 2 per resume
+        pre_grammar_score, pre_grammar_feedback, pre_grammar_suggestions, pre_resume_domain, pre_job_domain = pre_evaluate_resume(
+            resume_text=full_text,
+            job_description=job_description,
+            job_title=job_title,
+            lang_weight=lang_weight,
+        )
+
+        # ✅ LLM-based ATS Evaluation (passes pre-computed values — no extra LLM calls inside)
         ats_result, ats_scores = ats_percentage_score(
             resume_text=full_text,
             job_description=job_description,
@@ -4640,6 +4770,11 @@ if uploaded_files and job_description:
             lang_weight=lang_weight,
             keyword_weight=keyword_weight,
             format_data=format_data,
+            grammar_score=pre_grammar_score,
+            grammar_feedback=pre_grammar_feedback,
+            grammar_suggestions=pre_grammar_suggestions,
+            resume_domain=pre_resume_domain,
+            job_domain=pre_job_domain,
         )
 
         # ✅ Extract structured ATS values

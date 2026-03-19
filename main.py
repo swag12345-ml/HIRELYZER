@@ -12,7 +12,6 @@ from io import BytesIO
 from collections import Counter
 from datetime import datetime
 import time
-import pytz
 
 # Third-party library imports
 import streamlit as st
@@ -190,7 +189,7 @@ def generate_cover_letter_from_resume_builder():
     summary = st.session_state.get("summary", "")
     skills = st.session_state.get("skills", "")
     location = st.session_state.get("location", "")
-    today_date = datetime.now(pytz.timezone("Asia/Kolkata")).strftime("%B %d, %Y")
+    today_date = datetime.today().strftime("%B %d, %Y")
 
     # ✅ Input boxes for contact info
     company = st.text_input("🏢 Target Company", placeholder="e.g., Google")
@@ -3757,27 +3756,13 @@ def ats_percentage_score(
     skills_weight=30,
     lang_weight=5,
     keyword_weight=10,
-    format_data=None,   # ← NEW: pass pre-computed format check result
+    format_data=None,
 ):
-    import pytz as _pytz
-    _now_ist = datetime.now(_pytz.timezone("Asia/Kolkata"))
-
-    # ✅ Grammar evaluation
-    grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(
-        resume_text, max_score=lang_weight
-    )
-
-    # ✅ Domain similarity detection using LLM
-    resume_domain = db_manager.detect_domain_llm(
-        "Unknown", 
-        resume_text, 
-        session=st.session_state  # ✅ pass the Groq API key from session
-    )
-    job_domain = db_manager.detect_domain_llm(
-        job_title, 
-        job_description, 
-        session=st.session_state  # ✅ pass the Groq API key from session
-    )
+    # ── Domain detection (rule-based, zero LLM calls) ────────────────────────
+    # Grammar scoring is folded into the ATS prompt below — saves 3 API calls
+    # per resume (was: grammar + resume_domain_llm + job_domain_llm = 3 calls).
+    resume_domain    = db_manager.detect_domain_from_title_and_description("Unknown", resume_text)
+    job_domain       = db_manager.detect_domain_from_title_and_description(job_title, job_description)
     similarity_score = get_domain_similarity(resume_domain, job_domain)
 
     # ✅ Balanced domain penalty
@@ -3791,9 +3776,15 @@ def ats_percentage_score(
         if logic_profile_score else ""
     )
 
-    # ✅ FIXED: Stable education scoring with 2025 cutoff
-    current_year = _now_ist.year
+    # IST-aware current date (no extra import needed — pytz already at top-level)
+    _now_ist      = datetime.now(pytz.timezone("Asia/Kolkata"))
+    current_year  = _now_ist.year
     current_month = _now_ist.month
+
+    # Grammar score placeholder — will be extracted from the ATS LLM response below
+    grammar_score       = 0
+    grammar_feedback    = ""
+    grammar_suggestions = []
 
     # ✅ UPDATED: Stable education scoring with priority degrees minimum
     prompt = f"""
@@ -3937,8 +3928,12 @@ Follow this EXACT structure. Do not skip any section:
 **Score Justification:** <Explain with matched vs. required skills ratio>
 
 ### 🗣 Language Quality Analysis
-**Score:** {grammar_score} / {lang_weight}
-**Grammar & Professional Tone:** {grammar_feedback}
+**Score:** <0–{lang_weight}> / {lang_weight}
+**Grammar & Professional Tone:** <One sentence summarizing overall language quality and tone>
+**Suggestions:**
+- <Actionable improvement suggestion 1>
+- <Actionable improvement suggestion 2>
+- <Actionable improvement suggestion 3>
 **Assessment:** <Specific feedback on action verb usage, clarity, tense consistency, and ATS language>
 
 ### 🔑 Keyword Analysis
@@ -4008,7 +4003,6 @@ Follow this EXACT structure. Do not skip any section:
 
 **EVALUATION CONTEXT:**
 - Current Date: {_now_ist.strftime('%B %Y')} (Year: {current_year}, Month: {current_month})
-- Grammar Score Pre-evaluated: {grammar_score} / {lang_weight} — {grammar_feedback}
 - Resume Domain Detected: {resume_domain}
 - Target Job Domain: {job_domain}
 - Domain Similarity Score: {similarity_score:.2f}/1.0
@@ -4027,6 +4021,26 @@ Follow this EXACT structure. Do not skip any section:
    
    
     ats_result = call_llm(prompt, session=st.session_state).strip()
+
+    # ── Extract grammar score/feedback from ATS response (no separate LLM call) ──
+    _lang_block = re.search(
+        r"### 🗣 Language Quality Analysis(.*?)###", ats_result, re.DOTALL
+    )
+    _lang_text = _lang_block.group(1) if _lang_block else ""
+
+    _gram_score_match = re.search(r"\*\*Score:\*\*\s*(\d+)", _lang_text)
+    grammar_score = int(_gram_score_match.group(1)) if _gram_score_match else max(0, lang_weight - 2)
+    grammar_score = max(0, min(lang_weight, grammar_score))
+
+    _gram_fb_match = re.search(r"\*\*Grammar & Professional Tone:\*\*\s*(.+)", _lang_text)
+    grammar_feedback = _gram_fb_match.group(1).strip() if _gram_fb_match else "Language quality adequate for professional communication."
+
+    _sugg_block = re.search(r"\*\*Suggestions:\*\*(.*?)\*\*Assessment", _lang_text, re.DOTALL)
+    grammar_suggestions = (
+        [s.strip() for s in re.findall(r"[-•]\s*(.+)", _sugg_block.group(1))]
+        if _sugg_block else []
+    )
+    # ─────────────────────────────────────────────────────────────────────────
 
     # ── CRITICAL: Overwrite any LLM-modified Format Score/Grade lines ────
     # The LLM sometimes rewrites these despite instructions. Force the true
@@ -4181,7 +4195,7 @@ Follow this EXACT structure. Do not skip any section:
 - Domain Similarity: {similarity_score:.2f}/1.0 ({int(similarity_score * 100)}% alignment)
 - Resume Domain Detected: {resume_domain}
 - Target Job Domain: {job_domain}
-- Language Pre-Score: {grammar_score}/{lang_weight}
+- Language Score: {grammar_score}/{lang_weight} (extracted from ATS evaluation)
 
 **Score Interpretation (Industry Benchmarks):**
 - 85–100: Top 10% candidates — Strong interview recommendation

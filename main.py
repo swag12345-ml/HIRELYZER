@@ -12251,11 +12251,16 @@ Provide ONLY the JSON output, no additional text."""
     }
 
 
-def get_ist_time() -> str:
-    """Get current time in IST as a formatted string (no pytz dependency)."""
-    from datetime import datetime, timedelta, timezone
-    IST = timezone(timedelta(hours=5, minutes=30))
-    return datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S')
+def get_ist_time():
+    """Get current time in IST timezone"""
+    try:
+        from datetime import datetime
+        import pytz
+        ist = pytz.timezone('Asia/Kolkata')
+        return datetime.now(ist).strftime('%Y-%m-%d %H:%M:%S')
+    except:
+        from datetime import datetime
+        return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
 def log_user_action(username: str, action: str):
@@ -17181,25 +17186,23 @@ Generate {num_questions} questions now:
                         can_add_followup = n_answered < st.session_state.original_num_questions - 1
 
                         if diff == "Hard" and can_add_followup:
-                            # ⚡ OPTIMISED: reuse follow-up already generated inside eval JSON
-                            # The Hard eval prompt includes STEP 5 which produces a follow-up.
-                            # We use that directly — no second LLM call needed.
-                            # Only fall back to generate_adaptive_followup() if the LLM omitted it.
-                            layer    = getattr(st.session_state, 'escalation_layer', 1)
+                            # ── Hard mode: reuse followup already in eval result ──
+                            # evaluate_interview_answer_for_scores already asks for a followup
+                            # in its JSON for Hard difficulty — no second LLM call needed.
                             followup_q = (eval_res.get("followup") or "").strip()
 
+                            # Fallback: only call adaptive engine if eval didn't return one
                             if not followup_q:
-                                # Fallback: LLM omitted the follow-up field — generate separately
                                 weakness_data = analyze_answer_weaknesses(ans_text, eval_res)
-                                strategy      = weakness_data["strategy"]
-                                followup_q    = generate_adaptive_followup(
+                                strategy = weakness_data["strategy"]
+                                layer = getattr(st.session_state, 'escalation_layer', 1)
+                                followup_q = generate_adaptive_followup(
                                     q_text, ans_text, strategy, layer, selected_role, selected_domain
                                 )
                                 followup_q = followup_q.strip() if followup_q else ""
                             else:
-                                # Derive strategy label from eval gaps for session tracking
-                                weakness_data = analyze_answer_weaknesses(ans_text, eval_res)
-                                strategy      = weakness_data["strategy"]
+                                strategy = "Depth Probe"
+                                layer = getattr(st.session_state, 'escalation_layer', 1)
 
                             if followup_q:
                                 st.session_state.dynamic_interview_questions.insert(

@@ -4029,7 +4029,7 @@ Compare against resume. Credit synonyms and equivalent terms.
 Follow this EXACT structure. Do not skip any section:
 
 ### 🏷️ Candidate Name
-<Extract full name from resume header or contact section>
+<Copy the candidate's full name EXACTLY as it appears in the resume — character by character. Do NOT correct spelling, do NOT infer from context, do NOT paraphrase. Look at the very top of the resume (header/contact section). Output ONLY the name, nothing else. If you cannot find a name, write: Not Found>
 
 ### 🏫 Education Analysis
 **Score:** <0–{edu_weight}> / {edu_weight}
@@ -4191,7 +4191,21 @@ Follow this EXACT structure. Do not skip any section:
         return int(match.group(1)) if match else default
 
     # Extract key sections
-    candidate_name = extract_section(r"### 🏷️ Candidate Name(.*?)###", ats_result, "Not Found")
+    _raw_name = extract_section(r"### 🏷️ Candidate Name(.*?)###", ats_result, "")
+    # Strip markdown noise the LLM sometimes adds (bold, italics, backticks, angle brackets)
+    candidate_name = re.sub(r"[*_`#\[\]<>]", "", _raw_name).strip()
+    # Collapse newlines / excess whitespace into a single line
+    candidate_name = " ".join(candidate_name.split())
+    # Remove placeholder text the LLM occasionally returns verbatim
+    _placeholder_values = {
+        "not found", "n/a", "unknown", "none", "",
+        "extract full name from resume header or contact section",
+        "copy the candidate's full name exactly as it appears in the resume",
+        "copy the candidates full name exactly as it appears in the resume",
+        "name not found", "candidate name not found",
+    }
+    if candidate_name.lower() in _placeholder_values:
+        candidate_name = "Not Found"
     edu_analysis = extract_section(r"### 🏫 Education Analysis(.*?)###", ats_result)
     exp_analysis = extract_section(r"### 💼 Experience Analysis(.*?)###", ats_result)
     skills_analysis = extract_section(r"### 🛠 Skills Analysis(.*?)###", ats_result)
@@ -4779,6 +4793,45 @@ if uploaded_files and job_description:
 
         # ✅ Extract structured ATS values
         candidate_name = ats_scores.get("Candidate Name", "Not Found")
+
+        # ── Filename-based name extraction (reliable ground truth) ────────────
+        def _name_from_filename(fname: str) -> str:
+            """
+            Turn 'SARBAJIT_PAUL_Resume (3) (1).pdf' -> 'Sarbajit Paul'
+            Walks tokens left-to-right, stops at the first non-name word.
+            """
+            stop_words = {
+                "resume", "cv", "curriculum", "vitae", "updated", "final",
+                "new", "latest", "copy", "draft", "version", "doc",
+                "v1", "v2", "v3", "v4", "v5",
+                "2022", "2023", "2024", "2025", "2026",
+            }
+            base = os.path.splitext(fname)[0]                      # strip extension
+            base = re.sub(r"[\(\)\[\]_\-\.]", " ", base)  # separators -> space
+            base = re.sub(r"\s+", " ", base).strip()
+            parts = []
+            for word in base.split():
+                if word.lower() in stop_words or word.isdigit():
+                    break
+                if re.match(r"^[A-Za-z]+$", word):               # only plain alpha tokens
+                    parts.append(word.title())
+            return " ".join(parts) if len(parts) >= 1 else ""
+
+        _filename_name = _name_from_filename(uploaded_file.name)
+
+        # Use filename name when LLM returned nothing useful
+        _bad_name_values = {"not found", "n/a", "unknown", "none", ""}
+        if candidate_name.lower() in _bad_name_values and _filename_name:
+            candidate_name = _filename_name
+        elif _filename_name and candidate_name.lower() not in _bad_name_values:
+            # Cross-check: if LLM name shares fewer than 40% characters with
+            # filename name it is likely hallucinated — trust the filename.
+            llm_chars  = set(candidate_name.lower().replace(" ", ""))
+            file_chars = set(_filename_name.lower().replace(" ", ""))
+            overlap = len(llm_chars & file_chars) / max(len(file_chars), 1)
+            if overlap < 0.4:
+                candidate_name = _filename_name
+        # ─────────────────────────────────────────────────────────────────────
         ats_score = ats_scores.get("ATS Match %", 0)
         edu_score = ats_scores.get("Education Score", 0)
         exp_score = ats_scores.get("Experience Score", 0)

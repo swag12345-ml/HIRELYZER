@@ -2,6 +2,7 @@
 LLM Manager — Supabase PostgreSQL backend
 Migrated from SQLite to psycopg2, using the same @st.cache_resource singleton
 pattern as db_manager.py and user_login.py.
+All timestamps are stored and compared in UTC (TIMESTAMPTZ columns).
 """
 
 import hashlib
@@ -23,10 +24,10 @@ DAILY_KEY_LIMIT         = 800
 DEAD_KEY_REMOVE_DAYS    = 3   # auto-remove permanently dead keys after X days
 
 
-# ── Timezone helper (matches user_login.py) ───────────────────────────────────
-def get_ist_time() -> datetime:
-    """Return current datetime in Asia/Kolkata (IST) timezone."""
-    return datetime.now(pytz.timezone("Asia/Kolkata"))
+# ── Timezone helper ───────────────────────────────────────────────────────────
+def get_utc_now() -> datetime:
+    """Return current datetime in UTC. Use for all storage and comparisons."""
+    return datetime.now(pytz.utc)
 
 
 # ── Cached Supabase connection (one per Streamlit worker) ─────────────────────
@@ -92,14 +93,14 @@ def init_db():
     ddl = """
     CREATE TABLE IF NOT EXISTS llm_cache (
         prompt_hash TEXT PRIMARY KEY,
-        response    TEXT        NOT NULL,
-        timestamp   TIMESTAMP   NOT NULL DEFAULT NOW()
+        response    TEXT            NOT NULL,
+        timestamp   TIMESTAMPTZ     NOT NULL DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS key_failures (
         api_key   TEXT PRIMARY KEY,
-        fail_time TIMESTAMP NOT NULL,
-        reason    TEXT      NOT NULL DEFAULT 'error'
+        fail_time TIMESTAMPTZ NOT NULL,
+        reason    TEXT        NOT NULL DEFAULT 'error'
     );
 
     CREATE TABLE IF NOT EXISTS key_usage (
@@ -123,8 +124,8 @@ init_db()
 # ── Cache cleanup ─────────────────────────────────────────────────────────────
 def cleanup_cache():
     """Delete expired cache rows and permanently dead keys."""
-    cutoff_cache = get_ist_time() - timedelta(hours=CACHE_EXPIRY_HOURS)
-    cutoff_dead  = get_ist_time() - timedelta(days=DEAD_KEY_REMOVE_DAYS)
+    cutoff_cache = get_utc_now() - timedelta(hours=CACHE_EXPIRY_HOURS)
+    cutoff_dead  = get_utc_now() - timedelta(days=DEAD_KEY_REMOVE_DAYS)
 
     _execute(
         "DELETE FROM llm_cache WHERE timestamp < %s",
@@ -166,7 +167,7 @@ def hash_prompt(prompt: str, model: str) -> str:
 def get_cached_response(prompt: str, model: str):
     """Return cached LLM response if still within CACHE_EXPIRY_HOURS, else None."""
     key    = hash_prompt(prompt, model)
-    cutoff = get_ist_time() - timedelta(hours=CACHE_EXPIRY_HOURS)
+    cutoff = get_utc_now() - timedelta(hours=CACHE_EXPIRY_HOURS)
 
     row = _execute(
         "SELECT response, timestamp FROM llm_cache WHERE prompt_hash = %s",
@@ -175,12 +176,11 @@ def get_cached_response(prompt: str, model: str):
     )
     if row:
         ts = row["timestamp"]
-        # psycopg2 returns datetime objects for TIMESTAMP columns
         if isinstance(ts, str):
             ts = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
-        # Make naive datetimes timezone-aware (IST) for comparison
+        # Ensure timezone-aware for comparison (TIMESTAMPTZ returns UTC-aware)
         if ts.tzinfo is None:
-            ts = pytz.timezone("Asia/Kolkata").localize(ts)
+            ts = pytz.utc.localize(ts)
         if ts >= cutoff:
             return row["response"]
     return None
@@ -249,7 +249,7 @@ def get_healthy_keys(api_keys: list) -> list:
     - below DAILY_KEY_LIMIT
     Result is shuffled for load-balancing.
     """
-    now     = get_ist_time()
+    now     = get_utc_now()
     today   = now.strftime("%Y-%m-%d")
     healthy = []
 
@@ -276,9 +276,9 @@ def get_healthy_keys(api_keys: list) -> list:
             fail_dt  = f["fail_time"]
             if isinstance(fail_dt, str):
                 fail_dt = datetime.strptime(fail_dt, "%Y-%m-%d %H:%M:%S")
-            # Make naive datetimes timezone-aware (IST) for comparison
+            # Ensure timezone-aware for comparison (TIMESTAMPTZ returns UTC-aware)
             if fail_dt.tzinfo is None:
-                fail_dt = pytz.timezone("Asia/Kolkata").localize(fail_dt)
+                fail_dt = pytz.utc.localize(fail_dt)
             cooldown = (
                 QUOTA_COOLDOWN_MINUTES
                 if f["reason"] == "quota"

@@ -1,5 +1,1229 @@
 import os
 os.environ["STREAMLIT_WATCHDOG"] = "false"
+import math
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PAGE CONFIG — must be the very first Streamlit call
+# ─────────────────────────────────────────────────────────────────────────────
+import streamlit as st
+
+st.set_page_config(
+    page_title="HIRELYZER — Intelligent Career Platform",
+    page_icon="⬡",
+    layout="wide",
+)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SESSION STATE — page routing
+# ─────────────────────────────────────────────────────────────────────────────
+if "show_business_page" not in st.session_state:
+    st.session_state.show_business_page = True
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BUSINESS PAGE — constants, helpers, CSS, render functions
+# ─────────────────────────────────────────────────────────────────────────────
+APP_URL = "https://hirelyzer-career-based-saas-platform-rxzkspoyrtwfamm5ztkmcf.streamlit.app/"
+SUPPORT_EMAIL = "swagato_bmca2024@msit.edu.in"
+
+def _bp_H(s):
+    st.markdown(s, unsafe_allow_html=True)
+
+def _bp_CSS(s):
+    st.markdown("<style>" + s + "</style>", unsafe_allow_html=True)
+
+# ─── SVG helpers ──────────────────────────────────────────────────────────────
+def ats_ring(score=78):
+    r, c, sw = 38, 48, 5
+    circ = 2 * math.pi * r
+    fill = (score / 100) * circ
+    off  = circ * 0.25
+    return (
+        '<svg width="96" height="96" viewBox="0 0 96 96" fill="none">'
+        '<circle cx="' + str(c) + '" cy="' + str(c) + '" r="' + str(r) + '" stroke="rgba(255,255,255,0.06)" stroke-width="' + str(sw) + '"/>'
+        '<circle cx="' + str(c) + '" cy="' + str(c) + '" r="' + str(r) + '" stroke="url(#ag)" stroke-width="' + str(sw) + '"'
+        ' stroke-dasharray="' + str(round(fill,1)) + ' ' + str(round(circ,1)) + '"'
+        ' stroke-dashoffset="-' + str(round(off,1)) + '" stroke-linecap="round"/>'
+        '<text x="' + str(c) + '" y="' + str(c+1) + '" text-anchor="middle" dominant-baseline="middle"'
+        ' fill="#f5f5f7" font-size="18" font-weight="800" font-family="Sora,sans-serif">' + str(score) + '</text>'
+        '<defs><linearGradient id="ag" x1="0" y1="0" x2="96" y2="96" gradientUnits="userSpaceOnUse">'
+        '<stop offset="0%" stop-color="#30d158"/><stop offset="100%" stop-color="#0a84ff"/>'
+        '</linearGradient></defs></svg>'
+    )
+
+def radar_svg():
+    cats   = ["Communication","Technical","Confidence","Structure","Examples"]
+    scores = [0.82, 0.74, 0.88, 0.70, 0.78]
+    cx = cy = 95; R = 65; n = len(cats)
+    def pt(i, frac):
+        angle = math.pi/2 + 2*math.pi*i/n
+        return cx + R*frac*math.cos(angle), cy - R*frac*math.sin(angle)
+    grid = ""
+    for lv in [0.25, 0.5, 0.75, 1.0]:
+        pts = " ".join(str(round(pt(i,lv)[0],1))+","+str(round(pt(i,lv)[1],1)) for i in range(n))
+        grid += '<polygon points="'+pts+'" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>'
+    axes = "".join('<line x1="'+str(cx)+'" y1="'+str(cy)+'" x2="'+str(round(pt(i,1)[0],1))+'" y2="'+str(round(pt(i,1)[1],1))+'" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>' for i in range(n))
+    poly = " ".join(str(round(pt(i,scores[i])[0],1))+","+str(round(pt(i,scores[i])[1],1)) for i in range(n))
+    dots = "".join('<circle cx="'+str(round(pt(i,scores[i])[0],1))+'" cy="'+str(round(pt(i,scores[i])[1],1))+'" r="3.5" fill="#0a84ff"/>' for i in range(n))
+    labels = "".join('<text x="'+str(round(pt(i,1.27)[0],1))+'" y="'+str(round(pt(i,1.27)[1],1))+'" text-anchor="middle" dominant-baseline="middle" fill="rgba(245,245,247,0.4)" font-size="8.5" font-family="Sora,sans-serif" font-weight="500">'+cats[i]+'</text>' for i in range(n))
+    return ('<svg width="190" height="190" viewBox="0 0 190 190" fill="none">'+grid+axes+'<polygon points="'+poly+'" fill="rgba(10,132,255,0.14)" stroke="#0a84ff" stroke-width="1.5"/>'+dots+labels+'</svg>')
+
+# ─── fragment builders ────────────────────────────────────────────────────────
+def ats_bars():
+    data = [("Format & Layout",92,"#30d158"),("Keyword Coverage",71,"#ff9f0a"),("Sections Present",85,"#0a84ff"),("Action Verbs",68,"#ff9f0a"),("Contact Info",100,"#30d158"),("Date Consistency",80,"#0a84ff")]
+    return "".join('<div class="hl-bar"><div class="hl-bar-row"><span>'+lbl+'</span><span style="color:'+col+';font-weight:600">'+str(pct)+'%</span></div><div class="hl-bar-track"><div class="hl-bar-fill" style="width:'+str(pct)+'%;background:'+col+'"></div></div></div>' for lbl,pct,col in data)
+
+def score_bars():
+    data = [("Communication","85%","#0a84ff"),("Technical","79%","#bf5af2"),("Confidence","88%","#30d158"),("Structure","74%","#ff9f0a")]
+    return "".join('<div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(245,245,247,0.54);margin-bottom:5px"><span>'+dim+'</span><span style="color:'+col+';font-weight:600">'+sc+'</span></div><div style="height:3px;background:rgba(255,255,255,0.07);border-radius:2px;margin-bottom:8px;overflow:hidden"><div style="width:'+sc+';height:100%;background:'+col+';border-radius:2px"></div></div>' for dim,sc,col in data)
+
+def _mini_resume(name, accent, layout="single", active=False, sidebar_bg=None, header_style="bar"):
+    act = ' hl-tmpl-act' if active else ''
+    badge = ('<div class="hl-tmpl-badge">'+name+'</div>') if active else ''
+
+    def ln(w, col="rgba(255,255,255,0.15)", h="2px", mt="3px"):
+        return f'<div style="height:{h};width:{w};background:{col};border-radius:1px;margin-top:{mt}"></div>'
+
+    def name_block(col):
+        return (f'<div style="height:4px;width:55%;background:{col};border-radius:1px;margin-bottom:2px"></div>'
+                f'<div style="height:2px;width:38%;background:{col};opacity:.5;border-radius:1px"></div>')
+
+    def section_lines(n=3, w_list=None, col="rgba(255,255,255,0.13)"):
+        ws = w_list or ["85%","70%","78%","60%","75%"]
+        return "".join(ln(ws[i % len(ws)], col) for i in range(n))
+
+    def section_label(col):
+        return f'<div style="height:2px;width:40%;background:{col};opacity:.7;border-radius:1px;margin-top:4px;margin-bottom:2px"></div>'
+
+    body = ""
+    if layout == "sidebar":
+        sb = sidebar_bg or "#1e293b"
+        body = (
+            f'<div style="display:flex;gap:0;flex:1;min-height:0">'
+            f'<div style="width:32%;background:{sb};padding:4px 3px;display:flex;flex-direction:column;gap:2px;">'
+            + (f'<div style="height:16px;width:16px;border-radius:50%;background:{accent};opacity:.7;margin:0 auto 3px"></div>' if not sidebar_bg else '')
+            + name_block(accent)
+            + ln("90%", "rgba(255,255,255,0.2)", "1px")
+            + section_label(accent) + ln("80%", "rgba(255,255,255,0.18)") + ln("65%", "rgba(255,255,255,0.18)")
+            + section_label(accent) + ln("70%", "rgba(255,255,255,0.18)") + ln("55%", "rgba(255,255,255,0.18)")
+            + f'</div>'
+            f'<div style="flex:1;padding:4px 4px;display:flex;flex-direction:column;gap:0;">'
+            + section_label(accent) + ln("90%") + ln("80%") + ln("70%")
+            + section_label(accent) + ln("85%") + ln("75%") + ln("60%")
+            + f'</div></div>'
+        )
+    elif layout == "two-col":
+        body = (
+            f'<div style="display:flex;gap:4px;flex:1;min-height:0;padding:2px;">'
+            f'<div style="flex:1;display:flex;flex-direction:column;gap:0;">'
+            + section_label(accent) + ln("90%") + ln("75%") + ln("80%")
+            + section_label(accent) + ln("85%") + ln("70%") + ln("65%")
+            + f'</div>'
+            f'<div style="flex:1;display:flex;flex-direction:column;gap:0;">'
+            + section_label(accent) + ln("80%") + ln("90%") + ln("70%")
+            + section_label(accent) + ln("75%") + ln("60%") + ln("80%")
+            + f'</div></div>'
+        )
+    elif layout == "timeline":
+        body = (
+            f'<div style="flex:1;padding:2px 3px;display:flex;flex-direction:column;gap:0;">'
+            + section_label(accent)
+            + (f'<div style="display:flex;align-items:flex-start;gap:3px;margin-top:2px">'
+               f'<div style="width:4px;height:4px;border-radius:50%;background:{accent};flex-shrink:0;margin-top:1px"></div>'
+               f'<div style="flex:1">' + ln("85%") + ln("70%") + f'</div></div>'
+               f'<div style="margin-left:3px;width:1px;height:5px;background:{accent};opacity:.3;margin-left:5px"></div>'
+               f'<div style="display:flex;align-items:flex-start;gap:3px">'
+               f'<div style="width:4px;height:4px;border-radius:50%;background:{accent};flex-shrink:0;margin-top:1px"></div>'
+               f'<div style="flex:1">' + ln("78%") + ln("62%") + f'</div></div>')
+            + section_label(accent) + ln("90%") + ln("75%")
+            + f'</div>'
+        )
+    else:
+        body = (
+            f'<div style="flex:1;padding:2px 3px;display:flex;flex-direction:column;gap:0;">'
+            + section_label(accent) + ln("90%") + ln("80%") + ln("72%")
+            + section_label(accent) + ln("85%") + ln("68%") + ln("76%")
+            + section_label(accent) + ln("70%") + ln("55%")
+            + f'</div>'
+        )
+
+    if header_style == "band":
+        hdr = (f'<div style="background:{accent};padding:4px 5px;border-radius:3px 3px 0 0;">'
+               f'<div style="height:3px;width:50%;background:rgba(255,255,255,0.9);border-radius:1px;margin-bottom:1px"></div>'
+               f'<div style="height:2px;width:32%;background:rgba(255,255,255,0.55);border-radius:1px"></div></div>')
+    elif header_style == "left-accent":
+        hdr = (f'<div style="border-left:2px solid {accent};padding:3px 5px;">'
+               f'<div style="height:3px;width:50%;background:rgba(255,255,255,0.7);border-radius:1px;margin-bottom:1px"></div>'
+               f'<div style="height:2px;width:30%;background:{accent};border-radius:1px"></div>'
+               f'<div style="margin-top:2px;display:flex;gap:3px">'
+               f'<div style="height:2px;width:22%;background:rgba(255,255,255,0.2);border-radius:1px"></div>'
+               f'<div style="height:2px;width:18%;background:rgba(255,255,255,0.2);border-radius:1px"></div>'
+               f'</div></div>')
+    elif header_style == "center":
+        hdr = (f'<div style="text-align:center;padding:4px 3px;border-bottom:1px solid {accent};">'
+               f'<div style="height:3px;width:45%;background:rgba(255,255,255,0.75);border-radius:1px;margin:0 auto 2px"></div>'
+               f'<div style="height:2px;width:28%;background:{accent};border-radius:1px;margin:0 auto 2px"></div>'
+               f'<div style="display:flex;justify-content:center;gap:3px">'
+               f'<div style="height:1.5px;width:14%;background:rgba(255,255,255,0.2);border-radius:1px"></div>'
+               f'<div style="height:1.5px;width:14%;background:rgba(255,255,255,0.2);border-radius:1px"></div>'
+               f'</div></div>')
+    else:
+        if layout == "sidebar":
+            hdr = ""
+        else:
+            hdr = (f'<div style="height:4px;background:{accent};border-radius:3px 3px 0 0;margin-bottom:3px"></div>'
+                   f'<div style="padding:0 4px 2px;">'
+                   f'<div style="height:3px;width:52%;background:rgba(255,255,255,0.7);border-radius:1px;margin-bottom:2px"></div>'
+                   f'<div style="height:2px;width:34%;background:{accent};opacity:.6;border-radius:1px"></div>'
+                   f'<div style="display:flex;gap:3px;margin-top:2px">'
+                   f'<div style="height:1.5px;width:16%;background:rgba(255,255,255,0.18);border-radius:1px"></div>'
+                   f'<div style="height:1.5px;width:16%;background:rgba(255,255,255,0.18);border-radius:1px"></div>'
+                   f'</div></div>')
+
+    return (f'<div class="hl-tmpl{act}" style="display:flex;flex-direction:column;padding:0;overflow:hidden;">'
+            + hdr + body + badge + f'</div>')
+
+
+def tmpl_gallery():
+    templates = [
+        ("Modern",    "#0a84ff", "center",   "center",       None,      True),
+        ("Classic",   "#f5f5f7", "single",   "left-accent",  None,      False),
+        ("Executive", "#ff9f0a", "single",   "band",         None,      False),
+        ("Timeline",  "#30d158", "timeline", "bar",          None,      False),
+        ("Corporate", "#1d4ed8", "sidebar",  "bar",          "#1a2744", False),
+        ("Slate",     "#64748b", "sidebar",  "bar",          "#1a1f2a", False),
+        ("Rose",      "#fb7185", "single",   "band",         None,      False),
+        ("Midnight",  "#a78bfa", "two-col",  "bar",          None,      False),
+        ("Sand",      "#d97706", "single",   "left-accent",  None,      False),
+        ("Forest",    "#059669", "sidebar",  "bar",          "#0a1f1a", False),
+        ("Crimson",   "#dc2626", "single",   "band",         None,      False),
+        ("Creative",  "#bf5af2", "sidebar",  "bar",          "#1e1030", False),
+        ("Navy",      "#e2b96a", "sidebar",  "bar",          "#0d1833", False),
+        ("Teal",      "#0d9488", "sidebar",  "bar",          "#0d2420", False),
+        ("Pro",       "#6366f1", "two-col",  "center",       None,      False),
+        ("Minimal",   "#94a3b8", "single",   "left-accent",  None,      False),
+    ]
+    # Show only 8 in 4x2 grid for display
+    out = ""
+    for name, accent, layout, hdr_style, sb_bg, active in templates[:8]:
+        out += _mini_resume(name, accent, layout, active, sb_bg, hdr_style)
+    return out
+
+def job_cards():
+    jobs = [
+        ("SDE II","Google","Mountain View · Full-time","#4285f4","G",True),
+        ("ML Engineer","Anthropic","Remote · Full-time","#d97706","A",False),
+        ("Backend Dev","Razorpay","Bangalore · Full-time","#2563eb","R",False),
+        ("Data Analyst","Zepto","Mumbai · Hybrid","#7c3aed","Z",False)
+    ]
+    out = ""
+    for title,co,meta,col,letter,featured in jobs:
+        bb  = "rgba(10,132,255,0.12)" if featured else "rgba(255,255,255,0.05)"
+        bc  = "#4db3ff"               if featured else "rgba(245,245,247,0.3)"
+        btx = "Featured"              if featured else "New"
+        out += '<div class="hl-job"><div class="hl-job-logo" style="background:'+col+'22;color:'+col+'">'+letter+'</div><div style="flex:1;min-width:0"><div class="hl-job-title">'+title+' \u2014 '+co+'</div><div class="hl-job-co">'+meta+'</div></div><div class="hl-job-badge" style="background:'+bb+';color:'+bc+';border:1px solid '+bc+'40">'+btx+'</div></div>'
+    return out
+
+def checklist():
+    items = ["ATS score in seconds","Bias detection & rewrite","15 resume templates","Cover letter generator","Live job search","AI Interview Coach"]
+    chk = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#30d158" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    return "".join('<div class="hl-check">'+chk+'<span>'+item+'</span></div>' for item in items)
+
+def pills(labels):
+    return "".join('<span class="hl-pill">'+l+'</span>' for l in labels)
+
+def chk_y():
+    return '<span class="hl-chk-y">&#10003;</span>'
+
+def chk_n():
+    return '<span class="hl-chk-n">&mdash;</span>'
+
+def chk_p(t):
+    return '<span class="hl-chk-p">' + t + '</span>'
+
+# ─── SECTIONS ─────────────────────────────────────────────────────────────────
+def render_banner():
+    _bp_H('<div class="hl-banner">'
+      '<span class="hl-banner-badge">New</span>'
+      'AI Interview Coach is live &mdash; Practice with resume-based questions &amp; get instant scoring. '
+      '<a href="' + APP_URL + '" target="_blank">Try it free &rarr;</a>'
+      '</div>')
+
+def render_nav():
+    _bp_H('<div id="sp"></div>'
+      '<div class="hl-nav" id="hl-nav"><div class="hl-nav-inner">'
+      '<a href="#" class="hl-logo"><div class="hl-logo-icon">'
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none">'
+      '<path d="M12 2L2 7l10 5 10-5-10-5z M2 17l10 5 10-5 M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+      '</svg></div>HIRELYZER</a>'
+      '<div class="hl-nav-links">'
+      '<a href="#how">How it works</a>'
+      '<a href="#analyzer">Analyzer</a>'
+      '<a href="#builder">Builder</a>'
+      '<a href="#career">Career Hub</a>'
+      '<a href="#compare">Compare</a>'
+      '<a href="#contact">Contact</a>'
+      '</div>'
+      '<div class="hl-nav-right">'
+      '<a href="' + APP_URL + '" target="_blank" class="hl-nav-cta">'
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M12 2L13.8 8.2L20 10L13.8 11.8L12 18L10.2 11.8L4 10L10.2 8.2L12 2Z"/></svg>'
+      'Open App</a>'
+      '</div>'
+      '</div></div>')
+
+def render_hero():
+    ring = ats_ring(78)
+    bars = ats_bars()
+    _bp_H('<div class="hl-hero">'
+      '<div class="hl-hero-glow"></div>'
+      '<div class="hl-hero-grid"></div>'
+      '<div class="hl-hero-fade"></div>'
+      '<div class="hl-hero-content">'
+      '<div class="hl-eyebrow">'
+      '<svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#0a84ff"/></svg>'
+      'AI-Powered Career Intelligence'
+      '</div>'
+      '<h1 class="hl-h1">The last resume tool<br>you&rsquo;ll ever <em class="hl-h1-gradient">need</em></h1>'
+      '<p class="hl-hero-sub">Upload your resume. Hirelyzer instantly scores it for ATS compatibility, detects bias, rewrites with AI, and connects you to jobs &mdash; all in one place.</p>'
+      '<div class="hl-ctas">'
+      '<a href="' + APP_URL + '" target="_blank" class="hl-btn-p">'
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M12 2L13.8 8.2L20 10L13.8 11.8L12 18L10.2 11.8L4 10L10.2 8.2L12 2Z"/></svg>'
+      'Get Started Free</a>'
+      '<a href="#how" class="hl-btn-g">See how it works'
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      '</a></div>'
+
+      '<div class="hl-hero-features">'
+      '<div class="hl-hf-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#30d158" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>ATS Score in seconds</span></div>'
+      '<div class="hl-hf-sep"></div>'
+      '<div class="hl-hf-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#30d158" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Bias detection &amp; AI rewrite</span></div>'
+      '<div class="hl-hf-sep"></div>'
+      '<div class="hl-hf-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#30d158" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>15 ATS-certified templates</span></div>'
+      '<div class="hl-hf-sep"></div>'
+      '<div class="hl-hf-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#30d158" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>AI Interview Coach</span></div>'
+      '<div class="hl-hf-sep"></div>'
+      '<div class="hl-hf-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#30d158" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Live job search</span></div>'
+      '</div>'
+
+      '<div class="hl-card">'
+      '<div class="hl-card-bar">'
+      '<div class="hl-dot" style="background:#ff5f57"></div>'
+      '<div class="hl-dot" style="background:#febc2e"></div>'
+      '<div class="hl-dot" style="background:#28c840"></div>'
+      '<span class="hl-card-tab">hirelyzer &mdash; resume_analysis.pdf</span>'
+      '</div>'
+      '<div class="hl-card-body"><div class="hl-card-grid">'
+
+      # col 1 - ATS
+      '<div>'
+      '<div class="hl-ptitle"><svg width="9" height="9" viewBox="0 0 9 9"><circle cx="4.5" cy="4.5" r="4.5" fill="#30d158"/></svg>ATS Score</div>'
+      '<div style="display:flex;align-items:center;gap:16px;margin-bottom:18px">'
+      + ring +
+      '<div>'
+      '<div style="font-size:9px;color:rgba(245,245,247,0.34);text-transform:uppercase;letter-spacing:.9px;font-weight:700;margin-bottom:4px">Overall</div>'
+      '<div style="font-size:11px;color:#30d158;font-weight:600;margin-top:2px">Good &middot; Minor fixes</div>'
+      '</div></div>'
+      + bars +
+      '</div>'
+
+      # col 2 - Bias
+      '<div>'
+      '<div class="hl-ptitle"><svg width="9" height="9" viewBox="0 0 9 9"><circle cx="4.5" cy="4.5" r="4.5" fill="#bf5af2"/></svg>Bias Analysis</div>'
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">'
+      '<div style="padding:11px;background:rgba(10,132,255,0.06);border-radius:10px;border:1px solid rgba(10,132,255,0.15)">'
+      '<div style="font-size:9px;text-transform:uppercase;letter-spacing:.9px;color:rgba(245,245,247,0.34);font-weight:700;margin-bottom:4px">Masculine</div>'
+      '<div style="font-size:22px;font-weight:800;color:#4db3ff">8</div>'
+      '<div style="font-size:10px;color:rgba(245,245,247,0.34)">flagged</div></div>'
+      '<div style="padding:11px;background:rgba(191,90,242,0.06);border-radius:10px;border:1px solid rgba(191,90,242,0.15)">'
+      '<div style="font-size:9px;text-transform:uppercase;letter-spacing:.9px;color:rgba(245,245,247,0.34);font-weight:700;margin-bottom:4px">Feminine</div>'
+      '<div style="font-size:22px;font-weight:800;color:#d07ef7">3</div>'
+      '<div style="font-size:10px;color:rgba(245,245,247,0.34)">flagged</div></div>'
+      '</div>'
+      '<div class="hl-words">'
+      '<span class="wc wc-m">driven</span>'
+      '<span class="wc wc-m">dominate</span>'
+      '<span class="wc wc-f">nurture</span>'
+      '<span class="wc wc-m">aggressive</span>'
+      '<span class="wc wc-n">deliver</span>'
+      '<span class="wc wc-n">execute</span>'
+      '</div>'
+      '<div style="padding:10px 12px;background:rgba(48,209,88,0.06);border-radius:10px;border:1px solid rgba(48,209,88,0.18)">'
+      '<div style="font-size:11px;font-weight:700;color:#30d158;margin-bottom:4px">AI Rewrite Applied</div>'
+      '<div style="font-size:11px;color:rgba(245,245,247,0.54);line-height:1.6">'
+      '<span style="text-decoration:line-through;opacity:.4">Aggressively drove</span>'
+      ' &rarr; <span style="color:#30d158">Accelerated</span> delivery across 3 teams'
+      '</div></div></div>'
+
+      # col 3 - Quick Actions
+      '<div>'
+      '<div class="hl-ptitle"><svg width="9" height="9" viewBox="0 0 9 9"><circle cx="4.5" cy="4.5" r="4.5" fill="#ff9f0a"/></svg>Quick Actions</div>'
+      '<div style="display:flex;flex-direction:column;gap:8px">'
+      '<div style="padding:9px 12px;background:rgba(48,209,88,0.07);border-radius:9px;border:1px solid rgba(48,209,88,0.18);display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#30d158" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="font-size:12px;color:#30d158;font-weight:600">Single-column layout</span></div>'
+      '<div style="padding:9px 12px;background:rgba(48,209,88,0.07);border-radius:9px;border:1px solid rgba(48,209,88,0.18);display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#30d158" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="font-size:12px;color:#30d158;font-weight:600">Contact info present</span></div>'
+      '<div style="padding:9px 12px;background:rgba(255,159,10,0.07);border-radius:9px;border:1px solid rgba(255,159,10,0.18);display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#ff9f0a" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg><span style="font-size:12px;color:#ff9f0a;font-weight:600">Add LinkedIn URL</span></div>'
+      '<div style="padding:9px 12px;background:rgba(255,69,58,0.07);border-radius:9px;border:1px solid rgba(255,69,58,0.18);display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="#ff453a" stroke-width="2" stroke-linecap="round"/></svg><span style="font-size:12px;color:#ff453a;font-weight:600">No skills section</span></div>'
+      '<div style="padding:9px 12px;background:rgba(255,69,58,0.07);border-radius:9px;border:1px solid rgba(255,69,58,0.18);display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="#ff453a" stroke-width="2" stroke-linecap="round"/></svg><span style="font-size:12px;color:#ff453a;font-weight:600">Objective section outdated</span></div>'
+      '</div></div>'
+
+      '</div></div></div>'
+
+      '<div class="hl-stats">'
+      '<div class="hl-stat"><div class="hl-stat-n">15+</div><div class="hl-stat-l">Templates</div></div>'
+      '<div class="hl-stat"><div class="hl-stat-n">5</div><div class="hl-stat-l">Core Modules</div></div>'
+      '<div class="hl-stat"><div class="hl-stat-n">AI</div><div class="hl-stat-l">LLM Powered</div></div>'
+      '<div class="hl-stat"><div class="hl-stat-n">Free</div><div class="hl-stat-l">No Credit Card</div></div>'
+      '<div class="hl-stat"><div class="hl-stat-n">10k+</div><div class="hl-stat-l">Resumes Scored</div></div>'
+      '</div>'
+      '</div></div>')
+
+def render_how():
+    _bp_H('<div id="how" style="padding:100px 0 60px;background:#000">'
+      '<div class="hl-section">'
+      '<div class="hl-divider">How it works</div>'
+      '<div class="hl-steps">'
+
+      '<div class="hl-step"><span class="hl-step-n">01</span>'
+      '<svg class="hl-step-icon" viewBox="0 0 44 44" fill="none"><rect width="44" height="44" rx="12" fill="rgba(10,132,255,0.1)"/><path d="M22 28V20M22 20L19 23M22 20L25 23" stroke="#0a84ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 30h14" stroke="#0a84ff" stroke-width="1.6" stroke-linecap="round"/><rect x="14" y="13" width="16" height="19" rx="3" stroke="#0a84ff" stroke-width="1.4" stroke-dasharray="3 2" fill="none"/></svg>'
+      '<div class="hl-step-title">Upload your resume</div>'
+      '<div class="hl-step-desc">Drop any PDF. Our parser handles messy formats, multi-column layouts, and scanned documents via OCR fallback.</div></div>'
+
+      '<div class="hl-step"><span class="hl-step-n">02</span>'
+      '<svg class="hl-step-icon" viewBox="0 0 44 44" fill="none"><rect width="44" height="44" rx="12" fill="rgba(48,209,88,0.1)"/><circle cx="20" cy="20" r="7" stroke="#30d158" stroke-width="1.5" fill="none"/><path d="M20 17v3l2 1.5" stroke="#30d158" stroke-width="1.5" stroke-linecap="round"/><path d="M25.2 25.2l3.5 3.5" stroke="#30d158" stroke-width="1.7" stroke-linecap="round"/></svg>'
+      '<div class="hl-step-title">Instant AI analysis</div>'
+      '<div class="hl-step-desc">ATS scoring, bias detection, grammar check, keyword matching &mdash; all computed in seconds with detailed feedback.</div></div>'
+
+      '<div class="hl-step"><span class="hl-step-n">03</span>'
+      '<svg class="hl-step-icon" viewBox="0 0 44 44" fill="none"><rect width="44" height="44" rx="12" fill="rgba(191,90,242,0.1)"/><rect x="12" y="11" width="13" height="18" rx="2.5" stroke="#bf5af2" stroke-width="1.5" fill="none"/><rect x="19" y="16" width="14" height="18" rx="2.5" fill="rgba(191,90,242,0.08)" stroke="#bf5af2" stroke-width="1.5"/><path d="M22 21h8M22 24.5h8M22 28h5" stroke="#bf5af2" stroke-width="1.3" stroke-linecap="round"/><circle cx="32" cy="13" r="4" fill="#bf5af2"/><path d="M30.5 13l1 1 2-2" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      '<div class="hl-step-title">Build or rewrite</div>'
+      '<div class="hl-step-desc">Use the AI rewriter or open the full Resume Builder. Choose from 15 templates, generate a cover letter, export to PDF or DOCX.</div></div>'
+
+      '<div class="hl-step"><span class="hl-step-n">04</span>'
+      '<svg class="hl-step-icon" viewBox="0 0 44 44" fill="none"><rect width="44" height="44" rx="12" fill="rgba(255,159,10,0.1)"/><path d="M22 28c-3.31 0-6-2.69-6-6 0-4 3-8 6-9 3 1 6 5 6 9 0 3.31-2.69 6-6 6z" stroke="#ff9f0a" stroke-width="1.5" fill="none"/><circle cx="22" cy="22" r="2" fill="#ff9f0a"/><path d="M29 13l-2 2M15 13l2 2" stroke="#ff9f0a" stroke-width="1.4" stroke-linecap="round"/></svg>'
+      '<div class="hl-step-title">Apply with confidence</div>'
+      '<div class="hl-step-desc">Discover live job listings, salary benchmarks, curated courses, and practice with the AI Interview Coach before applying.</div></div>'
+
+      '</div></div></div>')
+
+def render_story_ats():
+    ring = ats_ring(78)
+    bars = ats_bars()
+    p = pills(["ATS Score","6-Dimension Breakdown","Keyword Gap","Grammar Check","Downloadable Report"])
+    _bp_H('<div id="analyzer" class="hl-story"><div class="hl-section"><div class="hl-story-grid">'
+      '<div>'
+      '<div class="hl-story-num">Feature 01 &mdash; Resume Analyzer</div>'
+      '<h2 class="hl-story-h">Your resume, <span class="hl-blue">scored like a machine</span> reads it</h2>'
+      '<p class="hl-story-p">Most resumes never reach a human. Applicant Tracking Systems silently filter them on format, missing keywords, or structural issues. Hirelyzer&rsquo;s analyzer replicates how ATS parsers actually read your document &mdash; not just a surface keyword match.</p>'
+      '<p class="hl-story-p">You get a score across six dimensions, a prioritised fix list, grammar and readability signals, and a full keyword-gap report mapped to the roles you care about.</p>'
+      '<div class="hl-pills">' + p + '</div>'
+      '</div>'
+      '<div><div class="hl-panel">'
+      '<div class="hl-ptitle"><svg width="11" height="11" viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="5.5" fill="#30d158"/></svg>ATS Analysis Report</div>'
+      '<div style="display:flex;align-items:center;gap:18px;margin-bottom:22px">'
+      + ring +
+      '<div>'
+      '<div style="font-size:9px;color:rgba(245,245,247,0.34);text-transform:uppercase;letter-spacing:.9px;font-weight:700;margin-bottom:4px">Overall Score</div>'
+      '<div style="font-size:11px;color:#30d158;font-weight:600">Good &middot; Minor fixes needed</div>'
+      '<div style="font-size:10px;color:rgba(245,245,247,0.34);margin-top:4px">Parsed in 1.4s</div>'
+      '</div></div>'
+      + bars +
+      '</div></div>'
+      '</div></div></div>')
+
+def render_story_bias():
+    p = pills(["Gender-coded Detection","AI Neutral Rewrite","Lexicon of 400+ Words","One-click Apply"])
+    _bp_H('<div class="hl-story-alt"><div class="hl-section"><div class="hl-story-grid">'
+      '<div style="order:2">'
+      '<div class="hl-story-num">Feature 02 &mdash; Bias Detection</div>'
+      '<h2 class="hl-story-h">Bias-free language that <span class="hl-purp">opens every door</span></h2>'
+      '<p class="hl-story-p">Gender-coded words can unconsciously signal culture fit to recruiters. Hirelyzer scans every verb, adjective, and phrase against a curated bias lexicon of 400+ terms.</p>'
+      '<p class="hl-story-p">The AI rewriter suggests impact-neutral alternatives, preserving your achievements while broadening appeal across hiring contexts.</p>'
+      '<div class="hl-pills">' + p + '</div>'
+      '</div>'
+      '<div style="order:1"><div class="hl-panel">'
+      '<div class="hl-ptitle"><svg width="11" height="11" viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="5.5" fill="#bf5af2"/></svg>Bias Analysis Report</div>'
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">'
+      '<div style="padding:14px;background:rgba(10,132,255,0.06);border-radius:12px;border:1px solid rgba(10,132,255,0.15)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.9px;color:rgba(245,245,247,0.34);font-weight:700;margin-bottom:6px">Masculine</div><div style="font-size:26px;font-weight:800;color:#4db3ff">8</div><div style="font-size:11px;color:rgba(245,245,247,0.34)">words flagged</div></div>'
+      '<div style="padding:14px;background:rgba(191,90,242,0.06);border-radius:12px;border:1px solid rgba(191,90,242,0.15)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.9px;color:rgba(245,245,247,0.34);font-weight:700;margin-bottom:6px">Feminine</div><div style="font-size:26px;font-weight:800;color:#d07ef7">3</div><div style="font-size:11px;color:rgba(245,245,247,0.34)">words flagged</div></div>'
+      '</div>'
+      '<div style="font-size:10px;color:rgba(245,245,247,0.34);font-weight:700;text-transform:uppercase;letter-spacing:.9px;margin-bottom:10px">Detected language</div>'
+      '<div class="hl-words"><span class="wc wc-m">driven</span><span class="wc wc-m">aggressive</span><span class="wc wc-m">dominate</span><span class="wc wc-m">champion</span><span class="wc wc-f">nurture</span><span class="wc wc-f">support</span><span class="wc wc-n">deliver</span><span class="wc wc-n">execute</span></div>'
+      '<div style="padding:14px;background:rgba(48,209,88,0.06);border-radius:12px;border:1px solid rgba(48,209,88,0.18)">'
+      '<div style="font-size:11px;font-weight:700;color:#30d158;margin-bottom:6px">AI Rewrite Applied</div>'
+      '<div style="font-size:12px;color:rgba(245,245,247,0.54);line-height:1.65"><span style="text-decoration:line-through;opacity:.45">Aggressively drove growth</span> &rarr; <span style="color:#30d158">Accelerated high-impact results</span> across 3 teams</div>'
+      '</div>'
+      '</div></div>'
+      '</div></div></div>')
+
+def render_story_builder():
+    tmpl = tmpl_gallery()
+    p = pills(["15 Templates","DOCX + PDF Export","AI Cover Letter","Live Preview","ATS Single-Column"])
+    _bp_H('<div id="builder" class="hl-story"><div class="hl-section"><div class="hl-story-grid">'
+      '<div>'
+      '<div class="hl-story-num">Feature 03 &mdash; Resume Builder</div>'
+      '<h2 class="hl-story-h">Build resumes that <span class="hl-green">look as good</span> as they parse</h2>'
+      '<p class="hl-story-p">Fifteen ATS-optimised templates &mdash; from understated minimal to executive prestige &mdash; all built on strict single-column structures that parse correctly in every major hiring platform.</p>'
+      '<p class="hl-story-p">Export to DOCX (three ATS compliance levels) or PDF. One click generates a tailored cover letter for your target company, formatted and ready to send.</p>'
+      '<div class="hl-pills">' + p + '</div>'
+      '</div>'
+      '<div><div class="hl-panel">'
+      '<div class="hl-ptitle"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="10" height="14" rx="2" stroke="#30d158" stroke-width="1.5"/><rect x="11" y="7" width="10" height="14" rx="2" fill="rgba(48,209,88,.08)" stroke="#30d158" stroke-width="1.5"/><path d="M14 11h5M14 14h5M14 17h3" stroke="#30d158" stroke-width="1.3" stroke-linecap="round"/></svg>Template Gallery &mdash; 15 Designs</div>'
+      '<div class="hl-tmpl-grid">' + tmpl + '</div>'
+      '<div style="padding:14px;background:rgba(10,132,255,0.06);border-radius:12px;border:1px solid rgba(10,132,255,0.18);display:flex;align-items:center;justify-content:space-between;gap:12px">'
+      '<div><div style="font-size:12px;font-weight:700;color:#0a84ff">Modern &mdash; ATS Certified</div><div style="font-size:11px;color:rgba(245,245,247,0.34);margin-top:2px">Sora &middot; Navy headings &middot; Single-column</div></div>'
+      '<a href="' + APP_URL + '" target="_blank" style="padding:8px 18px;background:#0a84ff;color:#fff;border-radius:100px;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap;flex-shrink:0">Use this</a>'
+      '</div>'
+      '</div></div>'
+      '</div></div></div>')
+
+def render_story_career():
+    cards = job_cards()
+    p = pills(["Live Job Listings","Salary Benchmarks","Course Recommendations","Skills Radar","Remote Filter"])
+    _bp_H('<div id="career" class="hl-story-alt"><div class="hl-section"><div class="hl-story-grid">'
+      '<div style="order:2">'
+      '<div class="hl-story-num">Feature 04 &mdash; Career Intelligence</div>'
+      '<h2 class="hl-story-h">Jobs, salaries, courses &mdash; <span class="hl-amber">one place</span></h2>'
+      '<p class="hl-story-p">The Job Search Hub pulls live listings from LinkedIn, Naukri, Foundit, and Indeed &mdash; or uses the JSearch/RapidAPI engine with remote and employment-type filters.</p>'
+      '<p class="hl-story-p">Hirelyzer surfaces salary benchmarks by role and market, curated courses mapped to skill gaps in your resume, and prep videos &mdash; all linked to your career profile.</p>'
+      '<div class="hl-pills">' + p + '</div>'
+      '</div>'
+      '<div style="order:1"><div class="hl-panel">'
+      '<div class="hl-ptitle"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="14" rx="2" stroke="#ff9f0a" stroke-width="1.5"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" stroke="#ff9f0a" stroke-width="1.5"/><path d="M2 13h20" stroke="#ff9f0a" stroke-width="1.3" stroke-linecap="round"/></svg>Job Search Hub</div>'
+      + cards +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">'
+      '<div style="padding:12px;background:rgba(255,159,10,0.06);border-radius:10px;border:1px solid rgba(255,159,10,0.15)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.9px;color:rgba(245,245,247,0.34);font-weight:700;margin-bottom:5px">Avg Salary</div><div style="font-size:20px;font-weight:800;color:#ff9f0a">&#8377;18&ndash;32 LPA</div><div style="font-size:11px;color:rgba(245,245,247,0.34)">Backend &middot; India</div></div>'
+      '<div style="padding:12px;background:rgba(10,132,255,0.06);border-radius:10px;border:1px solid rgba(10,132,255,0.15)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.9px;color:rgba(245,245,247,0.34);font-weight:700;margin-bottom:5px">Platforms</div><div style="font-size:13px;font-weight:700;color:#f5f5f7;line-height:1.7">LinkedIn &middot; Naukri<br>Foundit &middot; Indeed</div></div>'
+      '</div>'
+      '</div></div>'
+      '</div></div></div>')
+
+def render_story_interview():
+    sbars = score_bars()
+    radar = radar_svg()
+    p = pills(["Resume-based Questions","Real-time AI Scoring","Radar Chart","Session History","Downloadable Report"])
+    _bp_H('<div class="hl-story"><div class="hl-section"><div class="hl-story-grid">'
+      '<div>'
+      '<div class="hl-story-num">Feature 05 &mdash; AI Interview Coach</div>'
+      '<h2 class="hl-story-h">Practice until <span class="hl-blue">every answer</span> lands</h2>'
+      '<p class="hl-story-p">Upload your resume and Hirelyzer generates interview questions derived directly from your actual experience &mdash; not generic prompts. Answer in free text; the AI coach scores you on communication, technical depth, confidence, structure, and use of concrete examples.</p>'
+      '<p class="hl-story-p">Every session ends with a performance radar chart, a detailed Q&amp;A review, and course recommendations tied to your weakest dimensions.</p>'
+      '<div class="hl-pills">' + p + '</div>'
+      '</div>'
+      '<div><div class="hl-panel">'
+      '<div class="hl-ptitle" style="justify-content:space-between">'
+      '<div style="display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="#ff453a" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>Mock Interview &middot; Session 3</div>'
+      '<div class="hl-score-badge"><svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#30d158"/></svg>82 / 100</div>'
+      '</div>'
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">'
+      '<div>'
+      '<div class="hl-qa"><div class="hl-q"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10" stroke="#0a84ff" stroke-width="1.5"/><path d="M12 16v-4M12 8h.01" stroke="#0a84ff" stroke-width="1.8" stroke-linecap="round"/></svg>Describe your most complex backend system.</div><div class="hl-a">Built a multi-tenant microservices platform handling 2M events/day using Kafka, Redis, and PostgreSQL with 40% lower P99 latency.</div></div>'
+      '<div class="hl-qa"><div class="hl-q"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10" stroke="#bf5af2" stroke-width="1.5"/><path d="M12 16v-4M12 8h.01" stroke="#bf5af2" stroke-width="1.8" stroke-linecap="round"/></svg>How do you handle technical debt?</div><div class="hl-a">I prioritise tech debt as a first-class roadmap item, quantifying velocity cost before pitching refactors to stakeholders.</div></div>'
+      '<div style="margin-top:12px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.9px;color:rgba(245,245,247,0.34);font-weight:700;margin-bottom:8px">Score breakdown</div>'
+      + sbars +
+      '</div></div>'
+      '<div class="hl-radar-wrap">' + radar + '<div style="font-size:11px;color:rgba(245,245,247,0.34);margin-top:6px;text-align:center">Performance radar</div></div>'
+      '</div>'
+      '</div></div>'
+      '</div></div></div>')
+
+def render_compare():
+    rows = [
+        ("ATS Resume Scoring",          chk_y(),       chk_n(),          chk_n()),
+        ("6-Dimension Breakdown",        chk_y(),       chk_n(),          chk_n()),
+        ("Gender Bias Detection",        chk_y(),       chk_n(),          chk_n()),
+        ("AI Neutral Rewrite",           chk_y(),       chk_n(),          chk_n()),
+        ("15 Resume Templates",          chk_y(),       chk_p("3&ndash;5"),chk_p("Limited")),
+        ("DOCX &amp; PDF Export",        chk_y(),       chk_p("PDF only"), chk_n()),
+        ("AI Cover Letter Generator",    chk_y(),       chk_n(),          chk_n()),
+        ("Live Job Search (4 platforms)",chk_y(),       chk_n(),          chk_p("1 only")),
+        ("Salary Benchmarks",            chk_y(),       chk_n(),          chk_n()),
+        ("AI Interview Coach",           chk_y(),       chk_n(),          chk_n()),
+        ("Resume-Based Questions",       chk_y(),       chk_n(),          chk_n()),
+        ("100% Free, No Sign-up",        chk_y(),       chk_p("Freemium"),chk_p("Paid")),
+    ]
+    header = (
+        '<div class="hl-compare-head">'
+        '<div class="hl-ch" style="padding:20px 24px">Feature</div>'
+        '<div class="hl-ch hl-ch-hl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5z M2 17l10 5 10-5 M2 12l10 5 10-5" stroke="#0a84ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Hirelyzer</div>'
+        '<div class="hl-ch hl-cc-center">Resumeworded</div>'
+        '<div class="hl-ch hl-cc-center">Zety</div>'
+        '</div>'
+    )
+    body = "".join(
+        '<div class="hl-compare-row">'
+        '<div class="hl-cc hl-cc-feat">' + feat + '</div>'
+        '<div class="hl-cc hl-cc-hl hl-cc-center">' + hl + '</div>'
+        '<div class="hl-cc hl-cc-center">' + c2 + '</div>'
+        '<div class="hl-cc hl-cc-center">' + c3 + '</div>'
+        '</div>'
+        for feat, hl, c2, c3 in rows
+    )
+    _bp_H('<div id="compare" class="hl-compare">'
+      '<div class="hl-section">'
+      '<div class="hl-divider">How we compare</div>'
+      '<div style="text-align:center;margin-bottom:0">'
+      '<h2 style="font-size:clamp(26px,3.5vw,42px);font-weight:800;letter-spacing:-1.8px;color:#f5f5f7;line-height:1.08">Everything in one place &mdash; <span style="color:#0a84ff">completely free</span></h2>'
+      '<p style="font-size:15px;color:rgba(245,245,247,0.44);margin-top:14px;max-width:480px;margin-left:auto;margin-right:auto;line-height:1.7">No paywalls. No partial features. Hirelyzer gives you the complete career toolkit at zero cost.</p>'
+      '</div>'
+      '<div class="hl-compare-wrap">' + header + body + '</div>'
+      '</div></div>')
+
+def render_highlights():
+    cards = [
+        ("#0a84ff","rgba(10,132,255,0.1)",
+         '<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#0a84ff" stroke-width="1.5" fill="none" stroke-linecap="round"/>',
+         "ATS-Certified Scoring","Our six-dimension ATS engine parses your resume exactly as real hiring systems do — format, keywords, sections, verbs, contact info, and date consistency."),
+        ("#bf5af2","rgba(191,90,242,0.1)",
+         '<circle cx="12" cy="12" r="10" stroke="#bf5af2" stroke-width="1.5" fill="none"/><path d="M12 8v4M12 16h.01" stroke="#bf5af2" stroke-width="1.8" stroke-linecap="round"/>',
+         "Bias Lexicon of 400+ Terms","A curated gender-coded word database flags masculine and feminine language patterns, then our AI rewrites every phrase to be impact-neutral and inclusive."),
+        ("#30d158","rgba(48,209,88,0.1)",
+         '<rect x="3" y="3" width="10" height="14" rx="2" stroke="#30d158" stroke-width="1.5" fill="none"/><rect x="11" y="7" width="10" height="14" rx="2" fill="none" stroke="#30d158" stroke-width="1.5"/>',
+         "15 ATS-Ready Templates","Every template is single-column, structured to parse in Greenhouse, Lever, Workday, and iCIMS. Export as DOCX (3 compliance tiers) or PDF in one click."),
+        ("#ff9f0a","rgba(255,159,10,0.1)",
+         '<rect x="2" y="7" width="20" height="14" rx="2" stroke="#ff9f0a" stroke-width="1.5" fill="none"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" stroke="#ff9f0a" stroke-width="1.5"/><path d="M2 13h20" stroke="#ff9f0a" stroke-width="1.3" stroke-linecap="round"/>',
+         "Live Job Intelligence","Pull live listings from LinkedIn, Naukri, Foundit, and Indeed with role, location, and remote filters — plus salary benchmarks and curated skill courses."),
+        ("#ff453a","rgba(255,69,58,0.1)",
+         '<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="#ff453a" stroke-width="1.5" fill="none" stroke-linecap="round"/>',
+         "Resume-Based Interview Prep","Questions are generated from your actual resume — not generic prompts. Get scored across 5 competency dimensions with a radar chart and session history."),
+        ("#4db3ff","rgba(10,132,255,0.08)",
+         '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="#4db3ff" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+         "Instant &mdash; No Sign-up","Upload a PDF and get your full ATS report, bias analysis, keyword gaps, and fix list in under 2 seconds. No account, no email, no credit card."),
+    ]
+    items = "".join(
+        '<div class="hl-highlight">'
+        '<div class="hl-hi-icon" style="background:' + bg + '">'
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none">' + icon + '</svg>'
+        '</div>'
+        '<div class="hl-hi-title">' + title + '</div>'
+        '<div class="hl-hi-desc">' + desc + '</div>'
+        '</div>'
+        for col, bg, icon, title, desc in cards
+    )
+    _bp_H('<div class="hl-highlights">'
+      '<div class="hl-section">'
+      '<div class="hl-divider">Why Hirelyzer</div>'
+      '<div class="hl-highlight-grid">' + items + '</div>'
+      '</div></div>')
+
+def render_faq():
+    faqs = [
+        ("Is Hirelyzer completely free?", "Yes &mdash; the core features including ATS scoring, bias detection, and job search are fully free. No credit card required to get started."),
+        ("What file formats does Hirelyzer accept?", "PDF is the primary input format. Our parser handles standard, multi-column, and OCR-scanned PDFs. Export to DOCX or PDF is available from the Resume Builder."),
+        ("How accurate is the ATS scoring?", "Our scoring engine replicates how real ATS systems parse resumes across six dimensions. We test regularly against major platforms like Greenhouse, Lever, and Workday."),
+        ("Is my resume data private?", "Your resume is processed securely and never shared with third parties or recruiters. You control your data entirely."),
+        ("How does the AI Interview Coach work?", "Upload your resume and Hirelyzer extracts key experiences to generate tailored questions. You answer in free text and our AI scores you across five competency dimensions in real-time."),
+    ]
+    items = "".join(
+        '<div class="hl-faq-item">'
+        '<div class="hl-faq-q">' + q + '<div class="hl-faq-q-icon">+</div></div>'
+        '<div class="hl-faq-a">' + a + '</div>'
+        '</div>'
+        for q, a in faqs
+    )
+    _bp_H('<div class="hl-faq">'
+      '<div class="hl-section">'
+      '<div style="text-align:center;margin-bottom:0">'
+      '<div class="hl-divider">FAQ</div>'
+      '<h2 style="font-size:clamp(24px,3vw,38px);font-weight:800;letter-spacing:-1.5px;color:#f5f5f7;margin-bottom:0">Frequently asked questions</h2>'
+      '</div>'
+      '<div class="hl-faq-list">' + items + '</div>'
+      '</div></div>')
+
+def render_cta():
+    chk = checklist()
+    _bp_H('<div class="hl-section">'
+      '<div id="contact" class="hl-cta"><div class="hl-cta-glow"></div>'
+      '<div class="hl-eyebrow" style="margin:0 auto 28px"><svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#0a84ff"/></svg>Free to use &middot; No credit card required</div>'
+      '<div class="hl-cta-h">Your next job starts with a better resume</div>'
+      '<div style="font-size:16px;color:rgba(245,245,247,0.48);text-align:center;max-width:520px;margin:0 auto 40px;line-height:1.72;position:relative;z-index:1;">'
+      'Join professionals already using Hirelyzer to pass ATS filters, remove bias, and land more interviews.'
+      '</div>'
+      '<div class="hl-cta-btns">'
+      '<a href="' + APP_URL + '" target="_blank" class="hl-btn-p" style="font-size:16px;padding:16px 36px"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M12 2L13.8 8.2L20 10L13.8 11.8L12 18L10.2 11.8L4 10L10.2 8.2L12 2Z"/></svg>Start for free</a>'
+      '<a href="mailto:' + SUPPORT_EMAIL + '" class="hl-btn-g" style="font-size:16px;padding:16px 32px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="1.5" fill="none"/><polyline points="22,6 12,13 2,6" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>Contact us</a>'
+      '</div>'
+      '<div class="hl-checks">' + chk + '</div>'
+      '</div></div>')
+
+def render_contact_section():
+    _bp_H('<div class="hl-section">'
+      '<div class="hl-contact-card">'
+      '<div style="width:48px;height:48px;border-radius:14px;background:rgba(10,132,255,0.1);border:1px solid rgba(10,132,255,0.2);display:flex;align-items:center;justify-content:center;margin:0 auto 18px">'
+      '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="#0a84ff" stroke-width="1.5" fill="none"/><polyline points="22,6 12,13 2,6" stroke="#0a84ff" stroke-width="1.5" fill="none"/></svg>'
+      '</div>'
+      '<h3>Get in touch</h3>'
+      '<div style="font-size:14px;color:rgba(245,245,247,0.44);line-height:1.7;margin-bottom:28px;text-align:center;">Have questions, feedback, or want to report an issue? We typically respond within 24 hours.</div>'
+      '<a href="mailto:' + SUPPORT_EMAIL + '" class="hl-contact-email">'
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="#4db3ff" stroke-width="1.5" fill="none"/><polyline points="22,6 12,13 2,6" stroke="#4db3ff" stroke-width="1.5" fill="none"/></svg>'
+      + SUPPORT_EMAIL +
+      '</a>'
+      '<div class="hl-contact-meta">Support &middot; Feedback &middot; Bug reports &middot; Partnership enquiries</div>'
+      '</div></div>')
+
+def render_footer():
+    _bp_H('<footer style="background:#000">'
+      '<div class="hl-footer">'
+      '<div class="hl-footer-left">'
+      '<div style="display:flex;align-items:center;gap:9px;margin-bottom:2px">'
+      '<div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#0a84ff,#0055d4);display:flex;align-items:center;justify-content:center">'
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5z M2 17l10 5 10-5 M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      '</div>'
+      '<span style="font-size:13px;font-weight:800;color:rgba(245,245,247,0.7);letter-spacing:0.5px">HIRELYZER</span>'
+      '</div>'
+      '<div class="hl-footer-copy">&copy; 2025 HIRELYZER &middot; Intelligent Career Platform</div>'
+      '<div class="hl-footer-tagline">Built for the next generation of job seekers</div>'
+      '</div>'
+      '<div class="hl-footer-links">'
+      '<a href="#">Privacy</a>'
+      '<a href="#">Terms</a>'
+      '<a href="mailto:' + SUPPORT_EMAIL + '">' + SUPPORT_EMAIL + '</a>'
+      '<a href="' + APP_URL + '" target="_blank">Open App &rarr;</a>'
+      '</div></div></footer>')
+
+def render_js():
+    _bp_H('<script>'
+      '(function(){'
+      # Scroll progress bar
+      'var sp=document.getElementById("sp");'
+      'function u(){if(!sp)return;var p=(window.scrollY/(document.documentElement.scrollHeight-window.innerHeight))*100;sp.style.width=Math.min(p,100)+"%";}'
+      'window.addEventListener("scroll",u,{passive:true});'
+      # Nav scroll shadow
+      'var nav=document.getElementById("hl-nav");'
+      'window.addEventListener("scroll",function(){if(nav){nav.classList.toggle("scrolled",window.scrollY>20);}},{passive:true});'
+      # Smooth scroll for anchor links
+      'document.querySelectorAll("a[href^=\'#\']").forEach(function(a){'
+      'a.addEventListener("click",function(e){'
+      'var t=document.querySelector(this.getAttribute("href"));'
+      'if(t){e.preventDefault();t.scrollIntoView({behavior:"smooth",block:"start"});}'
+      '});});'
+      # FAQ accordion
+      'document.querySelectorAll(".hl-faq-q").forEach(function(q){'
+      'q.addEventListener("click",function(){'
+      'var ans=this.nextElementSibling;'
+      'var icon=this.querySelector(".hl-faq-q-icon");'
+      'var open=ans.style.display==="block";'
+      'document.querySelectorAll(".hl-faq-a").forEach(function(a){a.style.display="none";});'
+      'document.querySelectorAll(".hl-faq-q-icon").forEach(function(i){i.textContent="+";});'
+      'if(!open){ans.style.display="block";icon.textContent="\u2212";}'
+      '});});'
+      # Init all FAQ closed
+      'document.querySelectorAll(".hl-faq-a").forEach(function(a){a.style.display="none";});'
+      '})();'
+      '</script>')
+
+
+def render_business_page():
+    """Render the full business landing page. A Streamlit button lets users enter the main app."""
+
+    # ─── CSS ──────────────────────────────────────────────────────────────────────
+    _bp_CSS("""
+    @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"] {
+      background-color: #000000 !important;
+      color: #f5f5f7 !important;
+      font-family: 'Sora', sans-serif !important;
+      overflow-x: hidden !important;
+      -webkit-font-smoothing: antialiased !important;
+    }
+
+    [data-testid="stHeader"],
+    [data-testid="stToolbar"],
+    [data-testid="stDecoration"],
+    [data-testid="stSidebar"],
+    [data-testid="stStatusWidget"],
+    footer,
+    #MainMenu { display: none !important; }
+
+    section[data-testid="stAppViewContainer"] > div { padding: 0 !important; }
+    .block-container { padding: 0 !important; max-width: 100% !important; }
+    div[data-testid="stMarkdownContainer"] > p { margin: 0 !important; }
+
+    /* ── Progress bar ── */
+    #sp {
+      position: fixed; top: 0; left: 0; right: 0; height: 2px; width: 0%;
+      background: linear-gradient(90deg, #0a84ff, #30d158, #bf5af2);
+      z-index: 9999; transition: width 0.05s linear; pointer-events: none;
+    }
+
+    /* ── Announcement banner ── */
+    .hl-banner {
+      background: linear-gradient(90deg, rgba(10,132,255,0.12), rgba(48,209,88,0.08), rgba(10,132,255,0.12));
+      border-bottom: 1px solid rgba(10,132,255,0.2);
+      padding: 10px 32px; text-align: center; position: relative; z-index: 901;
+      font-size: 12.5px; color: rgba(245,245,247,0.7); font-weight: 500;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      background-size: 200% 100%; animation: shimmerBg 4s linear infinite;
+    }
+    .hl-banner-badge {
+      padding: 2px 10px; border-radius: 100px; background: rgba(10,132,255,0.2);
+      border: 1px solid rgba(10,132,255,0.35); color: #0a84ff;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; flex-shrink: 0;
+    }
+    .hl-banner a { color: #0a84ff; font-weight: 600; text-decoration: none; }
+
+    /* ── Nav ── */
+    .hl-nav {
+      position: sticky; top: 0; left: 0; right: 0; z-index: 900;
+      height: 60px; display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.88);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+      transition: box-shadow 0.3s ease;
+    }
+    .hl-nav.scrolled { box-shadow: 0 8px 40px rgba(0,0,0,0.6); }
+    .hl-nav-inner {
+      width: 100%; max-width: 1140px;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 32px;
+    }
+    .hl-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 14px; font-weight: 800; color: #f5f5f7; text-decoration: none; letter-spacing: 0.5px;
+    }
+    .hl-logo-icon {
+      width: 34px; height: 34px; border-radius: 10px;
+      background: linear-gradient(135deg, #0a84ff, #0055d4);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      box-shadow: 0 4px 16px rgba(10,132,255,0.35);
+    }
+    .hl-nav-links { display: flex; align-items: center; gap: 30px; }
+    .hl-nav-links a {
+      font-size: 13px; font-weight: 500; color: rgba(245,245,247,0.5); text-decoration: none;
+      transition: color 0.2s; position: relative;
+    }
+    .hl-nav-links a::after {
+      content: ''; position: absolute; bottom: -4px; left: 0; right: 0; height: 1px;
+      background: #0a84ff; transform: scaleX(0); transition: transform 0.2s ease; transform-origin: left;
+    }
+    .hl-nav-links a:hover { color: #f5f5f7; }
+    .hl-nav-links a:hover::after { transform: scaleX(1); }
+    .hl-nav-right { display: flex; align-items: center; gap: 12px; }
+    .hl-nav-cta {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 8px 20px; border-radius: 100px;
+      background: linear-gradient(135deg, #0a84ff, #0065cc);
+      color: #fff; font-size: 13px; font-weight: 600; text-decoration: none;
+      box-shadow: 0 4px 16px rgba(10,132,255,0.3); transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .hl-nav-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(10,132,255,0.4); }
+
+    /* ── Hero ── */
+    .hl-hero {
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 80px 32px 80px;
+      position: relative; overflow: hidden; background: #000;
+    }
+    .hl-hero-glow {
+      position: absolute; top: -250px; left: 50%; transform: translateX(-50%);
+      width: 1100px; height: 800px;
+      background: radial-gradient(ellipse at center, rgba(10,132,255,0.13) 0%, rgba(48,209,88,0.04) 40%, transparent 68%);
+      pointer-events: none; z-index: 0;
+    }
+    .hl-hero-grid {
+      position: absolute; inset: 0; pointer-events: none; z-index: 0;
+      background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
+    }
+    .hl-hero-fade {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 240px;
+      background: linear-gradient(to bottom, transparent, #000);
+      pointer-events: none; z-index: 0;
+    }
+    .hl-hero-content {
+      position: relative; z-index: 1; width: 100%; display: flex; flex-direction: column; align-items: center;
+    }
+
+    .hl-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 10.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+      color: #0a84ff; padding: 6px 16px; border-radius: 100px;
+      border: 1px solid rgba(10,132,255,0.28); background: rgba(10,132,255,0.07); margin-bottom: 28px;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .hl-h1 {
+      font-size: clamp(42px, 7vw, 88px); font-weight: 800; line-height: 1.02;
+      letter-spacing: -3.5px; color: #f5f5f7; max-width: 960px;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+    .hl-h1-blue { color: #0a84ff; font-style: normal; }
+    .hl-h1-gradient {
+      background: linear-gradient(135deg, #0a84ff 0%, #30d158 60%, #0a84ff 100%);
+      background-size: 200% 100%; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; animation: gradientShift 4s ease infinite;
+    }
+
+    .hl-hero-sub {
+      font-size: clamp(15px, 1.9vw, 19px); color: rgba(245,245,247,0.5); line-height: 1.7;
+      max-width: 580px; margin: 26px auto 0; animation: fadeUp 0.6s 0.2s ease both;
+      text-align: center;
+    }
+
+    .hl-ctas {
+      display: flex; gap: 14px; justify-content: center; margin-top: 44px; flex-wrap: wrap;
+      animation: fadeUp 0.6s 0.3s ease both;
+    }
+    .hl-btn-p {
+      display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px;
+      border-radius: 100px; background: linear-gradient(135deg, #0a84ff, #0065cc); color: #fff;
+      font-size: 15px; font-weight: 600; text-decoration: none; letter-spacing: -0.2px;
+      box-shadow: 0 8px 32px rgba(10,132,255,0.35); transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .hl-btn-p:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(10,132,255,0.45); }
+    .hl-btn-g {
+      display: inline-flex; align-items: center; gap: 8px; padding: 14px 30px;
+      border-radius: 100px; background: #141416; color: #f5f5f7;
+      font-size: 15px; font-weight: 600; text-decoration: none; letter-spacing: -0.2px;
+      border: 1px solid rgba(255,255,255,0.12); transition: border-color 0.2s, background 0.2s;
+    }
+    .hl-btn-g:hover { border-color: rgba(255,255,255,0.25); background: #1e1e22; }
+
+    /* ── Hero feature strip ── */
+    .hl-hero-features {
+      display: flex; align-items: center; gap: 0; flex-wrap: wrap; justify-content: center;
+      margin-top: 48px; padding: 14px 28px;
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 100px; animation: fadeUp 0.6s 0.4s ease both;
+    }
+    .hl-hf-item {
+      display: flex; align-items: center; gap: 7px; padding: 0 18px;
+      font-size: 12.5px; font-weight: 600; color: rgba(245,245,247,0.54);
+      white-space: nowrap;
+    }
+    .hl-hf-sep {
+      width: 1px; height: 14px; background: rgba(255,255,255,0.1); flex-shrink: 0;
+    }
+
+    /* ── Card ── */
+    .hl-card {
+      margin-top: 68px; width: 100%; max-width: 860px; background: #0d0d0f;
+      border-radius: 24px; border: 1px solid rgba(255,255,255,0.08); overflow: hidden;
+      box-shadow: 0 60px 120px rgba(0,0,0,0.8), 0 0 0 1px rgba(10,132,255,0.06);
+      animation: fadeUp 0.6s 0.44s ease both;
+    }
+    .hl-card-bar {
+      height: 42px; background: #141416; border-bottom: 1px solid rgba(255,255,255,0.07);
+      display: flex; align-items: center; padding: 0 16px; gap: 8px;
+    }
+    .hl-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .hl-card-tab { margin-left: 6px; font-size: 11px; color: rgba(245,245,247,0.3); font-family: 'JetBrains Mono', monospace; }
+    .hl-card-body { padding: 26px; }
+    .hl-card-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+    .hl-ptitle {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.1px;
+      color: rgba(245,245,247,0.34); display: flex; align-items: center; gap: 7px; margin-bottom: 18px;
+    }
+
+    .hl-bar { margin-bottom: 10px; }
+    .hl-bar-row {
+      display: flex; justify-content: space-between; font-size: 11px;
+      color: rgba(245,245,247,0.54); margin-bottom: 4px; font-weight: 500;
+    }
+    .hl-bar-track { height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+    .hl-bar-fill  { height: 100%; border-radius: 2px; }
+
+    .hl-words { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .wc { padding: 4px 11px; border-radius: 7px; font-size: 11px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+    .wc-m { background: rgba(10,132,255,0.11);  color: #4db3ff; border: 1px solid rgba(10,132,255,0.2); }
+    .wc-f { background: rgba(191,90,242,0.11);  color: #d07ef7; border: 1px solid rgba(191,90,242,0.2); }
+    .wc-n { background: rgba(48,209,88,0.11);   color: #4cd964; border: 1px solid rgba(48,209,88,0.2); }
+
+    /* ── Stats ── */
+    .hl-stats {
+      display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin: 32px 0 0;
+      animation: fadeUp 0.6s 0.55s ease both;
+    }
+    .hl-stat {
+      display: flex; flex-direction: column; align-items: center; padding: 20px 32px;
+      border-radius: 18px; background: #0d0d0f;
+      border: 1px solid rgba(255,255,255,0.07); min-width: 130px;
+      position: relative; overflow: hidden; transition: border-color 0.2s, transform 0.2s;
+    }
+    .hl-stat::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(10,132,255,0.3), transparent);
+    }
+    .hl-stat-n { font-size: 28px; font-weight: 800; color: #f5f5f7; letter-spacing: -1.2px; }
+    .hl-stat-l { font-size: 10px; color: rgba(245,245,247,0.3); font-weight: 600; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.9px; }
+
+    /* ── Section ── */
+    .hl-section { max-width: 1140px; margin: 0 auto; padding: 0 32px; }
+
+    /* ── Divider ── */
+    .hl-divider {
+      font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+      color: rgba(245,245,247,0.28); display: flex; align-items: center; gap: 18px; margin-bottom: 64px;
+    }
+    .hl-divider::before,
+    .hl-divider::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
+
+    /* ── How it works ── */
+    .hl-steps { display: grid; grid-template-columns: repeat(4,1fr); gap: 2px; }
+    .hl-step {
+      padding: 34px 26px; background: #0a0a0b;
+      border: 1px solid rgba(255,255,255,0.06); position: relative; overflow: hidden;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .hl-step:hover { background: #0f0f11; border-color: rgba(255,255,255,0.1); }
+    .hl-step:first-child { border-radius: 20px 0 0 20px; }
+    .hl-step:last-child  { border-radius: 0 20px 20px 0; }
+    .hl-step-n { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; color: rgba(245,245,247,0.28); margin-bottom: 16px; display: block; }
+    .hl-step-icon { width: 46px; height: 46px; margin-bottom: 18px; }
+    .hl-step-title { font-size: 14px; font-weight: 700; color: #f5f5f7; margin-bottom: 9px; letter-spacing: -0.3px; }
+    .hl-step-desc  { font-size: 13px; color: rgba(245,245,247,0.48); line-height: 1.7; }
+
+    /* ── Story sections ── */
+    .hl-story     { padding: 110px 0; background: #000; }
+    .hl-story-alt { padding: 110px 0; background: #050505; }
+    .hl-story-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 88px; align-items: center; }
+
+    .hl-story-num { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 600; color: rgba(245,245,247,0.28); letter-spacing: 1px; margin-bottom: 18px; }
+    .hl-story-h { font-size: clamp(28px, 3.8vw, 46px); font-weight: 800; letter-spacing: -2px; line-height: 1.07; color: #f5f5f7; margin-bottom: 22px; }
+    .hl-story-h .hl-blue  { color: #0a84ff; }
+    .hl-story-h .hl-green { color: #30d158; }
+    .hl-story-h .hl-amber { color: #ff9f0a; }
+    .hl-story-h .hl-purp  { color: #bf5af2; }
+    /* ── Override Streamlit p reset inside HL sections ── */
+    .hl-cta p, .hl-story p, .hl-story-alt p,
+    .hl-hero p, .hl-compare p {
+      margin: 0 !important;
+      text-align: inherit !important;
+    }
+
+    .hl-story-p { font-size: 15px; color: rgba(245,245,247,0.48); line-height: 1.82; margin-bottom: 16px; }
+
+    /* ── Pills ── */
+    .hl-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .hl-pill { padding: 6px 14px; border-radius: 100px; font-size: 11.5px; font-weight: 600; border: 1px solid rgba(255,255,255,0.1); color: rgba(245,245,247,0.48); background: #0a0a0b; transition: border-color 0.2s, color 0.2s; }
+    .hl-pill:hover { border-color: rgba(255,255,255,0.2); color: rgba(245,245,247,0.7); }
+
+    /* ── Panel ── */
+    .hl-panel {
+      background: #0a0a0b; border-radius: 22px; border: 1px solid rgba(255,255,255,0.07);
+      padding: 26px; overflow: hidden; position: relative;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+    }
+    .hl-panel::before {
+      content: ''; position: absolute; top: 0; left: 20px; right: 20px; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    }
+
+    /* ── Templates ── */
+    .hl-tmpl-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 14px; }
+    .hl-tmpl { border-radius: 10px; border: 1px solid rgba(255,255,255,0.07); background: #141416; overflow: hidden; display: flex; flex-direction: column; min-height: 110px; position: relative; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
+    .hl-tmpl:hover { border-color: rgba(255,255,255,0.18); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+    .hl-tmpl-act { border-color: #0a84ff !important; box-shadow: 0 0 0 2px rgba(10,132,255,0.2); }
+    .hl-tmpl-hdr { height: 5px; border-radius: 2px; }
+    .hl-tmpl-ln  { height: 3px; border-radius: 1.5px; background: rgba(255,255,255,0.13); }
+    .hl-tmpl-badge { position: absolute; bottom: 6px; left: 6px; right: 6px; background: rgba(10,132,255,0.15); border: 1px solid rgba(10,132,255,0.25); border-radius: 5px; padding: 3px 6px; font-size: 9px; font-weight: 700; color: #0a84ff; text-align: center; letter-spacing: 0.5px; text-transform: uppercase; }
+
+    /* ── Jobs ── */
+    .hl-job { padding: 13px 15px; border-radius: 12px; background: #141416; border: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; gap: 12px; margin-bottom: 8px; transition: border-color 0.15s, background 0.15s; }
+    .hl-job:hover { background: #181820; border-color: rgba(255,255,255,0.12); }
+    .hl-job-logo { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; }
+    .hl-job-title { font-size: 13px; font-weight: 600; color: #f5f5f7; }
+    .hl-job-co    { font-size: 11px; color: rgba(245,245,247,0.34); margin-top: 2px; }
+    .hl-job-badge { padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+
+    /* ── Interview ── */
+    .hl-radar-wrap { display: flex; flex-direction: column; align-items: center; }
+    .hl-qa { margin-bottom: 14px; }
+    .hl-q { font-size: 13px; font-weight: 600; color: #f5f5f7; margin-bottom: 7px; display: flex; gap: 8px; align-items: flex-start; }
+    .hl-a { font-size: 12px; color: rgba(245,245,247,0.5); line-height: 1.68; padding-left: 22px; }
+    .hl-score-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 100px; font-size: 12px; font-weight: 700; background: rgba(48,209,88,0.12); color: #30d158; border: 1px solid rgba(48,209,88,0.22); }
+
+    /* ── Comparison / Why Hirelyzer ── */
+    .hl-compare { padding: 100px 0; background: #000; }
+    .hl-compare-wrap { margin-top: 52px; border-radius: 22px; border: 1px solid rgba(255,255,255,0.07); overflow: hidden; }
+    .hl-compare-head {
+      display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr;
+      background: #0a0a0b; border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .hl-compare-row {
+      display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      transition: background 0.15s;
+    }
+    .hl-compare-row:last-child { border-bottom: none; }
+    .hl-compare-row:hover { background: rgba(255,255,255,0.02); }
+    .hl-ch { padding: 16px 24px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(245,245,247,0.3); }
+    .hl-ch-hl {
+      background: rgba(10,132,255,0.06); border-left: 1px solid rgba(10,132,255,0.15);
+      border-right: 1px solid rgba(10,132,255,0.15); color: #0a84ff;
+      display: flex; align-items: center; gap: 7px; justify-content: center;
+    }
+    .hl-cc { padding: 16px 24px; font-size: 13px; color: rgba(245,245,247,0.54); display: flex; align-items: center; }
+    .hl-cc-feat { font-weight: 600; color: #f5f5f7; font-size: 13.5px; }
+    .hl-cc-feat small { display: block; font-size: 11px; color: rgba(245,245,247,0.38); font-weight: 400; margin-top: 2px; }
+    .hl-cc-hl {
+      background: rgba(10,132,255,0.04);
+      border-left: 1px solid rgba(10,132,255,0.1); border-right: 1px solid rgba(10,132,255,0.1);
+      justify-content: center; font-weight: 600; color: #f5f5f7;
+    }
+    .hl-cc-center { justify-content: center; }
+    .hl-chk-y { color: #30d158; font-size: 16px; }
+    .hl-chk-n { color: rgba(245,245,247,0.18); font-size: 18px; }
+    .hl-chk-p { color: #ff9f0a; font-size: 11px; font-weight: 700; }
+
+    /* ── Feature Highlights (icon cards) ── */
+    .hl-highlights { padding: 0 0 100px; background: #000; }
+    .hl-highlight-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 2px; margin-top: 48px; }
+    .hl-highlight {
+      padding: 32px 28px; background: #0a0a0b; border: 1px solid rgba(255,255,255,0.06);
+      position: relative; overflow: hidden; transition: background 0.2s, border-color 0.2s;
+    }
+    .hl-highlight:first-child { border-radius: 20px 0 0 0; }
+    .hl-highlight:nth-child(3) { border-radius: 0 20px 0 0; }
+    .hl-highlight:nth-child(4) { border-radius: 0 0 0 20px; }
+    .hl-highlight:last-child { border-radius: 0 0 20px 0; }
+    .hl-highlight:hover { background: #0f0f11; border-color: rgba(255,255,255,0.1); }
+    .hl-highlight::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    }
+    .hl-hi-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 18px; }
+    .hl-hi-title { font-size: 15px; font-weight: 700; color: #f5f5f7; margin-bottom: 9px; letter-spacing: -0.3px; }
+    .hl-hi-desc { font-size: 13px; color: rgba(245,245,247,0.44); line-height: 1.72; }
+
+    /* ── FAQ ── */
+    .hl-faq { padding: 100px 0; background: #050505; }
+    .hl-faq-list { max-width: 720px; margin: 48px auto 0; display: flex; flex-direction: column; gap: 2px; }
+    .hl-faq-item {
+      background: #0a0a0b; border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .hl-faq-item:hover { border-color: rgba(255,255,255,0.12); }
+    .hl-faq-q {
+      padding: 20px 24px; font-size: 14px; font-weight: 600; color: #f5f5f7;
+      display: flex; justify-content: space-between; align-items: center; cursor: pointer; gap: 12px;
+    }
+    .hl-faq-q-icon { width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; color: rgba(245,245,247,0.5); }
+    .hl-faq-a { padding: 0 24px 20px; font-size: 14px; color: rgba(245,245,247,0.48); line-height: 1.78; }
+
+    /* ── CTA ── */
+    .hl-cta { margin: 0 0 120px; padding: 90px 56px; border-radius: 30px; background: #0a0a0b; border: 1px solid rgba(255,255,255,0.07); text-align: center; position: relative; overflow: hidden; }
+    .hl-cta-glow { position: absolute; top: -300px; left: 50%; transform: translateX(-50%); width: 700px; height: 700px; background: radial-gradient(ellipse at center, rgba(10,132,255,0.1) 0%, rgba(48,209,88,0.04) 50%, transparent 70%); pointer-events: none; }
+    .hl-cta-h { font-size: clamp(28px, 4.5vw, 54px); font-weight: 800; letter-spacing: -2.5px; color: #f5f5f7; line-height: 1.04; max-width: 680px; margin: 0 auto 22px; position: relative; z-index: 1; }
+    .hl-cta-sub { font-size: 16px; color: rgba(245,245,247,0.48); margin: 0 auto 40px; position: relative; z-index: 1; max-width: 520px; line-height: 1.7; text-align: center; }
+    .hl-cta-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1; }
+
+    /* ── Checklist ── */
+    .hl-checks { display: flex; justify-content: center; gap: 28px; flex-wrap: wrap; margin-top: 38px; }
+    .hl-check  { display: flex; align-items: center; gap: 7px; font-size: 13px; color: rgba(245,245,247,0.32); }
+
+    /* ── Contact section ── */
+    .hl-contact-card {
+      background: #0a0a0b; border-radius: 22px; border: 1px solid rgba(255,255,255,0.07);
+      padding: 40px; max-width: 560px; margin: 0 auto 100px;
+      text-align: center;
+    }
+    .hl-contact-card h3 { font-size: 22px; font-weight: 800; color: #f5f5f7; letter-spacing: -0.8px; margin-bottom: 10px; }
+    .hl-contact-card p { font-size: 14px; color: rgba(245,245,247,0.44); line-height: 1.7; margin-bottom: 28px; }
+    .hl-contact-email {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 28px; border-radius: 14px;
+      background: rgba(10,132,255,0.08); border: 1px solid rgba(10,132,255,0.22);
+      color: #4db3ff; font-size: 14px; font-weight: 600; text-decoration: none;
+      font-family: 'JetBrains Mono', monospace;
+      transition: background 0.2s, border-color 0.2s;
+      word-break: break-all;
+    }
+    .hl-contact-email:hover { background: rgba(10,132,255,0.14); border-color: rgba(10,132,255,0.4); }
+    .hl-contact-meta { margin-top: 20px; font-size: 12px; color: rgba(245,245,247,0.26); }
+
+    /* ── Footer ── */
+    .hl-footer {
+      border-top: 1px solid rgba(255,255,255,0.06); padding: 44px 32px;
+      display: grid; grid-template-columns: 1fr auto; align-items: center;
+      max-width: 1140px; margin: 0 auto; gap: 20px;
+    }
+    .hl-footer-left { display: flex; flex-direction: column; gap: 10px; }
+    .hl-footer-copy { font-size: 13px; font-weight: 600; color: rgba(245,245,247,0.28); }
+    .hl-footer-tagline { font-size: 12px; color: rgba(245,245,247,0.18); }
+    .hl-footer-links { display: flex; gap: 24px; }
+    .hl-footer-links a { font-size: 13px; color: rgba(245,245,247,0.3); text-decoration: none; transition: color 0.2s; }
+    .hl-footer-links a:hover { color: rgba(245,245,247,0.7); }
+
+    /* ── Keyframes ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(28px); }
+      to   { opacity: 1; transform: none; }
+    }
+    @keyframes gradientShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes shimmerBg {
+      0%   { background-position: 200% center; }
+      100% { background-position: -200% center; }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.5; }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .hl-story-grid { grid-template-columns: 1fr; gap: 44px; }
+      .hl-steps { grid-template-columns: 1fr 1fr; }
+      .hl-step:first-child  { border-radius: 20px 0 0 0; }
+      .hl-step:nth-child(2) { border-radius: 0 20px 0 0; }
+      .hl-step:nth-child(3) { border-radius: 0 0 0 20px; }
+      .hl-step:last-child   { border-radius: 0 0 20px 0; }
+      .hl-ctas { flex-direction: column; align-items: center; }
+      .hl-nav-links { display: none; }
+      .hl-cta { padding: 52px 28px; }
+      .hl-card-grid { grid-template-columns: 1fr; }
+      .hl-compare-head, .hl-compare-row { grid-template-columns: 1.4fr 1fr; }
+      .hl-compare-head > *:nth-child(3),
+      .hl-compare-head > *:nth-child(4),
+      .hl-compare-row > *:nth-child(3),
+      .hl-compare-row > *:nth-child(4) { display: none; }
+      .hl-highlight-grid { grid-template-columns: 1fr 1fr; }
+      .hl-highlight:first-child { border-radius: 20px 0 0 0; }
+      .hl-highlight:nth-child(2) { border-radius: 0 20px 0 0; }
+      .hl-highlight:nth-child(5) { border-radius: 0 0 0 20px; }
+      .hl-highlight:last-child { border-radius: 0 0 20px 0; }
+      .hl-footer { grid-template-columns: 1fr; }
+    }
+    """)
+
+    render_banner()
+    render_nav()
+    render_hero()
+    # Inject an "Enter App" Streamlit button right after the hero
+    st.markdown("""
+    <div style="display:flex;justify-content:center;margin:-30px 0 40px;">
+    </div>
+    """, unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([2, 1, 2])
+    with col2:
+        if st.button("🚀 Open Hirelyzer App", use_container_width=True, type="primary"):
+            st.session_state.show_business_page = False
+            st.rerun()
+    render_how()
+    render_story_ats()
+    render_story_bias()
+    render_story_builder()
+    render_story_career()
+    render_story_interview()
+    render_compare()
+    render_highlights()
+    render_faq()
+    render_cta()
+    render_contact_section()
+    render_footer()
+    render_js()
+
+import os
+os.environ["STREAMLIT_WATCHDOG"] = "false"
 import json
 import random
 import string
@@ -59,7 +1283,7 @@ from langchain_groq import ChatGroq  # optional if you're using it
 
 
 # Local project imports
-from llm_manager import call_llm, load_groq_api_keys
+from llm_manager import call_llm, load_groq_api_keys, get_healthy_keys, increment_key_usage, mark_key_failure
 from db_manager import (
     db_manager,
     insert_candidate,
@@ -244,7 +1468,12 @@ LENGTH: 3 short-to-medium paragraphs. Maximum 350 words.
 """
 
         # ✅ Call LLM
-        cover_letter = call_llm(prompt, session=st.session_state).strip()
+        with st.spinner("✉️ Generating cover letter..."):
+            try:
+                cover_letter = call_llm(prompt, session=st.session_state).strip()
+            except Exception as e:
+                st.error(f"❌ Failed to generate cover letter: {e}")
+                return
 
         # ✅ Store plain text
         st.session_state["cover_letter"] = cover_letter
@@ -274,6 +1503,18 @@ LENGTH: 3 short-to-medium paragraphs. Maximum 350 words.
 
         # ✅ Show nicely in Streamlit
         st.markdown(cover_letter_html, unsafe_allow_html=True)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PAGE ROUTING
+# ─────────────────────────────────────────────────────────────────────────────
+if st.session_state.show_business_page:
+    render_business_page()
+    st.stop()
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MAIN APP (landing.py) — only shown after user clicks "Open Hirelyzer App"
+# ─────────────────────────────────────────────────────────────────────────────
 
 # ------------------- Initialize -------------------
 # ✅ Initialize database in persistent storage
@@ -1727,517 +2968,6 @@ if not st.session_state.authenticated:
     </script>
     """, height=44, scrolling=False)
 
-    # ════════════════════════════════════════════════════════════════
-    # LANDING PAGE SECTIONS (injected from main_advanced.py)
-    # Shown only when NOT authenticated — renders full marketing page
-    # ════════════════════════════════════════════════════════════════
-
-    import math as _math
-
-    APP_URL = "https://hirelyzer-career-based-saas-platform-rxzkspoyrtwfamm5ztkmcf.streamlit.app/"
-    SUPPORT_EMAIL = "swagato_bmca2024@msit.edu.in"
-
-    def _H(s):
-        st.markdown(s, unsafe_allow_html=True)
-
-    def _CSS(s):
-        st.markdown("<style>" + s + "</style>", unsafe_allow_html=True)
-
-    _CSS("""
-    @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
-    /* ── Override Streamlit p reset inside HL sections ── */
-    .hl-cta p, .hl-story p, .hl-story-alt p, .hl-hero p, .hl-compare p { margin:0!important; text-align:inherit!important; }
-
-    /* ── Nav ── */
-    .hl-nav2 { background:rgba(0,0,0,0.85); border-bottom:1px solid rgba(255,255,255,0.07); backdrop-filter:blur(28px); padding:0 32px; height:58px; display:flex; align-items:center; justify-content:space-between; max-width:100%; }
-    .hl-logo2 { display:flex; align-items:center; gap:10px; font-size:14px; font-weight:800; color:#f5f5f7; text-decoration:none; letter-spacing:.5px; }
-    .hl-logo-icon2 { width:32px; height:32px; border-radius:9px; background:linear-gradient(135deg,#0a84ff,#0055d4); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(10,132,255,.3); }
-    .hl-nav2-links { display:flex; align-items:center; gap:28px; }
-    .hl-nav2-links a { font-size:13px; font-weight:500; color:rgba(245,245,247,.5); text-decoration:none; transition:color .2s; }
-    .hl-nav2-links a:hover { color:#f5f5f7; }
-    .hl-nav2-cta { display:inline-flex; align-items:center; gap:7px; padding:8px 20px; border-radius:100px; background:linear-gradient(135deg,#0a84ff,#0065cc); color:#fff; font-size:13px; font-weight:600; text-decoration:none; box-shadow:0 4px 14px rgba(10,132,255,.3); }
-
-    /* ── Section wrapper ── */
-    .hl-sec { max-width:1100px; margin:0 auto; padding:0 32px; }
-
-    /* ── Divider ── */
-    .hl-div { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:rgba(245,245,247,.28); display:flex; align-items:center; gap:18px; margin-bottom:64px; }
-    .hl-div::before, .hl-div::after { content:''; flex:1; height:1px; background:rgba(255,255,255,.06); }
-
-    /* ── Hero feature strip ── */
-    .hl-hfeats { display:flex; align-items:center; flex-wrap:wrap; justify-content:center; margin-top:36px; padding:14px 28px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.07); border-radius:100px; }
-    .hl-hfi { display:flex; align-items:center; gap:7px; padding:0 16px; font-size:12px; font-weight:600; color:rgba(245,245,247,.5); white-space:nowrap; font-family:'Sora',sans-serif; }
-    .hl-hfsep { width:1px; height:14px; background:rgba(255,255,255,.1); flex-shrink:0; }
-
-    /* ── How it works steps ── */
-    .hl-steps2 { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; }
-    .hl-step2 { padding:32px 24px; background:#0a0a0b; border:1px solid rgba(255,255,255,.06); position:relative; transition:background .2s; }
-    .hl-step2:hover { background:#0f0f11; border-color:rgba(255,255,255,.1); }
-    .hl-step2:first-child { border-radius:20px 0 0 20px; }
-    .hl-step2:last-child  { border-radius:0 20px 20px 0; }
-    .hl-step-n2 { font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:600; color:rgba(245,245,247,.28); margin-bottom:16px; display:block; }
-    .hl-step-icon2 { width:44px; height:44px; margin-bottom:16px; }
-    .hl-step-title2 { font-size:14px; font-weight:700; color:#f5f5f7; margin-bottom:8px; letter-spacing:-.3px; font-family:'Sora',sans-serif; }
-    .hl-step-desc2 { font-size:13px; color:rgba(245,245,247,.48); line-height:1.7; font-family:'Sora',sans-serif; }
-
-    /* ── Story sections ── */
-    .hl-story2     { padding:100px 0; background:#000; }
-    .hl-story2-alt { padding:100px 0; background:#050505; }
-    .hl-sg2 { display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:center; }
-    .hl-snum { font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:600; color:rgba(245,245,247,.28); letter-spacing:1px; margin-bottom:18px; }
-    .hl-sh { font-size:clamp(28px,3.8vw,44px); font-weight:800; letter-spacing:-1.8px; line-height:1.08; color:#f5f5f7; margin-bottom:20px; font-family:'Sora',sans-serif; }
-    .hl-sh .hl-blue { color:#0a84ff; } .hl-sh .hl-green { color:#30d158; } .hl-sh .hl-amber { color:#ff9f0a; } .hl-sh .hl-purp { color:#bf5af2; }
-    .hl-sp { font-size:15px; color:rgba(245,245,247,.48); line-height:1.82; margin-bottom:16px; font-family:'Sora',sans-serif; }
-    .hl-pills2 { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
-    .hl-pill2 { padding:6px 14px; border-radius:100px; font-size:11.5px; font-weight:600; border:1px solid rgba(255,255,255,.1); color:rgba(245,245,247,.48); background:#0a0a0b; font-family:'Sora',sans-serif; }
-    .hl-panel2 { background:#0a0a0b; border-radius:20px; border:1px solid rgba(255,255,255,.07); padding:24px; overflow:hidden; position:relative; box-shadow:0 40px 80px rgba(0,0,0,.5); }
-    .hl-panel2::before { content:''; position:absolute; top:0; left:20px; right:20px; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent); }
-    .hl-ptitle2 { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.1px; color:rgba(245,245,247,.34); display:flex; align-items:center; gap:7px; margin-bottom:18px; }
-
-    /* ── ATS bars ── */
-    .hl-bar2 { margin-bottom:10px; }
-    .hl-bar-row2 { display:flex; justify-content:space-between; font-size:11px; color:rgba(245,245,247,.54); margin-bottom:4px; font-weight:500; }
-    .hl-bar-track2 { height:4px; background:rgba(255,255,255,.06); border-radius:2px; overflow:hidden; }
-    .hl-bar-fill2  { height:100%; border-radius:2px; }
-
-    /* ── Bias words ── */
-    .hl-words2 { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
-    .wc2 { padding:4px 11px; border-radius:7px; font-size:11px; font-weight:600; font-family:'JetBrains Mono',monospace; }
-    .wc2-m { background:rgba(10,132,255,.11); color:#4db3ff; border:1px solid rgba(10,132,255,.2); }
-    .wc2-f { background:rgba(191,90,242,.11); color:#d07ef7; border:1px solid rgba(191,90,242,.2); }
-    .wc2-n { background:rgba(48,209,88,.11);  color:#4cd964; border:1px solid rgba(48,209,88,.2); }
-
-    /* ── Template grid ── */
-    .hl-tmpl-grid2 { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
-    .hl-tmpl2 { border-radius:10px; border:1px solid rgba(255,255,255,.07); background:#141416; overflow:hidden; display:flex; flex-direction:column; min-height:110px; position:relative; cursor:pointer; transition:border-color .15s,transform .15s; }
-    .hl-tmpl2:hover { border-color:rgba(255,255,255,.18); transform:translateY(-2px); }
-    .hl-tmpl2-act { border-color:#0a84ff!important; box-shadow:0 0 0 2px rgba(10,132,255,.2); }
-    .hl-tmpl2-badge { position:absolute; bottom:6px; left:6px; right:6px; background:rgba(10,132,255,.15); border:1px solid rgba(10,132,255,.25); border-radius:5px; padding:3px 6px; font-size:9px; font-weight:700; color:#0a84ff; text-align:center; letter-spacing:.5px; text-transform:uppercase; }
-
-    /* ── Job cards ── */
-    .hl-job2 { padding:13px 15px; border-radius:12px; background:#141416; border:1px solid rgba(255,255,255,.07); display:flex; align-items:center; gap:12px; margin-bottom:8px; transition:background .15s; }
-    .hl-job2:hover { background:#181820; }
-    .hl-job-logo2 { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; flex-shrink:0; font-family:'JetBrains Mono',monospace; }
-    .hl-job-title2 { font-size:13px; font-weight:600; color:#f5f5f7; font-family:'Sora',sans-serif; }
-    .hl-job-co2    { font-size:11px; color:rgba(245,245,247,.34); margin-top:2px; font-family:'Sora',sans-serif; }
-    .hl-job-badge2 { padding:3px 10px; border-radius:100px; font-size:11px; font-weight:600; white-space:nowrap; flex-shrink:0; }
-
-    /* ── Interview ── */
-    .hl-radar-wrap2 { display:flex; flex-direction:column; align-items:center; }
-    .hl-qa2 { margin-bottom:14px; }
-    .hl-q2 { font-size:13px; font-weight:600; color:#f5f5f7; margin-bottom:7px; display:flex; gap:8px; align-items:flex-start; font-family:'Sora',sans-serif; }
-    .hl-a2 { font-size:12px; color:rgba(245,245,247,.5); line-height:1.68; padding-left:22px; font-family:'Sora',sans-serif; }
-    .hl-score-badge2 { display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:100px; font-size:12px; font-weight:700; background:rgba(48,209,88,.12); color:#30d158; border:1px solid rgba(48,209,88,.22); }
-
-    /* ── Comparison table ── */
-    .hl-compare2 { padding:100px 0; background:#000; }
-    .hl-compare-wrap2 { margin-top:52px; border-radius:22px; border:1px solid rgba(255,255,255,.07); overflow:hidden; }
-    .hl-compare-head2 { display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr; background:#0a0a0b; border-bottom:1px solid rgba(255,255,255,.07); }
-    .hl-compare-row2  { display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr; border-bottom:1px solid rgba(255,255,255,.05); transition:background .15s; }
-    .hl-compare-row2:last-child { border-bottom:none; }
-    .hl-compare-row2:hover { background:rgba(255,255,255,.02); }
-    .hl-ch2 { padding:16px 24px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:rgba(245,245,247,.3); font-family:'Sora',sans-serif; }
-    .hl-ch2-hl { background:rgba(10,132,255,.06); border-left:1px solid rgba(10,132,255,.15); border-right:1px solid rgba(10,132,255,.15); color:#0a84ff; display:flex; align-items:center; gap:7px; justify-content:center; }
-    .hl-cc2 { padding:16px 24px; font-size:13px; color:rgba(245,245,247,.54); display:flex; align-items:center; font-family:'Sora',sans-serif; }
-    .hl-cc2-feat { font-weight:600; color:#f5f5f7; font-size:13.5px; }
-    .hl-cc2-hl { background:rgba(10,132,255,.04); border-left:1px solid rgba(10,132,255,.1); border-right:1px solid rgba(10,132,255,.1); justify-content:center; font-weight:600; color:#f5f5f7; }
-    .hl-cc2-center { justify-content:center; }
-    .hl-chk2-y { color:#30d158; font-size:16px; }
-    .hl-chk2-n { color:rgba(245,245,247,.18); font-size:18px; }
-    .hl-chk2-p { color:#ff9f0a; font-size:11px; font-weight:700; }
-
-    /* ── Feature highlights ── */
-    .hl-highlights2 { padding:0 0 100px; background:#000; }
-    .hl-highlight-grid2 { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; margin-top:48px; }
-    .hl-highlight2 { padding:32px 28px; background:#0a0a0b; border:1px solid rgba(255,255,255,.06); position:relative; overflow:hidden; transition:background .2s; }
-    .hl-highlight2:hover { background:#0f0f11; border-color:rgba(255,255,255,.1); }
-    .hl-highlight2:first-child { border-radius:20px 0 0 0; }
-    .hl-highlight2:nth-child(3) { border-radius:0 20px 0 0; }
-    .hl-highlight2:nth-child(4) { border-radius:0 0 0 20px; }
-    .hl-highlight2:last-child { border-radius:0 0 20px 0; }
-    .hl-hi-icon2 { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; margin-bottom:18px; }
-    .hl-hi-title2 { font-size:15px; font-weight:700; color:#f5f5f7; margin-bottom:9px; letter-spacing:-.3px; font-family:'Sora',sans-serif; }
-    .hl-hi-desc2  { font-size:13px; color:rgba(245,245,247,.44); line-height:1.72; font-family:'Sora',sans-serif; }
-
-    /* ── FAQ ── */
-    .hl-faq2 { padding:100px 0; background:#050505; }
-    .hl-faq-list2 { max-width:720px; margin:48px auto 0; display:flex; flex-direction:column; gap:2px; }
-    .hl-faq-item2 { background:#0a0a0b; border:1px solid rgba(255,255,255,.07); border-radius:14px; overflow:hidden; transition:border-color .2s; }
-    .hl-faq-item2:hover { border-color:rgba(255,255,255,.12); }
-    .hl-faq-q2 { padding:20px 24px; font-size:14px; font-weight:600; color:#f5f5f7; display:flex; justify-content:space-between; align-items:center; cursor:pointer; gap:12px; font-family:'Sora',sans-serif; }
-    .hl-faq-q-icon2 { width:24px; height:24px; border-radius:50%; background:rgba(255,255,255,.06); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:16px; color:rgba(245,245,247,.5); }
-    .hl-faq-a2 { display:none; padding:0 24px 20px; font-size:14px; color:rgba(245,245,247,.48); line-height:1.78; font-family:'Sora',sans-serif; }
-
-    /* ── CTA ── */
-    .hl-cta2 { margin:0 0 120px; padding:80px 48px; border-radius:28px; background:#0a0a0b; border:1px solid rgba(255,255,255,.07); text-align:center; position:relative; overflow:hidden; }
-    .hl-cta2-glow { position:absolute; top:-300px; left:50%; transform:translateX(-50%); width:700px; height:700px; background:radial-gradient(ellipse at center,rgba(10,132,255,.1) 0%,transparent 70%); pointer-events:none; }
-    .hl-cta2-h { font-size:clamp(28px,4.5vw,52px); font-weight:800; letter-spacing:-2.5px; color:#f5f5f7; line-height:1.04; max-width:640px; margin:0 auto 20px; position:relative; z-index:1; font-family:'Sora',sans-serif; }
-    .hl-cta2-btns { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; position:relative; z-index:1; }
-    .hl-checks2 { display:flex; justify-content:center; gap:26px; flex-wrap:wrap; margin-top:36px; }
-    .hl-check2 { display:flex; align-items:center; gap:7px; font-size:13px; color:rgba(245,245,247,.32); font-family:'Sora',sans-serif; }
-
-    /* ── Eyebrow ── */
-    .hl-eyebrow2 { display:inline-flex; align-items:center; gap:8px; font-size:10.5px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#0a84ff; padding:6px 16px; border-radius:100px; border:1px solid rgba(10,132,255,.28); background:rgba(10,132,255,.07); margin-bottom:28px; font-family:'Sora',sans-serif; }
-
-    /* ── Buttons ── */
-    .hl-btn-p2 { display:inline-flex; align-items:center; gap:8px; padding:14px 30px; border-radius:100px; background:linear-gradient(135deg,#0a84ff,#0065cc); color:#fff; font-size:15px; font-weight:600; text-decoration:none; letter-spacing:-.2px; box-shadow:0 8px 28px rgba(10,132,255,.3); }
-    .hl-btn-g2 { display:inline-flex; align-items:center; gap:8px; padding:14px 30px; border-radius:100px; background:#141416; color:#f5f5f7; font-size:15px; font-weight:600; text-decoration:none; letter-spacing:-.2px; border:1px solid rgba(255,255,255,.12); }
-
-    /* ── Contact ── */
-    .hl-contact-card2 { background:#0a0a0b; border-radius:22px; border:1px solid rgba(255,255,255,.07); padding:40px; max-width:560px; margin:0 auto 100px; text-align:center; }
-    .hl-contact-email2 { display:inline-flex; align-items:center; gap:10px; padding:14px 28px; border-radius:14px; background:rgba(10,132,255,.08); border:1px solid rgba(10,132,255,.22); color:#4db3ff; font-size:14px; font-weight:600; text-decoration:none; font-family:'JetBrains Mono',monospace; word-break:break-all; }
-
-    /* ── Footer ── */
-    .hl-footer2 { border-top:1px solid rgba(255,255,255,.06); padding:44px 32px; display:grid; grid-template-columns:1fr auto; align-items:center; max-width:1100px; margin:0 auto; gap:20px; }
-    .hl-footer2-copy { font-size:13px; font-weight:600; color:rgba(245,245,247,.28); font-family:'Sora',sans-serif; }
-    .hl-footer2-links { display:flex; gap:24px; }
-    .hl-footer2-links a { font-size:13px; color:rgba(245,245,247,.3); text-decoration:none; transition:color .2s; }
-    .hl-footer2-links a:hover { color:rgba(245,245,247,.7); }
-
-    @media (max-width:860px) {
-      .hl-sg2 { grid-template-columns:1fr; gap:44px; }
-      .hl-steps2 { grid-template-columns:1fr 1fr; }
-      .hl-step2:first-child { border-radius:20px 0 0 0; }
-      .hl-step2:nth-child(2) { border-radius:0 20px 0 0; }
-      .hl-step2:nth-child(3) { border-radius:0 0 0 20px; }
-      .hl-step2:last-child   { border-radius:0 0 20px 0; }
-      .hl-compare-head2, .hl-compare-row2 { grid-template-columns:1.4fr 1fr; }
-      .hl-compare-head2 > *:nth-child(3), .hl-compare-head2 > *:nth-child(4),
-      .hl-compare-row2 > *:nth-child(3),  .hl-compare-row2 > *:nth-child(4) { display:none; }
-      .hl-highlight-grid2 { grid-template-columns:1fr 1fr; }
-      .hl-footer2 { grid-template-columns:1fr; }
-      .hl-hfeats { border-radius:16px; }
-    }
-    """)
-
-    # ── helpers ──────────────────────────────────────────────────────
-    def _ats_ring(score=78):
-        r,c,sw=38,48,5; circ=2*_math.pi*r; fill=(score/100)*circ; off=circ*.25
-        return('<svg width="96" height="96" viewBox="0 0 96 96" fill="none">'
-               '<circle cx="'+str(c)+'" cy="'+str(c)+'" r="'+str(r)+'" stroke="rgba(255,255,255,0.06)" stroke-width="'+str(sw)+'"/>'
-               '<circle cx="'+str(c)+'" cy="'+str(c)+'" r="'+str(r)+'" stroke="url(#ag2)" stroke-width="'+str(sw)+'"'
-               ' stroke-dasharray="'+str(round(fill,1))+' '+str(round(circ,1))+'"'
-               ' stroke-dashoffset="-'+str(round(off,1))+'" stroke-linecap="round"/>'
-               '<text x="'+str(c)+'" y="'+str(c+1)+'" text-anchor="middle" dominant-baseline="middle"'
-               ' fill="#f5f5f7" font-size="18" font-weight="800" font-family="Sora,sans-serif">'+str(score)+'</text>'
-               '<defs><linearGradient id="ag2" x1="0" y1="0" x2="96" y2="96" gradientUnits="userSpaceOnUse">'
-               '<stop offset="0%" stop-color="#30d158"/><stop offset="100%" stop-color="#0a84ff"/>'
-               '</linearGradient></defs></svg>')
-
-    def _radar_svg():
-        cats=["Communication","Technical","Confidence","Structure","Examples"]; scores=[0.82,0.74,0.88,0.70,0.78]
-        cx=cy=95; R=65; n=len(cats)
-        def pt(i,frac): angle=_math.pi/2+2*_math.pi*i/n; return cx+R*frac*_math.cos(angle), cy-R*frac*_math.sin(angle)
-        grid="".join('<polygon points="'+" ".join(str(round(pt(i,lv)[0],1))+","+str(round(pt(i,lv)[1],1)) for i in range(n))+'" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>' for lv in [.25,.5,.75,1.])
-        axes="".join('<line x1="'+str(cx)+'" y1="'+str(cy)+'" x2="'+str(round(pt(i,1)[0],1))+'" y2="'+str(round(pt(i,1)[1],1))+'" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>' for i in range(n))
-        poly=" ".join(str(round(pt(i,scores[i])[0],1))+","+str(round(pt(i,scores[i])[1],1)) for i in range(n))
-        dots="".join('<circle cx="'+str(round(pt(i,scores[i])[0],1))+'" cy="'+str(round(pt(i,scores[i])[1],1))+'" r="3.5" fill="#0a84ff"/>' for i in range(n))
-        labels="".join('<text x="'+str(round(pt(i,1.27)[0],1))+'" y="'+str(round(pt(i,1.27)[1],1))+'" text-anchor="middle" dominant-baseline="middle" fill="rgba(245,245,247,0.4)" font-size="8.5" font-family="Sora,sans-serif">'+cats[i]+'</text>' for i in range(n))
-        return '<svg width="190" height="190" viewBox="0 0 190 190" fill="none">'+grid+axes+'<polygon points="'+poly+'" fill="rgba(10,132,255,0.14)" stroke="#0a84ff" stroke-width="1.5"/>'+dots+labels+'</svg>'
-
-    def _ats_bars():
-        data=[("Format & Layout",92,"#30d158"),("Keyword Coverage",71,"#ff9f0a"),("Sections Present",85,"#0a84ff"),("Action Verbs",68,"#ff9f0a"),("Contact Info",100,"#30d158"),("Date Consistency",80,"#0a84ff")]
-        return "".join('<div class="hl-bar2"><div class="hl-bar-row2"><span>'+lbl+'</span><span style="color:'+col+';font-weight:600">'+str(pct)+'%</span></div><div class="hl-bar-track2"><div class="hl-bar-fill2" style="width:'+str(pct)+'%;background:'+col+'"></div></div></div>' for lbl,pct,col in data)
-
-    def _score_bars():
-        data=[("Communication","85%","#0a84ff"),("Technical","79%","#bf5af2"),("Confidence","88%","#30d158"),("Structure","74%","#ff9f0a")]
-        return "".join('<div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(245,245,247,0.54);margin-bottom:5px"><span>'+d+'</span><span style="color:'+col+';font-weight:600">'+s+'</span></div><div style="height:3px;background:rgba(255,255,255,0.07);border-radius:2px;margin-bottom:8px;overflow:hidden"><div style="width:'+s+';height:100%;background:'+col+';border-radius:2px"></div></div>' for d,s,col in data)
-
-    def _mini_resume2(name, accent, layout="single", active=False, sidebar_bg=None, header_style="bar"):
-        act=' hl-tmpl2-act' if active else ''
-        badge=('<div class="hl-tmpl2-badge">'+name+'</div>') if active else ''
-        def ln(w,col="rgba(255,255,255,0.15)",h="2px",mt="3px"): return f'<div style="height:{h};width:{w};background:{col};border-radius:1px;margin-top:{mt}"></div>'
-        def nb(col): return f'<div style="height:4px;width:55%;background:{col};border-radius:1px;margin-bottom:2px"></div><div style="height:2px;width:38%;background:{col};opacity:.5;border-radius:1px"></div>'
-        def sl(col): return f'<div style="height:2px;width:40%;background:{col};opacity:.7;border-radius:1px;margin-top:4px;margin-bottom:2px"></div>'
-        body=""
-        if layout=="sidebar":
-            sb=sidebar_bg or "#1e293b"
-            body=(f'<div style="display:flex;gap:0;flex:1;min-height:0"><div style="width:32%;background:{sb};padding:4px 3px;display:flex;flex-direction:column;gap:2px;">'+nb(accent)+ln("90%","rgba(255,255,255,0.2)","1px")+sl(accent)+ln("80%","rgba(255,255,255,0.18)")+ln("65%","rgba(255,255,255,0.18)")+sl(accent)+ln("70%","rgba(255,255,255,0.18)")+ln("55%","rgba(255,255,255,0.18)")+'</div><div style="flex:1;padding:4px 4px;display:flex;flex-direction:column;gap:0;">'+sl(accent)+ln("90%")+ln("80%")+ln("70%")+sl(accent)+ln("85%")+ln("75%")+ln("60%")+'</div></div>')
-        elif layout=="two-col":
-            body=(f'<div style="display:flex;gap:4px;flex:1;min-height:0;padding:2px;"><div style="flex:1;display:flex;flex-direction:column;gap:0;">'+sl(accent)+ln("90%")+ln("75%")+ln("80%")+sl(accent)+ln("85%")+ln("70%")+ln("65%")+'</div><div style="flex:1;display:flex;flex-direction:column;gap:0;">'+sl(accent)+ln("80%")+ln("90%")+ln("70%")+sl(accent)+ln("75%")+ln("60%")+ln("80%")+'</div></div>')
-        elif layout=="timeline":
-            body=(f'<div style="flex:1;padding:2px 3px;display:flex;flex-direction:column;gap:0;">'+sl(accent)+f'<div style="display:flex;align-items:flex-start;gap:3px;margin-top:2px"><div style="width:4px;height:4px;border-radius:50%;background:{accent};flex-shrink:0;margin-top:1px"></div><div style="flex:1">'+ln("85%")+ln("70%")+f'</div></div><div style="margin-left:5px;width:1px;height:5px;background:{accent};opacity:.3"></div><div style="display:flex;align-items:flex-start;gap:3px"><div style="width:4px;height:4px;border-radius:50%;background:{accent};flex-shrink:0;margin-top:1px"></div><div style="flex:1">'+ln("78%")+ln("62%")+'</div></div>'+sl(accent)+ln("90%")+ln("75%")+'</div>')
-        else:
-            body=(f'<div style="flex:1;padding:2px 3px;display:flex;flex-direction:column;gap:0;">'+sl(accent)+ln("90%")+ln("80%")+ln("72%")+sl(accent)+ln("85%")+ln("68%")+ln("76%")+sl(accent)+ln("70%")+ln("55%")+'</div>')
-        if header_style=="band":
-            hdr=f'<div style="background:{accent};padding:4px 5px;border-radius:3px 3px 0 0;"><div style="height:3px;width:50%;background:rgba(255,255,255,0.9);border-radius:1px;margin-bottom:1px"></div><div style="height:2px;width:32%;background:rgba(255,255,255,0.55);border-radius:1px"></div></div>'
-        elif header_style=="left-accent":
-            hdr=f'<div style="border-left:2px solid {accent};padding:3px 5px;"><div style="height:3px;width:50%;background:rgba(255,255,255,0.7);border-radius:1px;margin-bottom:1px"></div><div style="height:2px;width:30%;background:{accent};border-radius:1px"></div><div style="margin-top:2px;display:flex;gap:3px"><div style="height:2px;width:22%;background:rgba(255,255,255,0.2);border-radius:1px"></div><div style="height:2px;width:18%;background:rgba(255,255,255,0.2);border-radius:1px"></div></div></div>'
-        elif header_style=="center":
-            hdr=f'<div style="text-align:center;padding:4px 3px;border-bottom:1px solid {accent};"><div style="height:3px;width:45%;background:rgba(255,255,255,0.75);border-radius:1px;margin:0 auto 2px"></div><div style="height:2px;width:28%;background:{accent};border-radius:1px;margin:0 auto 2px"></div><div style="display:flex;justify-content:center;gap:3px"><div style="height:1.5px;width:14%;background:rgba(255,255,255,0.2);border-radius:1px"></div><div style="height:1.5px;width:14%;background:rgba(255,255,255,0.2);border-radius:1px"></div></div></div>'
-        else:
-            hdr="" if layout=="sidebar" else f'<div style="height:4px;background:{accent};border-radius:3px 3px 0 0;margin-bottom:3px"></div><div style="padding:0 4px 2px;"><div style="height:3px;width:52%;background:rgba(255,255,255,0.7);border-radius:1px;margin-bottom:2px"></div><div style="height:2px;width:34%;background:{accent};opacity:.6;border-radius:1px"></div><div style="display:flex;gap:3px;margin-top:2px"><div style="height:1.5px;width:16%;background:rgba(255,255,255,0.18);border-radius:1px"></div><div style="height:1.5px;width:16%;background:rgba(255,255,255,0.18);border-radius:1px"></div></div></div>'
-        return f'<div class="hl-tmpl2{act}" style="display:flex;flex-direction:column;padding:0;overflow:hidden;">'+hdr+body+badge+'</div>'
-
-    def _tmpl_gallery2():
-        templates=[("Modern","#0a84ff","center","center",None,True),("Classic","#f5f5f7","single","left-accent",None,False),("Executive","#ff9f0a","single","band",None,False),("Timeline","#30d158","timeline","bar",None,False),("Corporate","#1d4ed8","sidebar","bar","#1a2744",False),("Slate","#64748b","sidebar","bar","#1a1f2a",False),("Rose","#fb7185","single","band",None,False),("Midnight","#a78bfa","two-col","bar",None,False)]
-        return "".join(_mini_resume2(n,a,l,h,s,ac) for n,a,l,h,s,ac in templates)
-
-    def _job_cards2():
-        jobs=[("SDE II","Google","Mountain View · Full-time","#4285f4","G",True),("ML Engineer","Anthropic","Remote · Full-time","#d97706","A",False),("Backend Dev","Razorpay","Bangalore · Full-time","#2563eb","R",False),("Data Analyst","Zepto","Mumbai · Hybrid","#7c3aed","Z",False)]
-        out=""
-        for title,co,meta,col,letter,featured in jobs:
-            bb="rgba(10,132,255,0.12)" if featured else "rgba(255,255,255,0.05)"
-            bc="#4db3ff" if featured else "rgba(245,245,247,0.3)"
-            btx="Featured" if featured else "New"
-            out+='<div class="hl-job2"><div class="hl-job-logo2" style="background:'+col+'22;color:'+col+'">'+letter+'</div><div style="flex:1;min-width:0"><div class="hl-job-title2">'+title+' \u2014 '+co+'</div><div class="hl-job-co2">'+meta+'</div></div><div class="hl-job-badge2" style="background:'+bb+';color:'+bc+';border:1px solid '+bc+'40">'+btx+'</div></div>'
-        return out
-
-    def _pills2(labels):
-        return "".join('<span class="hl-pill2">'+l+'</span>' for l in labels)
-
-    def _checklist2():
-        items=["ATS score in seconds","Bias detection & rewrite","15 resume templates","Cover letter generator","Live job search","AI Interview Coach"]
-        chk='<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#30d158" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-        return "".join('<div class="hl-check2">'+chk+'<span>'+item+'</span></div>' for item in items)
-
-    def _cy(): return '<span class="hl-chk2-y">&#10003;</span>'
-    def _cn(): return '<span class="hl-chk2-n">&mdash;</span>'
-    def _cp(t): return '<span class="hl-chk2-p">'+t+'</span>'
-
-    # ── Section renders ──────────────────────────────────────────────
-    # Inline landing page nav (separate from app nav)
-    _H('<div style="background:#000;padding:20px 0 0;">'
-       '<div class="hl-nav2">'
-       '<a href="#" class="hl-logo2"><div class="hl-logo-icon2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5z M2 17l10 5 10-5 M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>HIRELYZER</a>'
-       '<div class="hl-nav2-links"><a href="#lp-how">How it works</a><a href="#lp-analyzer">Analyzer</a><a href="#lp-builder">Builder</a><a href="#lp-compare">Compare</a><a href="#lp-faq">FAQ</a></div>'
-       '<a href="'+APP_URL+'" target="_blank" class="hl-nav2-cta"><svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M12 2L13.8 8.2L20 10L13.8 11.8L12 18L10.2 11.8L4 10L10.2 8.2L12 2Z"/></svg>Open App</a>'
-       '</div></div>')
-
-    # Feature strip
-    _H('<div style="background:#000;padding:28px 0 0;">'
-       '<div class="hl-hfeats">'
-       '<div class="hl-hfi"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#30d158" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>ATS Score in seconds</div>'
-       '<div class="hl-hfsep"></div>'
-       '<div class="hl-hfi"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#30d158" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Bias detection &amp; AI rewrite</div>'
-       '<div class="hl-hfsep"></div>'
-       '<div class="hl-hfi"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#30d158" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>15 ATS-certified templates</div>'
-       '<div class="hl-hfsep"></div>'
-       '<div class="hl-hfi"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#30d158" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>AI Interview Coach</div>'
-       '<div class="hl-hfsep"></div>'
-       '<div class="hl-hfi"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#30d158" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Live job search</div>'
-       '</div></div>')
-
-    # How it works
-    _H('<div id="lp-how" style="padding:80px 0 60px;background:#000"><div class="hl-sec">'
-       '<div class="hl-div">How it works</div>'
-       '<div class="hl-steps2">'
-       '<div class="hl-step2"><span class="hl-step-n2">01</span><svg class="hl-step-icon2" viewBox="0 0 44 44" fill="none"><rect width="44" height="44" rx="12" fill="rgba(10,132,255,0.1)"/><path d="M22 28V20M22 20L19 23M22 20L25 23" stroke="#0a84ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 30h14" stroke="#0a84ff" stroke-width="1.6" stroke-linecap="round"/><rect x="14" y="13" width="16" height="19" rx="3" stroke="#0a84ff" stroke-width="1.4" stroke-dasharray="3 2" fill="none"/></svg><div class="hl-step-title2">Upload your resume</div><div class="hl-step-desc2">Drop any PDF. Our parser handles messy formats, multi-column layouts, and scanned documents via OCR fallback.</div></div>'
-       '<div class="hl-step2"><span class="hl-step-n2">02</span><svg class="hl-step-icon2" viewBox="0 0 44 44" fill="none"><rect width="44" height="44" rx="12" fill="rgba(48,209,88,0.1)"/><circle cx="20" cy="20" r="7" stroke="#30d158" stroke-width="1.5" fill="none"/><path d="M20 17v3l2 1.5" stroke="#30d158" stroke-width="1.5" stroke-linecap="round"/><path d="M25.2 25.2l3.5 3.5" stroke="#30d158" stroke-width="1.7" stroke-linecap="round"/></svg><div class="hl-step-title2">Instant AI analysis</div><div class="hl-step-desc2">ATS scoring, bias detection, grammar check, keyword matching — all computed in seconds with detailed feedback.</div></div>'
-       '<div class="hl-step2"><span class="hl-step-n2">03</span><svg class="hl-step-icon2" viewBox="0 0 44 44" fill="none"><rect width="44" height="44" rx="12" fill="rgba(191,90,242,0.1)"/><rect x="12" y="11" width="13" height="18" rx="2.5" stroke="#bf5af2" stroke-width="1.5" fill="none"/><rect x="19" y="16" width="14" height="18" rx="2.5" fill="rgba(191,90,242,0.08)" stroke="#bf5af2" stroke-width="1.5"/><path d="M22 21h8M22 24.5h8M22 28h5" stroke="#bf5af2" stroke-width="1.3" stroke-linecap="round"/></svg><div class="hl-step-title2">Build or rewrite</div><div class="hl-step-desc2">Use the AI rewriter or open the Resume Builder. Choose from 15 templates, generate a cover letter, export to PDF or DOCX.</div></div>'
-       '<div class="hl-step2"><span class="hl-step-n2">04</span><svg class="hl-step-icon2" viewBox="0 0 44 44" fill="none"><rect width="44" height="44" rx="12" fill="rgba(255,159,10,0.1)"/><path d="M22 28c-3.31 0-6-2.69-6-6 0-4 3-8 6-9 3 1 6 5 6 9 0 3.31-2.69 6-6 6z" stroke="#ff9f0a" stroke-width="1.5" fill="none"/><circle cx="22" cy="22" r="2" fill="#ff9f0a"/></svg><div class="hl-step-title2">Apply with confidence</div><div class="hl-step-desc2">Discover live job listings, salary benchmarks, curated courses, and practice with the AI Interview Coach before applying.</div></div>'
-       '</div></div></div>')
-
-    # Feature 01 — ATS Analyzer
-    ring=_ats_ring(78); bars=_ats_bars()
-    _H('<div id="lp-analyzer" class="hl-story2"><div class="hl-sec"><div class="hl-sg2">'
-       '<div><div class="hl-snum">Feature 01 &mdash; Resume Analyzer</div>'
-       '<h2 class="hl-sh">Your resume, <span class="hl-blue">scored like a machine</span> reads it</h2>'
-       '<div class="hl-sp">Most resumes never reach a human. ATS silently filters them on format, missing keywords, or structural issues. Hirelyzer replicates how ATS parsers actually read your document &mdash; not just a surface keyword match.</div>'
-       '<div class="hl-sp">You get a score across six dimensions, a prioritised fix list, grammar signals, and a full keyword-gap report mapped to the roles you care about.</div>'
-       '<div class="hl-pills2">'+_pills2(["ATS Score","6-Dimension Breakdown","Keyword Gap","Grammar Check","Downloadable Report"])+'</div>'
-       '</div>'
-       '<div><div class="hl-panel2">'
-       '<div class="hl-ptitle2"><svg width="11" height="11" viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="5.5" fill="#30d158"/></svg>ATS Analysis Report</div>'
-       '<div style="display:flex;align-items:center;gap:18px;margin-bottom:22px">'+ring+'<div>'
-       '<div style="font-size:9px;color:rgba(245,245,247,0.34);text-transform:uppercase;letter-spacing:.9px;font-weight:700;margin-bottom:4px">Overall Score</div>'
-       '<div style="font-size:11px;color:#30d158;font-weight:600">Good &middot; Minor fixes needed</div>'
-       '<div style="font-size:10px;color:rgba(245,245,247,0.34);margin-top:4px">Parsed in 1.4s</div>'
-       '</div></div>'+bars
-       +'</div></div>'
-       '</div></div></div>')
-
-    # Feature 02 — Bias Detection
-    _H('<div class="hl-story2-alt"><div class="hl-sec"><div class="hl-sg2">'
-       '<div style="order:2"><div class="hl-snum">Feature 02 &mdash; Bias Detection</div>'
-       '<h2 class="hl-sh">Bias-free language that <span class="hl-purp">opens every door</span></h2>'
-       '<div class="hl-sp">Gender-coded words can unconsciously signal culture fit to recruiters. Hirelyzer scans every verb, adjective, and phrase against a curated bias lexicon of 400+ terms.</div>'
-       '<div class="hl-sp">The AI rewriter suggests impact-neutral alternatives, preserving your achievements while broadening appeal across hiring contexts.</div>'
-       '<div class="hl-pills2">'+_pills2(["Gender-coded Detection","AI Neutral Rewrite","Lexicon of 400+ Words","One-click Apply"])+'</div>'
-       '</div>'
-       '<div style="order:1"><div class="hl-panel2">'
-       '<div class="hl-ptitle2"><svg width="11" height="11" viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="5.5" fill="#bf5af2"/></svg>Bias Analysis Report</div>'
-       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">'
-       '<div style="padding:14px;background:rgba(10,132,255,0.06);border-radius:12px;border:1px solid rgba(10,132,255,0.15)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.9px;color:rgba(245,245,247,0.34);font-weight:700;margin-bottom:6px">Masculine</div><div style="font-size:26px;font-weight:800;color:#4db3ff">8</div><div style="font-size:11px;color:rgba(245,245,247,0.34)">words flagged</div></div>'
-       '<div style="padding:14px;background:rgba(191,90,242,0.06);border-radius:12px;border:1px solid rgba(191,90,242,0.15)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.9px;color:rgba(245,245,247,0.34);font-weight:700;margin-bottom:6px">Feminine</div><div style="font-size:26px;font-weight:800;color:#d07ef7">3</div><div style="font-size:11px;color:rgba(245,245,247,0.34)">words flagged</div></div>'
-       '</div>'
-       '<div class="hl-words2"><span class="wc2 wc2-m">driven</span><span class="wc2 wc2-m">aggressive</span><span class="wc2 wc2-m">dominate</span><span class="wc2 wc2-f">nurture</span><span class="wc2 wc2-f">support</span><span class="wc2 wc2-n">deliver</span><span class="wc2 wc2-n">execute</span></div>'
-       '<div style="padding:14px;background:rgba(48,209,88,0.06);border-radius:12px;border:1px solid rgba(48,209,88,0.18)">'
-       '<div style="font-size:11px;font-weight:700;color:#30d158;margin-bottom:6px">AI Rewrite Applied</div>'
-       '<div style="font-size:12px;color:rgba(245,245,247,0.54);line-height:1.65"><span style="text-decoration:line-through;opacity:.45">Aggressively drove growth</span> &rarr; <span style="color:#30d158">Accelerated high-impact results</span> across 3 teams</div>'
-       '</div></div></div>'
-       '</div></div></div>')
-
-    # Feature 03 — Resume Builder
-    tmpl=_tmpl_gallery2()
-    _H('<div id="lp-builder" class="hl-story2"><div class="hl-sec"><div class="hl-sg2">'
-       '<div><div class="hl-snum">Feature 03 &mdash; Resume Builder</div>'
-       '<h2 class="hl-sh">Build resumes that <span class="hl-green">look as good</span> as they parse</h2>'
-       '<div class="hl-sp">Fifteen ATS-optimised templates — from understated minimal to executive prestige — all built on strict single-column structures that parse correctly in every major hiring platform.</div>'
-       '<div class="hl-sp">Export to DOCX (three ATS compliance levels) or PDF. One click generates a tailored cover letter for your target company, formatted and ready to send.</div>'
-       '<div class="hl-pills2">'+_pills2(["15 Templates","DOCX + PDF Export","AI Cover Letter","Live Preview","ATS Single-Column"])+'</div>'
-       '</div>'
-       '<div><div class="hl-panel2">'
-       '<div class="hl-ptitle2"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="10" height="14" rx="2" stroke="#30d158" stroke-width="1.5"/><rect x="11" y="7" width="10" height="14" rx="2" fill="rgba(48,209,88,.08)" stroke="#30d158" stroke-width="1.5"/></svg>Template Gallery &mdash; 15 Designs</div>'
-       '<div class="hl-tmpl-grid2">'+tmpl+'</div>'
-       '<div style="padding:14px;background:rgba(10,132,255,0.06);border-radius:12px;border:1px solid rgba(10,132,255,0.18);display:flex;align-items:center;justify-content:space-between;gap:12px">'
-       '<div><div style="font-size:12px;font-weight:700;color:#0a84ff">Modern &mdash; ATS Certified</div><div style="font-size:11px;color:rgba(245,245,247,0.34);margin-top:2px">Sora &middot; Single-column &middot; Navy headings</div></div>'
-       '<a href="'+APP_URL+'" target="_blank" style="padding:8px 18px;background:#0a84ff;color:#fff;border-radius:100px;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap;flex-shrink:0">Use this</a>'
-       '</div></div></div>'
-       '</div></div></div>')
-
-    # Feature 04 — Career Intelligence
-    cards=_job_cards2()
-    _H('<div class="hl-story2-alt"><div class="hl-sec"><div class="hl-sg2">'
-       '<div style="order:2"><div class="hl-snum">Feature 04 &mdash; Career Intelligence</div>'
-       '<h2 class="hl-sh">Jobs, salaries, courses &mdash; <span class="hl-amber">one place</span></h2>'
-       '<div class="hl-sp">The Job Search Hub pulls live listings from LinkedIn, Naukri, Foundit, and Indeed with remote and employment-type filters.</div>'
-       '<div class="hl-sp">Hirelyzer surfaces salary benchmarks by role and market, curated courses mapped to skill gaps in your resume, and prep videos.</div>'
-       '<div class="hl-pills2">'+_pills2(["Live Job Listings","Salary Benchmarks","Course Recommendations","Skills Radar","Remote Filter"])+'</div>'
-       '</div>'
-       '<div style="order:1"><div class="hl-panel2">'
-       '<div class="hl-ptitle2"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="14" rx="2" stroke="#ff9f0a" stroke-width="1.5"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" stroke="#ff9f0a" stroke-width="1.5"/></svg>Job Search Hub</div>'
-       +cards+
-       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">'
-       '<div style="padding:12px;background:rgba(255,159,10,0.06);border-radius:10px;border:1px solid rgba(255,159,10,0.15)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.9px;color:rgba(245,245,247,0.34);font-weight:700;margin-bottom:5px">Avg Salary</div><div style="font-size:20px;font-weight:800;color:#ff9f0a">&#8377;18&ndash;32 LPA</div><div style="font-size:11px;color:rgba(245,245,247,0.34)">Backend &middot; India</div></div>'
-       '<div style="padding:12px;background:rgba(10,132,255,0.06);border-radius:10px;border:1px solid rgba(10,132,255,0.15)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.9px;color:rgba(245,245,247,0.34);font-weight:700;margin-bottom:5px">Platforms</div><div style="font-size:13px;font-weight:700;color:#f5f5f7;line-height:1.7">LinkedIn &middot; Naukri<br>Foundit &middot; Indeed</div></div>'
-       '</div></div></div>'
-       '</div></div></div>')
-
-    # Feature 05 — AI Interview Coach
-    sbars=_score_bars(); radar=_radar_svg()
-    _H('<div class="hl-story2"><div class="hl-sec"><div class="hl-sg2">'
-       '<div><div class="hl-snum">Feature 05 &mdash; AI Interview Coach</div>'
-       '<h2 class="hl-sh">Practice until <span class="hl-blue">every answer</span> lands</h2>'
-       '<div class="hl-sp">Upload your resume and Hirelyzer generates interview questions derived from your actual experience — not generic prompts. Answer in free text; the AI coach scores you on 5 dimensions.</div>'
-       '<div class="hl-sp">Every session ends with a performance radar chart, a detailed Q&amp;A review, and course recommendations tied to your weakest dimensions.</div>'
-       '<div class="hl-pills2">'+_pills2(["Resume-based Questions","Real-time AI Scoring","Radar Chart","Session History","Downloadable Report"])+'</div>'
-       '</div>'
-       '<div><div class="hl-panel2">'
-       '<div class="hl-ptitle2" style="justify-content:space-between">'
-       '<div style="display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="#ff453a" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>Mock Interview &middot; Session 3</div>'
-       '<div class="hl-score-badge2"><svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#30d158"/></svg>82 / 100</div>'
-       '</div>'
-       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">'
-       '<div>'
-       '<div class="hl-qa2"><div class="hl-q2"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10" stroke="#0a84ff" stroke-width="1.5"/><path d="M12 16v-4M12 8h.01" stroke="#0a84ff" stroke-width="1.8" stroke-linecap="round"/></svg>Describe your most complex backend system.</div><div class="hl-a2">Built a multi-tenant microservices platform handling 2M events/day using Kafka, Redis, and PostgreSQL with 40% lower P99 latency.</div></div>'
-       '<div class="hl-qa2"><div class="hl-q2"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10" stroke="#bf5af2" stroke-width="1.5"/><path d="M12 16v-4M12 8h.01" stroke="#bf5af2" stroke-width="1.8" stroke-linecap="round"/></svg>How do you handle technical debt?</div><div class="hl-a2">I prioritise tech debt as a first-class roadmap item, quantifying velocity cost before pitching refactors to stakeholders.</div></div>'
-       '<div style="margin-top:12px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.9px;color:rgba(245,245,247,0.34);font-weight:700;margin-bottom:8px">Score breakdown</div>'+sbars+'</div></div>'
-       '<div class="hl-radar-wrap2">'+radar+'<div style="font-size:11px;color:rgba(245,245,247,0.34);margin-top:6px;text-align:center">Performance radar</div></div>'
-       '</div></div></div>'
-       '</div></div></div>')
-
-    # Comparison table
-    rows=[("ATS Resume Scoring",_cy(),_cn(),_cn()),("6-Dimension Breakdown",_cy(),_cn(),_cn()),("Gender Bias Detection",_cy(),_cn(),_cn()),("AI Neutral Rewrite",_cy(),_cn(),_cn()),("15 Resume Templates",_cy(),_cp("3&ndash;5"),_cp("Limited")),("DOCX &amp; PDF Export",_cy(),_cp("PDF only"),_cn()),("AI Cover Letter",_cy(),_cn(),_cn()),("Live Job Search",_cy(),_cn(),_cp("1 only")),("Salary Benchmarks",_cy(),_cn(),_cn()),("AI Interview Coach",_cy(),_cn(),_cn()),("100% Free, No Sign-up",_cy(),_cp("Freemium"),_cp("Paid"))]
-    header='<div class="hl-compare-head2"><div class="hl-ch2" style="padding:20px 24px">Feature</div><div class="hl-ch2 hl-ch2-hl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5z M2 17l10 5 10-5 M2 12l10 5 10-5" stroke="#0a84ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Hirelyzer</div><div class="hl-ch2 hl-cc2-center">Resumeworded</div><div class="hl-ch2 hl-cc2-center">Zety</div></div>'
-    body="".join('<div class="hl-compare-row2"><div class="hl-cc2 hl-cc2-feat">'+f+'</div><div class="hl-cc2 hl-cc2-hl hl-cc2-center">'+h+'</div><div class="hl-cc2 hl-cc2-center">'+c2+'</div><div class="hl-cc2 hl-cc2-center">'+c3+'</div></div>' for f,h,c2,c3 in rows)
-    _H('<div id="lp-compare" class="hl-compare2"><div class="hl-sec">'
-       '<div class="hl-div">How we compare</div>'
-       '<div style="text-align:center;margin-bottom:0">'
-       '<h2 style="font-size:clamp(26px,3.5vw,42px);font-weight:800;letter-spacing:-1.8px;color:#f5f5f7;line-height:1.08;font-family:Sora,sans-serif">Everything in one place &mdash; <span style="color:#0a84ff">completely free</span></h2>'
-       '<div style="font-size:15px;color:rgba(245,245,247,0.44);margin-top:14px;max-width:480px;margin-left:auto;margin-right:auto;line-height:1.7;font-family:Sora,sans-serif">No paywalls. No partial features. Hirelyzer gives you the complete career toolkit at zero cost.</div>'
-       '</div>'
-       '<div class="hl-compare-wrap2">'+header+body+'</div>'
-       '</div></div>')
-
-    # Why Hirelyzer highlights
-    hcards=[
-        ("#0a84ff","rgba(10,132,255,0.1)",'<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#0a84ff" stroke-width="1.5" fill="none" stroke-linecap="round"/>',
-         "ATS-Certified Scoring","Our six-dimension ATS engine parses your resume exactly as real hiring systems do — format, keywords, sections, verbs, contact info, and date consistency."),
-        ("#bf5af2","rgba(191,90,242,0.1)",'<circle cx="12" cy="12" r="10" stroke="#bf5af2" stroke-width="1.5" fill="none"/><path d="M12 8v4M12 16h.01" stroke="#bf5af2" stroke-width="1.8" stroke-linecap="round"/>',
-         "Bias Lexicon of 400+ Terms","A curated gender-coded word database flags masculine and feminine language patterns, then our AI rewrites every phrase to be impact-neutral."),
-        ("#30d158","rgba(48,209,88,0.1)",'<rect x="3" y="3" width="10" height="14" rx="2" stroke="#30d158" stroke-width="1.5" fill="none"/><rect x="11" y="7" width="10" height="14" rx="2" fill="none" stroke="#30d158" stroke-width="1.5"/>',
-         "15 ATS-Ready Templates","Every template is single-column, structured to parse in Greenhouse, Lever, Workday, and iCIMS. Export as DOCX (3 compliance tiers) or PDF in one click."),
-        ("#ff9f0a","rgba(255,159,10,0.1)",'<rect x="2" y="7" width="20" height="14" rx="2" stroke="#ff9f0a" stroke-width="1.5" fill="none"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" stroke="#ff9f0a" stroke-width="1.5"/>',
-         "Live Job Intelligence","Pull live listings from LinkedIn, Naukri, Foundit, and Indeed with role, location, and remote filters — plus salary benchmarks and curated skill courses."),
-        ("#ff453a","rgba(255,69,58,0.1)",'<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="#ff453a" stroke-width="1.5" fill="none" stroke-linecap="round"/>',
-         "Resume-Based Interview Prep","Questions are generated from your actual resume. Get scored across 5 competency dimensions with a radar chart and downloadable session history."),
-        ("#4db3ff","rgba(10,132,255,0.08)",'<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="#4db3ff" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
-         "Instant — No Sign-up","Upload a PDF and get your full ATS report, bias analysis, keyword gaps, and fix list in under 2 seconds. No account, no email, no credit card."),
-    ]
-    hitems="".join('<div class="hl-highlight2"><div class="hl-hi-icon2" style="background:'+bg+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none">'+icon+'</svg></div><div class="hl-hi-title2">'+title+'</div><div class="hl-hi-desc2">'+desc+'</div></div>' for col,bg,icon,title,desc in hcards)
-    _H('<div class="hl-highlights2"><div class="hl-sec"><div class="hl-div">Why Hirelyzer</div><div class="hl-highlight-grid2">'+hitems+'</div></div></div>')
-
-    # FAQ
-    faqs=[
-        ("Is Hirelyzer completely free?","Yes &mdash; the core features including ATS scoring, bias detection, and job search are fully free. No credit card required."),
-        ("What file formats does Hirelyzer accept?","PDF is the primary input format. Our parser handles standard, multi-column, and OCR-scanned PDFs. Export to DOCX or PDF is available from the Resume Builder."),
-        ("How accurate is the ATS scoring?","Our scoring engine replicates how real ATS systems parse resumes across six dimensions. We test regularly against major platforms like Greenhouse, Lever, and Workday."),
-        ("Is my resume data private?","Your resume is processed securely and never shared with third parties or recruiters. You control your data entirely."),
-        ("How does the AI Interview Coach work?","Upload your resume and Hirelyzer extracts key experiences to generate tailored questions. You answer in free text and our AI scores you across five competency dimensions in real-time."),
-    ]
-    fitems="".join('<div class="hl-faq-item2"><div class="hl-faq-q2">'+q+'<div class="hl-faq-q-icon2">+</div></div><div class="hl-faq-a2">'+a+'</div></div>' for q,a in faqs)
-    _H('<div id="lp-faq" class="hl-faq2"><div class="hl-sec">'
-       '<div class="hl-div">FAQ</div>'
-       '<h2 style="font-size:clamp(24px,3vw,38px);font-weight:800;letter-spacing:-1.5px;color:#f5f5f7;text-align:center;margin-bottom:0;font-family:Sora,sans-serif">Frequently asked questions</h2>'
-       '<div class="hl-faq-list2">'+fitems+'</div>'
-       '</div></div>')
-
-    # CTA
-    chk=_checklist2()
-    _H('<div class="hl-sec">'
-       '<div id="lp-cta" class="hl-cta2"><div class="hl-cta2-glow"></div>'
-       '<div class="hl-eyebrow2" style="margin:0 auto 28px"><svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#0a84ff"/></svg>Free to use &middot; No credit card required</div>'
-       '<div class="hl-cta2-h">Your next job starts with a better resume</div>'
-       '<div style="font-size:16px;color:rgba(245,245,247,0.48);text-align:center;max-width:520px;margin:0 auto 40px;line-height:1.72;position:relative;z-index:1;font-family:Sora,sans-serif">Join professionals already using Hirelyzer to pass ATS filters, remove bias, and land more interviews.</div>'
-       '<div class="hl-cta2-btns">'
-       '<a href="'+APP_URL+'" target="_blank" class="hl-btn-p2" style="font-size:16px;padding:16px 36px"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M12 2L13.8 8.2L20 10L13.8 11.8L12 18L10.2 11.8L4 10L10.2 8.2L12 2Z"/></svg>Start for free</a>'
-       '<a href="mailto:'+SUPPORT_EMAIL+'" class="hl-btn-g2" style="font-size:16px;padding:16px 32px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="1.5" fill="none"/><polyline points="22,6 12,13 2,6" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>Contact us</a>'
-       '</div>'
-       '<div class="hl-checks2">'+chk+'</div>'
-       '</div></div>')
-
-    # Contact card
-    _H('<div class="hl-sec">'
-       '<div class="hl-contact-card2">'
-       '<div style="width:48px;height:48px;border-radius:14px;background:rgba(10,132,255,0.1);border:1px solid rgba(10,132,255,0.2);display:flex;align-items:center;justify-content:center;margin:0 auto 18px">'
-       '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="#0a84ff" stroke-width="1.5" fill="none"/><polyline points="22,6 12,13 2,6" stroke="#0a84ff" stroke-width="1.5" fill="none"/></svg>'
-       '</div>'
-       '<h3 style="font-size:22px;font-weight:800;color:#f5f5f7;letter-spacing:-.8px;margin-bottom:10px;font-family:Sora,sans-serif">Get in touch</h3>'
-       '<div style="font-size:14px;color:rgba(245,245,247,0.44);line-height:1.7;margin-bottom:28px;text-align:center;font-family:Sora,sans-serif">Have questions, feedback, or want to report an issue? We typically respond within 24 hours.</div>'
-       '<a href="mailto:'+SUPPORT_EMAIL+'" class="hl-contact-email2">'
-       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="#4db3ff" stroke-width="1.5" fill="none"/><polyline points="22,6 12,13 2,6" stroke="#4db3ff" stroke-width="1.5" fill="none"/></svg>'
-       +SUPPORT_EMAIL+
-       '</a>'
-       '<div style="margin-top:18px;font-size:12px;color:rgba(245,245,247,0.26);font-family:Sora,sans-serif">Support &middot; Feedback &middot; Bug reports &middot; Partnership enquiries</div>'
-       '</div></div>')
-
-    # Footer
-    _H('<footer style="background:#000"><div class="hl-footer2">'
-       '<div><div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">'
-       '<div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#0a84ff,#0055d4);display:flex;align-items:center;justify-content:center">'
-       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5z M2 17l10 5 10-5 M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-       '</div><span style="font-size:13px;font-weight:800;color:rgba(245,245,247,0.7);letter-spacing:.5px;font-family:Sora,sans-serif">HIRELYZER</span></div>'
-       '<div class="hl-footer2-copy">&copy; 2025 HIRELYZER &middot; Intelligent Career Platform</div>'
-       '<div style="font-size:12px;color:rgba(245,245,247,0.18);font-family:Sora,sans-serif">Built for the next generation of job seekers</div>'
-       '</div>'
-       '<div class="hl-footer2-links">'
-       '<a href="#">Privacy</a><a href="#">Terms</a>'
-       '<a href="mailto:'+SUPPORT_EMAIL+'">'+SUPPORT_EMAIL+'</a>'
-       '<a href="'+APP_URL+'" target="_blank">Open App &rarr;</a>'
-       '</div></div></footer>')
-
-    # FAQ accordion JS
-    st.components.v1.html("""
-    <script>
-    (function(){
-      document.querySelectorAll('.hl-faq-q2').forEach(function(q){
-        q.addEventListener('click',function(){
-          var a=this.nextElementSibling;
-          var icon=this.querySelector('.hl-faq-q-icon2');
-          var open=a.style.display==='block';
-          document.querySelectorAll('.hl-faq-a2').forEach(function(x){x.style.display='none';});
-          document.querySelectorAll('.hl-faq-q-icon2').forEach(function(x){x.textContent='+';});
-          if(!open){a.style.display='block';icon.textContent='\u2212';}
-        });
-      });
-    })();
-    </script>
-    """, height=0, scrolling=False)
-
-    st.markdown("---")
-
 if not st.session_state.get("authenticated", False):
 
     # -------- Login/Register Layout --------
@@ -3235,10 +3965,83 @@ def generate_docx(text, filename="bias_free_resume.docx"):
     return buffer
 
 # Extract text from PDF
+def _extract_page_text_smart(page) -> str:
+    """
+    Extract text from a single fitz page in correct reading order,
+    handling both simple single-column and complex multi-column / graphic
+    resume layouts (like sidebar designs, blue-header templates, etc.).
+
+    Strategy:
+      1. Pull raw text blocks with full bounding-box coordinates.
+      2. Detect whether the page has a multi-column layout by checking
+         whether meaningful content exists in both the left (<45%) and
+         right (>52%) horizontal zones.
+      3. Single-column  → sort blocks top-to-bottom (y0), then left-to-right.
+      4. Multi-column   → split blocks into left/right columns,
+                          sort each column top-to-bottom independently,
+                          then concatenate left column first (the main body
+                          on most sidebar resume designs sits on the right,
+                          but the name/header almost always spans full width
+                          or sits at the very top — so we sort by y0 first
+                          for the header region, then by column).
+    This ensures the candidate name — which is always the topmost block —
+    is the very first text we see regardless of layout.
+    """
+    blocks = page.get_text("blocks")  # (x0, y0, x1, y1, text, block_no, block_type)
+    page_width = page.rect.width
+
+    # Filter: only text blocks (block_type == 0) with real content
+    text_blocks = [b for b in blocks if b[6] == 0 and b[4].strip()]
+
+    if not text_blocks:
+        return ""
+
+    # ── Detect multi-column layout ────────────────────────────────────────
+    x_starts = [b[0] for b in text_blocks if len(b[4].strip()) > 10]
+    left_zone  = [x for x in x_starts if x < page_width * 0.45]
+    right_zone = [x for x in x_starts if x > page_width * 0.52]
+    is_multicolumn = len(left_zone) >= 3 and len(right_zone) >= 3
+
+    if not is_multicolumn:
+        # ── Single-column: simple top-to-bottom sort ──────────────────────
+        sorted_blocks = sorted(text_blocks, key=lambda b: (round(b[1] / 10) * 10, b[0]))
+        return "\n".join(b[4].strip() for b in sorted_blocks)
+
+    # ── Multi-column: split into header + left + right zones ─────────────
+    # Blocks in the top 15% of page height are "header" — name, title, etc.
+    # They are sorted purely by y0 so the name always comes first.
+    page_height  = page.rect.height
+    header_zone  = page_height * 0.15
+
+    header_blocks = [b for b in text_blocks if b[1] < header_zone]
+    body_blocks   = [b for b in text_blocks if b[1] >= header_zone]
+
+    # Sort header top-to-bottom
+    header_sorted = sorted(header_blocks, key=lambda b: (b[1], b[0]))
+
+    # Split body into left / right columns and sort each top-to-bottom
+    left_blocks  = sorted(
+        [b for b in body_blocks if b[0] < page_width * 0.48],
+        key=lambda b: b[1]
+    )
+    right_blocks = sorted(
+        [b for b in body_blocks if b[0] >= page_width * 0.48],
+        key=lambda b: b[1]
+    )
+
+    # Concatenate: header → left column → right column
+    all_sorted = header_sorted + left_blocks + right_blocks
+    return "\n".join(b[4].strip() for b in all_sorted)
+
+
 def extract_text_from_pdf(file_path):
     try:
         doc = fitz.open(file_path)
-        text_list = [page.get_text("text") for page in doc if page.get_text("text").strip()]
+        text_list = []
+        for page in doc:
+            page_text = _extract_page_text_smart(page)
+            if page_text.strip():
+                text_list.append(page_text)
         doc.close()
         return text_list if text_list else extract_text_from_images(file_path)
     except Exception as e:
@@ -3277,6 +4080,13 @@ def safe_extract_text(uploaded_file):
     except Exception as e:
         st.error(f"⚠️ Could not process this file: {e}")
         return None
+
+
+# ============================================================
+# 🏷️ Deterministic Candidate Name Extractor
+# ============================================================
+
+
 
 # ============================================================
 # 📐 Industry-Standard Resume Format Checker (v2 — Enhanced)
@@ -3964,158 +4774,1702 @@ replacement_mapping = {
     }
 }
 
-def rewrite_text_with_llm(text, replacement_mapping, user_location):
+def rewrite_and_optimize_resume(text, replacement_mapping, user_location):
     """
-    Enhanced resume rewrite engine (backward compatible).
-    - Improves structure, clarity, and ATS readiness
-    - Fills missing sections using internal evidence
-    - Maintains bias-free language
-    - Preserves and ENFORCES suggested job titles output
+    ⚡ MERGED FUNCTION — replaces rewrite_text_with_llm() + optimize_resume_to_json()
+    Single LLM call that returns BOTH:
+      - rewritten_text : plain-text ATS-optimised resume + job title suggestions (for UI display)
+      - json_str       : strict JSON object (for DOCX generation)
+    Saves 1 API key call per resume analysis (6 → 5 calls total).
     """
 
-    # -----------------------------
-    # Format bias replacement rules
-    # -----------------------------
     formatted_mapping = "\n".join(
         [f'- "{key}" → "{value}"' for key, value in replacement_mapping.items()]
     )
 
-    # -----------------------------
-    # MASTER PROMPT
-    # -----------------------------
-    prompt = f"""
-You are an elite Resume Optimization Engine used by Fortune 500 recruiters and executive career coaches.
+    prompt = f"""You are an enterprise-grade ATS resume optimization engine and bias-removal specialist.
 
-You will receive:
-1. Original Resume Text
-2. Bias Replacement Rules
-3. Candidate Location
+Your task is to process the resume below and return TWO outputs in a single response, separated by the exact delimiter shown.
 
-Your goal is to TRANSFORM the resume into a top-1% recruiter-ready document:
-ATS-optimized, bias-free, quantification-rich, and professionally compelling.
+════════════════════════════════════════════════════════
+OUTPUT STRUCTURE (return EXACTLY this — no deviation):
+════════════════════════════════════════════════════════
 
-═══════════════════════════════════════════════════
-🔒 ABSOLUTE RULES (NON-NEGOTIABLE)
-═══════════════════════════════════════════════════
+===REWRITTEN_RESUME_START===
+<full plain-text ATS-optimised resume here>
+<followed by job title suggestions block>
+===REWRITTEN_RESUME_END===
 
-- DO NOT fabricate companies, job titles, degrees, institutions, or dates
-- DO NOT invent metrics or statistics not implied by the resume
-- DO NOT add certifications or skills that don't appear anywhere in the resume
-- You MAY:
-  ✅ Strengthen and expand existing bullet points with stronger action verbs
-  ✅ CREATE missing sections if clear evidence exists elsewhere in the resume
-  ✅ Move skills from projects/experience into the dedicated Skills section
-  ✅ Infer tool proficiency ONLY when strongly implied (e.g., "built Flask API" → Python/Flask listed)
-  ✅ Estimate impact framing ONLY when role implies it (e.g., "customer support" → "resolved X+ client issues")
-  ✅ Reorder sections for maximum ATS impact
+===JSON_START===
+<strict JSON object here — no markdown fences, no explanation>
+===JSON_END===
 
-═══════════════════════════════════════════════════
-📌 OPTIMIZATION RULES
-═══════════════════════════════════════════════════
+════════════════════════════════════════════════════════
+PART 1 — PLAIN TEXT REWRITE (inside REWRITTEN_RESUME tags)
+════════════════════════════════════════════════════════
 
-1. **Professional Summary** — Write a 3–4 sentence executive-level summary that:
-   - Opens with seniority + core domain (e.g., "Results-driven Data Engineer with 3+ years...")
-   - Highlights top 2–3 technical strengths with specificity
-   - Closes with value proposition aligned to career goals
+ABSOLUTE RULES — NEVER VIOLATE:
+• DO NOT fabricate companies, job titles, degrees, institutions, or dates.
+• DO NOT invent statistics or metrics not implied by the resume content.
+• DO NOT add certifications, tools, or skills absent from the resume.
+• DO NOT use personal pronouns (I, my, me, we, our) anywhere.
+• DO NOT repeat the same phrase or word across multiple sections.
+• EVERY section must contain unique, non-overlapping content.
 
-2. **Experience Bullet Points** — Every bullet MUST follow:
-   → **Action Verb + Specific Task + Technology/Method Used + Quantified Impact**
-   → Example: "Engineered real-time data pipeline using Apache Kafka and Spark, reducing latency by 40%"
-   → Use STRONG action verbs: Architected, Engineered, Designed, Deployed, Optimized, Automated, Reduced, Increased, Led, Built, Launched, Delivered
+YOU MAY:
+✓ Strengthen bullet points with stronger action verbs and tighter phrasing.
+✓ Reconstruct missing sections when clear evidence exists in the resume.
+✓ Consolidate skills scattered across experience/projects into the Skills section.
+✓ Infer tool proficiency when strongly implied (e.g., "built Flask API" → Python, Flask).
+✓ Add plausible impact framing using "~" when the role implies measurable output.
 
-3. **Skills Section** — Must include ALL technologies, tools, frameworks, platforms, and methodologies mentioned ANYWHERE in the resume.
-   Format as clean ATS-friendly lists grouped by category:
-   - Programming Languages | Frameworks & Libraries | Cloud & DevOps | Databases | Tools & Platforms | Soft Skills
+SECTION ORDER: Contact Header → Professional Summary → Core Skills →
+Work Experience → Projects → Education → Certifications & Links
 
-4. **Projects Section** — Each project must include:
-   - Project name + brief (1 sentence) description
-   - Full tech stack used
-   - Your specific role/contribution
-   - Outcome, metric, or learning
+CONTACT HEADER: Full Name | Job Title | Email | Phone | Location | LinkedIn URL | GitHub/Portfolio URL
 
-5. **Education** — Include: Degree, Institution, Year, GPA (if strong), Relevant Coursework (if applicable)
+PROFESSIONAL SUMMARY (2–3 sentences, max 60 words):
+  Sentence 1: [Seniority level] + [core domain] + [years of experience]
+  Sentence 2: [Top 2–3 specific technical or functional strengths]
+  Sentence 3: [Career value proposition — what the candidate delivers]
 
-6. **Certifications** — List ALL found in resume. Add plausible ones ONLY if tool names strongly imply them.
+CORE SKILLS: labeled lines — Technical Skills: [...] and Professional Skills: [...]
 
-7. **Sections to create if evidence exists but are missing:**
-   🛠️ Skills | 📂 Projects | 🎓 Certifications | 🤝 Professional Competencies | 🌟 Interests
+WORK EXPERIENCE (reverse chronological):
+  Job Title | Company Name | MMM YYYY – MMM YYYY
+  [1-sentence role scope]
+  • [Action Verb] + [Task] + [Technology] + [Quantified impact]
+  (3–5 bullets per role)
+  Strong verbs ONLY: Architected, Engineered, Developed, Implemented, Optimized, Automated,
+  Spearheaded, Deployed, Designed, Reduced, Increased, Streamlined, Led, Built.
+  NEVER: helped, assisted, worked on, involved in, responsible for.
 
-═══════════════════════════════════════════════════
-🧾 REQUIRED OUTPUT STRUCTURE
-═══════════════════════════════════════════════════
+PROJECTS: Name | Tech Stack | Duration
+  [1-sentence purpose]
+  • [Achievement bullet with action verb and metric]
+  (3–5 bullets)
 
-Return a COMPLETE, polished resume with these sections (skip only if truly impossible):
+EDUCATION: Degree, Major | Institution | Graduation Year
+CERTIFICATIONS: • Name | Issuing Body | MMM YYYY
 
-🏷️ Full Name  
-📞 Phone Number  
-📧 Email Address  
-📍 Location  
-🔗 LinkedIn Profile URL  
-🌐 GitHub / Portfolio URL  
+ATS FORMATTING:
+• Single-column structure — no tables, columns, text boxes.
+• Bullet points: "•" only. Section headings: ALL CAPS.
+• No emojis, no personal pronouns.
 
-✍️ Professional Summary  
-🛠️ Technical Skills  
-💼 Work Experience  
-🧑‍💼 Internships (if applicable)  
-📂 Projects  
-🎓 Certifications & Training  
-🏫 Education  
-🤝 Professional Competencies  
-🌟 Interests & Extracurriculars  
-
-Formatting requirements:
-- Bullet points (•) for all list items
-- Clean spacing between sections
-- Section headers in CAPS or bold
-- ATS-safe formatting (no tables, columns, or special characters)
-- Tense: past for completed roles, present for current role
-
-═══════════════════════════════════════════════════
-🧠 BIAS REPLACEMENT RULES (APPLY EXACTLY)
-═══════════════════════════════════════════════════
+BIAS REPLACEMENT RULES — APPLY EXACTLY:
 {formatted_mapping}
 
-═══════════════════════════════════════════════════
-📄 ORIGINAL RESUME
-═══════════════════════════════════════════════════
-\"\"\"{text}\"\"\"
-
-═══════════════════════════════════════════════════
-🎯 MANDATORY JOB TITLE SUGGESTIONS
-═══════════════════════════════════════════════════
-
-After the resume, include a clearly separated section:
+MANDATORY JOB TITLE SUGGESTIONS (append after the resume text):
 
 ### 🎯 Suggested Job Titles (Based on Resume)
 
-Provide EXACTLY **5 job titles** suited for a candidate in **{user_location}**.
-
-For EACH job title, provide:
-- A specific reason why this role fits the candidate's background
-- A DIRECT LinkedIn job search URL using the exact format below
-
-FORMAT STRICTLY AS:
-
-1. **[Job Title]** — [Specific reason based on resume content]  
+Provide EXACTLY 5 job titles suited for a candidate in {user_location}.
+FORMAT:
+1. **[Job Title]** — [Specific reason tied to resume evidence]
 🔗 https://www.linkedin.com/jobs/search/?keywords=[URL+encoded+title]&location={urllib.parse.quote(user_location)}
 
-2. **[Job Title]** — ...  
-🔗 ...
+════════════════════════════════════════════════════════
+PART 2 — JSON OBJECT (inside JSON tags)
+════════════════════════════════════════════════════════
 
-(Continue for all 5)
+Return ONLY valid JSON. No preamble, no explanation, no markdown fences.
 
-═══════════════════════════════════════════════════
-✅ FINAL OUTPUT
-═══════════════════════════════════════════════════
-1. Fully optimized, bias-free resume (complete, not a summary)
-2. Suggested Job Titles section (MANDATORY — 5 titles with URLs)
+CONTENT REWRITING — same ATS rules as Part 1 apply to all bullet fields.
+Strong verbs only. Quantified impact. No pronouns. No repetition across sections.
+
+RETURN ONLY THIS EXACT JSON STRUCTURE:
+{{
+  "contact": {{
+    "name": "",
+    "title": "",
+    "email": "",
+    "phone": "",
+    "location": "",
+    "linkedin": "",
+    "github": "",
+    "portfolio": ""
+  }},
+  "summary": "",
+  "skills": [],
+  "soft_skills": [],
+  "languages": [],
+  "interests": [],
+  "experience": [
+    {{
+      "role": "",
+      "company": "",
+      "duration": "",
+      "description": "",
+      "bullets": []
+    }}
+  ],
+  "projects": [
+    {{
+      "name": "",
+      "duration": "",
+      "tech_stack": "",
+      "url": "",
+      "description": "",
+      "bullets": []
+    }}
+  ],
+  "education": [
+    {{
+      "degree": "",
+      "institution": "",
+      "year": "",
+      "bullets": []
+    }}
+  ],
+  "certifications": [
+    {{
+      "name": "",
+      "issuer": "",
+      "duration": ""
+    }}
+  ],
+  "additional": [
+    {{
+      "name": "",
+      "description": "",
+      "duration": ""
+    }}
+  ]
+}}
+
+FIELD RULES:
+- "skills" = flat array of individual skill strings. Minimum 8. No duplicates.
+- "soft_skills" = professional competency phrases. Must NOT duplicate items in "skills".
+- "contact.*" = extract exactly as written. Use "" not null for missing fields.
+- "summary" = 2–3 sentences, max 60 words, no pronouns.
+- "experience[].description" = 1-sentence role scope, unique from bullets.
+- "experience[].bullets" = 3–5 bullets each. Strong verb + task + tech + impact.
+- "projects[].bullets" = must NOT restate experience bullets.
+- "additional" items MUST use object format: {{"name":"","description":"","duration":""}}.
+- Missing fields: use "[Not Provided]" for text, [] for arrays.
+
+RESUME TEXT:
+\"\"\"{text}\"\"\"
 """
 
-    # -----------------------------
-    # Call LLM
-    # -----------------------------
-    response = call_llm(prompt, session=st.session_state)
-    return response
+    raw_response = call_llm(prompt, session=st.session_state)
+
+    # ── Parse the two sections out of the combined response ──────────────
+    rewritten_text = ""
+    json_str = ""
+
+    rewrite_match = re.search(
+        r"===REWRITTEN_RESUME_START===(.*?)===REWRITTEN_RESUME_END===",
+        raw_response, re.DOTALL
+    )
+    json_match = re.search(
+        r"===JSON_START===(.*?)===JSON_END===",
+        raw_response, re.DOTALL
+    )
+
+    if rewrite_match:
+        rewritten_text = rewrite_match.group(1).strip()
+    else:
+        # fallback: use everything before JSON block
+        rewritten_text = raw_response.split("===JSON_START===")[0].strip()
+
+    if json_match:
+        json_str = json_match.group(1).strip()
+    else:
+        # fallback: try to extract JSON object from anywhere in the response
+        json_fallback = re.search(r'\{[\s\S]*\}', raw_response)
+        json_str = json_fallback.group(0).strip() if json_fallback else ""
+
+    return rewritten_text, json_str
+
+
+# ── Thin compatibility wrappers — keep callers working without changes ────────
+
+def rewrite_text_with_llm(text, replacement_mapping, user_location):
+    """Compatibility wrapper — calls merged rewrite_and_optimize_resume()."""
+    rewritten_text, _ = rewrite_and_optimize_resume(text, replacement_mapping, user_location)
+    return rewritten_text
+
+
+def optimize_resume_to_json(raw_text: str) -> str:
+    """Compatibility wrapper — calls merged rewrite_and_optimize_resume()."""
+    _, json_str = rewrite_and_optimize_resume(raw_text, {}, "")
+    return json_str
+
+
+def _salvage_additional_str(s):
+    """
+    Extract name/description/duration from a leaked dict/JSON string.
+    Handles JSON double-quoted, Python single-quoted, and mixed formats.
+    Returns a clean dict or None.
+    """
+    import json as _j, re as _r
+    if not s or not s.strip():
+        return None
+    s = s.strip()
+    # Attempt 1: valid JSON double-quoted keys
+    try:
+        sub = _j.loads(s)
+        if isinstance(sub, dict):
+            n = str(sub.get("name", "") or "").strip()
+            d = str(sub.get("description", "") or "").strip()
+            r = str(sub.get("duration", "") or "").strip()
+            if n or d:
+                return {"name": n, "description": d, "duration": r}
+    except Exception:
+        pass
+    # Attempt 2: replace single quotes -> double quotes and try JSON parse
+    try:
+        # Preserve escaped single quotes, swap bare ones to double quotes
+        converted = s.replace("\\'", "\x01").replace("'", '"').replace("\x01", "\\'")
+        sub = _j.loads(converted)
+        if isinstance(sub, dict):
+            n = str(sub.get("name", "") or "").strip()
+            d = str(sub.get("description", "") or "").strip()
+            r = str(sub.get("duration", "") or "").strip()
+            if n or d:
+                return {"name": n, "description": d, "duration": r}
+    except Exception:
+        pass
+    # Attempt 3: brute-force regex — key can be single OR double quoted
+    def _extract(key, text):
+        for q in ('"', "'"):
+            pat = q + key + q + r"\s*:\s*" + q + r"(.*?)" + q + r'(?=\s*,\s*[\'"{]|\s*\})'
+            m = _r.search(pat, text, _r.DOTALL)
+            if m:
+                return m.group(1).strip()
+        return ""
+    n = _extract("name", s)
+    d = _extract("description", s)
+    r = _extract("duration", s)
+    if n or d:
+        return {"name": n, "description": d, "duration": r}
+    return None
+
+
+
+def extract_resume_json(llm_response: str) -> dict:
+    """
+    Safely extracts and parses JSON from LLM response.
+    Handles markdown fences, leading/trailing text, and partial JSON.
+    Returns a dict. Falls back to empty skeleton on any parse failure.
+    """
+    EMPTY = {
+        "contact": {
+            "name": "", "title": "", "email": "", "phone": "",
+            "location": "", "linkedin": "", "github": "", "portfolio": ""
+        },
+        "summary": "",
+        "skills": [],
+        "soft_skills": [],
+        "languages": [],
+        "interests": [],
+        "experience": [],
+        "projects": [],
+        "education": [],
+        "certifications": [],
+        "additional": [],
+    }
+    CONTACT_DEFAULTS = {
+        "name": "", "title": "", "email": "", "phone": "",
+        "location": "", "linkedin": "", "github": "", "portfolio": ""
+    }
+    if not llm_response:
+        return EMPTY
+    text = llm_response.strip()
+    # Strip markdown fences
+    text = re.sub(r'^```(?:json)?\s*', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'\s*```$', '', text)
+    text = text.strip()
+    # Find first { and last }
+    start = text.find('{')
+    end = text.rfind('}')
+    if start == -1 or end == -1:
+        return EMPTY
+    text = text[start:end + 1]
+    try:
+        data = json.loads(text)
+        # Ensure all top-level keys exist
+        for key in EMPTY:
+            if key not in data:
+                data[key] = EMPTY[key]
+        if not isinstance(data.get("contact"), dict):
+            data["contact"] = CONTACT_DEFAULTS.copy()
+        for field, default in CONTACT_DEFAULTS.items():
+            if field not in data["contact"]:
+                data["contact"][field] = default
+
+        # ── Contact field rescue: fix all LLM inconsistencies ───────────────
+        ct = data["contact"]
+
+        # 1. Null/None/"null"/"undefined" → empty string for ALL contact fields
+        for field in list(ct.keys()):
+            v = ct[field]
+            if v is None or str(v).strip() in ("null", "None", "undefined", "N/A", "n/a"):
+                ct[field] = ""
+
+        # 2. LLM put location/linkedin/github at top level instead of inside contact
+        for top_key, contact_key in [
+            ("location",  "location"),
+            ("linkedin",  "linkedin"),
+            ("github",    "github"),
+            ("portfolio", "portfolio"),
+            ("github_url","github"),
+            ("linkedin_url","linkedin"),
+            ("profile",   "linkedin"),
+            ("website",   "portfolio"),
+        ]:
+            top_val = data.get(top_key, "") or ""
+            if top_val and not ct.get(contact_key):
+                ct[contact_key] = str(top_val).strip()
+
+        # 3. LLM used alternate key names inside contact block
+        ALT_KEYS = {
+            "linkedin": ["linkedin_url", "linkedin_profile", "linkedin_profile_url",
+                         "linkedIn", "linked_in", "profile_url", "profile"],
+            "github":   ["github_url", "github_profile", "github_link",
+                         "portfolio_url", "portfolio", "website", "repo"],
+            "location": ["city", "address", "city_country", "current_location"],
+        }
+        for canonical, alts in ALT_KEYS.items():
+            if not ct.get(canonical):
+                for alt in alts:
+                    v = ct.get(alt, "") or ""
+                    if v and str(v).strip():
+                        ct[canonical] = str(v).strip()
+                        break
+
+        # 4. Final null/empty cleanup — ensure every field is a string
+        for field in CONTACT_DEFAULTS:
+            if not isinstance(ct.get(field), str) or ct[field] is None:
+                ct[field] = ""
+        # Backfill missing experience fields
+        for exp in data.get("experience", []):
+            for f in ["role", "company", "duration", "description"]:
+                if f not in exp:
+                    exp[f] = ""
+            if "bullets" not in exp:
+                exp["bullets"] = []
+        # Backfill missing project fields
+        for proj in data.get("projects", []):
+            for f in ["name", "duration", "tech_stack", "url", "description"]:
+                if f not in proj:
+                    proj[f] = ""
+            if "bullets" not in proj:
+                proj["bullets"] = []
+        # Backfill missing education fields
+        for edu in data.get("education", []):
+            for f in ["degree", "institution", "year"]:
+                if f not in edu:
+                    edu[f] = ""
+            if "bullets" not in edu:
+                edu["bullets"] = []
+        # Normalise additional — accept dicts, strings, or malformed objects
+        raw_add = data.get("additional", [])
+        norm_add = []
+        for item in raw_add:
+            if isinstance(item, dict):
+                name = str(item.get("name", "") or "").strip()
+                desc = str(item.get("description", "") or "").strip()
+                dur  = str(item.get("duration", "") or "").strip()
+                if not name and not desc:
+                    continue
+                norm_add.append({"name": name, "description": desc, "duration": dur})
+            elif isinstance(item, str):
+                s = item.strip()
+                if not s or s in ("[Not Provided]",):
+                    continue
+                # If it looks like a leaked dict/JSON string, try to parse or salvage it
+                if s.startswith("{") or ("name" in s and "description" in s):
+                    salvaged = _salvage_additional_str(s)
+                    if salvaged:
+                        norm_add.append(salvaged)
+                    # else discard entirely — do NOT render raw string
+                else:
+                    norm_add.append({"name": s, "description": "", "duration": ""})
+        data["additional"] = norm_add
+
+        # Normalise certifications — accept both flat strings and objects
+        raw_certs = data.get("certifications", [])
+        norm_certs = []
+        for c in raw_certs:
+            if isinstance(c, dict):
+                norm_certs.append({
+                    "name":     c.get("name", ""),
+                    "issuer":   c.get("issuer", ""),
+                    "duration": c.get("duration", ""),
+                })
+            elif isinstance(c, str) and c.strip():
+                norm_certs.append({"name": c.strip(), "issuer": "", "duration": ""})
+        data["certifications"] = norm_certs
+        return data
+    except (json.JSONDecodeError, ValueError):
+        return EMPTY
+
+
+# ============================================================
+# 📄 DOCX TEMPLATE GENERATORS — Three professional styles
+# ============================================================
+
+def _val(v) -> str:
+    """Return value or 'Not Provided' placeholder — never empty, never None, never '[Not Provided]'."""
+    if v is None:
+        return "Not Provided"
+    s = str(v).strip()
+    if not s or s in ("[Not Provided]", "null", "None", "undefined"):
+        return "Not Provided"
+    return s
+
+
+def _build_contact_header(doc, data: dict, name_size: int, name_color_rgb: tuple,
+                           name_font: str, contact_font: str, contact_color_hex: str,
+                           contact_size: int = 9, title_font: str = None,
+                           title_size: int = 11, title_color_rgb: tuple = None,
+                           separator: str = "  |  ",
+                           label_color_hex: str = None,
+                           accent_color_hex: str = None):
+    """
+    Builds the header block matching the exact sample template format:
+
+      Line 1:  FULL NAME  (large bold centered)
+      Line 2:  JOB TITLE  (smaller bold/normal centered uppercase)
+      Line 3:  email  |  phone  |  LOCATION  |  linkedin_url  |  github_url
+               (single pipe-separated line, centered, all fields always present)
+
+    Every field always appears. Missing values show "Not Provided".
+    No separate labeled rows. No dividers. Single clean contact line.
+    """
+    contact = data.get("contact", {})
+
+    # ── Resolve contact color ────────────────────────────────────────────────
+    cc = RGBColor(
+        int(contact_color_hex[0:2], 16),
+        int(contact_color_hex[2:4], 16),
+        int(contact_color_hex[4:6], 16),
+    )
+
+    # ── ① Name ──────────────────────────────────────────────────────────────
+    raw_name = contact.get("name", "") or ""
+    name = raw_name if raw_name and raw_name not in ("", "[Not Provided]") else "Your Name"
+    p_name = doc.add_paragraph()
+    p_name.clear()
+    r_name = p_name.add_run(name)
+    r_name.bold = True
+    r_name.font.size = Pt(name_size)
+    r_name.font.name = name_font
+    r_name.font.color.rgb = RGBColor(*name_color_rgb)
+    p_name.alignment = 1
+    p_name.paragraph_format.space_before = Pt(0)
+    p_name.paragraph_format.space_after = Pt(4)
+
+    # ── ② Job Title — always shown, placeholder if missing ──────────────────
+    raw_title = contact.get("title", "") or ""
+    title_text = raw_title if raw_title and raw_title not in ("", "[Not Provided]") else "Job Title"
+    p_title = doc.add_paragraph()
+    p_title.clear()
+    r_title = p_title.add_run(title_text.upper())
+    r_title.font.size = Pt(title_size)
+    r_title.font.name = title_font or name_font
+    r_title.bold = True
+    if title_color_rgb:
+        r_title.font.color.rgb = RGBColor(*title_color_rgb)
+    p_title.alignment = 1
+    p_title.paragraph_format.space_after = Pt(4)
+
+    # ── ③ Single pipe-separated contact line ────────────────────────────────
+    # Build parts in order: email | phone | location | linkedin | github
+    # Every field always included — "Not Provided" if missing
+    def _clean(v):
+        """Return value or 'Not Provided' — never None or empty."""
+        if v is None:
+            return "Not Provided"
+        s = str(v).strip()
+        return s if s and s not in ("[Not Provided]", "null", "None", "undefined") else "Not Provided"
+
+    email_val    = _clean(contact.get("email", ""))
+    phone_val    = _clean(contact.get("phone", ""))
+    location_val = _clean(contact.get("location", ""))
+    linkedin_val = _clean(contact.get("linkedin", ""))
+    github_raw   = contact.get("github", "") or ""
+    portfolio_raw= contact.get("portfolio", "") or ""
+    github_val   = _clean(github_raw if github_raw and github_raw not in ("", "[Not Provided]") else portfolio_raw)
+
+    parts = [email_val, phone_val, location_val, linkedin_val, github_val]
+    contact_line = "  |  ".join(parts)
+
+    p_contact = doc.add_paragraph()
+    p_contact.clear()
+    r_contact = p_contact.add_run(contact_line)
+    r_contact.font.size = Pt(contact_size)
+    r_contact.font.name = contact_font
+    r_contact.font.color.rgb = cc
+    p_contact.alignment = 1
+    p_contact.paragraph_format.space_before = Pt(2)
+    p_contact.paragraph_format.space_after = Pt(6)
+
+    # ── ④ Thin bottom rule below contact block ────────────────────────────
+    # Signals end of header to ATS parsers and improves recruiter readability.
+    from docx.oxml import OxmlElement as _OE
+    from docx.oxml.ns import qn as _qn
+    pPr = p_contact._p.get_or_add_pPr()
+    pBdr = _OE('w:pBdr')
+    btm = _OE('w:bottom')
+    btm.set(_qn('w:val'), 'single')
+    btm.set(_qn('w:sz'), '4')
+    btm.set(_qn('w:space'), '1')
+    # Use accent color if provided, else dark gray
+    _border_col = accent_color_hex if accent_color_hex else "555555"
+    btm.set(_qn('w:color'), _border_col)
+    pBdr.append(btm)
+    pPr.append(pBdr)
+
+
+def _section_heading_bordered(doc, text: str, font_name: str,
+                               font_size: int, bold: bool,
+                               color_hex: str, border_color: str,
+                               border_sz: str = "6",
+                               space_before: float = 10, space_after: float = 4,
+                               prefix: str = ""):
+    """Universal bordered section heading."""
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    p = doc.add_paragraph()
+    p.clear()
+    label = f"{prefix}{text.upper()}" if prefix else text.upper()
+    run = p.add_run(label)
+    run.bold = bold
+    run.font.size = Pt(font_size)
+    run.font.name = font_name
+    run.font.color.rgb = RGBColor(
+        int(color_hex[0:2], 16),
+        int(color_hex[2:4], 16),
+        int(color_hex[4:6], 16),
+    )
+    pPr = p._p.get_or_add_pPr()
+    pBdr = OxmlElement('w:pBdr')
+    bottom = OxmlElement('w:bottom')
+    bottom.set(qn('w:val'), 'single')
+    bottom.set(qn('w:sz'), border_sz)
+    bottom.set(qn('w:space'), '1')
+    bottom.set(qn('w:color'), border_color)
+    pBdr.append(bottom)
+    pPr.append(pBdr)
+    p.paragraph_format.space_before = Pt(space_before)
+    p.paragraph_format.space_after = Pt(space_after)
+    return p
+
+
+def _add_bullet(doc, text: str, font_size: int = 10, font_name: str = "Arial",
+                indent_left: int = 360, indent_hanging: int = 180,
+                color_rgb: tuple = None):
+    """
+    Add a properly formatted ATS-compliant bullet point paragraph.
+    Uses standard hanging indent matching Jobscan/Enhancv output.
+    Bullet character is plain Unicode bullet (U+2022) — universally parsed by all ATS.
+    """
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    # Strip any leading bullet/dash the LLM may have prepended to avoid double-bullets
+    clean_text = text.strip()
+    for prefix in ("\u2022", "-", "*", "\u25aa", "\u25cf"):
+        if clean_text.startswith(prefix):
+            clean_text = clean_text[len(prefix):].lstrip()
+            break
+    p = doc.add_paragraph(style="Normal")
+    p.clear()
+    run = p.add_run(f"\u2022  {clean_text}")
+    run.font.size = Pt(font_size)
+    run.font.name = font_name
+    if color_rgb:
+        run.font.color.rgb = RGBColor(*color_rgb)
+    pPr = p._p.get_or_add_pPr()
+    ind = OxmlElement('w:ind')
+    ind.set(qn('w:left'), str(indent_left))
+    ind.set(qn('w:hanging'), str(indent_hanging))
+    pPr.append(ind)
+    p.paragraph_format.space_before = Pt(1)
+    p.paragraph_format.space_after = Pt(1.5)
+    return p
+
+
+def _add_role_line(doc, role: str, company: str, duration: str,
+                   font_name: str, role_size: int = 11, meta_size: int = 9,
+                   role_color: tuple = (0, 0, 0), company_color: tuple = (74, 74, 74),
+                   duration_color: tuple = (128, 128, 128), separator: str = "  —  "):
+    """Add role | company | duration header row for experience."""
+    p = doc.add_paragraph()
+    p.clear()
+    if role:
+        r1 = p.add_run(role)
+        r1.bold = True
+        r1.font.size = Pt(role_size)
+        r1.font.name = font_name
+        r1.font.color.rgb = RGBColor(*role_color)
+    if company:
+        r2 = p.add_run(f"{separator}{company}")
+        r2.font.size = Pt(role_size - 1)
+        r2.font.name = font_name
+        r2.font.color.rgb = RGBColor(*company_color)
+    if duration and duration not in ("", "[Not Provided]"):
+        r3 = p.add_run(f"   [{duration}]")
+        r3.italic = True
+        r3.font.size = Pt(meta_size)
+        r3.font.name = font_name
+        r3.font.color.rgb = RGBColor(*duration_color)
+    p.paragraph_format.space_before = Pt(6)
+    p.paragraph_format.space_after = Pt(2)
+    return p
+
+
+def _add_project_header(doc, name: str, duration: str, tech_stack: str, url: str,
+                         font_name: str, name_size: int = 11,
+                         name_color: tuple = (0, 0, 0),
+                         meta_color: tuple = (74, 74, 74),
+                         url_color: tuple = (30, 58, 95)):
+    """Add project name | duration | tech stack | URL header row."""
+    p = doc.add_paragraph()
+    p.clear()
+    if name:
+        r1 = p.add_run(name)
+        r1.bold = True
+        r1.font.size = Pt(name_size)
+        r1.font.name = font_name
+        r1.font.color.rgb = RGBColor(*name_color)
+    if duration and duration not in ("", "[Not Provided]"):
+        rd = p.add_run(f"   [{duration}]")
+        rd.italic = True
+        rd.font.size = Pt(name_size - 2)
+        rd.font.name = font_name
+        rd.font.color.rgb = RGBColor(128, 128, 128)
+    if tech_stack and tech_stack not in ("", "[Not Provided]"):
+        r2 = p.add_run(f"  |  Tech: {tech_stack}")
+        r2.font.size = Pt(name_size - 2)
+        r2.font.name = font_name
+        r2.font.color.rgb = RGBColor(*meta_color)
+    if url and url not in ("", "[Not Provided]"):
+        r3 = p.add_run(f"  |  {url}")
+        r3.font.size = Pt(name_size - 2)
+        r3.font.name = font_name
+        r3.font.color.rgb = RGBColor(*url_color)
+        r3.underline = True
+    p.paragraph_format.space_before = Pt(6)
+    p.paragraph_format.space_after = Pt(2)
+    return p
+
+
+def _add_education_row(doc, degree: str, institution: str, year: str,
+                        edu_bullets: list, font_name: str,
+                        degree_size: int = 10, meta_size: int = 9,
+                        degree_color: tuple = (0, 0, 0),
+                        inst_color: tuple = (74, 74, 74),
+                        year_color: tuple = (128, 128, 128)):
+    """Add degree | institution | year + optional bullets."""
+    p = doc.add_paragraph()
+    p.clear()
+    if degree:
+        r1 = p.add_run(degree)
+        r1.bold = True
+        r1.font.size = Pt(degree_size)
+        r1.font.name = font_name
+        r1.font.color.rgb = RGBColor(*degree_color)
+    if institution and institution not in ("", "[Not Provided]"):
+        r2 = p.add_run(f"  —  {institution}")
+        r2.font.size = Pt(degree_size)
+        r2.font.name = font_name
+        r2.font.color.rgb = RGBColor(*inst_color)
+    if year and year not in ("", "[Not Provided]"):
+        r3 = p.add_run(f"  ({year})")
+        r3.italic = True
+        r3.font.size = Pt(meta_size)
+        r3.font.name = font_name
+        r3.font.color.rgb = RGBColor(*year_color)
+    p.paragraph_format.space_before = Pt(5)
+    p.paragraph_format.space_after = Pt(1)
+    for b in (edu_bullets or []):
+        if b and b != "[Not Provided]":
+            _add_bullet(doc, b, font_size=degree_size - 1, font_name=font_name)
+
+
+def _render_additional(doc, data: dict, font_name: str, font_size: int,
+                        heading_fn, bullet_fn,
+                        name_color_rgb: tuple = (0,0,0),
+                        desc_color_rgb: tuple = (80,80,80),
+                        dur_color_rgb: tuple = (128,128,128)):
+    """
+    Render the Additional section from structured objects.
+    Each item: bold name + optional [duration] on one line, description below.
+    Handles dicts, flat strings, and completely skips raw leaked JSON strings.
+    """
+    raw = data.get("additional", [])
+    # Final safety normalisation at render time
+    items = []
+    for item in raw:
+        if isinstance(item, dict):
+            name = str(item.get("name", "") or "").strip()
+            desc = str(item.get("description", "") or "").strip()
+            dur  = str(item.get("duration", "") or "").strip()
+            # Skip if both name and desc are empty or placeholder
+            if not name and not desc:
+                continue
+            if name in ("[Not Provided]", "") and desc in ("[Not Provided]", ""):
+                continue
+            items.append({"name": name, "description": desc, "duration": dur})
+        elif isinstance(item, str):
+            s = item.strip()
+            if not s or s == "[Not Provided]":
+                continue
+            # Discard any raw dict/JSON leak silently
+            if s.startswith("{") or ("'name'" in s and "'description'" in s) or s.startswith("["):
+                continue
+            items.append({"name": s, "description": "", "duration": ""})
+
+    if not items:
+        return
+
+    heading_fn("Additional")
+
+    for item in items:
+        name = item.get("name", "")
+        desc = item.get("description", "")
+        dur  = item.get("duration", "")
+
+        # Name line: bold name + italic [duration]
+        p = doc.add_paragraph()
+        p.clear()
+        if name and name not in ("[Not Provided]", ""):
+            r1 = p.add_run(name)
+            r1.bold = True
+            r1.font.size = Pt(font_size)
+            r1.font.name = font_name
+            r1.font.color.rgb = RGBColor(*name_color_rgb)
+        if dur and dur not in ("[Not Provided]", ""):
+            rd = p.add_run(f"   [{dur}]")
+            rd.italic = True
+            rd.font.size = Pt(font_size - 1)
+            rd.font.name = font_name
+            rd.font.color.rgb = RGBColor(*dur_color_rgb)
+        p.paragraph_format.space_before = Pt(4)
+        p.paragraph_format.space_after = Pt(1)
+
+        # Description line (if present)
+        if desc and desc not in ("[Not Provided]", ""):
+            pd = doc.add_paragraph()
+            pd.clear()
+            rd2 = pd.add_run(desc)
+            rd2.font.size = Pt(font_size - 1)
+            rd2.font.name = font_name
+            rd2.font.color.rgb = RGBColor(*desc_color_rgb)
+            pd.paragraph_format.space_before = Pt(0)
+            pd.paragraph_format.space_after = Pt(2)
+
+
+# ─── MODERN TEMPLATE ──────────────────────────────────────────────────────────
+def generate_modern_docx(data: dict) -> BytesIO:
+    """
+    Modern ATS-Optimized template — single-column, Calibri font, navy headings.
+    Strictly follows ATS section ordering used by Workday, Greenhouse, and Lever:
+      Header → Professional Summary → Skills → Work Experience →
+      Projects → Education → Certifications → Languages → Interests → Additional
+
+    All formatting decisions prioritize machine readability over visual design.
+    No tables, no columns, no text boxes — pure linear paragraph flow for ATS parsers.
+    """
+    doc = Document()
+    for sec in doc.sections:
+        sec.top_margin = Inches(0.75)
+        sec.bottom_margin = Inches(0.75)
+        sec.left_margin = Inches(1.0)
+        sec.right_margin = Inches(1.0)
+
+    NAVY = (0x1E, 0x3A, 0x5F)
+    NAVY_HEX = "1E3A5F"
+    FONT = "Calibri"
+    BODY = 10
+
+    # ── ATS RULE: Single-column header block — centered plain text, no tables ──
+    _build_contact_header(
+        doc, data,
+        name_size=20, name_color_rgb=NAVY, name_font=FONT,
+        contact_font=FONT, contact_color_hex="4A4A4A", contact_size=9,
+        title_font=FONT, title_size=11, title_color_rgb=NAVY,
+        accent_color_hex=NAVY_HEX,
+    )
+
+    def _heading(text):
+        """
+        ATS-standard section heading: ALL CAPS, bold, bottom-bordered.
+        Border signals section boundary to ATS parsers without using tables.
+        Matches heading labels expected by Workday/Greenhouse parsers.
+        """
+        _section_heading_bordered(doc, text, font_name=FONT, font_size=BODY,
+                                   bold=True, color_hex=NAVY_HEX,
+                                   border_color=NAVY_HEX, border_sz="6",
+                                   space_before=10, space_after=4)
+
+    def _body_para(text, italic=False, color_rgb=None):
+        """Standard body paragraph — consistent 10pt Calibri, minimal spacing."""
+        p = doc.add_paragraph()
+        p.clear()
+        run = p.add_run(text)
+        run.font.size = Pt(BODY)
+        run.font.name = FONT
+        run.italic = italic
+        if color_rgb:
+            run.font.color.rgb = RGBColor(*color_rgb)
+        p.paragraph_format.space_before = Pt(1)
+        p.paragraph_format.space_after = Pt(3)
+        return p
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 1: PROFESSIONAL SUMMARY
+    # ATS parsers (Workday, iCIMS) actively scan this section for role fit.
+    # 2-3 sentences: Role identity + core competencies + value proposition.
+    # ══════════════════════════════════════════════════════════════════════
+    if data.get("summary") and data["summary"] not in ("", "[Not Provided]"):
+        _heading("Professional Summary")
+        _body_para(data["summary"])
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 2: CORE SKILLS
+    # ATS keyword scanners parse Skills first for job description matching.
+    # Categorized format (Technical / Professional) with pipe-separated values
+    # is the industry standard used by Jobscan, Enhancv, and Greenhouse parsers.
+    # ══════════════════════════════════════════════════════════════════════
+    tech_skills = [s for s in data.get("skills", []) if s and s != "[Not Provided]"]
+    soft_skills = [s for s in data.get("soft_skills", []) if s and s != "[Not Provided]"]
+    if tech_skills or soft_skills:
+        _heading("Core Skills")
+        if tech_skills:
+            p = doc.add_paragraph()
+            p.clear()
+            label_run = p.add_run("Technical:  ")
+            label_run.bold = True
+            label_run.font.size = Pt(BODY)
+            label_run.font.name = FONT
+            label_run.font.color.rgb = RGBColor(*NAVY)
+            # Group into rows of max 6 skills for readability — ATS reads all as flat text
+            skills_text = "  |  ".join(tech_skills)
+            skills_run = p.add_run(skills_text)
+            skills_run.font.size = Pt(BODY)
+            skills_run.font.name = FONT
+            p.paragraph_format.space_before = Pt(2)
+            p.paragraph_format.space_after = Pt(3)
+        if soft_skills:
+            p = doc.add_paragraph()
+            p.clear()
+            label_run = p.add_run("Professional:  ")
+            label_run.bold = True
+            label_run.font.size = Pt(BODY)
+            label_run.font.name = FONT
+            label_run.font.color.rgb = RGBColor(*NAVY)
+            ss_run = p.add_run("  |  ".join(soft_skills))
+            ss_run.font.size = Pt(BODY)
+            ss_run.font.name = FONT
+            p.paragraph_format.space_before = Pt(1)
+            p.paragraph_format.space_after = Pt(4)
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 3: WORK EXPERIENCE
+    # Industry-standard layout (Enhancv/Jobscan):
+    #   Line 1: Job Title (bold, navy, larger)  |  Company Name
+    #   Line 2: MMM YYYY – MMM YYYY  (italic, right-aligned)
+    #   Line 3: 1-sentence role scope (italic gray) — optional
+    #   Lines 4+: • Bullet points (action verb + task + tech + impact)
+    # ATS parsers map Role Title and Company as separate parsed fields.
+    # ══════════════════════════════════════════════════════════════════════
+    valid_exp = [e for e in data.get("experience", [])
+                 if (e.get("role") and e["role"] not in ("", "[Not Provided]"))
+                 or (e.get("company") and e["company"] not in ("", "[Not Provided]"))]
+    if valid_exp:
+        _heading("Work Experience")
+        for exp in valid_exp:
+            _role     = exp.get("role", "")     if exp.get("role", "")     not in ("", "[Not Provided]") else ""
+            _company  = exp.get("company", "")  if exp.get("company", "")  not in ("", "[Not Provided]") else ""
+            _duration = exp.get("duration", "") if exp.get("duration", "") not in ("", "[Not Provided]") else ""
+
+            # ── Row 1: Role Title (bold navy) — Company (regular gray) ──────
+            p = doc.add_paragraph()
+            p.clear()
+            if _role:
+                r_role = p.add_run(_role)
+                r_role.bold = True
+                r_role.font.size = Pt(BODY + 1)
+                r_role.font.name = FONT
+                r_role.font.color.rgb = RGBColor(*NAVY)
+            if _company:
+                sep = "  \u2014  " if _role else ""   # em-dash separator — ATS-safe
+                r_co = p.add_run(f"{sep}{_company}")
+                r_co.font.size = Pt(BODY)
+                r_co.font.name = FONT
+                r_co.font.color.rgb = RGBColor(74, 74, 74)
+            p.paragraph_format.space_before = Pt(7)
+            p.paragraph_format.space_after = Pt(0)
+
+            # ── Row 2: Duration (italic, smaller, dark-gray) ─────────────────
+            if _duration:
+                p_dur = doc.add_paragraph()
+                p_dur.clear()
+                r_dur = p_dur.add_run(_duration)
+                r_dur.italic = True
+                r_dur.font.size = Pt(BODY - 1)
+                r_dur.font.name = FONT
+                r_dur.font.color.rgb = RGBColor(110, 110, 110)
+                p_dur.paragraph_format.space_before = Pt(0)
+                p_dur.paragraph_format.space_after = Pt(2)
+
+            # ── Row 3: Role scope summary (italic gray) ────────────────────
+            if exp.get("description") and exp["description"] not in ("", "[Not Provided]"):
+                _body_para(exp["description"], italic=True, color_rgb=(90, 90, 90))
+
+            # ── Rows 4+: Achievement bullets ───────────────────────────────
+            for b in exp.get("bullets", []):
+                if b and b != "[Not Provided]":
+                    _add_bullet(doc, b, font_size=BODY, font_name=FONT)
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 4: PROJECTS
+    # Industry-standard project entry format (Jobscan/Enhancv):
+    #   Line 1: Project Name (bold navy) | [Duration] (italic gray)
+    #   Line 2: Tech Stack: ... (smaller, plain) | URL (plain text — no hyperlink)
+    #   Line 3: 1-sentence project purpose (italic)
+    #   Lines 4+: Achievement bullets
+    # ATS parsers cannot follow hyperlinks — URLs must be plain text.
+    # ══════════════════════════════════════════════════════════════════════
+    valid_proj = [p for p in data.get("projects", [])
+                  if p.get("name") and p["name"] not in ("", "[Not Provided]")]
+    if valid_proj:
+        _heading("Projects")
+        for proj in valid_proj:
+            # Line 1: Project Name + Duration
+            p = doc.add_paragraph()
+            p.clear()
+            r_name = p.add_run(proj.get("name", ""))
+            r_name.bold = True
+            r_name.font.size = Pt(BODY + 1)
+            r_name.font.name = FONT
+            r_name.font.color.rgb = RGBColor(*NAVY)
+            if proj.get("duration") and proj["duration"] not in ("", "[Not Provided]"):
+                r_dur = p.add_run(f"   [{proj['duration']}]")
+                r_dur.italic = True
+                r_dur.font.size = Pt(BODY - 1)
+                r_dur.font.name = FONT
+                r_dur.font.color.rgb = RGBColor(110, 110, 110)
+            p.paragraph_format.space_before = Pt(6)
+            p.paragraph_format.space_after = Pt(1)
+            # Line 2: Tech Stack + URL (plain text, ATS-safe)
+            meta_parts = []
+            if proj.get("tech_stack") and proj["tech_stack"] not in ("", "[Not Provided]"):
+                meta_parts.append(f"Tech: {proj['tech_stack']}")
+            if proj.get("url") and proj["url"] not in ("", "[Not Provided]"):
+                meta_parts.append(proj["url"])
+            if meta_parts:
+                p_meta = doc.add_paragraph()
+                p_meta.clear()
+                r_meta = p_meta.add_run("  |  ".join(meta_parts))
+                r_meta.font.size = Pt(BODY - 1)
+                r_meta.font.name = FONT
+                r_meta.font.color.rgb = RGBColor(74, 74, 74)
+                p_meta.paragraph_format.space_before = Pt(0)
+                p_meta.paragraph_format.space_after = Pt(2)
+            if proj.get("description") and proj["description"] not in ("", "[Not Provided]"):
+                _body_para(proj["description"], italic=True, color_rgb=(80, 80, 80))
+            for b in proj.get("bullets", []):
+                if b and b != "[Not Provided]":
+                    _add_bullet(doc, b, font_size=BODY, font_name=FONT)
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 5: EDUCATION
+    # Two-line entry: Degree + Institution on line 1, Year on line 2.
+    # ATS parsers match: "Bachelor", "Master", "B.Tech", "MBA", "Ph.D".
+    # ══════════════════════════════════════════════════════════════════════
+    valid_edu = [e for e in data.get("education", [])
+                 if e.get("degree") or e.get("institution")]
+    if valid_edu:
+        _heading("Education")
+        for edu in valid_edu:
+            p = doc.add_paragraph()
+            p.clear()
+            if edu.get("degree") and edu["degree"] not in ("", "[Not Provided]"):
+                r_deg = p.add_run(edu["degree"])
+                r_deg.bold = True
+                r_deg.font.size = Pt(BODY + 1)
+                r_deg.font.name = FONT
+                r_deg.font.color.rgb = RGBColor(*NAVY)
+            if edu.get("institution") and edu["institution"] not in ("", "[Not Provided]"):
+                r_inst = p.add_run(f"  —  {edu['institution']}")
+                r_inst.font.size = Pt(BODY)
+                r_inst.font.name = FONT
+                r_inst.font.color.rgb = RGBColor(74, 74, 74)
+            p.paragraph_format.space_before = Pt(6)
+            p.paragraph_format.space_after = Pt(0)
+            if edu.get("year") and edu["year"] not in ("", "[Not Provided]"):
+                p_yr = doc.add_paragraph()
+                p_yr.clear()
+                r_yr = p_yr.add_run(edu["year"])
+                r_yr.italic = True
+                r_yr.font.size = Pt(BODY - 1)
+                r_yr.font.name = FONT
+                r_yr.font.color.rgb = RGBColor(110, 110, 110)
+                p_yr.paragraph_format.space_before = Pt(0)
+                p_yr.paragraph_format.space_after = Pt(2)
+            for b in (edu.get("bullets") or []):
+                if b and b != "[Not Provided]":
+                    _add_bullet(doc, b, font_size=BODY - 1, font_name=FONT)
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 6: CERTIFICATIONS & LINKS
+    # Each cert: Name (bold) | Issuer | Date — one bullet per credential.
+    # Followed by LinkedIn / GitHub / Portfolio as plain-text URL bullets.
+    # ATS systems (LinkedIn, Workday) match cert keywords directly.
+    # ══════════════════════════════════════════════════════════════════════
+    valid_certs = [c for c in data.get("certifications", [])
+                   if isinstance(c, dict) and c.get("name") and c["name"] not in ("", "[Not Provided]")]
+    contact = data.get("contact", {})
+    has_links = any(contact.get(k, "") not in ("", "[Not Provided]", "Not Provided")
+                    for k in ("linkedin", "github", "portfolio"))
+    if valid_certs or has_links:
+        _heading("Certifications & Links")
+        for cert in valid_certs:
+            parts = [cert["name"]]
+            if cert.get("issuer") and cert["issuer"] not in ("", "[Not Provided]"):
+                parts.append(cert["issuer"])
+            if cert.get("duration") and cert["duration"] not in ("", "[Not Provided]"):
+                parts.append(cert["duration"])
+            _add_bullet(doc, "  |  ".join(parts), font_size=BODY, font_name=FONT)
+        # Profile links as plain-text bullets (ATS-safe)
+        for label, key in [("LinkedIn", "linkedin"), ("GitHub", "github"), ("Portfolio", "portfolio")]:
+            val = contact.get(key, "")
+            if val and val not in ("", "[Not Provided]", "Not Provided"):
+                _add_bullet(doc, f"{label}: {val}", font_size=BODY, font_name=FONT)
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 7: LANGUAGES
+    # ══════════════════════════════════════════════════════════════════════
+    valid_lang = [l for l in data.get("languages", []) if l and l != "[Not Provided]"]
+    if valid_lang:
+        _heading("Languages")
+        _body_para("  |  ".join(valid_lang))
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 8: INTERESTS
+    # ══════════════════════════════════════════════════════════════════════
+    valid_int = [i for i in data.get("interests", []) if i and i != "[Not Provided]"]
+    if valid_int:
+        _heading("Interests")
+        _body_para("  |  ".join(valid_int))
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 9: ADDITIONAL (Awards, Training, Volunteering, Publications)
+    # ══════════════════════════════════════════════════════════════════════
+    _render_additional(doc, data, font_name=FONT, font_size=BODY,
+                       heading_fn=_heading,
+                       bullet_fn=lambda t: _add_bullet(doc, t, font_size=BODY, font_name=FONT),
+                       name_color_rgb=NAVY, desc_color_rgb=(80, 80, 80))
+
+    buf = BytesIO()
+    doc.save(buf)
+    buf.seek(0)
+    return buf
+
+
+# ─── MINIMAL TEMPLATE ─────────────────────────────────────────────────────────
+def generate_minimal_docx(data: dict) -> BytesIO:
+    """
+    Minimal ATS-Optimized template — pure black/white Arial, maximum machine readability.
+    Highest ATS parse accuracy of all three templates.
+    Follows identical section ordering to Modern template for ATS consistency:
+      Header → Professional Summary → Skills → Work Experience →
+      Projects → Education → Certifications → Languages → Interests → Additional
+
+    No color, no decoration, no graphics — every byte serves ATS keyword matching.
+    Preferred by Taleo, SmartRecruiters, and legacy HRIS systems.
+    """
+    doc = Document()
+    for sec in doc.sections:
+        sec.top_margin = Inches(0.8)
+        sec.bottom_margin = Inches(0.8)
+        sec.left_margin = Inches(1.1)
+        sec.right_margin = Inches(1.1)
+
+    FONT = "Arial"
+    BODY = 10
+    BLACK_HEX = "000000"
+    BLACK = (0, 0, 0)
+    DARK_GRAY = (60, 60, 60)
+    MID_GRAY = (100, 100, 100)
+
+    # ── ATS RULE: Plain-text header — no color, no decoration ──
+    _build_contact_header(
+        doc, data,
+        name_size=18, name_color_rgb=BLACK, name_font=FONT,
+        contact_font=FONT, contact_color_hex="333333", contact_size=9,
+        title_font=FONT, title_size=10, title_color_rgb=DARK_GRAY,
+    )
+
+    def _heading(text):
+        """
+        Pure black bold ALL-CAPS heading with bottom rule.
+        Maximum compatibility with legacy ATS parsers that strip color.
+        """
+        _section_heading_bordered(doc, text, font_name=FONT, font_size=BODY,
+                                   bold=True, color_hex=BLACK_HEX,
+                                   border_color=BLACK_HEX, border_sz="4",
+                                   space_before=10, space_after=3)
+
+    def _body_para(text, italic=False):
+        p = doc.add_paragraph()
+        p.clear()
+        run = p.add_run(text)
+        run.font.size = Pt(BODY)
+        run.font.name = FONT
+        run.italic = italic
+        p.paragraph_format.space_before = Pt(1)
+        p.paragraph_format.space_after = Pt(3)
+        return p
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 1: PROFESSIONAL SUMMARY
+    # ══════════════════════════════════════════════════════════════════════
+    if data.get("summary") and data["summary"] not in ("", "[Not Provided]"):
+        _heading("Professional Summary")
+        _body_para(data["summary"])
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 2: CORE SKILLS
+    # Comma-separated — maximum ATS keyword parser compatibility.
+    # Taleo, SmartRecruiters, and legacy HRIS systems parse comma lists best.
+    # Labeled "Technical" and "Professional" — matches Greenhouse/Lever field names.
+    # ══════════════════════════════════════════════════════════════════════
+    tech_skills = [s for s in data.get("skills", []) if s and s != "[Not Provided]"]
+    soft_skills = [s for s in data.get("soft_skills", []) if s and s != "[Not Provided]"]
+    if tech_skills or soft_skills:
+        _heading("Core Skills")
+        if tech_skills:
+            p = doc.add_paragraph()
+            p.clear()
+            lbl = p.add_run("Technical:  ")
+            lbl.bold = True
+            lbl.font.size = Pt(BODY)
+            lbl.font.name = FONT
+            skills_run = p.add_run(", ".join(tech_skills))
+            skills_run.font.size = Pt(BODY)
+            skills_run.font.name = FONT
+            p.paragraph_format.space_before = Pt(2)
+            p.paragraph_format.space_after = Pt(3)
+        if soft_skills:
+            p = doc.add_paragraph()
+            p.clear()
+            lbl = p.add_run("Professional:  ")
+            lbl.bold = True
+            lbl.font.size = Pt(BODY)
+            lbl.font.name = FONT
+            ss_run = p.add_run(", ".join(soft_skills))
+            ss_run.font.size = Pt(BODY)
+            ss_run.font.name = FONT
+            p.paragraph_format.space_before = Pt(1)
+            p.paragraph_format.space_after = Pt(4)
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 3: WORK EXPERIENCE
+    # Industry-standard two-line layout for maximum ATS field recognition:
+    #   Line 1: Job Title (bold, black)  |  Duration (italic, gray)
+    #   Line 2: Company Name (plain)
+    #   Line 3: Role scope (italic, optional)
+    #   Lines 4+: Bullet achievements
+    # Plain black/white — preferred by Taleo and legacy HRIS parsers.
+    # ══════════════════════════════════════════════════════════════════════
+    valid_exp = [e for e in data.get("experience", [])
+                 if (e.get("role") and e["role"] not in ("", "[Not Provided]"))
+                 or (e.get("company") and e["company"] not in ("", "[Not Provided]"))]
+    if valid_exp:
+        _heading("Work Experience")
+        for exp in valid_exp:
+            _role     = exp.get("role", "")     if exp.get("role", "")     not in ("", "[Not Provided]") else ""
+            _company  = exp.get("company", "")  if exp.get("company", "")  not in ("", "[Not Provided]") else ""
+            _duration = exp.get("duration", "") if exp.get("duration", "") not in ("", "[Not Provided]") else ""
+
+            # Line 1: Job Title + Duration
+            p = doc.add_paragraph()
+            p.clear()
+            if _role:
+                r1 = p.add_run(_role)
+                r1.bold = True
+                r1.font.size = Pt(BODY + 1)
+                r1.font.name = FONT
+            if _duration:
+                r2 = p.add_run(f"  |  {_duration}")
+                r2.italic = True
+                r2.font.size = Pt(BODY - 1)
+                r2.font.name = FONT
+                r2.font.color.rgb = RGBColor(*MID_GRAY)
+            p.paragraph_format.space_before = Pt(7)
+            p.paragraph_format.space_after = Pt(1)
+
+            # Line 2: Company Name
+            if _company:
+                p_co = doc.add_paragraph()
+                p_co.clear()
+                r_co = p_co.add_run(_company)
+                r_co.font.size = Pt(BODY)
+                r_co.font.name = FONT
+                r_co.font.color.rgb = RGBColor(*DARK_GRAY)
+                p_co.paragraph_format.space_before = Pt(0)
+                p_co.paragraph_format.space_after = Pt(2)
+
+            if exp.get("description") and exp["description"] not in ("", "[Not Provided]"):
+                _body_para(exp["description"], italic=True)
+            for b in exp.get("bullets", []):
+                if b and b != "[Not Provided]":
+                    _add_bullet(doc, b, font_size=BODY, font_name=FONT)
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 4: PROJECTS
+    # Plain black project header: Name (bold) + [Duration] + tech + URL
+    # Each on its own line for maximum ATS field parsing accuracy.
+    # ══════════════════════════════════════════════════════════════════════
+    valid_proj = [p for p in data.get("projects", [])
+                  if p.get("name") and p["name"] not in ("", "[Not Provided]")]
+    if valid_proj:
+        _heading("Projects")
+        for proj in valid_proj:
+            # Line 1: Project Name + Duration
+            p = doc.add_paragraph()
+            p.clear()
+            r1 = p.add_run(proj.get("name", ""))
+            r1.bold = True
+            r1.font.size = Pt(BODY + 1)
+            r1.font.name = FONT
+            if proj.get("duration") and proj["duration"] not in ("", "[Not Provided]"):
+                rd = p.add_run(f"   [{proj['duration']}]")
+                rd.italic = True
+                rd.font.size = Pt(BODY - 1)
+                rd.font.name = FONT
+                rd.font.color.rgb = RGBColor(*MID_GRAY)
+            p.paragraph_format.space_before = Pt(6)
+            p.paragraph_format.space_after = Pt(1)
+            # Line 2: Tech Stack + URL
+            meta_parts = []
+            if proj.get("tech_stack") and proj["tech_stack"] not in ("", "[Not Provided]"):
+                meta_parts.append(f"Tech: {proj['tech_stack']}")
+            if proj.get("url") and proj["url"] not in ("", "[Not Provided]"):
+                meta_parts.append(proj["url"])
+            if meta_parts:
+                p_meta = doc.add_paragraph()
+                p_meta.clear()
+                r_meta = p_meta.add_run("  |  ".join(meta_parts))
+                r_meta.font.size = Pt(BODY - 1)
+                r_meta.font.name = FONT
+                r_meta.font.color.rgb = RGBColor(*DARK_GRAY)
+                p_meta.paragraph_format.space_before = Pt(0)
+                p_meta.paragraph_format.space_after = Pt(2)
+            if proj.get("description") and proj["description"] not in ("", "[Not Provided]"):
+                _body_para(proj["description"], italic=True)
+            for b in proj.get("bullets", []):
+                if b and b != "[Not Provided]":
+                    _add_bullet(doc, b, font_size=BODY, font_name=FONT)
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 5: EDUCATION
+    # Degree (bold) — Institution — Year (italic)
+    # ATS parsers match: "Bachelor", "Master", "B.Tech", "MBA", "Ph.D".
+    # ══════════════════════════════════════════════════════════════════════
+    valid_edu = [e for e in data.get("education", [])
+                 if e.get("degree") or e.get("institution")]
+    if valid_edu:
+        _heading("Education")
+        for edu in valid_edu:
+            p = doc.add_paragraph()
+            p.clear()
+            if edu.get("degree") and edu["degree"] not in ("", "[Not Provided]"):
+                r_deg = p.add_run(edu["degree"])
+                r_deg.bold = True
+                r_deg.font.size = Pt(BODY + 1)
+                r_deg.font.name = FONT
+            if edu.get("institution") and edu["institution"] not in ("", "[Not Provided]"):
+                r_inst = p.add_run(f"  —  {edu['institution']}")
+                r_inst.font.size = Pt(BODY)
+                r_inst.font.name = FONT
+                r_inst.font.color.rgb = RGBColor(*DARK_GRAY)
+            p.paragraph_format.space_before = Pt(6)
+            p.paragraph_format.space_after = Pt(0)
+            if edu.get("year") and edu["year"] not in ("", "[Not Provided]"):
+                p_yr = doc.add_paragraph()
+                p_yr.clear()
+                r_yr = p_yr.add_run(edu["year"])
+                r_yr.italic = True
+                r_yr.font.size = Pt(BODY - 1)
+                r_yr.font.name = FONT
+                r_yr.font.color.rgb = RGBColor(*MID_GRAY)
+                p_yr.paragraph_format.space_before = Pt(0)
+                p_yr.paragraph_format.space_after = Pt(2)
+            for b in (edu.get("bullets") or []):
+                if b and b != "[Not Provided]":
+                    _add_bullet(doc, b, font_size=BODY - 1, font_name=FONT)
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 6: CERTIFICATIONS & LINKS
+    # Plain-text bullet per cert: Name | Issuer | Date
+    # Profile URLs added as plain-text bullets — ATS-safe (no hyperlinks).
+    # ══════════════════════════════════════════════════════════════════════
+    valid_certs = [c for c in data.get("certifications", [])
+                   if isinstance(c, dict) and c.get("name") and c["name"] not in ("", "[Not Provided]")]
+    contact_min = data.get("contact", {})
+    has_links_min = any(contact_min.get(k, "") not in ("", "[Not Provided]", "Not Provided")
+                        for k in ("linkedin", "github", "portfolio"))
+    if valid_certs or has_links_min:
+        _heading("Certifications & Links")
+        for cert in valid_certs:
+            parts = [cert["name"]]
+            if cert.get("issuer") and cert["issuer"] not in ("", "[Not Provided]"):
+                parts.append(cert["issuer"])
+            if cert.get("duration") and cert["duration"] not in ("", "[Not Provided]"):
+                parts.append(cert["duration"])
+            _add_bullet(doc, "  |  ".join(parts), font_size=BODY, font_name=FONT)
+        for label, key in [("LinkedIn", "linkedin"), ("GitHub", "github"), ("Portfolio", "portfolio")]:
+            val = contact_min.get(key, "")
+            if val and val not in ("", "[Not Provided]", "Not Provided"):
+                _add_bullet(doc, f"{label}: {val}", font_size=BODY, font_name=FONT)
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 7: LANGUAGES
+    # ══════════════════════════════════════════════════════════════════════
+    valid_lang = [l for l in data.get("languages", []) if l and l != "[Not Provided]"]
+    if valid_lang:
+        _heading("Languages")
+        _body_para(", ".join(valid_lang))
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 8: INTERESTS
+    # ══════════════════════════════════════════════════════════════════════
+    valid_int = [i for i in data.get("interests", []) if i and i != "[Not Provided]"]
+    if valid_int:
+        _heading("Interests")
+        _body_para(", ".join(valid_int))
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 9: ADDITIONAL
+    # ══════════════════════════════════════════════════════════════════════
+    _render_additional(doc, data, font_name=FONT, font_size=BODY,
+                       heading_fn=_heading,
+                       bullet_fn=lambda t: _add_bullet(doc, t, font_size=BODY, font_name=FONT),
+                       name_color_rgb=BLACK, desc_color_rgb=(80, 80, 80))
+
+    buf = BytesIO()
+    doc.save(buf)
+    buf.seek(0)
+    return buf
+
+
+# ─── CREATIVE TEMPLATE ────────────────────────────────────────────────────────
+def generate_creative_docx(data: dict) -> BytesIO:
+    """
+    Executive ATS-Optimized template — teal/dark-navy Calibri, polished yet ATS-safe.
+    Replaces design-heavy elements (decorative symbols, multi-font mixing, ◆/▌ glyphs)
+    with ATS-safe equivalents that retain visual appeal without breaking parsers.
+    Identical section ordering to Modern and Minimal templates for ATS consistency:
+      Header → Professional Summary → Skills → Work Experience →
+      Projects → Education → Certifications → Languages → Interests → Additional
+
+    ATS COMPLIANCE NOTES:
+    - All Unicode decorative characters (◆, ▌, @) removed from section headings/bullets.
+    - Single font family (Calibri) used throughout body — multi-font mixing confuses some parsers.
+    - Teal color is display-only; ATS parsers read plain text, not colors.
+    - Georgia used ONLY for candidate name (header) — never in parseable body sections.
+    """
+    doc = Document()
+    for sec in doc.sections:
+        sec.top_margin = Inches(0.75)
+        sec.bottom_margin = Inches(0.75)
+        sec.left_margin = Inches(0.95)
+        sec.right_margin = Inches(0.95)
+
+    TEAL_HEX = "0D7377"
+    DARK_HEX = "14213D"
+    TEAL = (0x0D, 0x73, 0x77)
+    DARK = (0x14, 0x21, 0x3D)
+    FONT_NAME = "Georgia"   # Name display only — ATS ignores header fonts
+    FONT_BODY = "Calibri"   # Consistent body font — required for ATS parsing
+    BODY = 10
+
+    # ── Header: Name in Georgia (display), contact in Calibri (parseable) ──
+    _build_contact_header(
+        doc, data,
+        name_size=22, name_color_rgb=DARK, name_font=FONT_NAME,
+        contact_font=FONT_BODY, contact_color_hex="444444", contact_size=9,
+        title_font=FONT_BODY, title_size=11, title_color_rgb=TEAL,
+        accent_color_hex=TEAL_HEX,
+    )
+
+    def _heading(text):
+        """
+        ATS-safe teal heading — NO prefix symbols (◆/▌ break some ATS parsers).
+        Teal color preserved for human readers; ATS reads underlying plain text.
+        """
+        _section_heading_bordered(doc, text, font_name=FONT_BODY, font_size=BODY + 1,
+                                   bold=True, color_hex=TEAL_HEX,
+                                   border_color=TEAL_HEX, border_sz="6",
+                                   space_before=10, space_after=4)
+        # NOTE: prefix="\u258c " removed — block character disrupts ATS text extraction
+
+    def _body_para(text, italic=False, color_rgb=None):
+        p = doc.add_paragraph()
+        p.clear()
+        run = p.add_run(text)
+        run.font.size = Pt(BODY)
+        run.font.name = FONT_BODY
+        run.italic = italic
+        if color_rgb:
+            run.font.color.rgb = RGBColor(*color_rgb)
+        p.paragraph_format.space_before = Pt(1)
+        p.paragraph_format.space_after = Pt(3)
+        return p
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 1: PROFESSIONAL SUMMARY
+    # "Profile" renamed to "Professional Summary" — standard ATS label.
+    # Some older ATS systems (Taleo) fail to map "Profile" to summary field.
+    # ══════════════════════════════════════════════════════════════════════
+    if data.get("summary") and data["summary"] not in ("", "[Not Provided]"):
+        _heading("Professional Summary")
+        _body_para(data["summary"], italic=False)  # Not italic — ATS reads italic as emphasis, not content
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 2: CORE SKILLS
+    # Teal labels + pipe-separated values — visually distinctive, ATS-safe.
+    # Georgia used ONLY for name; Calibri throughout body for ATS compatibility.
+    # ══════════════════════════════════════════════════════════════════════
+    tech_skills = [s for s in data.get("skills", []) if s and s != "[Not Provided]"]
+    soft_skills = [s for s in data.get("soft_skills", []) if s and s != "[Not Provided]"]
+    if tech_skills or soft_skills:
+        _heading("Core Skills")
+        if tech_skills:
+            p = doc.add_paragraph()
+            p.clear()
+            lbl = p.add_run("Technical:  ")
+            lbl.bold = True
+            lbl.font.size = Pt(BODY)
+            lbl.font.name = FONT_BODY
+            lbl.font.color.rgb = RGBColor(*TEAL)
+            skills_run = p.add_run("  |  ".join(tech_skills))
+            skills_run.font.size = Pt(BODY)
+            skills_run.font.name = FONT_BODY
+            p.paragraph_format.space_before = Pt(2)
+            p.paragraph_format.space_after = Pt(3)
+        if soft_skills:
+            p = doc.add_paragraph()
+            p.clear()
+            lbl = p.add_run("Professional:  ")
+            lbl.bold = True
+            lbl.font.size = Pt(BODY)
+            lbl.font.name = FONT_BODY
+            lbl.font.color.rgb = RGBColor(*TEAL)
+            ss_run = p.add_run("  |  ".join(soft_skills))
+            ss_run.font.size = Pt(BODY)
+            ss_run.font.name = FONT_BODY
+            p.paragraph_format.space_before = Pt(1)
+            p.paragraph_format.space_after = Pt(4)
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 3: WORK EXPERIENCE
+    # Two-line entry (Enhancv/Jobscan standard):
+    #   Line 1: Job Title (bold dark-navy, 11pt)  |  Duration (italic gray)
+    #   Line 2: Company Name (teal, 10pt)
+    #   Line 3: Role scope (italic, optional)
+    #   Lines 4+: Achievement bullets
+    # ATS-safe: "@" separator replaced with " — " (em-dash).
+    # ══════════════════════════════════════════════════════════════════════
+    valid_exp = [e for e in data.get("experience", [])
+                 if (e.get("role") and e["role"] not in ("", "[Not Provided]"))
+                 or (e.get("company") and e["company"] not in ("", "[Not Provided]"))]
+    if valid_exp:
+        _heading("Work Experience")
+        for exp in valid_exp:
+            _role     = exp.get("role", "")     if exp.get("role", "")     not in ("", "[Not Provided]") else ""
+            _company  = exp.get("company", "")  if exp.get("company", "")  not in ("", "[Not Provided]") else ""
+            _duration = exp.get("duration", "") if exp.get("duration", "") not in ("", "[Not Provided]") else ""
+
+            # Line 1: Job Title + Duration
+            p = doc.add_paragraph()
+            p.clear()
+            if _role:
+                r1 = p.add_run(_role)
+                r1.bold = True
+                r1.font.size = Pt(BODY + 1)
+                r1.font.name = FONT_BODY
+                r1.font.color.rgb = RGBColor(*DARK)
+            if _duration:
+                r3 = p.add_run(f"   {_duration}")
+                r3.italic = True
+                r3.font.size = Pt(BODY - 1)
+                r3.font.name = FONT_BODY
+                r3.font.color.rgb = RGBColor(110, 110, 110)
+            p.paragraph_format.space_before = Pt(7)
+            p.paragraph_format.space_after = Pt(1)
+
+            # Line 2: Company Name (teal)
+            if _company:
+                p_co = doc.add_paragraph()
+                p_co.clear()
+                r_co = p_co.add_run(_company)
+                r_co.font.size = Pt(BODY)
+                r_co.font.name = FONT_BODY
+                r_co.font.color.rgb = RGBColor(*TEAL)
+                p_co.paragraph_format.space_before = Pt(0)
+                p_co.paragraph_format.space_after = Pt(2)
+
+            if exp.get("description") and exp["description"] not in ("", "[Not Provided]"):
+                _body_para(exp["description"], italic=True, color_rgb=(80, 80, 80))
+            for b in exp.get("bullets", []):
+                if b and b != "[Not Provided]":
+                    _add_bullet(doc, b, font_size=BODY, font_name=FONT_BODY)
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 4: PROJECTS
+    # Project Name (bold dark-navy, 11pt) + [Duration] (italic gray)
+    # Tech Stack line (teal, 9pt) + URL as plain text (ATS-safe — no hyperlink)
+    # ══════════════════════════════════════════════════════════════════════
+    valid_proj = [pr for pr in data.get("projects", [])
+                  if pr.get("name") and pr["name"] not in ("", "[Not Provided]")]
+    if valid_proj:
+        _heading("Projects")
+        for proj in valid_proj:
+            # Line 1: Project Name + Duration
+            p = doc.add_paragraph()
+            p.clear()
+            r1 = p.add_run(proj.get("name", ""))
+            r1.bold = True
+            r1.font.size = Pt(BODY + 1)
+            r1.font.name = FONT_BODY
+            r1.font.color.rgb = RGBColor(*DARK)
+            if proj.get("duration") and proj["duration"] not in ("", "[Not Provided]"):
+                rd = p.add_run(f"   [{proj['duration']}]")
+                rd.italic = True
+                rd.font.size = Pt(BODY - 1)
+                rd.font.name = FONT_BODY
+                rd.font.color.rgb = RGBColor(110, 110, 110)
+            p.paragraph_format.space_before = Pt(6)
+            p.paragraph_format.space_after = Pt(1)
+            # Line 2: Tech + URL (plain text, teal color — no underline/hyperlink)
+            meta_parts = []
+            if proj.get("tech_stack") and proj["tech_stack"] not in ("", "[Not Provided]"):
+                meta_parts.append(f"Tech: {proj['tech_stack']}")
+            if proj.get("url") and proj["url"] not in ("", "[Not Provided]"):
+                meta_parts.append(proj["url"])
+            if meta_parts:
+                p_meta = doc.add_paragraph()
+                p_meta.clear()
+                r_meta = p_meta.add_run("  |  ".join(meta_parts))
+                r_meta.font.size = Pt(BODY - 1)
+                r_meta.font.name = FONT_BODY
+                r_meta.font.color.rgb = RGBColor(*TEAL)
+                p_meta.paragraph_format.space_before = Pt(0)
+                p_meta.paragraph_format.space_after = Pt(2)
+            if proj.get("description") and proj["description"] not in ("", "[Not Provided]"):
+                _body_para(proj["description"], italic=True, color_rgb=(80, 80, 80))
+            for b in proj.get("bullets", []):
+                if b and b != "[Not Provided]":
+                    _add_bullet(doc, b, font_size=BODY, font_name=FONT_BODY)
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 5: EDUCATION
+    # Degree (bold dark-navy) — Institution (teal) — Year (italic gray)
+    # ══════════════════════════════════════════════════════════════════════
+    valid_edu = [e for e in data.get("education", [])
+                 if e.get("degree") or e.get("institution")]
+    if valid_edu:
+        _heading("Education")
+        for edu in valid_edu:
+            p = doc.add_paragraph()
+            p.clear()
+            if edu.get("degree") and edu["degree"] not in ("", "[Not Provided]"):
+                r1 = p.add_run(edu["degree"])
+                r1.bold = True
+                r1.font.size = Pt(BODY + 1)
+                r1.font.name = FONT_BODY
+                r1.font.color.rgb = RGBColor(*DARK)
+            if edu.get("institution") and edu["institution"] not in ("", "[Not Provided]"):
+                r2 = p.add_run(f"  —  {edu['institution']}")
+                r2.font.size = Pt(BODY)
+                r2.font.name = FONT_BODY
+                r2.font.color.rgb = RGBColor(*TEAL)
+            p.paragraph_format.space_before = Pt(6)
+            p.paragraph_format.space_after = Pt(0)
+            if edu.get("year") and edu["year"] not in ("", "[Not Provided]"):
+                p_yr = doc.add_paragraph()
+                p_yr.clear()
+                r3 = p_yr.add_run(edu["year"])
+                r3.italic = True
+                r3.font.size = Pt(BODY - 1)
+                r3.font.name = FONT_BODY
+                r3.font.color.rgb = RGBColor(110, 110, 110)
+                p_yr.paragraph_format.space_before = Pt(0)
+                p_yr.paragraph_format.space_after = Pt(2)
+            for b in (edu.get("bullets") or []):
+                if b and b != "[Not Provided]":
+                    _add_bullet(doc, b, font_size=BODY - 1, font_name=FONT_BODY)
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 6: CERTIFICATIONS & LINKS
+    # Cert bullets: Name | Issuer | Date  (teal heading, plain bullets)
+    # Profile URLs as plain-text bullets — no hyperlinks (ATS-safe).
+    # ══════════════════════════════════════════════════════════════════════
+    valid_certs = [c for c in data.get("certifications", [])
+                   if isinstance(c, dict) and c.get("name") and c["name"] not in ("", "[Not Provided]")]
+    contact_exec = data.get("contact", {})
+    has_links_exec = any(contact_exec.get(k, "") not in ("", "[Not Provided]", "Not Provided")
+                         for k in ("linkedin", "github", "portfolio"))
+    if valid_certs or has_links_exec:
+        _heading("Certifications & Links")
+        for cert in valid_certs:
+            parts = [cert["name"]]
+            if cert.get("issuer") and cert["issuer"] not in ("", "[Not Provided]"):
+                parts.append(cert["issuer"])
+            if cert.get("duration") and cert["duration"] not in ("", "[Not Provided]"):
+                parts.append(cert["duration"])
+            _add_bullet(doc, "  |  ".join(parts), font_size=BODY, font_name=FONT_BODY)
+        for label, key in [("LinkedIn", "linkedin"), ("GitHub", "github"), ("Portfolio", "portfolio")]:
+            val = contact_exec.get(key, "")
+            if val and val not in ("", "[Not Provided]", "Not Provided"):
+                _add_bullet(doc, f"{label}: {val}", font_size=BODY, font_name=FONT_BODY)
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 7: LANGUAGES
+    # ══════════════════════════════════════════════════════════════════════
+    valid_lang = [l for l in data.get("languages", []) if l and l != "[Not Provided]"]
+    if valid_lang:
+        _heading("Languages")
+        _body_para("  |  ".join(valid_lang))
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 8: INTERESTS
+    # ══════════════════════════════════════════════════════════════════════
+    valid_int = [i for i in data.get("interests", []) if i and i != "[Not Provided]"]
+    if valid_int:
+        _heading("Interests")
+        _body_para("  |  ".join(valid_int))
+
+    # ══════════════════════════════════════════════════════════════════════
+    # SECTION 9: ADDITIONAL
+    # ══════════════════════════════════════════════════════════════════════
+    _render_additional(doc, data, font_name=FONT_BODY, font_size=BODY,
+                       heading_fn=_heading,
+                       bullet_fn=lambda t: _add_bullet(doc, t, font_size=BODY, font_name=FONT_BODY),
+                       name_color_rgb=DARK, desc_color_rgb=(80, 80, 80))
+
+    buf = BytesIO()
+    doc.save(buf)
+    buf.seek(0)
+    return buf
+
+
+# ============================================================
+# 🔍 RESUME ANALYSIS MODULE — Job Title Suggestions (UI only)
+# ============================================================
+# NOTE: rewrite_text_with_llm() above is the Analysis Module.
+# It generates job title suggestions + rewritten text for DISPLAY ONLY.
+# It is NEVER used for DOCX generation.
+# DOCX generation uses optimize_resume_to_json() + extract_resume_json() exclusively.
 
 
 def rewrite_and_highlight(text, replacement_mapping, user_location):
@@ -4200,141 +6554,19 @@ def rewrite_and_highlight(text, replacement_mapping, user_location):
                 })
             break  # Only one match per word
 
-    # Rewrite text with neutral terms
-    rewritten_text = rewrite_text_with_llm(
+    # ⚡ Single LLM call — returns BOTH plain-text rewrite (for UI) AND JSON (for DOCX)
+    # Replaces the old rewrite_text_with_llm call which discarded the JSON half.
+    rewritten_text, json_str = rewrite_and_optimize_resume(
         text,
         replacement_mapping["masculine"] | replacement_mapping["feminine"],
         user_location
     )
 
-    return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words
-
-# ✅ Combined pre-evaluation: grammar + both domain detections in ONE LLM call
-# This replaces 3 separate call_llm calls with a single request, cutting API key
-# usage from 5 → 2 per resume analysis (1 pre-eval + 1 ATS eval).
-def pre_evaluate_resume(resume_text, job_description, job_title, lang_weight=5):
-    # ⚠️ This list MUST match db_manager.detect_domain_llm's valid_domains exactly,
-    # because the returned values are passed directly to get_domain_similarity().
-    DOMAIN_LIST = [
-        "Data Science", "AI/Machine Learning", "UI/UX Design", "Mobile Development",
-        "Frontend Development", "Backend Development", "Full Stack Development",
-        "Cybersecurity", "Cloud Engineering", "DevOps/Infrastructure",
-        "Quality Assurance", "Game Development", "Blockchain Development",
-        "Embedded Systems", "System Architecture", "Database Management",
-        "Networking", "Site Reliability Engineering", "Product Management",
-        "Project Management", "Business Analysis", "Technical Writing",
-        "Digital Marketing", "E-commerce", "Fintech", "Healthcare Tech",
-        "EdTech", "IoT Development", "AR/VR Development", "Technical Sales",
-        "Agile Coaching", "Software Engineering"
-    ]
-    domain_list_str = "\n".join(f"- {d}" for d in DOMAIN_LIST)
-
-    prompt = f"""You are a senior technical HR evaluator. Perform THREE tasks on the inputs below and return ONLY the structured output shown — no extra commentary.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TASK 1 — LANGUAGE QUALITY SCORE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Evaluate the RESUME TEXT across five dimensions:
-1. Grammar & Mechanics
-2. Clarity & Conciseness
-3. Professional Tone
-4. Action Verb Usage
-5. ATS Language Alignment
-
-Scoring scale (out of {lang_weight}):
-- {lang_weight}: Exceptional
-- {lang_weight-1}: Very Good
-- {lang_weight-2}: Good
-- {max(0, lang_weight-3)}: Fair
-- {max(0, lang_weight-4)}: Poor
-- 0-1: Very Poor
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TASK 2 — RESUME DOMAIN
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-From this list, pick the single best domain for the RESUME:
-{domain_list_str}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TASK 3 — JOB DOMAIN
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-From the same list, pick the single best domain for the JOB TITLE + JOB DESCRIPTION:
-Job Title: {job_title}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-REQUIRED OUTPUT FORMAT (copy exactly, fill in values):
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Grammar_Score: <integer 0-{lang_weight}>
-Grammar_Feedback: <one sentence>
-Grammar_Suggestions:
-- <suggestion 1>
-- <suggestion 2>
-- <suggestion 3>
-- <suggestion 4>
-- <suggestion 5>
-Resume_Domain: <domain from list>
-Job_Domain: <domain from list>
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-RESUME TEXT:
----
-{resume_text[:4000]}
----
-
-JOB DESCRIPTION:
----
-{job_description[:2000]}
----
-"""
-
-    response = call_llm(prompt, session=st.session_state).strip()
-
-    # Parse grammar score
-    score_match = re.search(r"Grammar_Score:\s*(\d+)", response)
-    feedback_match = re.search(r"Grammar_Feedback:\s*(.+)", response)
-    suggestions = re.findall(r"^-\s+(.+)", response, re.MULTILINE)
-    resume_domain_match = re.search(r"Resume_Domain:\s*(.+)", response)
-    job_domain_match = re.search(r"Job_Domain:\s*(.+)", response)
-
-    grammar_score = int(score_match.group(1)) if score_match else max(0, min(lang_weight, lang_weight - 2))
-    grammar_score = max(0, min(lang_weight, grammar_score))
-    grammar_feedback = feedback_match.group(1).strip() if feedback_match else "Language quality appears adequate for professional communication."
-    # Exclude domain-name lines that may bleed into the suggestions block
-    grammar_suggestions = [s for s in suggestions if not s.strip().startswith((
-        "Data Science", "AI/Machine", "UI/UX", "Mobile Dev", "Frontend Dev",
-        "Backend Dev", "Full Stack", "Cybersecurity", "Cloud Eng", "DevOps",
-        "Quality Ass", "Game Dev", "Blockchain Dev", "Embedded", "System Arch",
-        "Database Man", "Networking", "Site Reli", "Product Man", "Project Man",
-        "Business An", "Technical Wri", "Digital Mar", "E-commerce", "Fintech",
-        "Healthcare", "EdTech", "IoT Dev", "AR/VR", "Technical Sales",
-        "Agile Coach", "Software Eng"
-    ))][:5]
-
-    DOMAIN_LIST = [
-        "Data Science", "AI/Machine Learning", "UI/UX Design", "Mobile Development",
-        "Frontend Development", "Backend Development", "Full Stack Development",
-        "Cybersecurity", "Cloud Engineering", "DevOps/Infrastructure",
-        "Quality Assurance", "Game Development", "Blockchain Development",
-        "Embedded Systems", "System Architecture", "Database Management",
-        "Networking", "Site Reliability Engineering", "Product Management",
-        "Project Management", "Business Analysis", "Technical Writing",
-        "Digital Marketing", "E-commerce", "Fintech", "Healthcare Tech",
-        "EdTech", "IoT Development", "AR/VR Development", "Technical Sales",
-        "Agile Coaching", "Software Engineering"
-    ]
-    resume_domain = resume_domain_match.group(1).strip() if resume_domain_match else "Software Engineering"
-    job_domain = job_domain_match.group(1).strip() if job_domain_match else "Software Engineering"
-    # Validate against known list — fall back to db_manager's default on mismatch
-    if resume_domain not in DOMAIN_LIST:
-        resume_domain = "Software Engineering"
-    if job_domain not in DOMAIN_LIST:
-        job_domain = "Software Engineering"
-
-    return grammar_score, grammar_feedback, grammar_suggestions, resume_domain, job_domain
-
+    # Return json_str as 7th value so the caller can reuse it directly
+    # without triggering a second optimize_resume_to_json() LLM call.
+    return highlighted_text, rewritten_text, masculine_count, feminine_count, detected_masculine_words, detected_feminine_words, json_str
 
 # ✅ Enhanced Grammar evaluation using LLM with suggestions
-# Kept for backward-compatibility but no longer called in the main analysis pipeline.
 def get_grammar_score_with_llm(text, max_score=5):
     grammar_prompt = f"""
 You are a senior HR language quality specialist and professional resume reviewer with 15+ years of experience evaluating resumes for Fortune 500 companies.
@@ -4395,36 +6627,48 @@ def ats_percentage_score(
     lang_weight=5,
     keyword_weight=10,
     format_data=None,   # ← NEW: pass pre-computed format check result
-    # ── Pre-computed values (pass these to skip 3 separate LLM calls) ──
-    grammar_score=None,
-    grammar_feedback=None,
-    grammar_suggestions=None,
-    resume_domain=None,
-    job_domain=None,
 ):
     import datetime
 
-    # ✅ Use pre-computed grammar score if provided, else fall back to standalone call
-    if grammar_score is None or grammar_feedback is None or grammar_suggestions is None:
-        grammar_score, grammar_feedback, grammar_suggestions = get_grammar_score_with_llm(
-            resume_text, max_score=lang_weight
-        )
+    # ⚡ MERGED: detect both domains in a single LLM call (saves 1 API call vs 2 separate detect_domain_llm calls)
+    _valid_domains = [
+        "Data Science", "AI/Machine Learning", "UI/UX Design", "Mobile Development",
+        "Frontend Development", "Backend Development", "Full Stack Development", "Cybersecurity",
+        "Cloud Engineering", "DevOps/Infrastructure", "Quality Assurance", "Game Development",
+        "Blockchain Development", "Embedded Systems", "System Architecture", "Database Management",
+        "Networking", "Site Reliability Engineering", "Product Management", "Project Management",
+        "Business Analysis", "Technical Writing", "Digital Marketing", "E-commerce", "Fintech",
+        "Healthcare Tech", "EdTech", "IoT Development", "AR/VR Development", "Technical Sales",
+        "Agile Coaching", "Software Engineering"
+    ]
+    _domain_list = ", ".join(_valid_domains)
+    _domain_prompt = f"""Classify the two texts below into professional domains.
+Return ONLY this exact format on one line, nothing else:
+RESUME_DOMAIN | JOB_DOMAIN
 
-    # ✅ Use pre-computed domains if provided, else fall back to separate LLM calls
-    if resume_domain is None:
-        resume_domain = db_manager.detect_domain_llm(
-            "Unknown",
-            resume_text,
-            session=st.session_state
-        )
-    if job_domain is None:
-        job_domain = db_manager.detect_domain_llm(
-            job_title,
-            job_description,
-            session=st.session_state
-        )
+Choose each domain from ONLY this list: {_domain_list}
+
+RESUME TEXT (first 600 chars):
+{resume_text[:600]}
+
+JOB TEXT (first 600 chars):
+{job_description[:600]}
+"""
+    try:
+        _domain_raw = call_llm(_domain_prompt, session=st.session_state).strip()
+        _parts = [p.strip() for p in _domain_raw.split("|")]
+        resume_domain = _parts[0] if len(_parts) == 2 and _parts[0] in _valid_domains else "Software Engineering"
+        job_domain    = _parts[1] if len(_parts) == 2 and _parts[1] in _valid_domains else "Software Engineering"
+    except Exception:
+        resume_domain = "Software Engineering"
+        job_domain    = "Software Engineering"
 
     similarity_score = get_domain_similarity(resume_domain, job_domain)
+
+    # Grammar defaults — overwritten by values parsed from the ATS prompt response below
+    grammar_score       = max(0, min(lang_weight, lang_weight - 2))
+    grammar_feedback    = "Language quality appears adequate for professional communication."
+    grammar_suggestions = []
 
     # ✅ Balanced domain penalty
     MAX_DOMAIN_PENALTY = 15
@@ -4439,6 +6683,7 @@ def ats_percentage_score(
 
     # ✅ FIXED: Stable education scoring with 2025 cutoff
     current_year = datetime.datetime.now().year
+
     current_month = datetime.datetime.now().month
 
     # ✅ UPDATED: Stable education scoring with priority degrees minimum
@@ -4583,9 +6828,22 @@ Follow this EXACT structure. Do not skip any section:
 **Score Justification:** <Explain with matched vs. required skills ratio>
 
 ### 🗣 Language Quality Analysis
-**Score:** {grammar_score} / {lang_weight}
-**Grammar & Professional Tone:** {grammar_feedback}
+**Score:** <evaluate and provide a score 0–{lang_weight}> / {lang_weight}
+**Grammar & Professional Tone:** <single sentence summarising overall language quality>
+**Suggestions:**
+- <Actionable suggestion 1>
+- <Actionable suggestion 2>
+- <Actionable suggestion 3>
+- <Actionable suggestion 4>
+- <Actionable suggestion 5>
 **Assessment:** <Specific feedback on action verb usage, clarity, tense consistency, and ATS language>
+
+SCORING SCALE for language ({lang_weight} pts max):
+- {lang_weight}: Exceptional — Flawless grammar, powerful action verbs, crystal-clear and professional throughout
+- {lang_weight-1}: Very Good — Minor stylistic issues; highly professional and readable
+- {lang_weight-2}: Good — Some grammar or clarity issues but largely professional
+- {lang_weight-3}: Fair — Noticeable grammar or clarity problems
+- 0-1: Poor — Significant language issues
 
 ### 🔑 Keyword Analysis
 **Score:** <0–{keyword_weight}> / {keyword_weight}
@@ -4654,7 +6912,6 @@ Follow this EXACT structure. Do not skip any section:
 
 **EVALUATION CONTEXT:**
 - Current Date: {datetime.datetime.now().strftime('%B %Y')} (Year: {current_year}, Month: {current_month})
-- Grammar Score Pre-evaluated: {grammar_score} / {lang_weight} — {grammar_feedback}
 - Resume Domain Detected: {resume_domain}
 - Target Job Domain: {job_domain}
 - Domain Similarity Score: {similarity_score:.2f}/1.0
@@ -4703,11 +6960,8 @@ Follow this EXACT structure. Do not skip any section:
 
     # Extract key sections
     _raw_name = extract_section(r"### 🏷️ Candidate Name(.*?)###", ats_result, "")
-    # Strip markdown noise the LLM sometimes adds (bold, italics, backticks, angle brackets)
     candidate_name = re.sub(r"[*_`#\[\]<>]", "", _raw_name).strip()
-    # Collapse newlines / excess whitespace into a single line
     candidate_name = " ".join(candidate_name.split())
-    # Remove placeholder text the LLM occasionally returns verbatim
     _placeholder_values = {
         "not found", "n/a", "unknown", "none", "",
         "extract full name from resume header or contact section",
@@ -4730,7 +6984,23 @@ Follow this EXACT structure. Do not skip any section:
     exp_score     = extract_score(r"\*\*Score:\*\*\s*(\d+)", exp_analysis)
     skills_score  = extract_score(r"\*\*Score:\*\*\s*(\d+)", skills_analysis)
     keyword_score = extract_score(r"\*\*Score:\*\*\s*(\d+)", keyword_analysis)
-    lang_score    = grammar_score  # Grammar score already capped to lang_weight
+    # ⚡ Parse grammar score + feedback from ATS result (no separate LLM call needed)
+    _grammar_score_match    = re.search(r"\*\*Score:\*\*\s*<evaluate.*?(\d+)>|Score.*?(\d+)\s*/\s*" + str(lang_weight), lang_analysis)
+    _grammar_score_match2   = re.search(r"\*\*Score:\*\*\s*(\d+)", lang_analysis)
+    _grammar_feedback_match = re.search(r"\*\*Grammar & Professional Tone:\*\*\s*(.+)", lang_analysis)
+    _grammar_sugg_raw       = re.findall(r"^- (.+)", lang_analysis, re.MULTILINE)
+
+    if _grammar_score_match2:
+        grammar_score = int(_grammar_score_match2.group(1))
+    # else keep the safe default already set above
+
+    if _grammar_feedback_match:
+        grammar_feedback = _grammar_feedback_match.group(1).strip()
+
+    if _grammar_sugg_raw:
+        grammar_suggestions = _grammar_sugg_raw
+
+    lang_score = grammar_score  # use value parsed from ATS result
 
     # ── Clamp every score: min floor + hard upper cap to its own weight ──
     # Upper cap prevents LLM hallucinating over-max scores (e.g. 25/20)
@@ -4900,22 +7170,31 @@ def setup_vectorstore(documents):
 
 # Create Conversational Chain
 def create_chain(vectorstore):
-    # 🔁 Get a rotated admin key
-    keys = load_groq_api_keys()
-    index = st.session_state.get("key_index", 0)
-    groq_api_key = keys[index % len(keys)]
-    st.session_state["key_index"] = index + 1
+    # ✅ Use get_healthy_keys() so dead/quota keys are skipped (reads key_failures
+    #    and key_usage from Supabase — same tables that call_llm() maintains).
+    all_keys    = load_groq_api_keys()
+    healthy     = get_healthy_keys(all_keys)
+    if not healthy:
+        raise ValueError("❌ No healthy Groq API keys available for chat chain.")
+    # healthy list is already shuffled by get_healthy_keys — just take the first
+    groq_api_key = healthy[0]
+    increment_key_usage(groq_api_key)   # keep usage count in sync with call_llm
 
     # ✅ Create the ChatGroq object
     llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0, groq_api_key=groq_api_key)
 
-    # ✅ Build the chain
-    chain = ConversationalRetrievalChain.from_llm(
-        llm=llm,
-        retriever=vectorstore.as_retriever(),
-        return_source_documents=True
-    )
-    return chain
+    # ✅ Build the chain — report failures back so llm_manager skips this key next time
+    try:
+        chain = ConversationalRetrievalChain.from_llm(
+            llm=llm,
+            retriever=vectorstore.as_retriever(),
+            return_source_documents=True
+        )
+        return chain
+    except Exception as e:
+        reason = "quota" if any(w in str(e).lower() for w in ["quota", "rate limit", "429"]) else "error"
+        mark_key_failure(groq_api_key, reason)
+        raise
 
 # Chat history
 if "chat_history" not in st.session_state:
@@ -5261,12 +7540,25 @@ if uploaded_files and job_description:
         # ✅ Bias detection
         bias_score, masc_count, fem_count, detected_masc, detected_fem = detect_bias(full_text)
 
-        # ✅ Rewrite and highlight gender-biased words
-        highlighted_text, rewritten_text, _, _, _, _ = rewrite_and_highlight(
-            full_text, replacement_mapping, user_location
-        )
+        # ⚡ MERGED: single LLM call returns BOTH plain-text rewrite AND JSON.
+        # json_str is the structured JSON for DOCX generation — no second call needed.
+        with st.spinner("✍️ Rewriting resume & generating optimised structure..."):
+            try:
+                highlighted_text, rewritten_text, _, _, _, _, json_str = rewrite_and_highlight(
+                    full_text, replacement_mapping, user_location
+                )
+            except Exception:
+                highlighted_text = full_text
+                rewritten_text   = full_text
+                json_str         = ""
 
-        # ✅ Format check (industry standard)
+        # ✅ Resume Optimization Module — reuse JSON already produced above (0 extra LLM calls)
+        try:
+            optimized_resume_data = extract_resume_json(json_str)
+        except Exception:
+            optimized_resume_data = extract_resume_json("")  # falls back to empty skeleton
+
+        # ✅ Format check (industry standard — no LLM call)
         try:
             doc_check = fitz.open(file_path)
             num_pages = doc_check.page_count
@@ -5275,74 +7567,55 @@ if uploaded_files and job_description:
             num_pages = 1
         format_data = check_resume_format(full_text, num_pages, pdf_path=file_path)
 
-        # ✅ Single combined pre-evaluation call (grammar + both domains)
-        # Replaces 3 separate LLM calls → reduces API key usage from 5 to 2 per resume
-        pre_grammar_score, pre_grammar_feedback, pre_grammar_suggestions, pre_resume_domain, pre_job_domain = pre_evaluate_resume(
-            resume_text=full_text,
-            job_description=job_description,
-            job_title=job_title,
-            lang_weight=lang_weight,
-        )
-
-        # ✅ LLM-based ATS Evaluation (passes pre-computed values — no extra LLM calls inside)
-        ats_result, ats_scores = ats_percentage_score(
-            resume_text=full_text,
-            job_description=job_description,
-            logic_profile_score=None,
-            edu_weight=edu_weight,
-            exp_weight=exp_weight,
-            skills_weight=skills_weight,
-            lang_weight=lang_weight,
-            keyword_weight=keyword_weight,
-            format_data=format_data,
-            grammar_score=pre_grammar_score,
-            grammar_feedback=pre_grammar_feedback,
-            grammar_suggestions=pre_grammar_suggestions,
-            resume_domain=pre_resume_domain,
-            job_domain=pre_job_domain,
-        )
+        # ✅ LLM-based ATS Evaluation (includes domain detection + grammar scoring internally)
+        with st.spinner("🔍 Running ATS evaluation..."):
+            ats_result, ats_scores = ats_percentage_score(
+                resume_text=full_text,
+                job_description=job_description,
+                logic_profile_score=None,
+                edu_weight=edu_weight,
+                exp_weight=exp_weight,
+                skills_weight=skills_weight,
+                lang_weight=lang_weight,
+                keyword_weight=keyword_weight,
+                format_data=format_data,
+            )
 
         # ✅ Extract structured ATS values
         candidate_name = ats_scores.get("Candidate Name", "Not Found")
 
-        # ── Filename-based name extraction (reliable ground truth) ────────────
+        # ── Filename-based name fallback (reliable ground truth) ─────────────
         def _name_from_filename(fname: str) -> str:
-            """
-            Turn 'SARBAJIT_PAUL_Resume (3) (1).pdf' -> 'Sarbajit Paul'
-            Walks tokens left-to-right, stops at the first non-name word.
-            """
             stop_words = {
                 "resume", "cv", "curriculum", "vitae", "updated", "final",
                 "new", "latest", "copy", "draft", "version", "doc",
                 "v1", "v2", "v3", "v4", "v5",
                 "2022", "2023", "2024", "2025", "2026",
             }
-            base = os.path.splitext(fname)[0]                      # strip extension
-            base = re.sub(r"[\(\)\[\]_\-\.]", " ", base)  # separators -> space
+            base = os.path.splitext(fname)[0]
+            base = re.sub(r"[\(\)\[\]_\-\.]", " ", base)
             base = re.sub(r"\s+", " ", base).strip()
             parts = []
             for word in base.split():
                 if word.lower() in stop_words or word.isdigit():
                     break
-                if re.match(r"^[A-Za-z]+$", word):               # only plain alpha tokens
+                if re.match(r"^[A-Za-z]+$", word):
                     parts.append(word.title())
             return " ".join(parts) if len(parts) >= 1 else ""
 
         _filename_name = _name_from_filename(uploaded_file.name)
-
-        # Use filename name when LLM returned nothing useful
         _bad_name_values = {"not found", "n/a", "unknown", "none", ""}
+
         if candidate_name.lower() in _bad_name_values and _filename_name:
             candidate_name = _filename_name
         elif _filename_name and candidate_name.lower() not in _bad_name_values:
-            # Cross-check: if LLM name shares fewer than 40% characters with
-            # filename name it is likely hallucinated — trust the filename.
             llm_chars  = set(candidate_name.lower().replace(" ", ""))
             file_chars = set(_filename_name.lower().replace(" ", ""))
             overlap = len(llm_chars & file_chars) / max(len(file_chars), 1)
             if overlap < 0.4:
                 candidate_name = _filename_name
         # ─────────────────────────────────────────────────────────────────────
+
         ats_score = ats_scores.get("ATS Match %", 0)
         edu_score = ats_scores.get("Education Score", 0)
         exp_score = ats_scores.get("Experience Score", 0)
@@ -5400,6 +7673,7 @@ if uploaded_files and job_description:
             "Text Preview": full_text[:300] + "...",
             "Highlighted Text": highlighted_text,
             "Rewritten Text": rewritten_text,
+            "Optimized Resume Data": optimized_resume_data,
             "Domain": domain,
             "Domain Penalty": ats_scores.get("Domain Penalty", 0),
             "Domain Similarity Score": ats_scores.get("Domain Similarity Score", 1.0),
@@ -6147,22 +8421,90 @@ with tab1:
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
                         <span class='section-label' style="margin:0;">Bias-Free Rewritten Resume</span>
                     </div>""", unsafe_allow_html=True)
-                    st.write(resume["Rewritten Text"])
-                    docx_file = generate_docx(resume["Rewritten Text"])
-                    st.download_button(
-                        label="Download Bias-Free Resume (.docx)",
-                        data=docx_file,
-                        file_name=f"{resume['Resume Name'].split('.')[0]}_bias_free.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        use_container_width=True,
-                        key=f"download_docx_{resume['Resume Name']}"
-                    )
+
+                    # ── Job Title Suggestions (Analysis Module — displayed here, NOT in DOCX) ──
+                    rewritten_raw = resume.get("Rewritten Text", "")
+                    if "### 🎯 Suggested Job Titles" in rewritten_raw:
+                        split_parts = rewritten_raw.split("### 🎯 Suggested Job Titles")
+                        resume_text_display = split_parts[0].strip()
+                        job_suggestions_display = "### 🎯 Suggested Job Titles" + split_parts[1]
+                    else:
+                        resume_text_display = rewritten_raw
+                        job_suggestions_display = ""
+
+                    st.write(resume_text_display)
+
+                    if job_suggestions_display:
+                        st.markdown("""
+                        <div style="margin:18px 0 8px;font-size:0.72rem;font-weight:700;color:#64748b;
+                                    letter-spacing:0.08em;text-transform:uppercase;font-family:-apple-system,sans-serif;">
+                            Job Title Suggestions (for reference only — not included in resume files)
+                        </div>""", unsafe_allow_html=True)
+                        st.markdown(job_suggestions_display)
+
+                    # ── 3-Template DOCX Download Buttons (Optimization Module — JSON data only) ──
+                    st.markdown("""
+                    <div style="margin:20px 0 10px;font-size:0.72rem;font-weight:700;color:#64748b;
+                                letter-spacing:0.08em;text-transform:uppercase;font-family:-apple-system,sans-serif;">
+                        Download Optimized Resume — Choose Template
+                    </div>""", unsafe_allow_html=True)
+
+                    optimized_data = resume.get("Optimized Resume Data", {})
+                    base_name = resume['Resume Name'].split('.')[0]
+
+                    dl_col1, dl_col2, dl_col3 = st.columns(3)
+
+                    with dl_col1:
+                        try:
+                            modern_buf = generate_modern_docx(optimized_data)
+                            st.download_button(
+                                label="⬇ Modern (ATS)",
+                                data=modern_buf,
+                                file_name=f"{base_name}_modern_ats.docx",
+                                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                use_container_width=True,
+                                key=f"dl_modern_{resume['Resume Name']}",
+                                help="Navy headings · Calibri · Labeled Skills block · ATS section order · Workday/Greenhouse optimized"
+                            )
+                        except Exception as e:
+                            st.error(f"Modern template error: {e}")
+
+                    with dl_col2:
+                        try:
+                            minimal_buf = generate_minimal_docx(optimized_data)
+                            st.download_button(
+                                label="⬇ Minimal (ATS)",
+                                data=minimal_buf,
+                                file_name=f"{base_name}_minimal_ats.docx",
+                                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                use_container_width=True,
+                                key=f"dl_minimal_{resume['Resume Name']}",
+                                help="Pure black/white Arial · Maximum parse accuracy · Taleo/iCIMS/SmartRecruiters compatible"
+                            )
+                        except Exception as e:
+                            st.error(f"Minimal template error: {e}")
+
+                    with dl_col3:
+                        try:
+                            creative_buf = generate_creative_docx(optimized_data)
+                            st.download_button(
+                                label="⬇ Executive (ATS)",
+                                data=creative_buf,
+                                file_name=f"{base_name}_executive_ats.docx",
+                                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                use_container_width=True,
+                                key=f"dl_creative_{resume['Resume Name']}",
+                                help="Teal/navy accents · ATS-safe symbols · Consistent Calibri body · Standard section labels"
+                            )
+                        except Exception as e:
+                            st.error(f"Executive template error: {e}")
+
                     html_report = generate_resume_report_html(resume)
                     pdf_file = html_to_pdf_bytes(html_report)
                     st.download_button(
                         label="Download Full Analysis Report (.pdf)",
                         data=pdf_file,
-                        file_name=f"{resume['Resume Name'].split('.')[0]}_report.pdf",
+                        file_name=f"{base_name}_report.pdf",
                         mime="application/pdf",
                         use_container_width=True,
                         key=f"download_pdf_{resume['Resume Name']}"

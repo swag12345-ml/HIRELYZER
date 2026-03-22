@@ -1727,6 +1727,517 @@ if not st.session_state.authenticated:
     </script>
     """, height=44, scrolling=False)
 
+    # ════════════════════════════════════════════════════════════════
+    # LANDING PAGE SECTIONS (injected from main_advanced.py)
+    # Shown only when NOT authenticated — renders full marketing page
+    # ════════════════════════════════════════════════════════════════
+
+    import math as _math
+
+    APP_URL = "https://hirelyzer-career-based-saas-platform-rxzkspoyrtwfamm5ztkmcf.streamlit.app/"
+    SUPPORT_EMAIL = "swagato_bmca2024@msit.edu.in"
+
+    def _H(s):
+        st.markdown(s, unsafe_allow_html=True)
+
+    def _CSS(s):
+        st.markdown("<style>" + s + "</style>", unsafe_allow_html=True)
+
+    _CSS("""
+    @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    /* ── Override Streamlit p reset inside HL sections ── */
+    .hl-cta p, .hl-story p, .hl-story-alt p, .hl-hero p, .hl-compare p { margin:0!important; text-align:inherit!important; }
+
+    /* ── Nav ── */
+    .hl-nav2 { background:rgba(0,0,0,0.85); border-bottom:1px solid rgba(255,255,255,0.07); backdrop-filter:blur(28px); padding:0 32px; height:58px; display:flex; align-items:center; justify-content:space-between; max-width:100%; }
+    .hl-logo2 { display:flex; align-items:center; gap:10px; font-size:14px; font-weight:800; color:#f5f5f7; text-decoration:none; letter-spacing:.5px; }
+    .hl-logo-icon2 { width:32px; height:32px; border-radius:9px; background:linear-gradient(135deg,#0a84ff,#0055d4); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(10,132,255,.3); }
+    .hl-nav2-links { display:flex; align-items:center; gap:28px; }
+    .hl-nav2-links a { font-size:13px; font-weight:500; color:rgba(245,245,247,.5); text-decoration:none; transition:color .2s; }
+    .hl-nav2-links a:hover { color:#f5f5f7; }
+    .hl-nav2-cta { display:inline-flex; align-items:center; gap:7px; padding:8px 20px; border-radius:100px; background:linear-gradient(135deg,#0a84ff,#0065cc); color:#fff; font-size:13px; font-weight:600; text-decoration:none; box-shadow:0 4px 14px rgba(10,132,255,.3); }
+
+    /* ── Section wrapper ── */
+    .hl-sec { max-width:1100px; margin:0 auto; padding:0 32px; }
+
+    /* ── Divider ── */
+    .hl-div { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:rgba(245,245,247,.28); display:flex; align-items:center; gap:18px; margin-bottom:64px; }
+    .hl-div::before, .hl-div::after { content:''; flex:1; height:1px; background:rgba(255,255,255,.06); }
+
+    /* ── Hero feature strip ── */
+    .hl-hfeats { display:flex; align-items:center; flex-wrap:wrap; justify-content:center; margin-top:36px; padding:14px 28px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.07); border-radius:100px; }
+    .hl-hfi { display:flex; align-items:center; gap:7px; padding:0 16px; font-size:12px; font-weight:600; color:rgba(245,245,247,.5); white-space:nowrap; font-family:'Sora',sans-serif; }
+    .hl-hfsep { width:1px; height:14px; background:rgba(255,255,255,.1); flex-shrink:0; }
+
+    /* ── How it works steps ── */
+    .hl-steps2 { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; }
+    .hl-step2 { padding:32px 24px; background:#0a0a0b; border:1px solid rgba(255,255,255,.06); position:relative; transition:background .2s; }
+    .hl-step2:hover { background:#0f0f11; border-color:rgba(255,255,255,.1); }
+    .hl-step2:first-child { border-radius:20px 0 0 20px; }
+    .hl-step2:last-child  { border-radius:0 20px 20px 0; }
+    .hl-step-n2 { font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:600; color:rgba(245,245,247,.28); margin-bottom:16px; display:block; }
+    .hl-step-icon2 { width:44px; height:44px; margin-bottom:16px; }
+    .hl-step-title2 { font-size:14px; font-weight:700; color:#f5f5f7; margin-bottom:8px; letter-spacing:-.3px; font-family:'Sora',sans-serif; }
+    .hl-step-desc2 { font-size:13px; color:rgba(245,245,247,.48); line-height:1.7; font-family:'Sora',sans-serif; }
+
+    /* ── Story sections ── */
+    .hl-story2     { padding:100px 0; background:#000; }
+    .hl-story2-alt { padding:100px 0; background:#050505; }
+    .hl-sg2 { display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:center; }
+    .hl-snum { font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:600; color:rgba(245,245,247,.28); letter-spacing:1px; margin-bottom:18px; }
+    .hl-sh { font-size:clamp(28px,3.8vw,44px); font-weight:800; letter-spacing:-1.8px; line-height:1.08; color:#f5f5f7; margin-bottom:20px; font-family:'Sora',sans-serif; }
+    .hl-sh .hl-blue { color:#0a84ff; } .hl-sh .hl-green { color:#30d158; } .hl-sh .hl-amber { color:#ff9f0a; } .hl-sh .hl-purp { color:#bf5af2; }
+    .hl-sp { font-size:15px; color:rgba(245,245,247,.48); line-height:1.82; margin-bottom:16px; font-family:'Sora',sans-serif; }
+    .hl-pills2 { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .hl-pill2 { padding:6px 14px; border-radius:100px; font-size:11.5px; font-weight:600; border:1px solid rgba(255,255,255,.1); color:rgba(245,245,247,.48); background:#0a0a0b; font-family:'Sora',sans-serif; }
+    .hl-panel2 { background:#0a0a0b; border-radius:20px; border:1px solid rgba(255,255,255,.07); padding:24px; overflow:hidden; position:relative; box-shadow:0 40px 80px rgba(0,0,0,.5); }
+    .hl-panel2::before { content:''; position:absolute; top:0; left:20px; right:20px; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent); }
+    .hl-ptitle2 { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.1px; color:rgba(245,245,247,.34); display:flex; align-items:center; gap:7px; margin-bottom:18px; }
+
+    /* ── ATS bars ── */
+    .hl-bar2 { margin-bottom:10px; }
+    .hl-bar-row2 { display:flex; justify-content:space-between; font-size:11px; color:rgba(245,245,247,.54); margin-bottom:4px; font-weight:500; }
+    .hl-bar-track2 { height:4px; background:rgba(255,255,255,.06); border-radius:2px; overflow:hidden; }
+    .hl-bar-fill2  { height:100%; border-radius:2px; }
+
+    /* ── Bias words ── */
+    .hl-words2 { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+    .wc2 { padding:4px 11px; border-radius:7px; font-size:11px; font-weight:600; font-family:'JetBrains Mono',monospace; }
+    .wc2-m { background:rgba(10,132,255,.11); color:#4db3ff; border:1px solid rgba(10,132,255,.2); }
+    .wc2-f { background:rgba(191,90,242,.11); color:#d07ef7; border:1px solid rgba(191,90,242,.2); }
+    .wc2-n { background:rgba(48,209,88,.11);  color:#4cd964; border:1px solid rgba(48,209,88,.2); }
+
+    /* ── Template grid ── */
+    .hl-tmpl-grid2 { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+    .hl-tmpl2 { border-radius:10px; border:1px solid rgba(255,255,255,.07); background:#141416; overflow:hidden; display:flex; flex-direction:column; min-height:110px; position:relative; cursor:pointer; transition:border-color .15s,transform .15s; }
+    .hl-tmpl2:hover { border-color:rgba(255,255,255,.18); transform:translateY(-2px); }
+    .hl-tmpl2-act { border-color:#0a84ff!important; box-shadow:0 0 0 2px rgba(10,132,255,.2); }
+    .hl-tmpl2-badge { position:absolute; bottom:6px; left:6px; right:6px; background:rgba(10,132,255,.15); border:1px solid rgba(10,132,255,.25); border-radius:5px; padding:3px 6px; font-size:9px; font-weight:700; color:#0a84ff; text-align:center; letter-spacing:.5px; text-transform:uppercase; }
+
+    /* ── Job cards ── */
+    .hl-job2 { padding:13px 15px; border-radius:12px; background:#141416; border:1px solid rgba(255,255,255,.07); display:flex; align-items:center; gap:12px; margin-bottom:8px; transition:background .15s; }
+    .hl-job2:hover { background:#181820; }
+    .hl-job-logo2 { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; flex-shrink:0; font-family:'JetBrains Mono',monospace; }
+    .hl-job-title2 { font-size:13px; font-weight:600; color:#f5f5f7; font-family:'Sora',sans-serif; }
+    .hl-job-co2    { font-size:11px; color:rgba(245,245,247,.34); margin-top:2px; font-family:'Sora',sans-serif; }
+    .hl-job-badge2 { padding:3px 10px; border-radius:100px; font-size:11px; font-weight:600; white-space:nowrap; flex-shrink:0; }
+
+    /* ── Interview ── */
+    .hl-radar-wrap2 { display:flex; flex-direction:column; align-items:center; }
+    .hl-qa2 { margin-bottom:14px; }
+    .hl-q2 { font-size:13px; font-weight:600; color:#f5f5f7; margin-bottom:7px; display:flex; gap:8px; align-items:flex-start; font-family:'Sora',sans-serif; }
+    .hl-a2 { font-size:12px; color:rgba(245,245,247,.5); line-height:1.68; padding-left:22px; font-family:'Sora',sans-serif; }
+    .hl-score-badge2 { display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:100px; font-size:12px; font-weight:700; background:rgba(48,209,88,.12); color:#30d158; border:1px solid rgba(48,209,88,.22); }
+
+    /* ── Comparison table ── */
+    .hl-compare2 { padding:100px 0; background:#000; }
+    .hl-compare-wrap2 { margin-top:52px; border-radius:22px; border:1px solid rgba(255,255,255,.07); overflow:hidden; }
+    .hl-compare-head2 { display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr; background:#0a0a0b; border-bottom:1px solid rgba(255,255,255,.07); }
+    .hl-compare-row2  { display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr; border-bottom:1px solid rgba(255,255,255,.05); transition:background .15s; }
+    .hl-compare-row2:last-child { border-bottom:none; }
+    .hl-compare-row2:hover { background:rgba(255,255,255,.02); }
+    .hl-ch2 { padding:16px 24px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:rgba(245,245,247,.3); font-family:'Sora',sans-serif; }
+    .hl-ch2-hl { background:rgba(10,132,255,.06); border-left:1px solid rgba(10,132,255,.15); border-right:1px solid rgba(10,132,255,.15); color:#0a84ff; display:flex; align-items:center; gap:7px; justify-content:center; }
+    .hl-cc2 { padding:16px 24px; font-size:13px; color:rgba(245,245,247,.54); display:flex; align-items:center; font-family:'Sora',sans-serif; }
+    .hl-cc2-feat { font-weight:600; color:#f5f5f7; font-size:13.5px; }
+    .hl-cc2-hl { background:rgba(10,132,255,.04); border-left:1px solid rgba(10,132,255,.1); border-right:1px solid rgba(10,132,255,.1); justify-content:center; font-weight:600; color:#f5f5f7; }
+    .hl-cc2-center { justify-content:center; }
+    .hl-chk2-y { color:#30d158; font-size:16px; }
+    .hl-chk2-n { color:rgba(245,245,247,.18); font-size:18px; }
+    .hl-chk2-p { color:#ff9f0a; font-size:11px; font-weight:700; }
+
+    /* ── Feature highlights ── */
+    .hl-highlights2 { padding:0 0 100px; background:#000; }
+    .hl-highlight-grid2 { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; margin-top:48px; }
+    .hl-highlight2 { padding:32px 28px; background:#0a0a0b; border:1px solid rgba(255,255,255,.06); position:relative; overflow:hidden; transition:background .2s; }
+    .hl-highlight2:hover { background:#0f0f11; border-color:rgba(255,255,255,.1); }
+    .hl-highlight2:first-child { border-radius:20px 0 0 0; }
+    .hl-highlight2:nth-child(3) { border-radius:0 20px 0 0; }
+    .hl-highlight2:nth-child(4) { border-radius:0 0 0 20px; }
+    .hl-highlight2:last-child { border-radius:0 0 20px 0; }
+    .hl-hi-icon2 { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; margin-bottom:18px; }
+    .hl-hi-title2 { font-size:15px; font-weight:700; color:#f5f5f7; margin-bottom:9px; letter-spacing:-.3px; font-family:'Sora',sans-serif; }
+    .hl-hi-desc2  { font-size:13px; color:rgba(245,245,247,.44); line-height:1.72; font-family:'Sora',sans-serif; }
+
+    /* ── FAQ ── */
+    .hl-faq2 { padding:100px 0; background:#050505; }
+    .hl-faq-list2 { max-width:720px; margin:48px auto 0; display:flex; flex-direction:column; gap:2px; }
+    .hl-faq-item2 { background:#0a0a0b; border:1px solid rgba(255,255,255,.07); border-radius:14px; overflow:hidden; transition:border-color .2s; }
+    .hl-faq-item2:hover { border-color:rgba(255,255,255,.12); }
+    .hl-faq-q2 { padding:20px 24px; font-size:14px; font-weight:600; color:#f5f5f7; display:flex; justify-content:space-between; align-items:center; cursor:pointer; gap:12px; font-family:'Sora',sans-serif; }
+    .hl-faq-q-icon2 { width:24px; height:24px; border-radius:50%; background:rgba(255,255,255,.06); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:16px; color:rgba(245,245,247,.5); }
+    .hl-faq-a2 { display:none; padding:0 24px 20px; font-size:14px; color:rgba(245,245,247,.48); line-height:1.78; font-family:'Sora',sans-serif; }
+
+    /* ── CTA ── */
+    .hl-cta2 { margin:0 0 120px; padding:80px 48px; border-radius:28px; background:#0a0a0b; border:1px solid rgba(255,255,255,.07); text-align:center; position:relative; overflow:hidden; }
+    .hl-cta2-glow { position:absolute; top:-300px; left:50%; transform:translateX(-50%); width:700px; height:700px; background:radial-gradient(ellipse at center,rgba(10,132,255,.1) 0%,transparent 70%); pointer-events:none; }
+    .hl-cta2-h { font-size:clamp(28px,4.5vw,52px); font-weight:800; letter-spacing:-2.5px; color:#f5f5f7; line-height:1.04; max-width:640px; margin:0 auto 20px; position:relative; z-index:1; font-family:'Sora',sans-serif; }
+    .hl-cta2-btns { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; position:relative; z-index:1; }
+    .hl-checks2 { display:flex; justify-content:center; gap:26px; flex-wrap:wrap; margin-top:36px; }
+    .hl-check2 { display:flex; align-items:center; gap:7px; font-size:13px; color:rgba(245,245,247,.32); font-family:'Sora',sans-serif; }
+
+    /* ── Eyebrow ── */
+    .hl-eyebrow2 { display:inline-flex; align-items:center; gap:8px; font-size:10.5px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#0a84ff; padding:6px 16px; border-radius:100px; border:1px solid rgba(10,132,255,.28); background:rgba(10,132,255,.07); margin-bottom:28px; font-family:'Sora',sans-serif; }
+
+    /* ── Buttons ── */
+    .hl-btn-p2 { display:inline-flex; align-items:center; gap:8px; padding:14px 30px; border-radius:100px; background:linear-gradient(135deg,#0a84ff,#0065cc); color:#fff; font-size:15px; font-weight:600; text-decoration:none; letter-spacing:-.2px; box-shadow:0 8px 28px rgba(10,132,255,.3); }
+    .hl-btn-g2 { display:inline-flex; align-items:center; gap:8px; padding:14px 30px; border-radius:100px; background:#141416; color:#f5f5f7; font-size:15px; font-weight:600; text-decoration:none; letter-spacing:-.2px; border:1px solid rgba(255,255,255,.12); }
+
+    /* ── Contact ── */
+    .hl-contact-card2 { background:#0a0a0b; border-radius:22px; border:1px solid rgba(255,255,255,.07); padding:40px; max-width:560px; margin:0 auto 100px; text-align:center; }
+    .hl-contact-email2 { display:inline-flex; align-items:center; gap:10px; padding:14px 28px; border-radius:14px; background:rgba(10,132,255,.08); border:1px solid rgba(10,132,255,.22); color:#4db3ff; font-size:14px; font-weight:600; text-decoration:none; font-family:'JetBrains Mono',monospace; word-break:break-all; }
+
+    /* ── Footer ── */
+    .hl-footer2 { border-top:1px solid rgba(255,255,255,.06); padding:44px 32px; display:grid; grid-template-columns:1fr auto; align-items:center; max-width:1100px; margin:0 auto; gap:20px; }
+    .hl-footer2-copy { font-size:13px; font-weight:600; color:rgba(245,245,247,.28); font-family:'Sora',sans-serif; }
+    .hl-footer2-links { display:flex; gap:24px; }
+    .hl-footer2-links a { font-size:13px; color:rgba(245,245,247,.3); text-decoration:none; transition:color .2s; }
+    .hl-footer2-links a:hover { color:rgba(245,245,247,.7); }
+
+    @media (max-width:860px) {
+      .hl-sg2 { grid-template-columns:1fr; gap:44px; }
+      .hl-steps2 { grid-template-columns:1fr 1fr; }
+      .hl-step2:first-child { border-radius:20px 0 0 0; }
+      .hl-step2:nth-child(2) { border-radius:0 20px 0 0; }
+      .hl-step2:nth-child(3) { border-radius:0 0 0 20px; }
+      .hl-step2:last-child   { border-radius:0 0 20px 0; }
+      .hl-compare-head2, .hl-compare-row2 { grid-template-columns:1.4fr 1fr; }
+      .hl-compare-head2 > *:nth-child(3), .hl-compare-head2 > *:nth-child(4),
+      .hl-compare-row2 > *:nth-child(3),  .hl-compare-row2 > *:nth-child(4) { display:none; }
+      .hl-highlight-grid2 { grid-template-columns:1fr 1fr; }
+      .hl-footer2 { grid-template-columns:1fr; }
+      .hl-hfeats { border-radius:16px; }
+    }
+    """)
+
+    # ── helpers ──────────────────────────────────────────────────────
+    def _ats_ring(score=78):
+        r,c,sw=38,48,5; circ=2*_math.pi*r; fill=(score/100)*circ; off=circ*.25
+        return('<svg width="96" height="96" viewBox="0 0 96 96" fill="none">'
+               '<circle cx="'+str(c)+'" cy="'+str(c)+'" r="'+str(r)+'" stroke="rgba(255,255,255,0.06)" stroke-width="'+str(sw)+'"/>'
+               '<circle cx="'+str(c)+'" cy="'+str(c)+'" r="'+str(r)+'" stroke="url(#ag2)" stroke-width="'+str(sw)+'"'
+               ' stroke-dasharray="'+str(round(fill,1))+' '+str(round(circ,1))+'"'
+               ' stroke-dashoffset="-'+str(round(off,1))+'" stroke-linecap="round"/>'
+               '<text x="'+str(c)+'" y="'+str(c+1)+'" text-anchor="middle" dominant-baseline="middle"'
+               ' fill="#f5f5f7" font-size="18" font-weight="800" font-family="Sora,sans-serif">'+str(score)+'</text>'
+               '<defs><linearGradient id="ag2" x1="0" y1="0" x2="96" y2="96" gradientUnits="userSpaceOnUse">'
+               '<stop offset="0%" stop-color="#30d158"/><stop offset="100%" stop-color="#0a84ff"/>'
+               '</linearGradient></defs></svg>')
+
+    def _radar_svg():
+        cats=["Communication","Technical","Confidence","Structure","Examples"]; scores=[0.82,0.74,0.88,0.70,0.78]
+        cx=cy=95; R=65; n=len(cats)
+        def pt(i,frac): angle=_math.pi/2+2*_math.pi*i/n; return cx+R*frac*_math.cos(angle), cy-R*frac*_math.sin(angle)
+        grid="".join('<polygon points="'+" ".join(str(round(pt(i,lv)[0],1))+","+str(round(pt(i,lv)[1],1)) for i in range(n))+'" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>' for lv in [.25,.5,.75,1.])
+        axes="".join('<line x1="'+str(cx)+'" y1="'+str(cy)+'" x2="'+str(round(pt(i,1)[0],1))+'" y2="'+str(round(pt(i,1)[1],1))+'" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>' for i in range(n))
+        poly=" ".join(str(round(pt(i,scores[i])[0],1))+","+str(round(pt(i,scores[i])[1],1)) for i in range(n))
+        dots="".join('<circle cx="'+str(round(pt(i,scores[i])[0],1))+'" cy="'+str(round(pt(i,scores[i])[1],1))+'" r="3.5" fill="#0a84ff"/>' for i in range(n))
+        labels="".join('<text x="'+str(round(pt(i,1.27)[0],1))+'" y="'+str(round(pt(i,1.27)[1],1))+'" text-anchor="middle" dominant-baseline="middle" fill="rgba(245,245,247,0.4)" font-size="8.5" font-family="Sora,sans-serif">'+cats[i]+'</text>' for i in range(n))
+        return '<svg width="190" height="190" viewBox="0 0 190 190" fill="none">'+grid+axes+'<polygon points="'+poly+'" fill="rgba(10,132,255,0.14)" stroke="#0a84ff" stroke-width="1.5"/>'+dots+labels+'</svg>'
+
+    def _ats_bars():
+        data=[("Format & Layout",92,"#30d158"),("Keyword Coverage",71,"#ff9f0a"),("Sections Present",85,"#0a84ff"),("Action Verbs",68,"#ff9f0a"),("Contact Info",100,"#30d158"),("Date Consistency",80,"#0a84ff")]
+        return "".join('<div class="hl-bar2"><div class="hl-bar-row2"><span>'+lbl+'</span><span style="color:'+col+';font-weight:600">'+str(pct)+'%</span></div><div class="hl-bar-track2"><div class="hl-bar-fill2" style="width:'+str(pct)+'%;background:'+col+'"></div></div></div>' for lbl,pct,col in data)
+
+    def _score_bars():
+        data=[("Communication","85%","#0a84ff"),("Technical","79%","#bf5af2"),("Confidence","88%","#30d158"),("Structure","74%","#ff9f0a")]
+        return "".join('<div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(245,245,247,0.54);margin-bottom:5px"><span>'+d+'</span><span style="color:'+col+';font-weight:600">'+s+'</span></div><div style="height:3px;background:rgba(255,255,255,0.07);border-radius:2px;margin-bottom:8px;overflow:hidden"><div style="width:'+s+';height:100%;background:'+col+';border-radius:2px"></div></div>' for d,s,col in data)
+
+    def _mini_resume2(name, accent, layout="single", active=False, sidebar_bg=None, header_style="bar"):
+        act=' hl-tmpl2-act' if active else ''
+        badge=('<div class="hl-tmpl2-badge">'+name+'</div>') if active else ''
+        def ln(w,col="rgba(255,255,255,0.15)",h="2px",mt="3px"): return f'<div style="height:{h};width:{w};background:{col};border-radius:1px;margin-top:{mt}"></div>'
+        def nb(col): return f'<div style="height:4px;width:55%;background:{col};border-radius:1px;margin-bottom:2px"></div><div style="height:2px;width:38%;background:{col};opacity:.5;border-radius:1px"></div>'
+        def sl(col): return f'<div style="height:2px;width:40%;background:{col};opacity:.7;border-radius:1px;margin-top:4px;margin-bottom:2px"></div>'
+        body=""
+        if layout=="sidebar":
+            sb=sidebar_bg or "#1e293b"
+            body=(f'<div style="display:flex;gap:0;flex:1;min-height:0"><div style="width:32%;background:{sb};padding:4px 3px;display:flex;flex-direction:column;gap:2px;">'+nb(accent)+ln("90%","rgba(255,255,255,0.2)","1px")+sl(accent)+ln("80%","rgba(255,255,255,0.18)")+ln("65%","rgba(255,255,255,0.18)")+sl(accent)+ln("70%","rgba(255,255,255,0.18)")+ln("55%","rgba(255,255,255,0.18)")+'</div><div style="flex:1;padding:4px 4px;display:flex;flex-direction:column;gap:0;">'+sl(accent)+ln("90%")+ln("80%")+ln("70%")+sl(accent)+ln("85%")+ln("75%")+ln("60%")+'</div></div>')
+        elif layout=="two-col":
+            body=(f'<div style="display:flex;gap:4px;flex:1;min-height:0;padding:2px;"><div style="flex:1;display:flex;flex-direction:column;gap:0;">'+sl(accent)+ln("90%")+ln("75%")+ln("80%")+sl(accent)+ln("85%")+ln("70%")+ln("65%")+'</div><div style="flex:1;display:flex;flex-direction:column;gap:0;">'+sl(accent)+ln("80%")+ln("90%")+ln("70%")+sl(accent)+ln("75%")+ln("60%")+ln("80%")+'</div></div>')
+        elif layout=="timeline":
+            body=(f'<div style="flex:1;padding:2px 3px;display:flex;flex-direction:column;gap:0;">'+sl(accent)+f'<div style="display:flex;align-items:flex-start;gap:3px;margin-top:2px"><div style="width:4px;height:4px;border-radius:50%;background:{accent};flex-shrink:0;margin-top:1px"></div><div style="flex:1">'+ln("85%")+ln("70%")+f'</div></div><div style="margin-left:5px;width:1px;height:5px;background:{accent};opacity:.3"></div><div style="display:flex;align-items:flex-start;gap:3px"><div style="width:4px;height:4px;border-radius:50%;background:{accent};flex-shrink:0;margin-top:1px"></div><div style="flex:1">'+ln("78%")+ln("62%")+'</div></div>'+sl(accent)+ln("90%")+ln("75%")+'</div>')
+        else:
+            body=(f'<div style="flex:1;padding:2px 3px;display:flex;flex-direction:column;gap:0;">'+sl(accent)+ln("90%")+ln("80%")+ln("72%")+sl(accent)+ln("85%")+ln("68%")+ln("76%")+sl(accent)+ln("70%")+ln("55%")+'</div>')
+        if header_style=="band":
+            hdr=f'<div style="background:{accent};padding:4px 5px;border-radius:3px 3px 0 0;"><div style="height:3px;width:50%;background:rgba(255,255,255,0.9);border-radius:1px;margin-bottom:1px"></div><div style="height:2px;width:32%;background:rgba(255,255,255,0.55);border-radius:1px"></div></div>'
+        elif header_style=="left-accent":
+            hdr=f'<div style="border-left:2px solid {accent};padding:3px 5px;"><div style="height:3px;width:50%;background:rgba(255,255,255,0.7);border-radius:1px;margin-bottom:1px"></div><div style="height:2px;width:30%;background:{accent};border-radius:1px"></div><div style="margin-top:2px;display:flex;gap:3px"><div style="height:2px;width:22%;background:rgba(255,255,255,0.2);border-radius:1px"></div><div style="height:2px;width:18%;background:rgba(255,255,255,0.2);border-radius:1px"></div></div></div>'
+        elif header_style=="center":
+            hdr=f'<div style="text-align:center;padding:4px 3px;border-bottom:1px solid {accent};"><div style="height:3px;width:45%;background:rgba(255,255,255,0.75);border-radius:1px;margin:0 auto 2px"></div><div style="height:2px;width:28%;background:{accent};border-radius:1px;margin:0 auto 2px"></div><div style="display:flex;justify-content:center;gap:3px"><div style="height:1.5px;width:14%;background:rgba(255,255,255,0.2);border-radius:1px"></div><div style="height:1.5px;width:14%;background:rgba(255,255,255,0.2);border-radius:1px"></div></div></div>'
+        else:
+            hdr="" if layout=="sidebar" else f'<div style="height:4px;background:{accent};border-radius:3px 3px 0 0;margin-bottom:3px"></div><div style="padding:0 4px 2px;"><div style="height:3px;width:52%;background:rgba(255,255,255,0.7);border-radius:1px;margin-bottom:2px"></div><div style="height:2px;width:34%;background:{accent};opacity:.6;border-radius:1px"></div><div style="display:flex;gap:3px;margin-top:2px"><div style="height:1.5px;width:16%;background:rgba(255,255,255,0.18);border-radius:1px"></div><div style="height:1.5px;width:16%;background:rgba(255,255,255,0.18);border-radius:1px"></div></div></div>'
+        return f'<div class="hl-tmpl2{act}" style="display:flex;flex-direction:column;padding:0;overflow:hidden;">'+hdr+body+badge+'</div>'
+
+    def _tmpl_gallery2():
+        templates=[("Modern","#0a84ff","center","center",None,True),("Classic","#f5f5f7","single","left-accent",None,False),("Executive","#ff9f0a","single","band",None,False),("Timeline","#30d158","timeline","bar",None,False),("Corporate","#1d4ed8","sidebar","bar","#1a2744",False),("Slate","#64748b","sidebar","bar","#1a1f2a",False),("Rose","#fb7185","single","band",None,False),("Midnight","#a78bfa","two-col","bar",None,False)]
+        return "".join(_mini_resume2(n,a,l,h,s,ac) for n,a,l,h,s,ac in templates)
+
+    def _job_cards2():
+        jobs=[("SDE II","Google","Mountain View · Full-time","#4285f4","G",True),("ML Engineer","Anthropic","Remote · Full-time","#d97706","A",False),("Backend Dev","Razorpay","Bangalore · Full-time","#2563eb","R",False),("Data Analyst","Zepto","Mumbai · Hybrid","#7c3aed","Z",False)]
+        out=""
+        for title,co,meta,col,letter,featured in jobs:
+            bb="rgba(10,132,255,0.12)" if featured else "rgba(255,255,255,0.05)"
+            bc="#4db3ff" if featured else "rgba(245,245,247,0.3)"
+            btx="Featured" if featured else "New"
+            out+='<div class="hl-job2"><div class="hl-job-logo2" style="background:'+col+'22;color:'+col+'">'+letter+'</div><div style="flex:1;min-width:0"><div class="hl-job-title2">'+title+' \u2014 '+co+'</div><div class="hl-job-co2">'+meta+'</div></div><div class="hl-job-badge2" style="background:'+bb+';color:'+bc+';border:1px solid '+bc+'40">'+btx+'</div></div>'
+        return out
+
+    def _pills2(labels):
+        return "".join('<span class="hl-pill2">'+l+'</span>' for l in labels)
+
+    def _checklist2():
+        items=["ATS score in seconds","Bias detection & rewrite","15 resume templates","Cover letter generator","Live job search","AI Interview Coach"]
+        chk='<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#30d158" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        return "".join('<div class="hl-check2">'+chk+'<span>'+item+'</span></div>' for item in items)
+
+    def _cy(): return '<span class="hl-chk2-y">&#10003;</span>'
+    def _cn(): return '<span class="hl-chk2-n">&mdash;</span>'
+    def _cp(t): return '<span class="hl-chk2-p">'+t+'</span>'
+
+    # ── Section renders ──────────────────────────────────────────────
+    # Inline landing page nav (separate from app nav)
+    _H('<div style="background:#000;padding:20px 0 0;">'
+       '<div class="hl-nav2">'
+       '<a href="#" class="hl-logo2"><div class="hl-logo-icon2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5z M2 17l10 5 10-5 M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>HIRELYZER</a>'
+       '<div class="hl-nav2-links"><a href="#lp-how">How it works</a><a href="#lp-analyzer">Analyzer</a><a href="#lp-builder">Builder</a><a href="#lp-compare">Compare</a><a href="#lp-faq">FAQ</a></div>'
+       '<a href="'+APP_URL+'" target="_blank" class="hl-nav2-cta"><svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M12 2L13.8 8.2L20 10L13.8 11.8L12 18L10.2 11.8L4 10L10.2 8.2L12 2Z"/></svg>Open App</a>'
+       '</div></div>')
+
+    # Feature strip
+    _H('<div style="background:#000;padding:28px 0 0;">'
+       '<div class="hl-hfeats">'
+       '<div class="hl-hfi"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#30d158" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>ATS Score in seconds</div>'
+       '<div class="hl-hfsep"></div>'
+       '<div class="hl-hfi"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#30d158" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Bias detection &amp; AI rewrite</div>'
+       '<div class="hl-hfsep"></div>'
+       '<div class="hl-hfi"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#30d158" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>15 ATS-certified templates</div>'
+       '<div class="hl-hfsep"></div>'
+       '<div class="hl-hfi"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#30d158" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>AI Interview Coach</div>'
+       '<div class="hl-hfsep"></div>'
+       '<div class="hl-hfi"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#30d158" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Live job search</div>'
+       '</div></div>')
+
+    # How it works
+    _H('<div id="lp-how" style="padding:80px 0 60px;background:#000"><div class="hl-sec">'
+       '<div class="hl-div">How it works</div>'
+       '<div class="hl-steps2">'
+       '<div class="hl-step2"><span class="hl-step-n2">01</span><svg class="hl-step-icon2" viewBox="0 0 44 44" fill="none"><rect width="44" height="44" rx="12" fill="rgba(10,132,255,0.1)"/><path d="M22 28V20M22 20L19 23M22 20L25 23" stroke="#0a84ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 30h14" stroke="#0a84ff" stroke-width="1.6" stroke-linecap="round"/><rect x="14" y="13" width="16" height="19" rx="3" stroke="#0a84ff" stroke-width="1.4" stroke-dasharray="3 2" fill="none"/></svg><div class="hl-step-title2">Upload your resume</div><div class="hl-step-desc2">Drop any PDF. Our parser handles messy formats, multi-column layouts, and scanned documents via OCR fallback.</div></div>'
+       '<div class="hl-step2"><span class="hl-step-n2">02</span><svg class="hl-step-icon2" viewBox="0 0 44 44" fill="none"><rect width="44" height="44" rx="12" fill="rgba(48,209,88,0.1)"/><circle cx="20" cy="20" r="7" stroke="#30d158" stroke-width="1.5" fill="none"/><path d="M20 17v3l2 1.5" stroke="#30d158" stroke-width="1.5" stroke-linecap="round"/><path d="M25.2 25.2l3.5 3.5" stroke="#30d158" stroke-width="1.7" stroke-linecap="round"/></svg><div class="hl-step-title2">Instant AI analysis</div><div class="hl-step-desc2">ATS scoring, bias detection, grammar check, keyword matching — all computed in seconds with detailed feedback.</div></div>'
+       '<div class="hl-step2"><span class="hl-step-n2">03</span><svg class="hl-step-icon2" viewBox="0 0 44 44" fill="none"><rect width="44" height="44" rx="12" fill="rgba(191,90,242,0.1)"/><rect x="12" y="11" width="13" height="18" rx="2.5" stroke="#bf5af2" stroke-width="1.5" fill="none"/><rect x="19" y="16" width="14" height="18" rx="2.5" fill="rgba(191,90,242,0.08)" stroke="#bf5af2" stroke-width="1.5"/><path d="M22 21h8M22 24.5h8M22 28h5" stroke="#bf5af2" stroke-width="1.3" stroke-linecap="round"/></svg><div class="hl-step-title2">Build or rewrite</div><div class="hl-step-desc2">Use the AI rewriter or open the Resume Builder. Choose from 15 templates, generate a cover letter, export to PDF or DOCX.</div></div>'
+       '<div class="hl-step2"><span class="hl-step-n2">04</span><svg class="hl-step-icon2" viewBox="0 0 44 44" fill="none"><rect width="44" height="44" rx="12" fill="rgba(255,159,10,0.1)"/><path d="M22 28c-3.31 0-6-2.69-6-6 0-4 3-8 6-9 3 1 6 5 6 9 0 3.31-2.69 6-6 6z" stroke="#ff9f0a" stroke-width="1.5" fill="none"/><circle cx="22" cy="22" r="2" fill="#ff9f0a"/></svg><div class="hl-step-title2">Apply with confidence</div><div class="hl-step-desc2">Discover live job listings, salary benchmarks, curated courses, and practice with the AI Interview Coach before applying.</div></div>'
+       '</div></div></div>')
+
+    # Feature 01 — ATS Analyzer
+    ring=_ats_ring(78); bars=_ats_bars()
+    _H('<div id="lp-analyzer" class="hl-story2"><div class="hl-sec"><div class="hl-sg2">'
+       '<div><div class="hl-snum">Feature 01 &mdash; Resume Analyzer</div>'
+       '<h2 class="hl-sh">Your resume, <span class="hl-blue">scored like a machine</span> reads it</h2>'
+       '<div class="hl-sp">Most resumes never reach a human. ATS silently filters them on format, missing keywords, or structural issues. Hirelyzer replicates how ATS parsers actually read your document &mdash; not just a surface keyword match.</div>'
+       '<div class="hl-sp">You get a score across six dimensions, a prioritised fix list, grammar signals, and a full keyword-gap report mapped to the roles you care about.</div>'
+       '<div class="hl-pills2">'+_pills2(["ATS Score","6-Dimension Breakdown","Keyword Gap","Grammar Check","Downloadable Report"])+'</div>'
+       '</div>'
+       '<div><div class="hl-panel2">'
+       '<div class="hl-ptitle2"><svg width="11" height="11" viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="5.5" fill="#30d158"/></svg>ATS Analysis Report</div>'
+       '<div style="display:flex;align-items:center;gap:18px;margin-bottom:22px">'+ring+'<div>'
+       '<div style="font-size:9px;color:rgba(245,245,247,0.34);text-transform:uppercase;letter-spacing:.9px;font-weight:700;margin-bottom:4px">Overall Score</div>'
+       '<div style="font-size:11px;color:#30d158;font-weight:600">Good &middot; Minor fixes needed</div>'
+       '<div style="font-size:10px;color:rgba(245,245,247,0.34);margin-top:4px">Parsed in 1.4s</div>'
+       '</div></div>'+bars
+       +'</div></div>'
+       '</div></div></div>')
+
+    # Feature 02 — Bias Detection
+    _H('<div class="hl-story2-alt"><div class="hl-sec"><div class="hl-sg2">'
+       '<div style="order:2"><div class="hl-snum">Feature 02 &mdash; Bias Detection</div>'
+       '<h2 class="hl-sh">Bias-free language that <span class="hl-purp">opens every door</span></h2>'
+       '<div class="hl-sp">Gender-coded words can unconsciously signal culture fit to recruiters. Hirelyzer scans every verb, adjective, and phrase against a curated bias lexicon of 400+ terms.</div>'
+       '<div class="hl-sp">The AI rewriter suggests impact-neutral alternatives, preserving your achievements while broadening appeal across hiring contexts.</div>'
+       '<div class="hl-pills2">'+_pills2(["Gender-coded Detection","AI Neutral Rewrite","Lexicon of 400+ Words","One-click Apply"])+'</div>'
+       '</div>'
+       '<div style="order:1"><div class="hl-panel2">'
+       '<div class="hl-ptitle2"><svg width="11" height="11" viewBox="0 0 11 11"><circle cx="5.5" cy="5.5" r="5.5" fill="#bf5af2"/></svg>Bias Analysis Report</div>'
+       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">'
+       '<div style="padding:14px;background:rgba(10,132,255,0.06);border-radius:12px;border:1px solid rgba(10,132,255,0.15)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.9px;color:rgba(245,245,247,0.34);font-weight:700;margin-bottom:6px">Masculine</div><div style="font-size:26px;font-weight:800;color:#4db3ff">8</div><div style="font-size:11px;color:rgba(245,245,247,0.34)">words flagged</div></div>'
+       '<div style="padding:14px;background:rgba(191,90,242,0.06);border-radius:12px;border:1px solid rgba(191,90,242,0.15)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.9px;color:rgba(245,245,247,0.34);font-weight:700;margin-bottom:6px">Feminine</div><div style="font-size:26px;font-weight:800;color:#d07ef7">3</div><div style="font-size:11px;color:rgba(245,245,247,0.34)">words flagged</div></div>'
+       '</div>'
+       '<div class="hl-words2"><span class="wc2 wc2-m">driven</span><span class="wc2 wc2-m">aggressive</span><span class="wc2 wc2-m">dominate</span><span class="wc2 wc2-f">nurture</span><span class="wc2 wc2-f">support</span><span class="wc2 wc2-n">deliver</span><span class="wc2 wc2-n">execute</span></div>'
+       '<div style="padding:14px;background:rgba(48,209,88,0.06);border-radius:12px;border:1px solid rgba(48,209,88,0.18)">'
+       '<div style="font-size:11px;font-weight:700;color:#30d158;margin-bottom:6px">AI Rewrite Applied</div>'
+       '<div style="font-size:12px;color:rgba(245,245,247,0.54);line-height:1.65"><span style="text-decoration:line-through;opacity:.45">Aggressively drove growth</span> &rarr; <span style="color:#30d158">Accelerated high-impact results</span> across 3 teams</div>'
+       '</div></div></div>'
+       '</div></div></div>')
+
+    # Feature 03 — Resume Builder
+    tmpl=_tmpl_gallery2()
+    _H('<div id="lp-builder" class="hl-story2"><div class="hl-sec"><div class="hl-sg2">'
+       '<div><div class="hl-snum">Feature 03 &mdash; Resume Builder</div>'
+       '<h2 class="hl-sh">Build resumes that <span class="hl-green">look as good</span> as they parse</h2>'
+       '<div class="hl-sp">Fifteen ATS-optimised templates — from understated minimal to executive prestige — all built on strict single-column structures that parse correctly in every major hiring platform.</div>'
+       '<div class="hl-sp">Export to DOCX (three ATS compliance levels) or PDF. One click generates a tailored cover letter for your target company, formatted and ready to send.</div>'
+       '<div class="hl-pills2">'+_pills2(["15 Templates","DOCX + PDF Export","AI Cover Letter","Live Preview","ATS Single-Column"])+'</div>'
+       '</div>'
+       '<div><div class="hl-panel2">'
+       '<div class="hl-ptitle2"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="10" height="14" rx="2" stroke="#30d158" stroke-width="1.5"/><rect x="11" y="7" width="10" height="14" rx="2" fill="rgba(48,209,88,.08)" stroke="#30d158" stroke-width="1.5"/></svg>Template Gallery &mdash; 15 Designs</div>'
+       '<div class="hl-tmpl-grid2">'+tmpl+'</div>'
+       '<div style="padding:14px;background:rgba(10,132,255,0.06);border-radius:12px;border:1px solid rgba(10,132,255,0.18);display:flex;align-items:center;justify-content:space-between;gap:12px">'
+       '<div><div style="font-size:12px;font-weight:700;color:#0a84ff">Modern &mdash; ATS Certified</div><div style="font-size:11px;color:rgba(245,245,247,0.34);margin-top:2px">Sora &middot; Single-column &middot; Navy headings</div></div>'
+       '<a href="'+APP_URL+'" target="_blank" style="padding:8px 18px;background:#0a84ff;color:#fff;border-radius:100px;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap;flex-shrink:0">Use this</a>'
+       '</div></div></div>'
+       '</div></div></div>')
+
+    # Feature 04 — Career Intelligence
+    cards=_job_cards2()
+    _H('<div class="hl-story2-alt"><div class="hl-sec"><div class="hl-sg2">'
+       '<div style="order:2"><div class="hl-snum">Feature 04 &mdash; Career Intelligence</div>'
+       '<h2 class="hl-sh">Jobs, salaries, courses &mdash; <span class="hl-amber">one place</span></h2>'
+       '<div class="hl-sp">The Job Search Hub pulls live listings from LinkedIn, Naukri, Foundit, and Indeed with remote and employment-type filters.</div>'
+       '<div class="hl-sp">Hirelyzer surfaces salary benchmarks by role and market, curated courses mapped to skill gaps in your resume, and prep videos.</div>'
+       '<div class="hl-pills2">'+_pills2(["Live Job Listings","Salary Benchmarks","Course Recommendations","Skills Radar","Remote Filter"])+'</div>'
+       '</div>'
+       '<div style="order:1"><div class="hl-panel2">'
+       '<div class="hl-ptitle2"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="14" rx="2" stroke="#ff9f0a" stroke-width="1.5"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" stroke="#ff9f0a" stroke-width="1.5"/></svg>Job Search Hub</div>'
+       +cards+
+       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">'
+       '<div style="padding:12px;background:rgba(255,159,10,0.06);border-radius:10px;border:1px solid rgba(255,159,10,0.15)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.9px;color:rgba(245,245,247,0.34);font-weight:700;margin-bottom:5px">Avg Salary</div><div style="font-size:20px;font-weight:800;color:#ff9f0a">&#8377;18&ndash;32 LPA</div><div style="font-size:11px;color:rgba(245,245,247,0.34)">Backend &middot; India</div></div>'
+       '<div style="padding:12px;background:rgba(10,132,255,0.06);border-radius:10px;border:1px solid rgba(10,132,255,0.15)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.9px;color:rgba(245,245,247,0.34);font-weight:700;margin-bottom:5px">Platforms</div><div style="font-size:13px;font-weight:700;color:#f5f5f7;line-height:1.7">LinkedIn &middot; Naukri<br>Foundit &middot; Indeed</div></div>'
+       '</div></div></div>'
+       '</div></div></div>')
+
+    # Feature 05 — AI Interview Coach
+    sbars=_score_bars(); radar=_radar_svg()
+    _H('<div class="hl-story2"><div class="hl-sec"><div class="hl-sg2">'
+       '<div><div class="hl-snum">Feature 05 &mdash; AI Interview Coach</div>'
+       '<h2 class="hl-sh">Practice until <span class="hl-blue">every answer</span> lands</h2>'
+       '<div class="hl-sp">Upload your resume and Hirelyzer generates interview questions derived from your actual experience — not generic prompts. Answer in free text; the AI coach scores you on 5 dimensions.</div>'
+       '<div class="hl-sp">Every session ends with a performance radar chart, a detailed Q&amp;A review, and course recommendations tied to your weakest dimensions.</div>'
+       '<div class="hl-pills2">'+_pills2(["Resume-based Questions","Real-time AI Scoring","Radar Chart","Session History","Downloadable Report"])+'</div>'
+       '</div>'
+       '<div><div class="hl-panel2">'
+       '<div class="hl-ptitle2" style="justify-content:space-between">'
+       '<div style="display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="#ff453a" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>Mock Interview &middot; Session 3</div>'
+       '<div class="hl-score-badge2"><svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#30d158"/></svg>82 / 100</div>'
+       '</div>'
+       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">'
+       '<div>'
+       '<div class="hl-qa2"><div class="hl-q2"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10" stroke="#0a84ff" stroke-width="1.5"/><path d="M12 16v-4M12 8h.01" stroke="#0a84ff" stroke-width="1.8" stroke-linecap="round"/></svg>Describe your most complex backend system.</div><div class="hl-a2">Built a multi-tenant microservices platform handling 2M events/day using Kafka, Redis, and PostgreSQL with 40% lower P99 latency.</div></div>'
+       '<div class="hl-qa2"><div class="hl-q2"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10" stroke="#bf5af2" stroke-width="1.5"/><path d="M12 16v-4M12 8h.01" stroke="#bf5af2" stroke-width="1.8" stroke-linecap="round"/></svg>How do you handle technical debt?</div><div class="hl-a2">I prioritise tech debt as a first-class roadmap item, quantifying velocity cost before pitching refactors to stakeholders.</div></div>'
+       '<div style="margin-top:12px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.9px;color:rgba(245,245,247,0.34);font-weight:700;margin-bottom:8px">Score breakdown</div>'+sbars+'</div></div>'
+       '<div class="hl-radar-wrap2">'+radar+'<div style="font-size:11px;color:rgba(245,245,247,0.34);margin-top:6px;text-align:center">Performance radar</div></div>'
+       '</div></div></div>'
+       '</div></div></div>')
+
+    # Comparison table
+    rows=[("ATS Resume Scoring",_cy(),_cn(),_cn()),("6-Dimension Breakdown",_cy(),_cn(),_cn()),("Gender Bias Detection",_cy(),_cn(),_cn()),("AI Neutral Rewrite",_cy(),_cn(),_cn()),("15 Resume Templates",_cy(),_cp("3&ndash;5"),_cp("Limited")),("DOCX &amp; PDF Export",_cy(),_cp("PDF only"),_cn()),("AI Cover Letter",_cy(),_cn(),_cn()),("Live Job Search",_cy(),_cn(),_cp("1 only")),("Salary Benchmarks",_cy(),_cn(),_cn()),("AI Interview Coach",_cy(),_cn(),_cn()),("100% Free, No Sign-up",_cy(),_cp("Freemium"),_cp("Paid"))]
+    header='<div class="hl-compare-head2"><div class="hl-ch2" style="padding:20px 24px">Feature</div><div class="hl-ch2 hl-ch2-hl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5z M2 17l10 5 10-5 M2 12l10 5 10-5" stroke="#0a84ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Hirelyzer</div><div class="hl-ch2 hl-cc2-center">Resumeworded</div><div class="hl-ch2 hl-cc2-center">Zety</div></div>'
+    body="".join('<div class="hl-compare-row2"><div class="hl-cc2 hl-cc2-feat">'+f+'</div><div class="hl-cc2 hl-cc2-hl hl-cc2-center">'+h+'</div><div class="hl-cc2 hl-cc2-center">'+c2+'</div><div class="hl-cc2 hl-cc2-center">'+c3+'</div></div>' for f,h,c2,c3 in rows)
+    _H('<div id="lp-compare" class="hl-compare2"><div class="hl-sec">'
+       '<div class="hl-div">How we compare</div>'
+       '<div style="text-align:center;margin-bottom:0">'
+       '<h2 style="font-size:clamp(26px,3.5vw,42px);font-weight:800;letter-spacing:-1.8px;color:#f5f5f7;line-height:1.08;font-family:Sora,sans-serif">Everything in one place &mdash; <span style="color:#0a84ff">completely free</span></h2>'
+       '<div style="font-size:15px;color:rgba(245,245,247,0.44);margin-top:14px;max-width:480px;margin-left:auto;margin-right:auto;line-height:1.7;font-family:Sora,sans-serif">No paywalls. No partial features. Hirelyzer gives you the complete career toolkit at zero cost.</div>'
+       '</div>'
+       '<div class="hl-compare-wrap2">'+header+body+'</div>'
+       '</div></div>')
+
+    # Why Hirelyzer highlights
+    hcards=[
+        ("#0a84ff","rgba(10,132,255,0.1)",'<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#0a84ff" stroke-width="1.5" fill="none" stroke-linecap="round"/>',
+         "ATS-Certified Scoring","Our six-dimension ATS engine parses your resume exactly as real hiring systems do — format, keywords, sections, verbs, contact info, and date consistency."),
+        ("#bf5af2","rgba(191,90,242,0.1)",'<circle cx="12" cy="12" r="10" stroke="#bf5af2" stroke-width="1.5" fill="none"/><path d="M12 8v4M12 16h.01" stroke="#bf5af2" stroke-width="1.8" stroke-linecap="round"/>',
+         "Bias Lexicon of 400+ Terms","A curated gender-coded word database flags masculine and feminine language patterns, then our AI rewrites every phrase to be impact-neutral."),
+        ("#30d158","rgba(48,209,88,0.1)",'<rect x="3" y="3" width="10" height="14" rx="2" stroke="#30d158" stroke-width="1.5" fill="none"/><rect x="11" y="7" width="10" height="14" rx="2" fill="none" stroke="#30d158" stroke-width="1.5"/>',
+         "15 ATS-Ready Templates","Every template is single-column, structured to parse in Greenhouse, Lever, Workday, and iCIMS. Export as DOCX (3 compliance tiers) or PDF in one click."),
+        ("#ff9f0a","rgba(255,159,10,0.1)",'<rect x="2" y="7" width="20" height="14" rx="2" stroke="#ff9f0a" stroke-width="1.5" fill="none"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" stroke="#ff9f0a" stroke-width="1.5"/>',
+         "Live Job Intelligence","Pull live listings from LinkedIn, Naukri, Foundit, and Indeed with role, location, and remote filters — plus salary benchmarks and curated skill courses."),
+        ("#ff453a","rgba(255,69,58,0.1)",'<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="#ff453a" stroke-width="1.5" fill="none" stroke-linecap="round"/>',
+         "Resume-Based Interview Prep","Questions are generated from your actual resume. Get scored across 5 competency dimensions with a radar chart and downloadable session history."),
+        ("#4db3ff","rgba(10,132,255,0.08)",'<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="#4db3ff" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+         "Instant — No Sign-up","Upload a PDF and get your full ATS report, bias analysis, keyword gaps, and fix list in under 2 seconds. No account, no email, no credit card."),
+    ]
+    hitems="".join('<div class="hl-highlight2"><div class="hl-hi-icon2" style="background:'+bg+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none">'+icon+'</svg></div><div class="hl-hi-title2">'+title+'</div><div class="hl-hi-desc2">'+desc+'</div></div>' for col,bg,icon,title,desc in hcards)
+    _H('<div class="hl-highlights2"><div class="hl-sec"><div class="hl-div">Why Hirelyzer</div><div class="hl-highlight-grid2">'+hitems+'</div></div></div>')
+
+    # FAQ
+    faqs=[
+        ("Is Hirelyzer completely free?","Yes &mdash; the core features including ATS scoring, bias detection, and job search are fully free. No credit card required."),
+        ("What file formats does Hirelyzer accept?","PDF is the primary input format. Our parser handles standard, multi-column, and OCR-scanned PDFs. Export to DOCX or PDF is available from the Resume Builder."),
+        ("How accurate is the ATS scoring?","Our scoring engine replicates how real ATS systems parse resumes across six dimensions. We test regularly against major platforms like Greenhouse, Lever, and Workday."),
+        ("Is my resume data private?","Your resume is processed securely and never shared with third parties or recruiters. You control your data entirely."),
+        ("How does the AI Interview Coach work?","Upload your resume and Hirelyzer extracts key experiences to generate tailored questions. You answer in free text and our AI scores you across five competency dimensions in real-time."),
+    ]
+    fitems="".join('<div class="hl-faq-item2"><div class="hl-faq-q2">'+q+'<div class="hl-faq-q-icon2">+</div></div><div class="hl-faq-a2">'+a+'</div></div>' for q,a in faqs)
+    _H('<div id="lp-faq" class="hl-faq2"><div class="hl-sec">'
+       '<div class="hl-div">FAQ</div>'
+       '<h2 style="font-size:clamp(24px,3vw,38px);font-weight:800;letter-spacing:-1.5px;color:#f5f5f7;text-align:center;margin-bottom:0;font-family:Sora,sans-serif">Frequently asked questions</h2>'
+       '<div class="hl-faq-list2">'+fitems+'</div>'
+       '</div></div>')
+
+    # CTA
+    chk=_checklist2()
+    _H('<div class="hl-sec">'
+       '<div id="lp-cta" class="hl-cta2"><div class="hl-cta2-glow"></div>'
+       '<div class="hl-eyebrow2" style="margin:0 auto 28px"><svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#0a84ff"/></svg>Free to use &middot; No credit card required</div>'
+       '<div class="hl-cta2-h">Your next job starts with a better resume</div>'
+       '<div style="font-size:16px;color:rgba(245,245,247,0.48);text-align:center;max-width:520px;margin:0 auto 40px;line-height:1.72;position:relative;z-index:1;font-family:Sora,sans-serif">Join professionals already using Hirelyzer to pass ATS filters, remove bias, and land more interviews.</div>'
+       '<div class="hl-cta2-btns">'
+       '<a href="'+APP_URL+'" target="_blank" class="hl-btn-p2" style="font-size:16px;padding:16px 36px"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M12 2L13.8 8.2L20 10L13.8 11.8L12 18L10.2 11.8L4 10L10.2 8.2L12 2Z"/></svg>Start for free</a>'
+       '<a href="mailto:'+SUPPORT_EMAIL+'" class="hl-btn-g2" style="font-size:16px;padding:16px 32px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="1.5" fill="none"/><polyline points="22,6 12,13 2,6" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>Contact us</a>'
+       '</div>'
+       '<div class="hl-checks2">'+chk+'</div>'
+       '</div></div>')
+
+    # Contact card
+    _H('<div class="hl-sec">'
+       '<div class="hl-contact-card2">'
+       '<div style="width:48px;height:48px;border-radius:14px;background:rgba(10,132,255,0.1);border:1px solid rgba(10,132,255,0.2);display:flex;align-items:center;justify-content:center;margin:0 auto 18px">'
+       '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="#0a84ff" stroke-width="1.5" fill="none"/><polyline points="22,6 12,13 2,6" stroke="#0a84ff" stroke-width="1.5" fill="none"/></svg>'
+       '</div>'
+       '<h3 style="font-size:22px;font-weight:800;color:#f5f5f7;letter-spacing:-.8px;margin-bottom:10px;font-family:Sora,sans-serif">Get in touch</h3>'
+       '<div style="font-size:14px;color:rgba(245,245,247,0.44);line-height:1.7;margin-bottom:28px;text-align:center;font-family:Sora,sans-serif">Have questions, feedback, or want to report an issue? We typically respond within 24 hours.</div>'
+       '<a href="mailto:'+SUPPORT_EMAIL+'" class="hl-contact-email2">'
+       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="#4db3ff" stroke-width="1.5" fill="none"/><polyline points="22,6 12,13 2,6" stroke="#4db3ff" stroke-width="1.5" fill="none"/></svg>'
+       +SUPPORT_EMAIL+
+       '</a>'
+       '<div style="margin-top:18px;font-size:12px;color:rgba(245,245,247,0.26);font-family:Sora,sans-serif">Support &middot; Feedback &middot; Bug reports &middot; Partnership enquiries</div>'
+       '</div></div>')
+
+    # Footer
+    _H('<footer style="background:#000"><div class="hl-footer2">'
+       '<div><div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">'
+       '<div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#0a84ff,#0055d4);display:flex;align-items:center;justify-content:center">'
+       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5z M2 17l10 5 10-5 M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+       '</div><span style="font-size:13px;font-weight:800;color:rgba(245,245,247,0.7);letter-spacing:.5px;font-family:Sora,sans-serif">HIRELYZER</span></div>'
+       '<div class="hl-footer2-copy">&copy; 2025 HIRELYZER &middot; Intelligent Career Platform</div>'
+       '<div style="font-size:12px;color:rgba(245,245,247,0.18);font-family:Sora,sans-serif">Built for the next generation of job seekers</div>'
+       '</div>'
+       '<div class="hl-footer2-links">'
+       '<a href="#">Privacy</a><a href="#">Terms</a>'
+       '<a href="mailto:'+SUPPORT_EMAIL+'">'+SUPPORT_EMAIL+'</a>'
+       '<a href="'+APP_URL+'" target="_blank">Open App &rarr;</a>'
+       '</div></div></footer>')
+
+    # FAQ accordion JS
+    st.components.v1.html("""
+    <script>
+    (function(){
+      document.querySelectorAll('.hl-faq-q2').forEach(function(q){
+        q.addEventListener('click',function(){
+          var a=this.nextElementSibling;
+          var icon=this.querySelector('.hl-faq-q-icon2');
+          var open=a.style.display==='block';
+          document.querySelectorAll('.hl-faq-a2').forEach(function(x){x.style.display='none';});
+          document.querySelectorAll('.hl-faq-q-icon2').forEach(function(x){x.textContent='+';});
+          if(!open){a.style.display='block';icon.textContent='\u2212';}
+        });
+      });
+    })();
+    </script>
+    """, height=0, scrolling=False)
+
+    st.markdown("---")
+
 if not st.session_state.get("authenticated", False):
 
     # -------- Login/Register Layout --------

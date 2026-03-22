@@ -561,7 +561,7 @@ def render_compare():
       '<div class="hl-divider">How we compare</div>'
       '<div style="text-align:center;margin-bottom:0">'
       '<h2 style="font-size:clamp(26px,3.5vw,42px);font-weight:800;letter-spacing:-1.8px;color:#f5f5f7;line-height:1.08">Everything in one place &mdash; <span style="color:#0a84ff">completely free</span></h2>'
-      '<p style="font-size:15px;color:rgba(245,245,247,0.44);margin-top:14px;max-width:480px;margin-left:auto;margin-right:auto;line-height:1.7">No paywalls. No partial features. Hirelyzer gives you the complete career toolkit at zero cost.</p>'
+      '<p style="font-size:15px;color:rgba(245,245,247,0.44);margin-top:14px;max-width:720px;width:100%;margin-left:auto;margin-right:auto;line-height:1.7;text-align:center;">No paywalls. No partial features. Hirelyzer gives you the complete career toolkit at zero cost.</p>'
       '</div>'
       '<div class="hl-compare-wrap">' + header + body + '</div>'
       '</div></div>')

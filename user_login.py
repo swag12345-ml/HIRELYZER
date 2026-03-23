@@ -7,6 +7,7 @@ import pytz
 import re
 import os
 import random
+import secrets
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -145,6 +146,132 @@ def create_user_table():
     except Exception as e:
         _conn().rollback()
         st.error(f"Error creating tables: {e}")
+    # Ensure the login confirmation tokens table also exists
+    create_login_tokens_table()
+
+
+# ── Login confirmation tokens ────────────────────────────────────────────────
+
+def create_login_tokens_table():
+    """
+    Create the login_tokens table if it doesn't exist.
+    Called once at app startup alongside create_user_table().
+    """
+    ddl = """
+    CREATE TABLE IF NOT EXISTS login_tokens (
+        id         SERIAL PRIMARY KEY,
+        username   TEXT NOT NULL,
+        token      TEXT UNIQUE NOT NULL,
+        created_at TEXT NOT NULL,
+        used       BOOLEAN NOT NULL DEFAULT FALSE
+    );
+    """
+    try:
+        conn = _conn()
+        with conn.cursor() as cur:
+            cur.execute(ddl)
+        conn.commit()
+    except Exception as e:
+        _conn().rollback()
+        st.error(f"Error creating login_tokens table: {e}")
+
+
+def create_login_token(username: str) -> str:
+    """
+    Generate a cryptographically secure 64-char hex token, store it in
+    login_tokens, and return the raw token string.
+    Any previous unused tokens for this user are invalidated first.
+    """
+    # Invalidate stale tokens for this user so only one link is live at a time
+    _execute(
+        "UPDATE login_tokens SET used = TRUE WHERE username = %s AND used = FALSE",
+        (username,),
+    )
+    token = secrets.token_hex(32)          # 64 hex chars, 256 bits of entropy
+    timestamp = get_ist_time().strftime("%Y-%m-%d %H:%M:%S")
+    _execute(
+        "INSERT INTO login_tokens (username, token, created_at, used) VALUES (%s, %s, %s, FALSE)",
+        (username, token, timestamp),
+    )
+    return token
+
+
+def verify_login_token(token: str):
+    """
+    Validate a login confirmation token.
+
+    Returns (username: str, groq_api_key: str | None) on success.
+    Returns (None, None) on failure (expired, used, or not found).
+
+    A token is valid for 10 minutes and can only be used once.
+    """
+    row = _execute(
+        """
+        SELECT lt.username, lt.created_at, lt.used, u.groq_api_key
+        FROM login_tokens lt
+        JOIN users u ON u.username = lt.username
+        WHERE lt.token = %s
+        """,
+        (token,),
+        fetch="one",
+    )
+    if not row:
+        return None, None
+    if row["used"]:
+        return None, None
+
+    # Check 10-minute expiry against IST
+    ist = pytz.timezone("Asia/Kolkata")
+    created_at = datetime.strptime(row["created_at"], "%Y-%m-%d %H:%M:%S")
+    created_at = ist.localize(created_at)
+    elapsed = (get_ist_time() - created_at).total_seconds()
+    if elapsed > 600:          # 10 minutes
+        return None, None
+
+    # Mark token as consumed
+    _execute(
+        "UPDATE login_tokens SET used = TRUE WHERE token = %s",
+        (token,),
+    )
+    return row["username"], row["groq_api_key"]
+
+
+def send_login_confirmation_email(to_email: str, username: str, token: str) -> bool:
+    """
+    Send a 'Yes, it's me' confirmation link to the user's registered email.
+    The app_url is read from st.secrets["APP_URL"] (e.g. https://yourapp.streamlit.app).
+    """
+    try:
+        app_url = st.secrets.get("APP_URL", "http://localhost:8501")
+        confirm_url = f"{app_url}?login_token={token}"
+
+        body = f"""Hello {username},
+
+Someone just tried to sign in to your HIRELYZER account.
+
+If this was you, please confirm your login by clicking the link below:
+
+  {confirm_url}
+
+This link expires in 10 minutes and can only be used once.
+
+If you did NOT attempt to log in, you can safely ignore this email — your account remains secure.
+
+Best regards,
+HIRELYZER Team
+"""
+        return _send_email(to_email, "Confirm your HIRELYZER login", body)
+    except Exception as e:
+        st.error(f"Error sending login confirmation email: {e}")
+        return False
+
+
+def get_email_by_username(username: str):
+    """Return the registered email address for a given username."""
+    row = _execute(
+        "SELECT email FROM users WHERE username = %s", (username,), fetch="one"
+    )
+    return row["email"] if row else None
 
 
 # ── OTP helpers ───────────────────────────────────────────────────────────────

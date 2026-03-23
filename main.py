@@ -3693,10 +3693,11 @@ Work Experience → Projects → Education → Certifications & Links
 
 CONTACT HEADER: Full Name | Job Title | Email | Phone | Location | LinkedIn URL | GitHub/Portfolio URL
 
-PROFESSIONAL SUMMARY (2–3 sentences, max 60 words):
+PROFESSIONAL SUMMARY (2–3 complete sentences, max 80 words — NEVER truncate mid-sentence):
   Sentence 1: [Seniority level] + [core domain] + [years of experience]
   Sentence 2: [Top 2–3 specific technical or functional strengths]
   Sentence 3: [Career value proposition — what the candidate delivers]
+  IMPORTANT: Always end with a complete sentence. Do NOT cut off mid-sentence.
 
 CORE SKILLS: labeled lines — Technical Skills: [...] and Professional Skills: [...]
 
@@ -3784,6 +3785,7 @@ RETURN ONLY THIS EXACT JSON STRUCTURE:
       "degree": "",
       "institution": "",
       "year": "",
+      "cgpa": "",
       "bullets": []
     }}
   ],
@@ -3807,7 +3809,8 @@ FIELD RULES:
 - "skills" = flat array of individual skill strings. Minimum 8. No duplicates.
 - "soft_skills" = professional competency phrases. Must NOT duplicate items in "skills".
 - "contact.*" = extract exactly as written. Use "" not null for missing fields.
-- "summary" = 2–3 sentences, max 60 words, no pronouns.
+- "summary" = 2–3 complete sentences, max 80 words, no pronouns. MUST end with a complete sentence — never truncate mid-sentence.
+- "education[].cgpa" = extract CGPA/GPA exactly as written (e.g. "8.5/10", "3.8/4.0"). Use "" if not mentioned.
 - "experience[].description" = 1-sentence role scope, unique from bullets.
 - "experience[].bullets" = 3–5 bullets each. Strong verb + task + tech + impact.
 - "projects[].bullets" = must NOT restate experience bullets.
@@ -4025,7 +4028,7 @@ def extract_resume_json(llm_response: str) -> dict:
                 proj["bullets"] = []
         # Backfill missing education fields
         for edu in data.get("education", []):
-            for f in ["degree", "institution", "year"]:
+            for f in ["degree", "institution", "year", "cgpa"]:
                 if f not in edu:
                     edu[f] = ""
             if "bullets" not in edu:
@@ -4671,7 +4674,20 @@ def generate_modern_docx(data: dict) -> BytesIO:
             if edu.get("year") and edu["year"] not in ("", "[Not Provided]"):
                 p_yr = doc.add_paragraph()
                 p_yr.clear()
-                r_yr = p_yr.add_run(edu["year"])
+                yr_text = edu["year"]
+                if edu.get("cgpa") and edu["cgpa"] not in ("", "[Not Provided]"):
+                    yr_text += f"  |  CGPA: {edu['cgpa']}"
+                r_yr = p_yr.add_run(yr_text)
+                r_yr.italic = True
+                r_yr.font.size = Pt(BODY - 1)
+                r_yr.font.name = FONT
+                r_yr.font.color.rgb = RGBColor(110, 110, 110)
+                p_yr.paragraph_format.space_before = Pt(0)
+                p_yr.paragraph_format.space_after = Pt(2)
+            elif edu.get("cgpa") and edu["cgpa"] not in ("", "[Not Provided]"):
+                p_yr = doc.add_paragraph()
+                p_yr.clear()
+                r_yr = p_yr.add_run(f"CGPA: {edu['cgpa']}")
                 r_yr.italic = True
                 r_yr.font.size = Pt(BODY - 1)
                 r_yr.font.name = FONT
@@ -4961,7 +4977,20 @@ def generate_minimal_docx(data: dict) -> BytesIO:
             if edu.get("year") and edu["year"] not in ("", "[Not Provided]"):
                 p_yr = doc.add_paragraph()
                 p_yr.clear()
-                r_yr = p_yr.add_run(edu["year"])
+                yr_text = edu["year"]
+                if edu.get("cgpa") and edu["cgpa"] not in ("", "[Not Provided]"):
+                    yr_text += f"  |  CGPA: {edu['cgpa']}"
+                r_yr = p_yr.add_run(yr_text)
+                r_yr.italic = True
+                r_yr.font.size = Pt(BODY - 1)
+                r_yr.font.name = FONT
+                r_yr.font.color.rgb = RGBColor(*MID_GRAY)
+                p_yr.paragraph_format.space_before = Pt(0)
+                p_yr.paragraph_format.space_after = Pt(2)
+            elif edu.get("cgpa") and edu["cgpa"] not in ("", "[Not Provided]"):
+                p_yr = doc.add_paragraph()
+                p_yr.clear()
+                r_yr = p_yr.add_run(f"CGPA: {edu['cgpa']}")
                 r_yr.italic = True
                 r_yr.font.size = Pt(BODY - 1)
                 r_yr.font.name = FONT
@@ -5263,7 +5292,20 @@ def generate_creative_docx(data: dict) -> BytesIO:
             if edu.get("year") and edu["year"] not in ("", "[Not Provided]"):
                 p_yr = doc.add_paragraph()
                 p_yr.clear()
-                r3 = p_yr.add_run(edu["year"])
+                yr_text = edu["year"]
+                if edu.get("cgpa") and edu["cgpa"] not in ("", "[Not Provided]"):
+                    yr_text += f"  |  CGPA: {edu['cgpa']}"
+                r3 = p_yr.add_run(yr_text)
+                r3.italic = True
+                r3.font.size = Pt(BODY - 1)
+                r3.font.name = FONT_BODY
+                r3.font.color.rgb = RGBColor(110, 110, 110)
+                p_yr.paragraph_format.space_before = Pt(0)
+                p_yr.paragraph_format.space_after = Pt(2)
+            elif edu.get("cgpa") and edu["cgpa"] not in ("", "[Not Provided]"):
+                p_yr = doc.add_paragraph()
+                p_yr.clear()
+                r3 = p_yr.add_run(f"CGPA: {edu['cgpa']}")
                 r3.italic = True
                 r3.font.size = Pt(BODY - 1)
                 r3.font.name = FONT_BODY

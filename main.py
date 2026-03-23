@@ -3592,13 +3592,11 @@ Work Experience → Projects → Education → Certifications & Links
 
 CONTACT HEADER: Full Name | Job Title | Email | Phone | Location | LinkedIn URL | GitHub/Portfolio URL
 
-PROFESSIONAL SUMMARY (4–6 sentences, 100–150 words):
+PROFESSIONAL SUMMARY (2–4 sentences, 40–80 words, 3–5 lines maximum):
   Sentence 1: [Seniority level] + [core domain] + [years of experience]
-  Sentence 2: [Top 2–3 specific technical or functional strengths with technologies/tools]
-  Sentence 3: [Domain expertise or industry context — sectors, scale, environments worked in]
-  Sentence 4: [Key accomplishments or impact — use metrics/quantification where possible]
-  Sentence 5: [Soft skills or leadership qualities that differentiate the candidate]
-  Sentence 6: [Career value proposition — what the candidate uniquely delivers to the next role]
+  Sentence 2: [Top 2–3 specific technical or functional strengths]
+  Sentence 3: [Key accomplishment or impact with metric where possible]
+  Sentence 4: [Career value proposition — what the candidate delivers]
   RULES: No personal pronouns. No filler phrases ("passionate about", "results-driven"). ATS-safe plain text only.
 
 CORE SKILLS: labeled lines — Technical Skills: [...] and Professional Skills: [...]
@@ -3710,7 +3708,7 @@ FIELD RULES:
 - "skills" = flat array of individual skill strings. Minimum 8. No duplicates.
 - "soft_skills" = professional competency phrases. Must NOT duplicate items in "skills".
 - "contact.*" = extract exactly as written. Use "" not null for missing fields.
-- "summary" = 4–6 sentences, 100–150 words, no pronouns. Must cover: seniority + domain + years of experience | top technical strengths | industry/domain context | key accomplishments with metrics | differentiating soft skills or leadership | career value proposition. No filler phrases. ATS-safe plain text only.
+- "summary" = 2–4 sentences, 40–80 words, no pronouns. Must cover: seniority + domain + years of experience | top technical strengths | key accomplishment with metric | career value proposition. No filler phrases. ATS-safe plain text only.
 - "experience[].description" = 1-sentence role scope, unique from bullets.
 - "experience[].bullets" = 3–5 bullets each. Strong verb + task + tech + impact.
 - "projects[].bullets" = must NOT restate experience bullets.

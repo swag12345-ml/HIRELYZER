@@ -3592,12 +3592,11 @@ Work Experience → Projects → Education → Certifications & Links
 
 CONTACT HEADER: Full Name | Job Title | Email | Phone | Location | LinkedIn URL | GitHub/Portfolio URL
 
-PROFESSIONAL SUMMARY (2–4 sentences, 40–80 words, 3–5 lines maximum):
+PROFESSIONAL SUMMARY (3–4 sentences, max 100 words):
   Sentence 1: [Seniority level] + [core domain] + [years of experience]
   Sentence 2: [Top 2–3 specific technical or functional strengths]
-  Sentence 3: [Key accomplishment or impact with metric where possible]
+  Sentence 3: [Notable tools, frameworks, or methodologies used]
   Sentence 4: [Career value proposition — what the candidate delivers]
-  RULES: No personal pronouns. No filler phrases ("passionate about", "results-driven"). ATS-safe plain text only.
 
 CORE SKILLS: labeled lines — Technical Skills: [...] and Professional Skills: [...]
 
@@ -3615,7 +3614,14 @@ PROJECTS: Name | Tech Stack | Duration
   • [Achievement bullet with action verb and metric]
   (3–5 bullets)
 
-EDUCATION: Degree, Major | Institution | Graduation Year
+EDUCATION: Degree, Major | Institution | Graduation Year | CGPA (if mentioned)
+  • Capture ALL details written under each education entry as bullets, including:
+    - Relevant coursework (e.g., "Relevant Coursework: Data Structures, ML, DBMS")
+    - Academic honors, awards, distinctions (e.g., "Dean's List", "Top 5% of batch")
+    - Thesis or final year project title
+    - Extracurricular academic activities (e.g., IEEE member, coding club)
+    - Any other detail the candidate wrote under their education entry
+  DO NOT drop or ignore any sub-detail written under an education entry.
 CERTIFICATIONS: • Name | Issuing Body | MMM YYYY
 
 ATS FORMATTING:
@@ -3685,6 +3691,7 @@ RETURN ONLY THIS EXACT JSON STRUCTURE:
       "degree": "",
       "institution": "",
       "year": "",
+      "cgpa": "",
       "bullets": []
     }}
   ],
@@ -3708,7 +3715,9 @@ FIELD RULES:
 - "skills" = flat array of individual skill strings. Minimum 8. No duplicates.
 - "soft_skills" = professional competency phrases. Must NOT duplicate items in "skills".
 - "contact.*" = extract exactly as written. Use "" not null for missing fields.
-- "summary" = 2–4 sentences, 40–80 words, no pronouns. Must cover: seniority + domain + years of experience | top technical strengths | key accomplishment with metric | career value proposition. No filler phrases. ATS-safe plain text only.
+- "summary" = 3–4 sentences, max 100 words, no pronouns. NEVER truncate mid-sentence.
+- "education[].cgpa" = CGPA or GPA value as a string (e.g., "8.5/10", "3.8/4.0"). Use "" if not mentioned.
+- "education[].bullets" = ALL sub-details written under that education entry: coursework, honors, awards, thesis, clubs, achievements. Capture every line — do NOT leave this array empty if the candidate wrote anything under their education.
 - "experience[].description" = 1-sentence role scope, unique from bullets.
 - "experience[].bullets" = 3–5 bullets each. Strong verb + task + tech + impact.
 - "projects[].bullets" = must NOT restate experience bullets.
@@ -4569,10 +4578,16 @@ def generate_modern_docx(data: dict) -> BytesIO:
                 r_inst.font.color.rgb = RGBColor(74, 74, 74)
             p.paragraph_format.space_before = Pt(6)
             p.paragraph_format.space_after = Pt(0)
-            if edu.get("year") and edu["year"] not in ("", "[Not Provided]"):
+            # ── Year + optional CGPA on same line ──────────────────────────
+            _yr_str = edu.get("year", "") if edu.get("year", "") not in ("", "[Not Provided]") else ""
+            _cgpa_str = edu.get("cgpa", "") if edu.get("cgpa", "") not in ("", "[Not Provided]") else ""
+            if _yr_str or _cgpa_str:
                 p_yr = doc.add_paragraph()
                 p_yr.clear()
-                r_yr = p_yr.add_run(edu["year"])
+                yr_line = _yr_str
+                if _cgpa_str:
+                    yr_line = f"{_yr_str}  |  CGPA: {_cgpa_str}" if _yr_str else f"CGPA: {_cgpa_str}"
+                r_yr = p_yr.add_run(yr_line)
                 r_yr.italic = True
                 r_yr.font.size = Pt(BODY - 1)
                 r_yr.font.name = FONT
@@ -4859,10 +4874,16 @@ def generate_minimal_docx(data: dict) -> BytesIO:
                 r_inst.font.color.rgb = RGBColor(*DARK_GRAY)
             p.paragraph_format.space_before = Pt(6)
             p.paragraph_format.space_after = Pt(0)
-            if edu.get("year") and edu["year"] not in ("", "[Not Provided]"):
+            # ── Year + optional CGPA on same line ──────────────────────────
+            _yr_str = edu.get("year", "") if edu.get("year", "") not in ("", "[Not Provided]") else ""
+            _cgpa_str = edu.get("cgpa", "") if edu.get("cgpa", "") not in ("", "[Not Provided]") else ""
+            if _yr_str or _cgpa_str:
                 p_yr = doc.add_paragraph()
                 p_yr.clear()
-                r_yr = p_yr.add_run(edu["year"])
+                yr_line = _yr_str
+                if _cgpa_str:
+                    yr_line = f"{_yr_str}  |  CGPA: {_cgpa_str}" if _yr_str else f"CGPA: {_cgpa_str}"
+                r_yr = p_yr.add_run(yr_line)
                 r_yr.italic = True
                 r_yr.font.size = Pt(BODY - 1)
                 r_yr.font.name = FONT
@@ -5161,10 +5182,16 @@ def generate_creative_docx(data: dict) -> BytesIO:
                 r2.font.color.rgb = RGBColor(*TEAL)
             p.paragraph_format.space_before = Pt(6)
             p.paragraph_format.space_after = Pt(0)
-            if edu.get("year") and edu["year"] not in ("", "[Not Provided]"):
+            # ── Year + optional CGPA on same line ──────────────────────────
+            _yr_str = edu.get("year", "") if edu.get("year", "") not in ("", "[Not Provided]") else ""
+            _cgpa_str = edu.get("cgpa", "") if edu.get("cgpa", "") not in ("", "[Not Provided]") else ""
+            if _yr_str or _cgpa_str:
                 p_yr = doc.add_paragraph()
                 p_yr.clear()
-                r3 = p_yr.add_run(edu["year"])
+                yr_line = _yr_str
+                if _cgpa_str:
+                    yr_line = f"{_yr_str}  |  CGPA: {_cgpa_str}" if _yr_str else f"CGPA: {_cgpa_str}"
+                r3 = p_yr.add_run(yr_line)
                 r3.italic = True
                 r3.font.size = Pt(BODY - 1)
                 r3.font.name = FONT_BODY

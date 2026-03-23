@@ -90,6 +90,7 @@ from user_login import (
     domain_has_mx_record,
     create_login_token,
     verify_login_token,
+    poll_login_confirmed,
     send_login_confirmation_email,
     get_email_by_username,
 )
@@ -1880,6 +1881,18 @@ if not st.session_state.get("authenticated", False):
                         _parts = _raw_email.split("@")
                         _masked_email = _parts[0][:2] + "***@" + _parts[1]
 
+                    # ── Poll DB to detect confirmation from any other device ──
+                    _confirmed, _groq_key = poll_login_confirmed(_pending)
+                    if _confirmed:
+                        st.session_state.authenticated = True
+                        st.session_state.user_groq_key = _groq_key or ""
+                        st.session_state.login_stage = "credentials"
+                        st.session_state.pending_login_username = None
+                        log_user_action(_pending, "login")
+                        notify("login", "success", "✅ Login confirmed! Welcome back.")
+                        time.sleep(1.0)
+                        st.rerun()
+
                     st.markdown(f"""
                     <div style="
                         text-align:center;
@@ -1894,7 +1907,10 @@ if not st.session_state.get("authenticated", False):
                             We sent a confirmation link to<br>
                             <strong style="color:#c9d1d9;">{_masked_email}</strong><br><br>
                             Click <em>"Yes, it's me"</em> in the email to complete your sign-in.<br>
-                            The link expires in <strong style="color:#fbbf24;">10 minutes</strong>.
+                            The link expires in <strong style="color:#fbbf24;">10 minutes</strong>.<br><br>
+                            <span style="color:#64748b; font-size:0.78rem;">
+                                This page checks automatically every few seconds.
+                            </span>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
@@ -1920,6 +1936,10 @@ if not st.session_state.get("authenticated", False):
                             st.session_state.pending_login_username = None
                             st.session_state.authenticated = False
                             st.rerun()
+
+                    # Auto-rerun every 3 seconds to poll for confirmation
+                    time.sleep(3)
+                    st.rerun()
 
             # ============================================================
             # FORGOT PASSWORD FLOW - Stage 1: Request Email

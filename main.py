@@ -92,7 +92,6 @@ from user_login import (
     verify_login_token,
     send_login_confirmation_email,
     get_email_by_username,
-    poll_login_confirmed,
 )
 
 # ============================================================
@@ -1881,15 +1880,6 @@ if not st.session_state.get("authenticated", False):
                         _parts = _raw_email.split("@")
                         _masked_email = _parts[0][:2] + "***@" + _parts[1]
 
-                    # ── Auto-poll: check if the token was consumed on another device ──
-                    if _pending != "you" and poll_login_confirmed(_pending):
-                        st.session_state.authenticated = True
-                        st.session_state.username = _pending
-                        st.session_state.login_stage = "credentials"
-                        st.session_state.pending_login_username = None
-                        log_user_action(_pending, "login")
-                        st.rerun()
-
                     st.markdown(f"""
                     <div style="
                         text-align:center;
@@ -1905,9 +1895,6 @@ if not st.session_state.get("authenticated", False):
                             <strong style="color:#c9d1d9;">{_masked_email}</strong><br><br>
                             Click <em>"Yes, it's me"</em> in the email to complete your sign-in.<br>
                             The link expires in <strong style="color:#fbbf24;">10 minutes</strong>.
-                        </div>
-                        <div style="font-size:0.75rem; color:#6b7280; margin-top:14px;">
-                            This page checks automatically every few seconds — no need to refresh.
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
@@ -1933,10 +1920,6 @@ if not st.session_state.get("authenticated", False):
                             st.session_state.pending_login_username = None
                             st.session_state.authenticated = False
                             st.rerun()
-
-                    # ── Poll loop: sleep 3 s then rerun to re-check the DB ──
-                    time.sleep(3)
-                    st.rerun()
 
             # ============================================================
             # FORGOT PASSWORD FLOW - Stage 1: Request Email

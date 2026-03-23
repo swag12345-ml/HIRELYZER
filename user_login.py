@@ -236,6 +236,26 @@ def verify_login_token(token: str):
     return row["username"], row["groq_api_key"]
 
 
+def poll_login_confirmed(username: str) -> bool:
+    """
+    Lightweight poll: returns True if the most recent login token for
+    `username` has been consumed (used = TRUE).  Called every few seconds
+    by the 'awaiting_email' screen so the laptop session auto-detects when
+    the user clicked the confirmation link on another device.
+    """
+    row = _execute(
+        """
+        SELECT used FROM login_tokens
+        WHERE username = %s
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (username,),
+        fetch="one",
+    )
+    return bool(row and row["used"])
+
+
 def send_login_confirmation_email(to_email: str, username: str, token: str) -> bool:
     """
     Send a 'Yes, it's me' confirmation link to the user's registered email.

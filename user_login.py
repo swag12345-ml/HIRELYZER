@@ -236,41 +236,6 @@ def verify_login_token(token: str):
     return row["username"], row["groq_api_key"]
 
 
-def poll_login_confirmed(username: str):
-    """
-    Called by the waiting screen to check if the confirmation link has been
-    clicked (from any device/browser). Returns (True, groq_api_key) if the
-    most recent token for this user has been marked used, else (False, None).
-
-    This is intentionally lightweight — one indexed lookup per poll tick.
-    """
-    row = _execute(
-        """
-        SELECT lt.used, lt.created_at, u.groq_api_key
-        FROM login_tokens lt
-        JOIN users u ON u.username = lt.username
-        WHERE lt.username = %s
-        ORDER BY lt.id DESC
-        LIMIT 1
-        """,
-        (username,),
-        fetch="one",
-    )
-    if not row:
-        return False, None
-    if not row["used"]:
-        return False, None
-    # Also verify the token hasn't expired (edge case: someone confirms a very
-    # old token that was already used — we only want a fresh confirmation)
-    ist = pytz.timezone("Asia/Kolkata")
-    created_at = datetime.strptime(row["created_at"], "%Y-%m-%d %H:%M:%S")
-    created_at = ist.localize(created_at)
-    elapsed = (get_ist_time() - created_at).total_seconds()
-    if elapsed > 600:
-        return False, None
-    return True, row["groq_api_key"]
-
-
 def send_login_confirmation_email(to_email: str, username: str, token: str) -> bool:
     """
     Send a 'Yes, it's me' confirmation link to the user's registered email.

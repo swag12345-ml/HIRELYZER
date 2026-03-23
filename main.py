@@ -16796,6 +16796,216 @@ JSON:
 
 
 # ======================================================
+# ⚡ MERGED STARTUP FUNCTION — 3 calls → 1
+# ======================================================
+def analyze_resume_and_generate_questions(
+    resume_text: str,
+    role: str,
+    domain: str,
+    difficulty: str,
+    interview_type: str,
+    num_resume_qs: int = 2,
+    num_generic_qs: int = 4,
+    weakness_bias: str = "balanced",
+) -> dict:
+    """
+    Single LLM call that replaces THREE separate startup calls:
+      1. analyze_resume_with_llm()           — resume context extraction
+      2. generate_resume_based_questions_domain_aware() — resume-based questions
+      3. generate_domain_questions_with_llm()           — generic domain questions
+
+    Cost: 1 API call (vs 3 in tab4__2_).
+    Quality: Full difficulty contract + domain authority block injected (same depth as tab4__2_).
+      - Uses get_difficulty_instruction_block() with structural templates, forbidden patterns,
+        cognitive load rules, and scoring calibration.
+      - Uses build_domain_authority_block() for domain-specific keyword enforcement.
+
+    Returns dict with keys:
+      resume_context   : dict  (skills, projects, experience, technologies)
+      resume_questions : list  (num_resume_qs items)
+      generic_questions: list  (num_generic_qs items)
+    """
+    from llm_manager import call_llm
+    import json, re, random
+    import streamlit as st
+
+    # ── Full difficulty + domain blocks (same as tab4__2_ separate calls) ──────
+    diff_block   = get_difficulty_instruction_block(difficulty)
+    domain_block = build_domain_authority_block(domain, role)
+
+    # ── Filter resume context for domain relevance (mirrors tab4__2_) ──────────
+    filtered_context = filter_resume_for_domain({
+        "skills": [],
+        "projects": [],
+        "experience": [],
+        "technologies": [],
+    }, domain)  # placeholder — real context parsed after Task 1; used for resume_qs below
+
+    interview_type_block = (
+        "⚙️ This is a TECHNICAL interview. Focus on technical depth, implementation details, tradeoffs, and reasoning."
+        if interview_type.lower() == "technical"
+        else "💬 This is a BEHAVIORAL interview. Focus on past experiences, teamwork, challenges, leadership, decision-making, and communication."
+        if interview_type.lower() == "behavioral"
+        else "🔀 This is a MIXED interview. Blend technical depth with behavioral judgment."
+    )
+
+    bias_map = {
+        "technical depth":     "Prioritize questions that expose gaps in technical depth — ask about internals, edge cases, and implementation specifics.",
+        "explanation clarity": "Prioritize questions that require the candidate to explain complex concepts step-by-step.",
+        "answer precision":    "Prioritize questions that require very specific, targeted answers directly tied to their resume.",
+        "balanced":            "",
+    }
+    bias_note = bias_map.get(weakness_bias, "")
+
+    variation_hint = random.choice([
+        "For generic questions, include one scenario referencing real-world constraints.",
+        "For generic questions, add one question about debugging or diagnosing a failure.",
+        "For generic questions, include one question about a specific tradeoff in this domain.",
+        "For generic questions, add one question about collaboration or technical decision-making.",
+        "For generic questions, add one reflective question about learning or adapting to new technologies.",
+    ])
+
+    prompt = f"""You are a senior technical interviewer. Complete THREE tasks and return ONLY the JSON shown below.
+
+{interview_type_block}
+
+{domain_block}
+
+{diff_block}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 1 — RESUME ANALYSIS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Analyze the resume for INTERVIEW-RELEVANT information only.
+Extract: core technical skills (4-6), notable projects (2-4), experience entries (2-4), primary technologies (4-6).
+Ignore generic soft skills. Prefer hard technical evidence.
+
+RESUME TEXT (first 3000 chars):
+{resume_text[:3000]}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 2 — {num_resume_qs} RESUME-BASED QUESTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Generate EXACTLY {num_resume_qs} interview questions grounded in the resume above.
+Target role: {role} | Domain: {domain} | Difficulty: {difficulty}
+
+RULES:
+- Every question MUST reference a skill, project, or technology from the resume
+- Every question MUST be about {domain} — not the candidate's previous domain if it differs
+- Match the DIFFICULTY CONTRACT and structural templates above exactly
+- Reflect the interview type above — technical questions probe implementation/tradeoffs; behavioral questions probe experience/judgment
+{f"- {bias_note}" if bias_note else ""}
+- Each question: 1-2 sentences, self-contained
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK 3 — {num_generic_qs} GENERIC DOMAIN QUESTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Generate EXACTLY {num_generic_qs} domain-general interview questions.
+Domain: {domain} | Role: {role} | Difficulty: {difficulty}
+
+RULES:
+- Every question MUST be about {domain} — no exceptions
+- Match the DIFFICULTY CONTRACT and structural templates above exactly
+- Reflect the interview type above
+- No overlap with resume questions; no numbering or prefixes
+- Each question: 1-2 sentences
+- {variation_hint}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OUTPUT FORMAT — return ONLY this JSON, no markdown, no extra text:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{{
+  "resume_context": {{
+    "skills": ["skill1", "skill2"],
+    "projects": ["project1 – tech used – key challenge"],
+    "experience": ["Role at Company – main responsibility"],
+    "technologies": ["tech1", "tech2"]
+  }},
+  "resume_questions": [
+    "Question referencing resume content 1",
+    "Question referencing resume content 2"
+  ],
+  "generic_questions": [
+    "Domain question 1",
+    "Domain question 2",
+    "Domain question 3",
+    "Domain question 4"
+  ]
+}}
+"""
+
+    # ── Fallback data ──────────────────────────────────────────────────────────
+    fallback_context = {
+        "skills": ["Technical Skills"],
+        "projects": ["Personal Technical Project"],
+        "experience": ["General Technical Experience"],
+        "technologies": ["General Tech Stack"],
+    }
+    fallback_resume_qs = [
+        f"Walk me through your most technically challenging project and the decisions you made.",
+        f"How does your experience prepare you for the {role} role?",
+    ][:num_resume_qs]
+    fallback_generic_qs = [
+        f"Explain a core {domain} concept and give a real-world example.",
+        f"Describe a specific implementation decision in {domain} and your reasoning.",
+        f"What is the most important tradeoff to understand in {domain}?",
+        f"How would you debug an unexpected failure in a {domain} system?",
+    ][:num_generic_qs]
+
+    try:
+        raw = call_llm(prompt, session=st.session_state).strip()
+
+        # Strip markdown fences if present
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.lower().startswith("json"):
+                raw = raw[4:]
+            raw = raw.strip()
+
+        data = json.loads(raw)
+
+        # ── Parse resume context ───────────────────────────────────────────────
+        rc = data.get("resume_context", {})
+        resume_context = {
+            "skills":       rc.get("skills", fallback_context["skills"])[:6],
+            "projects":     rc.get("projects", fallback_context["projects"])[:4],
+            "experience":   rc.get("experience", fallback_context["experience"])[:4],
+            "technologies": rc.get("technologies", fallback_context["technologies"])[:6],
+        }
+
+        # ── Parse questions ────────────────────────────────────────────────────
+        def _clean_qs(qs, needed, fallback):
+            cleaned = []
+            for q in qs:
+                q = str(q).strip()
+                q = re.sub(r'^[\d\)\.\-•\*]+\s*', '', q).strip()
+                if len(q) > 15:
+                    cleaned.append(q)
+                if len(cleaned) >= needed:
+                    break
+            # Pad with fallbacks if LLM returned too few
+            while len(cleaned) < needed:
+                cleaned.append(fallback[len(cleaned) % len(fallback)])
+            return cleaned[:needed]
+
+        resume_questions  = _clean_qs(data.get("resume_questions", []),  num_resume_qs,  fallback_resume_qs)
+        generic_questions = _clean_qs(data.get("generic_questions", []), num_generic_qs, fallback_generic_qs)
+
+        return {
+            "resume_context":    resume_context,
+            "resume_questions":  resume_questions,
+            "generic_questions": generic_questions,
+        }
+
+    except Exception:
+        return {
+            "resume_context":    fallback_context,
+            "resume_questions":  fallback_resume_qs,
+            "generic_questions": fallback_generic_qs,
+        }
+
+
+# ======================================================
 # RESUME-BASED QUESTION GENERATION
 # ======================================================
 def generate_resume_based_questions(resume_context, role, domain, difficulty, num_questions=3):
@@ -18546,15 +18756,16 @@ Generate {num_questions} questions now:
                     resume_text = extract_resume_text_from_pdf(uploaded_resume)
 
                     if resume_text and len(resume_text.strip()) > 50:
-                        # Analyze resume
-                        with st.spinner("Analyzing your resume with AI..."):
-                            resume_context = analyze_resume_with_llm(resume_text)
-
-                        # Store in session
                         st.session_state.resume_file = uploaded_resume.name
-                        st.session_state.resume_context = resume_context
+                        st.session_state.resume_raw_text = resume_text
                         st.session_state.interview_phase = "resume"
                         st.session_state.resume_questions_answered = 0
+
+                        # Analyze resume immediately so "Key topics in scope" card
+                        # is visible during interview setup (before Start Interview).
+                        with st.spinner("Analyzing your resume with AI..."):
+                            resume_context = analyze_resume_with_llm(resume_text)
+                        st.session_state.resume_context = resume_context
 
                         st.success("✅ Resume uploaded and analyzed successfully!")
                         
@@ -18868,37 +19079,33 @@ Generate {num_questions} questions now:
                     )
 
                 if st.button("🚀 Start Mock Interview"):
-                    with st.spinner("Generating personalized questions using AI..."):
-                        # Generate resume-based questions
-                        resume_based_qs = []
-                        if st.session_state.resume_context:
-                            with st.spinner("Creating resume-based questions..."):
-                                # PART 5: Get user weakness for bias
-                                _username_for_bias = st.session_state.get("username", "Guest")
-                                _weakness_data = get_user_weakness_history(_username_for_bias)
-                                _bias = _weakness_data.get("bias", "balanced")
-                                resume_based_qs = generate_resume_based_questions_domain_aware(
-                                    st.session_state.resume_context,
-                                    selected_role,
-                                    selected_domain,
-                                    interview_difficulty,
-                                    num_questions=2,
-                                    weakness_bias=_bias,
-                                    interview_type=interview_type
-                                )
+                    with st.spinner("Generating personalised interview questions..."):
+                        _username_for_bias = st.session_state.get("username", "Guest")
+                        _weakness_data = get_user_weakness_history(_username_for_bias)
+                        _bias = _weakness_data.get("bias", "balanced")
 
-                        # Generate generic questions
-                        generic_qs = []
-                        remaining_questions = num_questions - len(resume_based_qs)
-                        if remaining_questions > 0:
-                            with st.spinner("Creating generic interview questions..."):
-                                generic_qs = generate_domain_questions_with_llm(
-                                    selected_domain,
-                                    selected_role,
-                                    interview_type,
-                                    remaining_questions,
-                                    interview_difficulty
-                                )
+                        _resume_raw = st.session_state.get("resume_raw_text", "")
+                        _num_resume_qs = 2 if _resume_raw else 0
+                        _num_generic_qs = num_questions - _num_resume_qs
+
+                        # resume_context already populated at upload time —
+                        # pass it directly; no re-analysis needed.
+                        merged = analyze_resume_and_generate_questions(
+                            resume_text=_resume_raw,
+                            role=selected_role,
+                            domain=selected_domain,
+                            difficulty=interview_difficulty,
+                            interview_type=interview_type,
+                            num_resume_qs=_num_resume_qs,
+                            num_generic_qs=_num_generic_qs,
+                            weakness_bias=_bias,
+                        )
+
+                        # Keep existing resume_context (set at upload); only update questions
+                        if not st.session_state.get("resume_context"):
+                            st.session_state.resume_context = merged["resume_context"]
+                        resume_based_qs = merged["resume_questions"] if _resume_raw else []
+                        generic_qs = merged["generic_questions"]
 
                         # Combine all questions: resume-based first, then generic
                         all_questions = resume_based_qs + generic_qs
@@ -19106,24 +19313,14 @@ Generate {num_questions} questions now:
                         can_add_followup = n_answered < st.session_state.original_num_questions - 1
 
                         if diff == "Hard" and can_add_followup:
-                            # ── Hard mode: reuse followup already in eval result ──
-                            # evaluate_interview_answer_for_scores already asks for a followup
-                            # in its JSON for Hard difficulty — no second LLM call needed.
-                            followup_q = (eval_res.get("followup") or "").strip()
-
-                            # Fallback: only call adaptive engine if eval didn't return one
-                            if not followup_q:
-                                weakness_data = analyze_answer_weaknesses(ans_text, eval_res)
-                                strategy = weakness_data["strategy"]
-                                layer = getattr(st.session_state, 'escalation_layer', 1)
-                                followup_q = generate_adaptive_followup(
-                                    q_text, ans_text, strategy, layer, selected_role, selected_domain
-                                )
-                                followup_q = followup_q.strip() if followup_q else ""
-                            else:
-                                strategy = "Depth Probe"
-                                layer = getattr(st.session_state, 'escalation_layer', 1)
-
+                            # ── Hard mode: use adaptive engine (single source of truth) ──
+                            weakness_data = analyze_answer_weaknesses(ans_text, eval_res)
+                            strategy = weakness_data["strategy"]
+                            layer = getattr(st.session_state, 'escalation_layer', 1)
+                            followup_q = generate_adaptive_followup(
+                                q_text, ans_text, strategy, layer, selected_role, selected_domain
+                            )
+                            followup_q = followup_q.strip() if followup_q else ""
                             if followup_q:
                                 st.session_state.dynamic_interview_questions.insert(
                                     q_idx + 1, followup_q

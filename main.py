@@ -19205,6 +19205,22 @@ Generate {num_questions} questions now:
                     _pct = f"{(_rem/_tot*100) if _tot else 0:.1f}"
                     _mm  = f"{_rem // 60:02d}"
                     _ss  = f"{_rem % 60:02d}"
+
+                    # Hidden button: JS clicks this when the countdown hits zero,
+                    # which triggers a Streamlit rerun so Python can auto-submit.
+                    timer_expired = st.button("__timer_expired__", key="timer_expired_trigger")
+                    st.markdown(
+                        "<style>button[kind='secondary']:has(p:contains('__timer_expired__')),"
+                        "div:has(> button p:contains('__timer_expired__')){display:none !important;}</style>",
+                        unsafe_allow_html=True,
+                    )
+                    if timer_expired and not st.session_state.dynamic_answer_submitted:
+                        # Force remaining_time to 0 on next rerun so auto-submit fires.
+                        st.session_state.question_timer_start = (
+                            time.time() - st.session_state.timer_seconds - 1
+                        )
+                        st.rerun()
+
                     components.html(
                         "<style>"
                         "#t4tw{background:linear-gradient(135deg,rgba(251,191,36,.08),rgba(251,191,36,.04));"
@@ -19222,7 +19238,15 @@ Generate {num_questions} questions now:
                         "var r=" + str(_rem) + ",tot=" + str(_tot) + ";"
                         "var el=document.getElementById('t4t'),pf=document.getElementById('t4pf'),tt=document.getElementById('t4tt');"
                         "var iv=setInterval(function(){"
-                        "r--;if(r<=0){r=0;clearInterval(iv);}"
+                        "r--;if(r<=0){"
+                        "r=0;clearInterval(iv);"
+                        "try{"
+                        "var btns=window.parent.document.querySelectorAll('button');"
+                        "for(var i=0;i<btns.length;i++){"
+                        "if(btns[i].innerText.trim()==='__timer_expired__'){btns[i].click();break;}"
+                        "}"
+                        "}catch(e){}"
+                        "}"
                         "var m=Math.floor(r/60),s=r%60;"
                         "el.textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;"
                         "pf.style.width=((r/tot)*100).toFixed(1)+'%';"

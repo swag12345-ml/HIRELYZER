@@ -19193,29 +19193,44 @@ Generate {num_questions} questions now:
                     if st.session_state.question_timer_start is None:
                         st.session_state.question_timer_start = time.time()
 
-                    # Calculate remaining time
+                    # Calculate remaining time (Python-side, used for auto-submit logic only)
                     elapsed_time = time.time() - st.session_state.question_timer_start
                     remaining_time = max(0, st.session_state.timer_seconds - elapsed_time)
 
-                    # Display timer — wrapped in a placeholder so only this element
-                    # is swapped on each autorefresh tick, not the whole page.
-                    timer_minutes = int(remaining_time // 60)
-                    timer_seconds_display = int(remaining_time % 60)
-                    timer_urgent_class = "timer-urgent" if remaining_time <= 30 else ""
-
-                    # Use a keyed empty() container: Streamlit swaps only this DOM node
-                    timer_slot = st.empty()
-                    timer_slot.markdown(f"""
-                    <div class="timer-container">
-                        <div class="timer-display {timer_urgent_class}">
-                            ⏰ Time Remaining: {timer_minutes:02d}:{timer_seconds_display:02d}
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                    # Timer progress bar — also in its own slot
-                    progress_value = (st.session_state.timer_seconds - remaining_time) / st.session_state.timer_seconds
-                    st.progress(progress_value)
+                    # Pure JS countdown — runs in the browser, zero Streamlit reruns per tick.
+                    # No blinking, no extra packages needed.
+                    import streamlit.components.v1 as components
+                    _tot = int(st.session_state.timer_seconds)
+                    _rem = int(remaining_time)
+                    _pct = f"{(_rem/_tot*100) if _tot else 0:.1f}"
+                    _mm  = f"{_rem // 60:02d}"
+                    _ss  = f"{_rem % 60:02d}"
+                    components.html(
+                        "<style>"
+                        "#t4tw{background:linear-gradient(135deg,rgba(251,191,36,.08),rgba(251,191,36,.04));"
+                        "border:1px solid rgba(251,191,36,.25);border-radius:12px;padding:14px;text-align:center;margin-bottom:4px;}"
+                        "#t4tt{font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:1.4rem;font-weight:700;color:#fbbf24;letter-spacing:-0.01em;}"
+                        "#t4tt.urgent{color:#f43f5e;font-weight:800;}"
+                        "#t4pb{height:6px;border-radius:3px;background:rgba(255,255,255,.1);margin-top:10px;overflow:hidden;}"
+                        "#t4pf{height:100%;border-radius:3px;background:linear-gradient(90deg,#38bdf8,#fbbf24);transition:width 1s linear;}"
+                        "</style>"
+                        "<div id='t4tw'>"
+                        "<div id='t4tt'>&#9200; Time Remaining: <span id='t4t'>" + _mm + ":" + _ss + "</span></div>"
+                        "<div id='t4pb'><div id='t4pf' style='width:" + _pct + "%'></div></div>"
+                        "</div>"
+                        "<script>"
+                        "var r=" + str(_rem) + ",tot=" + str(_tot) + ";"
+                        "var el=document.getElementById('t4t'),pf=document.getElementById('t4pf'),tt=document.getElementById('t4tt');"
+                        "var iv=setInterval(function(){"
+                        "r--;if(r<=0){r=0;clearInterval(iv);}"
+                        "var m=Math.floor(r/60),s=r%60;"
+                        "el.textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;"
+                        "pf.style.width=((r/tot)*100).toFixed(1)+'%';"
+                        "if(r<=30){tt.classList.add('urgent');pf.style.background='linear-gradient(90deg,#f43f5e,#fbbf24)';}"
+                        "},1000);"
+                        "</script>",
+                        height=90,
+                    )
 
                     # Question display with phase indicator
                     phase_badge = "📄 Resume-Based Question" if current_index <= num_resume_qs else "💼 Generic Interview Question"
@@ -19494,16 +19509,11 @@ Generate {num_questions} questions now:
                                     if i < num_to_show - 1:  # Don't add separator after last item
                                         st.markdown("---")
 
-                    # Auto-refresh for timer — uses JS-based refresh so only the
-                    # timer widget updates, not the entire page (eliminates blinking).
-                    if remaining_time > 0 and not st.session_state.dynamic_answer_submitted:
-                        try:
-                            from streamlit_autorefresh import st_autorefresh
-                            st_autorefresh(interval=1000, limit=None, key="timer_autorefresh")
-                        except ImportError:
-                            # Fallback: fragment-style rerun avoids full page flash
-                            time.sleep(1)
-                            st.rerun()
+                    # Timer now runs in-browser via JS (components.html above).
+                    # NO rerun needed for countdown — zero blinking.
+                    # Only trigger a rerun when time genuinely expires (auto-submit).
+                    if remaining_time <= 0 and not st.session_state.dynamic_answer_submitted:
+                        st.rerun()
                 else:
                     # CRITICAL FIX: All questions answered, move to completion automatically
                     # Capture exact duration at auto-completion moment

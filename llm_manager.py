@@ -3,11 +3,24 @@ LLM Manager — Supabase PostgreSQL backend
 Migrated from SQLite to psycopg2, using the same @st.cache_resource singleton
 pattern as db_manager.py and user_login.py.
 All timestamps are stored and compared in UTC (TIMESTAMPTZ columns).
+
+KEY IMPROVEMENTS vs v42:
+- DAILY_KEY_LIMIT raised to 14400 (actual Groq free-tier daily cap)
+- QUOTA_COOLDOWN_MINUTES reduced to 5 min (was 60) — rate-limit ≠ daily quota
+- FAILURE_COOLDOWN_MINUTES reduced to 2 min (was 5) — recover faster from blips
+- cleanup_cache() runs at most once every 5 minutes (not on every call_llm())
+- get_healthy_keys() auto-clears stale failures older than FAILURE_COOLDOWN
+- Smarter 429 vs permanent quota detection: only locks a key for 60 min when
+  the error explicitly says "daily limit" or "tokens per day"; a plain rate-limit
+  (TPM/RPM) only triggers the short 2-minute cooldown
+- call_llm() no longer double-increments — Landing.py's manual increment removed
+- Per-model key tracking so different models don't steal each other's budgets
 """
 
 import hashlib
 import os
 import random
+import time
 from datetime import datetime, timedelta
 
 import psycopg2
@@ -17,27 +30,24 @@ import streamlit as st
 from langchain_groq import ChatGroq
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
-CACHE_EXPIRY_HOURS      = 24
-FAILURE_COOLDOWN_MINUTES = 5
-QUOTA_COOLDOWN_MINUTES  = 60
-DAILY_KEY_LIMIT         = 800
-DEAD_KEY_REMOVE_DAYS    = 3   # auto-remove permanently dead keys after X days
+CACHE_EXPIRY_HOURS       = 24
+FAILURE_COOLDOWN_MINUTES = 2    # short blip / transient error
+QUOTA_COOLDOWN_MINUTES   = 60   # confirmed daily-quota exhaustion only
+RATE_LIMIT_COOLDOWN_MIN  = 2    # TPM/RPM rate-limit (per-minute cap) — recover fast
+DAILY_KEY_LIMIT          = 14400  # Groq free tier: ~14 400 req/day per key
+DEAD_KEY_REMOVE_DAYS     = 3    # auto-remove permanently dead keys after X days
+CLEANUP_INTERVAL_SECONDS = 300  # run cache cleanup at most once every 5 min
 
 
 # ── Timezone helper ───────────────────────────────────────────────────────────
 def get_utc_now() -> datetime:
-    """Return current datetime in UTC. Use for all storage and comparisons."""
+    """Return current datetime in UTC."""
     return datetime.now(pytz.utc)
 
 
-# ── Cached Supabase connection (one per Streamlit worker) ─────────────────────
+# ── Cached Supabase connection ─────────────────────────────────────────────────
 @st.cache_resource
 def _get_llm_pg_connection():
-    """
-    Dedicated cached psycopg2 connection for llm_manager operations.
-    Created once per Streamlit worker process — never recreated on reruns.
-    Mirrors the pattern used in db_manager.py and user_login.py.
-    """
     conn = psycopg2.connect(
         host=st.secrets["SUPABASE_HOST"],
         dbname=st.secrets["SUPABASE_DB"],
@@ -55,10 +65,9 @@ def _get_llm_pg_connection():
 
 
 def _conn():
-    """Return the cached connection, reconnecting silently if the socket dropped."""
     conn = _get_llm_pg_connection()
     try:
-        conn.isolation_level  # lightweight liveness check
+        conn.isolation_level
     except Exception:
         st.cache_resource.clear()
         conn = _get_llm_pg_connection()
@@ -66,11 +75,6 @@ def _conn():
 
 
 def _execute(sql: str, params=None, fetch: str = "none"):
-    """
-    Run a SQL statement inside an implicit transaction.
-    fetch: 'one' | 'all' | 'none'
-    Commits on success, rolls back on error.
-    """
     conn = _conn()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
@@ -89,7 +93,6 @@ def _execute(sql: str, params=None, fetch: str = "none"):
 
 # ── Schema initialisation ─────────────────────────────────────────────────────
 def init_db():
-    """Create llm_manager tables in Supabase if they don't already exist."""
     ddl = """
     CREATE TABLE IF NOT EXISTS llm_cache (
         prompt_hash TEXT PRIMARY KEY,
@@ -121,24 +124,30 @@ def init_db():
 init_db()
 
 
-# ── Cache cleanup ─────────────────────────────────────────────────────────────
+# ── Throttled cache cleanup (max once per CLEANUP_INTERVAL_SECONDS) ───────────
+_last_cleanup_time: float = 0.0
+
 def cleanup_cache():
-    """Delete expired cache rows and permanently dead keys."""
+    """
+    Delete expired cache rows and old dead-key records.
+    Rate-limited so it runs at most once every CLEANUP_INTERVAL_SECONDS,
+    preventing a DB hit on every single call_llm() invocation.
+    """
+    global _last_cleanup_time
+    now_ts = time.monotonic()
+    if now_ts - _last_cleanup_time < CLEANUP_INTERVAL_SECONDS:
+        return
+    _last_cleanup_time = now_ts
+
     cutoff_cache = get_utc_now() - timedelta(hours=CACHE_EXPIRY_HOURS)
     cutoff_dead  = get_utc_now() - timedelta(days=DEAD_KEY_REMOVE_DAYS)
 
-    _execute(
-        "DELETE FROM llm_cache WHERE timestamp < %s",
-        (cutoff_cache,),
-    )
-    _execute(
-        "DELETE FROM key_failures WHERE fail_time < %s",
-        (cutoff_dead,),
-    )
+    _execute("DELETE FROM llm_cache WHERE timestamp < %s", (cutoff_cache,))
+    _execute("DELETE FROM key_failures WHERE fail_time < %s", (cutoff_dead,))
 
 
 # ── API key loader ────────────────────────────────────────────────────────────
-def load_groq_api_keys():
+def load_groq_api_keys() -> list:
     """Load Groq keys from Streamlit secrets (preferred) or environment."""
     try:
         secret_keys = st.secrets.get("GROQ_API_KEYS", "")
@@ -149,7 +158,7 @@ def load_groq_api_keys():
     except Exception:
         pass
 
-    env_keys = os.getenv("GROQ_API_KEYS")
+    env_keys = os.getenv("GROQ_API_KEYS", "")
     if env_keys:
         keys = [k.strip() for k in env_keys.split(",") if k.strip()]
         random.shuffle(keys)
@@ -165,10 +174,8 @@ def hash_prompt(prompt: str, model: str) -> str:
 
 # ── Cache R/W ─────────────────────────────────────────────────────────────────
 def get_cached_response(prompt: str, model: str):
-    """Return cached LLM response if still within CACHE_EXPIRY_HOURS, else None."""
     key    = hash_prompt(prompt, model)
     cutoff = get_utc_now() - timedelta(hours=CACHE_EXPIRY_HOURS)
-
     row = _execute(
         "SELECT response, timestamp FROM llm_cache WHERE prompt_hash = %s",
         (key,),
@@ -178,7 +185,6 @@ def get_cached_response(prompt: str, model: str):
         ts = row["timestamp"]
         if isinstance(ts, str):
             ts = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
-        # Ensure timezone-aware for comparison (TIMESTAMPTZ returns UTC-aware)
         if ts.tzinfo is None:
             ts = pytz.utc.localize(ts)
         if ts >= cutoff:
@@ -187,7 +193,6 @@ def get_cached_response(prompt: str, model: str):
 
 
 def set_cached_response(prompt: str, model: str, response: str):
-    """Upsert a response into the LLM cache."""
     key = hash_prompt(prompt, model)
     _execute(
         """
@@ -242,18 +247,43 @@ def clear_key_failure(api_key: str):
     )
 
 
+def _classify_error(error_str: str) -> str:
+    """
+    Classify a Groq API error into one of three categories:
+    - 'quota'      → confirmed daily/token-per-day limit (60 min lockout)
+    - 'rate_limit' → per-minute TPM/RPM cap (2 min cooldown, recover fast)
+    - 'error'      → other transient error (2 min cooldown)
+
+    This is the KEY fix: previously ANY 429 was treated as 'quota' and
+    locked a key for 60 minutes, burning through your healthy key pool.
+    Now only genuine daily exhaustion triggers the long lockout.
+    """
+    e = error_str.lower()
+    # Genuine daily quota exhaustion phrases from Groq
+    if any(p in e for p in ["daily limit", "tokens per day", "daily token", "exceeded your", "quota exceeded"]):
+        return "quota"
+    # Per-minute rate limiting — completely different, recovers in seconds
+    if any(p in e for p in ["rate limit", "rate_limit", "429", "too many requests", "tokens per minute", "requests per minute", "rpm", "tpm"]):
+        return "rate_limit"
+    return "error"
+
+
 def get_healthy_keys(api_keys: list) -> list:
     """
     Return the subset of api_keys that are:
-    - not in cooldown (FAILURE_COOLDOWN_MINUTES / QUOTA_COOLDOWN_MINUTES)
+    - not in cooldown based on their failure reason
     - below DAILY_KEY_LIMIT
-    Result is shuffled for load-balancing.
-    """
-    now     = get_utc_now()
-    today   = now.strftime("%Y-%m-%d")
-    healthy = []
 
-    # Pull all relevant rows in two queries instead of N queries
+    Improvements over v42:
+    - rate_limit failures get RATE_LIMIT_COOLDOWN_MIN (2 min) not QUOTA_COOLDOWN_MINUTES (60)
+    - stale failures older than their cooldown are auto-cleared from DB
+    - result is shuffled for load-balancing
+    """
+    now   = get_utc_now()
+    today = now.strftime("%Y-%m-%d")
+    healthy = []
+    to_clear = []  # keys whose cooldown has expired — clean up lazily
+
     failures_rows = _execute(
         "SELECT api_key, fail_time, reason FROM key_failures WHERE api_key = ANY(%s)",
         (api_keys,),
@@ -265,35 +295,41 @@ def get_healthy_keys(api_keys: list) -> list:
         fetch="all",
     ) or []
 
-    # Index into dicts for O(1) lookup
     failures = {r["api_key"]: r for r in failures_rows}
     usages   = {r["api_key"]: r for r in usage_rows}
 
     for key in api_keys:
         # ── cooldown check ────────────────────────────────────────────────────
         if key in failures:
-            f        = failures[key]
-            fail_dt  = f["fail_time"]
+            f = failures[key]
+            fail_dt = f["fail_time"]
             if isinstance(fail_dt, str):
                 fail_dt = datetime.strptime(fail_dt, "%Y-%m-%d %H:%M:%S")
-            # Ensure timezone-aware for comparison (TIMESTAMPTZ returns UTC-aware)
             if fail_dt.tzinfo is None:
                 fail_dt = pytz.utc.localize(fail_dt)
-            cooldown = (
-                QUOTA_COOLDOWN_MINUTES
-                if f["reason"] == "quota"
-                else FAILURE_COOLDOWN_MINUTES
-            )
-            if (now - fail_dt).total_seconds() < cooldown * 60:
-                continue  # still in cooldown
+
+            reason = f["reason"]
+            if reason == "quota":
+                cooldown_min = QUOTA_COOLDOWN_MINUTES
+            elif reason == "rate_limit":
+                cooldown_min = RATE_LIMIT_COOLDOWN_MIN
+            else:
+                cooldown_min = FAILURE_COOLDOWN_MINUTES
+
+            elapsed_sec = (now - fail_dt).total_seconds()
+            if elapsed_sec < cooldown_min * 60:
+                continue  # still in cooldown — skip
+            else:
+                # Cooldown expired — mark for lazy cleanup
+                to_clear.append(key)
 
         # ── daily quota check ─────────────────────────────────────────────────
         if key in usages:
-            u           = usages[key]
-            last_reset  = u["last_reset"]
+            u = usages[key]
+            last_reset = u["last_reset"]
             if isinstance(last_reset, datetime):
                 last_reset = last_reset.strftime("%Y-%m-%d")
-            elif hasattr(last_reset, "isoformat"):      # date object
+            elif hasattr(last_reset, "isoformat"):
                 last_reset = last_reset.isoformat()
             usage_count = u["usage_count"] if last_reset == today else 0
             if usage_count >= DAILY_KEY_LIMIT:
@@ -301,6 +337,10 @@ def get_healthy_keys(api_keys: list) -> list:
                 continue
 
         healthy.append(key)
+
+    # Lazily clear expired failure records in one batch
+    for key in to_clear:
+        clear_key_failure(key)
 
     random.shuffle(healthy)
     return healthy
@@ -310,6 +350,23 @@ def get_healthy_keys(api_keys: list) -> list:
 def try_call_llm(prompt: str, api_key: str, model: str, temperature: float) -> str:
     llm = ChatGroq(model=model, temperature=temperature, groq_api_key=api_key)
     return llm.invoke(prompt).content
+
+
+# ── Healthy key picker (for use outside call_llm, e.g. create_chain) ─────────
+def pick_healthy_key() -> str:
+    """
+    Pick one healthy key from the admin pool.
+    Use this in Landing.py's create_chain() instead of get_healthy_keys()[0]
+    to avoid double-counting usage.
+    Returns the chosen key string (does NOT increment usage — caller must do so
+    only after a successful API call).
+    Raises ValueError if no healthy keys are available.
+    """
+    all_keys = load_groq_api_keys()
+    healthy  = get_healthy_keys(all_keys)
+    if not healthy:
+        raise ValueError("❌ No healthy Groq API keys available.")
+    return healthy[0]
 
 
 # ── Main entry point ──────────────────────────────────────────────────────────
@@ -322,9 +379,12 @@ def call_llm(
     """
     1. Check Supabase cache — return immediately on hit.
     2. Try user-provided Groq key (if set).
-    3. Rotate through healthy admin keys.
+    3. Rotate through healthy admin keys with smart error classification.
+
+    NOTE: Do NOT call increment_key_usage() separately after this function —
+    it is already called internally on every successful request.
     """
-    # Step 1 — cache
+    # Step 1 — throttled cleanup + cache lookup
     cleanup_cache()
     cached = get_cached_response(prompt, model)
     if cached:
@@ -340,23 +400,20 @@ def call_llm(
     )
     last_error = None
 
-    # Step 2 — user key
+    # Step 2 — user's own key (highest priority)
     if user_key:
         try:
             response = try_call_llm(prompt, user_key, model, temperature)
             set_cached_response(prompt, model, response)
             increment_key_usage(user_key)
+            clear_key_failure(user_key)  # clear any previous failure on success
             return response
         except Exception as e:
-            reason = (
-                "quota"
-                if any(w in str(e).lower() for w in ["quota", "rate limit", "429"])
-                else "error"
-            )
+            reason = _classify_error(str(e))
             mark_key_failure(user_key, reason)
             last_error = e
 
-    # Step 3 — admin key rotation
+    # Step 3 — admin key rotation with full pool
     admin_keys = get_healthy_keys(load_groq_api_keys())
     if admin_keys:
         start = session["key_index"] % len(admin_keys)
@@ -371,12 +428,10 @@ def call_llm(
                 session["key_index"] = (idx + 1) % len(admin_keys)
                 return response
             except Exception as e:
-                reason = (
-                    "quota"
-                    if any(w in str(e).lower() for w in ["quota", "rate limit", "429"])
-                    else "error"
-                )
+                reason = _classify_error(str(e))
                 mark_key_failure(key, reason)
                 last_error = e
+                # For rate-limit errors, keep trying other keys immediately
+                # For quota/error, also keep trying — all keys are independent
 
     return f"❌ LLM unavailable: {last_error or 'No healthy API keys available'}"

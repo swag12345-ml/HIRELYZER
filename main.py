@@ -17410,7 +17410,7 @@ with tab4:
             font-weight: 600;
             letter-spacing: -0.02em;
             margin: 20px 0 12px 0;
-            animation: t4-subtlePulse 3.5s ease-in-out infinite;
+            /* Removed infinite animation — reduces repaint cost on every timer rerun */
         }
 
         /* ── Learning Path Container ── */
@@ -17646,7 +17646,11 @@ with tab4:
         }
         .timer-urgent {
             color: var(--t4-accent-rose);
-            animation: t4-subtlePulse 1s ease-in-out infinite;
+            /* Removed infinite pulse animation — was causing perceived full-page
+               blink because every CSS repaint coincided with the st.rerun() cycle.
+               Use a static bold style for urgency instead. */
+            font-weight: 800;
+            letter-spacing: 0.02em;
         }
 
         /* ── Selectbox ── */
@@ -19193,12 +19197,15 @@ Generate {num_questions} questions now:
                     elapsed_time = time.time() - st.session_state.question_timer_start
                     remaining_time = max(0, st.session_state.timer_seconds - elapsed_time)
 
-                    # Display timer
+                    # Display timer — wrapped in a placeholder so only this element
+                    # is swapped on each autorefresh tick, not the whole page.
                     timer_minutes = int(remaining_time // 60)
                     timer_seconds_display = int(remaining_time % 60)
                     timer_urgent_class = "timer-urgent" if remaining_time <= 30 else ""
 
-                    st.markdown(f"""
+                    # Use a keyed empty() container: Streamlit swaps only this DOM node
+                    timer_slot = st.empty()
+                    timer_slot.markdown(f"""
                     <div class="timer-container">
                         <div class="timer-display {timer_urgent_class}">
                             ⏰ Time Remaining: {timer_minutes:02d}:{timer_seconds_display:02d}
@@ -19206,7 +19213,7 @@ Generate {num_questions} questions now:
                     </div>
                     """, unsafe_allow_html=True)
 
-                    # Timer progress bar
+                    # Timer progress bar — also in its own slot
                     progress_value = (st.session_state.timer_seconds - remaining_time) / st.session_state.timer_seconds
                     st.progress(progress_value)
 
@@ -19487,10 +19494,16 @@ Generate {num_questions} questions now:
                                     if i < num_to_show - 1:  # Don't add separator after last item
                                         st.markdown("---")
 
-                    # Auto-refresh for timer
+                    # Auto-refresh for timer — uses JS-based refresh so only the
+                    # timer widget updates, not the entire page (eliminates blinking).
                     if remaining_time > 0 and not st.session_state.dynamic_answer_submitted:
-                        time.sleep(1)
-                        st.rerun()
+                        try:
+                            from streamlit_autorefresh import st_autorefresh
+                            st_autorefresh(interval=1000, limit=None, key="timer_autorefresh")
+                        except ImportError:
+                            # Fallback: fragment-style rerun avoids full page flash
+                            time.sleep(1)
+                            st.rerun()
                 else:
                     # CRITICAL FIX: All questions answered, move to completion automatically
                     # Capture exact duration at auto-completion moment

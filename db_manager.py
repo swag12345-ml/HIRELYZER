@@ -169,6 +169,10 @@ Business Analysis, Technical Writing, Digital Marketing, E-commerce, Fintech,
 Healthcare Tech, EdTech, IoT Development, AR/VR Development, Technical Sales,
 Agile Coaching, Software Engineering]
 """
+        # Provide a minimal safe session dict if none passed — prevents KeyError
+        # inside call_llm() when used outside a Streamlit request context.
+        if session is None:
+            session = {"key_index": 0, "user_groq_key": ""}
         try:
             result = call_llm(prompt, session=session).strip()
             valid_domains = [
@@ -870,16 +874,17 @@ Agile Coaching, Software Engineering]
 
     def get_daily_ats_stats(self, days_limit: int = 90) -> pd.DataFrame:
         try:
-            sql = f"""
+            # Use parameterised interval to avoid f-string SQL injection risk
+            sql = """
                 SELECT DATE(timestamp) AS date,
                        ROUND(AVG(ats_score)::numeric, 2) AS avg_ats,
                        COUNT(*) AS daily_count
                 FROM candidates
-                WHERE DATE(timestamp) >= CURRENT_DATE - INTERVAL '{days_limit} days'
+                WHERE DATE(timestamp) >= CURRENT_DATE - (%(days)s || ' days')::INTERVAL
                 GROUP BY DATE(timestamp)
                 ORDER BY DATE(timestamp)
             """
-            return self._read_df(sql)
+            return self._read_df(sql, params={"days": days_limit})
         except Exception as e:
             logger.error(f"Error getting daily ATS stats: {e}")
             return pd.DataFrame()
@@ -984,10 +989,10 @@ Agile Coaching, Software Engineering]
 
     def cleanup_old_records(self, days_to_keep: int = 365) -> int:
         try:
-            sql = f"DELETE FROM candidates WHERE DATE(timestamp) < CURRENT_DATE - INTERVAL '{days_to_keep} days'"
+            sql = "DELETE FROM candidates WHERE DATE(timestamp) < CURRENT_DATE - (%(days)s || ' days')::INTERVAL"
             with self.get_connection() as conn:
                 with conn.cursor() as cur:
-                    cur.execute(sql)
+                    cur.execute(sql, {"days": days_to_keep})
                     deleted = cur.rowcount
             if deleted > 0:
                 logger.info(f"Cleaned up {deleted} old records")
